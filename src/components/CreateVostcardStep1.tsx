@@ -30,8 +30,10 @@ const CreateVostcardStep1: React.FC = () => {
         />
       </div>
 
-      {/* 🎥 Record Button */}
-      <div style={recordSectionStyle}>
+      {/* 🎥 Record Section */}
+      <div style={contentStyle}>
+        <div style={recordTextStyle}>Record a 30-second video</div>
+
         {video ? (
           <video
             src={video}
@@ -43,7 +45,6 @@ const CreateVostcardStep1: React.FC = () => {
             <FaVideo size={40} color="white" />
           </div>
         )}
-        <div style={recordTextStyle}>Record a 30-second video</div>
       </div>
 
       {/* ✅ Save & Continue */}
@@ -82,14 +83,19 @@ const titleStyle: React.CSSProperties = {
   fontWeight: 'bold',
 };
 
-const recordSectionStyle: React.CSSProperties = {
+const contentStyle: React.CSSProperties = {
+  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
-  gap: 16,
-  paddingTop: 40,
-  paddingBottom: 20,
+  gap: 20,
+};
+
+const recordTextStyle: React.CSSProperties = {
+  fontSize: 20,
+  fontWeight: 600,
+  color: '#002B4D',
 };
 
 const recordButtonStyle: React.CSSProperties = {
@@ -103,12 +109,6 @@ const recordButtonStyle: React.CSSProperties = {
   justifyContent: 'center',
   cursor: 'pointer',
   boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-};
-
-const recordTextStyle: React.CSSProperties = {
-  fontSize: 20,
-  fontWeight: 600,
-  color: '#002B4D',
 };
 
 const videoStyle: React.CSSProperties = {
