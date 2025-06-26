@@ -1,6 +1,5 @@
 // src/App.tsx
-
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomeView from './components/HomeView';
 import CreateVostcardStep1 from './components/CreateVostcardStep1';
@@ -12,18 +11,23 @@ import ListView from './components/ListView';
 import LandingPage from './components/LandingPage';
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true);
+
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/home" element={<HomeView />} />
-        <Route path="/create-step1" element={<CreateVostcardStep1 />} />
-        <Route path="/create-step2" element={<CreateVostcardStep2 />} />
-        <Route path="/create-step3" element={<CreateVostcardStep3 />} />
-        <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
-        <Route path="/camera" element={<CameraView />} />
-        <Route path="/list-view" element={<ListView />} />
-      </Routes>
+      {showLanding ? (
+        <LandingPage onUnlock={() => setShowLanding(false)} />
+      ) : (
+        <Routes>
+          <Route path="/" element={<HomeView />} />
+          <Route path="/create-step1" element={<CreateVostcardStep1 />} />
+          <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+          <Route path="/create-step3" element={<CreateVostcardStep3 />} />
+          <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
+          <Route path="/camera" element={<CameraView />} />
+          <Route path="/list-view" element={<ListView />} />
+        </Routes>
+      )}
     </Router>
   );
 }

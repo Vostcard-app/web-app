@@ -1,18 +1,19 @@
 // src/components/LandingPage.tsx
 
 import React, { useState } from 'react';
-import roadSign from '../assets/underconstruction.jpg'; // Your road sign image
+import roadSign from '../assets/underconstruction.jpg'; // ✅ Make sure this filename is correct
 
 const LandingPage: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
   const [tapCount, setTapCount] = useState(0);
 
   const handleTap = () => {
     const newCount = tapCount + 1;
+    setTapCount(newCount);
+
     if (newCount >= 3) {
       onUnlock();
     } else {
-      setTapCount(newCount);
-      setTimeout(() => setTapCount(0), 1500); // Reset tap count after 1.5 seconds
+      setTimeout(() => setTapCount(0), 1500); // Reset after 1.5 seconds if not completed
     }
   };
 
