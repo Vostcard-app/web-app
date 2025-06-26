@@ -23,7 +23,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div style={bannerStyle}>
         <div style={titleStyle}>Vōstcard</div>
         <FaHome
-          size={24}
+          size={28}
           color="white"
           style={{ cursor: 'pointer' }}
           onClick={() => navigate('/')}
@@ -52,7 +52,7 @@ const CreateVostcardStep1: React.FC = () => {
         <button
           onClick={handleSaveAndContinue}
           style={saveButtonStyle}
-          disabled={!video}
+          disabled={!video} // Disable until video is recorded
         >
           Save & Continue
         </button>
