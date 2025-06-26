@@ -1,6 +1,8 @@
+// src/components/ScrollingCameraView.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaSyncAlt, FaTimes } from 'react-icons/fa';
+import { FaHome, FaTimes, FaSyncAlt } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const ScrollingCameraView: React.FC = () => {
@@ -50,7 +52,7 @@ const ScrollingCameraView: React.FC = () => {
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunks, { type: 'video/webm' });
       const blobUrl = URL.createObjectURL(blob);
-      setVideo(blobUrl); // ✅ Save video URL to context
+      setVideo(blobUrl); 
       navigate('/create-step1');
     };
 
@@ -91,13 +93,18 @@ const ScrollingCameraView: React.FC = () => {
         <FaTimes size={24} />
       </div>
 
-      {/* Countdown */}
-      <div style={countdownStyle}>{countdown}</div>
+      {/* Home */}
+      <div style={{ ...topButtonStyle, right: 80 }} onClick={() => { stopCamera(); navigate('/'); }}>
+        <FaHome size={24} />
+      </div>
 
       {/* Swap Camera */}
       <div style={{ ...topButtonStyle, right: 20 }} onClick={toggleCamera}>
         <FaSyncAlt size={24} />
       </div>
+
+      {/* Countdown */}
+      <div style={countdownStyle}>{countdown}</div>
 
       {/* Record Button */}
       <div
@@ -134,7 +141,7 @@ const countdownStyle: React.CSSProperties = {
   color: 'white',
   padding: '8px 16px',
   borderRadius: 12,
-  fontSize: 30,
+  fontSize: 40,
   zIndex: 3,
   position: 'absolute',
   top: 25,
@@ -144,7 +151,7 @@ const countdownStyle: React.CSSProperties = {
 
 const recordButtonStyle: React.CSSProperties = {
   position: 'absolute',
-  bottom: 40,
+  bottom: 60, // 🔥 moved up by 20px
   left: '50%',
   transform: 'translateX(-50%)',
   backgroundColor: 'red',
