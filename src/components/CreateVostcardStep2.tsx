@@ -1,31 +1,26 @@
 // src/components/CreateVostcardStep2.tsx
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2: React.FC = () => {
   const navigate = useNavigate();
-  const { photo1, setPhoto1, photo2, setPhoto2 } = useVostcard();
-  const [showPicker, setShowPicker] = useState<null | ((url: string) => void)>(null);
+  const { photo1, photo2, setPhoto1, setPhoto2, setActivePhoto } = useVostcard();
 
-  const handleThumbnailPress = (setPhoto: (url: string) => void) => {
-    setShowPicker(() => setPhoto);
-  };
-
-  const handleTakePhoto = () => {
-    if (showPicker) {
-      navigate('/camera', { state: { setPhoto: showPicker } });
-      setShowPicker(null);
-    }
-  };
-
-  const handleChooseFromGallery = () => {
-    if (showPicker) {
+  const handleSelectPhoto = (which: 'photo1' | 'photo2') => {
+    const choice = window.confirm('Take Photo? Click OK\nChoose From Gallery? Click Cancel');
+    if (choice) {
+      setActivePhoto(which);
+      navigate('/camera');
+    } else {
       const fakeUrl = URL.createObjectURL(new Blob());
-      showPicker(fakeUrl);
-      setShowPicker(null);
+      if (which === 'photo1') {
+        setPhoto1(fakeUrl);
+      } else {
+        setPhoto2(fakeUrl);
+      }
     }
   };
 
@@ -34,28 +29,17 @@ const CreateVostcardStep2: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'white',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div style={{ backgroundColor: 'white', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* 🔵 Banner */}
-      <div
-        style={{
-          backgroundColor: '#002B4D',
-          height: 80,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-        }}
-      >
-        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
-          Vōstcard
-        </div>
+      <div style={{
+        backgroundColor: '#002B4D',
+        height: 80,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 16px'
+      }}>
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
         <FaArrowLeft
           size={28}
           color="white"
@@ -64,20 +48,18 @@ const CreateVostcardStep2: React.FC = () => {
         />
       </div>
 
-      {/* 📸 Add Photo Buttons */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 24,
-        }}
-      >
-        {/* Distant */}
+      {/* 📸 Photo Buttons */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 24
+      }}>
+        {/* Button 1 */}
         <div
-          onClick={() => handleThumbnailPress(setPhoto1)}
+          onClick={() => handleSelectPhoto('photo1')}
           style={photoButtonStyle}
         >
           {photo1 ? (
@@ -90,9 +72,9 @@ const CreateVostcardStep2: React.FC = () => {
           )}
         </div>
 
-        {/* Near */}
+        {/* Button 2 */}
         <div
-          onClick={() => handleThumbnailPress(setPhoto2)}
+          onClick={() => handleSelectPhoto('photo2')}
           style={photoButtonStyle}
         >
           {photo2 ? (
@@ -118,98 +100,40 @@ const CreateVostcardStep2: React.FC = () => {
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
-            cursor: 'pointer',
+            cursor: 'pointer'
           }}
         >
           Save & Continue
         </button>
       </div>
-
-      {/* 📋 Picker Modal */}
-      {showPicker && (
-        <div style={modalOverlay}>
-          <div style={modalBox}>
-            <div style={{ marginBottom: 12, fontWeight: 'bold' }}>
-              Select an option
-            </div>
-            <button style={modalButton} onClick={handleTakePhoto}>
-              Take Photo
-            </button>
-            <button style={modalButton} onClick={handleChooseFromGallery}>
-              Choose from Gallery
-            </button>
-            <button
-              style={{ ...modalButton, backgroundColor: '#ccc', color: 'black' }}
-              onClick={() => setShowPicker(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
 const photoButtonStyle: React.CSSProperties = {
-  width: 280,
-  height: 280,
+  width: '80%',
+  height: 140,
   backgroundColor: '#F2F2F2',
   borderRadius: 16,
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
   cursor: 'pointer',
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
 };
 
 const photoTextStyle: React.CSSProperties = {
   textAlign: 'center',
   color: '#002B4D',
   fontSize: 20,
-  fontWeight: 600,
+  fontWeight: 600
 };
 
 const imageStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
   objectFit: 'cover',
-  borderRadius: 16,
-};
-
-const modalOverlay: React.CSSProperties = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: '100%',
-  height: '100%',
-  backgroundColor: 'rgba(0,0,0,0.5)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 999,
-};
-
-const modalBox: React.CSSProperties = {
-  backgroundColor: 'white',
-  padding: 24,
-  borderRadius: 12,
-  width: 280,
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-};
-
-const modalButton: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 0',
-  backgroundColor: '#002B4D',
-  color: 'white',
-  border: 'none',
-  borderRadius: 8,
-  fontSize: 16,
-  cursor: 'pointer',
-  marginTop: 8,
+  borderRadius: 16
 };
 
 export default CreateVostcardStep2;

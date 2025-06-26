@@ -1,18 +1,16 @@
 // src/components/CameraView.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AiOutlineClose } from 'react-icons/ai';
-import { MdCameraswitch } from 'react-icons/md';
+import { useNavigate } from 'react-router-dom';
+import { FaHome, FaSyncAlt, FaTimes } from 'react-icons/fa';
+import { useVostcard } from '../context/VostcardContext';
 
 const CameraView: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
-
-  const setPhoto = location.state?.setPhoto;
+  const navigate = useNavigate();
+  const { activePhoto, setPhoto1, setPhoto2, setActivePhoto } = useVostcard();
 
   useEffect(() => {
     startCamera();
@@ -24,6 +22,7 @@ const CameraView: React.FC = () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode },
+        audio: false,
       });
       setStream(mediaStream);
       if (videoRef.current) {
@@ -39,111 +38,107 @@ const CameraView: React.FC = () => {
     setStream(null);
   };
 
-  const toggleCamera = () => {
-    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
-  };
-
-  const takePhoto = () => {
+  const handleTakePhoto = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
-    const context = canvas.getContext('2d');
-    if (context) {
-      context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const photoData = canvas.toDataURL('image/png');
-      if (setPhoto) {
-        setPhoto(photoData);
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const imageUrl = canvas.toDataURL('image/png');
+
+      if (activePhoto === 'photo1') {
+        setPhoto1(imageUrl);
+      } else if (activePhoto === 'photo2') {
+        setPhoto2(imageUrl);
       }
-      stopCamera();
-      navigate(-1);
+
+      setActivePhoto(null);
+      navigate('/create-step2');
     }
   };
 
+  const toggleCamera = () => {
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+  };
+
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100vh',
-        background: 'black',
-      }}
-    >
+    <div style={{ width: '100%', height: '100vh', backgroundColor: 'black', position: 'relative' }}>
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-        }}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 
-      {/* 🔴 Close Button */}
+      {/* 🔙 Close */}
       <div
+        style={topButtonStyle({ left: 20 })}
         onClick={() => {
           stopCamera();
-          navigate(-1);
+          navigate('/create-step2');
         }}
-        style={{ ...topButtonStyle, left: 20 }}
       >
-        <AiOutlineClose size={24} />
+        <FaTimes size={20} />
       </div>
 
-      {/* 🔄 Toggle Camera */}
+      {/* 🔄 Swap */}
       <div
+        style={topButtonStyle({ right: 20 })}
         onClick={toggleCamera}
-        style={{ ...topButtonStyle, right: 20 }}
       >
-        <MdCameraswitch size={24} />
+        <FaSyncAlt size={20} />
       </div>
 
-      {/* 📸 Capture Button */}
+      {/* 🏠 Home */}
       <div
-        onClick={takePhoto}
-        style={{
-          position: 'absolute',
-          bottom: 40,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'red',
-          width: 70,
-          height: 70,
-          borderRadius: '50%',
-          border: '6px solid white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
+        style={topButtonStyle({ right: 80 })}
+        onClick={() => {
+          stopCamera();
+          navigate('/');
         }}
       >
-        <div
-          style={{
-            backgroundColor: 'white',
-            borderRadius: '50%',
-            width: 24,
-            height: 24,
-          }}
-        />
+        <FaHome size={20} />
       </div>
+
+      {/* 📸 Capture */}
+      <div
+        style={captureButtonStyle}
+        onClick={handleTakePhoto}
+      />
     </div>
   );
 };
 
-const topButtonStyle: React.CSSProperties = {
+const topButtonStyle = ({ left, right }: { left?: number; right?: number }): React.CSSProperties => ({
   position: 'absolute',
-  top: 25,
-  backgroundColor: 'white',
-  borderRadius: '50%',
+  top: 20,
+  left,
+  right,
   width: 48,
   height: 48,
+  borderRadius: '50%',
+  backgroundColor: 'white',
+  color: 'black',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  color: 'black',
   cursor: 'pointer',
-  zIndex: 3,
+  zIndex: 10,
+});
+
+const captureButtonStyle: React.CSSProperties = {
+  position: 'absolute',
+  bottom: 40,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  backgroundColor: 'red',
+  border: '6px solid white',
+  width: 70,
+  height: 70,
+  borderRadius: '50%',
+  cursor: 'pointer',
 };
 
 export default CameraView;

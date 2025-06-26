@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomeView from './components/HomeView';
@@ -7,11 +9,13 @@ import CreateVostcardStep3 from './components/CreateVostcardStep3';
 import ScrollingCameraView from './components/ScrollingCameraView';
 import CameraView from './components/CameraView';
 import ListView from './components/ListView';
+import LandingPage from './components/LandingPage';
 
 function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/home" element={<HomeView />} />
         <Route path="/create-step1" element={<CreateVostcardStep1 />} />
         <Route path="/create-step2" element={<CreateVostcardStep2 />} />
