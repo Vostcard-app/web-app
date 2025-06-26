@@ -30,8 +30,8 @@ const CreateVostcardStep1: React.FC = () => {
         />
       </div>
 
-      {/* 🎥 Video Preview or Record Button */}
-      <div style={contentStyle}>
+      {/* 🎥 Record Button */}
+      <div style={recordSectionStyle}>
         {video ? (
           <video
             src={video}
@@ -82,14 +82,14 @@ const titleStyle: React.CSSProperties = {
   fontWeight: 'bold',
 };
 
-const contentStyle: React.CSSProperties = {
-  flex: 1,
+const recordSectionStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
   gap: 16,
-  transform: 'translateY(-60px)', // 🔥 Raised 60px
+  paddingTop: 40,
+  paddingBottom: 20,
 };
 
 const recordButtonStyle: React.CSSProperties = {
@@ -120,7 +120,6 @@ const videoStyle: React.CSSProperties = {
 
 const buttonWrapperStyle: React.CSSProperties = {
   padding: '0 16px 30px',
-  transform: 'translateY(-60px)', // 🔥 Raised 60px
 };
 
 const saveButtonStyle: React.CSSProperties = {
