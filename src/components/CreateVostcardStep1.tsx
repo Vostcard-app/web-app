@@ -7,21 +7,25 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { video } = useVostcard();
+  const { video, setVideo } = useVostcard();
 
   const handleRecord = () => {
     navigate('/scrolling-camera');
   };
 
-  const handleSaveAndContinue = () => {
+  const handleSave = () => {
     navigate('/create-step2');
+  };
+
+  const handleScriptTool = () => {
+    navigate('/script-tool');
   };
 
   return (
     <div style={containerStyle}>
-      {/* 🔵 Banner */}
-      <div style={bannerStyle}>
-        <div style={titleStyle}>Vōstcard</div>
+      {/* 🔵 Header */}
+      <div style={headerStyle}>
+        <div style={headerTextStyle}>Vōstcard</div>
         <FaHome
           size={28}
           color="white"
@@ -30,41 +34,37 @@ const CreateVostcardStep1: React.FC = () => {
         />
       </div>
 
-      {/* 🎥 Record Section */}
+      {/* 🎥 Record Button */}
       <div style={contentStyle}>
-        <div style={recordTextStyle}>Record a 30-second video</div>
+        <div onClick={handleRecord} style={recordButtonStyle}>
+          <FaVideo size={50} color="white" />
+        </div>
 
-        {video ? (
-          <video
-            src={video}
-            controls
-            style={videoStyle}
-          />
-        ) : (
-          <div onClick={handleRecord} style={recordButtonStyle}>
-            <FaVideo size={40} color="white" />
-          </div>
-        )}
+        <div style={recordTextStyle}>Record a 30 Second Video</div>
       </div>
 
-      {/* ✅ Record Button */}
-      <div style={recordWrapperStyle}>
+      {/* 💾 Save Button */}
+      <div style={buttonWrapperStyle}>
         <button
-          onClick={handleRecord}
-          style={recordButtonMainStyle}
+          onClick={handleSave}
+          style={{
+            ...saveButtonStyle,
+            backgroundColor: video ? '#002B4D' : 'gray',
+            cursor: video ? 'pointer' : 'not-allowed',
+          }}
+          disabled={!video}
         >
-          {video ? 'Retake Video' : 'Record'}
+          Save
         </button>
       </div>
 
-      {/* ✅ Save & Continue */}
+      {/* 🟧 Script Tool Button */}
       <div style={buttonWrapperStyle}>
         <button
-          onClick={handleSaveAndContinue}
-          style={saveButtonStyle}
-          disabled={!video} // Disable until video is recorded
+          onClick={handleScriptTool}
+          style={scriptButtonStyle}
         >
-          Save & Continue
+          Use Script Tool
         </button>
       </div>
     </div>
@@ -78,7 +78,7 @@ const containerStyle: React.CSSProperties = {
   flexDirection: 'column',
 };
 
-const bannerStyle: React.CSSProperties = {
+const headerStyle: React.CSSProperties = {
   backgroundColor: '#002B4D',
   height: 80,
   display: 'flex',
@@ -87,25 +87,19 @@ const bannerStyle: React.CSSProperties = {
   padding: '0 16px',
 };
 
-const titleStyle: React.CSSProperties = {
+const headerTextStyle: React.CSSProperties = {
   color: 'white',
   fontSize: 28,
   fontWeight: 'bold',
 };
 
 const contentStyle: React.CSSProperties = {
+  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
-  paddingTop: 40,
   gap: 20,
-};
-
-const recordTextStyle: React.CSSProperties = {
-  fontSize: 20,
-  fontWeight: 600,
-  color: '#002B4D',
 };
 
 const recordButtonStyle: React.CSSProperties = {
@@ -121,34 +115,27 @@ const recordButtonStyle: React.CSSProperties = {
   boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
 };
 
-const videoStyle: React.CSSProperties = {
-  width: 240,
-  height: 240,
-  borderRadius: 16,
-  objectFit: 'cover',
+const recordTextStyle: React.CSSProperties = {
+  fontSize: 20,
+  fontWeight: 600,
+  color: '#002B4D',
 };
 
-const recordWrapperStyle: React.CSSProperties = {
+const buttonWrapperStyle: React.CSSProperties = {
   padding: '0 16px 10px',
 };
 
-const recordButtonMainStyle: React.CSSProperties = {
-  backgroundColor: 'red',
+const saveButtonStyle: React.CSSProperties = {
   color: 'white',
   border: 'none',
   width: '100%',
   padding: '14px',
   borderRadius: 8,
   fontSize: 18,
-  cursor: 'pointer',
 };
 
-const buttonWrapperStyle: React.CSSProperties = {
-  padding: '0 16px 30px',
-};
-
-const saveButtonStyle: React.CSSProperties = {
-  backgroundColor: '#002B4D',
+const scriptButtonStyle: React.CSSProperties = {
+  backgroundColor: 'orange',
   color: 'white',
   border: 'none',
   width: '100%',
