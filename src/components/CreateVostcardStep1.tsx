@@ -47,6 +47,16 @@ const CreateVostcardStep1: React.FC = () => {
         )}
       </div>
 
+      {/* ✅ Record Button */}
+      <div style={recordWrapperStyle}>
+        <button
+          onClick={handleRecord}
+          style={recordButtonMainStyle}
+        >
+          {video ? 'Retake Video' : 'Record'}
+        </button>
+      </div>
+
       {/* ✅ Save & Continue */}
       <div style={buttonWrapperStyle}>
         <button
@@ -84,11 +94,11 @@ const titleStyle: React.CSSProperties = {
 };
 
 const contentStyle: React.CSSProperties = {
-  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
+  paddingTop: 40,
   gap: 20,
 };
 
@@ -116,6 +126,21 @@ const videoStyle: React.CSSProperties = {
   height: 240,
   borderRadius: 16,
   objectFit: 'cover',
+};
+
+const recordWrapperStyle: React.CSSProperties = {
+  padding: '0 16px 10px',
+};
+
+const recordButtonMainStyle: React.CSSProperties = {
+  backgroundColor: 'red',
+  color: 'white',
+  border: 'none',
+  width: '100%',
+  padding: '14px',
+  borderRadius: 8,
+  fontSize: 18,
+  cursor: 'pointer',
 };
 
 const buttonWrapperStyle: React.CSSProperties = {
