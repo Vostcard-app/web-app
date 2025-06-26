@@ -2,13 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaSyncAlt, FaTimes } from 'react-icons/fa';
+import { FaHome } from 'react-icons/fa';
+import { AiOutlineClose, AiOutlineSync } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
   const { setVideo } = useVostcard();
-
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -53,8 +53,8 @@ const ScrollingCameraView: React.FC = () => {
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunks, { type: 'video/webm' });
       const blobUrl = URL.createObjectURL(blob);
-      setVideo(blobUrl); // ✅ Save video
-      navigate('/create-step1'); // ✅ Return to step 1 after recording stops
+      setVideo(blobUrl);
+      navigate('/create-step1');
     };
 
     mediaRecorder.start();
@@ -80,14 +80,7 @@ const ScrollingCameraView: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100vh',
-        background: 'black',
-      }}
-    >
+    <div style={containerStyle}>
       <video
         ref={videoRef}
         autoPlay
@@ -96,98 +89,103 @@ const ScrollingCameraView: React.FC = () => {
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 
-      {/* Top Buttons */}
-      <div style={{ position: 'absolute', top: 20, left: 20 }}>
-        <FaTimes
-          color="white"
-          size={28}
-          style={{ cursor: 'pointer' }}
-          onClick={() => {
-            stopCamera();
-            navigate(-1);
-          }}
-        />
+      {/* Close */}
+      <div style={{ ...topButtonStyle, left: 20 }} onClick={() => { stopCamera(); navigate(-1); }}>
+        <AiOutlineClose size={24} />
       </div>
 
-      <div style={{ position: 'absolute', top: 20, right: 20 }}>
-        <FaSyncAlt
-          color="white"
-          size={28}
-          style={{ cursor: 'pointer' }}
-          onClick={toggleCamera}
-        />
+      {/* Swap Camera */}
+      <div style={{ ...topButtonStyle, right: 20 }} onClick={toggleCamera}>
+        <AiOutlineSync size={24} />
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          top: 20,
-          right: 70,
-        }}
-      >
-        <FaHome
-          color="white"
-          size={28}
-          style={{ cursor: 'pointer' }}
-          onClick={() => {
-            stopCamera();
-            navigate('/');
-          }}
-        />
+      {/* Home */}
+      <div style={{ ...topButtonStyle, top: 25, right: 80 }} onClick={() => { stopCamera(); navigate('/'); }}>
+        <FaHome size={20} />
       </div>
 
       {/* Countdown */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 25,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '8px 16px',
-          borderRadius: 12,
-          fontSize: 36,
-          fontWeight: 'bold',
-        }}
-      >
+      <div style={countdownStyle}>
         {countdown}
       </div>
 
       {/* Record Button */}
       <div
         onClick={recording ? stopRecording : startRecording}
-        style={{
-          position: 'absolute',
-          bottom: 60, // ✅ moved higher by 20px
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'red',
-          width: 70,
-          height: 70,
-          borderRadius: '50%',
-          border: '6px solid white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-        }}
+        style={recordButtonStyle}
       >
         {recording ? (
-          <div style={{ backgroundColor: 'white', width: 24, height: 24 }} />
+          <div style={stopIconStyle} />
         ) : (
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '50%',
-              width: 24,
-              height: 24,
-            }}
-          />
+          <div style={dotIconStyle} />
         )}
       </div>
     </div>
   );
+};
+
+const containerStyle: React.CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  height: '100vh',
+  background: 'black',
+};
+
+const topButtonStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: 25,
+  backgroundColor: 'white',
+  borderRadius: '50%',
+  width: 48,
+  height: 48,
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  color: 'black',
+  cursor: 'pointer',
+  zIndex: 3,
+};
+
+const countdownStyle: React.CSSProperties = {
+  backgroundColor: 'black',
+  color: 'white',
+  padding: '8px 16px',
+  borderRadius: 12,
+  fontSize: 42, // Doubled size for visibility
+  zIndex: 3,
+  position: 'absolute',
+  top: 25,
+  left: '50%',
+  transform: 'translateX(-50%)',
+};
+
+const recordButtonStyle: React.CSSProperties = {
+  position: 'absolute',
+  bottom: 100, // 🔥 Raised by 30px (was 70)
+  left: '50%',
+  transform: 'translateX(-50%)',
+  backgroundColor: 'red',
+  width: 70,
+  height: 70,
+  borderRadius: '50%',
+  border: '6px solid white',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+};
+
+const stopIconStyle: React.CSSProperties = {
+  backgroundColor: 'white',
+  width: 24,
+  height: 24,
+};
+
+const dotIconStyle: React.CSSProperties = {
+  backgroundColor: 'white',
+  borderRadius: '50%',
+  width: 24,
+  height: 24,
 };
 
 export default ScrollingCameraView;
