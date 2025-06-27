@@ -15,6 +15,12 @@ const CreateVostcardStep1: React.FC = () => {
     navigate('/create-step2');
   };
 
+  const handlePreview = () => {
+    if (video) {
+      window.open(video);
+    }
+  };
+
   return (
     <div
       style={{
@@ -24,7 +30,7 @@ const CreateVostcardStep1: React.FC = () => {
         flexDirection: 'column',
       }}
     >
-      {/* 🔵 Banner */}
+      {/* 🔵 Header */}
       <div
         style={{
           backgroundColor: '#002B4D',
@@ -59,20 +65,22 @@ const CreateVostcardStep1: React.FC = () => {
           <video
             src={video}
             controls
+            onClick={handlePreview}
             style={{
-              width: '237px',
-              height: '332px',
+              width: '240px',
+              height: '340px',
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
+              cursor: 'pointer',
             }}
           />
         ) : (
           <div
             onClick={handleRecord}
             style={{
-              width: 237,
-              height: 332,
+              width: 240,
+              height: 340,
               backgroundColor: '#F2F2F2',
               borderRadius: 16,
               display: 'flex',
@@ -94,8 +102,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div
         style={{
           padding: '0 16px',
-          marginBottom: 35,
-          paddingBottom: 60, // ⬅️ Keep the 60px padding as requested
+          marginBottom: 60, // Added padding under the save button
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
