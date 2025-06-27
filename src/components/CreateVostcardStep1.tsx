@@ -1,148 +1,178 @@
-// src/components/CreateVostcardStep1.tsx
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaVideo } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
   const { video, setVideo } = useVostcard();
 
-  const handleRecord = () => {
+  const handleRecordVideo = () => {
     navigate('/scrolling-camera');
   };
 
-  const handleSave = () => {
+  const handleSaveAndContinue = () => {
     navigate('/create-step2');
   };
 
-  const handleScriptTool = () => {
-    navigate('/script-tool');
+  const handleUseScriptTool = () => {
+    navigate('/scrolling-camera');
   };
 
   return (
-    <div style={containerStyle}>
-      {/* 🔵 Header */}
-      <div style={headerStyle}>
-        <div style={headerTextStyle}>Vōstcard</div>
-        <FaHome
+    <div
+      style={{
+        backgroundColor: 'white',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* 🔵 Banner */}
+      <div
+        style={{
+          backgroundColor: '#002B4D',
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+        }}
+      >
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+          Vōstcard
+        </div>
+        <FaArrowLeft
           size={28}
           color="white"
           style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate(-1)}
         />
       </div>
 
-      {/* 🎥 Record Button */}
-      <div style={contentStyle}>
-        <div onClick={handleRecord} style={recordButtonStyle}>
-          <FaVideo size={50} color="white" />
-        </div>
-
-        <div style={recordTextStyle}>Record a 30 Second Video</div>
+      {/* 📄 Instruction Text */}
+      <div
+        style={{
+          marginTop: 12,
+          textAlign: 'center',
+          fontSize: 20,
+          fontWeight: 'bold',
+          color: '#002B4D',
+        }}
+      >
+        Record a 30 Second Video
       </div>
 
-      {/* 💾 Save Button */}
-      <div style={buttonWrapperStyle}>
-        <button
-          onClick={handleSave}
+      {/* 📹 Video Preview Thumbnail (Portrait) */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
+        {video ? (
+          <video
+            src={video}
+            controls
+            style={{
+              width: 200,
+              height: 300,
+              borderRadius: 16,
+              backgroundColor: '#000',
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 200,
+              height: 300,
+              backgroundColor: '#F2F2F2',
+              borderRadius: 16,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              color: '#002B4D',
+              fontSize: 20,
+              fontWeight: 600,
+            }}
+          >
+            No Video Yet
+          </div>
+        )}
+      </div>
+
+      {/* 🔴 Record Button */}
+      <div
+        onClick={handleRecordVideo}
+        style={{
+          backgroundColor: 'red',
+          width: 70,
+          height: 70,
+          borderRadius: '50%',
+          border: '6px solid white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          marginBottom: 10,
+          alignSelf: 'center',
+        }}
+      >
+        <div
           style={{
-            ...saveButtonStyle,
-            backgroundColor: video ? '#002B4D' : 'gray',
-            cursor: video ? 'pointer' : 'not-allowed',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            width: 24,
+            height: 24,
           }}
-          disabled={!video}
-        >
-          Save
-        </button>
+        />
       </div>
 
-      {/* 🟧 Script Tool Button */}
-      <div style={buttonWrapperStyle}>
+      {/* 📝 Use Script Tool */}
+      <div style={{ padding: '0 16px 10px' }}>
         <button
-          onClick={handleScriptTool}
-          style={scriptButtonStyle}
+          onClick={handleUseScriptTool}
+          style={{
+            backgroundColor: '#002B4D',
+            color: 'white',
+            border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 8,
+            fontSize: 18,
+            cursor: 'pointer',
+          }}
         >
           Use Script Tool
         </button>
       </div>
+
+      {/* ✅ Save & Continue */}
+      <div style={{ padding: '0 16px 20px' }}>
+        <button
+          onClick={handleSaveAndContinue}
+          disabled={!video}
+          style={{
+            backgroundColor: video ? '#002B4D' : 'gray',
+            color: 'white',
+            border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 8,
+            fontSize: 18,
+            cursor: video ? 'pointer' : 'not-allowed',
+          }}
+        >
+          Save & Continue
+        </button>
+      </div>
     </div>
   );
-};
-
-const containerStyle: React.CSSProperties = {
-  backgroundColor: 'white',
-  height: '100vh',
-  display: 'flex',
-  flexDirection: 'column',
-};
-
-const headerStyle: React.CSSProperties = {
-  backgroundColor: '#002B4D',
-  height: 80,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '0 16px',
-};
-
-const headerTextStyle: React.CSSProperties = {
-  color: 'white',
-  fontSize: 28,
-  fontWeight: 'bold',
-};
-
-const contentStyle: React.CSSProperties = {
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: 20,
-};
-
-const recordButtonStyle: React.CSSProperties = {
-  width: 120,
-  height: 120,
-  backgroundColor: 'red',
-  borderRadius: '50%',
-  border: '6px solid white',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-  boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-};
-
-const recordTextStyle: React.CSSProperties = {
-  fontSize: 20,
-  fontWeight: 600,
-  color: '#002B4D',
-};
-
-const buttonWrapperStyle: React.CSSProperties = {
-  padding: '0 16px 10px',
-};
-
-const saveButtonStyle: React.CSSProperties = {
-  color: 'white',
-  border: 'none',
-  width: '100%',
-  padding: '14px',
-  borderRadius: 8,
-  fontSize: 18,
-};
-
-const scriptButtonStyle: React.CSSProperties = {
-  backgroundColor: 'orange',
-  color: 'white',
-  border: 'none',
-  width: '100%',
-  padding: '14px',
-  borderRadius: 8,
-  fontSize: 18,
-  cursor: 'pointer',
 };
 
 export default CreateVostcardStep1;
