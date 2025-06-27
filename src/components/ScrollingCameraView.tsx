@@ -1,35 +1,32 @@
-// src/components/ScrollingCameraView.tsx
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MdCameraswitch } from 'react-icons/md';
 import { AiOutlineClose } from 'react-icons/ai';
+import { FaCamera, FaSync } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const { setVideo } = useVostcard();
+
+  const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [recording, setRecording] = useState(false);
-  const [countdown, setCountdown] = useState<number>(30);
-  const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
-  const { setVideo } = useVostcard();
+  const [countdown, setCountdown] = useState(30);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   useEffect(() => {
     startCamera();
-
     return () => {
       stopCamera();
     };
-  }, [cameraFacingMode]);
+  }, [facingMode]);
 
   const startCamera = async () => {
     stopCamera();
-
     try {
       const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: cameraFacingMode },
+        video: { facingMode },
         audio: true,
       });
       setStream(newStream);
@@ -42,50 +39,39 @@ const ScrollingCameraView: React.FC = () => {
   };
 
   const stopCamera = () => {
-    stream?.getTracks().forEach((track) => track.stop());
-  };
-
-  const toggleCamera = () => {
-    setCameraFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
-  };
-
-  const handleRecord = () => {
-    if (recording) {
-      stopRecording();
-    } else {
-      startRecording();
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
     }
   };
 
-  const startRecording = () => {
+  const handleRecord = () => {
     if (!stream) return;
-
     const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = mediaRecorder;
+    const chunks: BlobPart[] = [];
 
-    const chunks: Blob[] = [];
     mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunks.push(e.data);
-      }
+      if (e.data.size > 0) chunks.push(e.data);
     };
 
     mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/mp4' });
-      const url = URL.createObjectURL(blob);
-      setVideo(url);
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const videoUrl = URL.createObjectURL(blob);
+      setVideo(videoUrl);
       navigate('/create-step1');
     };
 
     mediaRecorder.start();
+    mediaRecorderRef.current = mediaRecorder;
     setRecording(true);
     setCountdown(30);
 
-    const countdownInterval = setInterval(() => {
+    const interval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(countdownInterval);
-          stopRecording();
+          clearInterval(interval);
+          mediaRecorder.stop();
+          setRecording(false);
           return 0;
         }
         return prev - 1;
@@ -93,10 +79,20 @@ const ScrollingCameraView: React.FC = () => {
     }, 1000);
   };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setRecording(false);
-    setCountdown(0);
+  const handleStop = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+    }
+  };
+
+  const handleDismiss = () => {
+    stopCamera();
+    navigate('/create-step1');
+  };
+
+  const toggleCamera = () => {
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
   return (
@@ -109,63 +105,62 @@ const ScrollingCameraView: React.FC = () => {
         overflow: 'hidden',
       }}
     >
-      {/* 🔵 Camera Preview */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-        }}
+        style={{ height: '100%', width: '100%', objectFit: 'cover' }}
       />
 
-      {/* ⏱️ Countdown Timer */}
+      {/* ⏳ Countdown */}
       {recording && (
         <div
           style={{
             position: 'absolute',
-            top: 100,
-            width: '100%',
-            textAlign: 'center',
-            fontSize: 48,
+            top: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(0,0,0,0.6)',
+            padding: '8px 16px',
+            borderRadius: '8px',
             color: 'white',
-            fontWeight: 'bold',
+            fontSize: 36,
+            zIndex: 1000,
           }}
         >
           {countdown}
         </div>
       )}
 
-      {/* 🔘 Bottom Controls */}
+      {/* 🔘 Controls */}
       <div
         style={{
           position: 'absolute',
-          bottom: 40,
+          bottom: '20%',
           width: '100%',
           display: 'flex',
-          justifyContent: 'center',
+          justifyContent: 'space-around',
           alignItems: 'center',
-          gap: 80,
+          padding: '0 20px',
+          zIndex: 1000,
         }}
       >
         {/* ❌ Dismiss */}
-        <div
-          onClick={() => navigate('/create-step1')}
+        <AiOutlineClose
+          size={40}
+          color="white"
           style={{ cursor: 'pointer' }}
-        >
-          <AiOutlineClose size={36} color="white" />
-        </div>
+          onClick={handleDismiss}
+        />
 
-        {/* 🔴 Record Button */}
+        {/* 🔴 Record */}
         <div
-          onClick={handleRecord}
+          onClick={recording ? handleStop : handleRecord}
           style={{
             backgroundColor: 'red',
-            width: 70,
-            height: 70,
+            width: 80,
+            height: 80,
             borderRadius: '50%',
             border: '6px solid white',
             display: 'flex',
@@ -178,8 +173,8 @@ const ScrollingCameraView: React.FC = () => {
             <div
               style={{
                 backgroundColor: 'white',
-                width: 24,
-                height: 24,
+                width: 28,
+                height: 28,
                 borderRadius: 4,
               }}
             />
@@ -188,17 +183,20 @@ const ScrollingCameraView: React.FC = () => {
               style={{
                 backgroundColor: 'white',
                 borderRadius: '50%',
-                width: 24,
-                height: 24,
+                width: 28,
+                height: 28,
               }}
             />
           )}
         </div>
 
-        {/* 🔄 Swap Camera */}
-        <div onClick={toggleCamera} style={{ cursor: 'pointer' }}>
-          <MdCameraswitch size={36} color="white" />
-        </div>
+        {/* 🔄 Camera Toggle */}
+        <FaSync
+          size={40}
+          color="white"
+          style={{ cursor: 'pointer' }}
+          onClick={toggleCamera}
+        />
       </div>
     </div>
   );
