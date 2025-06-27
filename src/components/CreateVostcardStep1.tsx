@@ -3,7 +3,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
-import { MdCameraswitch } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
@@ -63,8 +62,8 @@ const CreateVostcardStep1: React.FC = () => {
             src={video}
             controls
             style={{
-              width: '250px',
-              height: '350px',
+              width: '200px',
+              height: '280px',
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
@@ -74,8 +73,8 @@ const CreateVostcardStep1: React.FC = () => {
           <div
             onClick={handleRecord}
             style={{
-              width: 250,
-              height: 350,
+              width: 200,
+              height: 280,
               backgroundColor: '#F2F2F2',
               borderRadius: 16,
               display: 'flex',
@@ -128,13 +127,6 @@ const CreateVostcardStep1: React.FC = () => {
             }}
           />
         </div>
-
-        {/* 🔄 Camera Switch Button Example */}
-        <MdCameraswitch
-          size={28}
-          style={{ cursor: 'pointer' }}
-          onClick={() => console.log('Camera Switch Clicked')}
-        />
 
         {/* 📜 Use Script Tool */}
         <button
