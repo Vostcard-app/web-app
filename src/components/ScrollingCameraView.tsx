@@ -72,7 +72,7 @@ const ScrollingCameraView: React.FC = () => {
       const url = URL.createObjectURL(blob);
       console.log('Recorded video URL:', url);
       // 🔗 Save video URL to context or storage here
-      navigate('/create-step2');
+      navigate('/create-step1');
     };
 
     recorder.start();
@@ -155,7 +155,7 @@ const ScrollingCameraView: React.FC = () => {
         }}
       />
 
-      {/* ⏱️ Timer */}
+      {/* ⏱️ Timer (double size) */}
       {isRecording && (
         <div
           style={{
@@ -164,10 +164,10 @@ const ScrollingCameraView: React.FC = () => {
             right: '50%',
             transform: 'translateX(50%)',
             color: 'white',
-            fontSize: 24,
+            fontSize: 48,
             backgroundColor: 'rgba(0,0,0,0.5)',
-            padding: '4px 12px',
-            borderRadius: 8,
+            padding: '6px 16px',
+            borderRadius: 12,
           }}
         >
           {timer}s
@@ -193,14 +193,25 @@ const ScrollingCameraView: React.FC = () => {
           cursor: 'pointer',
         }}
       >
-        <div
-          style={{
-            backgroundColor: 'white',
-            width: 24,
-            height: 24,
-            borderRadius: '50%',
-          }}
-        />
+        {isRecording ? (
+          <div
+            style={{
+              backgroundColor: 'white',
+              width: 24,
+              height: 24,
+              borderRadius: 4,
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              backgroundColor: 'white',
+              width: 24,
+              height: 24,
+              borderRadius: '50%',
+            }}
+          />
+        )}
       </div>
     </div>
   );
