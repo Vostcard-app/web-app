@@ -1,144 +1,191 @@
 // src/components/CameraView.tsx
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaHome, FaSyncAlt, FaTimes } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
 
 const CameraView: React.FC = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const navigate = useNavigate();
-  const { activePhoto, setPhoto1, setPhoto2, setActivePhoto } = useVostcard();
+  const location = useLocation();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const { setPhoto1, setPhoto2, setVideo } = useVostcard();
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunks = useRef<Blob[]>([]);
+
+  const setPhoto = location.state?.setPhoto;
 
   useEffect(() => {
-    startCamera();
-    return () => stopCamera();
-  }, [facingMode]);
-
-  const startCamera = async () => {
-    stopCamera();
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode },
-        audio: false,
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error('Error accessing camera:', err);
       }
-    } catch (err) {
-      console.error('Error accessing camera:', err);
-    }
-  };
+    };
 
-  const stopCamera = () => {
-    stream?.getTracks().forEach((track) => track.stop());
-    setStream(null);
-  };
+    startCamera();
 
-  const handleTakePhoto = () => {
-    if (!videoRef.current) return;
+    return () => {
+      streamRef.current?.getTracks().forEach(track => track.stop());
+    };
+  }, []);
+
+  const handleCapturePhoto = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const imageUrl = canvas.toDataURL('image/png');
-
-      if (activePhoto === 'photo1') {
-        setPhoto1(imageUrl);
-      } else if (activePhoto === 'photo2') {
-        setPhoto2(imageUrl);
+      if (setPhoto) {
+        setPhoto(imageUrl);
       }
+    }
+    navigate(-1);
+  };
 
-      setActivePhoto(null);
-      navigate('/create-step2');
+  const handleStartRecording = () => {
+    if (streamRef.current) {
+      const mediaRecorder = new MediaRecorder(streamRef.current, {
+        mimeType: 'video/webm',
+      });
+      mediaRecorderRef.current = mediaRecorder;
+      recordedChunks.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunks.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks.current, { type: 'video/webm' });
+        const videoUrl = URL.createObjectURL(blob);
+        setVideo(videoUrl);
+        navigate(-1);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
     }
   };
 
-  const toggleCamera = () => {
-    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+  const handleStopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
   };
 
   return (
-    <div style={{ width: '100%', height: '100vh', backgroundColor: 'black', position: 'relative' }}>
+    <div
+      style={{
+        backgroundColor: 'black',
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
+      {/* 🔘 Close Button */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          zIndex: 10,
+        }}
+      >
+        <AiOutlineClose
+          size={28}
+          color="white"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate(-1)}
+        />
+      </div>
+
+      {/* 🎥 Video Preview */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        muted
+        style={{
+          flex: 1,
+          width: '100%',
+          objectFit: 'cover',
+        }}
       />
 
-      {/* 🔙 Close */}
+      {/* 🔴 Record Button */}
       <div
-        style={topButtonStyle({ left: 20 })}
-        onClick={() => {
-          stopCamera();
-          navigate('/create-step2');
+        style={{
+          position: 'absolute',
+          bottom: '20%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 12,
         }}
       >
-        <FaTimes size={20} />
+        {setPhoto ? (
+          <div
+            onClick={handleCapturePhoto}
+            style={{
+              backgroundColor: 'white',
+              width: 70,
+              height: 70,
+              borderRadius: '50%',
+              border: '6px solid red',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          />
+        ) : (
+          <div
+            onClick={isRecording ? handleStopRecording : handleStartRecording}
+            style={{
+              backgroundColor: isRecording ? 'white' : 'red',
+              width: 70,
+              height: 70,
+              borderRadius: '50%',
+              border: '6px solid white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+            }}
+          >
+            {isRecording && (
+              <div
+                style={{
+                  backgroundColor: 'red',
+                  width: 24,
+                  height: 24,
+                  borderRadius: 4,
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
-
-      {/* 🔄 Swap */}
-      <div
-        style={topButtonStyle({ right: 20 })}
-        onClick={toggleCamera}
-      >
-        <FaSyncAlt size={20} />
-      </div>
-
-      {/* 🏠 Home */}
-      <div
-        style={topButtonStyle({ right: 80 })}
-        onClick={() => {
-          stopCamera();
-          navigate('/');
-        }}
-      >
-        <FaHome size={20} />
-      </div>
-
-      {/* 📸 Capture */}
-      <div
-        style={captureButtonStyle}
-        onClick={handleTakePhoto}
-      />
     </div>
   );
-};
-
-const topButtonStyle = ({ left, right }: { left?: number; right?: number }): React.CSSProperties => ({
-  position: 'absolute',
-  top: 20,
-  left,
-  right,
-  width: 48,
-  height: 48,
-  borderRadius: '50%',
-  backgroundColor: 'white',
-  color: 'black',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  cursor: 'pointer',
-  zIndex: 10,
-});
-
-const captureButtonStyle: React.CSSProperties = {
-  position: 'absolute',
-  bottom: 40,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  backgroundColor: 'red',
-  border: '6px solid white',
-  width: 70,
-  height: 70,
-  borderRadius: '50%',
-  cursor: 'pointer',
 };
 
 export default CameraView;

@@ -7,20 +7,15 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2: React.FC = () => {
   const navigate = useNavigate();
-  const { photo1, photo2, setPhoto1, setPhoto2, setActivePhoto } = useVostcard();
+  const { photo1, setPhoto1, photo2, setPhoto2 } = useVostcard();
 
-  const handleSelectPhoto = (which: 'photo1' | 'photo2') => {
+  const handleSelectPhoto = (setPhoto: (url: string) => void) => {
     const choice = window.confirm('Take Photo? Click OK\nChoose From Gallery? Click Cancel');
     if (choice) {
-      setActivePhoto(which);
-      navigate('/camera');
+      navigate('/camera', { state: { setPhoto } });
     } else {
       const fakeUrl = URL.createObjectURL(new Blob());
-      if (which === 'photo1') {
-        setPhoto1(fakeUrl);
-      } else {
-        setPhoto2(fakeUrl);
-      }
+      setPhoto(fakeUrl);
     }
   };
 
@@ -29,38 +24,51 @@ const CreateVostcardStep2: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: 'white', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* 🔵 Banner */}
-      <div style={{
-        backgroundColor: '#002B4D',
-        height: 80,
+    <div
+      style={{
+        backgroundColor: 'white',
+        height: '100vh',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px'
-      }}>
-        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
+        flexDirection: 'column',
+      }}
+    >
+      {/* 🔵 Banner */}
+      <div
+        style={{
+          backgroundColor: '#002B4D',
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+        }}
+      >
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+          Vōstcard
+        </div>
         <FaArrowLeft
           size={28}
           color="white"
           style={{ cursor: 'pointer' }}
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/create-step1')} // 🔙 Back to Step 1
         />
       </div>
 
-      {/* 📸 Photo Buttons */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 24
-      }}>
-        {/* Button 1 */}
+      {/* 📸 Thumbnails */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 24,
+        }}
+      >
+        {/* 📷 Distant Photo */}
         <div
-          onClick={() => handleSelectPhoto('photo1')}
-          style={photoButtonStyle}
+          onClick={() => handleSelectPhoto(setPhoto1)}
+          style={photoBoxStyle}
         >
           {photo1 ? (
             <img src={photo1} alt="Distant" style={imageStyle} />
@@ -72,10 +80,10 @@ const CreateVostcardStep2: React.FC = () => {
           )}
         </div>
 
-        {/* Button 2 */}
+        {/* 📷 Near Photo */}
         <div
-          onClick={() => handleSelectPhoto('photo2')}
-          style={photoButtonStyle}
+          onClick={() => handleSelectPhoto(setPhoto2)}
+          style={photoBoxStyle}
         >
           {photo2 ? (
             <img src={photo2} alt="Near" style={imageStyle} />
@@ -89,7 +97,12 @@ const CreateVostcardStep2: React.FC = () => {
       </div>
 
       {/* ✅ Save & Continue */}
-      <div style={{ padding: '0 16px 30px' }}>
+      <div
+        style={{
+          padding: '0 16px',
+          marginBottom: '10vh', // ⬆️ About 1/5 up from bottom
+        }}
+      >
         <button
           onClick={handleSaveAndContinue}
           style={{
@@ -100,7 +113,7 @@ const CreateVostcardStep2: React.FC = () => {
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
           Save & Continue
@@ -110,30 +123,30 @@ const CreateVostcardStep2: React.FC = () => {
   );
 };
 
-const photoButtonStyle: React.CSSProperties = {
-  width: '80%',
-  height: 140,
+const photoBoxStyle: React.CSSProperties = {
+  width: 250,
+  height: 250, // 🔲 Square thumbnails
   backgroundColor: '#F2F2F2',
   borderRadius: 16,
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
   cursor: 'pointer',
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
 };
 
 const photoTextStyle: React.CSSProperties = {
   textAlign: 'center',
   color: '#002B4D',
   fontSize: 20,
-  fontWeight: 600
+  fontWeight: 600,
 };
 
 const imageStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
   objectFit: 'cover',
-  borderRadius: 16
+  borderRadius: 16,
 };
 
 export default CreateVostcardStep2;
