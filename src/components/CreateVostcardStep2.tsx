@@ -1,9 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
+
+  const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
+  const [nearPhoto, setNearPhoto] = useState<string | null>(null);
+
+  const handlePhotoSelect = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'distant' | 'near'
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      if (type === 'distant') setDistantPhoto(url);
+      else setNearPhoto(url);
+    }
+  };
 
   return (
     <div style={container}>
@@ -20,29 +35,50 @@ const CreateVostcardStep2 = () => {
 
       {/* 🔲 Thumbnails */}
       <div style={thumbnailsContainer}>
+        {/* Distant */}
         <div style={thumbnail}>
-          <img
-            src="/placeholder.png"
-            alt="Distant"
-            style={imageIcon}
-          />
-          <p style={label}>
-            Distant
-            <br />
-            (Suggested)
-          </p>
+          <label style={{ cursor: 'pointer' }}>
+            <img
+              src={distantPhoto || '/placeholder.png'}
+              alt="Distant"
+              style={imageIcon}
+            />
+            <p style={label}>
+              Distant
+              <br />
+              (Suggested)
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => handlePhotoSelect(e, 'distant')}
+              style={{ display: 'none' }}
+            />
+          </label>
         </div>
+
+        {/* Near */}
         <div style={thumbnail}>
-          <img
-            src="/placeholder.png"
-            alt="Near"
-            style={imageIcon}
-          />
-          <p style={label}>
-            Near
-            <br />
-            (Suggested)
-          </p>
+          <label style={{ cursor: 'pointer' }}>
+            <img
+              src={nearPhoto || '/placeholder.png'}
+              alt="Near"
+              style={imageIcon}
+            />
+            <p style={label}>
+              Near
+              <br />
+              (Suggested)
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => handlePhotoSelect(e, 'near')}
+              style={{ display: 'none' }}
+            />
+          </label>
         </div>
       </div>
 
@@ -92,8 +128,8 @@ const thumbnailsContainer = {
 
 const thumbnail = {
   backgroundColor: '#F3F3F3',
-  width: '280px',
-  height: '280px',
+  width: '210px', // ✅ 25% smaller
+  height: '210px',
   borderRadius: '20px',
   display: 'flex',
   flexDirection: 'column' as 'column',
@@ -102,14 +138,15 @@ const thumbnail = {
 };
 
 const imageIcon = {
-  width: '60px',
-  height: '60px',
+  width: '50px',
+  height: '50px',
   marginBottom: '10px',
+  objectFit: 'cover' as 'cover',
 };
 
 const label = {
   color: '#002B4D',
-  fontSize: '20px',
+  fontSize: '18px',
   textAlign: 'center' as 'center',
   margin: 0,
 };
