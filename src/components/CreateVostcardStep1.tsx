@@ -21,7 +21,7 @@ const CreateVostcardStep1: React.FC = () => {
     <div
       style={{
         backgroundColor: 'white',
-        height: '100dvh', // ✅ Changed from 100vh to 100dvh for mobile-safe viewport
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -62,8 +62,8 @@ const CreateVostcardStep1: React.FC = () => {
             src={video}
             controls
             style={{
-              width: '250px',
-              height: '350px',
+              width: 188,
+              height: 263,
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
@@ -73,8 +73,8 @@ const CreateVostcardStep1: React.FC = () => {
           <div
             onClick={handleRecord}
             style={{
-              width: 250,
-              height: 350,
+              width: 188,
+              height: 263,
               backgroundColor: '#F2F2F2',
               borderRadius: 16,
               display: 'flex',
@@ -96,7 +96,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div
         style={{
           padding: '0 16px',
-          marginBottom: 35, // ✅ Controls vertical positioning
+          marginBottom: 35,
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
