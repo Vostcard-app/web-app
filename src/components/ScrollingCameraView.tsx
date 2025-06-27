@@ -1,7 +1,9 @@
+// src/components/ScrollingCameraView.tsx
+
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCameraRotate } from 'react-icons/fa';
 import { AiOutlineClose } from 'react-icons/ai';
+import { MdCameraswitch } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
 
 const ScrollingCameraView: React.FC = () => {
@@ -51,7 +53,7 @@ const ScrollingCameraView: React.FC = () => {
     mediaRecorder.onstop = () => {
       const blob = new Blob(chunks, { type: 'video/webm' });
       const blobUrl = URL.createObjectURL(blob);
-      setVideo(blobUrl);
+      setVideo(blobUrl); 
       navigate('/create-step1');
     };
 
@@ -87,27 +89,20 @@ const ScrollingCameraView: React.FC = () => {
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 
-      {/* Close */}
-      <div
-        style={{ ...topButtonStyle, left: 20 }}
-        onClick={() => {
-          stopCamera();
-          navigate(-1);
-        }}
-      >
+      {/* Close Button */}
+      <div style={{ ...topButtonStyle, left: 20 }} onClick={() => { stopCamera(); navigate(-1); }}>
         <AiOutlineClose size={24} />
       </div>
 
       {/* Swap Camera */}
-      <div
-        style={{ ...topButtonStyle, right: 40 }} // <-- 🔥 moved 20px left (was right: 20)
-        onClick={toggleCamera}
-      >
-        <FaCameraRotate size={24} />
+      <div style={{ ...topButtonStyle, right: 40 }} onClick={toggleCamera}>
+        <MdCameraswitch size={24} />
       </div>
 
       {/* Countdown */}
-      <div style={countdownStyle}>{countdown}</div>
+      <div style={countdownStyle}>
+        {countdown}
+      </div>
 
       {/* Record Button */}
       <div
@@ -144,7 +139,7 @@ const countdownStyle: React.CSSProperties = {
   color: 'white',
   padding: '8px 16px',
   borderRadius: 12,
-  fontSize: 36,
+  fontSize: 40,
   zIndex: 3,
   position: 'absolute',
   top: 25,
@@ -154,7 +149,7 @@ const countdownStyle: React.CSSProperties = {
 
 const recordButtonStyle: React.CSSProperties = {
   position: 'absolute',
-  bottom: '25%', // <-- 🔥 1/4 up the screen
+  bottom: '25%',  // <-- 1/4 up from bottom
   left: '50%',
   transform: 'translateX(-50%)',
   backgroundColor: 'red',
