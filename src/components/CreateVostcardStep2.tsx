@@ -1,44 +1,134 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useVostcard } from '../context/VostcardContext';
+import { FaArrowLeft } from 'react-icons/fa';
 
-const CreateVostcardStep2: React.FC = () => {
+const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
-  const { photo1, setPhoto1, photo2, setPhoto2 } = useVostcard();
-
-  useEffect(() => {
-    // Clear thumbnails when entering Step 2
-    setPhoto1(null);
-    setPhoto2(null);
-  }, []);
-
-  const handleSaveAndContinue = () => {
-    navigate('/create-step3');
-  };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Step 2: Add Photos</h2>
+    <div style={container}>
+      {/* 🔵 Header */}
+      <div style={header}>
+        <h1 style={logo}>Vōstcard</h1>
+        <FaArrowLeft
+          size={24}
+          color="white"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate('/create-step1')}
+        />
+      </div>
 
-      {/* Photo thumbnails */}
-      <div style={{ display: 'flex', gap: 20 }}>
-        <div style={{ width: 150, height: 150, backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {photo1 ? <img src={photo1} alt="Photo 1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : 'No Photo 1'}
+      {/* 🔲 Thumbnails */}
+      <div style={thumbnailsContainer}>
+        <div style={thumbnail}>
+          <img
+            src="/placeholder.png"
+            alt="Distant"
+            style={imageIcon}
+          />
+          <p style={label}>
+            Distant
+            <br />
+            (Suggested)
+          </p>
         </div>
-        <div style={{ width: 150, height: 150, backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {photo2 ? <img src={photo2} alt="Photo 2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : 'No Photo 2'}
+        <div style={thumbnail}>
+          <img
+            src="/placeholder.png"
+            alt="Near"
+            style={imageIcon}
+          />
+          <p style={label}>
+            Near
+            <br />
+            (Suggested)
+          </p>
         </div>
       </div>
 
-      {/* Save & Continue Button */}
-      <button
-        style={{ marginTop: 20, padding: '10px 20px', backgroundColor: '#002B4D', color: 'white', border: 'none', borderRadius: 8 }}
-        onClick={handleSaveAndContinue}
-      >
-        Save & Continue
-      </button>
+      {/* ✅ Save & Continue Button */}
+      <div style={buttonContainer}>
+        <button style={button} onClick={() => navigate('/create-step3')}>
+          Save & Continue
+        </button>
+      </div>
     </div>
   );
+};
+
+/* 🎨 Styles */
+const container = {
+  height: '100vh',
+  width: '100vw',
+  backgroundColor: 'white',
+  display: 'flex',
+  flexDirection: 'column' as 'column',
+  alignItems: 'center',
+};
+
+const header = {
+  backgroundColor: '#002B4D',
+  height: '70px',
+  width: '100%',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '0 20px',
+  boxSizing: 'border-box' as 'border-box',
+};
+
+const logo = {
+  color: 'white',
+  fontSize: '28px',
+  margin: 0,
+};
+
+const thumbnailsContainer = {
+  display: 'flex',
+  flexDirection: 'column' as 'column',
+  gap: '30px',
+  marginTop: '60px',
+};
+
+const thumbnail = {
+  backgroundColor: '#F3F3F3',
+  width: '280px',
+  height: '280px',
+  borderRadius: '20px',
+  display: 'flex',
+  flexDirection: 'column' as 'column',
+  justifyContent: 'center',
+  alignItems: 'center',
+};
+
+const imageIcon = {
+  width: '60px',
+  height: '60px',
+  marginBottom: '10px',
+};
+
+const label = {
+  color: '#002B4D',
+  fontSize: '20px',
+  textAlign: 'center' as 'center',
+  margin: 0,
+};
+
+const buttonContainer = {
+  marginTop: 'auto',
+  marginBottom: '60px',
+  width: '90%',
+};
+
+const button = {
+  width: '100%',
+  backgroundColor: '#002B4D',
+  color: 'white',
+  padding: '15px',
+  borderRadius: '12px',
+  border: 'none',
+  fontSize: '18px',
+  cursor: 'pointer',
 };
 
 export default CreateVostcardStep2;
