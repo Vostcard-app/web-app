@@ -1,164 +1,116 @@
-// src/components/ScrollingCameraView.tsx
+// src/components/CreateVostcardStep1.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCameraRotate } from 'react-icons/fa';
-import { AiOutlineClose } from 'react-icons/ai';
+import { FaHome } from 'react-icons/fa';
+import { MdCameraswitch } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
 
-const ScrollingCameraView: React.FC = () => {
+const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { setVideo } = useVostcard();
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
-  const [countdown, setCountdown] = useState(30);
-
-  useEffect(() => {
-    const startCamera = async () => {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: cameraFacingMode },
-        audio: true,
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-    };
-    startCamera();
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [cameraFacingMode]);
-
-  const handleCameraSwitch = () => {
-    setCameraFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
-  };
+  const { video, setVideo } = useVostcard();
 
   const handleRecord = () => {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
+    navigate('/scrolling-camera');
   };
 
-  const startRecording = () => {
-    if (!stream) return;
-    const mediaRecorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = mediaRecorder;
-    const chunks: Blob[] = [];
-
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        chunks.push(e.data);
-      }
-    };
-
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(chunks, { type: 'video/mp4' });
-      const videoUrl = URL.createObjectURL(blob);
-      setVideo(videoUrl);
-      navigate('/create-step1');
-    };
-
-    mediaRecorder.start();
-    setIsRecording(true);
-    setCountdown(30);
-
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
-          stopRecording();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
-
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setIsRecording(false);
-  };
-
-  const handleDismiss = () => {
-    navigate('/create-step1');
+  const handleSaveAndContinue = () => {
+    navigate('/create-step2');
   };
 
   return (
     <div
       style={{
-        backgroundColor: 'black',
+        backgroundColor: 'white',
         height: '100vh',
-        width: '100vw',
-        position: 'relative',
-        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
-      {/* 🎥 Camera Feed */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        style={{ height: '100%', width: '100%', objectFit: 'cover' }}
-      />
-
-      {/* ⏳ Countdown */}
-      {isRecording && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 80,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(0,0,0,0.6)',
-            color: 'white',
-            padding: '8px 16px',
-            borderRadius: 8,
-            fontSize: 48,
-            fontWeight: 'bold',
-          }}
-        >
-          {countdown}
-        </div>
-      )}
-
-      {/* 🔘 Controls */}
+      {/* 🔵 Banner */}
       <div
         style={{
-          position: 'absolute',
-          bottom: '20%',
-          width: '100%',
+          backgroundColor: '#002B4D',
+          height: 80,
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '0 40px',
+          justifyContent: 'space-between',
+          padding: '0 16px',
         }}
       >
-        {/* ❌ Dismiss */}
-        <AiOutlineClose
-          size={36}
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+          Vōstcard
+        </div>
+        <FaHome
+          size={28}
           color="white"
           style={{ cursor: 'pointer' }}
-          onClick={handleDismiss}
+          onClick={() => navigate('/')}
         />
+      </div>
 
-        {/* 🔴 Record */}
+      {/* 🎥 Thumbnail */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        {video ? (
+          <video
+            src={video}
+            controls
+            style={{
+              width: '250px',
+              height: '350px',
+              borderRadius: 16,
+              backgroundColor: '#F2F2F2',
+              objectFit: 'cover',
+            }}
+          />
+        ) : (
+          <div
+            onClick={handleRecord}
+            style={{
+              width: 250,
+              height: 350,
+              backgroundColor: '#F2F2F2',
+              borderRadius: 16,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#002B4D',
+              fontSize: 18,
+              cursor: 'pointer',
+              padding: 10,
+            }}
+          >
+            Record a 30 Second Video
+          </div>
+        )}
+      </div>
+
+      {/* 🔘 Buttons */}
+      <div
+        style={{
+          padding: '0 16px',
+          marginBottom: 35,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          alignItems: 'center',
+        }}
+      >
+        {/* ⭕ Record Button */}
         <div
           onClick={handleRecord}
           style={{
-            backgroundColor: isRecording ? 'white' : 'red',
-            width: 80,
-            height: 80,
+            backgroundColor: 'red',
+            width: 70,
+            height: 70,
             borderRadius: '50%',
             border: '6px solid white',
             display: 'flex',
@@ -169,24 +121,58 @@ const ScrollingCameraView: React.FC = () => {
         >
           <div
             style={{
-              backgroundColor: isRecording ? 'red' : 'white',
-              borderRadius: isRecording ? 4 : '50%',
+              backgroundColor: 'white',
+              borderRadius: '50%',
               width: 24,
               height: 24,
             }}
           />
         </div>
 
-        {/* 🔄 Camera Switch */}
-        <FaCameraRotate
-          size={32}
-          color="white"
+        {/* 🔄 Camera Switch Button Example */}
+        <MdCameraswitch
+          size={28}
           style={{ cursor: 'pointer' }}
-          onClick={handleCameraSwitch}
+          onClick={() => console.log('Camera Switch Clicked')}
         />
+
+        {/* 📜 Use Script Tool */}
+        <button
+          onClick={() => navigate('/scrolling-camera')}
+          style={{
+            backgroundColor: '#002B4D',
+            color: 'white',
+            border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 8,
+            fontSize: 18,
+            cursor: 'pointer',
+          }}
+        >
+          Use Script Tool
+        </button>
+
+        {/* ✅ Save & Continue */}
+        <button
+          onClick={handleSaveAndContinue}
+          disabled={!video}
+          style={{
+            backgroundColor: video ? '#002B4D' : '#888',
+            color: 'white',
+            border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 8,
+            fontSize: 18,
+            cursor: video ? 'pointer' : 'not-allowed',
+          }}
+        >
+          Save & Continue
+        </button>
       </div>
     </div>
   );
 };
 
-export default ScrollingCameraView;
+export default CreateVostcardStep1;
