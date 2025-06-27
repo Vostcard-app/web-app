@@ -67,8 +67,8 @@ const CreateVostcardStep1: React.FC = () => {
             controls
             onClick={handlePreview}
             style={{
-              width: '240px',
-              height: '340px',
+              width: '192px',
+              height: '272px',
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
