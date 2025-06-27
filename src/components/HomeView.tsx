@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
+import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
 
 // 🔥 Vostcard Pin
 const vostcardIcon = new L.Icon({
@@ -13,7 +14,7 @@ const vostcardIcon = new L.Icon({
   popupAnchor: [0, -50],
 });
 
-// 🔵 Round Blue User Location Pin
+// 🔵 User Location Pin
 const userIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
   iconSize: [30, 45],
@@ -21,7 +22,7 @@ const userIcon = new L.Icon({
   popupAnchor: [0, -45],
 });
 
-// Example Vostcards (temporary)
+// 🔥 Example Vostcards (temporary)
 const exampleVostcards = [
   {
     id: '1',
@@ -74,6 +75,7 @@ const RecenterControl = ({ userLocation }: { userLocation: [number, number] | nu
 
 const HomeView = () => {
   const navigate = useNavigate();
+  const { setVideo } = useVostcard(); // ✅ Grab setVideo from context
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [map, setMap] = useState<any>(null);
 
@@ -92,6 +94,11 @@ const HomeView = () => {
       { enableHighAccuracy: true }
     );
   }, [map]);
+
+  const handleCreateVostcard = () => {
+    setVideo(null); // ✅ Clear previous video
+    navigate('/create-step1');
+  };
 
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
@@ -157,7 +164,7 @@ const HomeView = () => {
       <div style={createButtonContainer}>
         <button
           style={createButton}
-          onClick={() => navigate('/create-step1')}
+          onClick={handleCreateVostcard}
         >
           Create a Vōstcard
         </button>

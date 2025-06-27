@@ -1,19 +1,18 @@
-// src/components/LandingPage.tsx
-
 import React, { useState } from 'react';
-import roadSign from '../assets/underconstruction.jpg'; // ✅ Make sure this filename is correct
+import { useNavigate } from 'react-router-dom';
+import roadSign from '../assets/underconstruction.jpg'; // Make sure this is the correct path
 
-const LandingPage: React.FC<{ onUnlock: () => void }> = ({ onUnlock }) => {
+const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [tapCount, setTapCount] = useState(0);
 
   const handleTap = () => {
     const newCount = tapCount + 1;
-    setTapCount(newCount);
-
     if (newCount >= 3) {
-      onUnlock();
+      navigate('/home'); // ✅ Navigate to HomeView after 3 taps
     } else {
-      setTimeout(() => setTapCount(0), 1500); // Reset after 1.5 seconds if not completed
+      setTapCount(newCount);
+      setTimeout(() => setTapCount(0), 1500); // Reset if not tapped quickly enough
     }
   };
 
