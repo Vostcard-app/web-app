@@ -5,7 +5,7 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { video, setVideo } = useVostcard();
+  const { video } = useVostcard();
 
   const handleRecord = () => {
     navigate('/scrolling-camera');
@@ -46,7 +46,6 @@ const CreateVostcardStep1: React.FC = () => {
         />
       </div>
 
-
       {/* 🎥 Thumbnail */}
       <div
         style={{
@@ -61,8 +60,8 @@ const CreateVostcardStep1: React.FC = () => {
             src={video}
             controls
             style={{
-              width: '250px',
-              height: '350px',
+              width: 250,
+              height: 350,
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
@@ -95,7 +94,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div
         style={{
           padding: '0 16px',
-          marginBottom: 95, // ⬆️ raised 5px
+          marginBottom: 100,
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
