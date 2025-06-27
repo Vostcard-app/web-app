@@ -60,8 +60,8 @@ const CreateVostcardStep1: React.FC = () => {
             src={video}
             controls
             style={{
-              width: '250px',
-              height: '350px',
+              width: '237px',
+              height: '332px',
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
@@ -71,8 +71,8 @@ const CreateVostcardStep1: React.FC = () => {
           <div
             onClick={handleRecord}
             style={{
-              width: 250,
-              height: 350,
+              width: 237,
+              height: 332,
               backgroundColor: '#F2F2F2',
               borderRadius: 16,
               display: 'flex',
@@ -95,7 +95,7 @@ const CreateVostcardStep1: React.FC = () => {
         style={{
           padding: '0 16px',
           marginBottom: 35,
-          paddingBottom: 60, // ✅ Added padding under Save button
+          paddingBottom: 60, // ⬅️ Keep the 60px padding as requested
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
