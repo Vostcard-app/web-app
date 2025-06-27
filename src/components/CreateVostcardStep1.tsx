@@ -1,5 +1,3 @@
-// src/components/CreateVostcardStep1.tsx
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
@@ -62,8 +60,8 @@ const CreateVostcardStep1: React.FC = () => {
             src={video}
             controls
             style={{
-              width: '200px',
-              height: '280px',
+              width: '250px',
+              height: '350px',
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
@@ -73,8 +71,8 @@ const CreateVostcardStep1: React.FC = () => {
           <div
             onClick={handleRecord}
             style={{
-              width: 200,
-              height: 280,
+              width: 250,
+              height: 350,
               backgroundColor: '#F2F2F2',
               borderRadius: 16,
               display: 'flex',
@@ -97,6 +95,7 @@ const CreateVostcardStep1: React.FC = () => {
         style={{
           padding: '0 16px',
           marginBottom: 35,
+          paddingBottom: 60, // ✅ Added padding under Save button
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
