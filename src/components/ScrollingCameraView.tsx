@@ -11,7 +11,6 @@ const ScrollingCameraView: React.FC = () => {
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [isRecording, setIsRecording] = useState(false);
   const [timer, setTimer] = useState(30);
-  const [script] = useState('Welcome to Vōstcard! Share your story in 30 seconds. Speak clearly and enjoy.');
 
   // 🔥 Start Camera
   useEffect(() => {
@@ -96,38 +95,6 @@ const ScrollingCameraView: React.FC = () => {
         muted
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
-
-      {/* 🔡 Script Scrolling */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 90,
-          width: '100%',
-          textAlign: 'center',
-          color: 'white',
-          fontSize: 20,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            display: 'inline-block',
-            animation: 'scroll 20s linear infinite',
-          }}
-        >
-          {script} &nbsp; {script}
-        </div>
-      </div>
-
-      <style>
-        {`
-          @keyframes scroll {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-          }
-        `}
-      </style>
 
       {/* 🔄 Flip Camera */}
       <FaSyncAlt
