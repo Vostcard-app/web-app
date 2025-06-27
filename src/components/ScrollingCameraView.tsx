@@ -1,103 +1,94 @@
-// src/components/ScrollingCameraView.tsx
-
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCamera, FaSync } from 'react-icons/fa';
-import { useVostcard } from '../context/VostcardContext';
+import { FaSyncAlt, FaTimes } from 'react-icons/fa';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
-  const { setVideo } = useVostcard();
-
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunks = useRef<Blob[]>([]);
-
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [isRecording, setIsRecording] = useState(false);
+  const [timer, setTimer] = useState(30);
+  const [script] = useState('Welcome to Vōstcard! Share your story in 30 seconds. Speak clearly and enjoy.');
 
+  // 🔥 Start Camera
   useEffect(() => {
+    const startCamera = async () => {
+      try {
+        const newStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode },
+          audio: true,
+        });
+        setStream(newStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = newStream;
+        }
+      } catch (err) {
+        console.error('Error accessing camera', err);
+      }
+    };
+
     startCamera();
     return () => {
-      stopCamera();
+      stream?.getTracks().forEach((track) => track.stop());
     };
   }, [facingMode]);
 
-  const startCamera = async () => {
-    stopCamera();
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode },
-        audio: true,
-      });
-      setStream(newStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = newStream;
+  // 🔥 Timer countdown
+  useEffect(() => {
+    if (isRecording) {
+      if (timer === 0) {
+        stopRecording();
       }
-    } catch (err) {
-      console.error('Error accessing camera', err);
+      const interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
     }
+  }, [isRecording, timer]);
+
+  // 🔄 Flip Camera
+  const flipCamera = () => {
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
-  const stopCamera = () => {
-    stream?.getTracks().forEach((track) => track.stop());
-    setStream(null);
-  };
-
-  const handleStartRecording = () => {
+  // 🎥 Start Recording
+  const startRecording = () => {
     if (!stream) return;
-    recordedChunks.current = [];
+    chunks.current = [];
     const recorder = new MediaRecorder(stream);
-    mediaRecorderRef.current = recorder;
+    mediaRecorder.current = recorder;
 
     recorder.ondataavailable = (e) => {
       if (e.data.size > 0) {
-        recordedChunks.current.push(e.data);
+        chunks.current.push(e.data);
       }
     };
 
     recorder.onstop = () => {
-      const blob = new Blob(recordedChunks.current, { type: 'video/webm' });
+      const blob = new Blob(chunks.current, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
-      setVideo(url);
-      navigate('/create-step1');
+      console.log('Recorded video URL:', url);
+      // 🔗 Save video URL to context or storage here
+      navigate('/create-step2');
     };
 
     recorder.start();
     setIsRecording(true);
-
-    // Automatically stop after 30 seconds
-    setTimeout(() => {
-      if (recorder.state !== 'inactive') {
-        recorder.stop();
-        setIsRecording(false);
-      }
-    }, 30000);
+    setTimer(30);
   };
 
-  const handleStopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const toggleCamera = () => {
-    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+  // 🛑 Stop Recording
+  const stopRecording = () => {
+    mediaRecorder.current?.stop();
+    setIsRecording(false);
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'black',
-        width: '100vw',
-        height: '100vh',
-        overflow: 'hidden',
-        position: 'relative',
-      }}
-    >
-      {/* 🎥 Video */}
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', background: 'black' }}>
+      {/* 🎥 Video Preview */}
       <video
         ref={videoRef}
         autoPlay
@@ -106,42 +97,100 @@ const ScrollingCameraView: React.FC = () => {
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 
-      {/* 🔄 Camera Flip */}
+      {/* 🔡 Script Scrolling */}
       <div
-        onClick={toggleCamera}
+        style={{
+          position: 'absolute',
+          top: 90,
+          width: '100%',
+          textAlign: 'center',
+          color: 'white',
+          fontSize: 20,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            display: 'inline-block',
+            animation: 'scroll 20s linear infinite',
+          }}
+        >
+          {script} &nbsp; {script}
+        </div>
+      </div>
+
+      <style>
+        {`
+          @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+          }
+        `}
+      </style>
+
+      {/* 🔄 Flip Camera */}
+      <FaSyncAlt
+        onClick={flipCamera}
+        size={28}
+        color="white"
         style={{
           position: 'absolute',
           top: 20,
           left: 20,
-          backgroundColor: 'white',
-          borderRadius: '50%',
-          padding: 10,
           cursor: 'pointer',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.5)',
-          zIndex: 1000,
         }}
-      >
-        <FaSync size={20} color="#002B4D" />
-      </div>
+      />
+
+      {/* ❌ Dismiss */}
+      <FaTimes
+        onClick={() => navigate('/create-step1')}
+        size={28}
+        color="white"
+        style={{
+          position: 'absolute',
+          top: 20,
+          right: 20,
+          cursor: 'pointer',
+        }}
+      />
+
+      {/* ⏱️ Timer */}
+      {isRecording && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 60,
+            right: '50%',
+            transform: 'translateX(50%)',
+            color: 'white',
+            fontSize: 24,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            padding: '4px 12px',
+            borderRadius: 8,
+          }}
+        >
+          {timer}s
+        </div>
+      )}
 
       {/* 🔴 Record Button */}
       <div
-        onClick={isRecording ? handleStopRecording : handleStartRecording}
+        onClick={isRecording ? stopRecording : startRecording}
         style={{
-          position: 'absolute',
-          bottom: '25%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: isRecording ? '#555' : 'red',
+          backgroundColor: 'red',
           width: 80,
           height: 80,
           borderRadius: '50%',
           border: '6px solid white',
+          position: 'absolute',
+          bottom: '25%',
+          left: '50%',
+          transform: 'translateX(-50%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          zIndex: 1000,
         }}
       >
         <div
