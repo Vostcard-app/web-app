@@ -1,3 +1,5 @@
+// src/components/CreateVostcardStep1.tsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
@@ -19,7 +21,7 @@ const CreateVostcardStep1: React.FC = () => {
     <div
       style={{
         backgroundColor: 'white',
-        height: '100vh',
+        height: '100dvh', // ✅ Changed from 100vh to 100dvh for mobile-safe viewport
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -94,7 +96,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div
         style={{
           padding: '0 16px',
-          marginBottom: 35,
+          marginBottom: 35, // ✅ Controls vertical positioning
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
