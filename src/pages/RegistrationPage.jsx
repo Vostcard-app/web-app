@@ -7,7 +7,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [accountType, setAccountType] = useState("User"); // Default to User
+  const [accountType, setAccountType] = useState("User");
   const navigate = useNavigate();
 
   const handleRegister = (e) => {
@@ -22,7 +22,7 @@ export default function RegisterPage() {
 
     // 🔥 Add Firebase Auth + Firestore registration logic here
 
-    navigate("/"); // Redirect back to login after successful register
+    navigate("/login"); // Redirect after registration
   };
 
   return (
@@ -84,7 +84,7 @@ export default function RegisterPage() {
 
       <p className="register-prompt">Already have an account?</p>
 
-      <button className="main-button" onClick={() => navigate("/")}>
+      <button className="main-button" onClick={() => navigate("/login")}>
         Log In
       </button>
     </div>
