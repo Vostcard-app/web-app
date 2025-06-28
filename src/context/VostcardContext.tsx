@@ -41,6 +41,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (currentVostcard) {
       setCurrentVostcard({ ...currentVostcard, video, updatedAt: new Date().toISOString() });
     } else {
+      const user = auth.currentUser;
+      const username = user?.displayName || user?.email?.split('@')[0] || 'Unknown';
+
       const newVostcard = {
         id: uuidv4(),
         state: 'private' as const,
@@ -50,8 +53,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         photos: [],
         categories: [],
         geo: null,
-        username: '', // You can load from auth context
-        userId: '',   // You can load from auth context
+        username,
+        userId: user?.uid || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -139,11 +142,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         photoURLs.push(photoURL);
       }
 
+      const username = user.displayName || user.email?.split('@')[0] || 'Unknown';
+
       const docRef = doc(getFirestore(), 'vostcards', vostcardId);
       await setDoc(docRef, {
         id: vostcardId,
         userId: user.uid,
-        username: currentVostcard.username,
+        username,
         title: currentVostcard.title,
         description: currentVostcard.description,
         categories: currentVostcard.categories,
