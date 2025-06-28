@@ -1,16 +1,17 @@
-// src/components/CreateVostcardStep3.tsx
+// src/pages/CreateVostcardStep3.tsx
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
+import { db } from '../firebaseConfig';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
   const {
-    title, setTitle,
-    description, setDescription,
-    categories, setCategories
+    currentVostcard,
+    setCurrentVostcard,
   } = useVostcard();
 
   const [customCategory, setCustomCategory] = useState('');
@@ -19,27 +20,56 @@ const CreateVostcardStep3: React.FC = () => {
   const availableCategories = ['Nature', 'History', 'Food', 'Culture', 'Landmark'];
 
   const handleCategoryToggle = (category: string) => {
-    if (categories?.includes(category)) {
-      setCategories(categories.filter(c => c !== category));
+    const existing = currentVostcard.categories || [];
+    if (existing.includes(category)) {
+      setCurrentVostcard({
+        ...currentVostcard,
+        categories: existing.filter((c) => c !== category),
+      });
     } else {
-      setCategories([...(categories || []), category]);
+      setCurrentVostcard({
+        ...currentVostcard,
+        categories: [...existing, category],
+      });
     }
   };
 
   const handleAddCustomCategory = () => {
     if (customCategory.trim() !== '') {
-      setCategories([...(categories || []), customCategory.trim()]);
+      const existing = currentVostcard.categories || [];
+      setCurrentVostcard({
+        ...currentVostcard,
+        categories: [...existing, customCategory.trim()],
+      });
       setCustomCategory('');
     }
   };
 
   const handleSaveChanges = () => {
-    // Save locally; remains in saved state
+    setCurrentVostcard({
+      ...currentVostcard,
+      savedAt: Date.now(),
+    });
+    navigate('/home');
   };
 
-  const handlePost = () => {
-    // Post to map logic
+  const handlePost = async () => {
+    try {
+      await addDoc(collection(db, 'vostcards'), {
+        ...currentVostcard,
+        timestamp: Timestamp.now(),
+        isPublic: true,
+      });
+      // Clear currentVostcard after posting
+      setCurrentVostcard({});
+      navigate('/home');
+    } catch (error) {
+      console.error('Error posting:', error);
+      alert('Failed to post. Try again.');
+    }
   };
+
+  const { title = '', description = '', categories = [] } = currentVostcard;
 
   const isPostEnabled = title.trim() && description.trim() && categories.length > 0;
 
@@ -70,7 +100,7 @@ const CreateVostcardStep3: React.FC = () => {
           <label style={labelStyle}>Title</label>
           <input
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => setCurrentVostcard({ ...currentVostcard, title: e.target.value })}
             placeholder="Enter Title"
             style={inputStyle}
           />
@@ -80,8 +110,8 @@ const CreateVostcardStep3: React.FC = () => {
           <label style={labelStyle}>Description</label>
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder=""
+            onChange={(e) => setCurrentVostcard({ ...currentVostcard, description: e.target.value })}
+            placeholder="Enter Description"
             rows={4}
             style={textareaStyle}
           />
@@ -95,6 +125,17 @@ const CreateVostcardStep3: React.FC = () => {
           >
             Select Categories
           </div>
+
+          {categories.length > 0 && (
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              {categories.map((cat) => (
+                <div key={cat} style={{ backgroundColor: '#eee', padding: '6px 10px', borderRadius: 6, marginBottom: 4 }}>
+                  {cat}
+                </div>
+              ))}
+            </div>
+          )}
+
           <input
             placeholder="Add Custom Category"
             value={customCategory}
@@ -150,7 +191,7 @@ const CreateVostcardStep3: React.FC = () => {
               >
                 <input
                   type="checkbox"
-                  checked={categories?.includes(cat)}
+                  checked={categories.includes(cat)}
                   readOnly
                 />
                 <span style={{ marginLeft: 8 }}>{cat}</span>
