@@ -1,3 +1,10 @@
+/* ✅ Global Styles (move to index.css if preferred) */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ✅ Login Page Styles */
 .login-container {
   padding: 20px;
 }
