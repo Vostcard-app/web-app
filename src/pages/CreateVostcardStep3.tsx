@@ -11,7 +11,7 @@ const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
   const {
     currentVostcard,
-    setCurrentVostcard,
+    updateVostcard,
   } = useVostcard();
 
   const [customCategory, setCustomCategory] = useState('');
@@ -20,15 +20,13 @@ const CreateVostcardStep3: React.FC = () => {
   const availableCategories = ['Nature', 'History', 'Food', 'Culture', 'Landmark'];
 
   const handleCategoryToggle = (category: string) => {
-    const existing = currentVostcard.categories || [];
+    const existing = currentVostcard?.categories || [];
     if (existing.includes(category)) {
-      setCurrentVostcard({
-        ...currentVostcard,
+      updateVostcard({
         categories: existing.filter((c) => c !== category),
       });
     } else {
-      setCurrentVostcard({
-        ...currentVostcard,
+      updateVostcard({
         categories: [...existing, category],
       });
     }
@@ -36,9 +34,8 @@ const CreateVostcardStep3: React.FC = () => {
 
   const handleAddCustomCategory = () => {
     if (customCategory.trim() !== '') {
-      const existing = currentVostcard.categories || [];
-      setCurrentVostcard({
-        ...currentVostcard,
+      const existing = currentVostcard?.categories || [];
+      updateVostcard({
         categories: [...existing, customCategory.trim()],
       });
       setCustomCategory('');
@@ -46,10 +43,6 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handleSaveChanges = () => {
-    setCurrentVostcard({
-      ...currentVostcard,
-      savedAt: Date.now(),
-    });
     navigate('/home');
   };
 
@@ -61,7 +54,7 @@ const CreateVostcardStep3: React.FC = () => {
         isPublic: true,
       });
       // Clear currentVostcard after posting
-      setCurrentVostcard({});
+      updateVostcard({});
       navigate('/home');
     } catch (error) {
       console.error('Error posting:', error);
@@ -69,7 +62,9 @@ const CreateVostcardStep3: React.FC = () => {
     }
   };
 
-  const { title = '', description = '', categories = [] } = currentVostcard;
+  const title = currentVostcard?.title || '';
+  const description = currentVostcard?.description || '';
+  const categories = currentVostcard?.categories || [];
 
   const isPostEnabled = title.trim() && description.trim() && categories.length > 0;
 
@@ -100,7 +95,7 @@ const CreateVostcardStep3: React.FC = () => {
           <label style={labelStyle}>Title</label>
           <input
             value={title}
-            onChange={(e) => setCurrentVostcard({ ...currentVostcard, title: e.target.value })}
+            onChange={(e) => updateVostcard({ title: e.target.value })}
             placeholder="Enter Title"
             style={inputStyle}
           />
@@ -110,7 +105,7 @@ const CreateVostcardStep3: React.FC = () => {
           <label style={labelStyle}>Description</label>
           <textarea
             value={description}
-            onChange={(e) => setCurrentVostcard({ ...currentVostcard, description: e.target.value })}
+            onChange={(e) => updateVostcard({ description: e.target.value })}
             placeholder="Enter Description"
             rows={4}
             style={textareaStyle}
