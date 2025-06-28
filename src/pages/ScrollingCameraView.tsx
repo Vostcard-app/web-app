@@ -62,8 +62,7 @@ const ScrollingCameraView: React.FC = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        const videoURL = URL.createObjectURL(blob);
-        setVideo(videoURL);
+        setVideo(blob);
         navigate('/create-step1');
       };
 

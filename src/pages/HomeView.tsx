@@ -75,7 +75,7 @@ const RecenterControl = ({ userLocation }: { userLocation: [number, number] | nu
 
 const HomeView = () => {
   const navigate = useNavigate();
-  const { setVideo } = useVostcard(); // ✅ Grab setVideo from context
+  const { clearVostcard } = useVostcard(); // ✅ Grab clearVostcard from context
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [map, setMap] = useState<any>(null);
 
@@ -96,7 +96,7 @@ const HomeView = () => {
   }, [map]);
 
   const handleCreateVostcard = () => {
-    setVideo(null); // ✅ Clear previous video
+    clearVostcard(); // ✅ Clear any existing Vostcard
     navigate('/create-step1');
   };
 
@@ -127,7 +127,7 @@ const HomeView = () => {
           center={userLocation}
           zoom={16}
           style={{ height: '100%', width: '100%' }}
-          whenCreated={setMap}
+          whenReady={(map) => setMap(map)}
           zoomControl={false}
         >
           <TileLayer

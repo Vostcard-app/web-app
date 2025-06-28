@@ -18,6 +18,7 @@ const CreateVostcardStep1: React.FC = () => {
 
   const videoURL = video ? URL.createObjectURL(video) : null;
 
+  // Cleanup blob URL when component unmounts
   useEffect(() => {
     return () => {
       if (videoURL) {
@@ -105,7 +106,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div
         style={{
           padding: '0 16px',
-          marginBottom: 60, // Added padding under the save button
+          marginBottom: 60,
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
