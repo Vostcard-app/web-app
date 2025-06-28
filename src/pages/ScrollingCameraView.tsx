@@ -86,6 +86,9 @@ const ScrollingCameraView: React.FC = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks, { type: mimeType });
+        console.log('Recording stopped, blob created:', blob);
+        console.log('Blob size:', blob.size);
+        console.log('Blob type:', blob.type);
         setVideo(blob);
         navigate('/create-step1');
       };
@@ -126,7 +129,6 @@ const ScrollingCameraView: React.FC = () => {
         autoPlay
         playsInline
         muted
-        webkit-playsinline="true"
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 

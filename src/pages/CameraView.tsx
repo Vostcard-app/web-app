@@ -139,7 +139,6 @@ const CameraView: React.FC = () => {
         autoPlay
         playsInline
         muted
-        webkit-playsinline="true"
         style={{
           flex: 1,
           width: '100%',

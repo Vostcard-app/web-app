@@ -39,6 +39,12 @@ const CreateVostcardStep1: React.FC = () => {
 
   const videoURL = video ? URL.createObjectURL(video) : null;
 
+  // Debug video URL creation
+  useEffect(() => {
+    console.log('Video object:', video);
+    console.log('Video URL:', videoURL);
+  }, [video, videoURL]);
+
   // Cleanup blob URL when component unmounts
   useEffect(() => {
     return () => {
@@ -130,7 +136,6 @@ const CreateVostcardStep1: React.FC = () => {
               controls
               playsInline
               preload="metadata"
-              webkit-playsinline="true"
               style={getVideoStyles()}
               onLoadedMetadata={handleVideoLoad}
             />
