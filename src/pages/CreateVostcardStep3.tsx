@@ -56,8 +56,16 @@ const CreateVostcardStep3: React.FC = () => {
       return;
     }
     
+    // Check if user is authenticated
+    if (!auth.currentUser) {
+      console.error('User not authenticated');
+      alert('You must be logged in to post. Please log in and try again.');
+      return;
+    }
+    
     try {
       console.log('Attempting to post to Firebase...');
+      console.log('Current user:', auth.currentUser.uid);
       
       // Remove the video Blob and other problematic fields from the data since Firestore can't store them directly
       const { video, id, createdAt, updatedAt, ...postData } = currentVostcard || {};
@@ -66,7 +74,7 @@ const CreateVostcardStep3: React.FC = () => {
         ...postData,
         timestamp: Timestamp.now(),
         isPublic: true,
-        userId: auth.currentUser?.uid || '',
+        userID: auth.currentUser.uid,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       };
