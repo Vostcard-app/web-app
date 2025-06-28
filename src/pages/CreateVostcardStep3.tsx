@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
-import { db } from '../firebaseConfig';
+import { db, auth } from '../firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const CreateVostcardStep3: React.FC = () => {
@@ -47,26 +47,63 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handlePost = async () => {
+    console.log('Post button clicked!');
+    console.log('Current Vostcard:', currentVostcard);
+    console.log('isPostEnabled:', isPostEnabled);
+    
+    if (!isPostEnabled) {
+      console.log('Post is disabled - missing required fields');
+      return;
+    }
+    
     try {
-      await addDoc(collection(db, 'vostcards'), {
-        ...currentVostcard,
+      console.log('Attempting to post to Firebase...');
+      
+      // Remove the video Blob and other problematic fields from the data since Firestore can't store them directly
+      const { video, id, createdAt, updatedAt, ...postData } = currentVostcard || {};
+      
+      const docData = {
+        ...postData,
         timestamp: Timestamp.now(),
         isPublic: true,
-      });
+        userId: auth.currentUser?.uid || '',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+      console.log('Document data to post:', docData);
+      
+      await addDoc(collection(db, 'vostcards'), docData);
+      console.log('Successfully posted to Firebase!');
+      
       // Clear currentVostcard after posting
       updateVostcard({});
       navigate('/home');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error posting:', error);
-      alert('Failed to post. Try again.');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      alert(`Failed to post. Error: ${error.message}`);
     }
   };
 
   const title = currentVostcard?.title || '';
   const description = currentVostcard?.description || '';
   const categories = currentVostcard?.categories || [];
+  const photos = currentVostcard?.photos || [];
 
-  const isPostEnabled = title.trim() && description.trim() && categories.length > 0;
+  const isPostEnabled = title.trim() && description.trim() && categories.length > 0 && photos.length > 0;
+  
+  // Debug the post enabled state
+  console.log('Post enabled check:', {
+    title: title.trim(),
+    description: description.trim(),
+    categories: categories.length,
+    photos: photos.length,
+    isPostEnabled
+  });
 
   return (
     <div style={{ backgroundColor: 'white', height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -157,12 +194,15 @@ const CreateVostcardStep3: React.FC = () => {
 
         {!isPostEnabled && (
           <div style={missingTextStyle}>
-            Missing: Title, Description, Photos, or Categories
+            Missing: {!title.trim() && 'Title, '}{!description.trim() && 'Description, '}{categories.length === 0 && 'Categories, '}{photos.length === 0 && 'Photos'}
           </div>
         )}
 
         <button
-          onClick={handlePost}
+          onClick={() => {
+            console.log('Button clicked directly!');
+            handlePost();
+          }}
           disabled={!isPostEnabled}
           style={{
             ...postButtonStyle,

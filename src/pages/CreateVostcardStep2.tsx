@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
+import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
+  const { currentVostcard, updateVostcard } = useVostcard();
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
@@ -15,9 +17,31 @@ const CreateVostcardStep2 = () => {
     const file = event.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      if (type === 'distant') setDistantPhoto(url);
-      else setNearPhoto(url);
+      if (type === 'distant') {
+        setDistantPhoto(url);
+        // Save to context
+        const currentPhotos = currentVostcard?.photos || [];
+        updateVostcard({ photos: [...currentPhotos, url] });
+      } else {
+        setNearPhoto(url);
+        // Save to context
+        const currentPhotos = currentVostcard?.photos || [];
+        updateVostcard({ photos: [...currentPhotos, url] });
+      }
     }
+  };
+
+  const handleSaveAndContinue = () => {
+    // Ensure photos are saved to context before navigating
+    const photos = [];
+    if (distantPhoto) photos.push(distantPhoto);
+    if (nearPhoto) photos.push(nearPhoto);
+    
+    if (photos.length > 0) {
+      updateVostcard({ photos });
+    }
+    
+    navigate('/create-step3');
   };
 
   return (
@@ -84,7 +108,7 @@ const CreateVostcardStep2 = () => {
 
       {/* ✅ Save & Continue Button */}
       <div style={buttonContainer}>
-        <button style={button} onClick={() => navigate('/create-step3')}>
+        <button style={button} onClick={handleSaveAndContinue}>
           Save & Continue
         </button>
       </div>

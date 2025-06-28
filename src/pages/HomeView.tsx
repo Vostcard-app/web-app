@@ -73,27 +73,36 @@ const RecenterControl = ({ userLocation }: { userLocation: [number, number] | nu
   );
 };
 
+// Component to center map when user location changes
+const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (userLocation) {
+      map.setView(userLocation, 16);
+    }
+  }, [userLocation, map]);
+
+  return null;
+};
+
 const HomeView = () => {
   const navigate = useNavigate();
   const { clearVostcard } = useVostcard(); // ✅ Grab clearVostcard from context
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [map, setMap] = useState<any>(null);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const loc: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         setUserLocation(loc);
-        if (map) {
-          map.setView(loc, 16);
-        }
       },
       (err) => {
         console.error('Error getting location', err);
       },
       { enableHighAccuracy: true }
     );
-  }, [map]);
+  }, []);
 
   const handleCreateVostcard = () => {
     clearVostcard(); // ✅ Clear any existing Vostcard
@@ -127,7 +136,6 @@ const HomeView = () => {
           center={userLocation}
           zoom={16}
           style={{ height: '100%', width: '100%' }}
-          whenReady={(map) => setMap(map)}
           zoomControl={false}
         >
           <TileLayer
@@ -157,6 +165,9 @@ const HomeView = () => {
           {/* ➕ Zoom & Recenter Controls */}
           <ZoomControls />
           <RecenterControl userLocation={userLocation} />
+
+          {/* 🗺️ Map Center */}
+          <MapCenter userLocation={userLocation} />
         </MapContainer>
       )}
 
