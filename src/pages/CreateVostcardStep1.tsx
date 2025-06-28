@@ -162,7 +162,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div
         style={{
           padding: '0 16px',
-          marginBottom: 40,
+          marginBottom: 80,
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
