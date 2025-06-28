@@ -11,18 +11,18 @@ export default function LandingPage() {
     setTapCount(newCount);
 
     if (newCount >= 3) {
-      navigate("/"); // ✅ Navigate to LoginPage
-      setTapCount(0); // Reset tap count after navigation
+      navigate("/login"); // ✅ Send user to Login page after 3 taps
+      setTapCount(0);      // ✅ Reset count
     }
 
-    // Optional reset if user stops tapping for more than 2 seconds
+    // Optional: Reset if no further taps within 2 seconds
     setTimeout(() => setTapCount(0), 2000);
   };
 
   return (
     <div className="landing-container">
       <img
-        src="/assets/landing-image.png" // ✅ Change to your actual image path
+        src="/assets/underconstruction.jpg"
         alt="Vōstcard Landing"
         className="landing-image"
         onClick={handleImageTap}
