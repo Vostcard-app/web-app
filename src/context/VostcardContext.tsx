@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getFirestore, collection, doc, setDoc } from 'firebase/firestore';
+import { auth } from '../firebaseConfig';
 
 export interface Vostcard {
   id: string;
-  state: 'private';
+  state: 'private' | 'posted';
   video: Blob | null;
   title: string;
   description: string;
@@ -18,12 +21,14 @@ export interface Vostcard {
 
 interface VostcardContextProps {
   currentVostcard: Vostcard | null;
+  setCurrentVostcard: (vostcard: Vostcard | null) => void;
   setVideo: (video: Blob) => void;
   setGeo: (geo: { latitude: number; longitude: number }) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
   saveLocalVostcard: () => void;
   loadLocalVostcard: (id: string) => void;
   clearVostcard: () => void;
+  postVostcard: () => Promise<void>;
 }
 
 const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
@@ -97,16 +102,78 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentVostcard(null);
   };
 
+  // Post Vostcard to Firestore and Storage
+  const postVostcard = async () => {
+    if (!currentVostcard) return;
+
+    if (
+      !currentVostcard.video ||
+      currentVostcard.photos.length < 2 ||
+      !currentVostcard.title ||
+      !currentVostcard.description ||
+      currentVostcard.categories.length === 0 ||
+      !currentVostcard.geo
+    ) {
+      alert('All fields are required to post.');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert('User not authenticated');
+      return;
+    }
+
+    try {
+      const vostcardId = currentVostcard.id;
+      const videoRef = ref(getStorage(), `vostcards/${vostcardId}/video.webm`);
+      const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
+      const videoURL = await getDownloadURL(videoSnap.ref);
+
+      const photoURLs = [];
+      for (let i = 0; i < currentVostcard.photos.length; i++) {
+        const photoBlob = currentVostcard.photos[i];
+        const photoRef = ref(getStorage(), `vostcards/${vostcardId}/photo_${i}.jpg`);
+        const photoSnap = await uploadBytes(photoRef, photoBlob);
+        const photoURL = await getDownloadURL(photoSnap.ref);
+        photoURLs.push(photoURL);
+      }
+
+      const docRef = doc(getFirestore(), 'vostcards', vostcardId);
+      await setDoc(docRef, {
+        id: vostcardId,
+        userId: user.uid,
+        username: currentVostcard.username,
+        title: currentVostcard.title,
+        description: currentVostcard.description,
+        categories: currentVostcard.categories,
+        videoURL,
+        photoURLs,
+        geo: currentVostcard.geo,
+        createdAt: currentVostcard.createdAt,
+        updatedAt: new Date().toISOString(),
+        state: 'posted',
+      });
+
+      alert('Vōstcard posted successfully!');
+    } catch (error) {
+      console.error('Failed to post Vostcard:', error);
+      alert('Failed to post Vostcard.');
+    }
+  };
+
   return (
     <VostcardContext.Provider
       value={{
         currentVostcard,
+        setCurrentVostcard,
         setVideo,
         setGeo,
         updateVostcard,
         saveLocalVostcard,
         loadLocalVostcard,
         clearVostcard,
+        postVostcard, // ← added
       }}
     >
       {children}
