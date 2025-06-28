@@ -79,8 +79,8 @@ const CreateVostcardStep1: React.FC = () => {
           <div
             onClick={handleRecord}
             style={{
-              width: 240,
-              height: 340,
+              width: 192,
+              height: 272,
               backgroundColor: '#F2F2F2',
               borderRadius: 16,
               display: 'flex',

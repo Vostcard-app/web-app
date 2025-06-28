@@ -1,60 +1,32 @@
-// src/components/LandingPage.tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./LandingPage.css";
 
-import React, { useState } from 'react';
-import underConstruction from '../assets/underconstruction.jpg'; // Make sure the image is in src/assets
-
-interface LandingPageProps {
-  onUnlock: () => void;
-}
-
-const LandingPage: React.FC<LandingPageProps> = ({ onUnlock }) => {
+export default function LandingPage() {
   const [tapCount, setTapCount] = useState(0);
+  const navigate = useNavigate();
 
-  const handleTap = () => {
+  const handleImageTap = () => {
     const newCount = tapCount + 1;
     setTapCount(newCount);
 
     if (newCount >= 3) {
-      onUnlock();
-      setTapCount(0);
-    } else {
-      setTimeout(() => {
-        setTapCount(0);
-      }, 1500); // Reset if not tapped fast enough
+      navigate("/"); // ✅ Navigate to LoginPage
+      setTapCount(0); // Reset tap count after navigation
     }
+
+    // Optional reset if user stops tapping for more than 2 seconds
+    setTimeout(() => setTapCount(0), 2000);
   };
 
   return (
-    <div style={containerStyle} onClick={handleTap}>
-      <img src={underConstruction} alt="Under Construction" style={imageStyle} />
-      <div style={textStyle}>Under Construction</div>
+    <div className="landing-container">
+      <img
+        src="/assets/landing-image.png" // ✅ Change to your actual image path
+        alt="Vōstcard Landing"
+        className="landing-image"
+        onClick={handleImageTap}
+      />
     </div>
   );
-};
-
-/* 🎨 Styles */
-const containerStyle: React.CSSProperties = {
-  backgroundColor: '#fff',
-  height: '100vh',
-  width: '100vw',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
-  cursor: 'pointer',
-};
-
-const imageStyle: React.CSSProperties = {
-  width: '300px',
-  height: '300px',
-  objectFit: 'contain',
-};
-
-const textStyle: React.CSSProperties = {
-  marginTop: 20,
-  fontSize: 24,
-  fontWeight: 'bold',
-  color: '#333',
-};
-
-export default LandingPage;
+}
