@@ -11,7 +11,7 @@ const CameraView: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  const { setPhoto1, setPhoto2, setVideo } = useVostcard();
+  const { setVideo } = useVostcard();
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
@@ -58,8 +58,27 @@ const CameraView: React.FC = () => {
 
   const handleStartRecording = () => {
     if (streamRef.current) {
+      // Detect supported video formats for better mobile compatibility
+      const getSupportedMimeType = () => {
+        const types = [
+          'video/mp4;codecs=h264',
+          'video/webm;codecs=h264',
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm'
+        ];
+        
+        for (const type of types) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            return type;
+          }
+        }
+        return 'video/webm'; // fallback
+      };
+
+      const mimeType = getSupportedMimeType();
       const mediaRecorder = new MediaRecorder(streamRef.current, {
-        mimeType: 'video/webm',
+        mimeType,
       });
       mediaRecorderRef.current = mediaRecorder;
       recordedChunks.current = [];
@@ -71,9 +90,8 @@ const CameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks.current, { type: 'video/webm' });
-        const videoUrl = URL.createObjectURL(blob);
-        setVideo(videoUrl);
+        const blob = new Blob(recordedChunks.current, { type: mimeType });
+        setVideo(blob);
         navigate(-1);
       };
 
@@ -121,6 +139,7 @@ const CameraView: React.FC = () => {
         autoPlay
         playsInline
         muted
+        webkit-playsinline="true"
         style={{
           flex: 1,
           width: '100%',

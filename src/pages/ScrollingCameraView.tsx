@@ -51,7 +51,27 @@ const ScrollingCameraView: React.FC = () => {
       setRecording(false);
     } else {
       const recordedChunks: Blob[] = [];
-      const mediaRecorder = new MediaRecorder(stream as MediaStream);
+      
+      // Detect supported video formats for better mobile compatibility
+      const getSupportedMimeType = () => {
+        const types = [
+          'video/mp4;codecs=h264',
+          'video/webm;codecs=h264',
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm'
+        ];
+        
+        for (const type of types) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            return type;
+          }
+        }
+        return 'video/webm'; // fallback
+      };
+
+      const mimeType = getSupportedMimeType();
+      const mediaRecorder = new MediaRecorder(stream as MediaStream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
@@ -61,7 +81,7 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const blob = new Blob(recordedChunks, { type: mimeType });
         setVideo(blob);
         navigate('/create-step1');
       };
@@ -102,6 +122,7 @@ const ScrollingCameraView: React.FC = () => {
         autoPlay
         playsInline
         muted
+        webkit-playsinline="true"
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 

@@ -71,6 +71,9 @@ const CreateVostcardStep1: React.FC = () => {
           <video
             src={videoURL}
             controls
+            playsInline
+            preload="metadata"
+            webkit-playsinline="true"
             style={{
               width: '192px',
               height: '272px',
