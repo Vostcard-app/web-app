@@ -1,0 +1,98 @@
+/* ✅ Global reset */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: black;
+}
+
+/* ✅ Fullscreen Camera Container */
+.camera-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: black;
+}
+
+/* ✅ Camera Preview */
+.video-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ✅ Record Button */
+.record-button {
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 100px;
+  background-color: red;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.record-button:hover {
+  opacity: 0.8;
+}
+
+/* ✅ Stop Button (if applicable) */
+.stop-button {
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 100px;
+  background-color: #555;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.stop-button:hover {
+  opacity: 0.8;
+}
+
+/* ✅ Top Controls (Home, Back, etc.) */
+.top-controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.control-button {
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.control-button:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+/* ✅ Optional Text or Label */
+.camera-label {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 18px;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 6px 12px;
+  border-radius: 8px;
+}

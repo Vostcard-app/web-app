@@ -1,0 +1,94 @@
+/* ✅ Global Reset */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ✅ Main Container */
+.step2-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ✅ Header */
+.header {
+  background-color: #002B4D;
+  height: 70px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  color: white;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.home-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+/* ✅ Thumbnails Section */
+.photo-section {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.photo-thumbnail {
+  width: 250px;
+  height: 250px;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.photo-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.photo-thumbnail:hover {
+  border-color: #002B4D;
+}
+
+/* ✅ Label below thumbnails */
+.photo-label {
+  text-align: center;
+  color: #333;
+  margin-top: 10px;
+}
+
+/* ✅ Save and Continue Button */
+.save-button {
+  margin-top: auto;
+  padding: 15px;
+  background-color: #002B4D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.save-button:hover {
+  opacity: 0.9;
+}
