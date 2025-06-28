@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
@@ -7,6 +7,27 @@ const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
   const { currentVostcard, setVideo } = useVostcard();
   const video = currentVostcard?.video;
+  const [isMobile, setIsMobile] = useState(false);
+  const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
+
+  // Detect if we're on a mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+  }, []);
+
+  // Detect video orientation when video loads
+  const handleVideoLoad = (event: React.SyntheticEvent<HTMLVideoElement>) => {
+    const video = event.currentTarget;
+    const isLandscape = video.videoWidth > video.videoHeight;
+    setVideoOrientation(isLandscape ? 'landscape' : 'portrait');
+    console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight, 'Orientation:', isLandscape ? 'landscape' : 'portrait');
+  };
 
   const handleRecord = () => {
     navigate('/scrolling-camera');
@@ -26,6 +47,30 @@ const CreateVostcardStep1: React.FC = () => {
       }
     };
   }, [videoURL]);
+
+  // Video styles based on device type and video orientation
+  const getVideoStyles = () => {
+    const baseStyles = {
+      objectFit: 'cover' as const,
+    };
+
+    // If we're on mobile and the video is landscape (which is common for mobile recordings)
+    if (isMobile && videoOrientation === 'landscape') {
+      return {
+        ...baseStyles,
+        transform: 'rotate(90deg)',
+        transformOrigin: 'center center',
+        width: '272px', // Swap width and height for rotated video
+        height: '192px',
+      };
+    }
+
+    return {
+      ...baseStyles,
+      width: '100%',
+      height: '100%',
+    };
+  };
 
   return (
     <div
@@ -68,20 +113,28 @@ const CreateVostcardStep1: React.FC = () => {
         }}
       >
         {videoURL ? (
-          <video
-            src={videoURL}
-            controls
-            playsInline
-            preload="metadata"
-            webkit-playsinline="true"
+          <div
             style={{
               width: '192px',
               height: '272px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
-              objectFit: 'cover',
+              overflow: 'hidden',
             }}
-          />
+          >
+            <video
+              src={videoURL}
+              controls
+              playsInline
+              preload="metadata"
+              webkit-playsinline="true"
+              style={getVideoStyles()}
+              onLoadedMetadata={handleVideoLoad}
+            />
+          </div>
         ) : (
           <div
             onClick={handleRecord}
@@ -109,7 +162,7 @@ const CreateVostcardStep1: React.FC = () => {
       <div
         style={{
           padding: '0 16px',
-          marginBottom: 60,
+          marginBottom: 40,
           display: 'flex',
           flexDirection: 'column',
           gap: 12,

@@ -20,7 +20,11 @@ const ScrollingCameraView: React.FC = () => {
     }
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: cameraFacingMode },
+        video: { 
+          facingMode: cameraFacingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
         audio: true,
       });
       setStream(mediaStream);
