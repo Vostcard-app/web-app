@@ -20,11 +20,14 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegistrationPage />} />
           <Route path="/home" element={<HomeView />} />
-          <Route path="/step1" element={<CreateVostcardStep1 />} />
-          <Route path="/step2" element={<CreateVostcardStep2 />} />
-          <Route path="/step3" element={<CreateVostcardStep3 />} />
+
+          {/* ✅ Vostcard Creation Steps */}
+          <Route path="/create-step1" element={<CreateVostcardStep1 />} />
+          <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+          <Route path="/create-step3" element={<CreateVostcardStep3 />} />
+
           <Route path="/list" element={<ListView />} />
-          <Route path="/scroll-camera" element={<ScrollingCameraView />} />
+          <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
           <Route path="/camera" element={<CameraView />} />
         </Routes>
       </Router>

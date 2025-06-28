@@ -1,28 +1,75 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  setDoc,
+} from "firebase/firestore";
+import { auth, db } from "../firebaseConfig";
 import "./RegistrationPage.css";
 
 export default function RegisterPage() {
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [accountType, setAccountType] = useState("User");
+  const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    console.log({
-      username,
-      email,
-      password,
-      accountType,
-    });
+    if (!name || !username || !email || !password) {
+      setError("Please fill out all fields.");
+      return;
+    }
 
-    // 🔥 Add Firebase Auth + Firestore registration logic here
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
 
-    navigate("/login"); // Redirect after registration
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("username", "==", username.toLowerCase()));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        setError("Username already taken.");
+        return;
+      }
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        name: name,
+        username: username.toLowerCase(),
+        email: email,
+        userRole: accountType,
+        avatarURL: "",
+        message: "",
+        acceptedTerms: true,
+        termsAcceptanceDate: new Date().toISOString(),
+        privacyPolicyAcceptanceDate: new Date().toISOString(),
+      });
+
+      navigate("/home");
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    }
   };
 
   return (
@@ -35,6 +82,14 @@ export default function RegisterPage() {
       </div>
 
       <h2 className="welcome">Register</h2>
+
+      <input
+        type="text"
+        placeholder="Name"
+        className="input-field"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+      />
 
       <input
         type="text"
@@ -77,6 +132,8 @@ export default function RegisterPage() {
         <option value="User">User</option>
         <option value="Advertiser">Advertiser</option>
       </select>
+
+      {error && <div className="error-message">{error}</div>}
 
       <button className="main-button" onClick={handleRegister}>
         Register
