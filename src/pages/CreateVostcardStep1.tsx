@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { video, setVideo } = useVostcard();
+  const { currentVostcard, setVideo } = useVostcard();
+  const video = currentVostcard?.video;
 
   const handleRecord = () => {
     navigate('/scrolling-camera');
@@ -15,11 +16,15 @@ const CreateVostcardStep1: React.FC = () => {
     navigate('/create-step2');
   };
 
-  const handlePreview = () => {
-    if (video) {
-      window.open(video);
-    }
-  };
+  const videoURL = video ? URL.createObjectURL(video) : null;
+
+  useEffect(() => {
+    return () => {
+      if (videoURL) {
+        URL.revokeObjectURL(videoURL);
+      }
+    };
+  }, [videoURL]);
 
   return (
     <div
@@ -61,18 +66,16 @@ const CreateVostcardStep1: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        {video ? (
+        {videoURL ? (
           <video
-            src={video}
+            src={videoURL}
             controls
-            onClick={handlePreview}
             style={{
               width: '192px',
               height: '272px',
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               objectFit: 'cover',
-              cursor: 'pointer',
             }}
           />
         ) : (
