@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, collection, doc, setDoc } from 'firebase/firestore';
-import { auth } from '../firebaseConfig';
+import { getFirestore, collection, doc, setDoc, Timestamp } from 'firebase/firestore';
+import { auth } from '../firebaseConfig.ts';
 
 export interface Vostcard {
   id: string;
@@ -10,11 +10,11 @@ export interface Vostcard {
   video: Blob | null;
   title: string;
   description: string;
-  photos: string[];
+  photos: Blob[];
   categories: string[];
   geo: { latitude: number; longitude: number } | null;
   username: string;
-  userId: string;
+  userID: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,7 +54,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         categories: [],
         geo: null,
         username,
-        userId: user?.uid || '',
+        userID: user?.uid || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -105,7 +105,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentVostcard(null);
   };
 
-  // Post Vostcard to Firestore and Storage
+  // Post Vostcard to Firestore and Storage - Updated to match iOS app structure
   const postVostcard = async () => {
     if (!currentVostcard) return;
 
@@ -129,14 +129,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     try {
       const vostcardId = currentVostcard.id;
-      const videoRef = ref(getStorage(), `vostcards/${vostcardId}/video.webm`);
+      const userID = user.uid;
+      
+      // Upload video to Firebase Storage with iOS app path structure
+      const videoRef = ref(getStorage(), `vostcards/${userID}/${vostcardId}/video.mov`);
       const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
       const videoURL = await getDownloadURL(videoSnap.ref);
 
+      // Upload photos to Firebase Storage with iOS app path structure
       const photoURLs = [];
       for (let i = 0; i < currentVostcard.photos.length; i++) {
         const photoBlob = currentVostcard.photos[i];
-        const photoRef = ref(getStorage(), `vostcards/${vostcardId}/photo_${i}.jpg`);
+        const photoRef = ref(getStorage(), `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
         const photoSnap = await uploadBytes(photoRef, photoBlob);
         const photoURL = await getDownloadURL(photoSnap.ref);
         photoURLs.push(photoURL);
@@ -144,20 +148,26 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       const username = user.displayName || user.email?.split('@')[0] || 'Unknown';
 
+      // Create Firestore document matching iOS app structure exactly
       const docRef = doc(getFirestore(), 'vostcards', vostcardId);
       await setDoc(docRef, {
         id: vostcardId,
-        userId: user.uid,
-        username,
         title: currentVostcard.title,
         description: currentVostcard.description,
         categories: currentVostcard.categories,
-        videoURL,
-        photoURLs,
-        geo: currentVostcard.geo,
-        createdAt: currentVostcard.createdAt,
-        updatedAt: new Date().toISOString(),
-        state: 'posted',
+        username: username,
+        userID: userID, // Use userID to match iOS app
+        videoURL: videoURL,
+        photoURLs: photoURLs,
+        latitude: currentVostcard.geo.latitude, // Direct latitude field
+        longitude: currentVostcard.geo.longitude, // Direct longitude field
+        avatarURL: user.photoURL || '',
+        createdAt: Timestamp.now(), // Use Firestore Timestamp
+        likeCount: 0,
+        likedByUsers: [],
+        ratings: {},
+        averageRating: 0.0,
+        state: "posted" // Critical for map display - matches iOS app
       });
 
       alert('Vōstcard posted successfully!');
@@ -178,7 +188,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         saveLocalVostcard,
         loadLocalVostcard,
         clearVostcard,
-        postVostcard, // ← added
+        postVostcard,
       }}
     >
       {children}

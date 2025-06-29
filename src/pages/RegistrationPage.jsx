@@ -1,6 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import {
   collection,
   query,
@@ -8,8 +8,12 @@ import {
   getDocs,
   doc,
   setDoc,
+  Timestamp,
 } from "firebase/firestore";
-import { auth, db } from "../firebaseConfig";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getStorage } from "firebase/storage";
+import { FaUser, FaEnvelope, FaLock, FaCamera } from "react-icons/fa";
+import { auth, db } from "../firebaseConfig.ts";
 import "./RegistrationPage.css";
 
 export default function RegisterPage() {

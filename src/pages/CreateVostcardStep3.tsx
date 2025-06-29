@@ -4,14 +4,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
-import { db, auth } from '../firebaseConfig';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
   const {
     currentVostcard,
     updateVostcard,
+    postVostcard,
   } = useVostcard();
 
   const [customCategory, setCustomCategory] = useState('');
@@ -56,35 +55,10 @@ const CreateVostcardStep3: React.FC = () => {
       return;
     }
     
-    // Check if user is authenticated
-    if (!auth.currentUser) {
-      console.error('User not authenticated');
-      alert('You must be logged in to post. Please log in and try again.');
-      return;
-    }
-    
     try {
-      console.log('Attempting to post to Firebase...');
-      console.log('Current user:', auth.currentUser.uid);
-      
-      // Remove the video Blob and other problematic fields from the data since Firestore can't store them directly
-      const { video, id, createdAt, updatedAt, ...postData } = currentVostcard || {};
-      
-      const docData = {
-        ...postData,
-        timestamp: Timestamp.now(),
-        isPublic: true,
-        userID: auth.currentUser.uid,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-      console.log('Document data to post:', docData);
-      
-      await addDoc(collection(db, 'vostcards'), docData);
-      console.log('Successfully posted to Firebase!');
-      
-      // Clear currentVostcard after posting
-      updateVostcard({});
+      console.log('Attempting to post using context method...');
+      await postVostcard();
+      console.log('Successfully posted using context method!');
       navigate('/home');
     } catch (error: any) {
       console.error('Error posting:', error);
@@ -102,7 +76,7 @@ const CreateVostcardStep3: React.FC = () => {
   const categories = currentVostcard?.categories || [];
   const photos = currentVostcard?.photos || [];
 
-  const isPostEnabled = title.trim() && description.trim() && categories.length > 0 && photos.length > 0;
+  const isPostEnabled = title.trim() && description.trim() && categories.length > 0 && photos.length >= 2;
   
   // Debug the post enabled state
   console.log('Post enabled check:', {

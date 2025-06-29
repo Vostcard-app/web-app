@@ -19,14 +19,14 @@ const CreateVostcardStep2 = () => {
       const url = URL.createObjectURL(file);
       if (type === 'distant') {
         setDistantPhoto(url);
-        // Save to context
+        // Save Blob to context instead of URL
         const currentPhotos = currentVostcard?.photos || [];
-        updateVostcard({ photos: [...currentPhotos, url] });
+        updateVostcard({ photos: [...currentPhotos, file] });
       } else {
         setNearPhoto(url);
-        // Save to context
+        // Save Blob to context instead of URL
         const currentPhotos = currentVostcard?.photos || [];
-        updateVostcard({ photos: [...currentPhotos, url] });
+        updateVostcard({ photos: [...currentPhotos, file] });
       }
     }
   };
@@ -34,8 +34,16 @@ const CreateVostcardStep2 = () => {
   const handleSaveAndContinue = () => {
     // Ensure photos are saved to context before navigating
     const photos = [];
-    if (distantPhoto) photos.push(distantPhoto);
-    if (nearPhoto) photos.push(nearPhoto);
+    if (distantPhoto) {
+      // Find the corresponding file for distant photo
+      const distantFile = currentVostcard?.photos.find((_, index) => index === 0);
+      if (distantFile) photos.push(distantFile);
+    }
+    if (nearPhoto) {
+      // Find the corresponding file for near photo
+      const nearFile = currentVostcard?.photos.find((_, index) => index === 1);
+      if (nearFile) photos.push(nearFile);
+    }
     
     if (photos.length > 0) {
       updateVostcard({ photos });

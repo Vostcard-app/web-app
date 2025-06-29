@@ -5,6 +5,8 @@ import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
+import { db, auth } from '../firebaseConfig.ts';
+import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 
 // 🔥 Vostcard Pin
 const vostcardIcon = new L.Icon({
@@ -12,6 +14,14 @@ const vostcardIcon = new L.Icon({
   iconSize: [50, 50],
   iconAnchor: [25, 50],
   popupAnchor: [0, -50],
+});
+
+// Fallback Vostcard Pin (red marker)
+const fallbackVostcardIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  iconSize: [30, 45],
+  iconAnchor: [15, 45],
+  popupAnchor: [0, -45],
 });
 
 // 🔵 User Location Pin
@@ -88,8 +98,53 @@ const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) 
 
 const HomeView = () => {
   const navigate = useNavigate();
-  const { clearVostcard } = useVostcard(); // ✅ Grab clearVostcard from context
+  const { clearVostcard } = useVostcard();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [vostcards, setVostcards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load Vostcards from Firebase
+  const loadVostcards = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading Vostcards from Firebase...');
+      
+      // Query for Vostcards with state: "posted" (matching iOS app)
+      const q = query(
+        collection(db, 'vostcards'),
+        where('state', '==', 'posted')
+      );
+      const querySnapshot = await getDocs(q);
+      const postedVostcardsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      console.log('Posted Vostcards in database:', postedVostcardsData);
+      console.log('Total posted Vostcards in database:', postedVostcardsData.length);
+      
+      // Debug each Vostcard's fields
+      postedVostcardsData.forEach((v: any, index) => {
+        console.log(`Vostcard ${index + 1} fields:`, {
+          id: v.id,
+          title: v.title,
+          state: v.state,
+          latitude: v.latitude,
+          longitude: v.longitude,
+          geo: v.geo,
+          userID: v.userID,
+          userId: v.userId,
+          hasCoordinates: !!(v.latitude || v.geo?.latitude)
+        });
+      });
+      
+      setVostcards(postedVostcardsData);
+    } catch (error) {
+      console.error('Error loading Vostcards:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -102,6 +157,61 @@ const HomeView = () => {
       },
       { enableHighAccuracy: true }
     );
+  }, []);
+
+  // Load Vostcards when component mounts
+  useEffect(() => {
+    loadVostcards();
+  }, []);
+
+  // Function to manually add coordinates to a Vostcard (for testing)
+  const addCoordinatesToVostcard = async (vostcardId: string, lat: number, lng: number) => {
+    try {
+      const currentUser = auth.currentUser;
+      console.log('Current user:', currentUser?.uid);
+      
+      // Find the Vostcard to check ownership
+      const vostcard = vostcards.find(v => v.id === vostcardId);
+      if (!vostcard) {
+        console.error('Vostcard not found');
+        return;
+      }
+      
+      console.log('Vostcard owner:', vostcard.userID || vostcard.userId);
+      console.log('Current user:', currentUser?.uid);
+      
+      // Check if current user owns this Vostcard
+      const isOwner = (vostcard.userID || vostcard.userId) === currentUser?.uid;
+      console.log('Is owner:', isOwner);
+      
+      if (!isOwner) {
+        console.error('Cannot update Vostcard: not the owner');
+        alert('You can only update your own Vostcards. This Vostcard belongs to another user.');
+        return;
+      }
+      
+      const vostcardRef = doc(db, 'vostcards', vostcardId);
+      await updateDoc(vostcardRef, {
+        latitude: lat,
+        longitude: lng,
+        geo: { latitude: lat, longitude: lng }
+      });
+      console.log(`Added coordinates to Vostcard ${vostcardId}:`, { lat, lng });
+      loadVostcards(); // Reload the Vostcards
+    } catch (error) {
+      console.error('Error adding coordinates:', error);
+      alert('Error adding coordinates. Check console for details.');
+    }
+  };
+
+  // Refresh Vostcards when returning to the page
+  useEffect(() => {
+    const handleFocus = () => {
+      loadVostcards();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const handleCreateVostcard = () => {
@@ -130,6 +240,80 @@ const HomeView = () => {
         </button>
       </div>
 
+      {/* Debug Info */}
+      {loading && (
+        <div style={{
+          position: 'absolute',
+          top: '80px',
+          right: '20px',
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          fontSize: '12px',
+          zIndex: 1000,
+        }}>
+          Loading Vostcards...
+        </div>
+      )}
+      
+      {!loading && (
+        <div style={{
+          position: 'absolute',
+          top: '80px',
+          right: '20px',
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          fontSize: '12px',
+          zIndex: 1000,
+        }}>
+          {vostcards.length} posted Vostcards
+          <br />
+          (state: "posted")
+          <br />
+          <button 
+            onClick={() => {
+              // Add coordinates to the first Vostcard for testing
+              if (vostcards.length > 0) {
+                const vostcard = vostcards[0];
+                const currentUser = auth.currentUser;
+                const isOwner = (vostcard.userID || vostcard.userId) === currentUser?.uid;
+                
+                console.log('Attempting to add coordinates to:', {
+                  vostcardId: vostcard.id,
+                  title: vostcard.title,
+                  owner: vostcard.userID || vostcard.userId,
+                  currentUser: currentUser?.uid,
+                  isOwner
+                });
+                
+                if (userLocation && isOwner) {
+                  addCoordinatesToVostcard(vostcard.id, userLocation[0], userLocation[1]);
+                } else if (!isOwner) {
+                  alert('This Vostcard belongs to another user. You can only update your own Vostcards.');
+                } else {
+                  alert('Location not available. Please enable location services.');
+                }
+              }
+            }}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '4px 8px',
+              fontSize: '10px',
+              cursor: 'pointer',
+              marginTop: '4px'
+            }}
+          >
+            Add Coords to First
+          </button>
+        </div>
+      )}
+
       {/* 🗺️ Map */}
       {userLocation && (
         <MapContainer
@@ -149,18 +333,41 @@ const HomeView = () => {
           </Marker>
 
           {/* 🔥 Vostcards */}
-          {exampleVostcards.map((v) => (
-            <Marker
-              key={v.id}
-              position={[v.latitude, v.longitude]}
-              icon={vostcardIcon}
-            >
-              <Popup>
-                <h3>{v.title}</h3>
-                <p>{v.description}</p>
-              </Popup>
-            </Marker>
-          ))}
+          {vostcards.map((v) => {
+            // Handle different coordinate formats
+            const lat = v.latitude || v.geo?.latitude;
+            const lng = v.longitude || v.geo?.longitude;
+            
+            console.log('Rendering Vostcard:', {
+              id: v.id,
+              title: v.title,
+              lat,
+              lng,
+              hasCoordinates: !!(lat && lng)
+            });
+            
+            if (!lat || !lng) {
+              console.log('Vostcard missing coordinates:', v);
+              return null;
+            }
+            
+            return (
+              <Marker
+                key={v.id}
+                position={[lat, lng]}
+                icon={fallbackVostcardIcon}
+              >
+                <Popup>
+                  <h3>{v.title}</h3>
+                  <p>{v.description}</p>
+                  {v.categories && v.categories.length > 0 && (
+                    <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
+                  )}
+                  <p><small>Posted at: {v.timestamp?.toDate?.() || 'Unknown'}</small></p>
+                </Popup>
+              </Marker>
+            );
+          })}
 
           {/* ➕ Zoom & Recenter Controls */}
           <ZoomControls />
