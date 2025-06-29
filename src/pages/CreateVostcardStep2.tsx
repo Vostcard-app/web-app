@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
@@ -9,6 +9,19 @@ const CreateVostcardStep2 = () => {
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
+
+  // Debug location data when component mounts
+  useEffect(() => {
+    console.log('📍 Step 2 - Current Vostcard data:', {
+      id: currentVostcard?.id,
+      hasVideo: !!currentVostcard?.video,
+      hasGeo: !!currentVostcard?.geo,
+      geo: currentVostcard?.geo,
+      title: currentVostcard?.title,
+      photosCount: currentVostcard?.photos?.length,
+      categoriesCount: currentVostcard?.categories?.length
+    });
+  }, [currentVostcard]);
 
   const handlePhotoSelect = (
     event: React.ChangeEvent<HTMLInputElement>,

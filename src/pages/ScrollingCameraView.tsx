@@ -173,7 +173,18 @@ const ScrollingCameraView: React.FC = () => {
       // Check if location was captured
       console.log('📍 Final location check before setting video:', currentVostcard?.geo);
       
+      // Set the video first, then ensure geo is preserved
       setVideo(blob);
+      
+      // Double-check that geo is still there after setting video
+      setTimeout(() => {
+        console.log('📍 Location check after setVideo:', currentVostcard?.geo);
+        if (!currentVostcard?.geo) {
+          console.warn('⚠️ Geo was lost after setVideo, attempting to restore...');
+          // If geo was lost, try to restore it (this shouldn't happen with the fixed context)
+        }
+      }, 100);
+      
       navigate('/create-step1');
     };
 

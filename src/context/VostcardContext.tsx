@@ -36,10 +36,32 @@ const VostcardContext = createContext<VostcardContextProps | undefined>(undefine
 export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
 
+  // Debug currentVostcard changes
+  useEffect(() => {
+    console.log('🔄 currentVostcard state changed:', {
+      id: currentVostcard?.id,
+      hasVideo: !!currentVostcard?.video,
+      hasGeo: !!currentVostcard?.geo,
+      geo: currentVostcard?.geo,
+      title: currentVostcard?.title,
+      photosCount: currentVostcard?.photos?.length,
+      categoriesCount: currentVostcard?.categories?.length
+    });
+  }, [currentVostcard]);
+
   // ✅ Create or update video
   const setVideo = (video: Blob) => {
+    console.log('🎬 setVideo called with blob:', video);
+    console.log('📍 Current geo before setVideo:', currentVostcard?.geo);
+    
     if (currentVostcard) {
-      setCurrentVostcard({ ...currentVostcard, video, updatedAt: new Date().toISOString() });
+      const updatedVostcard = { 
+        ...currentVostcard, 
+        video, 
+        updatedAt: new Date().toISOString() 
+      };
+      console.log('📍 Updated Vostcard with video, preserving geo:', updatedVostcard.geo);
+      setCurrentVostcard(updatedVostcard);
     } else {
       const user = auth.currentUser;
       const username = user?.displayName || user?.email?.split('@')[0] || 'Unknown';
@@ -50,33 +72,52 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         video,
         title: '',
         description: '',
-        photos: [],
+        photos: [], // Changed to Blob[]
         categories: [],
         geo: null,
         username,
-        userID: user?.uid || '',
+        userID: user?.uid || '', // Changed from userId to userID
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+      console.log('🎬 Creating new Vostcard with video:', newVostcard);
       setCurrentVostcard(newVostcard);
     }
   };
 
   // ✅ Update geolocation
   const setGeo = (geo: { latitude: number; longitude: number }) => {
+    console.log('📍 setGeo called with:', geo);
+    console.log('📍 Current Vostcard before setGeo:', currentVostcard);
+    
     if (currentVostcard) {
-      setCurrentVostcard({ ...currentVostcard, geo, updatedAt: new Date().toISOString() });
+      const updatedVostcard = { 
+        ...currentVostcard, 
+        geo, 
+        updatedAt: new Date().toISOString() 
+      };
+      console.log('📍 Updated Vostcard with geo:', updatedVostcard.geo);
+      setCurrentVostcard(updatedVostcard);
+    } else {
+      console.warn('📍 setGeo called but no currentVostcard exists');
     }
   };
 
   // ✅ General updates (title, description, categories, etc.)
   const updateVostcard = (updates: Partial<Vostcard>) => {
+    console.log('🔄 updateVostcard called with:', updates);
+    console.log('📍 Current geo before updateVostcard:', currentVostcard?.geo);
+    
     if (currentVostcard) {
-      setCurrentVostcard({
+      const updatedVostcard = {
         ...currentVostcard,
         ...updates,
         updatedAt: new Date().toISOString(),
-      });
+      };
+      console.log('📍 Updated Vostcard, geo preserved:', updatedVostcard.geo);
+      setCurrentVostcard(updatedVostcard);
+    } else {
+      console.warn('🔄 updateVostcard called but no currentVostcard exists');
     }
   };
 

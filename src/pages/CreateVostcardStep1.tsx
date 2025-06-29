@@ -5,11 +5,24 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { currentVostcard, setVideo } = useVostcard();
+  const { currentVostcard, setVideo, clearVostcard } = useVostcard();
   const video = currentVostcard?.video;
   const [isMobile, setIsMobile] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'prompt' | 'checking'>('checking');
+
+  // Debug location data when component mounts
+  useEffect(() => {
+    console.log('📍 Step 1 - Current Vostcard data:', {
+      id: currentVostcard?.id,
+      hasVideo: !!currentVostcard?.video,
+      hasGeo: !!currentVostcard?.geo,
+      geo: currentVostcard?.geo,
+      title: currentVostcard?.title,
+      photosCount: currentVostcard?.photos?.length,
+      categoriesCount: currentVostcard?.categories?.length
+    });
+  }, [currentVostcard]);
 
   // Check location permission on component mount
   useEffect(() => {
@@ -157,6 +170,13 @@ const CreateVostcardStep1: React.FC = () => {
     };
   };
 
+  // Function to start over (clear context and go back to home)
+  const handleStartOver = () => {
+    console.log('🔄 Starting over - clearing Vostcard context');
+    clearVostcard();
+    navigate('/');
+  };
+
   return (
     <div
       style={{
@@ -180,12 +200,28 @@ const CreateVostcardStep1: React.FC = () => {
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
           Vōstcard
         </div>
-        <FaHome
-          size={28}
-          color="white"
-          style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/')}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={handleStartOver}
+            style={{
+              backgroundColor: 'transparent',
+              color: 'white',
+              border: '1px solid white',
+              borderRadius: '4px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
+          >
+            Start Over
+          </button>
+          <FaHome
+            size={28}
+            color="white"
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/')}
+          />
+        </div>
       </div>
 
       {/* 📍 Location Permission Status */}
