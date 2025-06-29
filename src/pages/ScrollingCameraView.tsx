@@ -99,8 +99,36 @@ const ScrollingCameraView: React.FC = () => {
           return;
         }
 
+        // Check if we have location permission first
+        try {
+          console.log('📍 Checking location permission...');
+          
+          // Try to get current position with a very short timeout to check permission
+          await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: false,
+              timeout: 1000,
+              maximumAge: 0
+            });
+          });
+          
+          console.log('✅ Location permission already granted');
+        } catch (permissionError: any) {
+          console.log('📍 Permission check result:', permissionError.code, permissionError.message);
+          
+          if (permissionError.code === 1) {
+            console.error('❌ Location permission denied');
+            setLocationStatus('error');
+            alert('Location permission is required. Please allow location access in your browser settings and refresh the page.');
+            return;
+          }
+          // For other errors (timeout, unavailable), we'll still try the full location request
+        }
+
         try {
           console.log('📍 Requesting location...');
+          console.log('📍 Browser geolocation support:', !!navigator.geolocation);
+          console.log('📍 Current location status:', locationStatus);
           
           // Get location with better error handling
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -154,23 +182,25 @@ const ScrollingCameraView: React.FC = () => {
           console.error('❌ Error getting location:', error);
           console.error('Error code:', error.code);
           console.error('Error message:', error.message);
+          console.error('Error name:', error.name);
           setLocationStatus('error');
           
           let errorMessage = 'Could not get your location. ';
           switch (error.code) {
             case 1:
-              errorMessage += 'Location permission denied. Please enable location services in your browser settings.';
+              errorMessage += 'Location permission denied. Please enable location services in your browser settings and refresh the page.';
               break;
             case 2:
-              errorMessage += 'Location unavailable. Please check your device location settings.';
+              errorMessage += 'Location unavailable. Please check your device location settings and try again.';
               break;
             case 3:
-              errorMessage += 'Location request timed out. Please try again.';
+              errorMessage += 'Location request timed out. Please check your internet connection and try again.';
               break;
             default:
-              errorMessage += 'Please enable location services and try again.';
+              errorMessage += `Error: ${error.message}. Please enable location services and try again.`;
           }
           
+          console.error('📍 Final error message:', errorMessage);
           alert(errorMessage);
           return;
         }
