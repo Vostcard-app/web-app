@@ -102,7 +102,7 @@ const ScrollingCameraView: React.FC = () => {
         try {
           console.log('📍 Requesting location...');
           
-          // Get location
+          // Get location with better error handling
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
@@ -123,14 +123,32 @@ const ScrollingCameraView: React.FC = () => {
           setGeo(geo);
           setLocationStatus('captured');
           
-          // Wait a moment for the context to update, then verify
+          // Wait longer for the context to update and verify
           setTimeout(() => {
             console.log('📍 Verification - Current Vostcard geo:', currentVostcard?.geo);
             
-            // Now start the recording
-            console.log('🎬 Starting video recording...');
-            startVideoRecording();
-          }, 200);
+            // Double-check that geo was saved
+            if (!currentVostcard?.geo) {
+              console.warn('⚠️ Geo not saved, trying again...');
+              setGeo(geo);
+              setTimeout(() => {
+                console.log('📍 Second verification - Current Vostcard geo:', currentVostcard?.geo);
+                if (currentVostcard?.geo) {
+                  console.log('✅ Geo successfully saved on second attempt');
+                  startVideoRecording();
+                } else {
+                  console.error('❌ Failed to save geo after multiple attempts');
+                  alert('Failed to capture location. Please try again.');
+                  setLocationStatus('error');
+                }
+              }, 200);
+            } else {
+              console.log('✅ Geo successfully saved on first attempt');
+              // Now start the recording
+              console.log('🎬 Starting video recording...');
+              startVideoRecording();
+            }
+          }, 300);
           
         } catch (error: any) {
           console.error('❌ Error getting location:', error);
