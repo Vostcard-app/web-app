@@ -135,33 +135,6 @@ const CreateVostcardStep3: React.FC = () => {
           </button>
         </div>
 
-        <div>
-          <label style={labelStyle}>Photos</label>
-          <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-            {currentVostcard.photo1Preview ? (
-              <img
-                src={currentVostcard.photo1Preview}
-                alt="Photo 1"
-                style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
-              />
-            ) : (
-              <div style={{ width: 120, height: 120, backgroundColor: '#eee', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                No Photo 1
-              </div>
-            )}
-            {currentVostcard.photo2Preview ? (
-              <img
-                src={currentVostcard.photo2Preview}
-                alt="Photo 2"
-                style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8 }}
-              />
-            ) : (
-              <div style={{ width: 120, height: 120, backgroundColor: '#eee', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                No Photo 2
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* 🔘 Buttons */}
