@@ -217,25 +217,36 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    // Check if we have location, if not wait for it to be set
+    // Improved location capture block
     let finalGeo = currentVostcard.geo;
-    if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
-      console.log('📍 Waiting for geo to be available...');
 
-      for (let attempt = 0; attempt < 5; attempt++) {
-        await new Promise((r) => setTimeout(r, 1000));
-        finalGeo = currentVostcard.geo;
-        if (finalGeo && finalGeo.latitude && finalGeo.longitude) {
-          console.log('✅ Geo became available:', finalGeo);
-          break;
-        }
+    if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
+      console.log('📍 Location missing in state. Attempting fresh capture...');
+
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000,
+          });
+        });
+
+        finalGeo = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+
+        console.log('✅ Fresh location captured during post:', finalGeo);
+
+        // Update it in state too for consistency
+        setGeo(finalGeo);
+
+      } catch (error) {
+        console.error('❌ Failed to capture location during posting:', error);
+        alert('Failed to capture location. Please ensure location services are enabled and try again.');
+        return;
       }
-    }
-
-    if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
-      console.error('❌ Failed to capture location.');
-      alert('Failed to capture location. Please try again.');
-      return;
     }
 
     console.log('All validation passed - proceeding with posting');
