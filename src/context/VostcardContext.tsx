@@ -156,14 +156,43 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    if (!currentVostcard.geo) {
-      console.error('Missing geolocation');
-      alert('Location is required. Please ensure location services are enabled and try recording again.');
-      return;
+    // Check if we have location, if not try to capture it now
+    let finalGeo = currentVostcard.geo;
+    if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
+      console.log('📍 Location missing, attempting to capture now...');
+      
+      try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          });
+        });
+        
+        finalGeo = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        
+        console.log('✅ Location captured during posting:', finalGeo);
+        
+        // Update the Vostcard with the captured location
+        setCurrentVostcard({
+          ...currentVostcard,
+          geo: finalGeo,
+          updatedAt: new Date().toISOString()
+        });
+        
+      } catch (error: any) {
+        console.error('❌ Failed to capture location during posting:', error);
+        alert('Location is required. Please ensure location services are enabled and try recording again.');
+        return;
+      }
     }
 
-    if (!currentVostcard.geo.latitude || !currentVostcard.geo.longitude) {
-      console.error('Invalid geolocation coordinates:', currentVostcard.geo);
+    if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
+      console.error('Invalid geolocation coordinates:', finalGeo);
       alert('Invalid location coordinates. Please try recording again.');
       return;
     }
@@ -208,8 +237,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         userID: userID, // Use userID to match iOS app
         videoURL: videoURL,
         photoURLs: photoURLs,
-        latitude: currentVostcard.geo.latitude, // Direct latitude field
-        longitude: currentVostcard.geo.longitude, // Direct longitude field
+        latitude: finalGeo.latitude, // Use the final geo coordinates
+        longitude: finalGeo.longitude, // Use the final geo coordinates
         avatarURL: user.photoURL || '',
         createdAt: Timestamp.now(), // Use Firestore Timestamp
         likeCount: 0,

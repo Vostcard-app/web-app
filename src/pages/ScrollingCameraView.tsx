@@ -6,7 +6,7 @@ import { useVostcard } from '../context/VostcardContext';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
-  const { setVideo, setGeo } = useVostcard();
+  const { setVideo, setGeo, currentVostcard } = useVostcard();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -56,33 +56,62 @@ const ScrollingCameraView: React.FC = () => {
     } else {
       // Capture location when recording starts
       const captureLocation = () => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const geo = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-              };
-              console.log('Location captured at recording start:', geo);
-              setGeo(geo);
-            },
-            (error) => {
-              console.error('Error getting location:', error);
-              alert('Could not get your location. Please enable location services and try again.');
-            },
-            {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 60000
-            }
-          );
-        } else {
+        console.log('Starting location capture...');
+        
+        if (!navigator.geolocation) {
           console.error('Geolocation not supported');
           alert('Geolocation is not supported by your browser.');
+          return;
         }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const geo = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+            console.log('✅ Location captured successfully at recording start:', geo);
+            console.log('Setting geo in context...');
+            setGeo(geo);
+            
+            // Verify the geo was set in context
+            setTimeout(() => {
+              console.log('Current Vostcard after setting geo:', currentVostcard);
+            }, 100);
+          },
+          (error) => {
+            console.error('❌ Error getting location:', error);
+            console.error('Error code:', error.code);
+            console.error('Error message:', error.message);
+            
+            let errorMessage = 'Could not get your location. ';
+            switch (error.code) {
+              case 1:
+                errorMessage += 'Location permission denied. Please enable location services in your browser settings.';
+                break;
+              case 2:
+                errorMessage += 'Location unavailable. Please check your device location settings.';
+                break;
+              case 3:
+                errorMessage += 'Location request timed out. Please try again.';
+                break;
+              default:
+                errorMessage += 'Please enable location services and try again.';
+            }
+            
+            alert(errorMessage);
+            return;
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 15000, // Increased timeout
+            maximumAge: 60000
+          }
+        );
       };
 
       // Capture location immediately when recording starts
+      console.log('🎬 Recording starting - capturing location...');
       captureLocation();
 
       const recordedChunks: Blob[] = [];
@@ -117,9 +146,13 @@ const ScrollingCameraView: React.FC = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks, { type: mimeType });
-        console.log('Recording stopped, blob created:', blob);
+        console.log('🎬 Recording stopped, blob created:', blob);
         console.log('Blob size:', blob.size);
         console.log('Blob type:', blob.type);
+        
+        // Check if location was captured
+        console.log('📍 Final location check before setting video:', currentVostcard?.geo);
+        
         setVideo(blob);
         navigate('/create-step1');
       };
