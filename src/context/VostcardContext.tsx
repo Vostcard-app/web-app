@@ -53,6 +53,26 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setVideo = (video: Blob) => {
     console.log('🎬 setVideo called with blob:', video);
     console.log('📍 Current geo before setVideo:', currentVostcard?.geo);
+
+    // Attempt to capture location when the user starts recording
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const geo = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        console.log('📍 Location captured at setVideo:', geo);
+        setGeo(geo);
+      },
+      (error) => {
+        console.warn('❌ Failed to capture location at setVideo:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
     
     if (currentVostcard) {
       const updatedVostcard = { 
