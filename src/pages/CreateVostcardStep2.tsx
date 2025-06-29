@@ -5,10 +5,11 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
-  const { currentVostcard, updateVostcard } = useVostcard();
+  const { currentVostcard, updateVostcard, setGeo } = useVostcard();
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'error'>('idle');
 
   // Debug location data when component mounts
   useEffect(() => {
@@ -22,6 +23,56 @@ const CreateVostcardStep2 = () => {
       categoriesCount: currentVostcard?.categories?.length
     });
   }, [currentVostcard]);
+
+  // Manual location capture function
+  const captureLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLocationStatus('capturing');
+    
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        });
+      });
+
+      const geo = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      };
+      
+      console.log('✅ Location captured manually:', geo);
+      setGeo(geo);
+      setLocationStatus('captured');
+      
+    } catch (error: any) {
+      console.error('❌ Error getting location:', error);
+      setLocationStatus('error');
+      
+      let errorMessage = 'Could not get your location. ';
+      switch (error.code) {
+        case 1:
+          errorMessage += 'Location permission denied. Please enable location services in your browser settings.';
+          break;
+        case 2:
+          errorMessage += 'Location unavailable. Please check your device location settings.';
+          break;
+        case 3:
+          errorMessage += 'Location request timed out. Please try again.';
+          break;
+        default:
+          errorMessage += 'Please enable location services and try again.';
+      }
+      
+      alert(errorMessage);
+    }
+  };
 
   const handlePhotoSelect = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -106,6 +157,25 @@ const CreateVostcardStep2 = () => {
             }
           </div>
         </div>
+        {/* Manual location capture button */}
+        {!currentVostcard?.geo && (
+          <button
+            onClick={captureLocation}
+            disabled={locationStatus === 'capturing'}
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 12px',
+              fontSize: '12px',
+              cursor: locationStatus === 'capturing' ? 'not-allowed' : 'pointer',
+              opacity: locationStatus === 'capturing' ? 0.6 : 1,
+            }}
+          >
+            {locationStatus === 'capturing' ? 'Capturing...' : 'Capture Now'}
+          </button>
+        )}
       </div>
 
       {/* 🔲 Thumbnails */}
