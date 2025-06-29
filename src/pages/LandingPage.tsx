@@ -22,7 +22,7 @@ export default function LandingPage() {
   return (
     <div className="landing-container">
       <img
-        src="/assets/underconstruction.jpg"
+        src="/underconstruction.jpg"
         alt="Vōstcard Landing"
         className="landing-image"
         onClick={handleImageTap}
