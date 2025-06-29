@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebaseConfig.ts";
+import { auth } from "../firebaseConfig";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -26,7 +26,7 @@ export default function LoginPage() {
       console.log("Logged in:", user);
 
       navigate("/home");
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err.code, err.message);
 
       if (err.code === "auth/invalid-credential") {

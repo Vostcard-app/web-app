@@ -13,7 +13,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getStorage } from "firebase/storage";
 import { FaUser, FaEnvelope, FaLock, FaCamera } from "react-icons/fa";
-import { auth, db } from "../firebaseConfig.ts";
+import { auth, db } from "../firebaseConfig";
 import "./RegistrationPage.css";
 
 export default function RegisterPage() {
@@ -27,7 +27,7 @@ export default function RegisterPage() {
 
   const navigate = useNavigate();
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name || !username || !email || !password) {
@@ -70,7 +70,7 @@ export default function RegisterPage() {
       });
 
       navigate("/home");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setError(err.message);
     }
