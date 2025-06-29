@@ -1,78 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
-  const { currentVostcard, updateVostcard, setGeo } = useVostcard();
+  const { currentVostcard, setCurrentVostcard } = useVostcard();
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'error'>('idle');
-
-  // Debug location data when component mounts
-  useEffect(() => {
-    console.log('📍 Step 2 - Current Vostcard data:', {
-      id: currentVostcard?.id,
-      hasVideo: !!currentVostcard?.video,
-      hasGeo: !!currentVostcard?.geo,
-      geo: currentVostcard?.geo,
-      title: currentVostcard?.title,
-      photosCount: currentVostcard?.photos?.length,
-      categoriesCount: currentVostcard?.categories?.length
-    });
-  }, [currentVostcard]);
-
-  // Manual location capture function
-  const captureLocation = async () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
-      return;
-    }
-
-    setLocationStatus('capturing');
-    
-    try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        });
-      });
-
-      const geo = {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
-      };
-      
-      console.log('✅ Location captured manually:', geo);
-      setGeo(geo);
-      setLocationStatus('captured');
-      
-    } catch (error: any) {
-      console.error('❌ Error getting location:', error);
-      setLocationStatus('error');
-      
-      let errorMessage = 'Could not get your location. ';
-      switch (error.code) {
-        case 1:
-          errorMessage += 'Location permission denied. Please enable location services in your browser settings.';
-          break;
-        case 2:
-          errorMessage += 'Location unavailable. Please check your device location settings.';
-          break;
-        case 3:
-          errorMessage += 'Location request timed out. Please try again.';
-          break;
-        default:
-          errorMessage += 'Please enable location services and try again.';
-      }
-      
-      alert(errorMessage);
-    }
-  };
 
   const handlePhotoSelect = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -81,39 +17,23 @@ const CreateVostcardStep2 = () => {
     const file = event.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
+
       if (type === 'distant') {
         setDistantPhoto(url);
-        // Save Blob to context instead of URL
-        const currentPhotos = currentVostcard?.photos || [];
-        updateVostcard({ photos: [...currentPhotos, file] });
+        setCurrentVostcard((prev: any) => ({
+          ...prev,
+          photo1: file,
+          photo1Preview: url,
+        }));
       } else {
         setNearPhoto(url);
-        // Save Blob to context instead of URL
-        const currentPhotos = currentVostcard?.photos || [];
-        updateVostcard({ photos: [...currentPhotos, file] });
+        setCurrentVostcard((prev: any) => ({
+          ...prev,
+          photo2: file,
+          photo2Preview: url,
+        }));
       }
     }
-  };
-
-  const handleSaveAndContinue = () => {
-    // Ensure photos are saved to context before navigating
-    const photos = [];
-    if (distantPhoto) {
-      // Find the corresponding file for distant photo
-      const distantFile = currentVostcard?.photos.find((_, index) => index === 0);
-      if (distantFile) photos.push(distantFile);
-    }
-    if (nearPhoto) {
-      // Find the corresponding file for near photo
-      const nearFile = currentVostcard?.photos.find((_, index) => index === 1);
-      if (nearFile) photos.push(nearFile);
-    }
-    
-    if (photos.length > 0) {
-      updateVostcard({ photos });
-    }
-    
-    navigate('/create-step3');
   };
 
   return (
@@ -127,55 +47,6 @@ const CreateVostcardStep2 = () => {
           style={{ cursor: 'pointer' }}
           onClick={() => navigate('/create-step1')}
         />
-      </div>
-
-      {/* 📍 Location Status Indicator */}
-      <div style={{
-        backgroundColor: currentVostcard?.geo ? '#e8f5e8' : '#fff3cd',
-        border: `1px solid ${currentVostcard?.geo ? '#4caf50' : '#ffc107'}`,
-        borderRadius: '8px',
-        margin: '16px',
-        padding: '12px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-      }}>
-        <div style={{
-          width: '12px',
-          height: '12px',
-          borderRadius: '50%',
-          backgroundColor: currentVostcard?.geo ? '#4caf50' : '#ffc107'
-        }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-            {currentVostcard?.geo ? '✅ Location Captured' : '⚠️ Location Pending'}
-          </div>
-          <div style={{ fontSize: '14px', color: '#666' }}>
-            {currentVostcard?.geo 
-              ? `Location recorded at: ${currentVostcard.geo.latitude.toFixed(4)}, ${currentVostcard.geo.longitude.toFixed(4)}`
-              : 'Location will be captured when you record your video'
-            }
-          </div>
-        </div>
-        {/* Manual location capture button */}
-        {!currentVostcard?.geo && (
-          <button
-            onClick={captureLocation}
-            disabled={locationStatus === 'capturing'}
-            style={{
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '8px 12px',
-              fontSize: '12px',
-              cursor: locationStatus === 'capturing' ? 'not-allowed' : 'pointer',
-              opacity: locationStatus === 'capturing' ? 0.6 : 1,
-            }}
-          >
-            {locationStatus === 'capturing' ? 'Capturing...' : 'Capture Now'}
-          </button>
-        )}
       </div>
 
       {/* 🔲 Thumbnails */}
@@ -229,7 +100,16 @@ const CreateVostcardStep2 = () => {
 
       {/* ✅ Save & Continue Button */}
       <div style={buttonContainer}>
-        <button style={button} onClick={handleSaveAndContinue}>
+        <button
+          style={button}
+          onClick={() => {
+            if (!distantPhoto || !nearPhoto) {
+              alert('Please select both photos before continuing.');
+              return;
+            }
+            navigate('/create-step3');
+          }}
+        >
           Save & Continue
         </button>
       </div>

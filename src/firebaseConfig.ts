@@ -24,8 +24,7 @@ export const storage = getStorage(app);
 // Connect to emulators in development
 if (process.env.NODE_ENV === 'development') {
   try {
-    // Enable Firebase emulators for local development
-    connectAuthEmulator(auth, 'http://localhost:9099');
+    // Enable Firebase emulators for local development;
     connectFirestoreEmulator(db, 'localhost', 8080);
     connectStorageEmulator(storage, 'localhost', 9199);
     console.log('✅ Firebase emulators connected for development');
