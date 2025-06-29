@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MdFlipCameraIos } from 'react-icons/md';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
+import { FaLocationArrow } from 'react-icons/fa';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const ScrollingCameraView: React.FC = () => {
   const [recording, setRecording] = useState(false);
   const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
   const [countdown, setCountdown] = useState(30);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'capturing' | 'captured' | 'error'>('idle');
 
   const startCamera = async () => {
     if (stream) {
@@ -54,124 +56,141 @@ const ScrollingCameraView: React.FC = () => {
       mediaRecorderRef.current?.stop();
       setRecording(false);
     } else {
-      // Capture location when recording starts
-      const captureLocation = () => {
-        console.log('Starting location capture...');
+      // Capture location when recording starts - make it synchronous
+      const startRecordingWithLocation = async () => {
+        console.log('🎬 Starting recording process...');
+        setLocationStatus('capturing');
         
         if (!navigator.geolocation) {
-          console.error('Geolocation not supported');
+          console.error('❌ Geolocation not supported');
+          setLocationStatus('error');
           alert('Geolocation is not supported by your browser.');
           return;
         }
 
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const geo = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            };
-            console.log('✅ Location captured successfully at recording start:', geo);
-            console.log('Setting geo in context...');
-            setGeo(geo);
-            
-            // Verify the geo was set in context
-            setTimeout(() => {
-              console.log('Current Vostcard after setting geo:', currentVostcard);
-            }, 100);
-          },
-          (error) => {
-            console.error('❌ Error getting location:', error);
-            console.error('Error code:', error.code);
-            console.error('Error message:', error.message);
-            
-            let errorMessage = 'Could not get your location. ';
-            switch (error.code) {
-              case 1:
-                errorMessage += 'Location permission denied. Please enable location services in your browser settings.';
-                break;
-              case 2:
-                errorMessage += 'Location unavailable. Please check your device location settings.';
-                break;
-              case 3:
-                errorMessage += 'Location request timed out. Please try again.';
-                break;
-              default:
-                errorMessage += 'Please enable location services and try again.';
-            }
-            
-            alert(errorMessage);
-            return;
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 15000, // Increased timeout
-            maximumAge: 60000
+        try {
+          console.log('📍 Requesting location...');
+          
+          // Get location first, then start recording
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 15000,
+              maximumAge: 60000
+            });
+          });
+
+          const geo = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+          
+          console.log('✅ Location captured successfully:', geo);
+          console.log('📍 Setting geo in context...');
+          
+          // Set the location in context
+          setGeo(geo);
+          setLocationStatus('captured');
+          
+          // Verify it was set
+          setTimeout(() => {
+            console.log('📍 Verification - Current Vostcard geo:', currentVostcard?.geo);
+          }, 100);
+          
+          // Now start the recording
+          console.log('🎬 Starting video recording...');
+          startVideoRecording();
+          
+        } catch (error: any) {
+          console.error('❌ Error getting location:', error);
+          console.error('Error code:', error.code);
+          console.error('Error message:', error.message);
+          setLocationStatus('error');
+          
+          let errorMessage = 'Could not get your location. ';
+          switch (error.code) {
+            case 1:
+              errorMessage += 'Location permission denied. Please enable location services in your browser settings.';
+              break;
+            case 2:
+              errorMessage += 'Location unavailable. Please check your device location settings.';
+              break;
+            case 3:
+              errorMessage += 'Location request timed out. Please try again.';
+              break;
+            default:
+              errorMessage += 'Please enable location services and try again.';
           }
-        );
-      };
-
-      // Capture location immediately when recording starts
-      console.log('🎬 Recording starting - capturing location...');
-      captureLocation();
-
-      const recordedChunks: Blob[] = [];
-      
-      // Detect supported video formats for better mobile compatibility
-      const getSupportedMimeType = () => {
-        const types = [
-          'video/mp4;codecs=h264',
-          'video/webm;codecs=h264',
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm'
-        ];
-        
-        for (const type of types) {
-          if (MediaRecorder.isTypeSupported(type)) {
-            return type;
-          }
-        }
-        return 'video/webm'; // fallback
-      };
-
-      const mimeType = getSupportedMimeType();
-      const mediaRecorder = new MediaRecorder(stream as MediaStream, { mimeType });
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunks.push(event.data);
+          
+          alert(errorMessage);
+          return;
         }
       };
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: mimeType });
-        console.log('🎬 Recording stopped, blob created:', blob);
-        console.log('Blob size:', blob.size);
-        console.log('Blob type:', blob.type);
-        
-        // Check if location was captured
-        console.log('📍 Final location check before setting video:', currentVostcard?.geo);
-        
-        setVideo(blob);
-        navigate('/create-step1');
-      };
-
-      mediaRecorder.start();
-      setRecording(true);
-
-      let time = 30;
-      setCountdown(time);
-      const interval = setInterval(() => {
-        time -= 1;
-        setCountdown(time);
-        if (time <= 0) {
-          mediaRecorder.stop();
-          setRecording(false);
-          clearInterval(interval);
-        }
-      }, 1000);
+      // Start the recording process with location capture
+      startRecordingWithLocation();
     }
+  };
+
+  // Separate function for starting video recording
+  const startVideoRecording = () => {
+    const recordedChunks: Blob[] = [];
+    
+    // Detect supported video formats for better mobile compatibility
+    const getSupportedMimeType = () => {
+      const types = [
+        'video/mp4;codecs=h264',
+        'video/webm;codecs=h264',
+        'video/webm;codecs=vp9',
+        'video/webm;codecs=vp8',
+        'video/webm'
+      ];
+      
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          return type;
+        }
+      }
+      return 'video/webm'; // fallback
+    };
+
+    const mimeType = getSupportedMimeType();
+    const mediaRecorder = new MediaRecorder(stream as MediaStream, { mimeType });
+    mediaRecorderRef.current = mediaRecorder;
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: mimeType });
+      console.log('🎬 Recording stopped, blob created:', blob);
+      console.log('Blob size:', blob.size);
+      console.log('Blob type:', blob.type);
+      
+      // Check if location was captured
+      console.log('📍 Final location check before setting video:', currentVostcard?.geo);
+      
+      setVideo(blob);
+      navigate('/create-step1');
+    };
+
+    mediaRecorder.start();
+    setRecording(true);
+
+    let time = 30;
+    setCountdown(time);
+    const interval = setInterval(() => {
+      time -= 1;
+      setCountdown(time);
+      if (time <= 0) {
+        mediaRecorder.stop();
+        setRecording(false);
+        clearInterval(interval);
+      }
+    }, 1000);
   };
 
   return (
@@ -195,6 +214,29 @@ const ScrollingCameraView: React.FC = () => {
         muted
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
+
+      {/* 📍 Location Status */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 50,
+          left: 20,
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+      >
+        <FaLocationArrow size={16} />
+        {locationStatus === 'idle' && 'Location: Ready'}
+        {locationStatus === 'capturing' && 'Location: Capturing...'}
+        {locationStatus === 'captured' && 'Location: ✅ Captured'}
+        {locationStatus === 'error' && 'Location: ❌ Error'}
+      </div>
 
       {/* ⏱️ Countdown */}
       {recording && (
