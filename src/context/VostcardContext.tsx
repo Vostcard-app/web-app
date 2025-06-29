@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth } from '../firebaseConfig';
+import { db, storage } from '../firebase';
+import { collection, addDoc, updateDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestore, collection, doc, setDoc, Timestamp } from 'firebase/firestore';
-import { auth } from '../firebaseConfig.ts';
 
 export interface Vostcard {
   id: string;
@@ -74,7 +75,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         description: '',
         photos: [], // Changed to Blob[]
         categories: [],
-        geo: null,
+        geo: null, // This will be set by setGeo if location was captured
         username,
         userID: user?.uid || '', // Changed from userId to userID
         createdAt: new Date().toISOString(),
@@ -99,7 +100,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('📍 Updated Vostcard with geo:', updatedVostcard.geo);
       setCurrentVostcard(updatedVostcard);
     } else {
-      console.warn('📍 setGeo called but no currentVostcard exists');
+      console.warn('📍 setGeo called but no currentVostcard exists - geo will be set when Vostcard is created');
     }
   };
 
@@ -251,7 +252,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const userID = user.uid;
       
       // Upload video to Firebase Storage with iOS app path structure
-      const videoRef = ref(getStorage(), `vostcards/${userID}/${vostcardId}/video.mov`);
+      const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
       const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
       const videoURL = await getDownloadURL(videoSnap.ref);
 
@@ -259,7 +260,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const photoURLs = [];
       for (let i = 0; i < currentVostcard.photos.length; i++) {
         const photoBlob = currentVostcard.photos[i];
-        const photoRef = ref(getStorage(), `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
+        const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
         const photoSnap = await uploadBytes(photoRef, photoBlob);
         const photoURL = await getDownloadURL(photoSnap.ref);
         photoURLs.push(photoURL);
@@ -268,7 +269,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const username = user.displayName || user.email?.split('@')[0] || 'Unknown';
 
       // Create Firestore document matching iOS app structure exactly
-      const docRef = doc(getFirestore(), 'vostcards', vostcardId);
+      const docRef = doc(db, 'vostcards', vostcardId);
       await setDoc(docRef, {
         id: vostcardId,
         title: currentVostcard.title,

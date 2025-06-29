@@ -4,10 +4,12 @@ import { MdFlipCameraIos } from 'react-icons/md';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
 import { FaLocationArrow } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid';
+import { auth } from '../firebaseConfig';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
-  const { setVideo, setGeo, currentVostcard } = useVostcard();
+  const { setVideo, setGeo, currentVostcard, setCurrentVostcard } = useVostcard();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -56,9 +58,38 @@ const ScrollingCameraView: React.FC = () => {
       mediaRecorderRef.current?.stop();
       setRecording(false);
     } else {
-      // Capture location when recording starts - make it synchronous
-      const startRecordingWithLocation = async () => {
+      // Create Vostcard first, then capture location and start recording
+      const startRecordingProcess = async () => {
         console.log('🎬 Starting recording process...');
+        
+        // First, ensure we have a Vostcard created
+        if (!currentVostcard) {
+          console.log('🎬 Creating new Vostcard for recording...');
+          const user = auth.currentUser;
+          const username = user?.displayName || user?.email?.split('@')[0] || 'Unknown';
+          
+          const newVostcard = {
+            id: uuidv4(),
+            state: 'private' as const,
+            video: null,
+            title: '',
+            description: '',
+            photos: [],
+            categories: [],
+            geo: null,
+            username,
+            userID: user?.uid || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          
+          setCurrentVostcard(newVostcard);
+          
+          // Wait for the context to update
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Now capture location
         setLocationStatus('capturing');
         
         if (!navigator.geolocation) {
@@ -71,7 +102,7 @@ const ScrollingCameraView: React.FC = () => {
         try {
           console.log('📍 Requesting location...');
           
-          // Get location first, then start recording
+          // Get location
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
@@ -92,14 +123,14 @@ const ScrollingCameraView: React.FC = () => {
           setGeo(geo);
           setLocationStatus('captured');
           
-          // Verify it was set
+          // Wait a moment for the context to update, then verify
           setTimeout(() => {
             console.log('📍 Verification - Current Vostcard geo:', currentVostcard?.geo);
-          }, 100);
-          
-          // Now start the recording
-          console.log('🎬 Starting video recording...');
-          startVideoRecording();
+            
+            // Now start the recording
+            console.log('🎬 Starting video recording...');
+            startVideoRecording();
+          }, 200);
           
         } catch (error: any) {
           console.error('❌ Error getting location:', error);
@@ -127,8 +158,8 @@ const ScrollingCameraView: React.FC = () => {
         }
       };
 
-      // Start the recording process with location capture
-      startRecordingWithLocation();
+      // Start the recording process
+      startRecordingProcess();
     }
   };
 
