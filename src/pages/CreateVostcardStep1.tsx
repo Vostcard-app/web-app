@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome } from 'react-icons/fa';
+import { FaHome, FaLocationArrow, FaExclamationTriangle } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
@@ -9,6 +9,81 @@ const CreateVostcardStep1: React.FC = () => {
   const video = currentVostcard?.video;
   const [isMobile, setIsMobile] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'prompt' | 'checking'>('checking');
+
+  // Check location permission on component mount
+  useEffect(() => {
+    checkLocationPermission();
+  }, []);
+
+  // Function to check location permission
+  const checkLocationPermission = async () => {
+    if (!navigator.geolocation) {
+      setLocationPermission('denied');
+      return;
+    }
+
+    try {
+      // Check if we can get the current position without prompting
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        });
+      });
+      
+      console.log('Location permission granted, current position:', {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude
+      });
+      setLocationPermission('granted');
+    } catch (error: any) {
+      console.log('Location permission check failed:', error);
+      
+      // Check if it's a permission denied error
+      if (error.code === 1) {
+        setLocationPermission('denied');
+      } else {
+        setLocationPermission('prompt');
+      }
+    }
+  };
+
+  // Function to request location permission
+  const requestLocationPermission = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLocationPermission('checking');
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        console.log('Location permission granted:', {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+        setLocationPermission('granted');
+      },
+      (error) => {
+        console.error('Location permission denied:', error);
+        setLocationPermission('denied');
+        
+        if (error.code === 1) {
+          alert('Location permission is required to create Vostcards. Please enable location services in your browser settings and try again.');
+        } else {
+          alert('Could not get your location. Please check your location settings and try again.');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
 
   // Detect if we're on a mobile device
   useEffect(() => {
@@ -30,6 +105,10 @@ const CreateVostcardStep1: React.FC = () => {
   };
 
   const handleRecord = () => {
+    if (locationPermission !== 'granted') {
+      alert('Location permission is required to record a Vostcard. Please enable location services first.');
+      return;
+    }
     navigate('/scrolling-camera');
   };
 
@@ -109,6 +188,56 @@ const CreateVostcardStep1: React.FC = () => {
         />
       </div>
 
+      {/* 📍 Location Permission Status */}
+      {locationPermission !== 'granted' && (
+        <div
+          style={{
+            backgroundColor: locationPermission === 'denied' ? '#ffebee' : '#fff3e0',
+            border: `1px solid ${locationPermission === 'denied' ? '#f44336' : '#ff9800'}`,
+            borderRadius: '8px',
+            margin: '16px',
+            padding: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          {locationPermission === 'denied' ? (
+            <FaExclamationTriangle color="#f44336" />
+          ) : (
+            <FaLocationArrow color="#ff9800" />
+          )}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+              {locationPermission === 'denied' 
+                ? 'Location Permission Required' 
+                : 'Enable Location Services'
+              }
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>
+              {locationPermission === 'denied' 
+                ? 'Location is required to create Vostcards. Please enable location services in your browser settings.'
+                : 'Location services are needed to record where your Vostcard was created.'
+              }
+            </div>
+          </div>
+          <button
+            onClick={requestLocationPermission}
+            style={{
+              backgroundColor: locationPermission === 'denied' ? '#f44336' : '#ff9800',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '8px 12px',
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
+          >
+            {locationPermission === 'denied' ? 'Enable' : 'Allow'}
+          </button>
+        </div>
+      )}
+
       {/* 🎥 Thumbnail */}
       <div
         style={{
@@ -142,7 +271,7 @@ const CreateVostcardStep1: React.FC = () => {
           </div>
         ) : (
           <div
-            onClick={handleRecord}
+            onClick={locationPermission === 'granted' ? handleRecord : undefined}
             style={{
               width: 192,
               height: 272,
@@ -152,13 +281,17 @@ const CreateVostcardStep1: React.FC = () => {
               justifyContent: 'center',
               alignItems: 'center',
               textAlign: 'center',
-              color: '#002B4D',
+              color: locationPermission === 'granted' ? '#002B4D' : '#999',
               fontSize: 18,
-              cursor: 'pointer',
+              cursor: locationPermission === 'granted' ? 'pointer' : 'not-allowed',
               padding: 10,
+              opacity: locationPermission === 'granted' ? 1 : 0.6,
             }}
           >
-            Record a 30 Second Video
+            {locationPermission === 'granted' 
+              ? 'Record a 30 Second Video'
+              : 'Enable Location to Record'
+            }
           </div>
         )}
       </div>
@@ -176,9 +309,9 @@ const CreateVostcardStep1: React.FC = () => {
       >
         {/* ⭕ Record Button */}
         <div
-          onClick={handleRecord}
+          onClick={locationPermission === 'granted' ? handleRecord : undefined}
           style={{
-            backgroundColor: 'red',
+            backgroundColor: locationPermission === 'granted' ? 'red' : '#ccc',
             width: 70,
             height: 70,
             borderRadius: '50%',
@@ -186,7 +319,8 @@ const CreateVostcardStep1: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: 'pointer',
+            cursor: locationPermission === 'granted' ? 'pointer' : 'not-allowed',
+            opacity: locationPermission === 'granted' ? 1 : 0.6,
           }}
         >
           <div
@@ -201,16 +335,17 @@ const CreateVostcardStep1: React.FC = () => {
 
         {/* 📜 Use Script Tool */}
         <button
-          onClick={() => navigate('/scrolling-camera')}
+          onClick={locationPermission === 'granted' ? () => navigate('/scrolling-camera') : undefined}
+          disabled={locationPermission !== 'granted'}
           style={{
-            backgroundColor: '#002B4D',
+            backgroundColor: locationPermission === 'granted' ? '#002B4D' : '#ccc',
             color: 'white',
             border: 'none',
             width: '100%',
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
-            cursor: 'pointer',
+            cursor: locationPermission === 'granted' ? 'pointer' : 'not-allowed',
           }}
         >
           Use Script Tool
