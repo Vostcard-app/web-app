@@ -78,6 +78,36 @@ const CreateVostcardStep2 = () => {
         />
       </div>
 
+      {/* 📍 Location Status Indicator */}
+      <div style={{
+        backgroundColor: currentVostcard?.geo ? '#e8f5e8' : '#fff3cd',
+        border: `1px solid ${currentVostcard?.geo ? '#4caf50' : '#ffc107'}`,
+        borderRadius: '8px',
+        margin: '16px',
+        padding: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+      }}>
+        <div style={{
+          width: '12px',
+          height: '12px',
+          borderRadius: '50%',
+          backgroundColor: currentVostcard?.geo ? '#4caf50' : '#ffc107'
+        }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            {currentVostcard?.geo ? '✅ Location Captured' : '⚠️ Location Pending'}
+          </div>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            {currentVostcard?.geo 
+              ? `Location recorded at: ${currentVostcard.geo.latitude.toFixed(4)}, ${currentVostcard.geo.longitude.toFixed(4)}`
+              : 'Location will be captured when you record your video'
+            }
+          </div>
+        </div>
+      </div>
+
       {/* 🔲 Thumbnails */}
       <div style={thumbnailsContainer}>
         {/* Distant */}

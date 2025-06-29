@@ -16,6 +16,19 @@ const CreateVostcardStep3: React.FC = () => {
   const [customCategory, setCustomCategory] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
+  // Debug location data when component mounts and when currentVostcard changes
+  useEffect(() => {
+    console.log('📍 Step 3 - Current Vostcard data:', {
+      id: currentVostcard?.id,
+      hasVideo: !!currentVostcard?.video,
+      hasGeo: !!currentVostcard?.geo,
+      geo: currentVostcard?.geo,
+      title: currentVostcard?.title,
+      photosCount: currentVostcard?.photos?.length,
+      categoriesCount: currentVostcard?.categories?.length
+    });
+  }, [currentVostcard]);
+
   const availableCategories = ['Nature', 'History', 'Food', 'Culture', 'Landmark'];
 
   const handleCategoryToggle = (category: string) => {
@@ -102,7 +115,13 @@ const CreateVostcardStep3: React.FC = () => {
   });
 
   return (
-    <div style={{ backgroundColor: 'white', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ 
+      backgroundColor: 'white', 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      overflow: 'hidden' // Prevent scrolling issues
+    }}>
       
       {/* 🔵 Header */}
       <div style={{
@@ -111,7 +130,8 @@ const CreateVostcardStep3: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px'
+        padding: '0 16px',
+        flexShrink: 0 // Prevent header from shrinking
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
         <FaArrowLeft
@@ -122,8 +142,13 @@ const CreateVostcardStep3: React.FC = () => {
         />
       </div>
 
-      {/* 📝 Form */}
-      <div style={{ padding: 16, flex: 1, overflowY: 'auto' }}>
+      {/* 📝 Form - Scrollable */}
+      <div style={{ 
+        padding: 16, 
+        flex: 1, 
+        overflowY: 'auto',
+        paddingBottom: 0 // Remove bottom padding to make room for buttons
+      }}>
         <div>
           <label style={labelStyle}>Title</label>
           <input
@@ -183,6 +208,7 @@ const CreateVostcardStep3: React.FC = () => {
           backgroundColor: '#f0f0f0', 
           padding: '10px', 
           marginTop: '20px', 
+          marginBottom: '20px',
           borderRadius: '8px',
           fontSize: '12px'
         }}>
@@ -193,12 +219,18 @@ const CreateVostcardStep3: React.FC = () => {
           Photos: {photos.length} ({photos.length >= 2 ? '✅' : '❌'})<br/>
           Video: {currentVostcard?.video ? '✅' : '❌'}<br/>
           Location: {currentVostcard?.geo ? '✅' : '❌'}<br/>
+          Location Details: {currentVostcard?.geo ? `Lat: ${currentVostcard.geo.latitude.toFixed(4)}, Lng: ${currentVostcard.geo.longitude.toFixed(4)}` : 'None'}<br/>
           <strong>Post Enabled: {isPostEnabled ? '✅ YES' : '❌ NO'}</strong>
         </div>
       </div>
 
-      {/* 🔘 Buttons */}
-      <div style={{ padding: 16 }}>
+      {/* 🔘 Buttons - Fixed at bottom */}
+      <div style={{ 
+        padding: 16, 
+        backgroundColor: 'white',
+        borderTop: '1px solid #eee',
+        flexShrink: 0 // Prevent buttons from shrinking
+      }}>
         <button
           onClick={handleSaveChanges}
           style={saveButtonStyle}
@@ -216,13 +248,15 @@ const CreateVostcardStep3: React.FC = () => {
           onClick={() => {
             console.log('🎯 Post to Map button clicked!');
             console.log('Button state:', { isPostEnabled, title, description, categories, photos });
+            console.log('📍 Current location data:', currentVostcard?.geo);
             handlePost();
           }}
           disabled={!isPostEnabled}
           style={{
             ...postButtonStyle,
             backgroundColor: isPostEnabled ? '#002B4D' : '#aaa',
-            cursor: isPostEnabled ? 'pointer' : 'not-allowed'
+            cursor: isPostEnabled ? 'pointer' : 'not-allowed',
+            marginTop: 10
           }}
         >
           Post to Map {isPostEnabled ? '✅' : '❌'}
