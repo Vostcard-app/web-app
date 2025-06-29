@@ -11,6 +11,8 @@ const CreateVostcardStep3: React.FC = () => {
     currentVostcard,
     updateVostcard,
     saveLocalVostcard,
+    loadLocalVostcard,
+    clearLocalStorage,
     postVostcard,
     clearVostcard,
   } = useVostcard();
@@ -186,6 +188,78 @@ const CreateVostcardStep3: React.FC = () => {
           <div>Title: {validationState.hasTitle ? '✅' : '❌'}</div>
           <div>Description: {validationState.hasDescription ? '✅' : '❌'}</div>
           <div>Categories: {validationState.hasCategories ? `✅ (${categories.length})` : '❌'}</div>
+        </div>
+      </div>
+
+      {/* 🧪 localStorage Test Section */}
+      <div style={{ 
+        marginTop: 20, 
+        padding: 12, 
+        backgroundColor: '#e8f4fd', 
+        borderRadius: 8,
+        fontSize: 14,
+        border: '1px solid #002B4D'
+      }}>
+        <div style={{ fontWeight: 'bold', marginBottom: 8, color: '#002B4D' }}>🧪 localStorage Test:</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => {
+              saveLocalVostcard();
+              alert('Vostcard saved to localStorage! Check console for details.');
+            }}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: 4,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
+            Save to localStorage
+          </button>
+          <button
+            onClick={() => {
+              if (currentVostcard?.id) {
+                loadLocalVostcard(currentVostcard.id);
+                alert('Vostcard loaded from localStorage! Check console for details.');
+              } else {
+                alert('No current Vostcard to load');
+              }
+            }}
+            style={{
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: 4,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
+            Load from localStorage
+          </button>
+          <button
+            onClick={() => {
+              clearLocalStorage();
+              alert('localStorage cleared!');
+            }}
+            style={{
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: 4,
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
+            Clear localStorage
+          </button>
+        </div>
+        <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+          Current Vostcard ID: {currentVostcard?.id || 'None'}
         </div>
       </div>
 

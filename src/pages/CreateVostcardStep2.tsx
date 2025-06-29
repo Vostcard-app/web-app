@@ -1,14 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
-  const { currentVostcard, setCurrentVostcard } = useVostcard();
+  const { currentVostcard, updateVostcard } = useVostcard();
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
+
+  // Restore photos when component mounts or currentVostcard changes
+  useEffect(() => {
+    console.log('📸 Step 2 - Current Vostcard photos:', {
+      photosCount: currentVostcard?.photos?.length || 0,
+      photos: currentVostcard?.photos,
+      hasPhoto1: !!currentVostcard?.photos?.[0],
+      hasPhoto2: !!currentVostcard?.photos?.[1]
+    });
+    
+    if (currentVostcard?.photos && currentVostcard.photos.length >= 2) {
+      try {
+        // Create URLs for the stored photo blobs
+        const photo1Url = URL.createObjectURL(currentVostcard.photos[0]);
+        const photo2Url = URL.createObjectURL(currentVostcard.photos[1]);
+        setDistantPhoto(photo1Url);
+        setNearPhoto(photo2Url);
+        
+        console.log('📸 Restored photos from context:', {
+          photo1Size: currentVostcard.photos[0]?.size,
+          photo2Size: currentVostcard.photos[1]?.size,
+          photo1Url: photo1Url,
+          photo2Url: photo2Url
+        });
+      } catch (error) {
+        console.error('❌ Error restoring photos:', error);
+      }
+    } else {
+      console.log('📸 No photos to restore or insufficient photos');
+      setDistantPhoto(null);
+      setNearPhoto(null);
+    }
+  }, [currentVostcard]);
 
   const handlePhotoSelect = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -17,21 +50,35 @@ const CreateVostcardStep2 = () => {
     const file = event.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
+      console.log('📸 Photo selected:', {
+        type,
+        fileSize: file.size,
+        fileType: file.type,
+        currentPhotosCount: currentVostcard?.photos?.length || 0
+      });
 
       if (type === 'distant') {
         setDistantPhoto(url);
-        setCurrentVostcard((prev: any) => ({
-          ...prev,
-          photo1: file,
-          photo1Preview: url,
-        }));
+        // Store in photos array at index 0
+        const currentPhotos = currentVostcard?.photos || [];
+        const updatedPhotos = [file, ...currentPhotos.slice(1)];
+        console.log('📸 Updating photos array for distant:', {
+          oldCount: currentPhotos.length,
+          newCount: updatedPhotos.length,
+          photo1Size: updatedPhotos[0]?.size
+        });
+        updateVostcard({ photos: updatedPhotos });
       } else {
         setNearPhoto(url);
-        setCurrentVostcard((prev: any) => ({
-          ...prev,
-          photo2: file,
-          photo2Preview: url,
-        }));
+        // Store in photos array at index 1
+        const currentPhotos = currentVostcard?.photos || [];
+        const updatedPhotos = [...currentPhotos.slice(0, 1), file];
+        console.log('📸 Updating photos array for near:', {
+          oldCount: currentPhotos.length,
+          newCount: updatedPhotos.length,
+          photo2Size: updatedPhotos[1]?.size
+        });
+        updateVostcard({ photos: updatedPhotos });
       }
     }
   };
@@ -103,10 +150,12 @@ const CreateVostcardStep2 = () => {
         <button
           style={button}
           onClick={() => {
-            if (!distantPhoto || !nearPhoto) {
+            const photosCount = currentVostcard?.photos?.length || 0;
+            if (photosCount < 2) {
               alert('Please select both photos before continuing.');
               return;
             }
+            console.log('📸 Proceeding to Step 3 with photos:', photosCount);
             navigate('/create-step3');
           }}
         >
