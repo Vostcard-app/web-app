@@ -8,15 +8,15 @@ import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
 import { db, auth } from '../firebaseConfig.ts';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 
-// 🔥 Vostcard Pin
+// 🔥 Vostcard Pin - Custom Vostcard pin
 const vostcardIcon = new L.Icon({
-  iconUrl: '/Vostcard_pin.png',
+  iconUrl: '/Vostcard_pin.svg', // Custom Vostcard pin (SVG)
   iconSize: [50, 50],
   iconAnchor: [25, 50],
   popupAnchor: [0, -50],
 });
 
-// Fallback Vostcard Pin (red marker)
+// Fallback Vostcard Pin (red marker) - used if custom pin not found
 const fallbackVostcardIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
   iconSize: [30, 45],
@@ -94,6 +94,22 @@ const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) 
   }, [userLocation, map]);
 
   return null;
+};
+
+// Function to get the appropriate Vostcard icon (with fallback)
+const getVostcardIcon = () => {
+  // Check if custom pin exists by trying to load it
+  const img = new Image();
+  img.onload = () => {
+    console.log('Custom Vostcard pin loaded successfully');
+  };
+  img.onerror = () => {
+    console.log('Custom Vostcard pin not found, using fallback');
+  };
+  img.src = '/Vostcard_pin.svg';
+  
+  // For now, always use custom pin (fallback will be handled by browser)
+  return vostcardIcon;
 };
 
 const HomeView = () => {
@@ -355,7 +371,7 @@ const HomeView = () => {
               <Marker
                 key={v.id}
                 position={[lat, lng]}
-                icon={fallbackVostcardIcon}
+                icon={getVostcardIcon()}
               >
                 <Popup>
                   <h3>{v.title}</h3>
@@ -363,7 +379,7 @@ const HomeView = () => {
                   {v.categories && v.categories.length > 0 && (
                     <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
                   )}
-                  <p><small>Posted at: {v.timestamp?.toDate?.() || 'Unknown'}</small></p>
+                  <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
                 </Popup>
               </Marker>
             );

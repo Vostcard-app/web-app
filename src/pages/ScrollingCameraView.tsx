@@ -6,7 +6,7 @@ import { useVostcard } from '../context/VostcardContext';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
-  const { setVideo } = useVostcard();
+  const { setVideo, setGeo } = useVostcard();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -54,6 +54,37 @@ const ScrollingCameraView: React.FC = () => {
       mediaRecorderRef.current?.stop();
       setRecording(false);
     } else {
+      // Capture location when recording starts
+      const captureLocation = () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const geo = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              };
+              console.log('Location captured at recording start:', geo);
+              setGeo(geo);
+            },
+            (error) => {
+              console.error('Error getting location:', error);
+              alert('Could not get your location. Please enable location services and try again.');
+            },
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 60000
+            }
+          );
+        } else {
+          console.error('Geolocation not supported');
+          alert('Geolocation is not supported by your browser.');
+        }
+      };
+
+      // Capture location immediately when recording starts
+      captureLocation();
+
       const recordedChunks: Blob[] = [];
       
       // Detect supported video formats for better mobile compatibility

@@ -107,19 +107,68 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Post Vostcard to Firestore and Storage - Updated to match iOS app structure
   const postVostcard = async () => {
-    if (!currentVostcard) return;
-
-    if (
-      !currentVostcard.video ||
-      currentVostcard.photos.length < 2 ||
-      !currentVostcard.title ||
-      !currentVostcard.description ||
-      currentVostcard.categories.length === 0 ||
-      !currentVostcard.geo
-    ) {
-      alert('All fields are required to post.');
+    if (!currentVostcard) {
+      console.error('No current Vostcard found');
+      alert('No Vostcard data found. Please start over.');
       return;
     }
+
+    // Debug all fields
+    console.log('Posting Vostcard - Current data:', {
+      video: !!currentVostcard.video,
+      photosCount: currentVostcard.photos.length,
+      title: currentVostcard.title,
+      description: currentVostcard.description,
+      categoriesCount: currentVostcard.categories.length,
+      geo: currentVostcard.geo,
+      latitude: currentVostcard.geo?.latitude,
+      longitude: currentVostcard.geo?.longitude
+    });
+
+    // Check each field individually and provide specific feedback
+    if (!currentVostcard.video) {
+      console.error('Missing video');
+      alert('Video is required. Please record a video first.');
+      return;
+    }
+
+    if (currentVostcard.photos.length < 2) {
+      console.error('Missing photos - need at least 2, have:', currentVostcard.photos.length);
+      alert('At least 2 photos are required. Please add more photos.');
+      return;
+    }
+
+    if (!currentVostcard.title || currentVostcard.title.trim() === '') {
+      console.error('Missing title');
+      alert('Title is required. Please enter a title.');
+      return;
+    }
+
+    if (!currentVostcard.description || currentVostcard.description.trim() === '') {
+      console.error('Missing description');
+      alert('Description is required. Please enter a description.');
+      return;
+    }
+
+    if (currentVostcard.categories.length === 0) {
+      console.error('Missing categories');
+      alert('At least one category is required. Please select categories.');
+      return;
+    }
+
+    if (!currentVostcard.geo) {
+      console.error('Missing geolocation');
+      alert('Location is required. Please ensure location services are enabled and try recording again.');
+      return;
+    }
+
+    if (!currentVostcard.geo.latitude || !currentVostcard.geo.longitude) {
+      console.error('Invalid geolocation coordinates:', currentVostcard.geo);
+      alert('Invalid location coordinates. Please try recording again.');
+      return;
+    }
+
+    console.log('All validation passed - proceeding with posting');
 
     const user = auth.currentUser;
     if (!user) {
