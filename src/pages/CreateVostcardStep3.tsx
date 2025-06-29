@@ -21,6 +21,29 @@ const CreateVostcardStep3: React.FC = () => {
 
   const availableCategories = ['Nature', 'History', 'Food', 'Culture', 'Landmark'];
 
+  // Debug validation state
+  const validationState = {
+    hasTitle: title.trim() !== '',
+    hasDescription: description.trim() !== '',
+    hasCategories: categories.length > 0,
+    hasPhotos: photos.length >= 2,
+    hasVideo: !!currentVostcard?.video,
+    hasGeo: !!currentVostcard?.geo
+  };
+
+  console.log('🔍 Step 3 Validation State:', {
+    title: title,
+    titleValid: validationState.hasTitle,
+    description: description,
+    descriptionValid: validationState.hasDescription,
+    categories: categories,
+    categoriesValid: validationState.hasCategories,
+    photosCount: photos.length,
+    photosValid: validationState.hasPhotos,
+    video: !!currentVostcard?.video,
+    geo: !!currentVostcard?.geo
+  });
+
   const handleCategoryToggle = (category: string) => {
     if (categories.includes(category)) {
       updateVostcard({ categories: categories.filter((c) => c !== category) });
@@ -53,10 +76,17 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const isPostEnabled =
-    title.trim() !== '' &&
-    description.trim() !== '' &&
-    categories.length > 0 &&
-    photos.length >= 2;
+    validationState.hasTitle &&
+    validationState.hasDescription &&
+    validationState.hasCategories &&
+    validationState.hasPhotos;
+
+  // Create specific missing items list
+  const missingItems = [];
+  if (!validationState.hasTitle) missingItems.push('Title');
+  if (!validationState.hasDescription) missingItems.push('Description');
+  if (!validationState.hasCategories) missingItems.push('Categories');
+  if (!validationState.hasPhotos) missingItems.push('Photos (need at least 2)');
 
   return (
     <div style={{ backgroundColor: 'white', height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -82,7 +112,9 @@ const CreateVostcardStep3: React.FC = () => {
       {/* 📝 Form */}
       <div style={{ padding: 16, flex: 1, overflowY: 'auto' }}>
         <div>
-          <label style={labelStyle}>Title</label>
+          <label style={labelStyle}>
+            Title {validationState.hasTitle && <span style={{color: 'green'}}>✅</span>}
+          </label>
           <input
             value={title}
             onChange={(e) => updateVostcard({ title: e.target.value })}
@@ -92,7 +124,9 @@ const CreateVostcardStep3: React.FC = () => {
         </div>
 
         <div>
-          <label style={labelStyle}>Description</label>
+          <label style={labelStyle}>
+            Description {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
+          </label>
           <textarea
             value={description}
             onChange={(e) => updateVostcard({ description: e.target.value })}
@@ -103,7 +137,9 @@ const CreateVostcardStep3: React.FC = () => {
         </div>
 
         <div>
-          <label style={labelStyle}>Categories</label>
+          <label style={labelStyle}>
+            Categories {validationState.hasCategories && <span style={{color: 'green'}}>✅</span>}
+          </label>
           <div
             onClick={() => setIsCategoryModalOpen(true)}
             style={categorySelectStyle}
@@ -135,6 +171,22 @@ const CreateVostcardStep3: React.FC = () => {
           </button>
         </div>
 
+        {/* 📊 Validation Summary */}
+        <div style={{ 
+          marginTop: 20, 
+          padding: 12, 
+          backgroundColor: '#f5f5f5', 
+          borderRadius: 8,
+          fontSize: 14
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 8 }}>Validation Status:</div>
+          <div>Video: {validationState.hasVideo ? '✅' : '❌'}</div>
+          <div>Location: {validationState.hasGeo ? '✅' : '❌'}</div>
+          <div>Photos: {validationState.hasPhotos ? `✅ (${photos.length})` : `❌ (${photos.length}/2)`}</div>
+          <div>Title: {validationState.hasTitle ? '✅' : '❌'}</div>
+          <div>Description: {validationState.hasDescription ? '✅' : '❌'}</div>
+          <div>Categories: {validationState.hasCategories ? `✅ (${categories.length})` : '❌'}</div>
+        </div>
       </div>
 
       {/* 🔘 Buttons */}
@@ -148,7 +200,7 @@ const CreateVostcardStep3: React.FC = () => {
 
         {!isPostEnabled && (
           <div style={missingTextStyle}>
-            Missing: Title, Description, Photos, or Categories
+            Missing: {missingItems.join(', ')}
           </div>
         )}
 
