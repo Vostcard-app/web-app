@@ -1,6 +1,6 @@
 // src/pages/CreateVostcardStep3.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
@@ -84,7 +84,21 @@ const CreateVostcardStep3: React.FC = () => {
     description: description.trim(),
     categories: categories.length,
     photos: photos.length,
-    isPostEnabled
+    isPostEnabled,
+    currentVostcard: currentVostcard
+  });
+
+  // Debug on every render to see what's happening
+  useEffect(() => {
+    console.log('CreateVostcardStep3 render - current state:', {
+      title: title.trim(),
+      description: description.trim(),
+      categories: categories.length,
+      photos: photos.length,
+      isPostEnabled,
+      hasVideo: !!currentVostcard?.video,
+      hasGeo: !!currentVostcard?.geo
+    });
   });
 
   return (
@@ -163,6 +177,24 @@ const CreateVostcardStep3: React.FC = () => {
             +
           </button>
         </div>
+
+        {/* Debug Info */}
+        <div style={{ 
+          backgroundColor: '#f0f0f0', 
+          padding: '10px', 
+          marginTop: '20px', 
+          borderRadius: '8px',
+          fontSize: '12px'
+        }}>
+          <strong>Debug Info:</strong><br/>
+          Title: "{title}" ({title.trim() ? '✅' : '❌'})<br/>
+          Description: "{description.substring(0, 20)}..." ({description.trim() ? '✅' : '❌'})<br/>
+          Categories: {categories.length} ({categories.length > 0 ? '✅' : '❌'})<br/>
+          Photos: {photos.length} ({photos.length >= 2 ? '✅' : '❌'})<br/>
+          Video: {currentVostcard?.video ? '✅' : '❌'}<br/>
+          Location: {currentVostcard?.geo ? '✅' : '❌'}<br/>
+          <strong>Post Enabled: {isPostEnabled ? '✅ YES' : '❌ NO'}</strong>
+        </div>
       </div>
 
       {/* 🔘 Buttons */}
@@ -176,22 +208,24 @@ const CreateVostcardStep3: React.FC = () => {
 
         {!isPostEnabled && (
           <div style={missingTextStyle}>
-            Missing: {!title.trim() && 'Title, '}{!description.trim() && 'Description, '}{categories.length === 0 && 'Categories, '}{photos.length === 0 && 'Photos'}
+            Missing: {!title.trim() && 'Title, '}{!description.trim() && 'Description, '}{categories.length === 0 && 'Categories, '}{photos.length < 2 && 'Photos (need 2+), '}{!currentVostcard?.video && 'Video, '}{!currentVostcard?.geo && 'Location'}
           </div>
         )}
 
         <button
           onClick={() => {
-            console.log('Button clicked directly!');
+            console.log('🎯 Post to Map button clicked!');
+            console.log('Button state:', { isPostEnabled, title, description, categories, photos });
             handlePost();
           }}
           disabled={!isPostEnabled}
           style={{
             ...postButtonStyle,
-            backgroundColor: isPostEnabled ? '#002B4D' : '#aaa'
+            backgroundColor: isPostEnabled ? '#002B4D' : '#aaa',
+            cursor: isPostEnabled ? 'pointer' : 'not-allowed'
           }}
         >
-          Post to Map
+          Post to Map {isPostEnabled ? '✅' : '❌'}
         </button>
       </div>
 
