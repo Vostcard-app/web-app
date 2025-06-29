@@ -437,7 +437,36 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const user = auth.currentUser;
     if (!user) {
-      alert('User not authenticated');
+      alert('User not authenticated. Please log in first.');
+      return;
+    }
+
+    // Force token refresh to ensure we have a valid token
+    try {
+      await user.getIdToken(true); // Force refresh
+      console.log('🔐 Token refreshed successfully');
+    } catch (tokenError) {
+      console.error('❌ Failed to refresh auth token:', tokenError);
+      alert('Authentication token expired. Please log in again.');
+      return;
+    }
+
+    // Debug authentication state
+    console.log('🔐 Authentication debug:', {
+      userID: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      isAnonymous: user.isAnonymous,
+      emailVerified: user.emailVerified
+    });
+
+    // Get current auth token for debugging
+    try {
+      const token = await user.getIdToken();
+      console.log('🔐 Auth token obtained, length:', token.length);
+    } catch (tokenError) {
+      console.error('❌ Failed to get auth token:', tokenError);
+      alert('Authentication token error. Please try logging in again.');
       return;
     }
 
@@ -445,23 +474,33 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
       
+      console.log('📤 Starting upload to Firebase Storage...');
+      console.log('📁 Upload path:', `vostcards/${userID}/${vostcardId}/video.mov`);
+      
       // Upload video to Firebase Storage with iOS app path structure
       const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
+      console.log('📤 Uploading video...');
       const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
+      console.log('✅ Video uploaded successfully');
       const videoURL = await getDownloadURL(videoSnap.ref);
+      console.log('🔗 Video URL obtained:', videoURL);
 
       // Upload photos to Firebase Storage with iOS app path structure
       const photoURLs = [];
       for (let i = 0; i < currentVostcard.photos.length; i++) {
         const photoBlob = currentVostcard.photos[i];
         const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
+        console.log(`📤 Uploading photo ${i + 1}...`);
         const photoSnap = await uploadBytes(photoRef, photoBlob);
+        console.log(`✅ Photo ${i + 1} uploaded successfully`);
         const photoURL = await getDownloadURL(photoSnap.ref);
         photoURLs.push(photoURL);
       }
+      console.log('🔗 All photo URLs obtained:', photoURLs);
 
       const username = user.displayName || user.email?.split('@')[0] || 'Unknown';
 
+      console.log('📝 Creating Firestore document...');
       // Create Firestore document matching iOS app structure exactly
       const docRef = doc(db, 'vostcards', vostcardId);
       await setDoc(docRef, {
@@ -483,11 +522,26 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         averageRating: 0.0,
         state: "posted" // Critical for map display - matches iOS app
       });
+      console.log('✅ Firestore document created successfully');
 
       alert('Vōstcard posted successfully!');
     } catch (error) {
-      console.error('Failed to post Vostcard:', error);
-      alert('Failed to post Vostcard.');
+      console.error('❌ Failed to post Vostcard:', error);
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes('CORS')) {
+          alert('CORS error: Please check Firebase Storage security rules or try logging in again.');
+        } else if (error.message.includes('permission')) {
+          alert('Permission denied: Please check Firebase Storage security rules.');
+        } else if (error.message.includes('unauthorized')) {
+          alert('Authentication error: Please log in again.');
+        } else {
+          alert(`Upload failed: ${error.message}`);
+        }
+      } else {
+        alert('Failed to post Vostcard. Please try again.');
+      }
     }
   };
 

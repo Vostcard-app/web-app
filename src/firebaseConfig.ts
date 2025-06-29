@@ -25,9 +25,9 @@ export const storage = getStorage(app);
 if (process.env.NODE_ENV === 'development') {
   try {
     // Enable Firebase emulators for local development;
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectStorageEmulator(storage, 'localhost', 9199);
-    console.log('✅ Firebase emulators connected for development');
+    // connectFirestoreEmulator(db, 'localhost', 8080);
+    // connectStorageEmulator(storage, 'localhost', 9199);
+    console.log('✅ Using production Firebase services (emulators disabled)');
   } catch (error) {
     console.log('Firebase emulators already connected or not available');
   }

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
-import { db } from '../firebaseConfig';
+import { db, auth } from '../firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const CreateVostcardStep3: React.FC = () => {
@@ -20,6 +20,7 @@ const CreateVostcardStep3: React.FC = () => {
 
   const [customCategory, setCustomCategory] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [authStatus, setAuthStatus] = useState<string>('Checking...');
 
   const availableCategories = ['Nature', 'History', 'Food', 'Culture', 'Landmark'];
 
@@ -45,6 +46,29 @@ const CreateVostcardStep3: React.FC = () => {
     video: !!currentVostcard?.video,
     geo: !!currentVostcard?.geo
   });
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = () => {
+      const user = auth.currentUser;
+      if (user) {
+        setAuthStatus(`✅ Logged in as: ${user.email || user.uid}`);
+        console.log('🔐 Auth status:', {
+          uid: user.uid,
+          email: user.email,
+          isAnonymous: user.isAnonymous
+        });
+      } else {
+        setAuthStatus('❌ Not logged in');
+        console.log('🔐 No user logged in');
+      }
+    };
+
+    checkAuth();
+    // Listen for auth state changes
+    const unsubscribe = auth.onAuthStateChanged(checkAuth);
+    return () => unsubscribe();
+  }, []);
 
   const handleCategoryToggle = (category: string) => {
     if (categories.includes(category)) {
@@ -182,6 +206,7 @@ const CreateVostcardStep3: React.FC = () => {
           fontSize: 14
         }}>
           <div style={{ fontWeight: 'bold', marginBottom: 8 }}>Validation Status:</div>
+          <div>Authentication: {authStatus}</div>
           <div>Video: {validationState.hasVideo ? '✅' : '❌'}</div>
           <div>Location: {validationState.hasGeo ? '✅' : '❌'}</div>
           <div>Photos: {validationState.hasPhotos ? `✅ (${photos.length})` : `❌ (${photos.length}/2)`}</div>
