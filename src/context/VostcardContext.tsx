@@ -217,44 +217,24 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    // Check if we have location, if not try to capture it now
+    // Check if we have location, if not wait for it to be set
     let finalGeo = currentVostcard.geo;
     if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
-      console.log('📍 Location missing, attempting to capture now...');
-      
-      try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000
-          });
-        });
-        
-        finalGeo = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        };
-        
-        console.log('✅ Location captured during posting:', finalGeo);
-        
-        // Update the Vostcard with the captured location
-        setCurrentVostcard({
-          ...currentVostcard,
-          geo: finalGeo,
-          updatedAt: new Date().toISOString()
-        });
-        
-      } catch (error: any) {
-        console.error('❌ Failed to capture location during posting:', error);
-        alert('Location is required. Please ensure location services are enabled and try recording again.');
-        return;
+      console.log('📍 Waiting for geo to be available...');
+
+      for (let attempt = 0; attempt < 5; attempt++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        finalGeo = currentVostcard.geo;
+        if (finalGeo && finalGeo.latitude && finalGeo.longitude) {
+          console.log('✅ Geo became available:', finalGeo);
+          break;
+        }
       }
     }
 
     if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
-      console.error('Invalid geolocation coordinates:', finalGeo);
-      alert('Invalid location coordinates. Please try recording again.');
+      console.error('❌ Failed to capture location.');
+      alert('Failed to capture location. Please try again.');
       return;
     }
 
