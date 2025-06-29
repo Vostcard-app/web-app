@@ -1,127 +1,67 @@
 // src/pages/CreateVostcardStep3.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
+import { db } from '../firebaseConfig';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
   const {
     currentVostcard,
     updateVostcard,
+    saveLocalVostcard,
     postVostcard,
+    clearVostcard,
   } = useVostcard();
+  const { title = '', description = '', categories = [], photos = [] } = currentVostcard || {};
 
   const [customCategory, setCustomCategory] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
-  // Debug location data when component mounts and when currentVostcard changes
-  useEffect(() => {
-    console.log('📍 Step 3 - Current Vostcard data:', {
-      id: currentVostcard?.id,
-      hasVideo: !!currentVostcard?.video,
-      hasGeo: !!currentVostcard?.geo,
-      geo: currentVostcard?.geo,
-      title: currentVostcard?.title,
-      photosCount: currentVostcard?.photos?.length,
-      categoriesCount: currentVostcard?.categories?.length
-    });
-  }, [currentVostcard]);
-
   const availableCategories = ['Nature', 'History', 'Food', 'Culture', 'Landmark'];
 
   const handleCategoryToggle = (category: string) => {
-    const existing = currentVostcard?.categories || [];
-    if (existing.includes(category)) {
-      updateVostcard({
-        categories: existing.filter((c) => c !== category),
-      });
+    if (categories.includes(category)) {
+      updateVostcard({ categories: categories.filter((c) => c !== category) });
     } else {
-      updateVostcard({
-        categories: [...existing, category],
-      });
+      updateVostcard({ categories: [...categories, category] });
     }
   };
 
   const handleAddCustomCategory = () => {
     if (customCategory.trim() !== '') {
-      const existing = currentVostcard?.categories || [];
-      updateVostcard({
-        categories: [...existing, customCategory.trim()],
-      });
+      updateVostcard({ categories: [...categories, customCategory.trim()] });
       setCustomCategory('');
     }
   };
 
   const handleSaveChanges = () => {
+    saveLocalVostcard();
     navigate('/home');
   };
 
   const handlePost = async () => {
-    console.log('Post button clicked!');
-    console.log('Current Vostcard:', currentVostcard);
-    console.log('isPostEnabled:', isPostEnabled);
-    
-    if (!isPostEnabled) {
-      console.log('Post is disabled - missing required fields');
-      return;
-    }
-    
     try {
-      console.log('Attempting to post using context method...');
       await postVostcard();
-      console.log('Successfully posted using context method!');
+      clearVostcard();
       navigate('/home');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error posting:', error);
-      console.error('Error details:', {
-        message: error.message,
-        code: error.code,
-        stack: error.stack
-      });
-      alert(`Failed to post. Error: ${error.message}`);
+      alert('Failed to post. Try again.');
     }
   };
 
-  const title = currentVostcard?.title || '';
-  const description = currentVostcard?.description || '';
-  const categories = currentVostcard?.categories || [];
-  const photos = currentVostcard?.photos || [];
-
-  const isPostEnabled = title.trim() && description.trim() && categories.length > 0 && photos.length >= 2;
-  
-  // Debug the post enabled state
-  console.log('Post enabled check:', {
-    title: title.trim(),
-    description: description.trim(),
-    categories: categories.length,
-    photos: photos.length,
-    isPostEnabled,
-    currentVostcard: currentVostcard
-  });
-
-  // Debug on every render to see what's happening
-  useEffect(() => {
-    console.log('CreateVostcardStep3 render - current state:', {
-      title: title.trim(),
-      description: description.trim(),
-      categories: categories.length,
-      photos: photos.length,
-      isPostEnabled,
-      hasVideo: !!currentVostcard?.video,
-      hasGeo: !!currentVostcard?.geo
-    });
-  });
+  const isPostEnabled =
+    title.trim() !== '' &&
+    description.trim() !== '' &&
+    categories.length > 0 &&
+    photos.length >= 2;
 
   return (
-    <div style={{ 
-      backgroundColor: 'white', 
-      height: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      overflow: 'hidden' // Prevent scrolling issues
-    }}>
+    <div style={{ backgroundColor: 'white', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       {/* 🔵 Header */}
       <div style={{
@@ -130,8 +70,7 @@ const CreateVostcardStep3: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px',
-        flexShrink: 0 // Prevent header from shrinking
+        padding: '0 16px'
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
         <FaArrowLeft
@@ -142,13 +81,8 @@ const CreateVostcardStep3: React.FC = () => {
         />
       </div>
 
-      {/* 📝 Form - Scrollable */}
-      <div style={{ 
-        padding: 16, 
-        flex: 1, 
-        overflowY: 'auto',
-        paddingBottom: 0 // Remove bottom padding to make room for buttons
-      }}>
+      {/* 📝 Form */}
+      <div style={{ padding: 16, flex: 1, overflowY: 'auto' }}>
         <div>
           <label style={labelStyle}>Title</label>
           <input
@@ -202,35 +136,10 @@ const CreateVostcardStep3: React.FC = () => {
             +
           </button>
         </div>
-
-        {/* Debug Info */}
-        <div style={{ 
-          backgroundColor: '#f0f0f0', 
-          padding: '10px', 
-          marginTop: '20px', 
-          marginBottom: '20px',
-          borderRadius: '8px',
-          fontSize: '12px'
-        }}>
-          <strong>Debug Info:</strong><br/>
-          Title: "{title}" ({title.trim() ? '✅' : '❌'})<br/>
-          Description: "{description.substring(0, 20)}..." ({description.trim() ? '✅' : '❌'})<br/>
-          Categories: {categories.length} ({categories.length > 0 ? '✅' : '❌'})<br/>
-          Photos: {photos.length} ({photos.length >= 2 ? '✅' : '❌'})<br/>
-          Video: {currentVostcard?.video ? '✅' : '❌'}<br/>
-          Location: {currentVostcard?.geo ? '✅' : '❌'}<br/>
-          Location Details: {currentVostcard?.geo ? `Lat: ${currentVostcard.geo.latitude.toFixed(4)}, Lng: ${currentVostcard.geo.longitude.toFixed(4)}` : 'None'}<br/>
-          <strong>Post Enabled: {isPostEnabled ? '✅ YES' : '❌ NO'}</strong>
-        </div>
       </div>
 
-      {/* 🔘 Buttons - Fixed at bottom */}
-      <div style={{ 
-        padding: 16, 
-        backgroundColor: 'white',
-        borderTop: '1px solid #eee',
-        flexShrink: 0 // Prevent buttons from shrinking
-      }}>
+      {/* 🔘 Buttons */}
+      <div style={{ padding: 16 }}>
         <button
           onClick={handleSaveChanges}
           style={saveButtonStyle}
@@ -240,26 +149,19 @@ const CreateVostcardStep3: React.FC = () => {
 
         {!isPostEnabled && (
           <div style={missingTextStyle}>
-            Missing: {!title.trim() && 'Title, '}{!description.trim() && 'Description, '}{categories.length === 0 && 'Categories, '}{photos.length < 2 && 'Photos (need 2+), '}{!currentVostcard?.video && 'Video, '}{!currentVostcard?.geo && 'Location'}
+            Missing: Title, Description, Photos, or Categories
           </div>
         )}
 
         <button
-          onClick={() => {
-            console.log('🎯 Post to Map button clicked!');
-            console.log('Button state:', { isPostEnabled, title, description, categories, photos });
-            console.log('📍 Current location data:', currentVostcard?.geo);
-            handlePost();
-          }}
+          onClick={handlePost}
           disabled={!isPostEnabled}
           style={{
             ...postButtonStyle,
-            backgroundColor: isPostEnabled ? '#002B4D' : '#aaa',
-            cursor: isPostEnabled ? 'pointer' : 'not-allowed',
-            marginTop: 10
+            backgroundColor: isPostEnabled ? '#002B4D' : '#aaa'
           }}
         >
-          Post to Map {isPostEnabled ? '✅' : '❌'}
+          Post to Map
         </button>
       </div>
 
