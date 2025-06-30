@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
-import { db, auth } from '../firebaseConfig';
+import { db, auth, storage } from '../firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
@@ -69,6 +70,38 @@ const CreateVostcardStep3: React.FC = () => {
     const unsubscribe = auth.onAuthStateChanged(checkAuth);
     return () => unsubscribe();
   }, []);
+
+  // Test Firebase Storage upload
+  const testStorageUpload = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert('Please log in first');
+      return;
+    }
+
+    try {
+      console.log('🧪 Testing Firebase Storage upload...');
+      
+      // Create a simple test file
+      const testContent = 'This is a test file for Firebase Storage';
+      const testBlob = new Blob([testContent], { type: 'text/plain' });
+      
+      // Upload to a simple path
+      const testRef = ref(storage, `test/${user.uid}/test.txt`);
+      console.log('📤 Uploading test file...');
+      
+      const snapshot = await uploadBytes(testRef, testBlob);
+      console.log('✅ Test file uploaded successfully!');
+      
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      console.log('🔗 Test file URL:', downloadURL);
+      
+      alert('✅ Firebase Storage test successful! Check console for details.');
+    } catch (error) {
+      console.error('❌ Firebase Storage test failed:', error);
+      alert(`❌ Firebase Storage test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   const handleCategoryToggle = (category: string) => {
     if (categories.includes(category)) {
@@ -275,12 +308,26 @@ const CreateVostcardStep3: React.FC = () => {
               color: 'white',
               border: 'none',
               padding: '8px 12px',
-              borderRadius: 4,
-              fontSize: 12,
+              borderRadius: '4px',
+              fontSize: '12px',
               cursor: 'pointer'
             }}
           >
             Clear localStorage
+          </button>
+          <button
+            onClick={testStorageUpload}
+            style={{
+              backgroundColor: '#17a2b8',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            Test Storage
           </button>
         </div>
         <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>

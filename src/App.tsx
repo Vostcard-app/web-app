@@ -9,6 +9,7 @@ import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
 import ListView from "./pages/ListView";
 import ScrollingCameraView from "./pages/ScrollingCameraView";
 import CameraView from "./pages/CameraView";
+import SavedVostcardsListView from "./components/SavedVostcardsListView";
 
 function App() {
   return (
@@ -27,6 +28,9 @@ function App() {
         <Route path="/list" element={<ListView />} />
         <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
         <Route path="/camera" element={<CameraView />} />
+
+        {/* ✅ NEW: Saved Vōstcards List */}
+        <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
       </Routes>
     </Router>
   );
