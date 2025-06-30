@@ -266,37 +266,35 @@ const HomeView = () => {
             zIndex: 2000,
           }}
         >
-          <p
-            style={{ cursor: 'pointer', margin: '8px 0' }}
-            onClick={() => {
-              navigate('/profile');
-              setIsMenuOpen(false);
-            }}
-          >
-            Profile
+          <p onClick={() => { navigate('/saved-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            My Private Vōstcards
           </p>
-          <p
-            style={{ cursor: 'pointer', margin: '8px 0' }}
-            onClick={() => {
-              navigate('/saved-vostcards');
-              setIsMenuOpen(false);
-            }}
-          >
-            My Saved Vōstcards
+          <p onClick={() => { navigate('/posted-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            My Posted Vōstcards
           </p>
-          <p
-            style={{ cursor: 'pointer', margin: '8px 0' }}
-            onClick={() => {
-              navigate('/list');
-              setIsMenuOpen(false);
-            }}
-          >
-            List View
+          <p onClick={() => { navigate('/edit-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Edit My Vōstcards
           </p>
-          <p
-            style={{ cursor: 'pointer', margin: '8px 0' }}
-            onClick={() => setIsMenuOpen(false)}
-          >
+          <hr />
+          <p onClick={() => { navigate('/liked'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Liked Vōstcards
+          </p>
+          <p onClick={() => { navigate('/following'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Following
+          </p>
+          <p onClick={() => { navigate('/suggestion-box'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Suggestion Box
+          </p>
+          <p onClick={() => { navigate('/report-bug'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Report a Bug
+          </p>
+          <p onClick={() => { navigate('/account-settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Account Settings
+          </p>
+          <p onClick={() => { navigate('/logout'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Logout
+          </p>
+          <p onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer', margin: '8px 0' }}>
             Close
           </p>
         </div>
