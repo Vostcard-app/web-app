@@ -35,42 +35,48 @@ const SettingsView = () => {
         <section style={{ marginBottom: '20px' }}>
           <h2>Manual Backup (iCloud Drive / Local)</h2>
           <div>
-            <input
-              type="file"
-              accept="application/json"
+            <label
               style={{
+                display: 'inline-block',
                 fontSize: '18px',
                 padding: '10px 15px',
                 borderRadius: '6px',
                 backgroundColor: 'white',
-                color: '#007BFF',
                 border: '1px solid #ccc',
+                color: '#007BFF',
                 cursor: 'pointer'
               }}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  try {
-                    const content = event.target?.result as string;
-                    const parsed = JSON.parse(content);
-                    if (Array.isArray(parsed)) {
-                      setSavedVostcards(parsed);
-                      console.log('✅ Backup loaded into app state:', parsed);
-                      alert('Backup restored successfully!');
-                    } else {
-                      console.error('❌ Invalid backup format');
-                      alert('Invalid backup file format.');
+            >
+              Choose File
+              <input
+                type="file"
+                accept="application/json"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    try {
+                      const content = event.target?.result as string;
+                      const parsed = JSON.parse(content);
+                      if (Array.isArray(parsed)) {
+                        setSavedVostcards(parsed);
+                        console.log('✅ Backup loaded into app state:', parsed);
+                        alert('Backup restored successfully!');
+                      } else {
+                        console.error('❌ Invalid backup format');
+                        alert('Invalid backup file format.');
+                      }
+                    } catch (error) {
+                      console.error('❌ Error parsing backup:', error);
+                      alert('Failed to load backup.');
                     }
-                  } catch (error) {
-                    console.error('❌ Error parsing backup:', error);
-                    alert('Failed to load backup.');
-                  }
-                };
-                reader.readAsText(file);
-              }}
-            />
+                  };
+                  reader.readAsText(file);
+                }}
+              />
+            </label>
           </div>
           <div style={{ marginTop: '10px' }}>
             <button
