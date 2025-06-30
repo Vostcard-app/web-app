@@ -2,10 +2,11 @@ import { useVostcard } from '../context/VostcardContext';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaHome } from 'react-icons/fa';
+import BackupRestoreComponent from '../components/BackupRestoreComponent';
 
 const SettingsView = () => {
   const navigate = useNavigate();
-  const { savedVostcards, setSavedVostcards } = useVostcard();
+  const { currentVostcard } = useVostcard();
 
   return (
     <>
@@ -30,16 +31,28 @@ const SettingsView = () => {
           onClick={() => navigate('/')} 
         />
       </div>
+      
       <div style={{ padding: '20px' }}>
-
-        <section style={{ marginBottom: '20px' }}>
-          <h2>Manual Backup (iCloud Drive / Local)</h2>
-          <div>
+        {/* Legacy Backup Section (for backward compatibility) */}
+        <section style={{ 
+          marginBottom: '30px', 
+          padding: '20px', 
+          backgroundColor: '#f8f9fa', 
+          borderRadius: '8px',
+          border: '1px solid #e9ecef'
+        }}>
+          <h2 style={{ color: '#6c757d', fontSize: '18px', marginBottom: '15px' }}>
+            Legacy Backup (JSON Format)
+          </h2>
+          <p style={{ color: '#6c757d', fontSize: '14px', marginBottom: '15px' }}>
+            This is the old backup format. For better backup functionality, use the new ZIP-based backup below.
+          </p>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <label
               style={{
                 display: 'inline-block',
-                fontSize: '18px',
-                padding: '10px 15px',
+                fontSize: '14px',
+                padding: '8px 12px',
                 borderRadius: '6px',
                 backgroundColor: 'white',
                 border: '1px solid #ccc',
@@ -47,7 +60,7 @@ const SettingsView = () => {
                 cursor: 'pointer'
               }}
             >
-              Choose File
+              Import JSON
               <input
                 type="file"
                 accept="application/json"
@@ -60,14 +73,8 @@ const SettingsView = () => {
                     try {
                       const content = event.target?.result as string;
                       const parsed = JSON.parse(content);
-                      if (Array.isArray(parsed)) {
-                        setSavedVostcards(parsed);
-                        console.log('✅ Backup loaded into app state:', parsed);
-                        alert('Backup restored successfully!');
-                      } else {
-                        console.error('❌ Invalid backup format');
-                        alert('Invalid backup file format.');
-                      }
+                      console.log('✅ Legacy backup loaded:', parsed);
+                      alert('Legacy backup loaded successfully! Note: This only loads the backup data into memory.');
                     } catch (error) {
                       console.error('❌ Error parsing backup:', error);
                       alert('Failed to load backup.');
@@ -77,32 +84,38 @@ const SettingsView = () => {
                 }}
               />
             </label>
-          </div>
-          <div style={{ marginTop: '10px' }}>
             <button
               style={{
-                fontSize: '18px',
-                padding: '10px 15px',
-                borderRadius: '6px'
+                fontSize: '14px',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                cursor: 'pointer'
               }}
               onClick={() => {
-                const blob = new Blob([JSON.stringify(savedVostcards, null, 2)], {
+                const dataToExport = currentVostcard ? [currentVostcard] : [];
+                const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
                   type: 'application/json',
                 });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'vostcards.json';
+                a.download = 'vostcard-legacy.json';
                 a.click();
                 URL.revokeObjectURL(url);
               }}
             >
-              Download Backup
+              Export Current Vostcard
             </button>
           </div>
         </section>
 
-        <section style={{ marginBottom: '20px' }}>
+        {/* New Backup & Restore Component */}
+        <BackupRestoreComponent />
+
+        <section style={{ marginBottom: '20px', marginTop: '30px' }}>
           <h2>Account</h2>
           <button style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Change Username</button>
           <button style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Change Password</button>
