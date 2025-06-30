@@ -38,6 +38,11 @@ const SettingsView = () => {
             <input
               type="file"
               accept="application/json"
+              style={{
+                fontSize: '18px',
+                padding: '8px 12px',
+                borderRadius: '6px'
+              }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
@@ -65,6 +70,11 @@ const SettingsView = () => {
           </div>
           <div style={{ marginTop: '10px' }}>
             <button
+              style={{
+                fontSize: '18px',
+                padding: '10px 15px',
+                borderRadius: '6px'
+              }}
               onClick={() => {
                 const blob = new Blob([JSON.stringify(savedVostcards, null, 2)], {
                   type: 'application/json',
@@ -84,15 +94,15 @@ const SettingsView = () => {
 
         <section style={{ marginBottom: '20px' }}>
           <h2>Account</h2>
-          <button style={{ marginRight: '10px' }}>Change Username</button>
-          <button style={{ marginRight: '10px' }}>Change Password</button>
-          <button>Logout</button>
+          <button style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Change Username</button>
+          <button style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Change Password</button>
+          <button style={{ fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Logout</button>
         </section>
 
         <section>
           <h2>Other</h2>
-          <button style={{ marginRight: '10px' }}>Suggestion Box</button>
-          <button>Report a Bug</button>
+          <button style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Suggestion Box</button>
+          <button style={{ fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Report a Bug</button>
         </section>
       </div>
     </>
