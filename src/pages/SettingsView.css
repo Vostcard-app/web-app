@@ -1,0 +1,158 @@
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background-color: #002B4D;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin: 10px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 20px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* Webkit scrollbar styling */
+.settings-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.settings-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.settings-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.settings-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e1e5e9;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section h2 {
+  color: #333;
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.settings-section p {
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.legacy-backup {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+/* Button styling */
+.settings-section button {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.settings-section button:hover {
+  background: #0056b3;
+}
+
+.settings-section button:active {
+  transform: translateY(1px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .settings-container {
+    height: 100vh;
+  }
+  
+  .settings-header {
+    margin: 5px;
+    padding: 10px 15px;
+  }
+  
+  .settings-content {
+    padding: 0 15px 15px 15px;
+  }
+  
+  .settings-section {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .settings-section button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    margin-right: 0;
+  }
+  
+  .settings-section button:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-header {
+    padding: 8px 12px;
+  }
+  
+  .settings-content {
+    padding: 0 10px 10px 10px;
+  }
+  
+  .settings-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+}
+
+/* Ensure the backup component fits well within the scrollable area */
+.settings-content .backup-restore-container {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.settings-content .backup-restore-container .section {
+  margin-bottom: 20px;
+}
+
+.settings-content .backup-restore-container .section:last-child {
+  margin-bottom: 0;
+} 

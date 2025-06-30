@@ -7,10 +7,11 @@ import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-ic
 import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
 import { db, auth } from '../firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import VostcardPin from '../assets/Vostcard_pin.png'; // Import the custom pin
 
 // 🔥 Vostcard Pin - Custom Vostcard pin
 const vostcardIcon = new L.Icon({
-  iconUrl: '/Vostcard_pin.svg', // Custom Vostcard pin (SVG)
+  iconUrl: VostcardPin, // Use imported asset
   iconSize: [50, 50],
   iconAnchor: [25, 50],
   popupAnchor: [0, -50],
@@ -96,21 +97,10 @@ const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) 
   return null;
 };
 
-// Function to get the appropriate Vostcard icon (with fallback)
-const getVostcardIcon = () => {
-  // Check if custom pin exists by trying to load it
-  const img = new Image();
-  img.onload = () => {
-    console.log('Custom Vostcard pin loaded successfully');
-  };
-  img.onerror = () => {
-    console.log('Custom Vostcard pin not found, using fallback');
-  };
-  img.src = '/Vostcard_pin.svg';
-  
-  // For now, always use custom pin (fallback will be handled by browser)
+// Helper to get the Vostcard icon (always use custom for now)
+function getVostcardIcon() {
   return vostcardIcon;
-};
+}
 
 const HomeView = () => {
   const navigate = useNavigate();
