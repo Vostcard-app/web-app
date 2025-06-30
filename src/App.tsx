@@ -12,6 +12,7 @@ import CameraView from "./pages/CameraView";
 import SavedVostcardsListView from "./components/SavedVostcardsListView";
 import SettingsView from "./pages/SettingsView";
 import AccountSettingsView from "./pages/AccountSettingsView";
+import MyPrivateVostcardsListView from './pages/MyPrivateVostcardsListView';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         {/* 🏠 Main */}
         <Route path="/home" element={<HomeView />} />
         <Route path="/list" element={<ListView />} />
+        <Route path="/my-private-vostcards" element={<MyPrivateVostcardsListView />} />
 
         {/* 🎥 Vostcard Creation Steps */}
         <Route path="/create-step1" element={<CreateVostcardStep1 />} />
