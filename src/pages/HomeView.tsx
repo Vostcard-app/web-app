@@ -118,6 +118,7 @@ const HomeView = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Load Vostcards from Firebase
   const loadVostcards = async () => {
@@ -244,9 +245,62 @@ const HomeView = () => {
         <h1 style={logoStyle}>Vōstcard</h1>
         <div style={headerRight}>
           <FaUserCircle size={30} style={{ marginRight: 20 }} />
-          <FaBars size={30} />
+          <FaBars
+            size={30}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            style={{ cursor: 'pointer' }}
+          />
         </div>
       </div>
+
+      {isMenuOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '70px',
+            right: '20px',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            padding: '10px',
+            zIndex: 2000,
+          }}
+        >
+          <p
+            style={{ cursor: 'pointer', margin: '8px 0' }}
+            onClick={() => {
+              navigate('/profile');
+              setIsMenuOpen(false);
+            }}
+          >
+            Profile
+          </p>
+          <p
+            style={{ cursor: 'pointer', margin: '8px 0' }}
+            onClick={() => {
+              navigate('/saved-vostcards');
+              setIsMenuOpen(false);
+            }}
+          >
+            My Saved Vōstcards
+          </p>
+          <p
+            style={{ cursor: 'pointer', margin: '8px 0' }}
+            onClick={() => {
+              navigate('/list');
+              setIsMenuOpen(false);
+            }}
+          >
+            List View
+          </p>
+          <p
+            style={{ cursor: 'pointer', margin: '8px 0' }}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Close
+          </p>
+        </div>
+      )}
 
       {/* 🔲 List View Button */}
       <div style={listViewButtonContainer}>
