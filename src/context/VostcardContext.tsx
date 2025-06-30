@@ -32,6 +32,7 @@ interface VostcardContextProps {
   clearVostcard: () => void;
   clearLocalStorage: () => void; // For testing
   postVostcard: () => Promise<void>;
+  localVostcards: Vostcard[];
 }
 
 const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
@@ -545,6 +546,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const getLocalVostcards = (): Vostcard[] => {
+    try {
+      const raw = localStorage.getItem('localVostcards');
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  };
+
   return (
     <VostcardContext.Provider
       value={{
@@ -558,6 +570,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearVostcard,
         clearLocalStorage,
         postVostcard,
+        localVostcards: getLocalVostcards(),
       }}
     >
       {children}

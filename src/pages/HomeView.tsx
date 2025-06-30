@@ -256,7 +256,7 @@ const HomeView = () => {
             zIndex: 2000,
           }}
         >
-          <p onClick={() => { navigate('/saved-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/my-private-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
             My Private Vōstcards
           </p>
           <p onClick={() => { navigate('/posted-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>

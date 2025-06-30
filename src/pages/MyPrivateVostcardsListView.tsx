@@ -1,38 +1,40 @@
-
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
+import '../styles/MyPrivateVostcardsListView.css';
 
-const MyPrivateVostcardsListView = () => {
-  const { savedVostcards } = useVostcard();
+const MyPrivateVostcardsListView: React.FC = () => {
+  const { localVostcards } = useVostcard();
   const navigate = useNavigate();
 
+  // Filter by state === 'private' and sort by createdAt (newest first)
+  const savedVostcards = (localVostcards || [])
+    .filter((v) => v.state === 'private')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>My Private Vōstcards</h1>
+    <div className="vostcard-page">
+      <div className="banner">Vōstcard</div>
+      <h1 className="page-title">My Private Vōstcards</h1>
+
       {savedVostcards.length === 0 ? (
-        <p>No saved Vōstcards yet.</p>
+        <p className="empty-message">No private Vōstcards</p>
       ) : (
-        <div>
+        <ul className="vostcard-list">
           {savedVostcards.map((vostcard) => (
-            <div
-              key={vostcard.id}
-              style={{
-                border: '1px solid #ccc',
-                borderRadius: '8px',
-                padding: '10px',
-                marginBottom: '10px',
-                cursor: 'pointer'
-              }}
-              onClick={() => navigate(`/create-step1?id=${vostcard.id}`)}
-            >
-              <h3>{vostcard.title || 'Untitled'}</h3>
-              <p>{vostcard.description || 'No description'}</p>
-              <p><strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}</p>
-            </div>
+            <li key={vostcard.id} className="vostcard-item">
+              <div className="vostcard-info">
+                <strong>{vostcard.title || 'Untitled'}</strong>
+              </div>
+              <button
+                className="view-button"
+                onClick={() => navigate(`/vostcard/${vostcard.id}`)}
+              >
+                View
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </div>
   );
