@@ -288,6 +288,9 @@ const HomeView = () => {
           <p onClick={() => { navigate('/report-bug'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
             Report a Bug
           </p>
+          <p onClick={() => { navigate('/settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+            Settings
+          </p>
           <p onClick={() => { navigate('/account-settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
             Account Settings
           </p>
