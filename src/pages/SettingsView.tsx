@@ -42,6 +42,9 @@ const SettingsView = () => {
                 fontSize: '18px',
                 padding: '10px 15px',
                 borderRadius: '6px',
+                backgroundColor: 'white',
+                color: '#007BFF',
+                border: '1px solid #ccc',
                 cursor: 'pointer'
               }}
               onChange={(e) => {
