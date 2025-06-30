@@ -40,8 +40,9 @@ const SettingsView = () => {
               accept="application/json"
               style={{
                 fontSize: '18px',
-                padding: '8px 12px',
-                borderRadius: '6px'
+                padding: '10px 15px',
+                borderRadius: '6px',
+                cursor: 'pointer'
               }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
