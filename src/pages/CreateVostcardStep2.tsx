@@ -16,6 +16,8 @@ const CreateVostcardStep2 = () => {
   const [photoType, setPhotoType] = useState<'distant' | 'near' | null>(null);
 
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
+  const cameraFileInput = React.useRef<HTMLInputElement>(null);
+  const libraryFileInput = React.useRef<HTMLInputElement>(null);
 
   const handlePhotoSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -51,18 +53,17 @@ const CreateVostcardStep2 = () => {
     }
   };
 
-  const openFilePicker = (capture: boolean) => {
-    if (hiddenFileInput.current) {
-      hiddenFileInput.current.value = ''; // Reset the input to allow re-selection of the same file
+  const openCamera = () => {
+    if (cameraFileInput.current) {
+      cameraFileInput.current.value = '';
+      cameraFileInput.current.click();
+    }
+  };
 
-      if (capture) {
-        hiddenFileInput.current.setAttribute('capture', 'environment');
-      } else {
-        hiddenFileInput.current.removeAttribute('capture');
-      }
-
-      console.log('File picker opened'); // Debugging log
-      hiddenFileInput.current.click();
+  const openLibrary = () => {
+    if (libraryFileInput.current) {
+      libraryFileInput.current.value = '';
+      libraryFileInput.current.click();
     }
   };
 
@@ -132,6 +133,35 @@ const CreateVostcardStep2 = () => {
         </div>
       </div>
 
+      {/* Camera File Input */}
+      <input
+        ref={cameraFileInput}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          if (photoType) {
+            handlePhotoSelect(e, photoType);
+          }
+          setShowModal(false);
+        }}
+      />
+
+      {/* Library File Input */}
+      <input
+        ref={libraryFileInput}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          if (photoType) {
+            handlePhotoSelect(e, photoType);
+          }
+          setShowModal(false);
+        }}
+      />
+
       {/* ✅ Save & Continue Button */}
       <div style={buttonContainer}>
         <button
@@ -144,20 +174,6 @@ const CreateVostcardStep2 = () => {
         </button>
       </div>
 
-      {/* 🔥 Hidden File Input */}
-      <input
-        ref={hiddenFileInput}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={(e) => {
-          if (photoType) {
-            handlePhotoSelect(e, photoType);
-          }
-          setShowModal(false);
-        }}
-      />
-
       {/* 🚀 Modal */}
       {showModal && (
         <div style={modalOverlay}>
@@ -165,13 +181,13 @@ const CreateVostcardStep2 = () => {
             <h3>Select Photo Source</h3>
             <button
               style={modalButton}
-              onClick={() => openFilePicker(true)}
+              onClick={openCamera}
             >
               📷 Take Photo
             </button>
             <button
               style={modalButton}
-              onClick={() => openFilePicker(false)}
+              onClick={openLibrary}
             >
               🖼️ Choose from Library
             </button>
