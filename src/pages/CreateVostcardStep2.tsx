@@ -78,7 +78,7 @@ const CreateVostcardStep2 = () => {
         setDistantPhoto(url);
         setPhotoLoadError(prev => ({ ...prev, distant: false }));
         
-        // Ensure we have a proper photos array
+        // Get current photos array
         const currentPhotos = currentVostcard?.photos || [];
         let updatedPhotos: Blob[];
         
@@ -105,13 +105,13 @@ const CreateVostcardStep2 = () => {
         setNearPhoto(url);
         setPhotoLoadError(prev => ({ ...prev, near: false }));
         
-        // Ensure we have a proper photos array
+        // Get current photos array
         const currentPhotos = currentVostcard?.photos || [];
         let updatedPhotos: Blob[];
         
         if (currentPhotos.length === 0) {
           // No photos yet, create array with this photo at index 1
-          updatedPhotos = [new Blob(), file];
+          updatedPhotos = [file]; // Start with just this photo
         } else if (currentPhotos.length === 1) {
           // One photo exists, add this photo at index 1
           updatedPhotos = [currentPhotos[0], file];
@@ -148,8 +148,12 @@ const CreateVostcardStep2 = () => {
       // Clear any existing value
       inputRef.current.value = '';
       
-      // Trigger the file input
-      inputRef.current.click();
+      // Add a small delay for iOS Safari
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.click();
+        }
+      }, 100);
     }
   };
 
@@ -163,6 +167,12 @@ const CreateVostcardStep2 = () => {
         photosCount: currentVostcard?.photos?.length || 0,
         photoSizes: currentVostcard?.photos?.map(p => p.size) || []
       });
+      
+      // Validate that we have the required data
+      if (!currentVostcard?.video) {
+        alert('Video is required. Please record a video first.');
+        return;
+      }
       
       // Automatically save as private when continuing
       await saveLocalVostcard();

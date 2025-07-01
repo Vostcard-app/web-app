@@ -43,70 +43,32 @@ const DB_VERSION = 1;
 const VIDEO_STORE = 'videos';
 const PHOTO_STORE = 'photos';
 
-// Initialize IndexedDB
+// Initialize IndexedDB - Fixed to not delete database every time
 const initDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
-    // First, try to delete the existing database to ensure clean state
-    const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     
-    deleteRequest.onsuccess = () => {
-      console.log('🗑️ Existing database deleted, creating new one...');
-      
-      // Now create the new database
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        console.log('✅ IndexedDB initialized successfully');
-        resolve(request.result);
-      };
-      
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        console.log('🔄 Creating IndexedDB object stores...');
-        
-        // Create video store
-        if (!db.objectStoreNames.contains(VIDEO_STORE)) {
-          db.createObjectStore(VIDEO_STORE, { keyPath: 'id' });
-          console.log('✅ Video store created');
-        }
-        
-        // Create photo store
-        if (!db.objectStoreNames.contains(PHOTO_STORE)) {
-          db.createObjectStore(PHOTO_STORE, { keyPath: 'id' });
-          console.log('✅ Photo store created');
-        }
-      };
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => {
+      console.log('✅ IndexedDB opened successfully');
+      resolve(request.result);
     };
     
-    deleteRequest.onerror = () => {
-      console.log('⚠️ Could not delete existing database, trying to open...');
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      console.log('🔄 Creating IndexedDB object stores...');
       
-      // Fallback: try to open existing database
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      // Create video store
+      if (!db.objectStoreNames.contains(VIDEO_STORE)) {
+        db.createObjectStore(VIDEO_STORE, { keyPath: 'id' });
+        console.log('✅ Video store created');
+      }
       
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        console.log('✅ IndexedDB opened successfully');
-        resolve(request.result);
-      };
-      
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        console.log('🔄 Upgrading IndexedDB object stores...');
-        
-        // Create video store
-        if (!db.objectStoreNames.contains(VIDEO_STORE)) {
-          db.createObjectStore(VIDEO_STORE, { keyPath: 'id' });
-          console.log('✅ Video store created');
-        }
-        
-        // Create photo store
-        if (!db.objectStoreNames.contains(PHOTO_STORE)) {
-          db.createObjectStore(PHOTO_STORE, { keyPath: 'id' });
-          console.log('✅ Photo store created');
-        }
-      };
+      // Create photo store
+      if (!db.objectStoreNames.contains(PHOTO_STORE)) {
+        db.createObjectStore(PHOTO_STORE, { keyPath: 'id' });
+        console.log('✅ Photo store created');
+      }
     };
   });
 };
