@@ -98,6 +98,32 @@ const CreateVostcardStep1: React.FC = () => {
     );
   };
 
+  // Function to lock screen orientation to portrait
+  const lockOrientationToPortrait = async () => {
+    if ('screen' in window && 'orientation' in window.screen) {
+      try {
+        // @ts-ignore - Screen Orientation API
+        await window.screen.orientation.lock('portrait');
+        console.log('🔒 Screen orientation locked to portrait');
+      } catch (error) {
+        console.log('⚠️ Could not lock screen orientation:', error);
+      }
+    }
+  };
+
+  // Function to unlock screen orientation
+  const unlockOrientation = async () => {
+    if ('screen' in window && 'orientation' in window.screen) {
+      try {
+        // @ts-ignore - Screen Orientation API
+        await window.screen.orientation.unlock();
+        console.log('🔓 Screen orientation unlocked');
+      } catch (error) {
+        console.log('⚠️ Could not unlock screen orientation:', error);
+      }
+    }
+  };
+
   // Detect if we're on a mobile device
   useEffect(() => {
     const checkMobile = () => {
@@ -117,22 +143,26 @@ const CreateVostcardStep1: React.FC = () => {
     console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight, 'Orientation:', isLandscape ? 'landscape' : 'portrait');
   };
 
-  const handleRecord = () => {
+  const handleRecord = async () => {
     if (locationPermission !== 'granted') {
       alert('Location permission is required to record a Vostcard. Please enable location services first.');
       return;
     }
+    
+    // Lock orientation to portrait before recording
+    await lockOrientationToPortrait();
+    
     navigate('/scrolling-camera');
   };
 
-  const handleSaveAndContinue = () => {
+  const handleSaveAndContinue = async () => {
     if (!video) {
       alert('Please record a video first.');
       return;
     }
     
     // Automatically save as private when continuing
-    saveLocalVostcard();
+    await saveLocalVostcard();
     navigate('/create-step2');
   };
 
@@ -142,6 +172,8 @@ const CreateVostcardStep1: React.FC = () => {
   useEffect(() => {
     console.log('Video object:', video);
     console.log('Video URL:', videoURL);
+    console.log('Video blob size:', video?.size);
+    console.log('Video blob type:', video?.type);
   }, [video, videoURL]);
 
   // Cleanup blob URL when component unmounts
@@ -159,17 +191,7 @@ const CreateVostcardStep1: React.FC = () => {
       objectFit: 'cover' as const,
     };
 
-    // If we're on mobile and the video is landscape (which is common for mobile recordings)
-    if (isMobile && videoOrientation === 'landscape') {
-      return {
-        ...baseStyles,
-        transform: 'rotate(90deg)',
-        transformOrigin: 'center center',
-        width: '272px', // Swap width and height for rotated video
-        height: '192px',
-      };
-    }
-
+    // For landscape thumbnail, we don't need rotation
     return {
       ...baseStyles,
       width: '100%',
@@ -293,8 +315,8 @@ const CreateVostcardStep1: React.FC = () => {
         {videoURL ? (
           <div
             style={{
-              width: '192px',
-              height: '272px',
+              width: '272px',
+              height: '192px',
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -310,14 +332,17 @@ const CreateVostcardStep1: React.FC = () => {
               preload="metadata"
               style={getVideoStyles()}
               onLoadedMetadata={handleVideoLoad}
+              onError={(e) => console.error('Video error:', e)}
+              onLoadStart={() => console.log('Video load started')}
+              onCanPlay={() => console.log('Video can play')}
             />
           </div>
         ) : (
           <div
             onClick={locationPermission === 'granted' ? handleRecord : undefined}
             style={{
-              width: 192,
-              height: 272,
+              width: 272,
+              height: 192,
               backgroundColor: '#F2F2F2',
               borderRadius: 16,
               display: 'flex',

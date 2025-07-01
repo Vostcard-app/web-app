@@ -11,7 +11,7 @@ const ScrollingCameraView: React.FC = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [recording, setRecording] = useState(false);
-  const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('user');
+  const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('environment');
   const [countdown, setCountdown] = useState(30);
 
   const startCamera = async () => {
@@ -123,6 +123,42 @@ const ScrollingCameraView: React.FC = () => {
       }, 1000);
     }
   };
+
+  // Function to lock screen orientation to portrait
+  const lockOrientationToPortrait = async () => {
+    if ('screen' in window && 'orientation' in window.screen) {
+      try {
+        // @ts-ignore - Screen Orientation API
+        await window.screen.orientation.lock('portrait');
+        console.log('🔒 Screen orientation locked to portrait for recording');
+      } catch (error) {
+        console.log('⚠️ Could not lock screen orientation:', error);
+      }
+    }
+  };
+
+  // Function to unlock screen orientation
+  const unlockOrientation = async () => {
+    if ('screen' in window && 'orientation' in window.screen) {
+      try {
+        // @ts-ignore - Screen Orientation API
+        await window.screen.orientation.unlock();
+        console.log('🔓 Screen orientation unlocked');
+      } catch (error) {
+        console.log('⚠️ Could not unlock screen orientation:', error);
+      }
+    }
+  };
+
+  // Lock orientation when component mounts
+  useEffect(() => {
+    lockOrientationToPortrait();
+    
+    // Unlock orientation when component unmounts
+    return () => {
+      unlockOrientation();
+    };
+  }, []);
 
   return (
     <div

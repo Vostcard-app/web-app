@@ -118,9 +118,9 @@ const CreateVostcardStep3: React.FC = () => {
     }
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     // This saves as private (updates the existing private Vostcard)
-    saveLocalVostcard();
+    await saveLocalVostcard();
     alert('Vōstcard saved! You can find it in My Private Vōstcards.');
     navigate('/home');
   };

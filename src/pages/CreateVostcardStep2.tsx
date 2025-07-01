@@ -83,11 +83,25 @@ const CreateVostcardStep2 = () => {
     }
   };
 
-  const handleSaveAndContinue = () => {
-    // Automatically save as private when continuing
-    saveLocalVostcard();
-    console.log('📸 Proceeding to Step 3 with photos:', currentVostcard?.photos?.length || 0);
-    navigate('/create-step3');
+  const handleSaveAndContinue = async () => {
+    try {
+      console.log('📸 Starting save and continue process...');
+      console.log('📸 Current Vostcard state:', {
+        id: currentVostcard?.id,
+        hasVideo: !!currentVostcard?.video,
+        videoSize: currentVostcard?.video?.size,
+        photosCount: currentVostcard?.photos?.length || 0,
+        photoSizes: currentVostcard?.photos?.map(p => p.size) || []
+      });
+      
+      // Automatically save as private when continuing
+      await saveLocalVostcard();
+      console.log('📸 Save completed successfully, proceeding to Step 3');
+      navigate('/create-step3');
+    } catch (error) {
+      console.error('📸 Error in handleSaveAndContinue:', error);
+      alert('Failed to save Vostcard. Please try again.');
+    }
   };
 
   return (
@@ -156,7 +170,10 @@ const CreateVostcardStep2 = () => {
       <div style={buttonContainer}>
         <button
           style={button}
-          onClick={handleSaveAndContinue}
+          onClick={() => {
+            console.log('📸 Save & Continue button clicked');
+            handleSaveAndContinue();
+          }}
         >
           Save & Continue
         </button>
