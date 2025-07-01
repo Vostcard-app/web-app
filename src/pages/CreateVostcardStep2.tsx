@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCamera } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
@@ -10,6 +10,10 @@ const CreateVostcardStep2 = () => {
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
   const [photoLoadError, setPhotoLoadError] = useState({ distant: false, near: false });
+  
+  // Refs for file inputs to handle iOS Safari issues
+  const distantInputRef = useRef<HTMLInputElement>(null);
+  const nearInputRef = useRef<HTMLInputElement>(null);
 
   // Restore photos when component mounts or currentVostcard changes
   useEffect(() => {
@@ -51,12 +55,16 @@ const CreateVostcardStep2 = () => {
     event: React.ChangeEvent<HTMLInputElement>,
     type: 'distant' | 'near'
   ) => {
+    console.log('📸 handlePhotoSelect triggered for:', type);
+    console.log('📸 Event target files:', event.target.files);
+    
     const file = event.target.files?.[0];
     if (file) {
       console.log('📸 Photo selected:', {
         type,
         fileSize: file.size,
         fileType: file.type,
+        fileName: file.name,
         currentPhotosCount: currentVostcard?.photos?.length || 0,
         userAgent: navigator.userAgent,
         isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
@@ -69,30 +77,79 @@ const CreateVostcardStep2 = () => {
       if (type === 'distant') {
         setDistantPhoto(url);
         setPhotoLoadError(prev => ({ ...prev, distant: false }));
-        // Store in photos array at index 0
+        
+        // Ensure we have a proper photos array
         const currentPhotos = currentVostcard?.photos || [];
-        const updatedPhotos = [file, ...currentPhotos.slice(1)];
+        let updatedPhotos: Blob[];
+        
+        if (currentPhotos.length === 0) {
+          // No photos yet, create array with this photo at index 0
+          updatedPhotos = [file];
+        } else if (currentPhotos.length === 1) {
+          // One photo exists, replace index 0 and keep index 1 if it exists
+          updatedPhotos = [file, currentPhotos[1]];
+        } else {
+          // Two photos exist, replace index 0
+          updatedPhotos = [file, currentPhotos[1]];
+        }
+        
         console.log('📸 Updating photos array for distant:', {
           oldCount: currentPhotos.length,
           newCount: updatedPhotos.length,
-          photo1Size: updatedPhotos[0]?.size
+          photo1Size: updatedPhotos[0]?.size,
+          photo2Size: updatedPhotos[1]?.size
         });
+        
         updateVostcard({ photos: updatedPhotos });
       } else {
         setNearPhoto(url);
         setPhotoLoadError(prev => ({ ...prev, near: false }));
-        // Store in photos array at index 1
+        
+        // Ensure we have a proper photos array
         const currentPhotos = currentVostcard?.photos || [];
-        const updatedPhotos = [...currentPhotos.slice(0, 1), file];
+        let updatedPhotos: Blob[];
+        
+        if (currentPhotos.length === 0) {
+          // No photos yet, create array with this photo at index 1
+          updatedPhotos = [new Blob(), file];
+        } else if (currentPhotos.length === 1) {
+          // One photo exists, add this photo at index 1
+          updatedPhotos = [currentPhotos[0], file];
+        } else {
+          // Two photos exist, replace index 1
+          updatedPhotos = [currentPhotos[0], file];
+        }
+        
         console.log('📸 Updating photos array for near:', {
           oldCount: currentPhotos.length,
           newCount: updatedPhotos.length,
+          photo1Size: updatedPhotos[0]?.size,
           photo2Size: updatedPhotos[1]?.size
         });
+        
         updateVostcard({ photos: updatedPhotos });
       }
+      
+      // Clear the input value to allow selecting the same file again
+      event.target.value = '';
     } else {
       console.log('📸 No file selected for', type);
+    }
+  };
+
+  // Handle photo capture with better iOS Safari support
+  const handlePhotoCapture = (type: 'distant' | 'near') => {
+    console.log('📸 handlePhotoCapture triggered for:', type);
+    
+    // For iOS Safari, we need to ensure the input is properly reset
+    const inputRef = type === 'distant' ? distantInputRef : nearInputRef;
+    
+    if (inputRef.current) {
+      // Clear any existing value
+      inputRef.current.value = '';
+      
+      // Trigger the file input
+      inputRef.current.click();
     }
   };
 
@@ -146,7 +203,10 @@ const CreateVostcardStep2 = () => {
       <div style={thumbnailsContainer}>
         {/* Distant */}
         <div style={thumbnail}>
-          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+          <div 
+            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}
+            onClick={() => handlePhotoCapture('distant')}
+          >
             {distantPhoto ? (
               <img
                 src={distantPhoto}
@@ -170,18 +230,22 @@ const CreateVostcardStep2 = () => {
               (Suggested)
             </p>
             <input
+              ref={distantInputRef}
               type="file"
               accept="image/*"
               capture="environment"
               onChange={(e) => handlePhotoSelect(e, 'distant')}
               style={{ display: 'none' }}
             />
-          </label>
+          </div>
         </div>
 
         {/* Near */}
         <div style={thumbnail}>
-          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+          <div 
+            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}
+            onClick={() => handlePhotoCapture('near')}
+          >
             {nearPhoto ? (
               <img
                 src={nearPhoto}
@@ -205,13 +269,14 @@ const CreateVostcardStep2 = () => {
               (Suggested)
             </p>
             <input
+              ref={nearInputRef}
               type="file"
               accept="image/*"
               capture="environment"
               onChange={(e) => handlePhotoSelect(e, 'near')}
               style={{ display: 'none' }}
             />
-          </label>
+          </div>
         </div>
       </div>
 
