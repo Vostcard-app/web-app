@@ -197,83 +197,55 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // ✅ Save Vostcard to Firebase
   const saveVostcard = async () => {
-    if (!currentVostcard) {
-      console.log('💾 saveVostcard: No currentVostcard to save');
+    if (!currentVostcard || !currentVostcard.video) {
+      alert('No video to save!');
       return;
     }
-
     const user = auth.currentUser;
     if (!user) {
       alert('Please log in to save Vostcards');
       return;
     }
 
-    const safePhotos = currentVostcard.photos || [];
-    
-    console.log('💾 saveVostcard: Starting save process for Vostcard:', {
-      id: currentVostcard.id,
-      hasVideo: !!currentVostcard.video,
-      videoSize: currentVostcard.video?.size,
-      photosCount: safePhotos.length,
-      photoSizes: safePhotos.map(p => p.size)
-    });
-
     try {
-      const vostcardId = currentVostcard.id;
+      const vostcardId = currentVostcard.id || uuidv4();
       const userID = user.uid;
-      
-      // Upload video to Firebase Storage
-      let videoURL = null;
-      if (currentVostcard.video) {
-        console.log('💾 Uploading video to Firebase Storage...');
-        const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
-        const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
-        videoURL = await getDownloadURL(videoSnap.ref);
-        console.log('✅ Video uploaded successfully');
-      }
 
-      // Upload photos to Firebase Storage
-      const photoURLs = [];
-      if (safePhotos.length > 0) {
-        console.log('💾 Uploading photos to Firebase Storage...');
-        for (let i = 0; i < safePhotos.length; i++) {
-          const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
-          const photoSnap = await uploadBytes(photoRef, safePhotos[i]);
-          const photoURL = await getDownloadURL(photoSnap.ref);
-          photoURLs.push(photoURL);
-        }
-        console.log('✅ Photos uploaded successfully');
-      }
+      // 1. Upload video to Firebase Storage
+      const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
+      const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
+      const videoURL = await getDownloadURL(videoSnap.ref);
 
-      const username = user.displayName || user.email?.split('@')[0] || 'Unknown';
-
-      // Save to Firestore
-      console.log('💾 Saving Vostcard metadata to Firestore...');
+      // 2. Save metadata to Firestore
       const docRef = doc(db, 'vostcards', vostcardId);
       await setDoc(docRef, {
         id: vostcardId,
-        title: currentVostcard.title,
-        description: currentVostcard.description,
-        categories: currentVostcard.categories,
-        username: username,
-        userID: userID,
-        videoURL: videoURL,
-        photoURLs: photoURLs,
-        latitude: currentVostcard.geo?.latitude,
-        longitude: currentVostcard.geo?.longitude,
-        avatarURL: user.photoURL || '',
+        userID,
+        username: user.displayName || user.email?.split('@')[0] || 'Unknown',
+        state: "private",
+        videoURL,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        state: "private"
+        // No photos, title, description, or categories yet
       });
 
-      console.log('✅ Vostcard saved successfully');
-      
-      // Refresh the list
+      // 3. Update context state (optional)
+      setCurrentVostcard({
+        ...currentVostcard,
+        id: vostcardId,
+        video: currentVostcard.video,
+        videoURL,
+        state: "private",
+        userID,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      // 4. Optionally, refresh the private vostcards list
       await loadPrivateVostcards();
-      
+
     } catch (error) {
-      console.error('❌ Error saving Vostcard:', error);
+      console.error('Error saving Vostcard:', error);
       alert('Failed to save Vostcard. Please try again.');
     }
   };
