@@ -222,9 +222,9 @@ const HomeView = () => {
   }, []);
 
   const handleCreateVostcard = () => {
-    // Don't clear the Vostcard context here - let it persist through the creation flow
-    // Only clear when starting a completely new Vostcard or when explicitly needed
-    console.log('🎬 Starting Vostcard creation - preserving existing context data');
+    // Clear the Vostcard context when starting a new Vostcard creation
+    console.log('🎬 Starting Vostcard creation - clearing previous context data');
+    clearVostcard();
     navigate('/create-step1');
   };
 

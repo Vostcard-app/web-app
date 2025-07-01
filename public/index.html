@@ -1,28 +1,13 @@
-import React, { useState } from 'react';
-
-const HamburgerMenu: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-
-  return (
-    <div>
-      <button onClick={toggleMenu} aria-label="Toggle menu">
-        ☰
-      </button>
-      {isOpen && (
-        <ul>
-          <li style={{ fontSize: '20px' }}>My Vōstcards</li>
-          <li style={{ fontSize: '20px' }}>Create Vōstcard</li>
-          <li style={{ fontSize: '20px' }}>Settings</li>
-          <li style={{ fontSize: '20px' }}>Help</li>
-          <li style={{ fontSize: '20px' }}>Logout</li>
-        </ul>
-      )}
-    </div>
-  );
-};
-
-export default HamburgerMenu;
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vōstcard</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -160,12 +160,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
     
+    // Ensure photos is always an array
+    const safePhotos = currentVostcard.photos || [];
+    
     console.log('💾 saveLocalVostcard: Starting save process for Vostcard:', {
       id: currentVostcard.id,
       hasVideo: !!currentVostcard.video,
       videoSize: currentVostcard.video?.size,
-      photosCount: currentVostcard.photos.length,
-      photoSizes: currentVostcard.photos.map(p => p.size)
+      photosCount: safePhotos.length,
+      photoSizes: safePhotos.map(p => p.size)
     });
     
     // Convert Blob objects to base64 strings for localStorage serialization
@@ -187,9 +190,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.log('💾 Video converted to base64, length:', base64.length);
         
         // Convert photos Blobs to base64
-        if (currentVostcard.photos.length > 0) {
+        if (safePhotos.length > 0) {
           console.log('💾 Converting photos to base64...');
-          const photoPromises = currentVostcard.photos.map((photo, index) => {
+          const photoPromises = safePhotos.map((photo, index) => {
             return new Promise<string>((resolve) => {
               const reader = new FileReader();
               reader.onload = () => {
@@ -227,9 +230,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       reader.readAsDataURL(currentVostcard.video);
     } else {
       // No video, just handle photos
-      if (currentVostcard.photos.length > 0) {
+      if (safePhotos.length > 0) {
         console.log('💾 Converting photos to base64 (no video)...');
-        const photoPromises = currentVostcard.photos.map((photo, index) => {
+        const photoPromises = safePhotos.map((photo, index) => {
           return new Promise<string>((resolve) => {
             const reader = new FileReader();
             reader.onload = () => {

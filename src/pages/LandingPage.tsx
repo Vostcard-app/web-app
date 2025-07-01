@@ -26,6 +26,17 @@ export default function LandingPage() {
         alt="Vōstcard Landing"
         className="landing-image"
         onClick={handleImageTap}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          const fallback = document.createElement('div');
+          fallback.innerText = 'Image not found. Tap anywhere to continue.';
+          fallback.style.color = '#002B4D';
+          fallback.style.fontSize = '18px';
+          fallback.style.textAlign = 'center';
+          fallback.style.marginTop = '20px';
+          target.parentElement?.appendChild(fallback);
+        }}
       />
     </div>
   );
