@@ -90,7 +90,7 @@ const CreateVostcardStep2 = () => {
         }
         
         updateVostcard({ photos: updatedPhotos });
-      } else {
+      } else if (type === 'near') {
         setNearPhoto(url);
         setPhotoLoadError(prev => ({ ...prev, near: false }));
         
