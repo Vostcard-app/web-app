@@ -88,22 +88,32 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: 'video/webm' });
-        console.log('Video Blob:', blob);
+        // Use MP4 format for better iOS compatibility
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const videoType = isIOS ? 'video/mp4' : 'video/webm';
+        
+        const blob = new Blob(recordedChunks, { type: videoType });
+        console.log('🎥 Video Blob created:', {
+          size: blob.size,
+          type: blob.type,
+          isIOS: isIOS,
+          userAgent: navigator.userAgent
+        });
+        
         setCurrentVostcard((prev) => {
           const newId = prev?.id || Date.now().toString();
-          console.log('Saving Vostcard with ID:', newId);
+          console.log('💾 Saving Vostcard with ID:', newId);
           return {
             ...prev,
             id: newId,
             video: blob,
           };
         });
-        console.log('Navigating to Step 1 with video blob:', blob);
+        console.log('🎬 Navigating to Step 1 with video blob');
         if (blob) {
           navigate('/create-step1');
         } else {
-          console.error('No video blob to navigate with.');
+          console.error('❌ No video blob to navigate with.');
         }
       };
 

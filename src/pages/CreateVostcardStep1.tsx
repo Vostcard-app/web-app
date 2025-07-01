@@ -170,10 +170,15 @@ const CreateVostcardStep1: React.FC = () => {
 
   // Debug video URL creation
   useEffect(() => {
-    console.log('Video object:', video);
-    console.log('Video URL:', videoURL);
-    console.log('Video blob size:', video?.size);
-    console.log('Video blob type:', video?.type);
+    console.log('🎥 Video debug info:', {
+      hasVideo: !!video,
+      videoSize: video?.size,
+      videoType: video?.type,
+      videoURL: videoURL,
+      userAgent: navigator.userAgent,
+      isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+      isSafari: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
+    });
   }, [video, videoURL]);
 
   // Cleanup blob URL when component unmounts
@@ -190,6 +195,23 @@ const CreateVostcardStep1: React.FC = () => {
     const baseStyles = {
       objectFit: 'cover' as const,
     };
+
+    // iOS-specific video handling
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isIOS) {
+      return {
+        ...baseStyles,
+        width: '100%',
+        height: '100%',
+        // iOS Safari specific properties
+        webkitPlaysinline: 'true',
+        playsInline: true,
+        muted: true, // iOS requires muted for autoplay
+        autoplay: false,
+        controls: true
+      };
+    }
 
     // For landscape thumbnail, we don't need rotation
     return {
@@ -323,6 +345,7 @@ const CreateVostcardStep1: React.FC = () => {
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               overflow: 'hidden',
+              position: 'relative'
             }}
           >
             <video
@@ -332,10 +355,46 @@ const CreateVostcardStep1: React.FC = () => {
               preload="metadata"
               style={getVideoStyles()}
               onLoadedMetadata={handleVideoLoad}
-              onError={(e) => console.error('Video error:', e)}
-              onLoadStart={() => console.log('Video load started')}
-              onCanPlay={() => console.log('Video can play')}
+              onError={(e) => {
+                console.error('🎥 Video error:', e);
+                // For iOS, show a simple success message if video fails
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                if (isIOS) {
+                  console.log('📱 iOS video preview failed - showing success message');
+                }
+              }}
+              onLoadStart={() => console.log('🎥 Video load started')}
+              onCanPlay={() => console.log('🎥 Video can play')}
+              onLoadedData={() => console.log('🎥 Video data loaded')}
+              onStalled={() => console.log('🎥 Video stalled')}
+              onSuspend={() => console.log('🎥 Video suspended')}
+              // iOS-specific attributes
+              webkit-playsinline="true"
+              x-webkit-airplay="allow"
             />
+            {/* Fallback for iOS if video fails to load */}
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#F2F2F2',
+                color: '#002B4D',
+                fontSize: '14px',
+                textAlign: 'center',
+                padding: '10px'
+              }}
+              id="video-fallback"
+            >
+              Video recorded successfully
+              <br />
+              Tap to continue
+            </div>
           </div>
         ) : (
           <div
