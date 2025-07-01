@@ -551,8 +551,56 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const raw = localStorage.getItem('localVostcards');
       if (!raw) return [];
       const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    } catch {
+      if (!Array.isArray(arr)) return [];
+      
+      // Convert base64 data back to Blob objects for each Vostcard
+      return arr.map((vostcard: any) => {
+        const restoredVostcard = {
+          ...vostcard,
+          video: null as Blob | null,
+          photos: [] as Blob[]
+        };
+
+        // Convert video base64 back to Blob
+        if (vostcard._videoBase64) {
+          try {
+            const videoBase64 = vostcard._videoBase64;
+            const videoBytes = atob(videoBase64.split(',')[1]);
+            const videoArray = new Uint8Array(videoBytes.length);
+            for (let i = 0; i < videoBytes.length; i++) {
+              videoArray[i] = videoBytes.charCodeAt(i);
+            }
+            restoredVostcard.video = new Blob([videoArray], { type: 'video/webm' });
+          } catch (error) {
+            console.error('Error converting video base64 to Blob:', error);
+          }
+        }
+
+        // Convert photos base64 back to Blobs
+        if (vostcard._photosBase64 && vostcard._photosBase64.length > 0) {
+          try {
+            const photoBlobs = vostcard._photosBase64.map((photoBase64: string) => {
+              const photoBytes = atob(photoBase64.split(',')[1]);
+              const photoArray = new Uint8Array(photoBytes.length);
+              for (let i = 0; i < photoBytes.length; i++) {
+                photoArray[i] = photoBytes.charCodeAt(i);
+              }
+              return new Blob([photoArray], { type: 'image/jpeg' });
+            });
+            restoredVostcard.photos = photoBlobs;
+          } catch (error) {
+            console.error('Error converting photos base64 to Blobs:', error);
+          }
+        }
+
+        // Remove the base64 fields from the restored object
+        delete restoredVostcard._videoBase64;
+        delete restoredVostcard._photosBase64;
+
+        return restoredVostcard;
+      });
+    } catch (error) {
+      console.error('Error getting local Vostcards:', error);
       return [];
     }
   };
