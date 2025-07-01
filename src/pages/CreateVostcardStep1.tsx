@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaLocationArrow, FaExclamationTriangle } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import './CreateVostcardStep1.css';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
@@ -239,28 +240,10 @@ const CreateVostcardStep1: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: 'white',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="step1-container">
       {/* 🔵 Header */}
-      <div
-        style={{
-          backgroundColor: '#002B4D',
-          height: 80,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-        }}
-      >
-        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
-          Vōstcard
-        </div>
+      <div className="header">
+        <h1>Vōstcard</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
             onClick={handleStartOver}
@@ -336,14 +319,7 @@ const CreateVostcardStep1: React.FC = () => {
       )}
 
       {/* 🎥 Thumbnail */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         {videoURL ? (
           <div
             style={{
@@ -415,30 +391,12 @@ const CreateVostcardStep1: React.FC = () => {
         )}
       </div>
 
-      {/* 🔘 Buttons - ALWAYS SHOW */}
-      <div
-        style={{
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          backgroundColor: 'white',
-          borderTop: '1px solid #eee',
-        }}
-      >
+      {/* 🔘 Buttons */}
+      <div style={{ marginTop: 'auto', padding: '20px' }}>
         {!video ? (
           <button
             onClick={handleRecord}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '16px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-            }}
+            className="save-button"
           >
             Record
           </button>
@@ -446,16 +404,8 @@ const CreateVostcardStep1: React.FC = () => {
           <>
             <button
               onClick={handleSaveAndContinue}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-              }}
+              className="save-button"
+              style={{ marginBottom: '12px' }}
             >
               Save & Continue
             </button>
@@ -470,6 +420,7 @@ const CreateVostcardStep1: React.FC = () => {
                 fontSize: '16px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
+                width: '100%',
               }}
             >
               Record Again
