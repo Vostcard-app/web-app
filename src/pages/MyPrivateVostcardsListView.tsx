@@ -12,11 +12,6 @@ const MyPrivateVostcardsListView = () => {
     loadPrivateVostcards();
   }, [loadPrivateVostcards]);
 
-  // Filter by state === 'private' and sort by createdAt (newest first)
-  const savedVostcards = (privateVostcards || [])
-    .filter((v) => v.state === 'private')
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
       {/* 🔵 Header with Home Icon */}
@@ -39,10 +34,10 @@ const MyPrivateVostcardsListView = () => {
 
       {/* 🔲 List of Saved Vostcards */}
       <div style={{ padding: '20px' }}>
-        {savedVostcards.length === 0 ? (
+        {privateVostcards.length === 0 ? (
           <p>No saved Vōstcards found.</p>
         ) : (
-          savedVostcards.map((vostcard) => (
+          privateVostcards.map((vostcard) => (
             <div key={vostcard.id} style={{
               border: '1px solid #ccc',
               borderRadius: '8px',
@@ -53,19 +48,34 @@ const MyPrivateVostcardsListView = () => {
               <h2 style={{ margin: '0 0 8px 0' }}>{vostcard.title || 'Untitled Vōstcard'}</h2>
               <p>{vostcard.description || 'No description provided.'}</p>
               <p><strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}</p>
-              <button
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => navigate(`/edit-vostcard/${vostcard.id}`)}
-              >
-                Edit
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  style={{
+                    backgroundColor: '#002B4D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => navigate(`/edit-vostcard/${vostcard.id}`)}
+                >
+                  Edit
+                </button>
+                <button
+                  style={{
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => navigate(`/post-vostcard/${vostcard.id}`)}
+                >
+                  Post
+                </button>
+              </div>
             </div>
           ))
         )}
