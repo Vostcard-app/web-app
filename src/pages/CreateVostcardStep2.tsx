@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaCamera } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2 = () => {
@@ -9,6 +9,7 @@ const CreateVostcardStep2 = () => {
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
+  const [photoLoadError, setPhotoLoadError] = useState({ distant: false, near: false });
 
   // Restore photos when component mounts or currentVostcard changes
   useEffect(() => {
@@ -26,6 +27,7 @@ const CreateVostcardStep2 = () => {
         const photo2Url = URL.createObjectURL(currentVostcard.photos[1]);
         setDistantPhoto(photo1Url);
         setNearPhoto(photo2Url);
+        setPhotoLoadError({ distant: false, near: false });
         
         console.log('📸 Restored photos from context:', {
           photo1Size: currentVostcard.photos[0]?.size,
@@ -35,11 +37,13 @@ const CreateVostcardStep2 = () => {
         });
       } catch (error) {
         console.error('❌ Error restoring photos:', error);
+        setPhotoLoadError({ distant: true, near: true });
       }
     } else {
       console.log('📸 No photos to restore or insufficient photos');
       setDistantPhoto(null);
       setNearPhoto(null);
+      setPhotoLoadError({ distant: false, near: false });
     }
   }, [currentVostcard]);
 
@@ -49,16 +53,22 @@ const CreateVostcardStep2 = () => {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
       console.log('📸 Photo selected:', {
         type,
         fileSize: file.size,
         fileType: file.type,
-        currentPhotosCount: currentVostcard?.photos?.length || 0
+        currentPhotosCount: currentVostcard?.photos?.length || 0,
+        userAgent: navigator.userAgent,
+        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
+        isSafari: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
       });
 
+      // Create URL for immediate display
+      const url = URL.createObjectURL(file);
+      
       if (type === 'distant') {
         setDistantPhoto(url);
+        setPhotoLoadError(prev => ({ ...prev, distant: false }));
         // Store in photos array at index 0
         const currentPhotos = currentVostcard?.photos || [];
         const updatedPhotos = [file, ...currentPhotos.slice(1)];
@@ -70,6 +80,7 @@ const CreateVostcardStep2 = () => {
         updateVostcard({ photos: updatedPhotos });
       } else {
         setNearPhoto(url);
+        setPhotoLoadError(prev => ({ ...prev, near: false }));
         // Store in photos array at index 1
         const currentPhotos = currentVostcard?.photos || [];
         const updatedPhotos = [...currentPhotos.slice(0, 1), file];
@@ -80,6 +91,8 @@ const CreateVostcardStep2 = () => {
         });
         updateVostcard({ photos: updatedPhotos });
       }
+    } else {
+      console.log('📸 No file selected for', type);
     }
   };
 
@@ -104,6 +117,18 @@ const CreateVostcardStep2 = () => {
     }
   };
 
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (distantPhoto) {
+        URL.revokeObjectURL(distantPhoto);
+      }
+      if (nearPhoto) {
+        URL.revokeObjectURL(nearPhoto);
+      }
+    };
+  }, [distantPhoto, nearPhoto]);
+
   return (
     <div style={container}>
       {/* 🔵 Header */}
@@ -121,12 +146,24 @@ const CreateVostcardStep2 = () => {
       <div style={thumbnailsContainer}>
         {/* Distant */}
         <div style={thumbnail}>
-          <label style={{ cursor: 'pointer' }}>
-            <img
-              src={distantPhoto || '/placeholder.png'}
-              alt="Distant"
-              style={imageIcon}
-            />
+          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+            {distantPhoto ? (
+              <img
+                src={distantPhoto}
+                alt="Distant"
+                style={imageIcon}
+                onError={() => {
+                  console.error('📸 Error loading distant photo');
+                  setPhotoLoadError(prev => ({ ...prev, distant: true }));
+                }}
+                onLoad={() => {
+                  console.log('📸 Distant photo loaded successfully');
+                  setPhotoLoadError(prev => ({ ...prev, distant: false }));
+                }}
+              />
+            ) : (
+              <FaCamera size={50} color="#002B4D" style={{ marginBottom: '10px' }} />
+            )}
             <p style={label}>
               Distant
               <br />
@@ -144,12 +181,24 @@ const CreateVostcardStep2 = () => {
 
         {/* Near */}
         <div style={thumbnail}>
-          <label style={{ cursor: 'pointer' }}>
-            <img
-              src={nearPhoto || '/placeholder.png'}
-              alt="Near"
-              style={imageIcon}
-            />
+          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+            {nearPhoto ? (
+              <img
+                src={nearPhoto}
+                alt="Near"
+                style={imageIcon}
+                onError={() => {
+                  console.error('📸 Error loading near photo');
+                  setPhotoLoadError(prev => ({ ...prev, near: true }));
+                }}
+                onLoad={() => {
+                  console.log('📸 Near photo loaded successfully');
+                  setPhotoLoadError(prev => ({ ...prev, near: false }));
+                }}
+              />
+            ) : (
+              <FaCamera size={50} color="#002B4D" style={{ marginBottom: '10px' }} />
+            )}
             <p style={label}>
               Near
               <br />
@@ -227,7 +276,7 @@ const thumbnailsContainer = {
 
 const thumbnail = {
   backgroundColor: '#F3F3F3',
-  width: '210px', // ✅ 25% smaller
+  width: '210px',
   height: '210px',
   borderRadius: '20px',
   display: 'flex',
@@ -241,6 +290,7 @@ const imageIcon = {
   height: '50px',
   marginBottom: '10px',
   objectFit: 'cover' as 'cover',
+  borderRadius: '8px',
 };
 
 const label = {
