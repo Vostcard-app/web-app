@@ -1,49 +1,28 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vōstcard - Under Construction</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
-      font-family: sans-serif;
-    }
-    img {
-      width: 300px;
-      cursor: pointer;
-    }
-    .message {
-      margin-top: 20px;
-      color: #555;
-      font-size: 16px;
-    }
-  </style>
-</head>
-<body>
+import React, { useState } from 'react';
 
-  <img id="sign" src="/underconstruction.jpg" alt="Under Construction">
+const HamburgerMenu: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
 
-  <div class="message">(Tap the sign 3 times)</div>
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
 
-  <script>
-    let tapCount = 0;
-    const sign = document.getElementById('sign');
+  return (
+    <div>
+      <button onClick={toggleMenu} aria-label="Toggle menu">
+        ☰
+      </button>
+      {isOpen && (
+        <ul>
+          <li style={{ fontSize: '20px' }}>My Vōstcards</li>
+          <li style={{ fontSize: '20px' }}>Create Vōstcard</li>
+          <li style={{ fontSize: '20px' }}>Settings</li>
+          <li style={{ fontSize: '20px' }}>Help</li>
+          <li style={{ fontSize: '20px' }}>Logout</li>
+        </ul>
+      )}
+    </div>
+  );
+};
 
-    sign.addEventListener('click', () => {
-      tapCount++;
-      if (tapCount >= 3) {
-        window.location.href = '/home';
-      }
-      setTimeout(() => tapCount = 0, 2000);
-    });
-  </script>
-
-</body>
-</html>
+export default HamburgerMenu;

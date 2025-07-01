@@ -256,38 +256,38 @@ const HomeView = () => {
             zIndex: 2000,
           }}
         >
-          <p onClick={() => { navigate('/my-private-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/my-private-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             My Private Vōstcards
           </p>
-          <p onClick={() => { navigate('/posted-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/posted-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             My Posted Vōstcards
           </p>
-          <p onClick={() => { navigate('/edit-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/edit-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Edit My Vōstcards
           </p>
           <hr />
-          <p onClick={() => { navigate('/liked'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/liked'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Liked Vōstcards
           </p>
-          <p onClick={() => { navigate('/following'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/following'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Following
           </p>
-          <p onClick={() => { navigate('/suggestion-box'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/suggestion-box'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Suggestion Box
           </p>
-          <p onClick={() => { navigate('/report-bug'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/report-bug'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Report a Bug
           </p>
-          <p onClick={() => { navigate('/settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Settings
           </p>
-          <p onClick={() => { navigate('/account-settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/account-settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Account Settings
           </p>
-          <p onClick={() => { navigate('/logout'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => { navigate('/logout'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Logout
           </p>
-          <p onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer', margin: '8px 0' }}>
+          <p onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
             Close
           </p>
         </div>
