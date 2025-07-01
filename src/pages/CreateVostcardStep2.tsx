@@ -48,9 +48,37 @@ const CreateVostcardStep2 = () => {
     e.target.value = '';
   };
 
+  const handleChooseOption = (type: 'distant' | 'near') => {
+    const choice = window.confirm('Tap OK to Take Photo, Cancel to Select from Files');
+    if (choice) {
+      // Open camera
+      if (type === 'distant') {
+        distantInputRef.current?.setAttribute('capture', 'environment');
+        distantInputRef.current?.click();
+      } else {
+        nearInputRef.current?.setAttribute('capture', 'environment');
+        nearInputRef.current?.click();
+      }
+    } else {
+      // Open file picker
+      if (type === 'distant') {
+        distantInputRef.current?.removeAttribute('capture');
+        distantInputRef.current?.click();
+      } else {
+        nearInputRef.current?.removeAttribute('capture');
+        nearInputRef.current?.click();
+      }
+    }
+  };
+
   const handleSaveAndContinue = async () => {
-    await saveVostcard();
-    navigate('/create-step3');
+    try {
+      await saveVostcard();
+      navigate('/create-step3');
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert('Save failed, check console.');
+    }
   };
 
   return (
@@ -69,47 +97,41 @@ const CreateVostcardStep2 = () => {
       {/* Thumbnails */}
       <div style={thumbnailsContainer}>
         {/* Distant */}
-        <div style={thumbnail}>
-          <label style={labelStyle}>
-            {distantPhoto ? (
-              <img src={distantPhoto} alt="Distant" style={imageStyle} />
-            ) : (
-              <div style={placeholder}>
-                <FaCamera size={32} color="#002B4D" />
-                <span>Distant (Suggested)</span>
-              </div>
-            )}
-            <input
-              ref={distantInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: 'none' }}
-              onChange={(e) => handlePhotoSelect(e, 'distant')}
-            />
-          </label>
+        <div style={thumbnail} onClick={() => handleChooseOption('distant')}>
+          {distantPhoto ? (
+            <img src={distantPhoto} alt="Distant" style={imageStyle} />
+          ) : (
+            <div style={placeholder}>
+              <FaCamera size={32} color="#002B4D" />
+              <span>Distant (Suggested)</span>
+            </div>
+          )}
+          <input
+            ref={distantInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={(e) => handlePhotoSelect(e, 'distant')}
+          />
         </div>
 
         {/* Near */}
-        <div style={thumbnail}>
-          <label style={labelStyle}>
-            {nearPhoto ? (
-              <img src={nearPhoto} alt="Near" style={imageStyle} />
-            ) : (
-              <div style={placeholder}>
-                <FaCamera size={32} color="#002B4D" />
-                <span>Near (Suggested)</span>
-              </div>
-            )}
-            <input
-              ref={nearInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              style={{ display: 'none' }}
-              onChange={(e) => handlePhotoSelect(e, 'near')}
-            />
-          </label>
+        <div style={thumbnail} onClick={() => handleChooseOption('near')}>
+          {nearPhoto ? (
+            <img src={nearPhoto} alt="Near" style={imageStyle} />
+          ) : (
+            <div style={placeholder}>
+              <FaCamera size={32} color="#002B4D" />
+              <span>Near (Suggested)</span>
+            </div>
+          )}
+          <input
+            ref={nearInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={(e) => handlePhotoSelect(e, 'near')}
+          />
         </div>
       </div>
 
@@ -167,6 +189,7 @@ const thumbnail = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  cursor: 'pointer',
 };
 
 const placeholder = {
