@@ -1,3 +1,61 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaCamera } from 'react-icons/fa';
+import { useVostcard } from '../context/VostcardContext';
+
+const CreateVostcardStep2 = () => {
+  const navigate = useNavigate();
+  const { currentVostcard, updateVostcard, saveVostcard } = useVostcard();
+
+  const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
+  const [nearPhoto, setNearPhoto] = useState<string | null>(null);
+  const [photoLoadError, setPhotoLoadError] = useState({ distant: false, near: false });
+  
+  // Refs for file inputs to handle iOS Safari issues
+  const distantInputRef = useRef<HTMLInputElement>(null);
+  const nearInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore photos when component mounts or currentVostcard changes
+  useEffect(() => {
+    console.log('📸 Step 2 - Current Vostcard photos:', {
+      photosCount: currentVostcard?.photos?.length || 0,
+      photos: currentVostcard?.photos,
+      hasPhoto1: !!currentVostcard?.photos?.[0],
+      hasPhoto2: !!currentVostcard?.photos?.[1]
+    });
+    
+    if (currentVostcard?.photos && currentVostcard.photos.length >= 2) {
+      try {
+        // Create URLs for the stored photo blobs
+        const photo1Url = URL.createObjectURL(currentVostcard.photos[0]);
+        const photo2Url = URL.createObjectURL(currentVostcard.photos[1]);
+        setDistantPhoto(photo1Url);
+        setNearPhoto(photo2Url);
+        setPhotoLoadError({ distant: false, near: false });
+        
+        console.log('📸 Restored photos from context:', {
+          photo1Size: currentVostcard.photos[0]?.size,
+          photo2Size: currentVostcard.photos[1]?.size,
+          photo1Url: photo1Url,
+          photo2Url: photo2Url
+        });
+      } catch (error) {
+        console.error('❌ Error restoring photos:', error);
+        setPhotoLoadError({ distant: true, near: true });
+      }
+    } else {
+      console.log('📸 No photos to restore or insufficient photos');
+      setDistantPhoto(null);
+      setNearPhoto(null);
+      setPhotoLoadError({ distant: false, near: false });
+    }
+  }, [currentVostcard]);
+
+  const handlePhotoSelect = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    type: 'distant' | 'near'
+  ) => {
+    console.log('📸 handlePhotoSelect triggered for:', type);
     
     const file = event.target.files?.[0];
     if (file) {
@@ -114,7 +172,6 @@
                 src={distantPhoto}
                 alt="Distant"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
-import React, { useState, useEffect, useRef } from 'react';
               />
             ) : (
               <div style={placeholder}>
@@ -167,63 +224,6 @@ import React, { useState, useEffect, useRef } from 'react';
         </button>
       </div>
     </div>
-import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaCamera } from 'react-icons/fa';
-import { useVostcard } from '../context/VostcardContext';
-
-const CreateVostcardStep2 = () => {
-  const navigate = useNavigate();
-  const { currentVostcard, updateVostcard, saveVostcard } = useVostcard();
-
-  const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
-  const [nearPhoto, setNearPhoto] = useState<string | null>(null);
-  const [photoLoadError, setPhotoLoadError] = useState({ distant: false, near: false });
-  
-  // Refs for file inputs to handle iOS Safari issues
-  const distantInputRef = useRef<HTMLInputElement>(null);
-  const nearInputRef = useRef<HTMLInputElement>(null);
-
-  // Restore photos when component mounts or currentVostcard changes
-  useEffect(() => {
-    console.log('📸 Step 2 - Current Vostcard photos:', {
-      photosCount: currentVostcard?.photos?.length || 0,
-      photos: currentVostcard?.photos,
-      hasPhoto1: !!currentVostcard?.photos?.[0],
-      hasPhoto2: !!currentVostcard?.photos?.[1]
-    });
-    
-    if (currentVostcard?.photos && currentVostcard.photos.length >= 2) {
-      try {
-        // Create URLs for the stored photo blobs
-        const photo1Url = URL.createObjectURL(currentVostcard.photos[0]);
-        const photo2Url = URL.createObjectURL(currentVostcard.photos[1]);
-        setDistantPhoto(photo1Url);
-        setNearPhoto(photo2Url);
-        setPhotoLoadError({ distant: false, near: false });
-        
-        console.log('📸 Restored photos from context:', {
-          photo1Size: currentVostcard.photos[0]?.size,
-          photo2Size: currentVostcard.photos[1]?.size,
-          photo1Url: photo1Url,
-          photo2Url: photo2Url
-        });
-      } catch (error) {
-        console.error('❌ Error restoring photos:', error);
-        setPhotoLoadError({ distant: true, near: true });
-      }
-    } else {
-      console.log('📸 No photos to restore or insufficient photos');
-      setDistantPhoto(null);
-      setNearPhoto(null);
-      setPhotoLoadError({ distant: false, near: false });
-    }
-  }, [currentVostcard]);
-
-  const handlePhotoSelect = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    type: 'distant' | 'near'
-  ) => {
-    console.log('📸 handlePhotoSelect triggered for:', type);
   );
 };
 
@@ -250,25 +250,58 @@ const header = {
 
 const logo = {
   color: 'white',
-  fontSize: '28px',
+  fontSize: '24px',
   margin: 0,
 };
 
 const thumbnailsContainer = {
   display: 'flex',
   flexDirection: 'column' as 'column',
-  gap: '30px',
-  marginTop: '60px',
+  gap: '20px',
+  padding: '20px',
+  width: '100%',
+  maxWidth: '400px',
+  flex: 1,
 };
 
 const thumbnail = {
-  backgroundColor: '#F3F3F3',
-  width: '210px',
-  height: '210px',
-  borderRadius: '20px',
+  width: '100%',
+  height: '200px',
+  border: '2px dashed #ccc',
+  borderRadius: '8px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#f9f9f9',
+};
+
+const placeholder = {
   display: 'flex',
   flexDirection: 'column' as 'column',
+  alignItems: 'center',
   justifyContent: 'center',
+  color: '#666',
+};
+
+const buttonContainer = {
+  padding: '20px',
+  width: '100%',
+  maxWidth: '400px',
+};
+
+const saveButton = {
+  width: '100%',
+  padding: '15px',
+  backgroundColor: '#002B4D',
+  color: 'white',
+  border: 'none',
+  borderRadius: '8px',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  cursor: 'pointer',
+};
+
+export default CreateVostcardStep2;
   alignItems: 'center',
     
     const file = event.target.files?.[0];
