@@ -137,26 +137,6 @@ const CreateVostcardStep2 = () => {
     }
   };
 
-  // Handle photo capture with better iOS Safari support
-  const handlePhotoCapture = (type: 'distant' | 'near') => {
-    console.log('📸 handlePhotoCapture triggered for:', type);
-    
-    // For iOS Safari, we need to ensure the input is properly reset
-    const inputRef = type === 'distant' ? distantInputRef : nearInputRef;
-    
-    if (inputRef.current) {
-      // Clear any existing value
-      inputRef.current.value = '';
-      
-      // Add a small delay for iOS Safari
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.click();
-        }
-      }, 100);
-    }
-  };
-
   const handleSaveAndContinue = async () => {
     try {
       console.log('📸 Starting save and continue process...');
@@ -213,10 +193,7 @@ const CreateVostcardStep2 = () => {
       <div style={thumbnailsContainer}>
         {/* Distant */}
         <div style={thumbnail}>
-          <div 
-            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}
-            onClick={() => handlePhotoCapture('distant')}
-          >
+          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
             {distantPhoto ? (
               <img
                 src={distantPhoto}
@@ -247,15 +224,12 @@ const CreateVostcardStep2 = () => {
               onChange={(e) => handlePhotoSelect(e, 'distant')}
               style={{ display: 'none' }}
             />
-          </div>
+          </label>
         </div>
 
         {/* Near */}
         <div style={thumbnail}>
-          <div 
-            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}
-            onClick={() => handlePhotoCapture('near')}
-          >
+          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
             {nearPhoto ? (
               <img
                 src={nearPhoto}
@@ -286,7 +260,7 @@ const CreateVostcardStep2 = () => {
               onChange={(e) => handlePhotoSelect(e, 'near')}
               style={{ display: 'none' }}
             />
-          </div>
+          </label>
         </div>
       </div>
 
