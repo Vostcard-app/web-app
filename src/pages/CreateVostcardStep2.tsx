@@ -53,11 +53,15 @@ const CreateVostcardStep2 = () => {
 
   const openFilePicker = (capture: boolean) => {
     if (hiddenFileInput.current) {
+      hiddenFileInput.current.value = ''; // Reset the input to allow re-selection of the same file
+
       if (capture) {
         hiddenFileInput.current.setAttribute('capture', 'environment');
       } else {
         hiddenFileInput.current.removeAttribute('capture');
       }
+
+      console.log('File picker opened'); // Debugging log
       hiddenFileInput.current.click();
     }
   };
