@@ -2,38 +2,46 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebaseConfig';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
   const { currentVostcard, setCurrentVostcard } = useVostcard();
 
-  const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
-  const [nearPhoto, setNearPhoto] = useState<string | null>(null);
+  const [distantPhoto, setDistantPhoto] = useState<string | null>(currentVostcard?.photo1URL || null);
+  const [nearPhoto, setNearPhoto] = useState<string | null>(currentVostcard?.photo2URL || null);
 
-  const handlePhotoSelect = (
+  const handlePhotoSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: 'distant' | 'near'
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
+      const storageRef = ref(storage, `vostcard-photos/${file.name}`);
+      try {
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
 
-      if (type === 'distant') {
-        setDistantPhoto(url);
-        setCurrentVostcard((prev: any) => ({
-          ...prev,
-          photo1: file,
-          photo1Preview: url,
-        }));
-      }
+        if (type === 'distant') {
+          setDistantPhoto(downloadURL);
+          setCurrentVostcard((prev: any) => ({
+            ...prev,
+            photo1: file,
+            photo1URL: downloadURL,
+          }));
+        }
 
-      if (type === 'near') {
-        setNearPhoto(url);
-        setCurrentVostcard((prev: any) => ({
-          ...prev,
-          photo2: file,
-          photo2Preview: url,
-        }));
+        if (type === 'near') {
+          setNearPhoto(downloadURL);
+          setCurrentVostcard((prev: any) => ({
+            ...prev,
+            photo2: file,
+            photo2URL: downloadURL,
+          }));
+        }
+      } catch (error) {
+        console.error('Upload failed', error);
       }
     }
   };
@@ -127,7 +135,7 @@ const container = {
   width: '100vw',
   backgroundColor: 'white',
   display: 'flex',
-  flexDirection: 'column' as 'column',
+  flexDirection: 'column' as const,
   alignItems: 'center',
 };
 
@@ -139,7 +147,7 @@ const header = {
   justifyContent: 'space-around',
   alignItems: 'center',
   padding: '0 20px',
-  boxSizing: 'border-box' as 'border-box',
+  boxSizing: 'border-box' as const,
 };
 
 const logo = {
@@ -150,18 +158,18 @@ const logo = {
 
 const thumbnailsContainer = {
   display: 'flex',
-  flexDirection: 'column' as 'column',
+  flexDirection: 'column' as const,
   gap: '30px',
   marginTop: '20px',
 };
 
 const thumbnail = {
   backgroundColor: '#F3F3F3',
-  width: '210px', // ✅ 25% smaller
+  width: '210px',
   height: '210px',
   borderRadius: '20px',
   display: 'flex',
-  flexDirection: 'column' as 'column',
+  flexDirection: 'column' as const,
   justifyContent: 'center',
   alignItems: 'center',
 };
@@ -170,13 +178,13 @@ const imageIcon = {
   width: '50px',
   height: '50px',
   marginBottom: '10px',
-  objectFit: 'cover' as 'cover',
+  objectFit: 'cover' as const,
 };
 
 const label = {
   color: '#002B4D',
   fontSize: '18px',
-  textAlign: 'center' as 'center',
+  textAlign: 'center' as const,
   margin: 0,
 };
 
