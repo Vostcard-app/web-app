@@ -34,6 +34,7 @@ interface VostcardContextProps {
   postVostcard: () => Promise<void>;
   localVostcards: Vostcard[];
   debugLocalStorage: () => void;
+  loadLocalVostcards: () => void;
 }
 
 const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
@@ -118,6 +119,53 @@ const deleteBlobFromIndexedDB = async (storeName: string, id: string): Promise<v
 
 export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
+  const [localVostcards, setLocalVostcards] = useState<Vostcard[]>([]);
+
+  // Load local Vostcards on mount and refresh when needed
+  const loadLocalVostcards = () => {
+    try {
+      const raw = localStorage.getItem('localVostcards');
+      console.log('🔍 Loading local Vostcards from localStorage:', raw);
+      
+      if (!raw) {
+        console.log('🔍 No localVostcards found in localStorage');
+        setLocalVostcards([]);
+        return;
+      }
+      
+      const arr = JSON.parse(raw);
+      console.log('🔍 Parsed localVostcards array:', arr);
+      console.log('🔍 Number of Vostcards found:', arr.length);
+      
+      if (!Array.isArray(arr)) {
+        console.log('🔍 localStorage data is not an array');
+        setLocalVostcards([]);
+        return;
+      }
+      
+      // Return Vostcards with metadata only (blobs will be loaded on demand)
+      const vostcards = arr.map((vostcard: any) => {
+        // Remove IndexedDB reference fields for the list view
+        const { _hasVideo, _hasPhotos, _videoId, _photoIds, ...cleanVostcard } = vostcard;
+        return {
+          ...cleanVostcard,
+          video: null, // Blobs will be loaded when needed
+          photos: []
+        };
+      });
+      
+      console.log('🔍 Processed Vostcards for display:', vostcards);
+      setLocalVostcards(vostcards);
+    } catch (error) {
+      console.error('❌ Error getting local Vostcards:', error);
+      setLocalVostcards([]);
+    }
+  };
+
+  // Load on mount
+  useEffect(() => {
+    loadLocalVostcards();
+  }, []);
 
   // Debug currentVostcard changes
   useEffect(() => {
@@ -285,6 +333,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ];
       localStorage.setItem('localVostcards', JSON.stringify(updated));
       console.log('💾 Vostcard metadata saved to localStorage');
+      
+      // Refresh the localVostcards list after saving
+      loadLocalVostcards();
       
     } catch (error) {
       console.error('💾 Error saving Vostcard:', error);
@@ -576,29 +627,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const getLocalVostcards = (): Vostcard[] => {
-    try {
-      const raw = localStorage.getItem('localVostcards');
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      if (!Array.isArray(arr)) return [];
-      
-      // Return Vostcards with metadata only (blobs will be loaded on demand)
-      return arr.map((vostcard: any) => {
-        // Remove IndexedDB reference fields for the list view
-        const { _hasVideo, _hasPhotos, _videoId, _photoIds, ...cleanVostcard } = vostcard;
-        return {
-          ...cleanVostcard,
-          video: null, // Blobs will be loaded when needed
-          photos: []
-        };
-      });
-    } catch (error) {
-      console.error('Error getting local Vostcards:', error);
-      return [];
-    }
-  };
-
   // Add this function to the VostcardProvider component
   const debugLocalStorage = () => {
     try {
@@ -642,8 +670,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearVostcard,
         clearLocalStorage,
         postVostcard,
-        localVostcards: getLocalVostcards(),
+        localVostcards: localVostcards,
         debugLocalStorage,
+        loadLocalVostcards,
       }}
     >
       {children}

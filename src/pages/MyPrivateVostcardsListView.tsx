@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const MyPrivateVostcardsListView = () => {
   const navigate = useNavigate();
-  const { localVostcards } = useVostcard();
+  const { privateVostcards, loadPrivateVostcards } = useVostcard();
+
+  // Load private Vostcards when component mounts
+  useEffect(() => {
+    loadPrivateVostcards();
+  }, [loadPrivateVostcards]);
 
   // Filter by state === 'private' and sort by createdAt (newest first)
-  const savedVostcards = (localVostcards || [])
+  const savedVostcards = (privateVostcards || [])
     .filter((v) => v.state === 'private')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 

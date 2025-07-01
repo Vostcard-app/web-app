@@ -1,11 +1,179 @@
+    
+    const file = event.target.files?.[0];
+    if (file) {
+      console.log('📸 Photo selected:', {
+        type,
+        fileSize: file.size,
+        fileType: file.type,
+        fileName: file.name,
+        currentPhotosCount: currentVostcard?.photos?.length || 0
+      });
+
+      // Create URL for immediate display
+      const url = URL.createObjectURL(file);
+      
+      if (type === 'distant') {
+        setDistantPhoto(url);
+        setPhotoLoadError(prev => ({ ...prev, distant: false }));
+        
+        // Get current photos array
+        const currentPhotos = currentVostcard?.photos || [];
+        let updatedPhotos: Blob[];
+        
+        if (currentPhotos.length === 0) {
+          // No photos yet, create array with this photo at index 0
+          updatedPhotos = [file];
+        } else if (currentPhotos.length === 1) {
+          // One photo exists, replace index 0 and keep index 1 if it exists
+          updatedPhotos = [file, currentPhotos[1]];
+        } else {
+          // Two photos exist, replace index 0
+          updatedPhotos = [file, currentPhotos[1]];
+        }
+        
+        updateVostcard({ photos: updatedPhotos });
+      } else {
+        setNearPhoto(url);
+        setPhotoLoadError(prev => ({ ...prev, near: false }));
+        
+        // Get current photos array
+        const currentPhotos = currentVostcard?.photos || [];
+        let updatedPhotos: Blob[];
+        
+        if (currentPhotos.length === 0) {
+          // No photos yet, create array with this photo at index 1
+          updatedPhotos = [file];
+        } else if (currentPhotos.length === 1) {
+          // One photo exists, add this photo at index 1
+          updatedPhotos = [currentPhotos[0], file];
+        } else {
+          // Two photos exist, replace index 1
+          updatedPhotos = [currentPhotos[0], file];
+        }
+        
+        updateVostcard({ photos: updatedPhotos });
+      }
+      
+      // Clear the input value to allow selecting the same file again
+      event.target.value = '';
+    }
+  };
+
+  const handleSaveAndContinue = async () => {
+    try {
+      console.log('📸 Starting save and continue process...');
+      
+      // Validate that we have the required data
+      if (!currentVostcard?.video) {
+        alert('Video is required. Please record a video first.');
+        return;
+      }
+      
+      // Save to Firebase
+      await saveVostcard();
+      console.log('📸 Save completed successfully, proceeding to Step 3');
+      navigate('/create-step3');
+    } catch (error) {
+      console.error('📸 Error in handleSaveAndContinue:', error);
+      alert('Failed to save Vostcard. Please try again.');
+    }
+  };
+
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (distantPhoto) {
+        URL.revokeObjectURL(distantPhoto);
+      }
+      if (nearPhoto) {
+        URL.revokeObjectURL(nearPhoto);
+      }
+    };
+  }, [distantPhoto, nearPhoto]);
+
+  return (
+    <div style={container}>
+      {/* 🔵 Header */}
+      <div style={header}>
+        <h1 style={logo}>Vōstcard</h1>
+        <FaArrowLeft
+          size={24}
+          color="white"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate('/create-step1')}
+        />
+      </div>
+
+      {/* 🔲 Thumbnails */}
+      <div style={thumbnailsContainer}>
+        {/* Distant */}
+        <div style={thumbnail}>
+          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+            {distantPhoto ? (
+              <img
+                src={distantPhoto}
+                alt="Distant"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
 import React, { useState, useEffect, useRef } from 'react';
+              />
+            ) : (
+              <div style={placeholder}>
+                <FaCamera size={32} color="#666" />
+                <span style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>Distant Photo</span>
+              </div>
+            )}
+            <input
+              ref={distantInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={(e) => handlePhotoSelect(e, 'distant')}
+            />
+          </label>
+        </div>
+
+        {/* Near */}
+        <div style={thumbnail}>
+          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+            {nearPhoto ? (
+              <img
+                src={nearPhoto}
+                alt="Near"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
+              />
+            ) : (
+              <div style={placeholder}>
+                <FaCamera size={32} color="#666" />
+                <span style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>Near Photo</span>
+              </div>
+            )}
+            <input
+              ref={nearInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: 'none' }}
+              onChange={(e) => handlePhotoSelect(e, 'near')}
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* 🔘 Save & Continue Button */}
+      <div style={buttonContainer}>
+        <button style={saveButton} onClick={handleSaveAndContinue}>
+          Save & Continue
+        </button>
+      </div>
+    </div>
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCamera } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
-  const { currentVostcard, updateVostcard, saveLocalVostcard } = useVostcard();
+  const { currentVostcard, updateVostcard, saveVostcard } = useVostcard();
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
@@ -56,236 +224,6 @@ const CreateVostcardStep2 = () => {
     type: 'distant' | 'near'
   ) => {
     console.log('📸 handlePhotoSelect triggered for:', type);
-    console.log('📸 Event target files:', event.target.files);
-    
-    const file = event.target.files?.[0];
-    if (file) {
-      console.log('📸 Photo selected:', {
-        type,
-        fileSize: file.size,
-        fileType: file.type,
-        fileName: file.name,
-        currentPhotosCount: currentVostcard?.photos?.length || 0,
-        userAgent: navigator.userAgent,
-        isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent),
-        isSafari: /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)
-      });
-
-      // Create URL for immediate display
-      const url = URL.createObjectURL(file);
-      
-      if (type === 'distant') {
-        setDistantPhoto(url);
-        setPhotoLoadError(prev => ({ ...prev, distant: false }));
-        
-        // Get current photos array
-        const currentPhotos = currentVostcard?.photos || [];
-        let updatedPhotos: Blob[];
-        
-        if (currentPhotos.length === 0) {
-          // No photos yet, create array with this photo at index 0
-          updatedPhotos = [file];
-        } else if (currentPhotos.length === 1) {
-          // One photo exists, replace index 0 and keep index 1 if it exists
-          updatedPhotos = [file, currentPhotos[1]];
-        } else {
-          // Two photos exist, replace index 0
-          updatedPhotos = [file, currentPhotos[1]];
-        }
-        
-        console.log('📸 Updating photos array for distant:', {
-          oldCount: currentPhotos.length,
-          newCount: updatedPhotos.length,
-          photo1Size: updatedPhotos[0]?.size,
-          photo2Size: updatedPhotos[1]?.size
-        });
-        
-        updateVostcard({ photos: updatedPhotos });
-      } else {
-        setNearPhoto(url);
-        setPhotoLoadError(prev => ({ ...prev, near: false }));
-        
-        // Get current photos array
-        const currentPhotos = currentVostcard?.photos || [];
-        let updatedPhotos: Blob[];
-        
-        if (currentPhotos.length === 0) {
-          // No photos yet, create array with this photo at index 1
-          updatedPhotos = [file]; // Start with just this photo
-        } else if (currentPhotos.length === 1) {
-          // One photo exists, add this photo at index 1
-          updatedPhotos = [currentPhotos[0], file];
-        } else {
-          // Two photos exist, replace index 1
-          updatedPhotos = [currentPhotos[0], file];
-        }
-        
-        console.log('📸 Updating photos array for near:', {
-          oldCount: currentPhotos.length,
-          newCount: updatedPhotos.length,
-          photo1Size: updatedPhotos[0]?.size,
-          photo2Size: updatedPhotos[1]?.size
-        });
-        
-        updateVostcard({ photos: updatedPhotos });
-      }
-      
-      // Clear the input value to allow selecting the same file again
-      event.target.value = '';
-    } else {
-      console.log('📸 No file selected for', type);
-    }
-  };
-
-  const handleSaveAndContinue = async () => {
-    try {
-      console.log('📸 Starting save and continue process...');
-      console.log('📸 Current Vostcard state:', {
-        id: currentVostcard?.id,
-        hasVideo: !!currentVostcard?.video,
-        videoSize: currentVostcard?.video?.size,
-        photosCount: currentVostcard?.photos?.length || 0,
-        photoSizes: currentVostcard?.photos?.map(p => p.size) || []
-      });
-      
-      // Validate that we have the required data
-      if (!currentVostcard?.video) {
-        alert('Video is required. Please record a video first.');
-        return;
-      }
-      
-      // Automatically save as private when continuing
-      await saveLocalVostcard();
-      console.log('📸 Save completed successfully, proceeding to Step 3');
-      navigate('/create-step3');
-    } catch (error) {
-      console.error('📸 Error in handleSaveAndContinue:', error);
-      alert('Failed to save Vostcard. Please try again.');
-    }
-  };
-
-  // Cleanup blob URLs when component unmounts
-  useEffect(() => {
-    return () => {
-      if (distantPhoto) {
-        URL.revokeObjectURL(distantPhoto);
-      }
-      if (nearPhoto) {
-        URL.revokeObjectURL(nearPhoto);
-      }
-    };
-  }, [distantPhoto, nearPhoto]);
-
-  return (
-    <div style={container}>
-      {/* 🔵 Header */}
-      <div style={header}>
-        <h1 style={logo}>Vōstcard</h1>
-        <FaArrowLeft
-          size={24}
-          color="white"
-          style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/create-step1')}
-        />
-      </div>
-
-      {/* 🔲 Thumbnails */}
-      <div style={thumbnailsContainer}>
-        {/* Distant */}
-        <div style={thumbnail}>
-          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-            {distantPhoto ? (
-              <img
-                src={distantPhoto}
-                alt="Distant"
-                style={imageIcon}
-                onError={() => {
-                  console.error('📸 Error loading distant photo');
-                  setPhotoLoadError(prev => ({ ...prev, distant: true }));
-                }}
-                onLoad={() => {
-                  console.log('📸 Distant photo loaded successfully');
-                  setPhotoLoadError(prev => ({ ...prev, distant: false }));
-                }}
-              />
-            ) : (
-              <FaCamera size={50} color="#002B4D" style={{ marginBottom: '10px' }} />
-            )}
-            <p style={label}>
-              Distant
-              <br />
-              (Suggested)
-            </p>
-            <input
-              ref={distantInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handlePhotoSelect(e, 'distant')}
-              style={{ display: 'none' }}
-            />
-          </label>
-        </div>
-
-        {/* Near */}
-        <div style={thumbnail}>
-          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
-            {nearPhoto ? (
-              <img
-                src={nearPhoto}
-                alt="Near"
-                style={imageIcon}
-                onError={() => {
-                  console.error('📸 Error loading near photo');
-                  setPhotoLoadError(prev => ({ ...prev, near: true }));
-                }}
-                onLoad={() => {
-                  console.log('📸 Near photo loaded successfully');
-                  setPhotoLoadError(prev => ({ ...prev, near: false }));
-                }}
-              />
-            ) : (
-              <FaCamera size={50} color="#002B4D" style={{ marginBottom: '10px' }} />
-            )}
-            <p style={label}>
-              Near
-              <br />
-              (Suggested)
-            </p>
-            <input
-              ref={nearInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handlePhotoSelect(e, 'near')}
-              style={{ display: 'none' }}
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* ✅ Save & Continue Button */}
-      <div style={buttonContainer}>
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '10px',
-          fontSize: '14px',
-          color: '#666',
-          fontStyle: 'italic'
-        }}>
-          Photos are optional - you can add them later
-        </div>
-        <button
-          style={button}
-          onClick={() => {
-            console.log('📸 Save & Continue button clicked');
-            handleSaveAndContinue();
-          }}
-        >
-          Save & Continue to Step 3
-        </button>
-      </div>
-    </div>
   );
 };
 
@@ -332,30 +270,134 @@ const thumbnail = {
   flexDirection: 'column' as 'column',
   justifyContent: 'center',
   alignItems: 'center',
+    
+    const file = event.target.files?.[0];
+    if (file) {
+      console.log('📸 Photo selected:', {
+        type,
+        fileSize: file.size,
+        fileType: file.type,
+        fileName: file.name,
+        currentPhotosCount: currentVostcard?.photos?.length || 0
+      });
+
+      // Create URL for immediate display
+      const url = URL.createObjectURL(file);
+      
+      if (type === 'distant') {
+        setDistantPhoto(url);
+        setPhotoLoadError(prev => ({ ...prev, distant: false }));
+        
+        // Get current photos array
+        const currentPhotos = currentVostcard?.photos || [];
+        let updatedPhotos: Blob[];
+        
+        if (currentPhotos.length === 0) {
+          // No photos yet, create array with this photo at index 0
+          updatedPhotos = [file];
+        } else if (currentPhotos.length === 1) {
+          // One photo exists, replace index 0 and keep index 1 if it exists
+          updatedPhotos = [file, currentPhotos[1]];
+        } else {
+          // Two photos exist, replace index 0
+          updatedPhotos = [file, currentPhotos[1]];
+        }
+        
+        updateVostcard({ photos: updatedPhotos });
+      } else {
+        setNearPhoto(url);
+        setPhotoLoadError(prev => ({ ...prev, near: false }));
+        
+        // Get current photos array
+        const currentPhotos = currentVostcard?.photos || [];
+        let updatedPhotos: Blob[];
+        
+        if (currentPhotos.length === 0) {
+          // No photos yet, create array with this photo at index 1
+          updatedPhotos = [file];
+        } else if (currentPhotos.length === 1) {
+          // One photo exists, add this photo at index 1
+          updatedPhotos = [currentPhotos[0], file];
+        } else {
+          // Two photos exist, replace index 1
+          updatedPhotos = [currentPhotos[0], file];
+        }
+        
+        updateVostcard({ photos: updatedPhotos });
+      }
+      
+      // Clear the input value to allow selecting the same file again
+      event.target.value = '';
+    }
+  };
+
+  const handleSaveAndContinue = async () => {
+    try {
+      console.log('📸 Starting save and continue process...');
+      
+      // Validate that we have the required data
+      if (!currentVostcard?.video) {
+        alert('Video is required. Please record a video first.');
+        return;
+      }
+      
+      // Save to Firebase
+      await saveVostcard();
+      console.log('📸 Save completed successfully, proceeding to Step 3');
+      navigate('/create-step3');
+    } catch (error) {
+      console.error('📸 Error in handleSaveAndContinue:', error);
+      alert('Failed to save Vostcard. Please try again.');
+    }
+  };
+
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (distantPhoto) {
+        URL.revokeObjectURL(distantPhoto);
+      }
+      if (nearPhoto) {
+        URL.revokeObjectURL(nearPhoto);
+      }
+    };
+  }, [distantPhoto, nearPhoto]);
+
+  return (
+    <div style={container}>
 };
 
-const imageIcon = {
-  width: '50px',
-  height: '50px',
-  marginBottom: '10px',
-  objectFit: 'cover' as 'cover',
-  borderRadius: '8px',
+const placeholder = {
+  display: 'flex',
+  flexDirection: 'column' as 'column',
+      {/* 🔵 Header */}
+      <div style={header}>
+        <h1 style={logo}>Vōstcard</h1>
+        <FaArrowLeft
+          size={24}
+          color="white"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate('/create-step1')}
+        />
+      </div>
+
+      {/* 🔲 Thumbnails */}
+      <div style={thumbnailsContainer}>
+        {/* Distant */}
+        <div style={thumbnail}>
+          <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100%' }}>
+            {distantPhoto ? (
+              <img
+                src={distantPhoto}
+                alt="Distant"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%',
+  height: '100%',
 };
 
-const label = {
-  color: '#002B4D',
-  fontSize: '18px',
-  textAlign: 'center' as 'center',
-  margin: 0,
-};
-
-const buttonContainer = {
-  marginTop: 'auto',
-  marginBottom: '60px',
-  width: '90%',
-};
-
-const button = {
+const saveButton = {
   width: '100%',
   backgroundColor: '#002B4D',
   color: 'white',
@@ -364,6 +406,12 @@ const button = {
   border: 'none',
   fontSize: '18px',
   cursor: 'pointer',
+};
+
+const buttonContainer = {
+  marginTop: 'auto',
+  marginBottom: '60px',
+  width: '90%',
 };
 
 export default CreateVostcardStep2;
