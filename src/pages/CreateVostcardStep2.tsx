@@ -25,34 +25,39 @@ const CreateVostcardStep2 = () => {
   ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const storageRef = ref(storage, `vostcard-photos/${file.name}`);
+      const uniqueId = Date.now();
+      const storageRef = ref(storage, `vostcard-photos/${uniqueId}-${file.name}`);
+
       try {
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
 
+        const updatedPhotos = [
+          ...(currentVostcard?.photos || []).filter((p: any) => p.type !== type),
+          { type, url: downloadURL, filename: file.name },
+        ];
+
         const updatedVostcard = {
           ...currentVostcard,
-          photos: [
-            ...(currentVostcard?.photos || []).filter((p: any) => p.type !== type),
-            { type, url: downloadURL, filename: file.name },
-          ],
+          photos: updatedPhotos,
+          photo1: type === 'distant' ? file : currentVostcard?.photo1,
+          photo1URL: type === 'distant' ? downloadURL : currentVostcard?.photo1URL,
+          photo2: type === 'near' ? file : currentVostcard?.photo2,
+          photo2URL: type === 'near' ? downloadURL : currentVostcard?.photo2URL,
         };
 
         if (type === 'distant') {
           setDistantPhoto(downloadURL);
-          updatedVostcard.photo1 = file;
-          updatedVostcard.photo1URL = downloadURL;
         }
 
         if (type === 'near') {
           setNearPhoto(downloadURL);
-          updatedVostcard.photo2 = file;
-          updatedVostcard.photo2URL = downloadURL;
         }
 
         setCurrentVostcard(updatedVostcard);
       } catch (error) {
         console.error('Upload failed', error);
+        alert('❌ Upload failed. Check console for details.');
       }
     }
   };
