@@ -211,12 +211,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const vostcardId = currentVostcard.id || uuidv4();
       const userID = user.uid;
 
-      // 1. Upload video to Firebase Storage
-      const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
-      const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
-      const videoURL = await getDownloadURL(videoSnap.ref);
+      // 1. Upload video to Firebase Storage (if not already uploaded)
+      let videoURL = currentVostcard.videoURL;
+      if (!videoURL) {
+        const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
+        const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
+        videoURL = await getDownloadURL(videoSnap.ref);
+      }
 
-      // 2. Save metadata to Firestore
+      // 2. Upload photos to Firebase Storage (if any)
+      let photoURLs: string[] = [];
+      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+        for (let i = 0; i < currentVostcard.photos.length; i++) {
+          const photo = currentVostcard.photos[i];
+          if (photo) {
+            const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
+            const photoSnap = await uploadBytes(photoRef, photo);
+            const photoURL = await getDownloadURL(photoSnap.ref);
+            photoURLs.push(photoURL);
+          }
+        }
+      }
+
+      // 3. Save/update metadata to Firestore
       const docRef = doc(db, 'vostcards', vostcardId);
       await setDoc(docRef, {
         id: vostcardId,
@@ -224,24 +241,27 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         username: user.displayName || user.email?.split('@')[0] || 'Unknown',
         state: "private",
         videoURL,
-        createdAt: Timestamp.now(),
+        photoURLs,
+        createdAt: currentVostcard.createdAt || Timestamp.now(),
         updatedAt: Timestamp.now(),
-        // No photos, title, description, or categories yet
-      });
+        // Other fields (title, description, etc.) can be added in Step 3
+      }, { merge: true });
 
-      // 3. Update context state (optional)
+      // 4. Update context state (optional)
       setCurrentVostcard({
         ...currentVostcard,
         id: vostcardId,
         video: currentVostcard.video,
         videoURL,
+        photos: currentVostcard.photos,
+        photoURLs,
         state: "private",
         userID,
-        createdAt: new Date().toISOString(),
+        createdAt: currentVostcard.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
-      // 4. Optionally, refresh the private vostcards list
+      // 5. Optionally, refresh the private vostcards list
       await loadPrivateVostcards();
 
     } catch (error) {
