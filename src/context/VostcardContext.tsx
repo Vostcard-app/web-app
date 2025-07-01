@@ -33,6 +33,7 @@ interface VostcardContextProps {
   clearLocalStorage: () => void; // For testing
   postVostcard: () => Promise<void>;
   localVostcards: Vostcard[];
+  debugLocalStorage: () => void;
 }
 
 const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
@@ -598,6 +599,36 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // Add this function to the VostcardProvider component
+  const debugLocalStorage = () => {
+    try {
+      const raw = localStorage.getItem('localVostcards');
+      console.log('🔍 Debug localStorage raw data:', raw);
+      
+      if (!raw) {
+        console.log('🔍 No localVostcards found in localStorage');
+        return;
+      }
+      
+      const arr = JSON.parse(raw);
+      console.log('🔍 Parsed localVostcards:', arr);
+      console.log('🔍 Number of Vostcards:', arr.length);
+      
+      arr.forEach((vostcard: any, index: number) => {
+        console.log(`🔍 Vostcard ${index + 1}:`, {
+          id: vostcard.id,
+          title: vostcard.title,
+          state: vostcard.state,
+          hasVideo: vostcard._hasVideo,
+          hasPhotos: vostcard._hasPhotos,
+          createdAt: vostcard.createdAt
+        });
+      });
+    } catch (error) {
+      console.error('🔍 Error debugging localStorage:', error);
+    }
+  };
+
   return (
     <VostcardContext.Provider
       value={{
@@ -612,6 +643,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearLocalStorage,
         postVostcard,
         localVostcards: getLocalVostcards(),
+        debugLocalStorage,
       }}
     >
       {children}
