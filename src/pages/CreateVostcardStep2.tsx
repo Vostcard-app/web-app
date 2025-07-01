@@ -168,6 +168,15 @@ const CreateVostcardStep2 = () => {
 
       {/* ✅ Save & Continue Button */}
       <div style={buttonContainer}>
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '10px',
+          fontSize: '14px',
+          color: '#666',
+          fontStyle: 'italic'
+        }}>
+          Photos are optional - you can add them later
+        </div>
         <button
           style={button}
           onClick={() => {
@@ -175,7 +184,7 @@ const CreateVostcardStep2 = () => {
             handleSaveAndContinue();
           }}
         >
-          Save & Continue
+          Save & Continue to Step 3
         </button>
       </div>
     </div>
