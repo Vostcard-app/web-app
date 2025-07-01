@@ -10,6 +10,7 @@ const CreateVostcardStep1: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'prompt' | 'checking'>('checking');
+  const [videoLoadError, setVideoLoadError] = useState(false);
 
   // Debug location data when component mounts
   useEffect(() => {
@@ -140,6 +141,7 @@ const CreateVostcardStep1: React.FC = () => {
     const video = event.currentTarget;
     const isLandscape = video.videoWidth > video.videoHeight;
     setVideoOrientation(isLandscape ? 'landscape' : 'portrait');
+    setVideoLoadError(false); // Clear any previous errors
     console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight, 'Orientation:', isLandscape ? 'landscape' : 'portrait');
   };
 
@@ -357,13 +359,17 @@ const CreateVostcardStep1: React.FC = () => {
               onLoadedMetadata={handleVideoLoad}
               onError={(e) => {
                 console.error('🎥 Video error:', e);
+                setVideoLoadError(true);
                 // For iOS, show a simple success message if video fails
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                 if (isIOS) {
                   console.log('📱 iOS video preview failed - showing success message');
                 }
               }}
-              onLoadStart={() => console.log('🎥 Video load started')}
+              onLoadStart={() => {
+                console.log('🎥 Video load started');
+                setVideoLoadError(false);
+              }}
               onCanPlay={() => console.log('🎥 Video can play')}
               onLoadedData={() => console.log('🎥 Video data loaded')}
               onStalled={() => console.log('🎥 Video stalled')}
@@ -372,29 +378,31 @@ const CreateVostcardStep1: React.FC = () => {
               webkit-playsinline="true"
               x-webkit-airplay="allow"
             />
-            {/* Fallback for iOS if video fails to load */}
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#F2F2F2',
-                color: '#002B4D',
-                fontSize: '14px',
-                textAlign: 'center',
-                padding: '10px'
-              }}
-              id="video-fallback"
-            >
-              Video recorded successfully
-              <br />
-              Tap to continue
-            </div>
+            {/* Fallback for iOS if video fails to load - only show when there's an error */}
+            {videoLoadError && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#F2F2F2',
+                  color: '#002B4D',
+                  fontSize: '14px',
+                  textAlign: 'center',
+                  padding: '10px'
+                }}
+                id="video-fallback"
+              >
+                Video recorded successfully
+                <br />
+                Tap to continue
+              </div>
+            )}
           </div>
         ) : (
           <div
