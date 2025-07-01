@@ -73,42 +73,22 @@ const CreateVostcardStep2 = () => {
       if (type === 'distant') {
         setDistantPhoto(url);
         setPhotoLoadError(prev => ({ ...prev, distant: false }));
-        
-        // Get current photos array
+
         const currentPhotos = currentVostcard?.photos || [];
-        let updatedPhotos: Blob[];
-        
-        if (currentPhotos.length === 0) {
-          // No photos yet, create array with this photo at index 0
-          updatedPhotos = [file];
-        } else if (currentPhotos.length === 1) {
-          // One photo exists, replace index 0 and keep index 1 if it exists
-          updatedPhotos = [file, currentPhotos[1]];
-        } else {
-          // Two photos exist, replace index 0
-          updatedPhotos = [file, currentPhotos[1]];
-        }
-        
+        const updatedPhotos: Blob[] = [...currentPhotos];
+        updatedPhotos[0] = file;
+        if (updatedPhotos.length < 2) updatedPhotos[1] = currentPhotos[1] || new Blob();
+
         updateVostcard({ photos: updatedPhotos });
       } else if (type === 'near') {
         setNearPhoto(url);
         setPhotoLoadError(prev => ({ ...prev, near: false }));
-        
-        // Get current photos array
+
         const currentPhotos = currentVostcard?.photos || [];
-        let updatedPhotos: Blob[];
-        
-        if (currentPhotos.length === 0) {
-          // No photos yet, create array with this photo at index 1
-          updatedPhotos = [file];
-        } else if (currentPhotos.length === 1) {
-          // One photo exists, add this photo at index 1
-          updatedPhotos = [currentPhotos[0], file];
-        } else {
-          // Two photos exist, replace index 1
-          updatedPhotos = [currentPhotos[0], file];
-        }
-        
+        const updatedPhotos: Blob[] = [...currentPhotos];
+        if (updatedPhotos.length < 1) updatedPhotos[0] = new Blob();
+        updatedPhotos[1] = file;
+
         updateVostcard({ photos: updatedPhotos });
       }
       
