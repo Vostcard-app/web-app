@@ -12,6 +12,11 @@ const CreateVostcardStep2 = () => {
   const [distantPhoto, setDistantPhoto] = useState<string | null>(currentVostcard?.photo1URL || null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(currentVostcard?.photo2URL || null);
 
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [photoType, setPhotoType] = useState<'distant' | 'near' | null>(null);
+
+  const hiddenFileInput = React.useRef<HTMLInputElement>(null);
+
   const handlePhotoSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: 'distant' | 'near'
@@ -46,6 +51,17 @@ const CreateVostcardStep2 = () => {
     }
   };
 
+  const openFilePicker = (capture: boolean) => {
+    if (hiddenFileInput.current) {
+      if (capture) {
+        hiddenFileInput.current.setAttribute('capture', 'environment');
+      } else {
+        hiddenFileInput.current.removeAttribute('capture');
+      }
+      hiddenFileInput.current.click();
+    }
+  };
+
   return (
     <div style={container}>
       {/* 🔵 Header */}
@@ -69,7 +85,13 @@ const CreateVostcardStep2 = () => {
       <div style={thumbnailsContainer}>
         {/* Distant */}
         <div style={thumbnail}>
-          <label style={{ cursor: 'pointer' }}>
+          <label
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              setPhotoType('distant');
+              setShowModal(true);
+            }}
+          >
             <img
               src={distantPhoto || '/placeholder.png'}
               alt="Distant"
@@ -80,19 +102,18 @@ const CreateVostcardStep2 = () => {
               <br />
               (Suggested)
             </p>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handlePhotoSelect(e, 'distant')}
-              style={{ display: 'none' }}
-            />
           </label>
         </div>
 
         {/* Near */}
         <div style={thumbnail}>
-          <label style={{ cursor: 'pointer' }}>
+          <label
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              setPhotoType('near');
+              setShowModal(true);
+            }}
+          >
             <img
               src={nearPhoto || '/placeholder.png'}
               alt="Near"
@@ -103,13 +124,6 @@ const CreateVostcardStep2 = () => {
               <br />
               (Suggested)
             </p>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => handlePhotoSelect(e, 'near')}
-              style={{ display: 'none' }}
-            />
           </label>
         </div>
       </div>
@@ -125,6 +139,47 @@ const CreateVostcardStep2 = () => {
           Save & Continue
         </button>
       </div>
+
+      {/* 🔥 Hidden File Input */}
+      <input
+        ref={hiddenFileInput}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          if (photoType) {
+            handlePhotoSelect(e, photoType);
+          }
+          setShowModal(false);
+        }}
+      />
+
+      {/* 🚀 Modal */}
+      {showModal && (
+        <div style={modalOverlay}>
+          <div style={modalContent}>
+            <h3>Select Photo Source</h3>
+            <button
+              style={modalButton}
+              onClick={() => openFilePicker(true)}
+            >
+              📷 Take Photo
+            </button>
+            <button
+              style={modalButton}
+              onClick={() => openFilePicker(false)}
+            >
+              🖼️ Choose from Library
+            </button>
+            <button
+              style={cancelButton}
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -203,6 +258,45 @@ const button = {
   border: 'none',
   fontSize: '18px',
   cursor: 'pointer',
+};
+
+/* Modal Styles */
+const modalOverlay = {
+  position: 'fixed' as const,
+  top: 0,
+  left: 0,
+  width: '100vw',
+  height: '100vh',
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000,
+};
+
+const modalContent = {
+  backgroundColor: 'white',
+  padding: '20px',
+  borderRadius: '12px',
+  width: '80%',
+  textAlign: 'center' as const,
+};
+
+const modalButton = {
+  backgroundColor: '#002B4D',
+  color: 'white',
+  padding: '10px',
+  margin: '10px 0',
+  border: 'none',
+  borderRadius: '8px',
+  width: '100%',
+  cursor: 'pointer',
+  fontSize: '16px',
+};
+
+const cancelButton = {
+  ...modalButton,
+  backgroundColor: 'gray',
 };
 
 export default CreateVostcardStep2;
