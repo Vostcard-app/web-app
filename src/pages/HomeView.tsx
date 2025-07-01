@@ -244,50 +244,36 @@ const HomeView = () => {
       </div>
 
       {isMenuOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '70px',
-            right: '20px',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-            padding: '10px',
-            zIndex: 2000,
-          }}
-        >
-          <p onClick={() => { navigate('/my-private-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
+        <div style={menuStyle}>
+          <p onClick={() => { navigate('/home'); setIsMenuOpen(false); }} style={menuItemStyle}>
+            Home
+          </p>
+          <p onClick={() => { navigate('/create-step1'); setIsMenuOpen(false); }} style={menuItemStyle}>
+            Create Vōstcard
+          </p>
+          <p onClick={() => { navigate('/my-private-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
             My Private Vōstcards
           </p>
-          <p onClick={() => { navigate('/posted-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
+          <p onClick={() => { navigate('/my-posted-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
             My Posted Vōstcards
           </p>
-          <p onClick={() => { navigate('/edit-vostcards'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
-            Edit My Vōstcards
-          </p>
-          <hr />
-          <p onClick={() => { navigate('/liked'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
-            Liked Vōstcards
-          </p>
-          <p onClick={() => { navigate('/following'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
-            Following
-          </p>
-          <p onClick={() => { navigate('/suggestion-box'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
-            Suggestion Box
-          </p>
-          <p onClick={() => { navigate('/report-bug'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
-            Report a Bug
-          </p>
-          <p onClick={() => { navigate('/settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
-            Settings
-          </p>
-          <p onClick={() => { navigate('/account-settings'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
+          <p onClick={() => { navigate('/account-settings'); setIsMenuOpen(false); }} style={menuItemStyle}>
             Account Settings
           </p>
-          <p onClick={() => { navigate('/logout'); setIsMenuOpen(false); }} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
+          <p onClick={() => { navigate('/settings'); setIsMenuOpen(false); }} style={menuItemStyle}>
+            Sync & Backup
+          </p>
+          <p onClick={() => { navigate('/suggestion-box'); setIsMenuOpen(false); }} style={menuItemStyle}>
+            Suggestion Box
+          </p>
+          <p onClick={() => { navigate('/report-bug'); setIsMenuOpen(false); }} style={menuItemStyle}>
+            Report a Bug
+          </p>
+          <hr style={{ margin: '10px 0', border: 'none', borderTop: '1px solid #ccc' }} />
+          <p onClick={() => { /* handle logout */ setIsMenuOpen(false); }} style={menuItemStyle}>
             Logout
           </p>
-          <p onClick={() => setIsMenuOpen(false)} style={{ cursor: 'pointer', margin: '8px 0', fontSize: '18px' }}>
+          <p onClick={() => setIsMenuOpen(false)} style={menuItemStyle}>
             Close
           </p>
         </div>
@@ -549,6 +535,30 @@ const createButton = {
   fontSize: '18px',
   cursor: 'pointer',
   boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+};
+
+const menuStyle = {
+  position: 'absolute',
+  top: '70px',
+  right: '20px',
+  backgroundColor: 'white',
+  borderRadius: '8px',
+  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+  padding: '10px',
+  zIndex: 2000,
+  minWidth: '200px',
+};
+
+const menuItemStyle = {
+  cursor: 'pointer',
+  margin: '8px 0',
+  fontSize: '16px',
+  padding: '8px 12px',
+  borderRadius: '4px',
+  transition: 'background-color 0.2s',
+  ':hover': {
+    backgroundColor: '#f5f5f5',
+  }
 };
 
 export default HomeView;

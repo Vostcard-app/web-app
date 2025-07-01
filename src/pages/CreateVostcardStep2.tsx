@@ -83,11 +83,11 @@ const CreateVostcardStep2 = () => {
     }
   };
 
-  const handleSaveAsPrivate = () => {
-    // Save current progress as private
+  const handleSaveAndContinue = () => {
+    // Automatically save as private when continuing
     saveLocalVostcard();
-    alert('Vōstcard saved as private! You can find it in My Private Vōstcards.');
-    navigate('/home');
+    console.log('📸 Proceeding to Step 3 with photos:', currentVostcard?.photos?.length || 0);
+    navigate('/create-step3');
   };
 
   return (
@@ -155,26 +155,8 @@ const CreateVostcardStep2 = () => {
       {/* ✅ Save & Continue Button */}
       <div style={buttonContainer}>
         <button
-          style={{
-            ...button,
-            backgroundColor: '#28a745',
-            marginBottom: '10px'
-          }}
-          onClick={handleSaveAsPrivate}
-        >
-          Save as Privat
-        </button>
-        <button
           style={button}
-          onClick={() => {
-            const photosCount = currentVostcard?.photos?.length || 0;
-            if (photosCount < 2) {
-              alert('Please select both photos before continuing.');
-              return;
-            }
-            console.log('📸 Proceeding to Step 3 with photos:', photosCount);
-            navigate('/create-step3');
-          }}
+          onClick={handleSaveAndContinue}
         >
           Save & Continue
         </button>

@@ -5,7 +5,7 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { currentVostcard, setVideo, clearVostcard } = useVostcard();
+  const { currentVostcard, setVideo, clearVostcard, saveLocalVostcard } = useVostcard();
   const video = currentVostcard?.video;
   const [isMobile, setIsMobile] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
@@ -126,6 +126,13 @@ const CreateVostcardStep1: React.FC = () => {
   };
 
   const handleSaveAndContinue = () => {
+    if (!video) {
+      alert('Please record a video first.');
+      return;
+    }
+    
+    // Automatically save as private when continuing
+    saveLocalVostcard();
     navigate('/create-step2');
   };
 
@@ -387,23 +394,25 @@ const CreateVostcardStep1: React.FC = () => {
           Use Script Tool
         </button>
 
-        {/* ✅ Save & Continue */}
-        <button
-          onClick={handleSaveAndContinue}
-          disabled={!video}
-          style={{
-            backgroundColor: video ? '#002B4D' : '#888',
-            color: 'white',
-            border: 'none',
-            width: '100%',
-            padding: '14px',
-            borderRadius: 8,
-            fontSize: 18,
-            cursor: video ? 'pointer' : 'not-allowed',
-          }}
-        >
-          Save & Continue
-        </button>
+        {/* 🔧 Save & Continue */}
+        <div style={{ padding: '16px' }}>
+          <button
+            onClick={handleSaveAndContinue}
+            disabled={!video}
+            style={{
+              backgroundColor: video ? '#002B4D' : '#888',
+              color: 'white',
+              border: 'none',
+              width: '100%',
+              padding: '14px',
+              borderRadius: 8,
+              fontSize: 18,
+              cursor: video ? 'pointer' : 'not-allowed',
+            }}
+          >
+            Save & Continue
+          </button>
+        </div>
       </div>
     </div>
   );
