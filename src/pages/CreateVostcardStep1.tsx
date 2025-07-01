@@ -415,13 +415,15 @@ const CreateVostcardStep1: React.FC = () => {
         )}
       </div>
 
-      {/* 🔘 Buttons */}
+      {/* 🔘 Buttons - ALWAYS SHOW */}
       <div
         style={{
           padding: '20px',
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
+          backgroundColor: 'white',
+          borderTop: '1px solid #eee',
         }}
       >
         {!video ? (
