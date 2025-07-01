@@ -200,6 +200,11 @@ const buttonContainer = {
   padding: '20px',
   width: '100%',
   maxWidth: '400px',
+  position: 'fixed' as const,
+  bottom: '20px',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  backgroundColor: 'white',
 };
 
 const saveButton = {
