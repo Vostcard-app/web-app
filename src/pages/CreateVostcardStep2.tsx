@@ -30,23 +30,27 @@ const CreateVostcardStep2 = () => {
         await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(storageRef);
 
+        const updatedVostcard = {
+          ...currentVostcard,
+          photos: [
+            ...(currentVostcard?.photos || []).filter((p: any) => p.type !== type),
+            { type, url: downloadURL, filename: file.name },
+          ],
+        };
+
         if (type === 'distant') {
           setDistantPhoto(downloadURL);
-          setCurrentVostcard((prev: any) => ({
-            ...prev,
-            photo1: file,
-            photo1URL: downloadURL,
-          }));
+          updatedVostcard.photo1 = file;
+          updatedVostcard.photo1URL = downloadURL;
         }
 
         if (type === 'near') {
           setNearPhoto(downloadURL);
-          setCurrentVostcard((prev: any) => ({
-            ...prev,
-            photo2: file,
-            photo2URL: downloadURL,
-          }));
+          updatedVostcard.photo2 = file;
+          updatedVostcard.photo2URL = downloadURL;
         }
+
+        setCurrentVostcard(updatedVostcard);
       } catch (error) {
         console.error('Upload failed', error);
       }
