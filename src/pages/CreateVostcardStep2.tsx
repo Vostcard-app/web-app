@@ -83,6 +83,13 @@ const CreateVostcardStep2 = () => {
     }
   };
 
+  const handleSaveAsPrivate = () => {
+    // Save current progress as private
+    saveLocalVostcard();
+    alert('Vōstcard saved as private! You can find it in My Private Vōstcards.');
+    navigate('/home');
+  };
+
   return (
     <div style={container}>
       {/* 🔵 Header */}
@@ -147,6 +154,16 @@ const CreateVostcardStep2 = () => {
 
       {/* ✅ Save & Continue Button */}
       <div style={buttonContainer}>
+        <button
+          style={{
+            ...button,
+            backgroundColor: '#28a745',
+            marginBottom: '10px'
+          }}
+          onClick={handleSaveAsPrivate}
+        >
+          Save as Privat
+        </button>
         <button
           style={button}
           onClick={() => {
