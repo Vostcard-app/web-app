@@ -5,7 +5,12 @@ import { useVostcard } from '../context/VostcardContext';
 
 const MyPrivateVostcardsListView = () => {
   const navigate = useNavigate();
-  const { savedVostcards } = useVostcard();
+  const { localVostcards } = useVostcard();
+
+  // Filter by state === 'private' and sort by createdAt (newest first)
+  const savedVostcards = (localVostcards || [])
+    .filter((v) => v.state === 'private')
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <div style={{ height: '100vh', width: '100vw' }}>
