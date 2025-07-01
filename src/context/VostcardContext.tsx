@@ -409,6 +409,71 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Post Vostcard to Firestore and Storage - Updated to match iOS app structure
   const postVostcard = async () => {
+  // Save Vostcard to privateVostcards (draft/private save)
+  const saveVostcard = async () => {
+    if (!currentVostcard) {
+      console.error('No current Vostcard to save');
+      alert('No Vostcard to save. Please start with a video.');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert('User not authenticated. Please log in first.');
+      return;
+    }
+
+    try {
+      const vostcardId = currentVostcard.id;
+      const userID = user.uid;
+
+      console.log('📥 Starting save to Firebase (privateVostcards)...');
+
+      // Upload video
+      let videoURL = '';
+      if (currentVostcard.video) {
+        const videoRef = ref(storage, `privateVostcards/${userID}/${vostcardId}/video.mov`);
+        const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
+        videoURL = await getDownloadURL(videoSnap.ref);
+        console.log('🎥 Video uploaded');
+      }
+
+      // Upload photos
+      const photoURLs = [];
+      for (let i = 0; i < currentVostcard.photos.length; i++) {
+        const photoBlob = currentVostcard.photos[i];
+        const photoRef = ref(storage, `privateVostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
+        const photoSnap = await uploadBytes(photoRef, photoBlob);
+        const photoURL = await getDownloadURL(photoSnap.ref);
+        photoURLs.push(photoURL);
+      }
+      console.log('📸 Photos uploaded:', photoURLs);
+
+      const docRef = doc(db, 'privateVostcards', vostcardId);
+      await setDoc(docRef, {
+        id: vostcardId,
+        title: currentVostcard.title,
+        description: currentVostcard.description,
+        categories: currentVostcard.categories,
+        username: currentVostcard.username,
+        userID: userID,
+        videoURL: videoURL,
+        photoURLs: photoURLs,
+        latitude: currentVostcard.geo?.latitude || null,
+        longitude: currentVostcard.geo?.longitude || null,
+        avatarURL: user.photoURL || '',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        state: 'private'
+      });
+
+      console.log('✅ Vostcard saved to privateVostcards collection');
+      alert('Vōstcard saved!');
+    } catch (error) {
+      console.error('❌ Failed to save Vostcard:', error);
+      alert('Failed to save Vostcard.');
+    }
+  };
     if (!currentVostcard) {
       console.error('No current Vostcard found');
       alert('No Vostcard data found. Please start over.');
@@ -611,6 +676,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setGeo,
         updateVostcard,
         addPhoto,
+        saveVostcard, // <-- ✅ Added here
         saveLocalVostcard,
         loadLocalVostcard,
         clearVostcard,
