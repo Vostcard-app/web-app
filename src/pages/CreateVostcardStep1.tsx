@@ -392,7 +392,16 @@ const CreateVostcardStep1: React.FC = () => {
       </div>
 
       {/* 🔘 Buttons */}
-      <div style={{ marginTop: 'auto', padding: '20px' }}>
+      <div style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'white',
+        padding: '20px',
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.04)',
+        zIndex: 100,
+      }}>
         {!video ? (
           <button
             onClick={handleRecord}
