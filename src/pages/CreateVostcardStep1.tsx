@@ -5,7 +5,7 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { currentVostcard, setVideo, clearVostcard, saveLocalVostcard } = useVostcard();
+  const { currentVostcard, setVideo, clearVostcard, saveVostcard } = useVostcard();
   const video = currentVostcard?.video;
   const [isMobile, setIsMobile] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
@@ -163,9 +163,17 @@ const CreateVostcardStep1: React.FC = () => {
       return;
     }
     
-    // Automatically save as private when continuing
-    await saveLocalVostcard();
-    navigate('/create-step2');
+    try {
+      console.log('💾 Step 1 - Starting save and continue process...');
+      
+      // Save to Firebase
+      await saveVostcard();
+      console.log('💾 Step 1 - Save completed successfully, proceeding to Step 2');
+      navigate('/create-step2');
+    } catch (error) {
+      console.error('💾 Step 1 - Error in handleSaveAndContinue:', error);
+      alert('Failed to save Vostcard. Please try again.');
+    }
   };
 
   const videoURL = video ? URL.createObjectURL(video) : null;
@@ -347,38 +355,15 @@ const CreateVostcardStep1: React.FC = () => {
               borderRadius: 16,
               backgroundColor: '#F2F2F2',
               overflow: 'hidden',
-              position: 'relative'
+              position: 'relative',
             }}
           >
             <video
               src={videoURL}
-              controls
-              playsInline
-              preload="metadata"
               style={getVideoStyles()}
               onLoadedMetadata={handleVideoLoad}
-              onError={(e) => {
-                console.error('🎥 Video error:', e);
-                setVideoLoadError(true);
-                // For iOS, show a simple success message if video fails
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                if (isIOS) {
-                  console.log('📱 iOS video preview failed - showing success message');
-                }
-              }}
-              onLoadStart={() => {
-                console.log('🎥 Video load started');
-                setVideoLoadError(false);
-              }}
-              onCanPlay={() => console.log('🎥 Video can play')}
-              onLoadedData={() => console.log('🎥 Video data loaded')}
-              onStalled={() => console.log('🎥 Video stalled')}
-              onSuspend={() => console.log('🎥 Video suspended')}
-              // iOS-specific attributes
-              webkit-playsinline="true"
-              x-webkit-airplay="allow"
+              onError={() => setVideoLoadError(true)}
             />
-            {/* Fallback for iOS if video fails to load - only show when there's an error */}
             {videoLoadError && (
               <div
                 style={{
@@ -388,45 +373,44 @@ const CreateVostcardStep1: React.FC = () => {
                   right: 0,
                   bottom: 0,
                   display: 'flex',
-                  alignItems: 'center',
+                  flexDirection: 'column',
                   justifyContent: 'center',
-                  backgroundColor: '#F2F2F2',
-                  color: '#002B4D',
-                  fontSize: '14px',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
                   textAlign: 'center',
-                  padding: '10px'
+                  padding: '16px',
                 }}
-                id="video-fallback"
               >
-                Video recorded successfully
-                <br />
-                Tap to continue
+                <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+                  Video recorded successfully
+                </div>
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>
+                  Tap to continue
+                </div>
               </div>
             )}
           </div>
         ) : (
           <div
-            onClick={locationPermission === 'granted' ? handleRecord : undefined}
             style={{
-              width: 272,
-              height: 192,
-              backgroundColor: '#F2F2F2',
-              borderRadius: 16,
+              width: '272px',
+              height: '192px',
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              textAlign: 'center',
-              color: locationPermission === 'granted' ? '#002B4D' : '#999',
-              fontSize: 18,
-              cursor: locationPermission === 'granted' ? 'pointer' : 'not-allowed',
-              padding: 10,
-              opacity: locationPermission === 'granted' ? 1 : 0.6,
+              borderRadius: 16,
+              backgroundColor: '#F2F2F2',
+              border: '2px dashed #ccc',
             }}
           >
-            {locationPermission === 'granted' 
-              ? 'Record a 30 Second Video'
-              : 'Enable Location to Record'
-            }
+            <div style={{ fontSize: '16px', color: '#666', marginBottom: '8px' }}>
+              No video recorded
+            </div>
+            <div style={{ fontSize: '14px', color: '#999' }}>
+              Tap "Record" to start
+            </div>
           </div>
         )}
       </div>
@@ -434,77 +418,62 @@ const CreateVostcardStep1: React.FC = () => {
       {/* 🔘 Buttons */}
       <div
         style={{
-          padding: '0 16px',
-          marginBottom: 80,
+          padding: '20px',
           display: 'flex',
           flexDirection: 'column',
-          gap: 12,
-          alignItems: 'center',
+          gap: '12px',
         }}
       >
-        {/* ⭕ Record Button */}
-        <div
-          onClick={locationPermission === 'granted' ? handleRecord : undefined}
-          style={{
-            backgroundColor: locationPermission === 'granted' ? 'red' : '#ccc',
-            width: 70,
-            height: 70,
-            borderRadius: '50%',
-            border: '6px solid white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: locationPermission === 'granted' ? 'pointer' : 'not-allowed',
-            opacity: locationPermission === 'granted' ? 1 : 0.6,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '50%',
-              width: 24,
-              height: 24,
-            }}
-          />
-        </div>
-
-        {/* 📜 Use Script Tool */}
-        <button
-          onClick={locationPermission === 'granted' ? () => navigate('/scrolling-camera') : undefined}
-          disabled={locationPermission !== 'granted'}
-          style={{
-            backgroundColor: locationPermission === 'granted' ? '#002B4D' : '#ccc',
-            color: 'white',
-            border: 'none',
-            width: '100%',
-            padding: '14px',
-            borderRadius: 8,
-            fontSize: 18,
-            cursor: locationPermission === 'granted' ? 'pointer' : 'not-allowed',
-          }}
-        >
-          Use Script Tool
-        </button>
-
-        {/* 🔧 Save & Continue */}
-        <div style={{ padding: '16px' }}>
+        {!video ? (
           <button
-            onClick={handleSaveAndContinue}
-            disabled={!video}
+            onClick={handleRecord}
             style={{
-              backgroundColor: video ? '#002B4D' : '#888',
+              backgroundColor: '#002B4D',
               color: 'white',
               border: 'none',
-              width: '100%',
-              padding: '14px',
-              borderRadius: 8,
-              fontSize: 18,
-              cursor: video ? 'pointer' : 'not-allowed',
+              borderRadius: '8px',
+              padding: '16px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
             }}
           >
-            Save & Continue
+            Record
           </button>
-        </div>
+        ) : (
+          <>
+            <button
+              onClick={handleSaveAndContinue}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '16px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+              }}
+            >
+              Save & Continue
+            </button>
+            <button
+              onClick={handleRecord}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#002B4D',
+                border: '2px solid #002B4D',
+                borderRadius: '8px',
+                padding: '16px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+              }}
+            >
+              Record Again
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
