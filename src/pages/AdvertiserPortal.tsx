@@ -121,7 +121,7 @@ const AdvertiserPortal: React.FC = () => {
           <FaUserCircle size={30} />
           <FaBars
             size={30}
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => setIsMenuOpen((open) => !open)}
             style={{ cursor: 'pointer' }}
           />
         </div>
