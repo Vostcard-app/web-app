@@ -515,7 +515,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // ✅ Post Vostcard to Firebase (public map) - Temporary CORS workaround
+  // ✅ Post Vostcard to Firebase (public map) - Fixed undefined values
   const postVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.error('No current Vostcard to post');
@@ -546,19 +546,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
 
+      // Get username with fallback
+      const username = currentVostcard.username || user.displayName || user.email?.split('@')[0] || 'Unknown User';
+
       // TEMPORARY: Skip Firebase Storage upload due to CORS issues
       // TODO: Re-enable once CORS is resolved
       console.log('⚠️ Skipping Firebase Storage upload due to CORS issues');
       console.log('💾 Saving Vostcard data to Firestore only...');
 
-      // Save Vostcard data to Firestore (without media URLs for now)
-      const docRef = doc(db, 'vostcards', vostcardId);
-      await setDoc(docRef, {
+      // Prepare data for Firestore (ensure no undefined values)
+      const vostcardData = {
         id: vostcardId,
-        title: currentVostcard.title,
-        description: currentVostcard.description,
-        categories: currentVostcard.categories,
-        username: currentVostcard.username,
+        title: currentVostcard.title || '',
+        description: currentVostcard.description || '',
+        categories: currentVostcard.categories || [],
+        username: username,
         userID: userID,
         videoURL: '', // Empty for now due to CORS
         photoURLs: [], // Empty for now due to CORS
@@ -572,7 +574,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasVideo: !!currentVostcard.video,
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'pending' // Will be updated when CORS is resolved
-      });
+      };
+
+      // Log the data being saved (for debugging)
+      console.log('💾 Saving Vostcard data:', vostcardData);
+
+      // Save Vostcard data to Firestore
+      const docRef = doc(db, 'vostcards', vostcardId);
+      await setDoc(docRef, vostcardData);
 
       console.log('✅ Vostcard posted successfully to Firestore!');
       alert('🎉 Vōstcard posted successfully! It will appear on the map. (Media upload pending CORS resolution)');
