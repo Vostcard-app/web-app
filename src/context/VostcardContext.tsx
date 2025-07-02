@@ -227,15 +227,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrentVostcard(updatedVostcard);
     } else {
       const user = auth.currentUser;
-      // Get username with fallback - prioritize email username over displayName
-      let username = 'Unknown';
-      if (user) {
-        if (user.email) {
-          username = user.email.split('@')[0];
-        } else if (user.displayName && user.displayName !== 'info Web App') {
-          username = user.displayName;
-        }
+      // ADD: Check for invalid user/email/displayName
+      if (!user || (!user.email && (!user.displayName || user.displayName === 'info Web App'))) {
+        alert('❌ Sorry, something went wrong. Please start again.');
+        setCurrentVostcard(null);
+        return;
       }
+
+      // SIMPLIFIED username assignment
+      const username = user.email
+        ? user.email.split('@')[0]
+        : user.displayName!;
 
       const newVostcard = {
         id: uuidv4(),

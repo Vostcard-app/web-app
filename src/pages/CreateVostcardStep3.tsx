@@ -126,6 +126,12 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handlePost = async () => {
+    const user = auth.currentUser;
+    if (!user || !currentVostcard?.username) {
+      alert("❌ Something went wrong. Please start again.");
+      navigate('/home');
+      return;
+    }
     try {
       await postVostcard();
       clearVostcard();
