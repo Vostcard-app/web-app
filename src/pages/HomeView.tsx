@@ -10,6 +10,8 @@ import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png'; // Import the custom pin
 import OfferPin from '../assets/Offer_pin.png'; // Import the offer pin
+import { signOut } from 'firebase/auth';
+import { auth as firebaseAuth } from '../firebase/firebaseConfig';
 
 
 // 🔥 Vostcard Pin - Custom Vostcard pin
@@ -121,6 +123,17 @@ const HomeView = () => {
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsMenuOpen(false);
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('Logout failed. Please try again.');
+    }
+  };
 
   // Load Vostcards from Firebase
   const loadVostcards = async () => {
@@ -285,7 +298,7 @@ const HomeView = () => {
             Report a Bug
           </p>
           <hr style={{ margin: '10px 0', border: 'none', borderTop: '1px solid #ccc' }} />
-          <p onClick={() => { /* handle logout */ setIsMenuOpen(false); }} style={menuItemStyle}>
+          <p onClick={handleLogout} style={menuItemStyle}>
             Logout
           </p>
           <p onClick={() => setIsMenuOpen(false)} style={menuItemStyle}>
