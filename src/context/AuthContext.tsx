@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import type { User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 
@@ -26,6 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setLoading(true);
       if (currentUser) {
+        console.log('🔐 Firebase Auth user object:', {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          photoURL: currentUser.photoURL,
+          isAnonymous: currentUser.isAnonymous
+        });
+        
         setUser(currentUser);
         setUserID(currentUser.uid);
 
@@ -36,6 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (userDocSnap.exists()) {
             const data = userDocSnap.data();
+            console.log('📄 Firestore user document:', data);
             setUsername(data.username || null);
           } else {
             console.warn("No user document found for:", currentUser.uid);

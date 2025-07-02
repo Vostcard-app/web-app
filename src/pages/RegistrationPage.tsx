@@ -57,6 +57,11 @@ export default function RegisterPage() {
       );
       const user = userCredential.user;
 
+      // Set the displayName in Firebase Auth to prevent "info Web App" fallback
+      await updateProfile(user, {
+        displayName: name
+      });
+
       await setDoc(doc(db, "users", user.uid), {
         name: name,
         username: username.toLowerCase(),

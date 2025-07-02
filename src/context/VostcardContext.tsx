@@ -66,17 +66,34 @@ const VostcardContext = createContext<VostcardContextProps | undefined>(undefine
 
 // Helper function to get correct username from AuthContext
 const getCorrectUsername = (authContext: any, currentUsername?: string): string => {
+  console.log('🔍 getCorrectUsername called with:', {
+    authContextUsername: authContext.username,
+    authContextUserEmail: authContext.user?.email,
+    authContextUserDisplayName: authContext.user?.displayName,
+    currentUsername: currentUsername
+  });
+  
   // Use username from AuthContext (loaded from Firestore)
   if (authContext.username) {
+    console.log('✅ Using username from AuthContext:', authContext.username);
     return authContext.username;
   }
   
-  // Fallback to email username
+  // Fallback to email username (preferred over displayName)
   if (authContext.user?.email) {
-    return authContext.user.email.split('@')[0];
+    const emailUsername = authContext.user.email.split('@')[0];
+    console.log('📧 Using email username as fallback:', emailUsername);
+    return emailUsername;
+  }
+  
+  // Only use displayName if it's not "info Web App"
+  if (authContext.user?.displayName && authContext.user.displayName !== 'info Web App') {
+    console.log('👤 Using displayName as fallback:', authContext.user.displayName);
+    return authContext.user.displayName;
   }
   
   // Final fallback
+  console.log('⚠️ Using final fallback username:', currentUsername || 'Unknown');
   return currentUsername || 'Unknown';
 };
 
