@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { auth, db, storage } from '../firebaseConfig.ts';
+import { auth, db, storage } from '../firebaseConfig';
 import { collection, addDoc, updateDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
@@ -529,7 +529,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    // For private Vostcards, save to IndexedDB
+    // For private Vostcards, save to IndexedDB (local storage)
     if (currentVostcard.state === 'private') {
       try {
         await saveLocalVostcard();
@@ -540,6 +540,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       return;
     }
+
+    // For posted Vostcards, save 
 
     // For posted Vostcards, continue using Firebase
     try {
