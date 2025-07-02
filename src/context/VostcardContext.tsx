@@ -165,8 +165,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return restored;
           });
 
-          setSavedVostcards(restoredVostcards);
-          console.log('📂 Loaded all saved Vōstcards:', restoredVostcards);
+          // Filter out Vostcards with state === 'posted'
+          const filteredVostcards = restoredVostcards.filter(v => v.state !== 'posted');
+          setSavedVostcards(filteredVostcards);
+          console.log('📂 Loaded all saved Vōstcards:', filteredVostcards);
           resolve();
         };
       });
