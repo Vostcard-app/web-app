@@ -407,8 +407,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     console.log('🗑️ Cleared all Vostcards from localStorage');
   };
 
-  // Post Vostcard to Firestore and Storage - Updated to match iOS app structure
-  const postVostcard = async () => {
   // Save Vostcard to privateVostcards (draft/private save)
   const saveVostcard = async () => {
     if (!currentVostcard) {
@@ -474,6 +472,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       alert('Failed to save Vostcard.');
     }
   };
+  // Post Vostcard to Firestore and Storage - Updated to match iOS app structure
+  const postVostcard = async () => {
     if (!currentVostcard) {
       console.error('No current Vostcard found');
       alert('No Vostcard data found. Please start over.');
@@ -676,7 +676,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setGeo,
         updateVostcard,
         addPhoto,
-        saveVostcard, // <-- ✅ Added here
+        saveVostcard,
         saveLocalVostcard,
         loadLocalVostcard,
         clearVostcard,
