@@ -5,6 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import { auth, db } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
+const menuStyle = {
+  position: 'absolute',
+  top: '100%',
+  right: 0,
+  backgroundColor: 'white',
+  border: '1px solid #ccc',
+  borderRadius: '8px',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+  padding: '10px 0',
+  minWidth: '200px',
+  zIndex: 1001,
+};
+
 const AdvertiserPortal: React.FC = () => {
   const navigate = useNavigate();
   const { user, username, logout } = useAuth();
@@ -39,19 +52,6 @@ const AdvertiserPortal: React.FC = () => {
     display: 'flex',
     alignItems: 'center',
     gap: '15px',
-  };
-
-  const menuStyle = {
-    position: 'absolute' as const,
-    top: '100%',
-    right: 0,
-    backgroundColor: 'white',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    padding: '10px 0',
-    minWidth: '200px',
-    zIndex: 1001,
   };
 
   const menuItemStyle = {
