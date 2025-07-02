@@ -35,12 +35,9 @@ const SavedVostcardsListView: React.FC = () => {
             >
               <h3>{vostcard.title || 'Untitled'}</h3>
               <p>{vostcard.description || 'No description.'}</p>
-              <p>
-                <strong>Categories:</strong>{' '}
-                {vostcard.categories.length > 0
-                  ? vostcard.categories.join(', ')
-                  : 'None'}
-              </p>
+              {vostcard.categories && (vostcard.categories?.length || 0) > 0 && (
+                <p><strong>Categories:</strong> {vostcard.categories.join(', ')}</p>
+              )}
               <button onClick={() => handleEdit(vostcard.id)}>Edit</button>
             </li>
           ))}

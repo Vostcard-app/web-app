@@ -117,7 +117,7 @@ const MyPrivateVostcardsListView = () => {
                     <strong>Video:</strong> {vostcard.video ? '✅' : '❌'}
                   </div>
                   <div>
-                    <strong>Photos:</strong> {vostcard.photos.length}/2
+                    <strong>Photos:</strong> {(vostcard.photos?.length || 0)}/2
                   </div>
                   <div>
                     <strong>Title:</strong> {vostcard.title ? '✅' : '❌'}
@@ -126,7 +126,7 @@ const MyPrivateVostcardsListView = () => {
                     <strong>Description:</strong> {vostcard.description ? '✅' : '❌'}
                   </div>
                   <div>
-                    <strong>Categories:</strong> {vostcard.categories.length}
+                    <strong>Categories:</strong> {(vostcard.categories?.length || 0)}
                   </div>
                   <div>
                     <strong>Location:</strong> {vostcard.geo ? '✅' : '❌'}

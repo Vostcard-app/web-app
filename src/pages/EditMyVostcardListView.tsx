@@ -36,10 +36,10 @@ const EditMyVostcardListView = () => {
 
   const getVostcardStatus = (vostcard: any) => {
     if (!vostcard.video) return 'No Video';
-    if (vostcard.photos.length < 2) return 'Need More Photos';
+    if ((vostcard.photos?.length || 0) < 2) return 'Need More Photos';
     if (!vostcard.title) return 'No Title';
     if (!vostcard.description) return 'No Description';
-    if (vostcard.categories.length === 0) return 'No Categories';
+    if ((vostcard.categories?.length || 0) === 0) return 'No Categories';
     return 'Ready to Post';
   };
 
@@ -181,7 +181,7 @@ const EditMyVostcardListView = () => {
                       <strong>Video:</strong> {vostcard.video ? '✅' : '❌'}
                     </div>
                     <div>
-                      <strong>Photos:</strong> {vostcard.photos.length}/2
+                      <strong>Photos:</strong> {(vostcard.photos?.length || 0)}/2
                     </div>
                     <div>
                       <strong>Title:</strong> {vostcard.title ? '✅' : '❌'}
@@ -190,7 +190,7 @@ const EditMyVostcardListView = () => {
                       <strong>Description:</strong> {vostcard.description ? '✅' : '❌'}
                     </div>
                     <div>
-                      <strong>Categories:</strong> {vostcard.categories.length}
+                      <strong>Categories:</strong> {(vostcard.categories?.length || 0)}
                     </div>
                     <div>
                       <strong>Location:</strong> {vostcard.geo ? '✅' : '❌'}
@@ -198,7 +198,7 @@ const EditMyVostcardListView = () => {
                   </div>
 
                   {/* Categories */}
-                  {vostcard.categories.length > 0 && (
+                  {(vostcard.categories?.length || 0) > 0 && (
                     <div style={{ marginBottom: '16px' }}>
                       <strong style={{ fontSize: '12px', color: '#666' }}>Categories:</strong>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>

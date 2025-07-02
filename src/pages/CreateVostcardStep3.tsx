@@ -29,8 +29,8 @@ const CreateVostcardStep3: React.FC = () => {
   const validationState = {
     hasTitle: title.trim() !== '',
     hasDescription: description.trim() !== '',
-    hasCategories: categories.length > 0,
-    hasPhotos: photos.length >= 2,
+    hasCategories: (categories?.length || 0) > 0,
+    hasPhotos: (photos?.length || 0) >= 2,
     hasVideo: !!currentVostcard?.video,
     hasGeo: !!currentVostcard?.geo
   };
@@ -244,10 +244,10 @@ const CreateVostcardStep3: React.FC = () => {
           <div>Authentication: {authStatus}</div>
           <div>Video: {validationState.hasVideo ? '✅' : '❌'}</div>
           <div>Location: {validationState.hasGeo ? '✅' : '❌'}</div>
-          <div>Photos: {validationState.hasPhotos ? `✅ (${photos.length})` : `❌ (${photos.length}/2)`}</div>
+          <div>Photos: {validationState.hasPhotos ? `✅ (${photos?.length || 0})` : `❌ (${photos?.length || 0}/2)`}</div>
           <div>Title: {validationState.hasTitle ? '✅' : '❌'}</div>
           <div>Description: {validationState.hasDescription ? '✅' : '❌'}</div>
-          <div>Categories: {validationState.hasCategories ? `✅ (${categories.length})` : '❌'}</div>
+          <div>Categories: {validationState.hasCategories ? `✅ (${categories?.length || 0})` : '❌'}</div>
         </div>
       </div>
 
