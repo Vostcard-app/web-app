@@ -5,7 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
-import { db, auth } from '../firebaseConfig';
+import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png'; // Import the custom pin
 

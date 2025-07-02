@@ -13,7 +13,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getStorage } from "firebase/storage";
 import { FaUser, FaEnvelope, FaLock, FaCamera } from "react-icons/fa";
-import { auth, db } from "../firebaseConfig";
+import { auth, db } from "../firebase/firebaseConfig";
 import "./RegistrationPage.css";
 
 export default function RegisterPage() {
