@@ -137,7 +137,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Load all Vostcards on component mount
   useEffect(() => {
     loadAllLocalVostcards();
-  }, [loadAllLocalVostcards]);
+  }, []);
 
   // Debug currentVostcard changes
   useEffect(() => {
@@ -150,6 +150,24 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       photosCount: currentVostcard?.photos?.length,
       categoriesCount: currentVostcard?.categories?.length
     });
+  }, [currentVostcard]);
+
+  // ✅ Update geolocation (define this first since setVideo depends on it)
+  const setGeo = useCallback((geo: { latitude: number; longitude: number }) => {
+    console.log('📍 setGeo called with:', geo);
+    console.log('📍 Current Vostcard before setGeo:', currentVostcard);
+    
+    if (currentVostcard) {
+      const updatedVostcard = { 
+        ...currentVostcard, 
+        geo, 
+        updatedAt: new Date().toISOString() 
+      };
+      console.log('📍 Updated Vostcard with geo:', updatedVostcard.geo);
+      setCurrentVostcard(updatedVostcard);
+    } else {
+      console.warn('📍 setGeo called but no currentVostcard exists - geo will be set when Vostcard is created');
+    }
   }, [currentVostcard]);
 
   // ✅ Create or update video
@@ -195,11 +213,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         video,
         title: '',
         description: '',
-        photos: [], // Changed to Blob[]
+        photos: [],
         categories: [],
-        geo: null, // This will be set by setGeo if location was captured
+        geo: null,
         username,
-        userID: user?.uid || '', // Changed from userId to userID
+        userID: user?.uid || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -208,32 +226,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard, setGeo]);
 
-  // ✅ Update geolocation
-  const setGeo = useCallback((geo: { latitude: number; longitude: number }) => {
-    console.log('📍 setGeo called with:', geo);
-    console.log('📍 Current Vostcard before setGeo:', currentVostcard);
-    
-    if (currentVostcard) {
-      const updatedVostcard = { 
-        ...currentVostcard, 
-        geo, 
-        updatedAt: new Date().toISOString() 
-      };
-      console.log('📍 Updated Vostcard with geo:', updatedVostcard.geo);
-      setCurrentVostcard(updatedVostcard);
-    } else {
-      console.warn('📍 setGeo called but no currentVostcard exists - geo will be set when Vostcard is created');
-    }
-  }, [currentVostcard, setCurrentVostcard]);
-
   // ✅ General updates (title, description, categories, etc.)
   const updateVostcard = useCallback((updates: Partial<Vostcard>) => {
     console.log('🔄 updateVostcard called with:', updates);
-    console.log('📍 Current geo before updateVostcard:', currentVostcard?.geo);
-    console.log('📸 Current photos before updateVostcard:', {
-      photosCount: currentVostcard?.photos?.length || 0,
-      photos: currentVostcard?.photos
-    });
     
     if (currentVostcard) {
       const updatedVostcard = {
@@ -242,15 +237,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updatedAt: new Date().toISOString(),
       };
       console.log('📍 Updated Vostcard, geo preserved:', updatedVostcard.geo);
-      console.log('📸 Updated Vostcard, photos:', {
-        photosCount: updatedVostcard.photos?.length || 0,
-        photos: updatedVostcard.photos
-      });
       setCurrentVostcard(updatedVostcard);
     } else {
       console.warn('🔄 updateVostcard called but no currentVostcard exists');
     }
-  }, [currentVostcard, setCurrentVostcard]);
+  }, [currentVostcard]);
 
   // ✅ Add a photo to the current Vostcard
   const addPhoto = useCallback((photo: Blob) => {
@@ -266,7 +257,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } else {
       console.warn('📸 Tried to add photo but no currentVostcard exists');
     }
-  }, [currentVostcard, setCurrentVostcard]);
+  }, [currentVostcard]);
 
   // ✅ Save to IndexedDB
   const saveLocalVostcard = useCallback(async () => {
@@ -287,8 +278,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Convert Blob objects to base64 strings for IndexedDB serialization
       const serializableVostcard = {
         ...currentVostcard,
-        video: currentVostcard.video ? null : null, // We'll handle video separately
-        photos: [], // We'll handle photos separately
+        video: currentVostcard.video ? null : null,
+        photos: [],
         _videoBase64: null as string | null,
         _photosBase64: [] as string[]
       };
@@ -342,8 +333,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         request.onsuccess = () => {
           console.log('💾 Saved Vostcard to IndexedDB successfully');
-          // Update the savedVostcards list
-          loadAllLocalVostcards();
+          // Update the savedVostcards list by adding the new/updated item
+          setSavedVostcards(prev => {
+            const existingIndex = prev.findIndex(v => v.id === currentVostcard.id);
+            if (existingIndex >= 0) {
+              // Update existing item
+              const updated = [...prev];
+              updated[existingIndex] = currentVostcard;
+              return updated;
+            } else {
+              // Add new item
+              return [...prev, currentVostcard];
+            }
+          });
           resolve();
         };
       });
@@ -351,7 +353,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in saveLocalVostcard:', error);
       alert('Failed to save Vostcard locally. Please try again.');
     }
-  }, [currentVostcard, loadAllLocalVostcards]);
+  }, [currentVostcard]);
 
   // ✅ Load from IndexedDB
   const loadLocalVostcard = useCallback(async (id: string) => {
@@ -451,7 +453,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in loadLocalVostcard:', error);
       alert('Failed to load Vostcard. Please try again.');
     }
-  }, [setCurrentVostcard]);
+  }, []);
 
   // ✅ Delete private Vostcard from IndexedDB
   const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
@@ -485,7 +487,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // ✅ Clear current Vostcard
   const clearVostcard = useCallback(() => {
     setCurrentVostcard(null);
-  }, [setCurrentVostcard]);
+  }, []);
 
   // ✅ Clear IndexedDB (for testing)
   const clearLocalStorage = useCallback(async () => {
@@ -511,7 +513,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in clearLocalStorage:', error);
       alert('Failed to clear local storage. Please try again.');
     }
-  }, [setSavedVostcards]);
+  }, []);
 
   // Save Vostcard to privateVostcards (draft/private save) - Keep Firebase for posted Vostcards
   const postVostcard = useCallback(async () => {
