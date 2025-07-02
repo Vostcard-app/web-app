@@ -549,29 +549,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Get username with fallback
       const username = currentVostcard.username || user.displayName || user.email?.split('@')[0] || 'Unknown User';
 
-      // Upload video to Firebase Storage
+      // TEMPORARY: Skip Firebase Storage upload due to CORS issues
+      // TODO: Re-enable once Firebase Storage rules are updated
+      console.log('⚠️ Skipping Firebase Storage upload due to CORS issues');
+      console.log('💾 Saving Vostcard data to Firestore only...');
+      
       let videoURL = '';
-      if (currentVostcard.video) {
-        console.log('🎬 Uploading video to Firebase Storage...');
-        const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
-        const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
-        videoURL = await getDownloadURL(videoSnap.ref);
-        console.log('✅ Video uploaded successfully:', videoURL);
-      }
-
-      // Upload photos to Firebase Storage
-      const photoURLs = [];
-      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
-        console.log('📸 Uploading photos to Firebase Storage...');
-        for (let i = 0; i < currentVostcard.photos.length; i++) {
-          const photoBlob = currentVostcard.photos[i];
-          const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
-          const photoSnap = await uploadBytes(photoRef, photoBlob);
-          const photoURL = await getDownloadURL(photoSnap.ref);
-          photoURLs.push(photoURL);
-          console.log(`✅ Photo ${i + 1} uploaded:`, photoURL);
-        }
-      }
+      const photoURLs: string[] = [];
 
       // Save Vostcard data to Firestore
       console.log('💾 Saving Vostcard data to Firestore...');
@@ -593,7 +577,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: 'posted',
         hasVideo: !!currentVostcard.video,
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
-        mediaUploadStatus: 'completed'
+        mediaUploadStatus: 'pending' // Set to pending since we're skipping uploads due to CORS
       });
 
       console.log('✅ Vostcard posted successfully to Firebase!');
