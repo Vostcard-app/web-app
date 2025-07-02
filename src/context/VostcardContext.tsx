@@ -205,7 +205,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrentVostcard(updatedVostcard);
     } else {
       const user = auth.currentUser;
-      const username = user?.displayName || user?.email?.split('@')[0] || 'Unknown';
+      // Get username with fallback - prioritize email username over displayName
+      let username = 'Unknown';
+      if (user) {
+        if (user.email) {
+          username = user.email.split('@')[0];
+        } else if (user.displayName && user.displayName !== 'info Web App') {
+          username = user.displayName;
+        }
+      }
 
       const newVostcard = {
         id: uuidv4(),
@@ -546,8 +554,25 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
 
-      // Get username with fallback
-      const username = currentVostcard.username || user.displayName || user.email?.split('@')[0] || 'Unknown User';
+      // Get username with fallback - prioritize email username over displayName
+      let username = currentVostcard.username;
+      if (!username || username === 'info Web App') {
+        // Use email username as primary fallback
+        if (user.email) {
+          username = user.email.split('@')[0];
+        } else if (user.displayName && user.displayName !== 'info Web App') {
+          username = user.displayName;
+        } else {
+          username = 'Unknown User';
+        }
+      }
+      
+      console.log('👤 Username resolution:', {
+        currentVostcardUsername: currentVostcard.username,
+        userDisplayName: user.displayName,
+        userEmail: user.email,
+        finalUsername: username
+      });
 
       // TEMPORARY: Skip Firebase Storage upload due to CORS issues
       // TODO: Re-enable once Firebase Storage rules are updated
