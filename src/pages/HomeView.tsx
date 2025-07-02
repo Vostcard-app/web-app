@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
-import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
+// import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
 import { db, auth } from '../firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png'; // Import the custom pin
@@ -104,7 +104,7 @@ function getVostcardIcon() {
 
 const HomeView = () => {
   const navigate = useNavigate();
-  const { clearVostcard } = useVostcard();
+  // const { clearVostcard } = useVostcard();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -224,7 +224,7 @@ const HomeView = () => {
   const handleCreateVostcard = () => {
     // Clear the Vostcard context when starting a new Vostcard creation
     console.log('🎬 Starting Vostcard creation - clearing previous context data');
-    clearVostcard();
+    // clearVostcard();
     navigate('/create-step1');
   };
 
@@ -538,7 +538,7 @@ const createButton = {
 };
 
 const menuStyle = {
-  position: 'absolute',
+  position: 'absolute' as 'absolute',
   top: '70px',
   right: '20px',
   backgroundColor: 'white',
