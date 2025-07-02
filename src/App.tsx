@@ -16,6 +16,7 @@ import SettingsView from "./pages/SettingsView";
 import AccountSettingsView from "./pages/AccountSettingsView";
 import MyPrivateVostcardsListView from "./pages/MyPrivateVostcardsListView";
 import MyPostedVostcardsListView from "./pages/MyPostedVostcardsListView";
+import EditMyVostcardListView from "./pages/EditMyVostcardListView";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/list" element={<ListView />} />
           <Route path="/my-private-vostcards" element={<MyPrivateVostcardsListView />} />
           <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
+          <Route path="/edit-my-vostcards" element={<EditMyVostcardListView />} />
 
           {/* 🎥 Vostcard Creation */}
           <Route path="/create-step1" element={<CreateVostcardStep1 />} />

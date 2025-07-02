@@ -254,6 +254,9 @@ const HomeView = () => {
           <p onClick={() => { navigate('/my-private-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
             My Private Vōstcards
           </p>
+          <p onClick={() => { navigate('/edit-my-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
+            Edit My Vōstcards
+          </p>
           <p onClick={() => { navigate('/my-posted-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
             My Posted Vōstcards
           </p>
