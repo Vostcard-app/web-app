@@ -177,7 +177,7 @@ const HomeView = () => {
       {isMenuOpen && (
         <div style={menuStyle} role="menu" aria-label="Main menu">
           {menuItems.map(({ label, route }) => (
-            <p
+            <div
               key={label}
               style={menuItemStyle}
               onClick={() => {
@@ -200,9 +200,15 @@ const HomeView = () => {
                   }
                 }
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f5f5f5';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
               {label}
-            </p>
+            </div>
           ))}
         </div>
       )}
@@ -370,24 +376,32 @@ const createButton = {
 
 const menuStyle = {
   position: 'absolute' as 'absolute',
-  top: '100%',
-  right: 0,
+  top: '70px',
+  right: '20px',
   backgroundColor: 'white',
   border: '1px solid #ccc',
   borderRadius: '8px',
   boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-  padding: '10px 0',
-  minWidth: '200px',
+  padding: '8px 0',
+  minWidth: '220px',
   zIndex: 1001,
+  color: '#333',
+  fontSize: '14px',
 };
 
 const menuItemStyle = {
   cursor: 'pointer',
-  margin: '8px 0',
-  fontSize: '16px',
-  padding: '8px 12px',
-  borderRadius: '4px',
+  margin: '0',
+  fontSize: '14px',
+  padding: '12px 16px',
+  borderRadius: '0',
   transition: 'background-color 0.2s',
+  border: 'none',
+  backgroundColor: 'transparent',
+  width: '100%',
+  textAlign: 'left' as 'left',
+  display: 'block',
+  color: '#333',
 };
 
 const loadingStyle = {
