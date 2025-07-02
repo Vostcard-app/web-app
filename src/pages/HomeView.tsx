@@ -104,7 +104,7 @@ function getVostcardIcon() {
 
 const HomeView = () => {
   const navigate = useNavigate();
-  const { fixExistingVostcardUsernames } = useVostcard();
+  const { deleteVostcardsWithWrongUsername } = useVostcard();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -367,15 +367,18 @@ const HomeView = () => {
           <button 
             onClick={async () => {
               try {
-                await fixExistingVostcardUsernames();
-                alert('✅ Usernames fixed! Refresh the page to see changes.');
-                loadVostcards(); // Reload to see the changes
+                const confirmed = window.confirm('⚠️ This will permanently delete all your Vostcards with username "info Web App". Are you sure?');
+                if (confirmed) {
+                  await deleteVostcardsWithWrongUsername();
+                  alert('✅ Vostcards with wrong username deleted! Refresh the page to see changes.');
+                  loadVostcards(); // Reload to see the changes
+                }
               } catch (error) {
-                alert('❌ Error fixing usernames. Check console for details.');
+                alert('❌ Error deleting Vostcards. Check console for details.');
               }
             }}
             style={{
-              backgroundColor: '#28a745',
+              backgroundColor: '#dc3545',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -385,7 +388,7 @@ const HomeView = () => {
               marginTop: '4px'
             }}
           >
-            Fix Usernames
+            Delete Wrong Username
           </button>
         </div>
       )}

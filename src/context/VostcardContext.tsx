@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth, db, storage } from '../firebaseConfig';
-import { collection, addDoc, updateDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -36,7 +36,7 @@ interface VostcardContextProps {
   savedVostcards: Vostcard[];
   loadAllLocalVostcards: () => void;
   deletePrivateVostcard: (id: string) => Promise<void>;
-  fixExistingVostcardUsernames: () => Promise<void>;
+  deleteVostcardsWithWrongUsername: () => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -524,25 +524,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // ✅ Fix existing Vostcards with incorrect username
-  const fixExistingVostcardUsernames = useCallback(async () => {
+  // ✅ Delete Vostcards with incorrect username
+  const deleteVostcardsWithWrongUsername = useCallback(async () => {
     try {
       const user = auth.currentUser;
       if (!user) {
-        console.log('No user logged in, skipping username fix');
+        console.log('No user logged in, skipping delete');
         return;
       }
 
-      console.log('🔧 Fixing existing Vostcard usernames...');
+      console.log('🗑️ Deleting Vostcards with incorrect username...');
       
-      // Get correct username
-      let correctUsername = 'Unknown';
-      if (user.email) {
-        correctUsername = user.email.split('@')[0];
-      } else if (user.displayName && user.displayName !== 'info Web App') {
-        correctUsername = user.displayName;
-      }
-
       // Query for Vostcards with incorrect username
       const q = query(
         collection(db, 'vostcards'),
@@ -551,23 +543,25 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
       
       const querySnapshot = await getDocs(q);
-      console.log(`Found ${querySnapshot.docs.length} Vostcards with incorrect username`);
+      console.log(`Found ${querySnapshot.docs.length} Vostcards with incorrect username to delete`);
 
-      // Update each Vostcard
-      const updatePromises = querySnapshot.docs.map(async (docSnapshot) => {
+      if (querySnapshot.docs.length === 0) {
+        console.log('No Vostcards with incorrect username found');
+        return;
+      }
+
+      // Delete each Vostcard
+      const deletePromises = querySnapshot.docs.map(async (docSnapshot) => {
         const vostcardRef = doc(db, 'vostcards', docSnapshot.id);
-        await updateDoc(vostcardRef, {
-          username: correctUsername,
-          updatedAt: Timestamp.now()
-        });
-        console.log(`✅ Fixed username for Vostcard ${docSnapshot.id}: ${correctUsername}`);
+        await deleteDoc(vostcardRef);
+        console.log(`🗑️ Deleted Vostcard ${docSnapshot.id}`);
       });
 
-      await Promise.all(updatePromises);
-      console.log('✅ All Vostcard usernames fixed!');
+      await Promise.all(deletePromises);
+      console.log('✅ All Vostcards with incorrect username deleted!');
       
     } catch (error) {
-      console.error('❌ Error fixing Vostcard usernames:', error);
+      console.error('❌ Error deleting Vostcards:', error);
     }
   }, []);
 
@@ -690,7 +684,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         savedVostcards,
         loadAllLocalVostcards,
         deletePrivateVostcard,
-        fixExistingVostcardUsernames,
+        deleteVostcardsWithWrongUsername,
       }}
     >
       {children}
