@@ -17,8 +17,8 @@ export interface Vostcard {
   userID: string;
   createdAt: string;
   updatedAt: string;
-  _videoBase64?: string | null; // For localStorage serialization
-  _photosBase64?: string[]; // For localStorage serialization
+  _videoBase64?: string | null; // For IndexedDB serialization
+  _photosBase64?: string[]; // For IndexedDB serialization
 }
 
 interface VostcardContextProps {
@@ -35,50 +35,109 @@ interface VostcardContextProps {
   postVostcard: () => Promise<void>;
   savedVostcards: Vostcard[];
   loadAllLocalVostcards: () => void;
+  deletePrivateVostcard: (id: string) => Promise<void>;
 }
+
+// IndexedDB configuration
+const DB_NAME = 'VostcardDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'privateVostcards';
+
+// IndexedDB utility functions
+const openDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+  });
+};
 
 const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
 
 export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
-  // Load all Vostcards from localStorage and restore their blobs
-  const loadAllLocalVostcards = () => {
-    const existing: any[] = JSON.parse(localStorage.getItem('localVostcards') || '[]');
 
-    const restoredVostcards = existing.map((v) => {
-      const restored: Vostcard = {
-        ...v,
-        video: null,
-        photos: [],
-      };
+  // Load all Vostcards from IndexedDB and restore their blobs
+  const loadAllLocalVostcards = async () => {
+    try {
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
 
-      if (v._videoBase64) {
-        const videoData = atob(v._videoBase64.split(',')[1]);
-        const videoArray = new Uint8Array(videoData.length);
-        for (let i = 0; i < videoData.length; i++) {
-          videoArray[i] = videoData.charCodeAt(i);
-        }
-        restored.video = new Blob([videoArray], { type: 'video/webm' });
-      }
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to load Vostcards from IndexedDB:', request.error);
+          reject(request.error);
+        };
 
-      if (v._photosBase64) {
-        restored.photos = v._photosBase64.map((base64: string) => {
-          const photoData = atob(base64.split(',')[1]);
-          const photoArray = new Uint8Array(photoData.length);
-          for (let i = 0; i < photoData.length; i++) {
-            photoArray[i] = photoData.charCodeAt(i);
-          }
-          return new Blob([photoArray], { type: 'image/jpeg' });
-        });
-      }
+        request.onsuccess = () => {
+          const existing: any[] = request.result || [];
+          console.log('📂 Found', existing.length, 'Vostcards in IndexedDB');
 
-      return restored;
-    });
+          const restoredVostcards = existing.map((v) => {
+            const restored: Vostcard = {
+              ...v,
+              video: null,
+              photos: [],
+            };
 
-    setSavedVostcards(restoredVostcards);
-    console.log('📂 Loaded all saved Vōstcards:', restoredVostcards);
+            if (v._videoBase64) {
+              try {
+                const videoData = atob(v._videoBase64.split(',')[1]);
+                const videoArray = new Uint8Array(videoData.length);
+                for (let i = 0; i < videoData.length; i++) {
+                  videoArray[i] = videoData.charCodeAt(i);
+                }
+                restored.video = new Blob([videoArray], { type: 'video/webm' });
+              } catch (error) {
+                console.error('❌ Failed to restore video from base64:', error);
+              }
+            }
+
+            if (v._photosBase64) {
+              restored.photos = v._photosBase64.map((base64: string) => {
+                try {
+                  const photoData = atob(base64.split(',')[1]);
+                  const photoArray = new Uint8Array(photoData.length);
+                  for (let i = 0; i < photoData.length; i++) {
+                    photoArray[i] = photoData.charCodeAt(i);
+                  }
+                  return new Blob([photoArray], { type: 'image/jpeg' });
+                } catch (error) {
+                  console.error('❌ Failed to restore photo from base64:', error);
+                  return new Blob([], { type: 'image/jpeg' });
+                }
+              });
+            }
+
+            return restored;
+          });
+
+          setSavedVostcards(restoredVostcards);
+          console.log('📂 Loaded all saved Vōstcards:', restoredVostcards);
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ Failed to open IndexedDB:', error);
+      alert('Failed to load saved Vostcards. Please refresh the page and try again.');
+    }
   };
+
+  // Load all Vostcards on component mount
+  useEffect(() => {
+    loadAllLocalVostcards();
+  }, []);
 
   // Debug currentVostcard changes
   useEffect(() => {
@@ -209,8 +268,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // ✅ Save to localStorage
-  const saveLocalVostcard = () => {
+  // ✅ Save to IndexedDB
+  const saveLocalVostcard = async () => {
     if (!currentVostcard) {
       console.log('💾 saveLocalVostcard: No currentVostcard to save');
       return;
@@ -224,175 +283,202 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       photoSizes: currentVostcard.photos.map(p => p.size)
     });
     
-    // Convert Blob objects to base64 strings for localStorage serialization
-    const serializableVostcard = {
-      ...currentVostcard,
-      video: currentVostcard.video ? null : null, // We'll handle video separately
-      photos: [], // We'll handle photos separately
-      _videoBase64: null as string | null,
-      _photosBase64: [] as string[]
-    };
-
-    // Convert video Blob to base64 if it exists
-    if (currentVostcard.video) {
-      console.log('💾 Converting video to base64...');
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        serializableVostcard._videoBase64 = base64;
-        console.log('💾 Video converted to base64, length:', base64.length);
-        
-        // Convert photos Blobs to base64
-        if (currentVostcard.photos.length > 0) {
-          console.log('💾 Converting photos to base64...');
-          const photoPromises = currentVostcard.photos.map((photo, index) => {
-            return new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => {
-                console.log(`💾 Photo ${index + 1} converted to base64, length:`, (reader.result as string).length);
-                resolve(reader.result as string);
-              };
-              reader.readAsDataURL(photo);
-            });
-          });
-
-          Promise.all(photoPromises).then(photoBase64s => {
-            serializableVostcard._photosBase64 = photoBase64s;
-            console.log('💾 All photos converted to base64');
-            
-            // Now save to localStorage
-            const existing = JSON.parse(localStorage.getItem('localVostcards') || '[]');
-            const updated = [
-              ...existing.filter((v: any) => v.id !== currentVostcard.id),
-              serializableVostcard,
-            ];
-            localStorage.setItem('localVostcards', JSON.stringify(updated));
-            console.log('💾 Saved Vostcard to localStorage with base64 data');
-          });
-        } else {
-          // No photos, just save video
-          const existing = JSON.parse(localStorage.getItem('localVostcards') || '[]');
-          const updated = [
-            ...existing.filter((v: any) => v.id !== currentVostcard.id),
-            serializableVostcard,
-          ];
-          localStorage.setItem('localVostcards', JSON.stringify(updated));
-          console.log('💾 Saved Vostcard to localStorage with video only');
-        }
+    try {
+      // Convert Blob objects to base64 strings for IndexedDB serialization
+      const serializableVostcard = {
+        ...currentVostcard,
+        video: currentVostcard.video ? null : null, // We'll handle video separately
+        photos: [], // We'll handle photos separately
+        _videoBase64: null as string | null,
+        _photosBase64: [] as string[]
       };
-      reader.readAsDataURL(currentVostcard.video);
-    } else {
-      // No video, just handle photos
+
+      // Convert video Blob to base64 if it exists
+      if (currentVostcard.video) {
+        console.log('💾 Converting video to base64...');
+        const videoBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(currentVostcard.video!);
+        });
+        serializableVostcard._videoBase64 = videoBase64;
+        console.log('💾 Video converted to base64, length:', videoBase64.length);
+      }
+
+      // Convert photos Blobs to base64
       if (currentVostcard.photos.length > 0) {
-        console.log('💾 Converting photos to base64 (no video)...');
+        console.log('💾 Converting photos to base64...');
         const photoPromises = currentVostcard.photos.map((photo, index) => {
-          return new Promise<string>((resolve) => {
+          return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => {
               console.log(`💾 Photo ${index + 1} converted to base64, length:`, (reader.result as string).length);
               resolve(reader.result as string);
             };
+            reader.onerror = () => reject(reader.error);
             reader.readAsDataURL(photo);
           });
         });
 
-        Promise.all(photoPromises).then(photoBase64s => {
-          serializableVostcard._photosBase64 = photoBase64s;
-          console.log('💾 All photos converted to base64');
-          
-          // Now save to localStorage
-          const existing = JSON.parse(localStorage.getItem('localVostcards') || '[]');
-          const updated = [
-            ...existing.filter((v: any) => v.id !== currentVostcard.id),
-            serializableVostcard,
-          ];
-          localStorage.setItem('localVostcards', JSON.stringify(updated));
-          console.log('💾 Saved Vostcard to localStorage with photos only');
-        });
-      } else {
-        // No video or photos, just save metadata
-        const existing = JSON.parse(localStorage.getItem('localVostcards') || '[]');
-        const updated = [
-          ...existing.filter((v: any) => v.id !== currentVostcard.id),
-          serializableVostcard,
-        ];
-        localStorage.setItem('localVostcards', JSON.stringify(updated));
-        console.log('💾 Saved Vostcard to localStorage with metadata only');
+        const photoBase64s = await Promise.all(photoPromises);
+        serializableVostcard._photosBase64 = photoBase64s;
+        console.log('💾 All photos converted to base64');
       }
+
+      // Save to IndexedDB
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      const request = store.put(serializableVostcard);
+      
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to save Vostcard to IndexedDB:', request.error);
+          alert('Failed to save Vostcard locally. Please try again.');
+          reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+          console.log('💾 Saved Vostcard to IndexedDB successfully');
+          // Update the savedVostcards list
+          loadAllLocalVostcards();
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ Error in saveLocalVostcard:', error);
+      alert('Failed to save Vostcard locally. Please try again.');
     }
   };
 
-  // ✅ Load from localStorage
-  const loadLocalVostcard = (id: string) => {
+  // ✅ Load from IndexedDB
+  const loadLocalVostcard = async (id: string) => {
     console.log('📂 loadLocalVostcard: Attempting to load Vostcard with ID:', id);
-    const existing: any[] = JSON.parse(localStorage.getItem('localVostcards') || '[]');
-    console.log('📂 Found', existing.length, 'Vostcards in localStorage');
     
-    const found = existing.find((v) => v.id === id);
-    
-    if (found) {
-      console.log('📂 Found Vostcard in localStorage:', {
-        id: found.id,
-        hasVideoBase64: !!found._videoBase64,
-        videoBase64Length: found._videoBase64?.length,
-        hasPhotosBase64: !!found._photosBase64,
-        photosBase64Count: found._photosBase64?.length,
-        title: found.title
-      });
-      
-      // Convert base64 strings back to Blob objects
-      const restoredVostcard = {
-        ...found,
-        video: null as Blob | null,
-        photos: [] as Blob[]
-      };
+    try {
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(id);
 
-      // Convert video base64 back to Blob
-      if (found._videoBase64) {
-        console.log('📂 Converting video base64 back to Blob...');
-        const videoBase64 = found._videoBase64;
-        const videoBytes = atob(videoBase64.split(',')[1]);
-        const videoArray = new Uint8Array(videoBytes.length);
-        for (let i = 0; i < videoBytes.length; i++) {
-          videoArray[i] = videoBytes.charCodeAt(i);
-        }
-        restoredVostcard.video = new Blob([videoArray], { type: 'video/webm' });
-        console.log('📂 Video restored, size:', restoredVostcard.video.size);
-      }
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to load Vostcard from IndexedDB:', request.error);
+          reject(request.error);
+        };
 
-      // Convert photos base64 back to Blobs
-      if (found._photosBase64 && found._photosBase64.length > 0) {
-        console.log('📂 Converting photos base64 back to Blobs...');
-        const photoBlobs = found._photosBase64.map((photoBase64: string, index: number) => {
-          const photoBytes = atob(photoBase64.split(',')[1]);
-          const photoArray = new Uint8Array(photoBytes.length);
-          for (let i = 0; i < photoBytes.length; i++) {
-            photoArray[i] = photoBytes.charCodeAt(i);
+        request.onsuccess = () => {
+          const found = request.result;
+          
+          if (found) {
+            console.log('📂 Found Vostcard in IndexedDB:', {
+              id: found.id,
+              hasVideoBase64: !!found._videoBase64,
+              videoBase64Length: found._videoBase64?.length,
+              hasPhotosBase64: !!found._photosBase64,
+              photosBase64Count: found._photosBase64?.length,
+              title: found.title
+            });
+            
+            // Convert base64 strings back to Blob objects
+            const restoredVostcard = {
+              ...found,
+              video: null as Blob | null,
+              photos: [] as Blob[]
+            };
+
+            // Convert video base64 back to Blob
+            if (found._videoBase64) {
+              try {
+                console.log('📂 Converting video base64 back to Blob...');
+                const videoBase64 = found._videoBase64;
+                const videoBytes = atob(videoBase64.split(',')[1]);
+                const videoArray = new Uint8Array(videoBytes.length);
+                for (let i = 0; i < videoBytes.length; i++) {
+                  videoArray[i] = videoBytes.charCodeAt(i);
+                }
+                restoredVostcard.video = new Blob([videoArray], { type: 'video/webm' });
+                console.log('📂 Video restored, size:', restoredVostcard.video.size);
+              } catch (error) {
+                console.error('❌ Failed to restore video from base64:', error);
+              }
+            }
+
+            // Convert photos base64 back to Blobs
+            if (found._photosBase64 && found._photosBase64.length > 0) {
+              try {
+                console.log('📂 Converting photos base64 back to Blobs...');
+                const photoBlobs = found._photosBase64.map((photoBase64: string, index: number) => {
+                  const photoBytes = atob(photoBase64.split(',')[1]);
+                  const photoArray = new Uint8Array(photoBytes.length);
+                  for (let i = 0; i < photoBytes.length; i++) {
+                    photoArray[i] = photoBytes.charCodeAt(i);
+                  }
+                  const blob = new Blob([photoArray], { type: 'image/jpeg' });
+                  console.log(`📂 Photo ${index + 1} restored, size:`, blob.size);
+                  return blob;
+                });
+                restoredVostcard.photos = photoBlobs;
+                console.log('📂 All photos restored, count:', photoBlobs.length);
+              } catch (error) {
+                console.error('❌ Failed to restore photos from base64:', error);
+              }
+            }
+
+            // Remove the base64 fields from the restored object
+            delete restoredVostcard._videoBase64;
+            delete restoredVostcard._photosBase64;
+
+            console.log('📂 Loaded Vostcard from IndexedDB:', {
+              id: restoredVostcard.id,
+              hasVideo: !!restoredVostcard.video,
+              videoSize: restoredVostcard.video?.size,
+              photosCount: restoredVostcard.photos.length,
+              photoSizes: restoredVostcard.photos.map((p: Blob) => p.size),
+              title: restoredVostcard.title
+            });
+
+            setCurrentVostcard(restoredVostcard);
+          } else {
+            console.log('📂 Vostcard not found in IndexedDB with ID:', id);
           }
-          const blob = new Blob([photoArray], { type: 'image/jpeg' });
-          console.log(`📂 Photo ${index + 1} restored, size:`, blob.size);
-          return blob;
-        });
-        restoredVostcard.photos = photoBlobs;
-        console.log('📂 All photos restored, count:', photoBlobs.length);
-      }
-
-      // Remove the base64 fields from the restored object
-      delete restoredVostcard._videoBase64;
-      delete restoredVostcard._photosBase64;
-
-      console.log('📂 Loaded Vostcard from localStorage:', {
-        id: restoredVostcard.id,
-        hasVideo: !!restoredVostcard.video,
-        videoSize: restoredVostcard.video?.size,
-        photosCount: restoredVostcard.photos.length,
-        photoSizes: restoredVostcard.photos.map((p: Blob) => p.size),
-        title: restoredVostcard.title
+          resolve();
+        };
       });
+    } catch (error) {
+      console.error('❌ Error in loadLocalVostcard:', error);
+      alert('Failed to load Vostcard. Please try again.');
+    }
+  };
 
-      setCurrentVostcard(restoredVostcard);
-    } else {
-      console.log('📂 Vostcard not found in localStorage with ID:', id);
+  // ✅ Delete private Vostcard from IndexedDB
+  const deletePrivateVostcard = async (id: string): Promise<void> => {
+    try {
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(id);
+
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to delete Vostcard from IndexedDB:', request.error);
+          alert('Failed to delete Vostcard. Please try again.');
+          reject(request.error);
+        };
+
+        request.onsuccess = () => {
+          console.log('🗑️ Deleted Vostcard from IndexedDB:', id);
+          // Update the savedVostcards list
+          loadAllLocalVostcards();
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ Error in deletePrivateVostcard:', error);
+      alert('Failed to delete Vostcard. Please try again.');
+      throw error;
     }
   };
 
@@ -401,13 +487,33 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentVostcard(null);
   };
 
-  // ✅ Clear localStorage (for testing)
-  const clearLocalStorage = () => {
-    localStorage.removeItem('localVostcards');
-    console.log('🗑️ Cleared all Vostcards from localStorage');
+  // ✅ Clear IndexedDB (for testing)
+  const clearLocalStorage = async () => {
+    try {
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.clear();
+
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to clear IndexedDB:', request.error);
+          reject(request.error);
+        };
+
+        request.onsuccess = () => {
+          console.log('🗑️ Cleared all Vostcards from IndexedDB');
+          setSavedVostcards([]);
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ Error in clearLocalStorage:', error);
+      alert('Failed to clear local storage. Please try again.');
+    }
   };
 
-  // Save Vostcard to privateVostcards (draft/private save)
+  // Save Vostcard to privateVostcards (draft/private save) - Keep Firebase for posted Vostcards
   const saveVostcard = async () => {
     if (!currentVostcard) {
       console.error('No current Vostcard to save');
@@ -421,6 +527,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
+    // For private Vostcards, save to IndexedDB
+    if (currentVostcard.state === 'private') {
+      try {
+        await saveLocalVostcard();
+        alert('Vōstcard saved locally!');
+      } catch (error) {
+        console.error('❌ Failed to save private Vostcard:', error);
+        alert('Failed to save Vostcard locally.');
+      }
+      return;
+    }
+
+    // For posted Vostcards, continue using Firebase
     try {
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
@@ -472,6 +591,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       alert('Failed to save Vostcard.');
     }
   };
+
   // Post Vostcard to Firestore and Storage - Updated to match iOS app structure
   const postVostcard = async () => {
     if (!currentVostcard) {
@@ -684,6 +804,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         postVostcard,
         savedVostcards,
         loadAllLocalVostcards,
+        deletePrivateVostcard,
       }}
     >
       {children}
