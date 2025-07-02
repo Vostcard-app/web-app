@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoURL: currentUser.photoURL,
           isAnonymous: currentUser.isAnonymous
         });
-        
+
         setUser(currentUser);
         setUserID(currentUser.uid);
 
@@ -46,7 +46,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (userDocSnap.exists()) {
             const data = userDocSnap.data();
             console.log('📄 Firestore user document:', data);
-            setUsername(data.username || null);
+
+            // Filter out unwanted usernames like "Web App"
+            const fetchedUsername = data.username || null;
+            const cleanedUsername = (fetchedUsername === "Web App") ? null : fetchedUsername;
+
+            setUsername(cleanedUsername);
           } else {
             console.warn("No user document found for:", currentUser.uid);
             setUsername(null);
