@@ -1,158 +1,297 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  setDoc,
-  Timestamp,
-} from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getStorage } from "firebase/storage";
-import { FaUser, FaEnvelope, FaLock, FaCamera } from "react-icons/fa";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
-import "./RegistrationPage.css";
 
-export default function RegisterPage() {
+export default function RegistrationPage() {
+  const [formType, setFormType] = useState<"user" | "advertiser">("user");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [accountType, setAccountType] = useState("User");
+  const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState("");
-
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Helper to check if username is unique
+  const isUsernameUnique = async (username: string) => {
+    const q = query(collection(db, "users"), where("username", "==", username));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.empty;
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    if (!name || !username || !email || !password) {
-      setError("Please fill out all fields.");
+    // Basic validation
+    if (!name || !email || !password || (formType === "user" && !username) || (formType === "advertiser" && !businessName)) {
+      setError("Please fill out all required fields.");
+      setLoading(false);
       return;
     }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (!agreed) {
+      setError("You must agree to the terms and privacy policy.");
+      setLoading(false);
       return;
     }
 
     try {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("username", "==", username.toLowerCase()));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        setError("Username already taken.");
-        return;
+      // For user, check username uniqueness
+      if (formType === "user") {
+        const unique = await isUsernameUnique(username);
+        if (!unique) {
+          setError("Username is already taken.");
+          setLoading(false);
+          return;
+        }
       }
 
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Set the displayName in Firebase Auth to prevent "info Web App" fallback
-      await updateProfile(user, {
-        displayName: name
-      });
-
-      await setDoc(doc(db, "users", user.uid), {
-        name: name,
-        username: username.toLowerCase(),
-        email: email,
-        userRole: accountType,
-        avatarURL: "",
-        message: "",
-        acceptedTerms: true,
-        termsAcceptanceDate: new Date().toISOString(),
-        privacyPolicyAcceptanceDate: new Date().toISOString(),
-      });
-
-      navigate("/home");
+      // Save extra info to Firestore
+      if (formType === "user") {
+        await setDoc(doc(db, "users", user.uid), {
+          name,
+          username,
+          email,
+          role: "user",
+          createdAt: new Date(),
+        });
+        navigate("/profile");
+      } else {
+        await setDoc(doc(db, "advertisers", user.uid), {
+          name,
+          businessName,
+          email,
+          role: "advertiser",
+          createdAt: new Date(),
+        });
+        navigate("/advertiser-portal");
+      }
     } catch (err: any) {
-      console.error(err);
-      setError(err.message);
+      setError(err.message || "Registration failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="register-container">
-      <div className="header">
-        <h1>Vōstcard</h1>
-        <button className="home-button" onClick={() => navigate("/")}>
-          <i className="fas fa-home"></i>
-        </button>
-      </div>
-
-      <h2 className="welcome">Register</h2>
-
-      <input
-        type="text"
-        placeholder="Name"
-        className="input-field"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-
-      <input
-        type="text"
-        placeholder="Username"
-        className="input-field"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
-
-      <input
-        type="email"
-        placeholder="Email"
-        className="input-field"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <div className="password-wrapper">
-        <input
-          type={showPassword ? "text" : "password"}
-          placeholder="Password"
-          className="input-field"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+    <div style={{
+      minHeight: '100vh',
+      background: '#fff',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      padding: 0,
+    }}>
+      {/* Header */}
+      <div style={{
+        background: '#07345c',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '32px 24px 24px 24px',
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        width: '100%',
+        boxSizing: 'border-box',
+      }}>
+        <h1 style={{
+          color: 'white',
+          fontWeight: 700,
+          fontSize: '2.5rem',
+          margin: 0,
+        }}>Vōstcard</h1>
         <button
-          className="eye-button"
-          onClick={() => setShowPassword(!showPassword)}
+          onClick={() => navigate("/")}
+          style={{
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 56,
+            height: 56,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+            cursor: 'pointer',
+          }}
         >
-          <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+          <i className="fas fa-home" style={{ color: 'white', fontSize: 28 }}></i>
         </button>
       </div>
 
-      <label className="account-type-label">Account Type</label>
-      <select
-        className="input-field"
-        value={accountType}
-        onChange={(e) => setAccountType(e.target.value)}
-      >
-        <option value="User">User</option>
-        <option value="Advertiser">Advertiser</option>
-      </select>
+      {/* Toggle */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        margin: '32px 0 16px 0',
+        width: '90%',
+      }}>
+        <button
+          onClick={() => setFormType("user")}
+          style={{
+            flex: 1,
+            padding: '12px 0',
+            background: formType === "user" ? "#07345c" : "#eee",
+            color: formType === "user" ? "#fff" : "#07345c",
+            border: 'none',
+            borderRadius: '16px 0 0 16px',
+            fontWeight: 600,
+            fontSize: 18,
+            cursor: 'pointer',
+          }}
+        >
+          User
+        </button>
+        <button
+          onClick={() => setFormType("advertiser")}
+          style={{
+            flex: 1,
+            padding: '12px 0',
+            background: formType === "advertiser" ? "#07345c" : "#eee",
+            color: formType === "advertiser" ? "#fff" : "#07345c",
+            border: 'none',
+            borderRadius: '0 16px 16px 0',
+            fontWeight: 600,
+            fontSize: 18,
+            cursor: 'pointer',
+          }}
+        >
+          Advertiser
+        </button>
+      </div>
 
-      {error && <div className="error-message">{error}</div>}
-
-      <button className="main-button" onClick={handleRegister}>
-        Register
-      </button>
-
-      <p className="register-prompt">Already have an account?</p>
-
-      <button className="main-button" onClick={() => navigate("/login")}>
-        Log In
-      </button>
+      {/* Form */}
+      <form style={{ width: '90%', maxWidth: 400 }} onSubmit={handleRegister}>
+        <input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          style={inputStyle}
+        />
+        {formType === "user" && (
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            style={inputStyle}
+          />
+        )}
+        {formType === "advertiser" && (
+          <input
+            type="text"
+            placeholder="Business Name"
+            value={businessName}
+            onChange={e => setBusinessName(e.target.value)}
+            style={inputStyle}
+          />
+        )}
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          style={inputStyle}
+        />
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            style={{ ...inputStyle, marginBottom: 0 }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 22, color: '#888' }}></i>
+          </button>
+        </div>
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <a href="/terms" style={linkStyle}>Terms & Conditions</a>
+        </div>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <a href="/privacy" style={linkStyle}>Privacy Policy</a>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: 24,
+        }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={e => setAgreed(e.target.checked)}
+            style={{ width: 28, height: 28, marginRight: 12 }}
+            id="agree"
+          />
+          <label htmlFor="agree" style={{ color: '#b0b0b0', fontSize: 18 }}>
+            I have Read and Agree to the above
+          </label>
+        </div>
+        {error && <div style={{ color: "#ff3b30", textAlign: "center", marginBottom: 12 }}>{error}</div>}
+        <button
+          type="submit"
+          disabled={!agreed || loading}
+          style={{
+            width: '100%',
+            background: agreed ? "#07345c" : "#b0b0b0",
+            color: 'white',
+            border: 'none',
+            borderRadius: 16,
+            fontSize: 28,
+            fontWeight: 600,
+            padding: '16px 0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+            cursor: agreed && !loading ? 'pointer' : 'not-allowed',
+            letterSpacing: '0.01em',
+          }}
+        >
+          {loading ? "Registering..." : "Register"}
+        </button>
+      </form>
     </div>
   );
 }
+
+const inputStyle = {
+  width: '100%',
+  marginBottom: 16,
+  fontSize: 22,
+  padding: '16px 12px',
+  borderRadius: 12,
+  border: '1px solid #eee',
+  background: '#f8f8f8',
+  color: '#222',
+  boxSizing: 'border-box' as const,
+};
+
+const linkStyle = {
+  color: '#07345c',
+  fontWeight: 600,
+  fontSize: 20,
+  textDecoration: 'underline',
+  cursor: 'pointer',
+};

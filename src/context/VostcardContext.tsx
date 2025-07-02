@@ -18,6 +18,12 @@ export interface Vostcard {
   userID: string;
   createdAt: string;
   updatedAt: string;
+  isOffer?: boolean; // New field for offers
+  offerDetails?: {
+    discount?: string;
+    validUntil?: string;
+    terms?: string;
+  };
   _videoBase64?: string | null; // For IndexedDB serialization
   _photosBase64?: string[]; // For IndexedDB serialization
 }
@@ -696,7 +702,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: 'posted',
         hasVideo: !!currentVostcard.video,
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
-        mediaUploadStatus: 'pending'
+        mediaUploadStatus: 'pending',
+        isOffer: currentVostcard.isOffer || false,
+        offerDetails: currentVostcard.offerDetails || null
       });
 
       console.log('✅ Vostcard posted successfully to Firebase!');

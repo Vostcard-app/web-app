@@ -3,15 +3,26 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaList, FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
+import { useAuth } from '../context/AuthContext';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png'; // Import the custom pin
+import OfferPin from '../assets/Offer_pin.png'; // Import the offer pin
+
 
 // 🔥 Vostcard Pin - Custom Vostcard pin
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin, // Use imported asset
+  iconSize: [50, 50],
+  iconAnchor: [25, 50],
+  popupAnchor: [0, -50],
+});
+
+// 🎁 Offer Pin - Custom Offer pin
+const offerIcon = new L.Icon({
+  iconUrl: OfferPin, // Use imported asset
   iconSize: [50, 50],
   iconAnchor: [25, 50],
   popupAnchor: [0, -50],
@@ -97,14 +108,15 @@ const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) 
   return null;
 };
 
-// Helper to get the Vostcard icon (always use custom for now)
-function getVostcardIcon() {
-  return vostcardIcon;
+// Helper to get the appropriate icon based on whether it's an offer
+function getVostcardIcon(isOffer: boolean = false) {
+  return isOffer ? offerIcon : vostcardIcon;
 }
 
 const HomeView = () => {
   const navigate = useNavigate();
   const { deleteVostcardsWithWrongUsername } = useVostcard();
+  const { userRole } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -434,11 +446,25 @@ const HomeView = () => {
               <Marker
                 key={v.id}
                 position={[lat, lng]}
-                icon={getVostcardIcon()}
+                icon={getVostcardIcon(v.isOffer)}
               >
                 <Popup>
                   <h3>{v.title || 'Untitled'}</h3>
                   <p>{v.description || 'No description'}</p>
+                  {v.isOffer && v.offerDetails?.discount && (
+                    <div style={{
+                      backgroundColor: '#fff3cd',
+                      border: '1px solid #ffeaa7',
+                      borderRadius: '4px',
+                      padding: '8px',
+                      margin: '8px 0'
+                    }}>
+                      <strong>🎁 Special Offer:</strong> {v.offerDetails.discount}
+                      {v.offerDetails.validUntil && (
+                        <div><small>Valid until: {v.offerDetails.validUntil}</small></div>
+                      )}
+                    </div>
+                  )}
                   {v.categories && Array.isArray(v.categories) && v.categories.length > 0 && (
                     <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
                   )}

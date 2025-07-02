@@ -9,6 +9,7 @@ interface AuthContextType {
   user: User | null;
   username: string | null;
   userID: string | null;
+  userRole: string | null;
   loading: boolean;
   logout: () => Promise<void>;
 }
@@ -21,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [userID, setUserID] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -46,24 +48,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (userDocSnap.exists()) {
             const data = userDocSnap.data();
             console.log('📄 Firestore user document:', data);
-
-            // Filter out unwanted usernames like "Web App"
-            const fetchedUsername = data.username || null;
-            const cleanedUsername = (fetchedUsername === "Web App") ? null : fetchedUsername;
-
-            setUsername(cleanedUsername);
+            setUsername(data.username || null);
+            setUserRole(data.userRole || null);
           } else {
             console.warn("No user document found for:", currentUser.uid);
             setUsername(null);
+            setUserRole(null);
           }
         } catch (error) {
           console.error("Error fetching username:", error);
           setUsername(null);
+          setUserRole(null);
         }
       } else {
         setUser(null);
         setUsername(null);
         setUserID(null);
+        setUserRole(null);
       }
       setLoading(false);
     });
@@ -79,6 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     username,
     userID,
+    userRole,
     loading,
     logout,
   };

@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { VostcardProvider } from "./context/VostcardContext";
 
@@ -17,6 +18,9 @@ import AccountSettingsView from "./pages/AccountSettingsView";
 import MyPrivateVostcardsListView from "./pages/MyPrivateVostcardsListView";
 import MyPostedVostcardsListView from "./pages/MyPostedVostcardsListView";
 import EditMyVostcardListView from "./pages/EditMyVostcardListView";
+import AdvertiserPortal from "./pages/AdvertiserPortal";
+import CreateAdvertisement from './pages/CreateAdvertisement';
+import CreateOffer from './pages/CreateOffer';
 
 function App() {
   return (
@@ -50,6 +54,15 @@ function App() {
           {/* ⚙️ Settings */}
           <Route path="/settings" element={<SettingsView />} />
           <Route path="/account-settings" element={<AccountSettingsView />} />
+
+          {/* 📣 Advertiser Portal */}
+          <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
+
+          {/* 📄 Create Advertisement */}
+          <Route path="/create-advertisement" element={<CreateAdvertisement />} />
+
+          {/* 📄 Create Offer */}
+          <Route path="/create-offer" element={<CreateOffer />} />
         </Routes>
       </Router>
     </VostcardProvider>
