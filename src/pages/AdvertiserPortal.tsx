@@ -18,6 +18,14 @@ const menuStyle = {
   zIndex: 1001,
 };
 
+const menuItemStyle = {
+  padding: '10px 20px',
+  margin: 0,
+  cursor: 'pointer',
+  borderBottom: '1px solid #f0f0f0',
+  fontSize: '14px',
+};
+
 const AdvertiserPortal: React.FC = () => {
   const navigate = useNavigate();
   const { user, username, logout } = useAuth();
@@ -52,14 +60,6 @@ const AdvertiserPortal: React.FC = () => {
     display: 'flex',
     alignItems: 'center',
     gap: '15px',
-  };
-
-  const menuItemStyle = {
-    padding: '10px 20px',
-    margin: 0,
-    cursor: 'pointer',
-    borderBottom: '1px solid #f0f0f0',
-    fontSize: '14px',
   };
 
   // Load advertiser statistics
@@ -127,7 +127,7 @@ const AdvertiserPortal: React.FC = () => {
         </div>
       </div>
 
-      {/* Menu */}
+      {/* Hamburger Menu */}
       {isMenuOpen && (
         <div style={menuStyle}>
           <p onClick={() => { navigate('/advertiser-portal'); setIsMenuOpen(false); }} style={menuItemStyle}>
