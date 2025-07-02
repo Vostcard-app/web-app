@@ -4,7 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
-// import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
+import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
 import { db, auth } from '../firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png'; // Import the custom pin
@@ -104,7 +104,7 @@ function getVostcardIcon() {
 
 const HomeView = () => {
   const navigate = useNavigate();
-  // const { clearVostcard } = useVostcard();
+  const { fixExistingVostcardUsernames } = useVostcard();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -358,10 +358,34 @@ const HomeView = () => {
               padding: '4px 8px',
               fontSize: '10px',
               cursor: 'pointer',
-              marginTop: '4px'
+              marginTop: '4px',
+              marginRight: '4px'
             }}
           >
             Add Coords to First
+          </button>
+          <button 
+            onClick={async () => {
+              try {
+                await fixExistingVostcardUsernames();
+                alert('✅ Usernames fixed! Refresh the page to see changes.');
+                loadVostcards(); // Reload to see the changes
+              } catch (error) {
+                alert('❌ Error fixing usernames. Check console for details.');
+              }
+            }}
+            style={{
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '4px 8px',
+              fontSize: '10px',
+              cursor: 'pointer',
+              marginTop: '4px'
+            }}
+          >
+            Fix Usernames
           </button>
         </div>
       )}

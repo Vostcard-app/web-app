@@ -36,6 +36,7 @@ interface VostcardContextProps {
   savedVostcards: Vostcard[];
   loadAllLocalVostcards: () => void;
   deletePrivateVostcard: (id: string) => Promise<void>;
+  fixExistingVostcardUsernames: () => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -523,6 +524,53 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // ✅ Fix existing Vostcards with incorrect username
+  const fixExistingVostcardUsernames = useCallback(async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('No user logged in, skipping username fix');
+        return;
+      }
+
+      console.log('🔧 Fixing existing Vostcard usernames...');
+      
+      // Get correct username
+      let correctUsername = 'Unknown';
+      if (user.email) {
+        correctUsername = user.email.split('@')[0];
+      } else if (user.displayName && user.displayName !== 'info Web App') {
+        correctUsername = user.displayName;
+      }
+
+      // Query for Vostcards with incorrect username
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        where('username', '==', 'info Web App')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`Found ${querySnapshot.docs.length} Vostcards with incorrect username`);
+
+      // Update each Vostcard
+      const updatePromises = querySnapshot.docs.map(async (docSnapshot) => {
+        const vostcardRef = doc(db, 'vostcards', docSnapshot.id);
+        await updateDoc(vostcardRef, {
+          username: correctUsername,
+          updatedAt: Timestamp.now()
+        });
+        console.log(`✅ Fixed username for Vostcard ${docSnapshot.id}: ${correctUsername}`);
+      });
+
+      await Promise.all(updatePromises);
+      console.log('✅ All Vostcard usernames fixed!');
+      
+    } catch (error) {
+      console.error('❌ Error fixing Vostcard usernames:', error);
+    }
+  }, []);
+
   // ✅ Post Vostcard to Firebase (public map) - Fixed CORS version
   const postVostcard = useCallback(async () => {
     if (!currentVostcard) {
@@ -642,6 +690,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         savedVostcards,
         loadAllLocalVostcards,
         deletePrivateVostcard,
+        fixExistingVostcardUsernames,
       }}
     >
       {children}
