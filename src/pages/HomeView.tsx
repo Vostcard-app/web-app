@@ -333,90 +333,6 @@ const HomeView = () => {
           Loading Vostcards...
         </div>
       )}
-      
-      {!loading && (
-        <div style={{
-          position: 'absolute',
-          top: '80px',
-          right: '20px',
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          color: 'white',
-          padding: '8px 12px',
-          borderRadius: '8px',
-          fontSize: '12px',
-          zIndex: 1000,
-        }}>
-          {vostcards.length} posted Vostcards
-          <br />
-          (state: "posted")
-          <br />
-          <button 
-            onClick={() => {
-              // Add coordinates to the first Vostcard for testing
-              if (vostcards.length > 0) {
-                const vostcard = vostcards[0];
-                const currentUser = auth.currentUser;
-                const isOwner = (vostcard.userID || vostcard.userId) === currentUser?.uid;
-                
-                console.log('Attempting to add coordinates to:', {
-                  vostcardId: vostcard.id,
-                  title: vostcard.title,
-                  owner: vostcard.userID || vostcard.userId,
-                  currentUser: currentUser?.uid,
-                  isOwner
-                });
-                
-                if (userLocation && isOwner) {
-                  addCoordinatesToVostcard(vostcard.id, userLocation[0], userLocation[1]);
-                } else if (!isOwner) {
-                  alert('This Vostcard belongs to another user. You can only update your own Vostcards.');
-                } else {
-                  alert('Location not available. Please enable location services.');
-                }
-              }
-            }}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '10px',
-              cursor: 'pointer',
-              marginTop: '4px',
-              marginRight: '4px'
-            }}
-          >
-            Add Coords to First
-          </button>
-          <button 
-            onClick={async () => {
-              try {
-                const confirmed = window.confirm('⚠️ This will permanently delete all your Vostcards with incorrect usernames. Are you sure?');
-                if (confirmed) {
-                  await deleteVostcardsWithWrongUsername();
-                  alert('✅ Vostcards with wrong username deleted! Refresh the page to see changes.');
-                  loadVostcards(); // Reload to see the changes
-                }
-              } catch (error) {
-                alert('❌ Error deleting Vostcards. Check console for details.');
-              }
-            }}
-            style={{
-              backgroundColor: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '10px',
-              cursor: 'pointer',
-              marginTop: '4px'
-            }}
-          >
-            Fix Usernames
-          </button>
-        </div>
-      )}
 
       {/* 🗺️ Map */}
       {userLocation && (
@@ -441,7 +357,7 @@ const HomeView = () => {
             // Handle different coordinate formats
             const lat = v.latitude || v.geo?.latitude;
             const lng = v.longitude || v.geo?.longitude;
-            
+
             console.log('Rendering Vostcard:', {
               id: v.id,
               title: v.title,
@@ -449,12 +365,12 @@ const HomeView = () => {
               lng,
               hasCoordinates: !!(lat && lng)
             });
-            
+
             if (!lat || !lng) {
               console.log('Vostcard missing coordinates:', v);
               return null;
             }
-            
+
             return (
               <Marker
                 key={v.id}
@@ -615,19 +531,3 @@ const menuStyle = {
   boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
   padding: '10px',
   zIndex: 2000,
-  minWidth: '200px',
-};
-
-const menuItemStyle = {
-  cursor: 'pointer',
-  margin: '8px 0',
-  fontSize: '16px',
-  padding: '8px 12px',
-  borderRadius: '4px',
-  transition: 'background-color 0.2s',
-  ':hover': {
-    backgroundColor: '#f5f5f5',
-  }
-};
-
-export default HomeView;
