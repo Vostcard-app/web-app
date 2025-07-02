@@ -470,8 +470,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         request.onsuccess = () => {
           console.log('🗑️ Deleted Vostcard from IndexedDB:', id);
-          // Update the savedVostcards list
-          loadAllLocalVostcards();
+          // Update the savedVostcards list by filtering out the deleted item
+          setSavedVostcards(prev => prev.filter(vostcard => vostcard.id !== id));
           resolve();
         };
       });
@@ -480,7 +480,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       alert('Failed to delete Vostcard. Please try again.');
       throw error;
     }
-  }, [loadAllLocalVostcards]);
+  }, []);
 
   // ✅ Clear current Vostcard
   const clearVostcard = useCallback(() => {
