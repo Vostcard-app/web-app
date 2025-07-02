@@ -50,7 +50,14 @@ export default function LandingPage() {
         className="landing-image"
         onClick={handleImageTap}
         onTouchStart={handleImageTap} // Add touch event for mobile
-        style={{ cursor: 'pointer' }} // Add pointer cursor
+        style={{
+          cursor: 'pointer',
+          width: '50%',         // Image is now half the width of its container
+          maxWidth: 300,        // Optional: limit max width for mobile
+          height: 'auto',       // Maintain aspect ratio
+          display: 'block',
+          margin: '40px auto 0 auto', // Center the image with top margin
+        }}
         onError={(e) => {
           console.error('❌ Image failed to load:', e);
           const target = e.target as HTMLImageElement;
