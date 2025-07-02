@@ -142,13 +142,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Debug currentVostcard changes
   useEffect(() => {
     console.log('🔄 currentVostcard state changed:', {
-      id: currentVostcard?.id,
+      id: currentVostcard?.id || 'null',
       hasVideo: !!currentVostcard?.video,
       hasGeo: !!currentVostcard?.geo,
-      geo: currentVostcard?.geo,
-      title: currentVostcard?.title,
-      photosCount: currentVostcard?.photos?.length,
-      categoriesCount: currentVostcard?.categories?.length
+      geo: currentVostcard?.geo || 'null',
+      title: currentVostcard?.title || 'null',
+      photosCount: currentVostcard?.photos?.length || 0,
+      categoriesCount: currentVostcard?.categories?.length || 0
     });
   }, [currentVostcard]);
 

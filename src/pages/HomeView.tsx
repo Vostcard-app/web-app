@@ -410,9 +410,9 @@ const HomeView = () => {
                 icon={getVostcardIcon()}
               >
                 <Popup>
-                  <h3>{v.title}</h3>
-                  <p>{v.description}</p>
-                  {v.categories && v.categories.length > 0 && (
+                  <h3>{v.title || 'Untitled'}</h3>
+                  <p>{v.description || 'No description'}</p>
+                  {v.categories && Array.isArray(v.categories) && v.categories.length > 0 && (
                     <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
                   )}
                   <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
