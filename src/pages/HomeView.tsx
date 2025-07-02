@@ -532,3 +532,5 @@ const menuStyle = {
   padding: '10px',
   zIndex: 2000
 };
+
+export default HomeView;
