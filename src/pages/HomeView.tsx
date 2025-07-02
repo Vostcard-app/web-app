@@ -531,3 +531,4 @@ const menuStyle = {
   boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
   padding: '10px',
   zIndex: 2000,
+};
