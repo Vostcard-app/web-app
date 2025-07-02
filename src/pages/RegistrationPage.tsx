@@ -299,8 +299,8 @@ export default function RegistrationPage() {
 const inputStyle = {
   width: '100%',
   marginBottom: 20,
-  fontSize: 28,
-  padding: '20px 14px',
+  fontSize: 20,
+  padding: '14px 10px',
   borderRadius: 12,
   border: '1px solid #eee',
   background: '#f8f8f8',
