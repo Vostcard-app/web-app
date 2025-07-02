@@ -88,12 +88,13 @@ export default function RegistrationPage() {
       style={{
         minHeight: '100vh',
         height: '100vh',
+        width: '100vw',
         background: '#fff',
+        overflowY: 'auto', // Ensures vertical scrolling
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         padding: 0,
-        overflowY: 'auto', // Enable vertical scrolling
       }}
     >
       {/* Header */}
@@ -180,119 +181,117 @@ export default function RegistrationPage() {
         </button>
       </div>
 
-      {/* Scrollable content wrapper */}
-      <div style={{
-        width: '100%',
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        overflowY: 'auto',
-        paddingBottom: 32,
-      }}>
-        {/* Form */}
-        <form style={{ width: '90%', maxWidth: 400 }} onSubmit={handleRegister}>
+      {/* Form */}
+      <form
+        style={{
+          width: '90%',
+          maxWidth: 400,
+          marginBottom: 40,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onSubmit={handleRegister}
+      >
+        <input
+          type="text"
+          placeholder="Name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          style={inputStyle}
+        />
+        {formType === "user" && (
           <input
             type="text"
-            placeholder="Name"
-            value={name}
-            onChange={e => setName(e.target.value)}
+            placeholder="Username"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
             style={inputStyle}
           />
-          {formType === "user" && (
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              style={inputStyle}
-            />
-          )}
-          {formType === "advertiser" && (
-            <input
-              type="text"
-              placeholder="Business Name"
-              value={businessName}
-              onChange={e => setBusinessName(e.target.value)}
-              style={inputStyle}
-            />
-          )}
+        )}
+        {formType === "advertiser" && (
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            type="text"
+            placeholder="Business Name"
+            value={businessName}
+            onChange={e => setBusinessName(e.target.value)}
             style={inputStyle}
           />
-          <div style={{ position: 'relative', marginBottom: 16 }}>
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={{ ...inputStyle, marginBottom: 0 }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: 12,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 26, color: '#888' }}></i>
-            </button>
-          </div>
-          <div style={{ textAlign: 'center', marginBottom: 8 }}>
-            <a href="/terms" style={linkStyle}>Terms & Conditions</a>
-          </div>
-          <div style={{ textAlign: 'center', marginBottom: 16 }}>
-            <a href="/privacy" style={linkStyle}>Privacy Policy</a>
-          </div>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: 24,
-          }}>
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={e => setAgreed(e.target.checked)}
-              style={{ width: 28, height: 28, marginRight: 12 }}
-              id="agree"
-            />
-            <label htmlFor="agree" style={{ color: '#b0b0b0', fontSize: 20 }}>
-              I have Read and Agree to the above
-            </label>
-          </div>
-          {error && <div style={{ color: "#ff3b30", textAlign: "center", marginBottom: 12 }}>{error}</div>}
+        )}
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          style={inputStyle}
+        />
+        <div style={{ position: 'relative', marginBottom: 16 }}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            style={{ ...inputStyle, marginBottom: 0 }}
+          />
           <button
-            type="submit"
-            disabled={!agreed || loading}
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
             style={{
-              width: '100%',
-              background: agreed ? "#07345c" : "#b0b0b0",
-              color: 'white',
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
               border: 'none',
-              borderRadius: 16,
-              fontSize: 32,
-              fontWeight: 600,
-              padding: '20px 0',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-              cursor: agreed && !loading ? 'pointer' : 'not-allowed',
-              letterSpacing: '0.01em',
+              cursor: 'pointer',
+              padding: 0,
             }}
           >
-            {loading ? "Registering..." : "Register"}
+            <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 26, color: '#888' }}></i>
           </button>
-        </form>
-      </div>
+        </div>
+        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+          <a href="/terms" style={linkStyle}>Terms & Conditions</a>
+        </div>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>
+          <a href="/privacy" style={linkStyle}>Privacy Policy</a>
+        </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: 24,
+        }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={e => setAgreed(e.target.checked)}
+            style={{ width: 28, height: 28, marginRight: 12 }}
+            id="agree"
+          />
+          <label htmlFor="agree" style={{ color: '#b0b0b0', fontSize: 20 }}>
+            I have Read and Agree to the above
+          </label>
+        </div>
+        {error && <div style={{ color: "#ff3b30", textAlign: "center", marginBottom: 12 }}>{error}</div>}
+        <button
+          type="submit"
+          disabled={!agreed || loading}
+          style={{
+            width: '100%',
+            background: agreed ? "#07345c" : "#b0b0b0",
+            color: 'white',
+            border: 'none',
+            borderRadius: 16,
+            fontSize: 32,
+            fontWeight: 600,
+            padding: '20px 0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+            cursor: agreed && !loading ? 'pointer' : 'not-allowed',
+            letterSpacing: '0.01em',
+          }}
+        >
+          {loading ? "Registering..." : "Register"}
+        </button>
+      </form>
     </div>
   );
 }
