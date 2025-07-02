@@ -63,6 +63,19 @@ const openDB = (): Promise<IDBDatabase> => {
 
 const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
 
+// Helper function to get correct username
+const getCorrectUsername = (currentUsername?: string): string => {
+  const user = auth.currentUser;
+  if (user) {
+    if (user.email) {
+      return user.email.split('@')[0];
+    } else if (user.displayName && user.displayName !== 'info Web App') {
+      return user.displayName;
+    }
+  }
+  return currentUsername || 'Unknown';
+};
+
 export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
@@ -159,12 +172,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     console.log('📍 Current Vostcard before setGeo:', currentVostcard);
     
     if (currentVostcard) {
+      // Always ensure username is correct when setting geo
+      const correctUsername = getCorrectUsername(currentVostcard.username);
+      
       const updatedVostcard = { 
         ...currentVostcard, 
-        geo, 
+        geo,
+        username: correctUsername, // Always set correct username
         updatedAt: new Date().toISOString() 
       };
-      console.log('📍 Updated Vostcard with geo:', updatedVostcard.geo);
+      console.log('📍 Updated Vostcard with geo and correct username:', {
+        geo: updatedVostcard.geo,
+        oldUsername: currentVostcard.username,
+        newUsername: correctUsername
+      });
       setCurrentVostcard(updatedVostcard);
     } else {
       console.warn('📍 setGeo called but no currentVostcard exists - geo will be set when Vostcard is created');
@@ -240,12 +261,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     console.log('🔄 updateVostcard called with:', updates);
     
     if (currentVostcard) {
+      // Always ensure username is correct when updating
+      const correctUsername = getCorrectUsername(currentVostcard.username);
+      
       const updatedVostcard = {
         ...currentVostcard,
         ...updates,
+        username: correctUsername, // Always set correct username
         updatedAt: new Date().toISOString(),
       };
-      console.log('📍 Updated Vostcard, geo preserved:', updatedVostcard.geo);
+      
+      console.log('📍 Updated Vostcard with correct username:', {
+        oldUsername: currentVostcard.username,
+        newUsername: correctUsername,
+        geo: updatedVostcard.geo
+      });
       setCurrentVostcard(updatedVostcard);
     } else {
       console.warn('🔄 updateVostcard called but no currentVostcard exists');
@@ -255,13 +285,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // ✅ Add a photo to the current Vostcard
   const addPhoto = useCallback((photo: Blob) => {
     if (currentVostcard) {
+      // Always ensure username is correct when adding photos
+      const correctUsername = getCorrectUsername(currentVostcard.username);
+      
       const updatedPhotos = [...currentVostcard.photos, photo];
       const updatedVostcard = {
         ...currentVostcard,
         photos: updatedPhotos,
+        username: correctUsername, // Always set correct username
         updatedAt: new Date().toISOString(),
       };
-      console.log('📸 Photo added. Total photos:', updatedPhotos.length);
+      console.log('📸 Photo added with correct username:', {
+        totalPhotos: updatedPhotos.length,
+        oldUsername: currentVostcard.username,
+        newUsername: correctUsername
+      });
       setCurrentVostcard(updatedVostcard);
     } else {
       console.warn('📸 Tried to add photo but no currentVostcard exists');
