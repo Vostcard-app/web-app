@@ -596,17 +596,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
 
-      // Get username with fallback - prioritize email username over displayName
-      let username = currentVostcard.username;
-      if (!username || username === 'info Web App') {
-        // Use email username as primary fallback
-        if (user.email) {
-          username = user.email.split('@')[0];
-        } else if (user.displayName && user.displayName !== 'info Web App') {
-          username = user.displayName;
-        } else {
-          username = 'Unknown User';
-        }
+      // ALWAYS get username from email - ignore any existing username
+      let username = 'Unknown User';
+      if (user.email) {
+        username = user.email.split('@')[0];
+      } else if (user.displayName && user.displayName !== 'info Web App') {
+        username = user.displayName;
       }
       
       console.log('👤 Username resolution:', {
