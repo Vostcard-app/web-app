@@ -134,6 +134,52 @@ export default function RegistrationPage() {
         </button>
       </div>
 
+      {/* Large Account Type Toggle */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        margin: '40px 0 24px 0',
+        width: '95%',
+        maxWidth: 500,
+      }}>
+        <button
+          onClick={() => setFormType("user")}
+          style={{
+            flex: 1,
+            padding: '24px 0',
+            background: formType === "user" ? "#07345c" : "#eee",
+            color: formType === "user" ? "#fff" : "#07345c",
+            border: 'none',
+            borderRadius: '32px 0 0 32px',
+            fontWeight: 700,
+            fontSize: 28,
+            cursor: 'pointer',
+            transition: 'background 0.2s, color 0.2s',
+            boxShadow: formType === "user" ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
+          }}
+        >
+          User
+        </button>
+        <button
+          onClick={() => setFormType("advertiser")}
+          style={{
+            flex: 1,
+            padding: '24px 0',
+            background: formType === "advertiser" ? "#07345c" : "#eee",
+            color: formType === "advertiser" ? "#fff" : "#07345c",
+            border: 'none',
+            borderRadius: '0 32px 32px 0',
+            fontWeight: 700,
+            fontSize: 28,
+            cursor: 'pointer',
+            transition: 'background 0.2s, color 0.2s',
+            boxShadow: formType === "advertiser" ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
+          }}
+        >
+          Advertiser
+        </button>
+      </div>
+
       {/* Scrollable content wrapper */}
       <div style={{
         width: '100%',
@@ -144,47 +190,6 @@ export default function RegistrationPage() {
         overflowY: 'auto',
         paddingBottom: 32,
       }}>
-        {/* Toggle */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          margin: '32px 0 16px 0',
-          width: '90%',
-        }}>
-          <button
-            onClick={() => setFormType("user")}
-            style={{
-              flex: 1,
-              padding: '12px 0',
-              background: formType === "user" ? "#07345c" : "#eee",
-              color: formType === "user" ? "#fff" : "#07345c",
-              border: 'none',
-              borderRadius: '16px 0 0 16px',
-              fontWeight: 600,
-              fontSize: 18,
-              cursor: 'pointer',
-            }}
-          >
-            User
-          </button>
-          <button
-            onClick={() => setFormType("advertiser")}
-            style={{
-              flex: 1,
-              padding: '12px 0',
-              background: formType === "advertiser" ? "#07345c" : "#eee",
-              color: formType === "advertiser" ? "#fff" : "#07345c",
-              border: 'none',
-              borderRadius: '0 16px 16px 0',
-              fontWeight: 600,
-              fontSize: 18,
-              cursor: 'pointer',
-            }}
-          >
-            Advertiser
-          </button>
-        </div>
-
         {/* Form */}
         <form style={{ width: '90%', maxWidth: 400 }} onSubmit={handleRegister}>
           <input
