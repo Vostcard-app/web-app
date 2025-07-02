@@ -279,8 +279,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       id: currentVostcard.id,
       hasVideo: !!currentVostcard.video,
       videoSize: currentVostcard.video?.size,
-      photosCount: currentVostcard.photos.length,
-      photoSizes: currentVostcard.photos.map(p => p.size)
+      photosCount: currentVostcard.photos?.length || 0,
+      photoSizes: currentVostcard.photos?.map(p => p.size) || []
     });
     
     try {
@@ -307,7 +307,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Convert photos Blobs to base64
-      if (currentVostcard.photos.length > 0) {
+      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
         console.log('💾 Converting photos to base64...');
         const photoPromises = currentVostcard.photos.map((photo, index) => {
           return new Promise<string>((resolve, reject) => {
@@ -557,7 +557,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Upload photos
       const photoURLs = [];
-      for (let i = 0; i < currentVostcard.photos.length; i++) {
+      for (let i = 0; i < (currentVostcard.photos?.length || 0); i++) {
         const photoBlob = currentVostcard.photos[i];
         const photoRef = ref(storage, `privateVostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
         const photoSnap = await uploadBytes(photoRef, photoBlob);
@@ -603,7 +603,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Debug all fields
     console.log('Posting Vostcard - Current data:', {
       video: !!currentVostcard.video,
-      photosCount: currentVostcard.photos.length,
+      photosCount: currentVostcard.photos?.length || 0,
       title: currentVostcard.title,
       description: currentVostcard.description,
       categoriesCount: currentVostcard.categories.length,
@@ -619,8 +619,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    if (currentVostcard.photos.length < 2) {
-      console.error('Missing photos - need at least 2, have:', currentVostcard.photos.length);
+    if (!currentVostcard.photos || currentVostcard.photos.length < 2) {
+      console.error('Missing photos - need at least 2, have:', currentVostcard.photos?.length || 0);
       alert('At least 2 photos are required. Please add more photos.');
       return;
     }
@@ -729,7 +729,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Upload photos to Firebase Storage with iOS app path structure
       const photoURLs = [];
-      for (let i = 0; i < currentVostcard.photos.length; i++) {
+      for (let i = 0; i < (currentVostcard.photos?.length || 0); i++) {
         const photoBlob = currentVostcard.photos[i];
         const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
         console.log(`📤 Uploading photo ${i + 1}...`);
@@ -796,7 +796,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setGeo,
         updateVostcard,
         addPhoto,
-        saveVostcard,
         saveLocalVostcard,
         loadLocalVostcard,
         clearVostcard,
