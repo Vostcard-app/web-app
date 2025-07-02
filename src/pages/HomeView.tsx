@@ -425,6 +425,8 @@ const HomeView = () => {
   );
 };
 
+export default HomeView;
+
 /* 🎨 Styles */
 const headerStyle = {
   position: 'absolute' as 'absolute',
