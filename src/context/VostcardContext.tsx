@@ -529,70 +529,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    // For private Vostcards, save to IndexedDB (local storage)
-    if (currentVostcard.state === 'private') {
-      try {
-        await saveLocalVostcard();
-        alert('Vōstcard saved locally!');
-      } catch (error) {
-        console.error('❌ Failed to save private Vostcard:', error);
-        alert('Failed to save Vostcard locally.');
-      }
-      return;
-    }
-
-    // For posted Vostcards, save 
-
-    // For posted Vostcards, continue using Firebase
+    // For now, save all Vostcards to IndexedDB to avoid CORS issues
+    // TODO: Implement Firebase Storage upload once CORS is resolved
     try {
-      const vostcardId = currentVostcard.id;
-      const userID = user.uid;
-
-      console.log('📥 Starting save to Firebase (privateVostcards)...');
-
-      // Upload video
-      let videoURL = '';
-      if (currentVostcard.video) {
-        const videoRef = ref(storage, `privateVostcards/${userID}/${vostcardId}/video.mov`);
-        const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
-        videoURL = await getDownloadURL(videoSnap.ref);
-        console.log('🎥 Video uploaded');
-      }
-
-      // Upload photos
-      const photoURLs = [];
-      for (let i = 0; i < (currentVostcard.photos?.length || 0); i++) {
-        const photoBlob = currentVostcard.photos[i];
-        const photoRef = ref(storage, `privateVostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
-        const photoSnap = await uploadBytes(photoRef, photoBlob);
-        const photoURL = await getDownloadURL(photoSnap.ref);
-        photoURLs.push(photoURL);
-      }
-      console.log('📸 Photos uploaded:', photoURLs);
-
-      const docRef = doc(db, 'privateVostcards', vostcardId);
-      await setDoc(docRef, {
-        id: vostcardId,
-        title: currentVostcard.title,
-        description: currentVostcard.description,
-        categories: currentVostcard.categories,
-        username: currentVostcard.username,
-        userID: userID,
-        videoURL: videoURL,
-        photoURLs: photoURLs,
-        latitude: currentVostcard.geo?.latitude || null,
-        longitude: currentVostcard.geo?.longitude || null,
-        avatarURL: user.photoURL || '',
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        state: 'private'
-      });
-
-      console.log('✅ Vostcard saved to privateVostcards collection');
-      alert('Vōstcard saved!');
+      console.log('💾 Saving Vostcard to IndexedDB (local storage)...');
+      await saveLocalVostcard();
+      alert('Vōstcard saved successfully! You can find it in My Private Vōstcards.');
     } catch (error) {
       console.error('❌ Failed to save Vostcard:', error);
-      alert('Failed to save Vostcard.');
+      alert('Failed to save Vostcard. Please try again.');
     }
   }, [currentVostcard, saveLocalVostcard]);
 
