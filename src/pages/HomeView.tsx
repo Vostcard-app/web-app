@@ -367,7 +367,7 @@ const HomeView = () => {
           <button 
             onClick={async () => {
               try {
-                const confirmed = window.confirm('⚠️ This will permanently delete all your Vostcards with username "info Web App". Are you sure?');
+                const confirmed = window.confirm('⚠️ This will permanently delete all your Vostcards with incorrect usernames. Are you sure?');
                 if (confirmed) {
                   await deleteVostcardsWithWrongUsername();
                   alert('✅ Vostcards with wrong username deleted! Refresh the page to see changes.');
@@ -388,7 +388,7 @@ const HomeView = () => {
               marginTop: '4px'
             }}
           >
-            Delete Wrong Username
+            Fix Usernames
           </button>
         </div>
       )}

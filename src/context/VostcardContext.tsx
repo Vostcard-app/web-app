@@ -3,6 +3,7 @@ import { auth, db, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './AuthContext';
 
 export interface Vostcard {
   id: string;
@@ -63,20 +64,24 @@ const openDB = (): Promise<IDBDatabase> => {
 
 const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
 
-// Helper function to get correct username
-const getCorrectUsername = (currentUsername?: string): string => {
-  const user = auth.currentUser;
-  if (user) {
-    if (user.email) {
-      return user.email.split('@')[0];
-    } else if (user.displayName && user.displayName !== 'info Web App') {
-      return user.displayName;
-    }
+// Helper function to get correct username from AuthContext
+const getCorrectUsername = (authContext: any, currentUsername?: string): string => {
+  // Use username from AuthContext (loaded from Firestore)
+  if (authContext.username) {
+    return authContext.username;
   }
+  
+  // Fallback to email username
+  if (authContext.user?.email) {
+    return authContext.user.email.split('@')[0];
+  }
+  
+  // Final fallback
   return currentUsername || 'Unknown';
 };
 
 export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const authContext = useAuth();
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
 
@@ -173,7 +178,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     if (currentVostcard) {
       // Always ensure username is correct when setting geo
-      const correctUsername = getCorrectUsername(currentVostcard.username);
+      const correctUsername = getCorrectUsername(authContext, currentVostcard.username);
       
       const updatedVostcard = { 
         ...currentVostcard, 
@@ -227,17 +232,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrentVostcard(updatedVostcard);
     } else {
       const user = auth.currentUser;
-      // ADD: Check for invalid user/email/displayName
-      if (!user || (!user.email && (!user.displayName || user.displayName === 'info Web App'))) {
-        alert('❌ Sorry, something went wrong. Please start again.');
-        setCurrentVostcard(null);
-        return;
-      }
-
-      // SIMPLIFIED username assignment
-      const username = user.email
-        ? user.email.split('@')[0]
-        : user.displayName!;
+      
+      // Use AuthContext to get proper username
+      const username = getCorrectUsername(authContext);
+      
+      console.log('🎬 Creating Vostcard with username from AuthContext:', {
+        authUsername: authContext.username,
+        userEmail: authContext.user?.email,
+        finalUsername: username
+      });
 
       const newVostcard = {
         id: uuidv4(),
@@ -264,7 +267,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     if (currentVostcard) {
       // Always ensure username is correct when updating
-      const correctUsername = getCorrectUsername(currentVostcard.username);
+      const correctUsername = getCorrectUsername(authContext, currentVostcard.username);
       
       const updatedVostcard = {
         ...currentVostcard,
@@ -288,7 +291,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const addPhoto = useCallback((photo: Blob) => {
     if (currentVostcard) {
       // Always ensure username is correct when adding photos
-      const correctUsername = getCorrectUsername(currentVostcard.username);
+      const correctUsername = getCorrectUsername(authContext, currentVostcard.username);
       
       const updatedPhotos = [...currentVostcard.photos, photo];
       const updatedVostcard = {
@@ -575,11 +578,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       console.log('🗑️ Deleting Vostcards with incorrect username...');
       
-      // Query for Vostcards with incorrect username
+      // Query for Vostcards with incorrect username (any username that's not from AuthContext)
+      const correctUsername = getCorrectUsername(authContext);
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
-        where('username', '==', 'info Web App')
+        where('username', '!=', correctUsername)
       );
       
       const querySnapshot = await getDocs(q);
@@ -630,22 +634,32 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    if (!currentVostcard.username) {
-      alert('Username is missing. Please start again.');
-      return;
-    }
-
-    try {
+        try {
       console.log('📥 Starting post to Firebase (public map)...');
-
+      
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
-      const username = currentVostcard.username;
+      
+      // Get username from AuthContext (most reliable source)
+      const username = getCorrectUsername(authContext, currentVostcard.username);
 
-      console.log('👤 Posting with username:', username);
+      console.log('👤 Posting with username from AuthContext:', {
+        authUsername: authContext.username,
+        currentVostcardUsername: currentVostcard.username,
+        finalUsername: username
+      });
 
       const videoURL = '';
       const photoURLs: string[] = [];
+
+      // DEBUG: Log username before saving to Firestore
+      console.log('🔍 DEBUG: Final username before Firestore save:', {
+        username: username,
+        authContextUsername: authContext.username,
+        userEmail: authContext.user?.email,
+        userID: userID,
+        vostcardId: vostcardId
+      });
 
       const docRef = doc(db, 'vostcards', vostcardId);
       await setDoc(docRef, {
