@@ -533,3 +533,16 @@ const menuItemStyle = {
   transition: 'background-color 0.2s',
   // You might want to add hover styles via CSS or inline event handlers
 };
+
+const menuStyle = {
+  position: 'absolute',
+  top: '100%',
+  right: 0,
+  backgroundColor: 'white',
+  border: '1px solid #ccc',
+  borderRadius: '8px',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+  padding: '10px 0',
+  minWidth: '200px',
+  zIndex: 1001,
+};
