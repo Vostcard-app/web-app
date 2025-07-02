@@ -23,17 +23,18 @@ const MyPostedVostcardsListView = () => {
         return;
       }
 
+      // Fetch all vostcards by this user, then filter out posted ones in code
       const q = query(
         collection(db, 'vostcards'),
-        where('state', '==', 'posted'),
         where('userID', '==', currentUser.uid)
       );
       const querySnapshot = await getDocs(q);
-      const vostcards = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
+      const vostcards = querySnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }))
+        .filter(v => v.state !== 'posted');
       setPostedVostcards(vostcards);
     } catch (error) {
       console.error('Error loading posted Vostcards:', error);
