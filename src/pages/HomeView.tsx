@@ -522,15 +522,12 @@ const createButton = {
   boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
 };
 
-const menuStyle = {
-  position: 'absolute' as 'absolute',
-  top: '70px',
-  right: '20px',
-  backgroundColor: 'white',
-  borderRadius: '8px',
-  boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
-  padding: '10px',
-  zIndex: 2000
+const menuItemStyle = {
+  cursor: 'pointer',
+  margin: '8px 0',
+  fontSize: '16px',
+  padding: '8px 12px',
+  borderRadius: '4px',
+  transition: 'background-color 0.2s',
+  // You might want to add hover styles via CSS or inline event handlers
 };
-
-export default HomeView;
