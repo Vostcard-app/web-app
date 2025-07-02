@@ -605,7 +605,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // ✅ Post Vostcard to Firebase (public map) - Fixed CORS version
+  // ✅ Post Vostcard to Firebase (public map) - Updated version
   const postVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.error('No current Vostcard to post');
@@ -630,37 +630,23 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
+    if (!currentVostcard.username) {
+      alert('Username is missing. Please start again.');
+      return;
+    }
+
     try {
       console.log('📥 Starting post to Firebase (public map)...');
-      
+
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
+      const username = currentVostcard.username;
 
-      // ALWAYS get username from email - ignore any existing username
-      let username = 'Unknown User';
-      if (user.email) {
-        username = user.email.split('@')[0];
-      } else if (user.displayName && user.displayName !== 'info Web App') {
-        username = user.displayName;
-      }
-      
-      console.log('👤 Username resolution:', {
-        currentVostcardUsername: currentVostcard.username,
-        userDisplayName: user.displayName,
-        userEmail: user.email,
-        finalUsername: username
-      });
+      console.log('👤 Posting with username:', username);
 
-      // TEMPORARY: Skip Firebase Storage upload due to CORS issues
-      // TODO: Re-enable once Firebase Storage rules are updated
-      console.log('⚠️ Skipping Firebase Storage upload due to CORS issues');
-      console.log('💾 Saving Vostcard data to Firestore only...');
-      
-      let videoURL = '';
+      const videoURL = '';
       const photoURLs: string[] = [];
 
-      // Save Vostcard data to Firestore
-      console.log('💾 Saving Vostcard data to Firestore...');
       const docRef = doc(db, 'vostcards', vostcardId);
       await setDoc(docRef, {
         id: vostcardId,
@@ -679,25 +665,23 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: 'posted',
         hasVideo: !!currentVostcard.video,
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
-        mediaUploadStatus: 'pending' // Set to pending since we're skipping uploads due to CORS
+        mediaUploadStatus: 'pending'
       });
 
       console.log('✅ Vostcard posted successfully to Firebase!');
       alert('🎉 Vōstcard posted successfully! It will appear on the map with media.');
-      
-      // Clear the current Vostcard after successful posting
+
       clearVostcard();
-      
+
     } catch (error) {
       console.error('❌ Failed to post Vostcard:', error);
-      
-      // Check if it's a CORS error
+
       if (error instanceof Error && error.message.includes('CORS')) {
         alert('❌ Upload failed due to CORS policy. Please check your Firebase Storage rules.');
       } else {
         alert('❌ Failed to post Vostcard. Please try again.');
       }
-      
+
       throw error;
     }
   }, [currentVostcard, clearVostcard]);
