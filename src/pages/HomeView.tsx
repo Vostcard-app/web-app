@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaList, FaHome } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext'; // ✅ Import context
 import { useAuth } from '../context/AuthContext';
 import { db, auth } from '../firebase/firebaseConfig';
@@ -11,7 +11,6 @@ import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/fire
 import VostcardPin from '../assets/Vostcard_pin.png'; // Import the custom pin
 import OfferPin from '../assets/Offer_pin.png'; // Import the offer pin
 import { signOut } from 'firebase/auth';
-import { auth as firebaseAuth } from '../firebase/firebaseConfig';
 
 
 // 🔥 Vostcard Pin - Custom Vostcard pin
@@ -45,24 +44,6 @@ const userIcon = new L.Icon({
   iconAnchor: [15, 45],
   popupAnchor: [0, -45],
 });
-
-// 🔥 Example Vostcards (temporary)
-const exampleVostcards = [
-  {
-    id: '1',
-    title: 'Golden Gate',
-    description: 'Beautiful view of the bridge.',
-    latitude: 37.8199,
-    longitude: -122.4783,
-  },
-  {
-    id: '2',
-    title: 'Central Park',
-    description: 'Relaxing in the park.',
-    latitude: 40.7851,
-    longitude: -73.9683,
-  },
-];
 
 const ZoomControls = () => {
   const map = useMap();
@@ -141,7 +122,6 @@ const HomeView = () => {
       setLoading(true);
       console.log('Loading Vostcards from Firebase...');
       
-      // Query for Vostcards with state: "posted" (matching iOS app)
       const q = query(
         collection(db, 'vostcards'),
         where('state', '==', 'posted')
@@ -155,7 +135,6 @@ const HomeView = () => {
       console.log('Posted Vostcards in database:', postedVostcardsData);
       console.log('Total posted Vostcards in database:', postedVostcardsData.length);
       
-      // Debug each Vostcard's fields
       postedVostcardsData.forEach((v: any, index) => {
         console.log(`Vostcard ${index + 1} fields:`, {
           id: v.id,
@@ -191,33 +170,18 @@ const HomeView = () => {
     );
   }, []);
 
-  // Load Vostcards when component mounts
   useEffect(() => {
     loadVostcards();
   }, []);
 
-  // Function to manually add coordinates to a Vostcard (for testing)
   const addCoordinatesToVostcard = async (vostcardId: string, lat: number, lng: number) => {
     try {
       const currentUser = auth.currentUser;
-      console.log('Current user:', currentUser?.uid);
-      
-      // Find the Vostcard to check ownership
       const vostcard = vostcards.find(v => v.id === vostcardId);
-      if (!vostcard) {
-        console.error('Vostcard not found');
-        return;
-      }
+      if (!vostcard) return;
       
-      console.log('Vostcard owner:', vostcard.userID || vostcard.userId);
-      console.log('Current user:', currentUser?.uid);
-      
-      // Check if current user owns this Vostcard
       const isOwner = (vostcard.userID || vostcard.userId) === currentUser?.uid;
-      console.log('Is owner:', isOwner);
-      
       if (!isOwner) {
-        console.error('Cannot update Vostcard: not the owner');
         alert('You can only update your own Vostcards. This Vostcard belongs to another user.');
         return;
       }
@@ -228,15 +192,13 @@ const HomeView = () => {
         longitude: lng,
         geo: { latitude: lat, longitude: lng }
       });
-      console.log(`Added coordinates to Vostcard ${vostcardId}:`, { lat, lng });
-      loadVostcards(); // Reload the Vostcards
+      loadVostcards();
     } catch (error) {
       console.error('Error adding coordinates:', error);
       alert('Error adding coordinates. Check console for details.');
     }
   };
 
-  // Refresh Vostcards when returning to the page
   useEffect(() => {
     const handleFocus = () => {
       loadVostcards();
@@ -247,9 +209,7 @@ const HomeView = () => {
   }, []);
 
   const handleCreateVostcard = () => {
-    // Clear the Vostcard context when starting a new Vostcard creation
     console.log('🎬 Starting Vostcard creation - clearing previous context data');
-    // clearVostcard();
     navigate('/create-step1');
   };
 
@@ -268,42 +228,42 @@ const HomeView = () => {
         </div>
       </div>
 
+      {/* Hamburger Menu */}
       {isMenuOpen && (
         <div style={menuStyle}>
-          <p onClick={() => { navigate('/home'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Home
-          </p>
-          <p onClick={() => { navigate('/create-step1'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Create Vōstcard
-          </p>
-          <p onClick={() => { navigate('/my-private-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            My Private Vōstcards
-          </p>
-          <p onClick={() => { navigate('/edit-my-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Edit My Vōstcards
-          </p>
-          <p onClick={() => { navigate('/my-posted-vostcards'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            My Posted Vōstcards
-          </p>
-          <p onClick={() => { navigate('/account-settings'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Account Settings
-          </p>
-          <p onClick={() => { navigate('/settings'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Sync & Backup
-          </p>
-          <p onClick={() => { navigate('/suggestion-box'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Suggestion Box
-          </p>
-          <p onClick={() => { navigate('/report-bug'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Report a Bug
-          </p>
-          <hr style={{ margin: '10px 0', border: 'none', borderTop: '1px solid #ccc' }} />
-          <p onClick={handleLogout} style={menuItemStyle}>
-            Logout
-          </p>
-          <p onClick={() => setIsMenuOpen(false)} style={menuItemStyle}>
-            Close
-          </p>
+          {[
+            'My Private Vōstcards',
+            'My Posted Vōstcards',
+            'Edit My Vōstcards',
+            'Liked Vōstcard',
+            'Following',
+            'Suggestion Box',
+            'Report a Bug',
+            'Account Settings',
+            'Logout',
+          ].map(item => (
+            <p
+              key={item}
+              onClick={() => {
+                console.log(`Clicked menu item: ${item}`);
+                setIsMenuOpen(false);
+                if (item === 'Logout') handleLogout();
+                // Add navigation wiring here later
+              }}
+              style={menuItemStyle}
+              role="menuitem"
+              tabIndex={0}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  console.log(`Clicked menu item: ${item}`);
+                  setIsMenuOpen(false);
+                  if (item === 'Logout') handleLogout();
+                }
+              }}
+            >
+              {item}
+            </p>
+          ))}
         </div>
       )}
 
@@ -354,22 +314,10 @@ const HomeView = () => {
 
           {/* 🔥 Vostcards */}
           {vostcards.map((v) => {
-            // Handle different coordinate formats
             const lat = v.latitude || v.geo?.latitude;
             const lng = v.longitude || v.geo?.longitude;
 
-            console.log('Rendering Vostcard:', {
-              id: v.id,
-              title: v.title,
-              lat,
-              lng,
-              hasCoordinates: !!(lat && lng)
-            });
-
-            if (!lat || !lng) {
-              console.log('Vostcard missing coordinates:', v);
-              return null;
-            }
+            if (!lat || !lng) return null;
 
             return (
               <Marker
@@ -403,11 +351,8 @@ const HomeView = () => {
             );
           })}
 
-          {/* ➕ Zoom & Recenter Controls */}
           <ZoomControls />
           <RecenterControl userLocation={userLocation} />
-
-          {/* 🗺️ Map Center */}
           <MapCenter userLocation={userLocation} />
         </MapContainer>
       )}
