@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth, db, storage } from '../firebaseConfig.ts';
 import { collection, addDoc, updateDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -67,7 +67,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
 
   // Load all Vostcards from IndexedDB and restore their blobs
-  const loadAllLocalVostcards = async () => {
+  const loadAllLocalVostcards = useCallback(async () => {
     try {
       const db = await openDB();
       const transaction = db.transaction([STORE_NAME], 'readonly');
@@ -132,12 +132,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Failed to open IndexedDB:', error);
       alert('Failed to load saved Vostcards. Please refresh the page and try again.');
     }
-  };
+  }, []);
 
   // Load all Vostcards on component mount
   useEffect(() => {
     loadAllLocalVostcards();
-  }, []);
+  }, [loadAllLocalVostcards]);
 
   // Debug currentVostcard changes
   useEffect(() => {
@@ -153,7 +153,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [currentVostcard]);
 
   // ✅ Create or update video
-  const setVideo = (video: Blob) => {
+  const setVideo = useCallback((video: Blob) => {
     console.log('🎬 setVideo called with blob:', video);
     console.log('📍 Current geo before setVideo:', currentVostcard?.geo);
 
@@ -206,10 +206,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('🎬 Creating new Vostcard with video:', newVostcard);
       setCurrentVostcard(newVostcard);
     }
-  };
+  }, [currentVostcard, setGeo]);
 
   // ✅ Update geolocation
-  const setGeo = (geo: { latitude: number; longitude: number }) => {
+  const setGeo = useCallback((geo: { latitude: number; longitude: number }) => {
     console.log('📍 setGeo called with:', geo);
     console.log('📍 Current Vostcard before setGeo:', currentVostcard);
     
@@ -224,10 +224,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } else {
       console.warn('📍 setGeo called but no currentVostcard exists - geo will be set when Vostcard is created');
     }
-  };
+  }, [currentVostcard, setCurrentVostcard]);
 
   // ✅ General updates (title, description, categories, etc.)
-  const updateVostcard = (updates: Partial<Vostcard>) => {
+  const updateVostcard = useCallback((updates: Partial<Vostcard>) => {
     console.log('🔄 updateVostcard called with:', updates);
     console.log('📍 Current geo before updateVostcard:', currentVostcard?.geo);
     console.log('📸 Current photos before updateVostcard:', {
@@ -250,10 +250,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } else {
       console.warn('🔄 updateVostcard called but no currentVostcard exists');
     }
-  };
+  }, [currentVostcard, setCurrentVostcard]);
 
   // ✅ Add a photo to the current Vostcard
-  const addPhoto = (photo: Blob) => {
+  const addPhoto = useCallback((photo: Blob) => {
     if (currentVostcard) {
       const updatedPhotos = [...currentVostcard.photos, photo];
       const updatedVostcard = {
@@ -266,10 +266,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } else {
       console.warn('📸 Tried to add photo but no currentVostcard exists');
     }
-  };
+  }, [currentVostcard, setCurrentVostcard]);
 
   // ✅ Save to IndexedDB
-  const saveLocalVostcard = async () => {
+  const saveLocalVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.log('💾 saveLocalVostcard: No currentVostcard to save');
       return;
@@ -351,10 +351,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in saveLocalVostcard:', error);
       alert('Failed to save Vostcard locally. Please try again.');
     }
-  };
+  }, [currentVostcard, loadAllLocalVostcards]);
 
   // ✅ Load from IndexedDB
-  const loadLocalVostcard = async (id: string) => {
+  const loadLocalVostcard = useCallback(async (id: string) => {
     console.log('📂 loadLocalVostcard: Attempting to load Vostcard with ID:', id);
     
     try {
@@ -451,10 +451,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in loadLocalVostcard:', error);
       alert('Failed to load Vostcard. Please try again.');
     }
-  };
+  }, [setCurrentVostcard]);
 
   // ✅ Delete private Vostcard from IndexedDB
-  const deletePrivateVostcard = async (id: string): Promise<void> => {
+  const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
     try {
       const db = await openDB();
       const transaction = db.transaction([STORE_NAME], 'readwrite');
@@ -480,15 +480,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       alert('Failed to delete Vostcard. Please try again.');
       throw error;
     }
-  };
+  }, [loadAllLocalVostcards]);
 
   // ✅ Clear current Vostcard
-  const clearVostcard = () => {
+  const clearVostcard = useCallback(() => {
     setCurrentVostcard(null);
-  };
+  }, [setCurrentVostcard]);
 
   // ✅ Clear IndexedDB (for testing)
-  const clearLocalStorage = async () => {
+  const clearLocalStorage = useCallback(async () => {
     try {
       const db = await openDB();
       const transaction = db.transaction([STORE_NAME], 'readwrite');
@@ -511,10 +511,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in clearLocalStorage:', error);
       alert('Failed to clear local storage. Please try again.');
     }
-  };
+  }, [setSavedVostcards]);
 
   // Save Vostcard to privateVostcards (draft/private save) - Keep Firebase for posted Vostcards
-  const saveVostcard = async () => {
+  const postVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.error('No current Vostcard to save');
       alert('No Vostcard to save. Please start with a video.');
@@ -590,202 +590,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Failed to save Vostcard:', error);
       alert('Failed to save Vostcard.');
     }
-  };
-
-  // Post Vostcard to Firestore and Storage - Updated to match iOS app structure
-  const postVostcard = async () => {
-    if (!currentVostcard) {
-      console.error('No current Vostcard found');
-      alert('No Vostcard data found. Please start over.');
-      return;
-    }
-
-    // Debug all fields
-    console.log('Posting Vostcard - Current data:', {
-      video: !!currentVostcard.video,
-      photosCount: currentVostcard.photos?.length || 0,
-      title: currentVostcard.title,
-      description: currentVostcard.description,
-      categoriesCount: currentVostcard.categories.length,
-      geo: currentVostcard.geo,
-      latitude: currentVostcard.geo?.latitude,
-      longitude: currentVostcard.geo?.longitude
-    });
-
-    // Check each field individually and provide specific feedback
-    if (!currentVostcard.video) {
-      console.error('Missing video');
-      alert('Video is required. Please record a video first.');
-      return;
-    }
-
-    if (!currentVostcard.photos || currentVostcard.photos.length < 2) {
-      console.error('Missing photos - need at least 2, have:', currentVostcard.photos?.length || 0);
-      alert('At least 2 photos are required. Please add more photos.');
-      return;
-    }
-
-    if (!currentVostcard.title || currentVostcard.title.trim() === '') {
-      console.error('Missing title');
-      alert('Title is required. Please enter a title.');
-      return;
-    }
-
-    if (!currentVostcard.description || currentVostcard.description.trim() === '') {
-      console.error('Missing description');
-      alert('Description is required. Please enter a description.');
-      return;
-    }
-
-    if (currentVostcard.categories.length === 0) {
-      console.error('Missing categories');
-      alert('At least one category is required. Please select categories.');
-      return;
-    }
-
-    // Improved location capture block
-    let finalGeo = currentVostcard.geo;
-
-    if (!finalGeo || !finalGeo.latitude || !finalGeo.longitude) {
-      console.log('📍 Location missing in state. Attempting fresh capture...');
-
-      try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000,
-          });
-        });
-
-        finalGeo = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
-
-        console.log('✅ Fresh location captured during post:', finalGeo);
-
-        // Update it in state too for consistency
-        setGeo(finalGeo);
-
-      } catch (error) {
-        console.error('❌ Failed to capture location during posting:', error);
-        alert('Failed to capture location. Please ensure location services are enabled and try again.');
-        return;
-      }
-    }
-
-    console.log('All validation passed - proceeding with posting');
-
-    const user = auth.currentUser;
-    if (!user) {
-      alert('User not authenticated. Please log in first.');
-      return;
-    }
-
-    // Force token refresh to ensure we have a valid token
-    try {
-      await user.getIdToken(true); // Force refresh
-      console.log('🔐 Token refreshed successfully');
-    } catch (tokenError) {
-      console.error('❌ Failed to refresh auth token:', tokenError);
-      alert('Authentication token expired. Please log in again.');
-      return;
-    }
-
-    // Debug authentication state
-    console.log('🔐 Authentication debug:', {
-      userID: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      isAnonymous: user.isAnonymous,
-      emailVerified: user.emailVerified
-    });
-
-    // Get current auth token for debugging
-    try {
-      const token = await user.getIdToken();
-      console.log('🔐 Auth token obtained, length:', token.length);
-    } catch (tokenError) {
-      console.error('❌ Failed to get auth token:', tokenError);
-      alert('Authentication token error. Please try logging in again.');
-      return;
-    }
-
-    try {
-      const vostcardId = currentVostcard.id;
-      const userID = user.uid;
-      
-      console.log('📤 Starting upload to Firebase Storage...');
-      console.log('📁 Upload path:', `vostcards/${userID}/${vostcardId}/video.mov`);
-      
-      // Upload video to Firebase Storage with iOS app path structure
-      const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.mov`);
-      console.log('📤 Uploading video...');
-      const videoSnap = await uploadBytes(videoRef, currentVostcard.video);
-      console.log('✅ Video uploaded successfully');
-      const videoURL = await getDownloadURL(videoSnap.ref);
-      console.log('🔗 Video URL obtained:', videoURL);
-
-      // Upload photos to Firebase Storage with iOS app path structure
-      const photoURLs = [];
-      for (let i = 0; i < (currentVostcard.photos?.length || 0); i++) {
-        const photoBlob = currentVostcard.photos[i];
-        const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo_${i}.jpg`);
-        console.log(`📤 Uploading photo ${i + 1}...`);
-        const photoSnap = await uploadBytes(photoRef, photoBlob);
-        console.log(`✅ Photo ${i + 1} uploaded successfully`);
-        const photoURL = await getDownloadURL(photoSnap.ref);
-        photoURLs.push(photoURL);
-      }
-      console.log('🔗 All photo URLs obtained:', photoURLs);
-
-      const username = user.displayName || user.email?.split('@')[0] || 'Unknown';
-
-      console.log('📝 Creating Firestore document...');
-      // Create Firestore document matching iOS app structure exactly
-      const docRef = doc(db, 'vostcards', vostcardId);
-      await setDoc(docRef, {
-        id: vostcardId,
-        title: currentVostcard.title,
-        description: currentVostcard.description,
-        categories: currentVostcard.categories,
-        username: username,
-        userID: userID, // Use userID to match iOS app
-        videoURL: videoURL,
-        photoURLs: photoURLs,
-        latitude: finalGeo.latitude, // Use the final geo coordinates
-        longitude: finalGeo.longitude, // Use the final geo coordinates
-        avatarURL: user.photoURL || '',
-        createdAt: Timestamp.now(), // Use Firestore Timestamp
-        likeCount: 0,
-        likedByUsers: [],
-        ratings: {},
-        averageRating: 0.0,
-        state: "posted" // Critical for map display - matches iOS app
-      });
-      console.log('✅ Firestore document created successfully');
-
-      alert('Vōstcard posted successfully!');
-    } catch (error) {
-      console.error('❌ Failed to post Vostcard:', error);
-      
-      // Provide more specific error messages
-      if (error instanceof Error) {
-        if (error.message.includes('CORS')) {
-          alert('CORS error: Please check Firebase Storage security rules or try logging in again.');
-        } else if (error.message.includes('permission')) {
-          alert('Permission denied: Please check Firebase Storage security rules.');
-        } else if (error.message.includes('unauthorized')) {
-          alert('Authentication error: Please log in again.');
-        } else {
-          alert(`Upload failed: ${error.message}`);
-        }
-      } else {
-        alert('Failed to post Vostcard. Please try again.');
-      }
-    }
-  };
+  }, [currentVostcard, saveLocalVostcard]);
 
   return (
     <VostcardContext.Provider
