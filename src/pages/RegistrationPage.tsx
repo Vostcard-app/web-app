@@ -151,7 +151,7 @@ export default function RegistrationPage() {
             background: formType === "user" ? "#07345c" : "#eee",
             color: formType === "user" ? "#fff" : "#07345c",
             border: 'none',
-            borderRadius: '32px 0 0 32px',
+            borderRadius: '8px 0 0 8px',
             fontWeight: 700,
             fontSize: 28,
             cursor: 'pointer',
