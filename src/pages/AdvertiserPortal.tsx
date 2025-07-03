@@ -160,7 +160,7 @@ const AdvertiserPortal: React.FC = () => {
 
       {/* Main Content */}
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Welcome Section */}
+        {/* Store Profile Section */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
@@ -169,11 +169,57 @@ const AdvertiserPortal: React.FC = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
           <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>
-            Welcome to Your Advertiser Dashboard
+            Store Profile
           </h2>
           <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
-            Manage your advertisements, track performance, and reach your target audience.
+            Update your store profile details to ensure your offers appear correctly in the app.
           </p>
+          <button
+            onClick={() => navigate('/advertiser-settings')}
+            style={{
+              marginTop: '16px',
+              padding: '12px 20px',
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Update Store Profile
+          </button>
+        </div>
+
+        {/* Create Offer Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{ margin: '0 0 8px 0', color: '#28a745' }}>
+            Create an Offer
+          </h2>
+          <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
+            (Must update profile to create offer)
+          </p>
+          <button
+            onClick={() => navigate('/create-offer')}
+            style={{
+              marginTop: '16px',
+              padding: '12px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Create Offer
+          </button>
         </div>
 
         {/* Stats Cards */}
@@ -183,20 +229,6 @@ const AdvertiserPortal: React.FC = () => {
           gap: '20px',
           marginBottom: '24px'
         }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            textAlign: 'center'
-          }}>
-            <FaAd size={40} style={{ color: '#002B4D', marginBottom: '12px' }} />
-            <h3 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>
-              {loading ? 'Loading...' : advertiserStats.totalVostcards}
-            </h3>
-            <p style={{ margin: 0, color: '#666' }}>Total Advertisements</p>
-          </div>
-
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
@@ -223,102 +255,6 @@ const AdvertiserPortal: React.FC = () => {
               {loading ? 'Loading...' : advertiserStats.totalEngagement}
             </h3>
             <p style={{ margin: 0, color: '#666' }}>Total Engagement</p>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#002B4D' }}>Quick Actions</h3>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '16px'
-          }}>
-            <button
-              onClick={() => navigate('/create-advertisement')}
-              style={{
-                padding: '16px',
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <FaPlus />
-              Create Advertisement
-            </button>
-
-            <button
-              onClick={() => navigate('/create-offer')}
-              style={{
-                padding: '16px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <FaGift />
-              Create Special Offer
-            </button>
-
-            <button
-              onClick={() => navigate('/advertiser-analytics')}
-              style={{
-                padding: '16px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <FaChartBar />
-              View Analytics
-            </button>
-
-            <button
-              onClick={() => navigate('/advertiser-settings')}
-              style={{
-                padding: '16px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <FaCog />
-              Settings
-            </button>
           </div>
         </div>
 
