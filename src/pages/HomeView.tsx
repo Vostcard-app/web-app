@@ -14,23 +14,23 @@ import { signOut } from 'firebase/auth';
 
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
-  popupAnchor: [0, -50],
+  iconSize: [100, 100],
+  iconAnchor: [50, 100],
+  popupAnchor: [0, -100],
 });
 
 const offerIcon = new L.Icon({
   iconUrl: OfferPin,
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
-  popupAnchor: [0, -50],
+  iconSize: [100, 100],
+  iconAnchor: [50, 100],
+  popupAnchor: [0, -100],
 });
 
 const userIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-  iconSize: [30, 45],
-  iconAnchor: [15, 45],
-  popupAnchor: [0, -45],
+  iconSize: [60, 90],
+  iconAnchor: [30, 90],
+  popupAnchor: [0, -90],
 });
 
 const ZoomControls = () => {
