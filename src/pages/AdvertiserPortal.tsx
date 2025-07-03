@@ -7,6 +7,17 @@ const AdvertiserPortal: React.FC = () => {
   const { user } = useAuth();
 
   return (
+    <div style={{
+      width: '100%',
+      backgroundColor: '#002B4D',
+      color: 'white',
+      padding: '16px',
+      textAlign: 'center',
+      fontSize: '24px',
+      fontWeight: 'bold',
+    }}>
+      Vōstcard Advertiser Portal
+    </div>
     <div style={{ maxWidth: "900px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
       <h1 style={{ textAlign: "center", color: "#002B4D" }}>Advertiser Portal</h1>
 
@@ -70,7 +81,7 @@ const AdvertiserPortal: React.FC = () => {
           You must update your profile before creating an offer.
         </p>
         <button
-          onClick={() => navigate('/create-offer-view')}
+          onClick={() => navigate('/create-offer')}
           style={{
             marginTop: '16px',
             padding: '12px 20px',
