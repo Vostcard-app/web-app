@@ -22,6 +22,7 @@ import AdvertiserPortal from "./pages/AdvertiserPortal";
 import CreateAdvertisement from './pages/CreateAdvertisement';
 import CreateOffer from './pages/CreateOffer';
 import AllPostedVostcardsView from './pages/AllPostedVostcardsView';
+import StoreProfilePageView from './pages/StoreProfilePageView';
 
 function App() {
   return (
@@ -65,6 +66,9 @@ function App() {
 
           {/* 📄 Create Offer */}
           <Route path="/create-offer" element={<CreateOffer />} />
+
+          {/* 🏪 Store Profile */}
+          <Route path="/store-profile-page" element={<StoreProfilePageView />} />
         </Routes>
       </Router>
     </VostcardProvider>
