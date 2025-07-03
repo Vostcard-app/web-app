@@ -1,291 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaHome, FaBars, FaUserCircle, FaPlus, FaChartBar, FaAd, FaUsers, FaCog, FaGift } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
-import { auth, db } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import React, { useState } from "react";
+import { doc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../firebase/firebaseConfig";
+import { useAuth } from "../context/AuthContext";
 
-const menuStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: '100%',
-  right: 0,
-  backgroundColor: 'white',
-  border: '1px solid #ccc',
-  borderRadius: '8px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-  padding: '10px 0',
-  minWidth: '200px',
-  zIndex: 1001,
-};
+const StoreProfilePageView: React.FC = () => {
+  const { user } = useAuth();
 
-const menuItemStyle = {
-  padding: '10px 20px',
-  margin: 0,
-  cursor: 'pointer',
-  borderBottom: '1px solid #f0f0f0',
-  fontSize: '14px',
-};
+  const [storeName, setStoreName] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [stateProvince, setStateProvince] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [description, setDescription] = useState("");
+  const [storePhoto, setStorePhoto] = useState<File | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
 
-const AdvertiserPortal: React.FC = () => {
-  const navigate = useNavigate();
-  const { user, username, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [advertiserStats, setAdvertiserStats] = useState({
-    totalVostcards: 0,
-    totalViews: 0,
-    totalEngagement: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  // Header styles
-  const headerStyle = {
-    backgroundColor: '#002B4D',
-    color: 'white',
-    padding: '15px 20px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    position: 'sticky' as const,
-    top: 0,
-    zIndex: 1000,
-  };
+    if (
+      !storeName ||
+      !streetAddress ||
+      !city ||
+      !stateProvince ||
+      !country ||
+      !contactEmail
+    ) {
+      setError("Please fill out all required fields.");
+      return;
+    }
 
-  const logoStyle = {
-    margin: 0,
-    fontSize: '28px',
-    fontWeight: 'bold' as const,
-  };
-
-  const headerRight = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '15px',
-  };
-
-  // Load advertiser statistics
-  useEffect(() => {
-    const loadAdvertiserStats = async () => {
-      if (!user) return;
-
-      try {
-        setLoading(true);
-        
-        // Get Vostcards posted by this advertiser
-        const vostcardsQuery = query(
-          collection(db, 'vostcards'),
-          where('userID', '==', user.uid),
-          where('state', '==', 'posted')
-        );
-        const vostcardsSnapshot = await getDocs(vostcardsQuery);
-        
-        setAdvertiserStats({
-          totalVostcards: vostcardsSnapshot.docs.length,
-          totalViews: vostcardsSnapshot.docs.reduce((sum, doc) => sum + (doc.data().views || 0), 0),
-          totalEngagement: vostcardsSnapshot.docs.reduce((sum, doc) => sum + (doc.data().engagement || 0), 0)
-        });
-      } catch (error) {
-        console.error('Error loading advertiser stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAdvertiserStats();
-  }, [user]);
-
-  const handleLogout = async () => {
     try {
-      await logout();
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
+      setError("");
+      setSuccess(false);
+
+      let photoURL = user?.photoURL || "";
+      if (storePhoto) {
+        const photoRef = ref(storage, `advertisers/${user.uid}/profile.jpg`);
+        await uploadBytes(photoRef, storePhoto);
+        photoURL = await getDownloadURL(photoRef);
+      }
+
+      const advertiserData = {
+        storeName,
+        streetAddress,
+        city,
+        stateProvince,
+        postalCode,
+        country,
+        contactEmail,
+        contactPerson,
+        description,
+        photoURL,
+        userID: user.uid
+      };
+
+      await setDoc(doc(db, "advertisers", user.uid), advertiserData, { merge: true });
+
+      setSuccess(true);
+    } catch (err) {
+      console.error("Error saving advertiser profile:", err);
+      setError("Failed to save profile. Please try again.");
     }
   };
 
-  if (!user) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2>Please log in to access the Advertiser Portal</h2>
-        <button onClick={() => navigate('/login')}>Go to Login</button>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <div style={headerStyle}>
-        <h1 style={logoStyle}>Advertiser Portal</h1>
-        <div style={headerRight}>
-          <span style={{ fontSize: '14px' }}>Welcome, {username || user.email}</span>
-          <FaUserCircle size={30} />
-          <FaBars
-            size={30}
-            onClick={() => setIsMenuOpen((open) => !open)}
-            style={{ cursor: 'pointer' }}
-          />
-        </div>
-      </div>
-
-      {/* Hamburger Menu */}
-      {isMenuOpen && (
-        <div style={menuStyle}>
-          <p onClick={() => { navigate('/advertiser-portal'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Dashboard
-          </p>
-          <p onClick={() => { navigate('/create-offer'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Create Special Offer
-          </p>
-          <p onClick={() => { navigate('/advertiser-analytics'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Analytics
-          </p>
-          <p onClick={() => { navigate('/advertiser-settings'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Settings
-          </p>
-          <hr style={{ margin: '10px 0', border: 'none', borderTop: '1px solid #ccc' }} />
-          <p onClick={() => { navigate('/home'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Switch to User Mode
-          </p>
-          <p onClick={handleLogout} style={menuItemStyle}>
-            Logout
-          </p>
-          <p onClick={() => setIsMenuOpen(false)} style={menuItemStyle}>
-            Close
-          </p>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Store Profile Section */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          textAlign: 'center'
-        }}>
-          <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>
-            Store Profile
-          </h2>
-
-          {/* Store Profile Image */}
-          <img
-            src={user?.photoURL || '/default-store.png'}
-            alt="Store Profile"
-            style={{
-              width: '120px',
-              height: '120px',
-              objectFit: 'cover',
-              borderRadius: '12px',
-              marginBottom: '12px',
-              border: '2px solid #002B4D'
-            }}
-          />
-
-          <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
-            Update your store profile details to ensure your offers appear correctly in the app.
-          </p>
-          <button
-            onClick={() => navigate('/store-profile-page')}
-            style={{
-              marginTop: '16px',
-              padding: '12px 20px',
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer'
-            }}
-          >
-            Update Store Profile
-          </button>
-        </div>
-
-        {/* Create Offer Section */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ margin: '0 0 8px 0', color: '#28a745' }}>
-            Create an Offer
-          </h2>
-          <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
-            (Must update profile to create offer)
-          </p>
-          <button
-            onClick={() => navigate('/create-offer')}
-            style={{
-              marginTop: '16px',
-              padding: '12px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer'
-            }}
-          >
-            Create Offer
-          </button>
-        </div>
-
-        {/* Stats Cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '20px',
-          marginBottom: '24px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            textAlign: 'center'
-          }}>
-            <FaChartBar size={40} style={{ color: '#28a745', marginBottom: '12px' }} />
-            <h3 style={{ margin: '0 0 8px 0', color: '#28a745' }}>
-              {loading ? 'Loading...' : advertiserStats.totalViews}
-            </h3>
-            <p style={{ margin: 0, color: '#666' }}>Total Views</p>
-          </div>
-
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            textAlign: 'center'
-          }}>
-            <FaUsers size={40} style={{ color: '#ffc107', marginBottom: '12px' }} />
-            <h3 style={{ margin: '0 0 8px 0', color: '#ffc107' }}>
-              {loading ? 'Loading...' : advertiserStats.totalEngagement}
-            </h3>
-            <p style={{ margin: 0, color: '#666' }}>Total Engagement</p>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          padding: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ margin: '0 0 16px 0', color: '#002B4D' }}>Recent Activity</h3>
-          <p style={{ color: '#666', fontStyle: 'italic' }}>
-            No recent activity to display. Create your first advertisement to get started!
-          </p>
-        </div>
-      </div>
+    <div>
+      {/* Form UI here */}
     </div>
   );
 };
 
-export default AdvertiserPortal;
+export default StoreProfilePageView;
