@@ -252,7 +252,7 @@ const ScrollingCameraView: React.FC = () => {
       <div
         style={{
           position: 'absolute',
-          bottom: '20%',
+          bottom: 'calc(20% + 20px)',
           display: 'flex',
           width: '100%',
           justifyContent: 'space-around',
