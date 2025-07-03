@@ -19,8 +19,7 @@ import MyPrivateVostcardsListView from "./pages/MyPrivateVostcardsListView";
 import MyPostedVostcardsListView from "./pages/MyPostedVostcardsListView";
 import EditMyVostcardListView from "./pages/EditMyVostcardListView";
 import AdvertiserPortal from "./pages/AdvertiserPortal";
-import CreateAdvertisement from './pages/CreateAdvertisement';
-import CreateOffer from './pages/CreateOffer';
+import CreateOfferView from './pages/CreateOfferView';
 import AllPostedVostcardsView from './pages/AllPostedVostcardsView';
 import StoreProfilePageView from './pages/StoreProfilePageView';
 
@@ -61,11 +60,8 @@ function App() {
           {/* 📣 Advertiser Portal */}
           <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
 
-          {/* 📄 Create Advertisement */}
-          <Route path="/create-advertisement" element={<CreateAdvertisement />} />
-
           {/* 📄 Create Offer */}
-          <Route path="/create-offer" element={<CreateOffer />} />
+          <Route path="/create-offer" element={<CreateOfferView />} />
 
           {/* 🏪 Store Profile */}
           <Route path="/store-profile-page" element={<StoreProfilePageView />} />

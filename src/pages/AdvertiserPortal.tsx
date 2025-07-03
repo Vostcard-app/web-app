@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { auth, db } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
-const menuStyle = {
+const menuStyle: React.CSSProperties = {
   position: 'absolute',
   top: '100%',
   right: 0,
@@ -133,9 +133,6 @@ const AdvertiserPortal: React.FC = () => {
           <p onClick={() => { navigate('/advertiser-portal'); setIsMenuOpen(false); }} style={menuItemStyle}>
             Dashboard
           </p>
-          <p onClick={() => { navigate('/create-advertisement'); setIsMenuOpen(false); }} style={menuItemStyle}>
-            Create Advertisement
-          </p>
           <p onClick={() => { navigate('/create-offer'); setIsMenuOpen(false); }} style={menuItemStyle}>
             Create Special Offer
           </p>
@@ -222,7 +219,7 @@ const AdvertiserPortal: React.FC = () => {
             (Must update profile to create offer)
           </p>
           <button
-            onClick={() => navigate('/create-offer-view')}
+            onClick={() => navigate('/create-offer')}
             style={{
               marginTop: '16px',
               padding: '12px 20px',
