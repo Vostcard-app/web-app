@@ -49,8 +49,9 @@ const ScrollingCameraView: React.FC = () => {
 
   const handleRecord = () => {
     if (!currentUser) {
-      console.warn('⚠️ User session not yet restored. Retrying...');
-      setTimeout(() => handleRecord(), 500);
+      alert('❌ Please log in again.');
+      console.error('❌ User not logged in.');
+      navigate('/');
       return;
     }
     console.log('Stream state on record:', stream);
@@ -78,7 +79,15 @@ const ScrollingCameraView: React.FC = () => {
     );
     const username = currentUser.displayName || 'Anonymous';
     if (!stream) {
-      console.error('No media stream available');
+      console.warn('⚠️ No media stream found. Restarting camera...');
+      startCamera().then(() => {
+        if (videoRef.current?.srcObject) {
+          console.log('✅ Camera restarted. Retrying recording...');
+          handleRecord();
+        } else {
+          console.error('❌ Failed to restart camera stream.');
+        }
+      });
       return;
     }
     if (recording) {
