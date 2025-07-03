@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
+import { db } from "../firebase/firebaseConfig";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,12 +15,7 @@ export default function LoginPage() {
   const location = useLocation();
   const [successMessage, setSuccessMessage] = useState(location.state?.message || "");
 
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => setSuccessMessage(""), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
+  // Removed auto-dismiss; successMessage stays until dismissed
 
   // Redirect based on user role after successful login
   useEffect(() => {
@@ -56,8 +52,19 @@ export default function LoginPage() {
         return;
       }
 
-      // The redirect will be handled by the useEffect above
-      // based on the userRole from AuthContext
+      // ✅ Fetch user role from Firestore
+      const userDoc = await db.collection("users").doc(user.uid).get();
+      const advertiserDoc = await db.collection("advertisers").doc(user.uid).get();
+
+      if (userDoc.exists) {
+        navigate("/home");
+      } else if (advertiserDoc.exists) {
+        navigate("/advertiser-portal");
+      } else {
+        await auth.signOut();
+        setError("Account does not have an assigned role. Contact support.");
+      }
+
     } catch (err: any) {
       console.error("Login error:", err.code, err.message);
 
