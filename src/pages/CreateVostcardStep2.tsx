@@ -5,7 +5,7 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
-  const { currentVostcard, updateVostcard, saveLocalVostcard } = useVostcard();
+  const { currentVostcard, updateVostcard, saveLocalVostcard, user } = useVostcard();
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
@@ -24,6 +24,13 @@ const CreateVostcardStep2 = () => {
     }
   }, [currentVostcard]);
 
+  useEffect(() => {
+    if (!user || !user.username) {
+      alert('Sorry, something went wrong. Please start again.');
+      navigate('/home');
+    }
+  }, [user, navigate]);
+
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'distant' | 'near') => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -36,15 +43,14 @@ const CreateVostcardStep2 = () => {
       setNearPhoto(photoURL);
     }
 
-    const currentPhotos = currentVostcard?.photos || [];
-    const updatedPhotos: Blob[] =
-      type === 'distant'
-        ? [file, currentPhotos[1] || null].filter(Boolean) as Blob[]
-        : [currentPhotos[0] || null, file].filter(Boolean) as Blob[];
+    const currentPhotos = currentVostcard?.photos || [null, null];
+    const updatedPhotos: (Blob | null)[] = [
+      type === 'distant' ? file : currentPhotos[0],
+      type === 'near' ? file : currentPhotos[1],
+    ];
 
     updateVostcard({ photos: updatedPhotos });
-    
-    // Save to IndexedDB for private Vostcards
+
     try {
       await saveLocalVostcard();
     } catch (error) {
