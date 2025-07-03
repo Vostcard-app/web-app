@@ -1,8 +1,14 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const StoreProfilePage: React.FC = () => {
   const [storeName, setStoreName] = useState("");
-  const [storeAddress, setStoreAddress] = useState("");
+  // New address fields
+  const [streetAddress, setStreetAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [stateProvince, setStateProvince] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");
   const [storePhoto, setStorePhoto] = useState<File | null>(null);
   const [contactEmail, setContactEmail] = useState("");
   const [contactPerson, setContactPerson] = useState("");
@@ -10,10 +16,21 @@ const StoreProfilePage: React.FC = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
+  const navigate = useNavigate();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!storeName || !storeAddress || !contactEmail || !storePhoto) {
+    // Validate required fields
+    if (
+      !storeName ||
+      !streetAddress ||
+      !city ||
+      !stateProvince ||
+      !country ||
+      !contactEmail ||
+      !storePhoto
+    ) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -21,7 +38,11 @@ const StoreProfilePage: React.FC = () => {
     // Simulate save process
     console.log("Store Profile Saved:", {
       storeName,
-      storeAddress,
+      streetAddress,
+      city,
+      stateProvince,
+      postalCode,
+      country,
       storePhoto,
       contactEmail,
       contactPerson,
@@ -35,6 +56,20 @@ const StoreProfilePage: React.FC = () => {
   return (
     <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
       <h1 style={{ textAlign: "center", color: "#002B4D" }}>Store Profile</h1>
+      <button
+        onClick={() => navigate("/advertiser-portal")}
+        style={{
+          backgroundColor: "#ccc",
+          color: "#333",
+          border: "none",
+          padding: "8px 12px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          marginBottom: "16px",
+        }}
+      >
+        ← Back to Portal
+      </button>
       <form onSubmit={handleSubmit}>
         <label>
           Store Name<span style={{ color: "red" }}>*</span>
@@ -46,12 +81,52 @@ const StoreProfilePage: React.FC = () => {
             style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
           />
         </label>
+        {/* Address Fields */}
         <label>
-          Store Address<span style={{ color: "red" }}>*</span>
+          Street Address<span style={{ color: "red" }}>*</span>
           <input
             type="text"
-            value={storeAddress}
-            onChange={(e) => setStoreAddress(e.target.value)}
+            value={streetAddress}
+            onChange={(e) => setStreetAddress(e.target.value)}
+            required
+            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
+          />
+        </label>
+        <label>
+          City<span style={{ color: "red" }}>*</span>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            required
+            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
+          />
+        </label>
+        <label>
+          State/Province/Region<span style={{ color: "red" }}>*</span>
+          <input
+            type="text"
+            value={stateProvince}
+            onChange={(e) => setStateProvince(e.target.value)}
+            required
+            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
+          />
+        </label>
+        <label>
+          Postal/ZIP Code
+          <input
+            type="text"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
+            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
+          />
+        </label>
+        <label>
+          Country<span style={{ color: "red" }}>*</span>
+          <input
+            type="text"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
             required
             style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
           />
