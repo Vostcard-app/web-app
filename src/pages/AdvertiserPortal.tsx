@@ -166,11 +166,27 @@ const AdvertiserPortal: React.FC = () => {
           borderRadius: '12px',
           padding: '24px',
           marginBottom: '24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          textAlign: 'center'
         }}>
           <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>
             Store Profile
           </h2>
+
+          {/* Store Profile Image */}
+          <img
+            src={user?.photoURL || '/default-store.png'}
+            alt="Store Profile"
+            style={{
+              width: '120px',
+              height: '120px',
+              objectFit: 'cover',
+              borderRadius: '12px',
+              marginBottom: '12px',
+              border: '2px solid #002B4D'
+            }}
+          />
+
           <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
             Update your store profile details to ensure your offers appear correctly in the app.
           </p>
