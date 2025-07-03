@@ -132,6 +132,7 @@ const ScrollingCameraView: React.FC = () => {
         });
         
         const newId = currentVostcard?.id || Date.now().toString();
+        const username = user?.displayName || 'Anonymous';
         console.log('💾 Saving Vostcard with ID:', newId);
         setCurrentVostcard({
           id: newId,
