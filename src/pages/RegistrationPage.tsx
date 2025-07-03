@@ -65,7 +65,7 @@ export default function RegistrationPage() {
 
       // Send email verification
       await sendEmailVerification(user);
-      window.alert('Check your email to validate your email address');
+      window.alert('Registration successful! Check your email to verify your account.');
 
       // Save extra info to Firestore
       if (formType === "user") {
@@ -76,7 +76,6 @@ export default function RegistrationPage() {
           role: "user",
           createdAt: new Date(),
         });
-        navigate("/profile");
       } else {
         await setDoc(doc(db, "advertisers", user.uid), {
           name,
@@ -85,8 +84,13 @@ export default function RegistrationPage() {
           role: "advertiser",
           createdAt: new Date(),
         });
-        navigate("/advertiser-portal");
       }
+
+      // ✅ Force logout so they must log in after verifying
+      await auth.signOut();
+
+      // Redirect to login page with a success message
+      navigate("/login", { state: { message: "Registration successful! Please verify your email before logging in." } });
     } catch (err: any) {
       console.error('Registration error:', err.code, err.message, err);
       setError((err.code ? err.code + ': ' : '') + (err.message || 'Registration failed.'));
