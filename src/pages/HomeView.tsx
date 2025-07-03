@@ -215,7 +215,7 @@ const HomeView = () => {
 
       {/* List View Button */}
       <div style={listViewButtonContainer}>
-        <button style={listViewButton} onClick={() => navigate('/list-view')}>
+        <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
           List View
         </button>
       </div>
