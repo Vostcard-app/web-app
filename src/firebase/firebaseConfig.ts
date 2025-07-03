@@ -15,11 +15,23 @@ const firebaseConfig = {
   measurementId: "G-G6BVKFH8BE"
 };
 
+console.log('🔥 Initializing Firebase with config:', {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  storageBucket: firebaseConfig.storageBucket
+});
+
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+console.log('✅ Firebase services initialized:', {
+  auth: !!auth,
+  db: !!db,
+  storage: !!storage
+});
 
 // Connect to emulators in development
 if (process.env.NODE_ENV === 'development') {

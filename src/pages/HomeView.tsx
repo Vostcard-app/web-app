@@ -70,11 +70,23 @@ function getVostcardIcon(isOffer: boolean = false) {
 const HomeView = () => {
   const navigate = useNavigate();
   const { deleteVostcardsWithWrongUsername, clearVostcard } = useVostcard();
-  const { userRole } = useAuth();
+  const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [loadingVostcards, setLoadingVostcards] = useState(true);
+
+  // Debug authentication state
+  useEffect(() => {
+    console.log('🏠 HomeView: Auth state:', {
+      user: !!user,
+      username,
+      userID,
+      userRole,
+      loading,
+      authCurrentUser: !!auth.currentUser
+    });
+  }, [user, username, userID, userRole, loading]);
 
   const handleLogout = async () => {
     try {
@@ -87,9 +99,40 @@ const HomeView = () => {
     }
   };
 
+  const clearAuthState = async () => {
+    try {
+      console.log('🧹 Clearing Firebase auth state...');
+      await signOut(auth);
+      
+      // Clear any stored auth data
+      if (typeof window !== 'undefined') {
+        // Clear localStorage items that might be related to Firebase auth
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.includes('firebase') || key.includes('auth'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(key => {
+          console.log('🗑️ Removing localStorage key:', key);
+          localStorage.removeItem(key);
+        });
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        console.log('✅ Auth state cleared');
+        alert('Authentication state cleared. Please refresh the page and log in again.');
+      }
+    } catch (error) {
+      console.error('❌ Error clearing auth state:', error);
+    }
+  };
+
   const loadVostcards = async () => {
     try {
-      setLoading(true);
+      setLoadingVostcards(true);
       const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
       const querySnapshot = await getDocs(q);
       const postedVostcardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -97,7 +140,7 @@ const HomeView = () => {
     } catch (error) {
       console.error('Error loading Vostcards:', error);
     } finally {
-      setLoading(false);
+      setLoadingVostcards(false);
     }
   };
 
@@ -225,6 +268,46 @@ const HomeView = () => {
       {loading && (
         <div style={loadingStyle}>
           Loading Vostcards...
+        </div>
+      )}
+
+      {/* Debug Section - Remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '10px',
+          background: 'rgba(0,0,0,0.8)',
+          color: 'white',
+          padding: '10px',
+          borderRadius: '5px',
+          fontSize: '12px',
+          zIndex: 1000,
+          maxWidth: '300px'
+        }}>
+          <div><strong>Auth Debug:</strong></div>
+          <div>User: {user ? '✅' : '❌'}</div>
+          <div>Username: {username || 'N/A'}</div>
+          <div>UserID: {userID || 'N/A'}</div>
+          <div>Role: {userRole || 'N/A'}</div>
+          <div>Loading: {loading ? '🔄' : '✅'}</div>
+          <div>Auth Current: {auth.currentUser ? '✅' : '❌'}</div>
+          <div>Vostcards: {vostcards.length}</div>
+          <button 
+            onClick={clearAuthState}
+            style={{
+              background: '#ff4444',
+              color: 'white',
+              border: 'none',
+              padding: '5px 10px',
+              borderRadius: '3px',
+              cursor: 'pointer',
+              marginTop: '5px',
+              fontSize: '10px'
+            }}
+          >
+            Clear Auth State
+          </button>
         </div>
       )}
 
