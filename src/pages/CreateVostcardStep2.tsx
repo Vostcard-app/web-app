@@ -2,16 +2,29 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCamera } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { useAuth } from '../context/AuthContext';
 
 const CreateVostcardStep2 = () => {
   const navigate = useNavigate();
-  const { currentVostcard, updateVostcard, saveLocalVostcard, user } = useVostcard();
+  const { currentVostcard, updateVostcard, saveLocalVostcard, loadLocalVostcard } = useVostcard();
+  const { user } = useAuth();
 
   const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
   const [nearPhoto, setNearPhoto] = useState<string | null>(null);
 
   const distantInputRef = useRef<HTMLInputElement>(null);
   const nearInputRef = useRef<HTMLInputElement>(null);
+
+  // Always reload the Vostcard from IndexedDB on mount
+  useEffect(() => {
+    const load = async () => {
+      if (currentVostcard?.id) {
+        await loadLocalVostcard(currentVostcard.id);
+        console.log('Step 2 loaded Vostcard:', currentVostcard);
+      }
+    };
+    load();
+  }, []);
 
   useEffect(() => {
     if (currentVostcard?.photos) {
@@ -25,7 +38,7 @@ const CreateVostcardStep2 = () => {
   }, [currentVostcard]);
 
   useEffect(() => {
-    if (!user || !user.username) {
+    if (!user || !user.displayName) {
       alert('Sorry, something went wrong. Please start again.');
       navigate('/home');
     }
@@ -43,11 +56,11 @@ const CreateVostcardStep2 = () => {
       setNearPhoto(photoURL);
     }
 
-    const currentPhotos = currentVostcard?.photos || [null, null];
-    const updatedPhotos: (Blob | null)[] = [
+    const currentPhotos = (currentVostcard?.photos || []).filter(Boolean) as Blob[];
+    const updatedPhotos: Blob[] = [
       type === 'distant' ? file : currentPhotos[0],
       type === 'near' ? file : currentPhotos[1],
-    ];
+    ].filter(Boolean) as Blob[];
 
     updateVostcard({ photos: updatedPhotos });
 
