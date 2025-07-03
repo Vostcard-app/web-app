@@ -214,6 +214,36 @@ const CreateVostcardStep1: React.FC = () => {
         >
           Save & Continue
         </button>
+
+        {/* 🧪 Debug Button - Remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <button
+            onClick={() => {
+              console.log('🧪 Debug: Current Vostcard State:', {
+                currentVostcard: !!currentVostcard,
+                video: !!video,
+                videoSize: video?.size,
+                videoType: video?.type,
+                currentVostcardId: currentVostcard?.id,
+                currentVostcardUsername: currentVostcard?.username,
+                currentVostcardUserID: currentVostcard?.userID
+              });
+            }}
+            style={{
+              backgroundColor: '#ff6b6b',
+              color: 'white',
+              border: 'none',
+              width: '100%',
+              padding: '10px',
+              borderRadius: 8,
+              fontSize: '14px',
+              cursor: 'pointer',
+              marginTop: '8px'
+            }}
+          >
+            Debug: Log Vostcard State
+          </button>
+        )}
       </div>
     </div>
   );

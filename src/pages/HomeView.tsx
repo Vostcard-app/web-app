@@ -28,9 +28,9 @@ const offerIcon = new L.Icon({
 
 const userIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-  iconSize: [60, 90],
-  iconAnchor: [30, 90],
-  popupAnchor: [0, -90],
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
 });
 
 const ZoomControls = () => {

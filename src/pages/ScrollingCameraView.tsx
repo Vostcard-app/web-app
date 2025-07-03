@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
-  const { setCurrentVostcard, currentVostcard } = useVostcard();
+  const { setCurrentVostcard, currentVostcard, setVideo } = useVostcard();
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -131,29 +131,10 @@ const ScrollingCameraView: React.FC = () => {
           userAgent: navigator.userAgent
         });
         
-        const newId = currentVostcard?.id || Date.now().toString();
-        const username = user?.displayName || 'Anonymous';
-        console.log('💾 Saving Vostcard with ID:', newId);
-        setCurrentVostcard({
-          id: newId,
-          state: 'private',
-          video: blob,
-          title: '',
-          description: '',
-          photos: [],
-          categories: [],
-          geo: currentVostcard?.geo || null,
-          username,
-          userID: user?.uid || 'Unknown',
-          createdAt: currentVostcard?.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        });
-        console.log('🎬 Navigating to Step 1 with video blob');
-        if (blob) {
-          navigate('/create-step1');
-        } else {
-          console.error('❌ No video blob to navigate with.');
-        }
+        console.log('🎬 Video recording completed, setting video in VostcardContext');
+        setVideo(blob);
+        console.log('🎬 Video set in VostcardContext, navigating to Step 1');
+        navigate('/create-step1');
       };
 
       mediaRecorder.start();
