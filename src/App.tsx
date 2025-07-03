@@ -21,7 +21,7 @@ import EditMyVostcardListView from "./pages/EditMyVostcardListView";
 import AdvertiserPortal from "./pages/AdvertiserPortal";
 import CreateOfferView from './pages/CreateOfferView';
 import AllPostedVostcardsView from './pages/AllPostedVostcardsView';
-import StoreProfilePageView from './pages/StoreProfilePageView';
+import EditStoreProfileView from './pages/EditStoreProfileView';
 
 function App() {
   return (
@@ -64,7 +64,7 @@ function App() {
           <Route path="/create-offer" element={<CreateOfferView />} />
 
           {/* 🏪 Store Profile */}
-          <Route path="/store-profile-page" element={<StoreProfilePageView />} />
+          <Route path="/store-profile-page" element={<EditStoreProfileView />} />
         </Routes>
       </Router>
     </VostcardProvider>

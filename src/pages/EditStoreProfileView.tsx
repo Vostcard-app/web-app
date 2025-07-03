@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const StoreProfilePage: React.FC = () => {
+const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");
   // New address fields
   const [streetAddress, setStreetAddress] = useState("");
@@ -189,4 +189,4 @@ const StoreProfilePage: React.FC = () => {
   );
 };
 
-export default StoreProfilePage;
+export default EditStoreProfileView;
