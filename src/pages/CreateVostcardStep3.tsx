@@ -23,7 +23,17 @@ const CreateVostcardStep3: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
 
-  const availableCategories = ['Nature', 'History', 'Food', 'Culture', 'Landmark'];
+  const availableCategories = [
+    'None',
+    'Landmark',
+    'Fun Fact',
+    'Architecture',
+    'Historical',
+    'Museum',
+    'Gallery',
+    'Restaurant',
+    'Drive Mode Event'
+  ];
 
   // Debug validation state
   const validationState = {
