@@ -130,11 +130,37 @@ const ScrollingCameraView: React.FC = () => {
           isIOS: isIOS,
           userAgent: navigator.userAgent
         });
-        
-        console.log('🎬 Video recording completed, setting video in VostcardContext');
-        setVideo(blob);
-        console.log('🎬 Video set in VostcardContext, navigating to Step 1');
-        navigate('/create-step1');
+        // Wait for geolocation before saving video
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const geo = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+            console.log('📍 Location captured at video save:', geo);
+            // Set geo on Vostcard before saving video
+            if (currentVostcard) {
+              setCurrentVostcard({
+                ...currentVostcard,
+                geo,
+              });
+            }
+            setVideo(blob);
+            console.log('🎬 Video and geo set in VostcardContext, navigating to Step 1');
+            navigate('/create-step1');
+          },
+          (error) => {
+            console.warn('❌ Failed to capture location at video save:', error);
+            setVideo(blob);
+            console.log('🎬 Video set in VostcardContext (no geo), navigating to Step 1');
+            navigate('/create-step1');
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000,
+          }
+        );
       };
 
       mediaRecorder.start();
