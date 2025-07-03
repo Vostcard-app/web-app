@@ -38,7 +38,7 @@ const CreateVostcardStep2 = () => {
   }, [currentVostcard]);
 
   useEffect(() => {
-    if (!user || !user.displayName) {
+    if (!user) {
       alert('Sorry, something went wrong. Please start again.');
       navigate('/home');
     }
