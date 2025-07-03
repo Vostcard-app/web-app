@@ -222,7 +222,7 @@ const AdvertiserPortal: React.FC = () => {
             (Must update profile to create offer)
           </p>
           <button
-            onClick={() => navigate('/create-offer-view')}
+            onClick={() => navigate('/create-offer')}
             style={{
               marginTop: '16px',
               padding: '12px 20px',
