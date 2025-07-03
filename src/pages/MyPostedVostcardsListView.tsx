@@ -4,9 +4,19 @@ import { FaHome } from 'react-icons/fa';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
+interface PostedVostcard {
+  id: string;
+  title: string;
+  description: string;
+  categories: string[];
+  createdAt: any;
+  state: string;
+  [key: string]: any;
+}
+
 const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
-  const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
+  const [postedVostcards, setPostedVostcards] = useState<PostedVostcard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,7 +33,7 @@ const MyPostedVostcardsListView = () => {
         return;
       }
 
-      // Fetch all vostcards by this user, then filter out posted ones in code
+      // Fetch all vostcards by this user, then filter to show only posted ones
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', currentUser.uid)
@@ -33,8 +43,8 @@ const MyPostedVostcardsListView = () => {
         .map(doc => ({
           id: doc.id,
           ...doc.data()
-        }))
-        .filter(v => v.state !== 'posted');
+        } as PostedVostcard))
+        .filter(v => v.state === 'posted');
       setPostedVostcards(vostcards);
     } catch (error) {
       console.error('Error loading posted Vostcards:', error);

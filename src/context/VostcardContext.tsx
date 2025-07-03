@@ -410,19 +410,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         request.onsuccess = () => {
           console.log('💾 Saved Vostcard to IndexedDB successfully');
-          // Update the savedVostcards list by adding the new/updated item
-          setSavedVostcards(prev => {
-            const existingIndex = prev.findIndex(v => v.id === currentVostcard.id);
-            if (existingIndex >= 0) {
-              // Update existing item
-              const updated = [...prev];
-              updated[existingIndex] = currentVostcard;
-              return updated;
-            } else {
-              // Add new item
-              return [...prev, currentVostcard];
-            }
-          });
+          // Refresh the savedVostcards list from IndexedDB
+          loadAllLocalVostcards();
           resolve();
         };
       });
