@@ -48,13 +48,25 @@ const ScrollingCameraView: React.FC = () => {
   }, [cameraFacingMode]);
 
   const handleRecord = () => {
+    console.log('Stream state on record:', stream);
+    if (!stream) {
+      console.warn('⚠️ No media stream found. Restarting camera...');
+      startCamera().then(() => {
+        if (videoRef.current?.srcObject) {
+          console.log('✅ Camera restarted. Retrying recording...');
+          handleRecord();
+        } else {
+          console.error('❌ Failed to restart camera stream.');
+        }
+      });
+      return;
+    }
     if (!currentUser) {
       alert('❌ Please log in again.');
       console.error('❌ User not logged in.');
       navigate('/');
       return;
     }
-    console.log('Stream state on record:', stream);
     // Capture user location when recording starts
     navigator.geolocation.getCurrentPosition(
       (position) => {
