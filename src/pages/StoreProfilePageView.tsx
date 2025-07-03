@@ -28,8 +28,7 @@ const StoreProfilePage: React.FC = () => {
       !city ||
       !stateProvince ||
       !country ||
-      !contactEmail ||
-      !storePhoto
+      !contactEmail
     ) {
       setError("Please fill out all required fields.");
       return;
@@ -132,12 +131,11 @@ const StoreProfilePage: React.FC = () => {
           />
         </label>
         <label>
-          Store Photo<span style={{ color: "red" }}>*</span>
+          Store Photo
           <input
             type="file"
             accept="image/*"
             onChange={(e) => setStorePhoto(e.target.files ? e.target.files[0] : null)}
-            required
             style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
           />
         </label>
