@@ -5,7 +5,7 @@ import { useVostcard } from '../context/VostcardContext';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { currentVostcard } = useVostcard();
+  const { currentVostcard, saveLocalVostcard } = useVostcard();
   const video = currentVostcard?.video ?? null;
 
   console.log('➡️ currentVostcard:', currentVostcard);
@@ -35,8 +35,16 @@ const CreateVostcardStep1: React.FC = () => {
     navigate('/scrolling-camera');
   };
 
-  const handleSaveAndContinue = () => {
-    navigate('/create-step2');
+  const handleSaveAndContinue = async () => {
+    try {
+      console.log('💾 Saving Vostcard before continuing to step 2...');
+      await saveLocalVostcard();
+      console.log('✅ Vostcard saved successfully, navigating to step 2');
+      navigate('/create-step2');
+    } catch (error) {
+      console.error('❌ Failed to save Vostcard:', error);
+      alert('Failed to save Vostcard. Please try again.');
+    }
   };
 
   return (
