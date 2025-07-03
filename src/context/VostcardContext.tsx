@@ -31,7 +31,7 @@ export interface Vostcard {
 interface VostcardContextProps {
   currentVostcard: Vostcard | null;
   setCurrentVostcard: (vostcard: Vostcard | null) => void;
-  setVideo: (video: Blob) => void;
+  setVideo: (video: Blob, geoOverride?: { latitude: number; longitude: number }) => void;
   setGeo: (geo: { latitude: number; longitude: number }) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
   addPhoto: (photo: Blob) => void;
@@ -223,50 +223,22 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [currentVostcard]);
 
   // ✅ Create or update video
-  const setVideo = useCallback((video: Blob) => {
+  const setVideo = useCallback((video: Blob, geoOverride?: { latitude: number; longitude: number }) => {
     console.log('🎬 setVideo called with blob:', video);
-    console.log('📍 Current geo before setVideo:', currentVostcard?.geo);
+    console.log('📍 Current geo before setVideo:', currentVostcard?.geo, 'geoOverride:', geoOverride);
 
-    // Attempt to capture location when the user starts recording
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const geo = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        };
-        console.log('📍 Location captured at setVideo:', geo);
-        setGeo(geo);
-      },
-      (error) => {
-        console.warn('❌ Failed to capture location at setVideo:', error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000
-      }
-    );
-    
     if (currentVostcard) {
-      const updatedVostcard = { 
-        ...currentVostcard, 
-        video, 
-        updatedAt: new Date().toISOString() 
+      const updatedVostcard = {
+        ...currentVostcard,
+        video,
+        updatedAt: new Date().toISOString(),
+        geo: geoOverride || currentVostcard.geo,
       };
-      console.log('📍 Updated Vostcard with video, preserving geo:', updatedVostcard.geo);
+      console.log('📍 Updated Vostcard with video and geo:', updatedVostcard.geo);
       setCurrentVostcard(updatedVostcard);
     } else {
       const user = auth.currentUser;
-      
-      // Use AuthContext to get proper username
       const username = getCorrectUsername(authContext);
-      
-      console.log('🎬 Creating Vostcard with username from AuthContext:', {
-        authUsername: authContext.username,
-        userEmail: authContext.user?.email,
-        finalUsername: username
-      });
-
       const newVostcard = {
         id: uuidv4(),
         state: 'private' as const,
@@ -275,16 +247,16 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         description: '',
         photos: [],
         categories: [],
-        geo: null,
+        geo: geoOverride || null,
         username,
         userID: user?.uid || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      console.log('🎬 Creating new Vostcard with video:', newVostcard);
+      console.log('🎬 Creating new Vostcard with video and geo:', newVostcard.geo);
       setCurrentVostcard(newVostcard);
     }
-  }, [currentVostcard, setGeo]);
+  }, [currentVostcard]);
 
   // ✅ General updates (title, description, categories, etc.)
   const updateVostcard = useCallback((updates: Partial<Vostcard>) => {

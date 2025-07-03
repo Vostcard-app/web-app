@@ -138,14 +138,7 @@ const ScrollingCameraView: React.FC = () => {
               longitude: position.coords.longitude,
             };
             console.log('📍 Location captured at video save:', geo);
-            // Set geo on Vostcard before saving video
-            if (currentVostcard) {
-              setCurrentVostcard({
-                ...currentVostcard,
-                geo,
-              });
-            }
-            setVideo(blob);
+            setVideo(blob, geo);
             console.log('🎬 Video and geo set in VostcardContext, navigating to Step 1');
             navigate('/create-step1');
           },
