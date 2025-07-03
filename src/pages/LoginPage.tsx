@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -52,13 +53,16 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Fetch user role from Firestore
-      const userDoc = await db.collection("users").doc(user.uid).get();
-      const advertiserDoc = await db.collection("advertisers").doc(user.uid).get();
+      // ✅ Fetch user role from Firestore using modular syntax
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
 
-      if (userDoc.exists) {
+      const advertiserDocRef = doc(db, "advertisers", user.uid);
+      const advertiserDocSnap = await getDoc(advertiserDocRef);
+
+      if (userDocSnap.exists()) {
         navigate("/home");
-      } else if (advertiserDoc.exists) {
+      } else if (advertiserDocSnap.exists()) {
         navigate("/advertiser-portal");
       } else {
         await auth.signOut();
