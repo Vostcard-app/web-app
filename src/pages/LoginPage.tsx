@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
@@ -11,6 +11,15 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const { userRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [successMessage, setSuccessMessage] = useState(location.state?.message || "");
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // Redirect based on user role after successful login
   useEffect(() => {
@@ -35,6 +44,17 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("Logged in:", user);
+
+      if (!user.emailVerified) {
+        await auth.signOut();
+        setError("Please verify your email before logging in. We've sent you another verification email.");
+        try {
+          await user.sendEmailVerification();
+        } catch (verificationError) {
+          console.error("Failed to send verification email:", verificationError);
+        }
+        return;
+      }
 
       // The redirect will be handled by the useEffect above
       // based on the userRole from AuthContext
@@ -62,6 +82,38 @@ export default function LoginPage() {
       alignItems: 'center',
       padding: 0,
     }}>
+      {successMessage && (
+        <div style={{
+          background: '#d4edda',
+          color: '#155724',
+          border: '1px solid #c3e6cb',
+          borderRadius: 12,
+          padding: '12px 16px',
+          margin: '16px auto',
+          width: '90%',
+          textAlign: 'center',
+          fontWeight: 500,
+          position: 'relative',
+        }}>
+          {successMessage}
+          <button
+            onClick={() => setSuccessMessage("")}
+            style={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              background: 'transparent',
+              border: 'none',
+              fontSize: 20,
+              cursor: 'pointer',
+              color: '#155724',
+            }}
+            aria-label="Dismiss"
+          >
+            &times;
+          </button>
+        </div>
+      )}
       {/* Header */}
       <div style={{
         background: '#07345c',
