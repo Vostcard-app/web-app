@@ -7,8 +7,8 @@ import { useAuth } from '../context/AuthContext';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
-  const { setCurrentVostcard } = useVostcard();
-  const { currentUser } = useAuth();
+  const { setCurrentVostcard, currentVostcard } = useVostcard();
+  const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -61,7 +61,7 @@ const ScrollingCameraView: React.FC = () => {
       });
       return;
     }
-    if (!currentUser) {
+    if (!user) {
       alert('❌ Please log in again.');
       console.error('❌ User not logged in.');
       navigate('/');
@@ -75,10 +75,12 @@ const ScrollingCameraView: React.FC = () => {
           longitude: position.coords.longitude,
         };
         console.log('📍 Location captured at ScrollingCameraView:', geo);
-        setCurrentVostcard((prev) => ({
-          ...prev,
-          geo,
-        }));
+        if (currentVostcard) {
+          setCurrentVostcard({
+            ...currentVostcard,
+            geo,
+          });
+        }
       },
       (error) => {
         console.warn('❌ Failed to capture location at ScrollingCameraView:', error);
@@ -89,7 +91,7 @@ const ScrollingCameraView: React.FC = () => {
         maximumAge: 60000,
       }
     );
-    const username = currentUser.displayName || 'Anonymous';
+    const username = user.displayName || 'Anonymous';
     if (!stream) {
       console.warn('⚠️ No media stream found. Restarting camera...');
       startCamera().then(() => {
@@ -129,16 +131,21 @@ const ScrollingCameraView: React.FC = () => {
           userAgent: navigator.userAgent
         });
         
-        setCurrentVostcard((prev) => {
-          const newId = prev?.id || Date.now().toString();
-          console.log('💾 Saving Vostcard with ID:', newId);
-          return {
-            ...prev,
-            id: newId,
-            video: blob,
-            username,
-            userId: currentUser?.uid || 'Unknown',
-          };
+        const newId = currentVostcard?.id || Date.now().toString();
+        console.log('💾 Saving Vostcard with ID:', newId);
+        setCurrentVostcard({
+          id: newId,
+          state: 'private',
+          video: blob,
+          title: '',
+          description: '',
+          photos: [],
+          categories: [],
+          geo: currentVostcard?.geo || null,
+          username,
+          userID: user?.uid || 'Unknown',
+          createdAt: currentVostcard?.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         });
         console.log('🎬 Navigating to Step 1 with video blob');
         if (blob) {
