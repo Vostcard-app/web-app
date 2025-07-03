@@ -48,6 +48,11 @@ const ScrollingCameraView: React.FC = () => {
   }, [cameraFacingMode]);
 
   const handleRecord = () => {
+    if (!currentUser) {
+      console.warn('⚠️ User session not yet restored. Retrying...');
+      setTimeout(() => handleRecord(), 500);
+      return;
+    }
     console.log('Stream state on record:', stream);
     // Capture user location when recording starts
     navigator.geolocation.getCurrentPosition(
@@ -71,12 +76,6 @@ const ScrollingCameraView: React.FC = () => {
         maximumAge: 60000,
       }
     );
-    if (!currentUser) {
-      alert('❌ Please log in again.');
-      console.error('❌ User not logged in.');
-      navigate('/');
-      return;
-    }
     const username = currentUser.displayName || 'Anonymous';
     if (!stream) {
       console.error('No media stream available');
