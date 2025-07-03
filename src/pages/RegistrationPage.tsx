@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 
@@ -29,9 +29,16 @@ export default function RegistrationPage() {
     setError("");
     setLoading(true);
 
+    console.log("🔐 Registering advertiser with:", { email, password, formType });
+
     // Basic validation
     if (!name || !email || !password || (formType === "user" && !username) || (formType === "advertiser" && !businessName)) {
       setError("Please fill out all required fields.");
+      setLoading(false);
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       setLoading(false);
       return;
     }
@@ -56,6 +63,10 @@ export default function RegistrationPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Send email verification
+      await sendEmailVerification(user);
+      window.alert('Check your email to validate your email address');
+
       // Save extra info to Firestore
       if (formType === "user") {
         await setDoc(doc(db, "users", user.uid), {
@@ -77,7 +88,8 @@ export default function RegistrationPage() {
         navigate("/advertiser-portal");
       }
     } catch (err: any) {
-      setError(err.message || "Registration failed.");
+      console.error('Registration error:', err.code, err.message, err);
+      setError((err.code ? err.code + ': ' : '') + (err.message || 'Registration failed.'));
     } finally {
       setLoading(false);
     }
