@@ -70,8 +70,28 @@ const StoreProfilePageView: React.FC = () => {
   };
 
   return (
-    <div>
-      {/* Form UI here */}
+    <div style={{ maxWidth: "700px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+      <h1 style={{ textAlign: "center", color: "#002B4D" }}>Advertiser Portal</h1>
+      <p style={{ textAlign: "center", marginBottom: "20px" }}>
+        Welcome, {user?.displayName || "Advertiser"}!
+      </p>
+      <button
+        onClick={handleSubmit}
+        style={{
+          backgroundColor: "#002B4D",
+          color: "#fff",
+          border: "none",
+          padding: "12px 20px",
+          borderRadius: "8px",
+          width: "100%",
+          cursor: "pointer",
+          fontSize: "16px",
+        }}
+      >
+        Save Profile
+      </button>
+      {success && <p style={{ color: "green", marginTop: "12px" }}>Profile saved successfully!</p>}
+      {error && <p style={{ color: "red", marginTop: "12px" }}>{error}</p>}
     </div>
   );
 };
