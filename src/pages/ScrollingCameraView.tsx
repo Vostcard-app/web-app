@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { MdFlipCameraIos } from 'react-icons/md';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
+import { useAuth } from '../context/AuthContext';
 
 const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
   const { setCurrentVostcard } = useVostcard();
+  const { currentUser } = useAuth();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -69,6 +71,13 @@ const ScrollingCameraView: React.FC = () => {
         maximumAge: 60000,
       }
     );
+    if (!currentUser) {
+      alert('❌ Please log in again.');
+      console.error('❌ User not logged in.');
+      navigate('/');
+      return;
+    }
+    const username = currentUser.displayName || 'Anonymous';
     if (!stream) {
       console.error('No media stream available');
       return;
@@ -107,6 +116,8 @@ const ScrollingCameraView: React.FC = () => {
             ...prev,
             id: newId,
             video: blob,
+            username,
+            userId: currentUser?.uid || 'Unknown',
           };
         });
         console.log('🎬 Navigating to Step 1 with video blob');
