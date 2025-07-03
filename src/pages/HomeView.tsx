@@ -69,7 +69,7 @@ function getVostcardIcon(isOffer: boolean = false) {
 
 const HomeView = () => {
   const navigate = useNavigate();
-  const { deleteVostcardsWithWrongUsername, clearVostcard } = useVostcard();
+  const { deleteVostcardsWithWrongUsername } = useVostcard();
   const { userRole } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
@@ -143,12 +143,11 @@ const HomeView = () => {
   }, []);
 
   const handleCreateVostcard = () => {
-    clearVostcard(); // Clear any existing Vostcard data before starting new one
     navigate('/create-step1');
   };
 
   const menuItems = [
-    { label: 'My Private Vōstcards', route: '/my-posted-vostcards' }, // wired to MyPostedVostcardsListView
+    { label: 'My Private Vōstcards', route: '/my-private-vostcards' },
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Edit My Vōstcards', route: '/edit-my-vostcards' },
     { label: 'Liked Vōstcard', route: '/liked-vostcards' },
