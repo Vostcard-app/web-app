@@ -175,7 +175,7 @@ const AdvertiserPortal: React.FC = () => {
             Update your store profile details to ensure your offers appear correctly in the app.
           </p>
           <button
-            onClick={() => navigate('/store-profile')}
+            onClick={() => navigate('/store-profile-page')}
             style={{
               marginTop: '16px',
               padding: '12px 20px',
