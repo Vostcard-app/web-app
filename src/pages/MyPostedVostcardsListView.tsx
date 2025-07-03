@@ -54,7 +54,7 @@ const MyPostedVostcardsListView = () => {
   };
 
   return (
-    <div style={{ height: '100vh', width: '100vw' }}>
+    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5', position: 'relative' }}>
       {/* 🔵 Header with Home Icon */}
       <div style={{
         backgroundColor: '#002B4D',
@@ -63,7 +63,10 @@ const MyPostedVostcardsListView = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 20px',
-        color: 'white'
+        color: 'white',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10
       }}>
         <h1 style={{ fontSize: '24px', margin: 0 }}>My Posted Vōstcards</h1>
         <FaHome
@@ -73,8 +76,17 @@ const MyPostedVostcardsListView = () => {
         />
       </div>
 
-      {/* 🔲 List of Posted Vostcards */}
-      <div style={{ padding: '20px' }}>
+      {/* 🔲 List of Posted Vostcards (Scrollable) */}
+      <div style={{
+        position: 'absolute',
+        top: 70,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflowY: 'auto',
+        padding: '20px',
+        background: '#f5f5f5',
+      }}>
         {loading ? (
           <p>Loading your posted Vostcards...</p>
         ) : postedVostcards.length === 0 ? (
@@ -87,6 +99,7 @@ const MyPostedVostcardsListView = () => {
               padding: '12px',
               marginBottom: '10px',
               boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              background: 'white',
             }}>
               <h2 style={{ margin: '0 0 8px 0' }}>{vostcard.title || 'Untitled Vōstcard'}</h2>
               <p>{vostcard.description || 'No description provided.'}</p>
