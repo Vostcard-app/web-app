@@ -37,13 +37,34 @@ const CreateVostcardStep1: React.FC = () => {
 
   const handleSaveAndContinue = async () => {
     try {
-      console.log('💾 Saving Vostcard before continuing to step 2...');
+      console.log('💾 Step 1: Starting save process...');
+      console.log('💾 Current Vostcard state:', {
+        id: currentVostcard?.id,
+        hasVideo: !!currentVostcard?.video,
+        videoSize: currentVostcard?.video?.size,
+        hasGeo: !!currentVostcard?.geo,
+        username: currentVostcard?.username,
+        userID: currentVostcard?.userID
+      });
+      
+      if (!currentVostcard) {
+        console.error('❌ No currentVostcard to save');
+        alert('No Vostcard to save. Please record a video first.');
+        return;
+      }
+      
+      if (!currentVostcard.video) {
+        console.error('❌ No video in currentVostcard');
+        alert('No video to save. Please record a video first.');
+        return;
+      }
+      
       await saveLocalVostcard();
       console.log('✅ Vostcard saved successfully, navigating to step 2');
       navigate('/create-step2');
     } catch (error) {
       console.error('❌ Failed to save Vostcard:', error);
-      alert('Failed to save Vostcard. Please try again.');
+      alert(`Failed to save Vostcard: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

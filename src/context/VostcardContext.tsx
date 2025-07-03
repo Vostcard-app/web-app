@@ -419,7 +419,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in saveLocalVostcard:', error);
       alert('Failed to save Vostcard locally. Please try again.');
     }
-  }, [currentVostcard]);
+  }, [currentVostcard, loadAllLocalVostcards]);
 
   // ✅ Load from IndexedDB
   const loadLocalVostcard = useCallback(async (id: string) => {
