@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,17 +7,15 @@ const CreateOfferView: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [itemPhoto, setItemPhoto] = useState<File | null>(null);
-  const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [businessPhoto, setBusinessPhoto] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!title || !description || !itemPhoto || !businessName || !phone || !email || !businessPhoto) {
+    if (!title || !description) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -28,10 +25,8 @@ const CreateOfferView: React.FC = () => {
       title,
       description,
       itemPhoto,
-      businessName,
       phone,
-      email,
-      businessPhoto
+      email
     });
 
     setError("");
@@ -65,53 +60,30 @@ const CreateOfferView: React.FC = () => {
           />
         </label>
         <label>
-          Photo of the Item<span style={{ color: "red" }}>*</span>
+          Photo of the Item
           <input
             type="file"
             accept="image/*"
             onChange={(e) => setItemPhoto(e.target.files ? e.target.files[0] : null)}
-            required
             style={{ display: "block", width: "100%", marginBottom: "12px" }}
           />
         </label>
         <label>
-          Business Name<span style={{ color: "red" }}>*</span>
-          <input
-            type="text"
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
-            required
-            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
-          />
-        </label>
-        <label>
-          Phone Number<span style={{ color: "red" }}>*</span>
+          Phone Number
           <input
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            required
             style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
           />
         </label>
         <label>
-          Email Address<span style={{ color: "red" }}>*</span>
+          Email Address
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
             style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
-          />
-        </label>
-        <label>
-          Photo of the Business<span style={{ color: "red" }}>*</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setBusinessPhoto(e.target.files ? e.target.files[0] : null)}
-            required
-            style={{ display: "block", width: "100%", marginBottom: "12px" }}
           />
         </label>
         {error && <p style={{ color: "red" }}>{error}</p>}
