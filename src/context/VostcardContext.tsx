@@ -340,7 +340,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const saveLocalVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.log('💾 saveLocalVostcard: No currentVostcard to save');
-      return;
+      throw new Error('No currentVostcard to save');
     }
     
     console.log('💾 saveLocalVostcard: Starting save process for Vostcard:', {
@@ -418,6 +418,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('❌ Error in saveLocalVostcard:', error);
       alert('Failed to save Vostcard locally. Please try again.');
+      throw error;
     }
   }, [currentVostcard, loadAllLocalVostcards]);
 
