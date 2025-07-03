@@ -69,7 +69,7 @@ function getVostcardIcon(isOffer: boolean = false) {
 
 const HomeView = () => {
   const navigate = useNavigate();
-  const { deleteVostcardsWithWrongUsername } = useVostcard();
+  const { deleteVostcardsWithWrongUsername, clearVostcard } = useVostcard();
   const { userRole } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
@@ -143,6 +143,7 @@ const HomeView = () => {
   }, []);
 
   const handleCreateVostcard = () => {
+    clearVostcard(); // Clear any existing Vostcard data before starting new one
     navigate('/create-step1');
   };
 
