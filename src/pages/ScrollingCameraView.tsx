@@ -79,7 +79,9 @@ const ScrollingCameraView: React.FC = () => {
           setCurrentVostcard({
             ...currentVostcard,
             geo,
+            createdAt: new Date().toISOString(), // 📅 Add timestamp
           });
+          console.log('📅 Vostcard creation date set:', new Date().toISOString());
         }
       },
       (error) => {

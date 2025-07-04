@@ -54,7 +54,19 @@ const VostcardDetailView: React.FC = () => {
   const avgRating = vostcard.avgRating || 0.0;
   const comments = vostcard.comments || 0;
   const description = vostcard.description || '';
-  const createdAt = vostcard.createdAt?.toDate ? vostcard.createdAt.toDate().toLocaleString() : (vostcard.createdAt || '');
+
+  let createdAt = '';
+  if (vostcard.createdAt) {
+    if (typeof vostcard.createdAt.toDate === 'function') {
+      createdAt = vostcard.createdAt.toDate().toLocaleString();
+    } else if (vostcard.createdAt instanceof Date) {
+      createdAt = vostcard.createdAt.toLocaleString();
+    } else if (typeof vostcard.createdAt === 'string' || typeof vostcard.createdAt === 'number') {
+      createdAt = new Date(vostcard.createdAt).toLocaleString();
+    } else {
+      createdAt = String(vostcard.createdAt);
+    }
+  }
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
