@@ -621,23 +621,36 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-        try {
+    try {
       console.log('📥 Starting post to Firebase (public map)...');
-      
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
-      
-      // Get username from AuthContext (most reliable source)
       const username = getCorrectUsername(authContext, currentVostcard.username);
 
-      console.log('👤 Posting with username from AuthContext:', {
-        authUsername: authContext.username,
-        currentVostcardUsername: currentVostcard.username,
-        finalUsername: username
-      });
+      // --- Upload video to Firebase Storage ---
+      let videoURL = '';
+      if (currentVostcard.video && currentVostcard.video instanceof Blob) {
+        const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.webm`);
+        const videoSnapshot = await uploadBytes(videoRef, currentVostcard.video);
+        videoURL = await getDownloadURL(videoSnapshot.ref);
+        console.log('✅ Video uploaded, URL:', videoURL);
+      }
 
-      const videoURL = '';
-      const photoURLs: string[] = [];
+      // --- Upload photos to Firebase Storage ---
+      let photoURLs: string[] = [];
+      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+        const uploadPromises = currentVostcard.photos.map(async (photo, idx) => {
+          if (photo instanceof Blob) {
+            const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo${idx + 1}.jpg`);
+            const photoSnapshot = await uploadBytes(photoRef, photo);
+            const url = await getDownloadURL(photoSnapshot.ref);
+            console.log(`✅ Photo ${idx + 1} uploaded, URL:`, url);
+            return url;
+          }
+          return '';
+        });
+        photoURLs = await Promise.all(uploadPromises);
+      }
 
       // DEBUG: Log username before saving to Firestore
       console.log('🔍 DEBUG: Final username before Firestore save:', {
@@ -666,7 +679,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: 'posted',
         hasVideo: !!currentVostcard.video,
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
-        mediaUploadStatus: 'pending',
+        mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
         offerDetails: currentVostcard.offerDetails || null
       });
