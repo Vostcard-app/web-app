@@ -22,6 +22,7 @@ import AdvertiserPortal from "./pages/AdvertiserPortal";
 import CreateOfferView from './pages/CreateOfferView';
 import AllPostedVostcardsView from './pages/AllPostedVostcardsView';
 import EditStoreProfileView from './pages/EditStoreProfileView';
+import VostcardDetailView from './pages/VostcardDetailView';
 
 function App() {
   return (
@@ -52,6 +53,9 @@ function App() {
 
           {/* 📦 Saved */}
           <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
+
+          {/* 📄 Vostcard Detail */}
+          <Route path="/vostcard/:id" element={<VostcardDetailView />} />
 
           {/* ⚙️ Settings */}
           <Route path="/settings" element={<SettingsView />} />
