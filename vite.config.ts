@@ -9,4 +9,31 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    rollupOptions: {
+      external: [],
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          firebase: ['firebase'],
+          router: ['react-router-dom'],
+          icons: ['react-icons']
+        }
+      }
+    }
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'firebase',
+      'react-icons',
+      'leaflet',
+      'react-leaflet',
+      'jszip',
+      'file-saver',
+      'uuid'
+    ]
+  }
 });

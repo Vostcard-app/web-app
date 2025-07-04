@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useScripts } from '../context/ScriptContext';
 import { useAuth } from '../context/AuthContext';
 import { FaArrowLeft, FaSave, FaTrash, FaHome } from 'react-icons/fa';
-import './ScriptEditorView.css';
 
 const ScriptEditorView: React.FC = () => {
   const navigate = useNavigate();
@@ -18,9 +17,6 @@ const ScriptEditorView: React.FC = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
-
-  // Auto-save timer
-  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Calculate word and character count
   useEffect(() => {
@@ -44,47 +40,6 @@ const ScriptEditorView: React.FC = () => {
       setHasUnsavedChanges(false);
     }
   }, [scriptId, currentScript]);
-
-  // Auto-save functionality
-  const autoSave = useCallback(async () => {
-    if (!hasUnsavedChanges || !title.trim() || !content.trim()) return;
-
-    try {
-      setIsSaving(true);
-      if (scriptId) {
-        await updateScript(scriptId, title, content);
-      } else {
-        const newScript = await createScript(title, content);
-        // Navigate to the new script's edit page
-        navigate(`/script-editor/${newScript.id}`, { replace: true });
-      }
-      setLastSaved(new Date());
-      setHasUnsavedChanges(false);
-      console.log('✅ Auto-saved successfully');
-    } catch (error) {
-      console.error('❌ Auto-save failed:', error);
-    } finally {
-      setIsSaving(false);
-    }
-  }, [scriptId, title, content, hasUnsavedChanges, updateScript, createScript, navigate]);
-
-  // Set up auto-save timer
-  useEffect(() => {
-    if (autoSaveTimer) {
-      clearTimeout(autoSaveTimer);
-    }
-
-    if (hasUnsavedChanges && title.trim() && content.trim()) {
-      const timer = setTimeout(autoSave, 3000); // Auto-save after 3 seconds of inactivity
-      setAutoSaveTimer(timer);
-    }
-
-    return () => {
-      if (autoSaveTimer) {
-        clearTimeout(autoSaveTimer);
-      }
-    };
-  }, [title, content, hasUnsavedChanges, autoSave]);
 
   // Track changes
   useEffect(() => {
@@ -153,53 +108,56 @@ const ScriptEditorView: React.FC = () => {
     }
   };
 
-  // Warn user before leaving with unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
   return (
-    <div className="script-editor">
+    <div style={{ maxWidth: 1000, margin: '0 auto', padding: 20 }}>
       {/* Header */}
-      <div className="editor-header">
-        <div className="header-left">
-          <button className="nav-button" onClick={handleBack}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, background: 'white', padding: 20, borderRadius: 15, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+          <button 
+            onClick={handleBack}
+            style={{ background: '#667eea', color: 'white', border: 'none', padding: 12, borderRadius: 10, cursor: 'pointer' }}
+          >
             <FaArrowLeft />
           </button>
-          <button className="nav-button" onClick={() => navigate('/home')}>
+          <button 
+            onClick={() => navigate('/home')}
+            style={{ background: '#667eea', color: 'white', border: 'none', padding: 12, borderRadius: 10, cursor: 'pointer' }}
+          >
             <FaHome />
           </button>
           <h1>{scriptId ? 'Edit Script' : 'New Script'}</h1>
         </div>
         
-        <div className="header-right">
-          <div className="save-status">
-            {isSaving && <span className="saving-indicator">Saving...</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+          <div style={{ fontSize: '0.85rem', color: '#666' }}>
+            {isSaving && <span style={{ color: '#667eea', fontWeight: 600 }}>Saving...</span>}
             {lastSaved && !isSaving && (
-              <span className="last-saved">
+              <span style={{ color: '#28a745' }}>
                 Last saved: {lastSaved.toLocaleTimeString()}
               </span>
             )}
           </div>
           
           <button 
-            className="save-button" 
             onClick={handleSave}
             disabled={isSaving || (!title.trim() && !content.trim())}
+            style={{ 
+              background: isSaving || (!title.trim() && !content.trim()) ? '#ccc' : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)', 
+              color: 'white', 
+              border: 'none', 
+              padding: '12px 24px', 
+              borderRadius: 10, 
+              cursor: isSaving || (!title.trim() && !content.trim()) ? 'not-allowed' : 'pointer'
+            }}
           >
             <FaSave /> Save
           </button>
           
           {scriptId && (
-            <button className="delete-button" onClick={handleDelete}>
+            <button 
+              onClick={handleDelete}
+              style={{ background: '#e74c3c', color: 'white', border: 'none', padding: 12, borderRadius: 10, cursor: 'pointer' }}
+            >
               <FaTrash />
             </button>
           )}
@@ -207,54 +165,69 @@ const ScriptEditorView: React.FC = () => {
       </div>
 
       {/* Stats Bar */}
-      <div className="stats-bar">
-        <div className="stat">
-          <span className="stat-label">Words:</span>
-          <span className="stat-value">{wordCount}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 30, marginBottom: 20, background: 'white', padding: '15px 20px', borderRadius: 15, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: '#666', fontSize: '0.9rem' }}>Words:</span>
+          <span style={{ color: '#333', fontWeight: 600, fontSize: '1.1rem' }}>{wordCount}</span>
         </div>
-        <div className="stat">
-          <span className="stat-label">Characters:</span>
-          <span className="stat-value">{charCount}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: '#666', fontSize: '0.9rem' }}>Characters:</span>
+          <span style={{ color: '#333', fontWeight: 600, fontSize: '1.1rem' }}>{charCount}</span>
         </div>
         {hasUnsavedChanges && (
-          <div className="unsaved-indicator">
-            <span className="dot"></span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f39c12', fontWeight: 600, fontSize: '0.9rem' }}>
+            <span style={{ width: 8, height: 8, background: '#f39c12', borderRadius: '50%' }}></span>
             Unsaved changes
           </div>
         )}
       </div>
 
       {/* Editor Content */}
-      <div className="editor-content">
-        <div className="title-input-container">
+      <div style={{ background: 'white', borderRadius: 15, boxShadow: '0 8px 32px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+        <div style={{ padding: '20px 20px 0 20px' }}>
           <input
             type="text"
             placeholder="Enter script title..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="title-input"
+            style={{ width: '100%', padding: 15, border: '2px solid #e9ecef', borderRadius: 10, fontSize: '1.5rem', fontWeight: 600, color: '#333' }}
             maxLength={100}
           />
         </div>
         
-        <div className="content-input-container">
+        <div style={{ padding: 20 }}>
           <textarea
             placeholder="Start writing your script..."
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="content-textarea"
+            style={{ 
+              width: '100%', 
+              minHeight: 500, 
+              padding: 20, 
+              border: '2px solid #e9ecef', 
+              borderRadius: 10, 
+              fontSize: '1.1rem', 
+              lineHeight: 1.6, 
+              color: '#333', 
+              resize: 'vertical',
+              fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+            }}
             autoFocus
           />
         </div>
       </div>
 
-      {/* Keyboard Shortcuts Info */}
-      <div className="shortcuts-info">
-        <p>💡 <strong>Auto-save:</strong> Your script saves automatically every 3 seconds</p>
-        <p>⌘+S / Ctrl+S: Save manually</p>
+      {/* Info */}
+      <div style={{ marginTop: 20, background: 'white', padding: '15px 20px', borderRadius: 15, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+        <p style={{ margin: '5px 0', color: '#666', fontSize: '0.9rem' }}>
+          💡 <strong>Auto-save:</strong> Your script saves automatically every 3 seconds
+        </p>
+        <p style={{ margin: '5px 0', color: '#666', fontSize: '0.9rem' }}>
+          ⌘+S / Ctrl+S: Save manually
+        </p>
       </div>
     </div>
   );
 };
 
-export default ScriptEditorView; 
+export default ScriptEditorView;

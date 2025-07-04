@@ -68,44 +68,45 @@ const ScriptLibraryView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="script-library">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading your scripts...</p>
-        </div>
+      <div style={{ padding: 40, textAlign: 'center' }}>
+        <div>Loading your scripts...</div>
       </div>
     );
   }
 
   return (
-    <div className="script-library">
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
       {/* Header */}
-      <div className="script-header">
-        <div className="header-left">
-          <button className="nav-button" onClick={() => navigate('/home')}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+          <button 
+            onClick={() => navigate('/home')}
+            style={{ background: '#667eea', color: 'white', border: 'none', padding: 12, borderRadius: 10, cursor: 'pointer' }}
+          >
             <FaHome />
           </button>
           <h1>Script Library</h1>
         </div>
-        <div className="header-right">
-          <button className="create-button" onClick={handleCreateNew}>
-            <FaPlus /> New Script
-          </button>
-        </div>
+        <button 
+          onClick={handleCreateNew}
+          style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: 10, cursor: 'pointer' }}
+        >
+          <FaPlus /> New Script
+        </button>
       </div>
 
       {/* Search Bar */}
-      <div className="search-container">
-        <div className="search-input-group">
+      <div style={{ marginBottom: 30 }}>
+        <div style={{ display: 'flex', background: 'white', borderRadius: 15, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
           <input
             type="text"
             placeholder="Search scripts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            className="search-input"
+            style={{ flex: 1, padding: '15px 20px', border: 'none', outline: 'none', fontSize: 16 }}
           />
-          <button onClick={handleSearch} className="search-button">
+          <button onClick={handleSearch} style={{ background: '#667eea', color: 'white', border: 'none', padding: '15px 20px', cursor: 'pointer' }}>
             <FaSearch />
           </button>
         </div>
@@ -113,16 +114,16 @@ const ScriptLibraryView: React.FC = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="error-message">
+        <div style={{ background: '#fee', color: '#c33', padding: 15, borderRadius: 10, marginBottom: 20, borderLeft: '4px solid #c33' }}>
           <p>{error}</p>
         </div>
       )}
 
       {/* Scripts List */}
-      <div className="scripts-container">
+      <div>
         {displayScripts.length === 0 ? (
-          <div className="empty-state">
-            <FaFileAlt className="empty-icon" />
+          <div style={{ textAlign: 'center', padding: 60, background: 'white', borderRadius: 15, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+            <FaFileAlt style={{ fontSize: '4rem', color: '#ccc', marginBottom: 20 }} />
             <h3>No scripts found</h3>
             <p>
               {searchTerm 
@@ -131,28 +132,33 @@ const ScriptLibraryView: React.FC = () => {
               }
             </p>
             {!searchTerm && (
-              <button className="create-button" onClick={handleCreateNew}>
+              <button 
+                onClick={handleCreateNew}
+                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: 10, cursor: 'pointer', marginTop: 20 }}
+              >
                 <FaPlus /> Create Your First Script
               </button>
             )}
           </div>
         ) : (
-          <div className="scripts-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 20 }}>
             {displayScripts.map((script) => (
-              <div key={script.id} className="script-card">
-                <div className="script-header">
-                  <h3 className="script-title">{script.title}</h3>
-                  <div className="script-actions">
+              <div key={script.id} style={{ background: 'white', borderRadius: 15, padding: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+                  <h3 style={{ margin: 0, color: '#333', fontSize: '1.3rem', fontWeight: 600, flex: 1, marginRight: 10 }}>
+                    {script.title}
+                  </h3>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       onClick={() => handleEditScript(script.id)}
-                      className="action-button edit"
+                      style={{ background: 'none', border: 'none', padding: 8, borderRadius: 6, cursor: 'pointer', color: '#667eea' }}
                       title="Edit script"
                     >
                       <FaEdit />
                     </button>
                     <button
                       onClick={() => handleDeleteScript(script.id, script.title)}
-                      className="action-button delete"
+                      style={{ background: 'none', border: 'none', padding: 8, borderRadius: 6, cursor: 'pointer', color: '#e74c3c' }}
                       title="Delete script"
                     >
                       <FaTrash />
@@ -160,17 +166,17 @@ const ScriptLibraryView: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="script-content">
-                  <p className="script-preview">
+                <div style={{ marginBottom: 15 }}>
+                  <p style={{ color: '#666', lineHeight: 1.5, margin: 0, fontSize: '0.95rem' }}>
                     {getPreview(script.content)}
                   </p>
                 </div>
                 
-                <div className="script-footer">
-                  <span className="script-date">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: '#999' }}>
+                  <span style={{ fontStyle: 'italic' }}>
                     Updated {formatDate(script.updatedAt)}
                   </span>
-                  <span className="script-length">
+                  <span style={{ background: 'rgba(102, 126, 234, 0.1)', color: '#667eea', padding: '4px 8px', borderRadius: 12, fontWeight: 500 }}>
                     {script.content.length} characters
                   </span>
                 </div>
@@ -182,9 +188,8 @@ const ScriptLibraryView: React.FC = () => {
 
       {/* Search Loading */}
       {isSearching && (
-        <div className="search-loading">
-          <div className="loading-spinner"></div>
-          <p>Searching...</p>
+        <div style={{ textAlign: 'center', padding: 20 }}>
+          <div>Searching...</div>
         </div>
       )}
     </div>

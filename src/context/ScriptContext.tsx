@@ -87,12 +87,19 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           ? { ...script, title, content, updatedAt: new Date() }
           : script
       ));
+      
+      // Update current script if it's the one being edited
+      if (currentScript?.id === scriptId) {
+        setCurrentScript(prev => prev ? { ...prev, title, content, updatedAt: new Date() } : null);
+      }
+      
+      console.log('✅ Script updated in state');
     } catch (err) {
       console.error('❌ Error updating script:', err);
       setError(err instanceof Error ? err.message : 'Failed to update script');
       throw err;
     }
-  }, [userID]);
+  }, [userID, currentScript]);
 
   const deleteScript = useCallback(async (scriptId: string): Promise<void> => {
     if (!userID) {
@@ -103,52 +110,62 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(null);
       await ScriptService.deleteScript(userID, scriptId);
       
-      // Update local state
+      // Remove from local state
       setScripts(prev => prev.filter(script => script.id !== scriptId));
+      
+      // Clear current script if it's the one being deleted
+      if (currentScript?.id === scriptId) {
+        setCurrentScript(null);
+      }
+      
+      console.log('✅ Script deleted from state');
     } catch (err) {
       console.error('❌ Error deleting script:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete script');
       throw err;
     }
-  }, [userID]);
-
-  const setCurrentScript = useCallback((script: Script | null) => {
-    setCurrentScript(script);
-  }, []);
+  }, [userID, currentScript]);
 
   const searchScripts = useCallback(async (searchTerm: string): Promise<Script[]> => {
     if (!userID) {
-      throw new Error('User not authenticated');
+      return [];
     }
 
     try {
-      setError(null);
-      const filteredScripts = await ScriptService.searchScripts(userID, searchTerm);
-      setScripts(filteredScripts);
-      return filteredScripts;
+      return await ScriptService.searchScripts(userID, searchTerm);
     } catch (err) {
       console.error('❌ Error searching scripts:', err);
       setError(err instanceof Error ? err.message : 'Failed to search scripts');
-      throw err;
+      return [];
     }
   }, [userID]);
 
+  // Load scripts when user ID changes
+  useEffect(() => {
+    if (userID) {
+      loadScripts();
+    } else {
+      setScripts([]);
+      setCurrentScript(null);
+    }
+  }, [userID, loadScripts]);
+
+  const value: ScriptContextType = {
+    scripts,
+    currentScript,
+    loading,
+    error,
+    loadScripts,
+    createScript,
+    updateScript,
+    deleteScript,
+    setCurrentScript,
+    searchScripts
+  };
+
   return (
-    <ScriptContext.Provider
-      value={{
-        scripts,
-        currentScript,
-        loading,
-        error,
-        loadScripts,
-        createScript,
-        updateScript,
-        deleteScript,
-        setCurrentScript,
-        searchScripts
-      }}
-    >
+    <ScriptContext.Provider value={value}>
       {children}
     </ScriptContext.Provider>
   );
-}; 
+};
