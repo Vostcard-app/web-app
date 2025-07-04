@@ -325,7 +325,17 @@ const HomeView = () => {
             const lng = v.longitude || v.geo?.longitude;
             if (!lat || !lng) return null;
             return (
-              <Marker key={v.id} position={[lat, lng]} icon={getVostcardIcon(v.isOffer)}>
+              <Marker
+                key={v.id}
+                position={[lat, lng]}
+                icon={getVostcardIcon(v.isOffer)}
+                eventHandlers={{
+                  click: () => {
+                    console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
+                    navigate(`/vostcard/${v.id}`);
+                  }
+                }}
+              >
                 <Popup>
                   <h3>{v.title || 'Untitled'}</h3>
                   <p>{v.description || 'No description'}</p>
@@ -339,24 +349,6 @@ const HomeView = () => {
                     <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
                   )}
                   <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
-                  <button
-                    style={{
-                      marginTop: 8,
-                      backgroundColor: '#002B4D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 6,
-                      padding: '6px 12px',
-                      cursor: 'pointer',
-                      fontWeight: 600
-                    }}
-                    onClick={() => {
-                      console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
-                      navigate(`/vostcard/${v.id}`);
-                    }}
-                  >
-                    View Details
-                  </button>
                 </Popup>
               </Marker>
             );
