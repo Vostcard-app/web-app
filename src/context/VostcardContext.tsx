@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth, db, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 
@@ -102,6 +102,54 @@ const getCorrectUsername = (authContext: any, currentUsername?: string): string 
   console.log('⚠️ Using final fallback username:', currentUsername || 'Unknown');
   return currentUsername || 'Unknown';
 };
+
+// Helper for video upload
+async function uploadVideo(userId: string, vostcardId: string, file: Blob): Promise<string> {
+  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/video.webm`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  return new Promise((resolve, reject) => {
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log(`Video upload is ${progress}% done`);
+      },
+      (error) => {
+        console.error('Video upload failed:', error);
+        reject(error);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log('Video file available at', downloadURL);
+        resolve(downloadURL);
+      }
+    );
+  });
+}
+
+// Helper for photo upload
+async function uploadPhoto(userId: string, vostcardId: string, idx: number, file: Blob): Promise<string> {
+  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/photo${idx + 1}.jpg`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  return new Promise((resolve, reject) => {
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log(`Photo ${idx + 1} upload is ${progress}% done`);
+      },
+      (error) => {
+        console.error(`Photo ${idx + 1} upload failed:`, error);
+        reject(error);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log(`Photo ${idx + 1} file available at`, downloadURL);
+        resolve(downloadURL);
+      }
+    );
+  });
+}
 
 export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const authContext = useAuth();
@@ -630,26 +678,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // --- Upload video to Firebase Storage ---
       let videoURL = '';
       if (currentVostcard.video && currentVostcard.video instanceof Blob) {
-        const videoRef = ref(storage, `vostcards/${userID}/${vostcardId}/video.webm`);
-        const videoSnapshot = await uploadBytes(videoRef, currentVostcard.video);
-        videoURL = await getDownloadURL(videoSnapshot.ref);
-        console.log('✅ Video uploaded, URL:', videoURL);
+        videoURL = await uploadVideo(userID, vostcardId, currentVostcard.video);
       }
 
       // --- Upload photos to Firebase Storage ---
       let photoURLs: string[] = [];
       if (currentVostcard.photos && currentVostcard.photos.length > 0) {
-        const uploadPromises = currentVostcard.photos.map(async (photo, idx) => {
-          if (photo instanceof Blob) {
-            const photoRef = ref(storage, `vostcards/${userID}/${vostcardId}/photo${idx + 1}.jpg`);
-            const photoSnapshot = await uploadBytes(photoRef, photo);
-            const url = await getDownloadURL(photoSnapshot.ref);
-            console.log(`✅ Photo ${idx + 1} uploaded, URL:`, url);
-            return url;
-          }
-          return '';
-        });
-        photoURLs = await Promise.all(uploadPromises);
+        photoURLs = await Promise.all(
+          currentVostcard.photos.map((photo, idx) =>
+            photo instanceof Blob ? uploadPhoto(userID, vostcardId, idx, photo) : Promise.resolve('')
+          )
+        );
       }
 
       // DEBUG: Log username before saving to Firestore
