@@ -350,7 +350,10 @@ const HomeView = () => {
                       cursor: 'pointer',
                       fontWeight: 600
                     }}
-                    onClick={() => navigate(`/vostcard/${v.id}`)}
+                    onClick={() => {
+                      console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
+                      navigate(`/vostcard/${v.id}`);
+                    }}
                   >
                     View Details
                   </button>
