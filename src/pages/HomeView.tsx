@@ -339,6 +339,21 @@ const HomeView = () => {
                     <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
                   )}
                   <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
+                  <button
+                    style={{
+                      marginTop: 8,
+                      backgroundColor: '#002B4D',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 6,
+                      padding: '6px 12px',
+                      cursor: 'pointer',
+                      fontWeight: 600
+                    }}
+                    onClick={() => navigate(`/vostcard/${v.id}`)}
+                  >
+                    View Details
+                  </button>
                 </Popup>
               </Marker>
             );
