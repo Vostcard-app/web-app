@@ -1,0 +1,154 @@
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from './AuthContext';
+import { ScriptService, Script } from '../services/scriptService';
+
+interface ScriptContextType {
+  scripts: Script[];
+  currentScript: Script | null;
+  loading: boolean;
+  error: string | null;
+  loadScripts: () => Promise<void>;
+  createScript: (title: string, content: string) => Promise<Script>;
+  updateScript: (scriptId: string, title: string, content: string) => Promise<void>;
+  deleteScript: (scriptId: string) => Promise<void>;
+  setCurrentScript: (script: Script | null) => void;
+  searchScripts: (searchTerm: string) => Promise<Script[]>;
+}
+
+const ScriptContext = createContext<ScriptContextType | undefined>(undefined);
+
+export const useScripts = () => {
+  const context = useContext(ScriptContext);
+  if (context === undefined) {
+    throw new Error('useScripts must be used within a ScriptProvider');
+  }
+  return context;
+};
+
+export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [currentScript, setCurrentScript] = useState<Script | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { userID } = useAuth();
+
+  const loadScripts = useCallback(async () => {
+    if (!userID) {
+      console.log('No user ID, skipping script load');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('📜 Loading scripts for user:', userID);
+      
+      const userScripts = await ScriptService.getUserScripts(userID);
+      setScripts(userScripts);
+      console.log(`✅ Loaded ${userScripts.length} scripts`);
+    } catch (err) {
+      console.error('❌ Error loading scripts:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load scripts');
+    } finally {
+      setLoading(false);
+    }
+  }, [userID]);
+
+  const createScript = useCallback(async (title: string, content: string): Promise<Script> => {
+    if (!userID) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      setError(null);
+      const newScript = await ScriptService.createScript(userID, title, content);
+      setScripts(prev => [newScript, ...prev]);
+      console.log('✅ Script created and added to state');
+      return newScript;
+    } catch (err) {
+      console.error('❌ Error creating script:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create script');
+      throw err;
+    }
+  }, [userID]);
+
+  const updateScript = useCallback(async (scriptId: string, title: string, content: string): Promise<void> => {
+    if (!userID) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      setError(null);
+      await ScriptService.updateScript(userID, scriptId, title, content);
+      
+      // Update local state
+      setScripts(prev => prev.map(script => 
+        script.id === scriptId 
+          ? { ...script, title, content, updatedAt: new Date() }
+          : script
+      ));
+    } catch (err) {
+      console.error('❌ Error updating script:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update script');
+      throw err;
+    }
+  }, [userID]);
+
+  const deleteScript = useCallback(async (scriptId: string): Promise<void> => {
+    if (!userID) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      setError(null);
+      await ScriptService.deleteScript(userID, scriptId);
+      
+      // Update local state
+      setScripts(prev => prev.filter(script => script.id !== scriptId));
+    } catch (err) {
+      console.error('❌ Error deleting script:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete script');
+      throw err;
+    }
+  }, [userID]);
+
+  const setCurrentScript = useCallback((script: Script | null) => {
+    setCurrentScript(script);
+  }, []);
+
+  const searchScripts = useCallback(async (searchTerm: string): Promise<Script[]> => {
+    if (!userID) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      setError(null);
+      const filteredScripts = await ScriptService.searchScripts(userID, searchTerm);
+      setScripts(filteredScripts);
+      return filteredScripts;
+    } catch (err) {
+      console.error('❌ Error searching scripts:', err);
+      setError(err instanceof Error ? err.message : 'Failed to search scripts');
+      throw err;
+    }
+  }, [userID]);
+
+  return (
+    <ScriptContext.Provider
+      value={{
+        scripts,
+        currentScript,
+        loading,
+        error,
+        loadScripts,
+        createScript,
+        updateScript,
+        deleteScript,
+        setCurrentScript,
+        searchScripts
+      }}
+    >
+      {children}
+    </ScriptContext.Provider>
+  );
+}; 
