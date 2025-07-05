@@ -10,8 +10,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:5001/vostcard-a3b71/us-central1/generateScript',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/generate-script/, '')
       }
     }
   },

@@ -1,21 +1,24 @@
+const isProd = window.location.hostname === "vostcard.com";
+const apiUrl = isProd
+  ? "https://generatescript-kc5sk6wcvq-uc.a.run.app"
+  : "/api/generate-script"; // local proxy for dev
+
 export async function generateScript(topic, style) {
   try {
     console.log('🔄 Calling AI API with:', { topic, style });
     
-    const response = await fetch('/api/generate-script', {
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json' 
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ topic, style }),
     });
 
     console.log(' Response status:', response.status);
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('❌ Server error:', errorData);
-      throw new Error(`Server error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+      const errorText = await response.text();
+      console.error('❌ Server error:', errorText);
+      throw new Error(`Server error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
