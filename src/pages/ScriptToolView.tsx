@@ -209,6 +209,11 @@ export default function ScriptToolView() {
         {/* Roll Cameras Button */}
         <button
           disabled={!script.trim()}
+          onClick={() => {
+            if (script.trim()) {
+              window.location.href = `/scrolling-camera?script=${encodeURIComponent(script)}`;
+            }
+          }}
           style={{
             width: "100%",
             background: script.trim() ? "#007aff" : "#888",
