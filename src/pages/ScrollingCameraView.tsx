@@ -4,17 +4,22 @@ import { MdFlipCameraIos } from 'react-icons/md';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
+import { useScriptContext } from '../context/ScriptContext';
 
-const ScrollingCameraView: React.FC = () => {
+interface ScrollingCameraViewProps {}
+
+const ScrollingCameraView: React.FC<ScrollingCameraViewProps> = () => {
   const navigate = useNavigate();
   const { setCurrentVostcard, currentVostcard, setVideo } = useVostcard();
   const { user } = useAuth();
+  const { currentScript } = useScriptContext();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [recording, setRecording] = useState(false);
   const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('environment');
   const [countdown, setCountdown] = useState(30);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const startCamera = async () => {
     if (stream) {
@@ -48,44 +53,27 @@ const ScrollingCameraView: React.FC = () => {
   }, [cameraFacingMode]);
 
   const handleRecord = () => {
-    console.log('Stream state on record:', stream);
-    if (!stream) {
-      console.warn('⚠️ No media stream found. Restarting camera...');
-      startCamera().then(() => {
-        if (videoRef.current?.srcObject) {
-          console.log('✅ Camera restarted. Retrying recording...');
-          handleRecord();
-        } else {
-          console.error('❌ Failed to restart camera stream.');
-        }
-      });
-      return;
-    }
     if (!user) {
       alert('❌ Please log in again.');
-      console.error('❌ User not logged in.');
       navigate('/');
       return;
     }
-    // Capture user location when recording starts
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const geo = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         };
-        console.log('📍 Location captured at ScrollingCameraView:', geo);
         if (currentVostcard) {
           setCurrentVostcard({
             ...currentVostcard,
             geo,
-            createdAt: new Date().toISOString(), // 📅 Add timestamp
+            createdAt: new Date().toISOString(),
           });
-          console.log('📅 Vostcard creation date set:', new Date().toISOString());
         }
       },
       (error) => {
-        console.warn('❌ Failed to capture location at ScrollingCameraView:', error);
+        console.warn('Failed to capture location:', error);
       },
       {
         enableHighAccuracy: true,
@@ -93,19 +81,7 @@ const ScrollingCameraView: React.FC = () => {
         maximumAge: 60000,
       }
     );
-    const username = user.displayName || 'Anonymous';
-    if (!stream) {
-      console.warn('⚠️ No media stream found. Restarting camera...');
-      startCamera().then(() => {
-        if (videoRef.current?.srcObject) {
-          console.log('✅ Camera restarted. Retrying recording...');
-          handleRecord();
-        } else {
-          console.error('❌ Failed to restart camera stream.');
-        }
-      });
-      return;
-    }
+
     if (recording) {
       mediaRecorderRef.current?.stop();
       setRecording(false);
@@ -121,46 +97,15 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        // Use MP4 format for better iOS compatibility
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const videoType = isIOS ? 'video/mp4' : 'video/webm';
-        
-        const blob = new Blob(recordedChunks, { type: videoType });
-        console.log('🎥 Video Blob created:', {
-          size: blob.size,
-          type: blob.type,
-          isIOS: isIOS,
-          userAgent: navigator.userAgent
-        });
-        // Wait for geolocation before saving video
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const geo = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-            };
-            console.log('📍 Location captured at video save:', geo);
-            setVideo(blob, geo);
-            console.log('🎬 Video and geo set in VostcardContext, navigating to Step 1');
-            navigate('/create-step1');
-          },
-          (error) => {
-            console.warn('❌ Failed to capture location at video save:', error);
-            setVideo(blob);
-            console.log('🎬 Video set in VostcardContext (no geo), navigating to Step 1');
-            navigate('/create-step1');
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000,
-          }
-        );
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        setVideo(blob);
+        navigate('/create-step1');
       };
 
       mediaRecorder.start();
       setRecording(true);
 
+      // Countdown logic
       let time = 30;
       setCountdown(time);
       const interval = setInterval(() => {
@@ -172,44 +117,23 @@ const ScrollingCameraView: React.FC = () => {
           clearInterval(interval);
         }
       }, 1000);
-    }
-  };
 
-  // Function to lock screen orientation to portrait
-  const lockOrientationToPortrait = async () => {
-    if ('screen' in window && 'orientation' in window.screen) {
-      try {
-        // @ts-ignore - Screen Orientation API
-        await window.screen.orientation.lock('portrait');
-        console.log('🔒 Screen orientation locked to portrait for recording');
-      } catch (error) {
-        console.log('⚠️ Could not lock screen orientation:', error);
+      // Start script scrolling animation
+      if (scrollRef.current && currentScript) {
+        scrollRef.current.animate(
+          [
+            { transform: 'translateY(100%)' },
+            { transform: 'translateY(-100%)' },
+          ],
+          {
+            duration: 30000, // Match countdown duration
+            iterations: 1,
+            easing: 'linear',
+          }
+        );
       }
     }
   };
-
-  // Function to unlock screen orientation
-  const unlockOrientation = async () => {
-    if ('screen' in window && 'orientation' in window.screen) {
-      try {
-        // @ts-ignore - Screen Orientation API
-        await window.screen.orientation.unlock();
-        console.log('🔓 Screen orientation unlocked');
-      } catch (error) {
-        console.log('⚠️ Could not unlock screen orientation:', error);
-      }
-    }
-  };
-
-  // Lock orientation when component mounts
-  useEffect(() => {
-    lockOrientationToPortrait();
-    
-    // Unlock orientation when component unmounts
-    return () => {
-      unlockOrientation();
-    };
-  }, []);
 
   return (
     <div
@@ -233,17 +157,47 @@ const ScrollingCameraView: React.FC = () => {
         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
       />
 
+      {/* 📜 Scrolling Script */}
+      {currentScript && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 50,
+            width: '100%',
+            height: '200px',
+            overflow: 'hidden',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            ref={scrollRef}
+            style={{
+              color: 'white',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              textShadow: '2px 2px 5px black',
+              textAlign: 'center',
+              whiteSpace: 'pre-wrap',
+            }}
+          >
+            {currentScript}
+          </div>
+        </div>
+      )}
+
       {/* ⏱️ Countdown */}
       {recording && (
         <div
           style={{
             position: 'absolute',
-            top: 100,
+            top: 80,
             backgroundColor: 'rgba(0,0,0,0.6)',
             color: 'white',
-            padding: '20px 40px',
+            padding: '10px 20px',
             borderRadius: '12px',
-            fontSize: 56,
+            fontSize: 48,
             fontWeight: 'bold',
           }}
         >
@@ -262,7 +216,6 @@ const ScrollingCameraView: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        {/* ❌ Dismiss */}
         <AiOutlineClose
           size={40}
           color="white"
@@ -306,7 +259,6 @@ const ScrollingCameraView: React.FC = () => {
           )}
         </div>
 
-        {/* 🔄 Flip Camera */}
         <MdFlipCameraIos
           size={40}
           color="white"
