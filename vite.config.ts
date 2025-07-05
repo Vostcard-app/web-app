@@ -15,7 +15,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          firebase: ['firebase'],
           router: ['react-router-dom'],
           icons: ['react-icons']
         }
@@ -27,15 +26,13 @@ export default defineConfig({
       'react',
       'react-dom',
       'react-router-dom',
-      'firebase',
       'react-icons',
       'leaflet',
       'react-leaflet',
       'jszip',
       'file-saver',
       'uuid'
-    ],
-    exclude: []
+    ]
   },
   resolve: {
     alias: {

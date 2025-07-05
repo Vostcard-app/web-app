@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { VostcardProvider } from "./context/VostcardContext";
-import { ScriptProvider } from "./context/ScriptContext";
 
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -30,57 +29,55 @@ import ScriptEditorView from './pages/ScriptEditorView';
 function App() {
   return (
     <VostcardProvider>
-      <ScriptProvider>
-        <Router>
-          <Routes>
-            {/* 🔑 Authentication */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegistrationPage />} />
+      <Router>
+        <Routes>
+          {/* 🔑 Authentication */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegistrationPage />} />
 
-            {/* 🏠 Main */}
-            <Route path="/home" element={<HomeView />} />
-            <Route path="/list" element={<ListView />} />
-            <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
-            <Route path="/my-private-vostcards" element={<MyPrivateVostcardsListView />} />
-            <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
-            <Route path="/edit-my-vostcards" element={<EditMyVostcardListView />} />
+          {/* 🏠 Main */}
+          <Route path="/home" element={<HomeView />} />
+          <Route path="/list" element={<ListView />} />
+          <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
+          <Route path="/my-private-vostcards" element={<MyPrivateVostcardsListView />} />
+          <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
+          <Route path="/edit-my-vostcards" element={<EditMyVostcardListView />} />
 
-            {/* 📜 Script Management */}
-            <Route path="/scripts" element={<ScriptLibraryView />} />
-            <Route path="/script-editor" element={<ScriptEditorView />} />
-            <Route path="/script-editor/:scriptId" element={<ScriptEditorView />} />
+          {/* 📜 Script Management */}
+          <Route path="/scripts" element={<ScriptLibraryView />} />
+          <Route path="/script-editor" element={<ScriptEditorView />} />
+          <Route path="/script-editor/:scriptId" element={<ScriptEditorView />} />
 
-            {/* 🎥 Vostcard Creation */}
-            <Route path="/create-step1" element={<CreateVostcardStep1 />} />
-            <Route path="/create-step2" element={<CreateVostcardStep2 />} />
-            <Route path="/create-step3" element={<CreateVostcardStep3 />} />
+          {/* 🎥 Vostcard Creation */}
+          <Route path="/create-step1" element={<CreateVostcardStep1 />} />
+          <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+          <Route path="/create-step3" element={<CreateVostcardStep3 />} />
 
-            {/* 📷 Camera */}
-            <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
-            <Route path="/camera" element={<CameraView />} />
+          {/* 📷 Camera */}
+          <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
+          <Route path="/camera" element={<CameraView />} />
 
-            {/* 📦 Saved */}
-            <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
+          {/* 📦 Saved */}
+          <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
 
-            {/* 📄 Vostcard Detail */}
-            <Route path="/vostcard/:id" element={<VostcardDetailView />} />
+          {/* 📄 Vostcard Detail */}
+          <Route path="/vostcard/:id" element={<VostcardDetailView />} />
 
-            {/* ⚙️ Settings */}
-            <Route path="/settings" element={<SettingsView />} />
-            <Route path="/account-settings" element={<AccountSettingsView />} />
+          {/* ⚙️ Settings */}
+          <Route path="/settings" element={<SettingsView />} />
+          <Route path="/account-settings" element={<AccountSettingsView />} />
 
-            {/* 📣 Advertiser Portal */}
-            <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
+          {/* 📣 Advertiser Portal */}
+          <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
 
-            {/* 📄 Create Offer */}
-            <Route path="/create-offer" element={<CreateOfferView />} />
+          {/* 📄 Create Offer */}
+          <Route path="/create-offer" element={<CreateOfferView />} />
 
-            {/* 🏪 Store Profile */}
-            <Route path="/store-profile-page" element={<EditStoreProfileView />} />
-          </Routes>
-        </Router>
-      </ScriptProvider>
+          {/* 🏪 Store Profile */}
+          <Route path="/store-profile-page" element={<EditStoreProfileView />} />
+        </Routes>
+      </Router>
     </VostcardProvider>
   );
 }

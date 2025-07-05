@@ -1,23 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useScripts } from '../context/ScriptContext';
 import { FaPlus, FaHome } from 'react-icons/fa';
 
 const ScriptLibraryView: React.FC = () => {
   const navigate = useNavigate();
-  const { scripts, loading, error } = useScripts();
 
   const handleCreateNew = () => {
     navigate('/script-editor');
   };
-
-  if (loading) {
-    return (
-      <div style={{ padding: 40, textAlign: 'center' }}>
-        <div>Loading your scripts...</div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
@@ -39,13 +29,6 @@ const ScriptLibraryView: React.FC = () => {
           <FaPlus /> New Script
         </button>
       </div>
-
-      {/* Error Display */}
-      {error && (
-        <div style={{ background: '#fee', color: '#c33', padding: 15, borderRadius: 10, marginBottom: 20, borderLeft: '4px solid #c33' }}>
-          <p>{error}</p>
-        </div>
-      )}
 
       {/* Scripts List */}
       <div>
