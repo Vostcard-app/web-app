@@ -1,7 +1,7 @@
 const isProd = window.location.hostname === "vostcard.com";
 const apiUrl = isProd
-  ? "https://generatescript-kc5sk6wcvq-uc.a.run.app"
-  : "/api/generate-script"; // local proxy for dev
+  ? "https://vostcard-api.vercel.app/api/generate-script"  // Your Vercel URL
+  : "http://localhost:3002/generate-script"; // local for dev
 
 export async function generateScript(topic, style) {
   try {
