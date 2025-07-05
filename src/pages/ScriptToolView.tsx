@@ -124,7 +124,9 @@ export default function ScriptToolView() {
 
         {/* Script Style Radio Buttons */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ marginBottom: 8, fontWeight: 600 }}>Choose Script Style:</div>
+          <div style={{ marginBottom: 8, fontWeight: 600 }}>
+            Select a script style or type your own below:
+          </div>
           {scriptStyles.map(opt => (
             <div key={opt} style={{ marginBottom: 8 }}>
               <label style={{ fontSize: 18 }}>
