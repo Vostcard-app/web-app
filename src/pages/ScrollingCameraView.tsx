@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MdFlipCameraIos } from 'react-icons/md';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
@@ -20,6 +20,12 @@ const ScrollingCameraView: React.FC<ScrollingCameraViewProps> = () => {
   const [cameraFacingMode, setCameraFacingMode] = useState<'user' | 'environment'>('environment');
   const [countdown, setCountdown] = useState(30);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const scriptFromUrl = params.get('script');
+
+  // Use local state for overlay script
+  const [overlayScript, setOverlayScript] = useState<string | null>(null);
 
   const startCamera = async () => {
     if (stream) {
@@ -51,6 +57,14 @@ const ScrollingCameraView: React.FC<ScrollingCameraViewProps> = () => {
       }
     };
   }, [cameraFacingMode]);
+
+  useEffect(() => {
+    if (scriptFromUrl) {
+      setOverlayScript(scriptFromUrl);
+    } else if (currentScript) {
+      setOverlayScript(currentScript);
+    }
+  }, [scriptFromUrl, currentScript]);
 
   const handleRecord = () => {
     if (!user) {
@@ -158,7 +172,7 @@ const ScrollingCameraView: React.FC<ScrollingCameraViewProps> = () => {
       />
 
       {/* 📜 Scrolling Script */}
-      {currentScript && (
+      {overlayScript && (
         <div
           style={{
             position: 'absolute',
@@ -182,7 +196,7 @@ const ScrollingCameraView: React.FC<ScrollingCameraViewProps> = () => {
               whiteSpace: 'pre-wrap',
             }}
           >
-            {currentScript}
+            {overlayScript}
           </div>
         </div>
       )}
