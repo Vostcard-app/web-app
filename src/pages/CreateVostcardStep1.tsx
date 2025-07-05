@@ -1,189 +1,201 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
-import AIScriptTool from '../components/AIScriptTool';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
-  const { currentVostcard, setVideo, saveLocalVostcard, clearVostcard } = useVostcard();
-  const [video, setVideoState] = useState<Blob | null>(null);
-  const [videoURL, setVideoURL] = useState<string>('');
-  const [showAIScriptTool, setShowAIScriptTool] = useState(false);
-  const [generatedScript, setGeneratedScript] = useState('');
+  const { currentVostcard } = useVostcard();
+  const video = currentVostcard?.video ?? null;
+
+  console.log('➡️ currentVostcard:', currentVostcard);
+  console.log('🎥 video object:', video);
+
+  const videoURL = useMemo(() => {
+    if (video instanceof Blob) {
+      const url = URL.createObjectURL(video);
+      console.log('Generated Blob URL:', url);
+      return url;
+    } else if (typeof video === 'string') {
+      console.log('Using stored video URL:', video);
+      return video;
+    }
+    return null;
+  }, [video]);
 
   useEffect(() => {
-    if (currentVostcard?.video) {
-      setVideoState(currentVostcard.video);
-      const url = URL.createObjectURL(currentVostcard.video);
-      setVideoURL(url);
-      console.log('Generated Blob URL:', url);
-    }
-  }, [currentVostcard?.video]);
+    return () => {
+      if (videoURL && video instanceof Blob) {
+        URL.revokeObjectURL(videoURL);
+      }
+    };
+  }, [videoURL, video]);
 
   const handleRecord = () => {
+    if (!currentVostcard?.username) {
+      console.warn('⚠️ Username missing. Using fallback Anonymous username.');
+      currentVostcard.username = 'Anonymous';
+    }
     navigate('/scrolling-camera');
   };
 
-  const handleAIScriptSave = (scriptText: string) => {
-    setGeneratedScript(scriptText);
-    console.log('AI Script saved:', scriptText);
-    // You can also save this to the Vostcard context if needed
-  };
+  const handleSaveAndContinue = () => {
+    console.log('✅ handleSaveAndContinue called');
+    console.log('🎥 Video object at save:', video);
 
-  const handleSaveAndContinue = async () => {
-    try {
-      console.log('💾 Step 1: Starting save process...');
-      console.log('💾 Current Vostcard state:', {
-        id: currentVostcard?.id,
-        hasVideo: !!currentVostcard?.video,
-        videoSize: currentVostcard?.video?.size,
-        hasGeo: !!currentVostcard?.geo,
-        username: currentVostcard?.username,
-        userID: currentVostcard?.userID,
-        generatedScript: generatedScript
-      });
-      
-      if (!currentVostcard) {
-        console.error('❌ No currentVostcard to save');
-        alert('No Vostcard to save. Please record a video first.');
-        return;
-      }
-      
-      if (!currentVostcard.video) {
-        console.error('❌ No video in currentVostcard');
-        alert('No video to save. Please record a video first.');
-        return;
-      }
-      
-      await saveLocalVostcard();
-      console.log('✅ Vostcard saved successfully, navigating to step 2');
-      navigate('/create-step2');
-    } catch (error) {
-      console.error('❌ Failed to save Vostcard:', error);
-      alert(`Failed to save Vostcard: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    if (!video) {
+      alert('❌ No video found. Please record a video first.');
+      return;
     }
+
+    navigate('/create-step2');
   };
 
   return (
-    <div style={{ background: "white", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      {/* Header */}
-      <div style={{
-        backgroundColor: "#002B4D",
-        height: 80,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "0 16px"
-      }}>
-        <div style={{ color: "white", fontSize: 32, fontWeight: "bold" }}>Vōstcard</div>
-        <button
-          style={{
-            background: "none",
-            border: "none",
-            borderRadius: "50%",
-            padding: 8,
-            marginRight: 4,
-            cursor: "pointer"
-          }}
-          onClick={() => navigate("/")}
-        >
-          <FaHome size={36} color="white" />
-        </button>
+    <div
+      style={{
+        backgroundColor: 'white',
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* 🔵 Header */}
+      <div
+        style={{
+          backgroundColor: '#002B4D',
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+        }}
+      >
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+          Vōstcard
+        </div>
+        <FaHome
+          size={28}
+          color="white"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate('/')}
+        />
       </div>
 
-      {/* Main Content */}
-      <div style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center"
-      }}>
-        {/* Record Button */}
+      {/* 🎥 Thumbnail */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        {videoURL ? (
+          <video
+            src={videoURL}
+            controls
+            style={{
+              width: '192px',
+              height: '272px',
+              borderRadius: 16,
+              backgroundColor: '#F2F2F2',
+              objectFit: 'cover',
+            }}
+            onError={() => console.error('❌ Error loading video at', videoURL)}
+          />
+        ) : (
+          <div
+            onClick={handleRecord}
+            style={{
+              width: 192,
+              height: 272,
+              backgroundColor: '#F2F2F2',
+              borderRadius: 16,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              textAlign: 'center',
+              color: '#002B4D',
+              fontSize: 18,
+              cursor: 'pointer',
+              padding: 10,
+            }}
+          >
+            Record a 30 Second Video
+          </div>
+        )}
+      </div>
+
+      {/* 🔘 Buttons */}
+      <div
+        style={{
+          padding: '0 16px',
+          marginBottom: 60,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          alignItems: 'center',
+        }}
+      >
+        {/* ⭕ Record Button */}
         <div
           onClick={handleRecord}
           style={{
-            backgroundColor: "white",
-            border: "none",
-            outline: "none",
-            cursor: "pointer",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center"
+            backgroundColor: 'red',
+            width: 70,
+            height: 70,
+            borderRadius: '50%',
+            border: '6px solid white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
           }}
         >
-          <div style={{
-            width: 120,
-            height: 120,
-            borderRadius: "50%",
-            border: "10px solid #ff3b30",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 8
-          }}>
-            <div style={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              backgroundColor: "#ff3b30"
-            }} />
-          </div>
-          <div style={{
-            fontSize: 22,
-            color: "#222",
-            marginTop: 8,
-            fontWeight: 500
-          }}>
-            Record a 30 Second Video
-          </div>
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '50%',
+              width: 24,
+              height: 24,
+            }}
+          />
         </div>
-      </div>
 
-      {/* Bottom Buttons */}
-      <div style={{
-        width: "100%",
-        padding: "0 16px 32px 16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 16
-      }}>
+        {/* 📜 Use Script Tool */}
         <button
-          disabled={!video}
-          onClick={handleSaveAndContinue}
+          onClick={() => navigate('/scrolling-camera')}
           style={{
-            width: "100%",
-            backgroundColor: "#888",
-            color: "white",
-            border: "none",
-            borderRadius: 10,
-            padding: "18px 0",
-            fontSize: 22,
-            fontWeight: 600,
-            marginBottom: 0,
-            opacity: video ? 1 : 0.6,
-            cursor: video ? "pointer" : "not-allowed"
-          }}
-        >
-          Save
-        </button>
-        <button
-          onClick={() => navigate("/script-tool")}
-          style={{
-            width: "100%",
-            backgroundColor: "#ff9900",
-            color: "white",
-            border: "none",
-            borderRadius: 10,
-            padding: "18px 0",
-            fontSize: 22,
-            fontWeight: 600,
-            marginBottom: 0,
-            cursor: "pointer"
+            backgroundColor: '#002B4D',
+            color: 'white',
+            border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 8,
+            fontSize: 18,
+            cursor: 'pointer',
           }}
         >
           Use Script Tool
+        </button>
+
+        {/* ✅ Save & Continue */}
+        <button
+          onClick={handleSaveAndContinue}
+          disabled={!video}
+          style={{
+            backgroundColor: video ? '#002B4D' : '#888',
+            color: 'white',
+            border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 8,
+            fontSize: 18,
+            cursor: video ? 'pointer' : 'not-allowed',
+          }}
+        >
+          Save & Continue
         </button>
       </div>
     </div>
