@@ -398,124 +398,115 @@ const headerRight = {
   alignItems: 'center',
 };
 
-const listViewButtonContainer = {
-  position: 'absolute' as 'absolute',
-  top: '80px',
-  left: '20px',
-  zIndex: 1000,
-};
-
-const listViewButton = {
-  backgroundColor: '#002B4D',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  padding: '8px 12px',
-  fontSize: '14px',
-  cursor: 'pointer',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-};
-
-const zoomControlStyle = {
-  position: 'absolute' as 'absolute',
-  bottom: '20%',
-  right: '20px',
-  transform: 'translateY(-100px)',
-  display: 'flex',
-  flexDirection: 'column' as 'column',
-  gap: '10px',
-  zIndex: 1000,
-};
-
-const recenterControlStyle = {
-  position: 'absolute' as 'absolute',
-  bottom: '20%',
-  right: '20px',
-  transform: 'translateY(40px)',
-  zIndex: 1000,
-};
-
-const zoomButton = {
-  backgroundColor: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  width: '45px',
-  height: '45px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-  cursor: 'pointer',
-};
-
-const createButtonContainer = {
-  position: 'absolute' as 'absolute',
-  bottom: '20px',
-  width: '100%',
-  display: 'flex',
-  justifyContent: 'center',
-  zIndex: 1000,
-};
-
-const createButton = {
-  padding: '15px 25px',
-  backgroundColor: '#002B4D',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  fontSize: '18px',
-  cursor: 'pointer',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-};
-
 const menuStyle = {
   position: 'absolute' as 'absolute',
-  top: '70px',
-  right: '20px',
-  backgroundColor: 'white',
-  border: '1px solid #ccc',
-  borderRadius: '8px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-  padding: '8px 0',
-  minWidth: '220px',
+  top: 70,
+  right: 0,
+  background: 'white',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+  borderRadius: '0 0 10px 10px',
   zIndex: 1001,
-  color: '#333',
-  fontSize: '14px',
+  minWidth: 220,
+  padding: '10px 0',
 };
 
 const menuItemStyle = {
+  padding: '12px 24px',
   cursor: 'pointer',
-  margin: '0',
-  fontSize: '14px',
-  padding: '12px 16px',
-  borderRadius: '0',
-  transition: 'background-color 0.2s',
+  fontSize: 16,
+  color: '#002B4D',
+  borderBottom: '1px solid #f0f0f0',
+  background: 'transparent',
+};
+
+const listViewButtonContainer = {
+  position: 'absolute' as 'absolute',
+  top: 80,
+  left: 20,
+  zIndex: 1002,
+};
+
+const listViewButton = {
+  background: '#007aff',
+  color: 'white',
   border: 'none',
-  backgroundColor: 'transparent',
-  width: '100%',
-  textAlign: 'left' as 'left',
-  display: 'block',
-  color: '#333',
+  borderRadius: 8,
+  padding: '10px 20px',
+  fontSize: 16,
+  fontWeight: 600,
+  cursor: 'pointer',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 };
 
 const loadingStyle = {
   position: 'absolute' as 'absolute',
-  top: '80px',
-  right: '20px',
-  backgroundColor: 'rgba(0,0,0,0.7)',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  background: 'rgba(255,255,255,0.9)',
+  padding: '30px 50px',
+  borderRadius: 12,
+  fontSize: 20,
+  color: '#002B4D',
+  zIndex: 2000,
+};
+
+const createButtonContainer = {
+  position: 'absolute' as 'absolute',
+  bottom: 40,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 1002,
+};
+
+const createButton = {
+  background: '#002B4D',
   color: 'white',
-  padding: '8px 12px',
-  borderRadius: '8px',
-  fontSize: '12px',
-  zIndex: 1000,
+  border: 'none',
+  borderRadius: 12,
+  padding: '18px 40px',
+  fontSize: 22,
+  fontWeight: 700,
+  cursor: 'pointer',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+};
+
+const zoomControlStyle = {
+  position: 'absolute' as 'absolute',
+  top: 100,
+  right: 20,
+  zIndex: 1003,
+  display: 'flex',
+  flexDirection: 'column' as 'column',
+  gap: 8,
+};
+
+const zoomButton = {
+  background: '#fff',
+  color: '#002B4D',
+  border: '1px solid #ddd',
+  borderRadius: 8,
+  padding: 10,
+  fontSize: 18,
+  cursor: 'pointer',
+  marginBottom: 4,
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+};
+
+const recenterControlStyle = {
+  position: 'absolute' as 'absolute',
+  top: 180,
+  right: 20,
+  zIndex: 1003,
 };
 
 const offerPopupStyle = {
-  backgroundColor: '#fff3cd',
-  border: '1px solid #ffeaa7',
-  borderRadius: '4px',
-  padding: '8px',
-  margin: '8px 0'
+  background: '#f8f9fa',
+  borderRadius: 8,
+  padding: '8px 12px',
+  margin: '8px 0',
+  color: '#333',
+  fontSize: 15,
 };
 
 export default HomeView;
