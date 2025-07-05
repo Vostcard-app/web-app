@@ -140,7 +140,7 @@ const CreateVostcardStep1: React.FC = () => {
       >
         {/* ⭕ Record Button */}
         <div
-          onClick={handleRecord}
+          onClick={() => navigate('/scrolling-camera')}
           style={{
             backgroundColor: 'red',
             width: 70,
