@@ -164,3 +164,5 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     </ScriptContext.Provider>
   );
 };
+
+export const useScriptContext = useScripts;
