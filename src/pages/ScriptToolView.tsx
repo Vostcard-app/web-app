@@ -62,46 +62,83 @@ export default function ScriptToolView() {
       />
 
       {/* Script Style Radio Buttons */}
-      <div style={{ marginBottom: 24 }}>
-        {scriptStyles.map((s, index) => (
-          <label key={index}>
-            <input
-              type="radio"
-              value={s}
-              checked={style === s}
-              onChange={() => setStyle(s)}
-            />
-            {s}
-          </label>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 8, fontWeight: 600 }}>Choose Script Style:</div>
+        {scriptStyles.map(opt => (
+          <div key={opt} style={{ marginBottom: 8 }}>
+            <label style={{ fontSize: 18 }}>
+              <input
+                type="radio"
+                checked={style === opt}
+                onChange={() => setStyle(opt)}
+                style={{ marginRight: 8 }}
+              />
+              {opt}
+            </label>
+          </div>
         ))}
       </div>
 
-      {/* Script Input */}
+      {/* Script Textarea */}
       <textarea
-        placeholder="Enter your script here"
         value={script}
         onChange={e => setScript(e.target.value)}
         style={{
           width: "100%",
-          padding: 12,
+          minHeight: 100,
           borderRadius: 8,
-          marginBottom: 24,
+          padding: 12,
           fontSize: 16,
-          border: "1px solid #ccc"
+          border: "1px solid #ccc",
+          marginBottom: 16
         }}
       />
 
-      {/* Save Button */}
-      <button style={{
-        width: "100%",
-        background: "#007aff",
-        color: "white",
-        padding: 12,
-        borderRadius: 8,
-        fontSize: 20,
-        border: "none"
-      }}>
-        Save
+      {/* AI Buttons (side by side) */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+        <button style={{
+          flex: 1,
+          background: "orange",
+          color: "white",
+          padding: 14,
+          borderRadius: 8,
+          fontSize: 16,
+          border: "none",
+          fontWeight: 600
+        }}>
+          Generate Script with AI
+        </button>
+        <button style={{
+          flex: 1,
+          background: "purple",
+          color: "white",
+          padding: 14,
+          borderRadius: 8,
+          fontSize: 16,
+          border: "none",
+          fontWeight: 600
+        }}>
+          Polish My Script
+        </button>
+      </div>
+
+      {/* Roll Cameras Button */}
+      <button
+        disabled={!script.trim()}
+        style={{
+          width: "100%",
+          background: script.trim() ? "#007aff" : "#888",
+          color: "white",
+          padding: 16,
+          borderRadius: 8,
+          fontSize: 20,
+          border: "none",
+          fontWeight: 600,
+          opacity: script.trim() ? 1 : 0.7,
+          cursor: script.trim() ? "pointer" : "not-allowed"
+        }}
+      >
+        Roll Cameras!
       </button>
     </div>
   );
