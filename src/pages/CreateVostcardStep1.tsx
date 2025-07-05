@@ -165,7 +165,7 @@ const CreateVostcardStep1: React.FC = () => {
 
         {/* 📜 Use Script Tool */}
         <button
-          onClick={() => navigate('/script-editor')}
+          onClick={() => navigate('/script-tool')}
           style={{
             backgroundColor: '#002B4D',
             color: 'white',
