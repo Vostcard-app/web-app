@@ -165,7 +165,7 @@ const CreateVostcardStep1: React.FC = () => {
 
         {/* 📜 Use Script Tool */}
         <button
-          onClick={() => navigate('/scrolling-camera')}
+          onClick={() => navigate('/script-editor')}
           style={{
             backgroundColor: '#002B4D',
             color: 'white',
