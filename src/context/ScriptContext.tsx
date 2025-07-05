@@ -81,14 +81,12 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(null);
       await ScriptService.updateScript(userID, scriptId, title, content);
       
-      // Update local state
       setScripts(prev => prev.map(script => 
         script.id === scriptId 
           ? { ...script, title, content, updatedAt: new Date() }
           : script
       ));
       
-      // Update current script if it's the one being edited
       if (currentScript?.id === scriptId) {
         setCurrentScript(prev => prev ? { ...prev, title, content, updatedAt: new Date() } : null);
       }
@@ -110,10 +108,8 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(null);
       await ScriptService.deleteScript(userID, scriptId);
       
-      // Remove from local state
       setScripts(prev => prev.filter(script => script.id !== scriptId));
       
-      // Clear current script if it's the one being deleted
       if (currentScript?.id === scriptId) {
         setCurrentScript(null);
       }
@@ -140,7 +136,6 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [userID]);
 
-  // Load scripts when user ID changes
   useEffect(() => {
     if (userID) {
       loadScripts();

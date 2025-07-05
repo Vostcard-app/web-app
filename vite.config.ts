@@ -34,6 +34,12 @@ export default defineConfig({
       'jszip',
       'file-saver',
       'uuid'
-    ]
+    ],
+    exclude: []
+  },
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
   }
 });

@@ -6,7 +6,6 @@ import {
   doc, 
   getDocs, 
   query, 
-  where, 
   orderBy,
   Timestamp 
 } from "firebase/firestore";
@@ -22,9 +21,6 @@ export interface Script {
 }
 
 export class ScriptService {
-  /**
-   * Get all scripts for current user
-   */
   static async getUserScripts(userId: string): Promise<Script[]> {
     try {
       console.log('📜 Fetching scripts for user:', userId);
@@ -47,9 +43,6 @@ export class ScriptService {
     }
   }
 
-  /**
-   * Create new script
-   */
   static async createScript(userId: string, title: string, content: string): Promise<Script> {
     try {
       console.log('📝 Creating new script:', { userId, title });
@@ -81,9 +74,6 @@ export class ScriptService {
     }
   }
 
-  /**
-   * Update existing script
-   */
   static async updateScript(userId: string, scriptId: string, title: string, content: string): Promise<void> {
     try {
       console.log('✏️ Updating script:', { userId, scriptId, title });
@@ -103,9 +93,6 @@ export class ScriptService {
     }
   }
 
-  /**
-   * Delete script
-   */
   static async deleteScript(userId: string, scriptId: string): Promise<void> {
     try {
       console.log('🗑️ Deleting script:', { userId, scriptId });
@@ -118,37 +105,6 @@ export class ScriptService {
     }
   }
 
-  /**
-   * Get single script by ID
-   */
-  static async getScript(userId: string, scriptId: string): Promise<Script | null> {
-    try {
-      console.log('📜 Fetching script:', { userId, scriptId });
-      const scriptRef = doc(db, "users", userId, "scripts", scriptId);
-      const docSnap = await getDocs(collection(db, "users", userId, "scripts"));
-      
-      const scriptDoc = docSnap.docs.find(doc => doc.id === scriptId);
-      if (!scriptDoc) {
-        console.log('❌ Script not found');
-        return null;
-      }
-      
-      const data = scriptDoc.data();
-      return {
-        id: scriptDoc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date()
-      } as Script;
-    } catch (error) {
-      console.error('❌ Error fetching script:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Search scripts by title or content
-   */
   static async searchScripts(userId: string, searchTerm: string): Promise<Script[]> {
     try {
       console.log('🔍 Searching scripts:', { userId, searchTerm });
@@ -166,4 +122,4 @@ export class ScriptService {
       throw error;
     }
   }
-} 
+}
