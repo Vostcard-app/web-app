@@ -24,6 +24,7 @@ export interface Vostcard {
     validUntil?: string;
     terms?: string;
   };
+  script?: string; // Add script field
   _videoBase64?: string | null; // For IndexedDB serialization
   _photosBase64?: string[]; // For IndexedDB serialization
 }

@@ -25,6 +25,7 @@ import EditStoreProfileView from './pages/EditStoreProfileView';
 import VostcardDetailView from './pages/VostcardDetailView';
 import ScriptLibraryView from './pages/ScriptLibraryView';
 import ScriptEditorView from './pages/ScriptEditorView';
+import ScriptToolView from './pages/ScriptToolView';
 
 function App() {
   return (
@@ -76,6 +77,9 @@ function App() {
 
           {/* 🏪 Store Profile */}
           <Route path="/store-profile-page" element={<EditStoreProfileView />} />
+
+          {/* 📄 Script Tool */}
+          <Route path="/script-tool" element={<ScriptToolView />} />
         </Routes>
       </Router>
     </VostcardProvider>
