@@ -1,7 +1,7 @@
 const isProd = window.location.hostname === "vostcard.com";
 const apiUrl = isProd
-  ? "https://vostcard-api.vercel.app/api/generate-script"  // Your Vercel URL
-  : "http://localhost:3002/generate-script"; // local for dev
+  ? "/.netlify/functions/generate-script" // Netlify Function for production
+  : "http://localhost:8888/.netlify/functions/generate-script"; // Netlify dev for local
 
 export async function generateScript(topic, style) {
   try {
