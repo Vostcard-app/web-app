@@ -12,6 +12,7 @@ const VostcardDetailView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -99,6 +100,12 @@ const VostcardDetailView: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {photoUrls.length > 0 ? (
             photoUrls.slice(0, 2).map((url: string, idx: number) => (
+              <img
+                key={idx}
+                src={url}
+                alt={`photo${idx+1}`}
+                style={{ width: 120, height: 110, borderRadius: 16, objectFit: 'cover', cursor: 'pointer' }}
+                onClick={() => setSelectedPhoto(url)}
               <img key={idx} src={url} alt={`photo${idx+1}`} style={{ width: 120, height: 110, borderRadius: 16, objectFit: 'cover', cursor: 'pointer' }} />
             ))
           ) : (
