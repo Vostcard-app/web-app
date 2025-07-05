@@ -106,7 +106,7 @@ const VostcardDetailView: React.FC = () => {
                 alt={`photo${idx+1}`}
                 style={{ width: 120, height: 110, borderRadius: 16, objectFit: 'cover', cursor: 'pointer' }}
                 onClick={() => setSelectedPhoto(url)}
-              <img key={idx} src={url} alt={`photo${idx+1}`} style={{ width: 120, height: 110, borderRadius: 16, objectFit: 'cover', cursor: 'pointer' }} />
+              />
             ))
           ) : (
             <>
