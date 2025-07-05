@@ -1,62 +1,37 @@
-const cors = require('cors');
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
-// Enable CORS middleware
-const corsMiddleware = cors({
-  origin: ['https://vostcard.com', 'http://localhost:5173'],
-  credentials: true
-});
+const fetch = require('node-fetch');
 
 exports.handler = async (event, context) => {
-  // Apply CORS
-  const corsHandler = (req, res) => {
-    return new Promise((resolve) => corsMiddleware(req, res, resolve));
+  // CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 
-  // Handle preflight requests
+  // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-      }
-    };
+    return { statusCode: 204, headers, body: '' };
   }
 
-  // Only allow POST requests
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
   try {
     const { topic, style } = JSON.parse(event.body);
-    
+
     if (!topic || !style) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Missing topic or style' })
-      };
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing topic or style' }) };
     }
 
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     if (!OPENAI_API_KEY) {
-      console.error('OpenAI API key not configured');
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'OpenAI API key not configured' })
-      };
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'OpenAI API key not configured' }) };
     }
 
     const prompt = `Write a 30-second video script in a "${style}" style about: ${topic}. 
     Make it engaging, conversational, and perfect for a short video. 
     Keep it under 100 words and make it sound natural when spoken.`;
-
-    console.log('Calling OpenAI API...');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -76,35 +51,13 @@ exports.handler = async (event, context) => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
-      console.error('OpenAI API error:', data);
-      return {
-        statusCode: response.status,
-        body: JSON.stringify({ 
-          error: `OpenAI API error: ${data.error?.message || 'Unknown error'}`,
-          details: data
-        })
-      };
+      return { statusCode: response.status, headers, body: JSON.stringify({ error: data.error?.message || 'Unknown error', details: data }) };
     }
 
-    console.log('Successfully generated script');
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    };
+    return { statusCode: 200, headers, body: JSON.stringify(data) };
   } catch (error) {
-    console.error('Function error:', error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ 
-        error: 'Script generation failed', 
-        details: error.message 
-      })
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Script generation failed', details: error.message }) };
   }
 }; 
