@@ -1,12 +1,39 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaHome } from 'react-icons/fa';
+import { useScriptLibrary } from '../context/ScriptLibraryContext'; // 🆕 Firebase-backed script manager
+import { useVostcard } from '../context/VostcardContext'; // 🆕 To pass selected script to ScrollingCameraView
 
 const ScriptLibraryView: React.FC = () => {
   const navigate = useNavigate();
+  const { scripts, fetchScripts } = useScriptLibrary();
+  const { setCurrentScript } = useVostcard();
+
+  useEffect(() => {
+    fetchScripts().catch((err) => {
+      console.error('⚠️ Failed to fetch scripts from Firebase, loading fallback:', err);
+      const fallbackScripts = [
+        { id: 'fallback1', title: 'Welcome Script', content: 'This is a fallback script example.', updatedAt: new Date() },
+        { id: 'fallback2', title: 'Demo Script', content: 'Use this fallback if Firebase is offline.', updatedAt: new Date() }
+      ];
+      setCurrentScript(null);
+      // Properly set fallback scripts in context
+      fetchScripts.setFallbackScripts(fallbackScripts);
+    });
+  }, []);
 
   const handleCreateNew = () => {
-    navigate('/script-editor');
+    navigate('/script-editor'); // Navigate to script editor page
+  };
+
+  const handleUseScript = (scriptContent: string) => {
+    if (!scriptContent) {
+      alert('This script has no content.');
+      return;
+    }
+    setCurrentScript(scriptContent); // Save script in context
+    localStorage.setItem('selectedScript', scriptContent); // Persist for script tool
+    navigate('/script-editor'); // Navigate to ScriptEditor for polishing
   };
 
   return (
@@ -46,16 +73,33 @@ const ScriptLibraryView: React.FC = () => {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 20 }}>
             {scripts.map((script) => (
-              <div key={script.id} style={{ background: 'white', borderRadius: 15, padding: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+              <div 
+                key={script.id} 
+                style={{ background: 'white', borderRadius: 15, padding: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: 10 }}
+              >
                 <h3 style={{ margin: 0, color: '#333', fontSize: '1.3rem', fontWeight: 600 }}>
-                  {script.title}
+                  {script.title || 'Untitled'}
                 </h3>
-                <p style={{ color: '#666', lineHeight: 1.5, margin: '15px 0', fontSize: '0.95rem' }}>
-                  {script.content.substring(0, 100)}...
+                <p style={{ color: '#666', lineHeight: 1.5, margin: 0, fontSize: '0.95rem' }}>
+                  {script.content.split('\n')[0].substring(0, 100)}...
                 </p>
-                <div style={{ fontSize: '0.85rem', color: '#999' }}>
-                  Updated {script.updatedAt.toLocaleDateString()}
+                <div style={{ fontSize: '0.85rem', color: '#999', marginBottom: 10 }}>
+                  Created {script.createdAt?.toDate().toLocaleDateString() ?? 'recently'}
                 </div>
+                <button
+                  onClick={() => handleUseScript(script.content)}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    alignSelf: 'flex-start'
+                  }}
+                >
+                  Load
+                </button>
               </div>
             ))}
           </div>
@@ -65,4 +109,4 @@ const ScriptLibraryView: React.FC = () => {
   );
 };
 
-export default ScriptLibraryView; 
+export default ScriptLibraryView;

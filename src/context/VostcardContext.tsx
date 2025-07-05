@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { Script } from '../types/Script'; // Define a Script type for scripts
 import { auth, db, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -45,6 +46,10 @@ interface VostcardContextProps {
   loadAllLocalVostcards: () => void;
   deletePrivateVostcard: (id: string) => Promise<void>;
   deleteVostcardsWithWrongUsername: () => Promise<void>;
+  scripts: Script[];
+  loadScripts: () => Promise<void>;
+  saveScript: (script: Script) => Promise<void>;
+  deleteScript: (id: string) => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -156,6 +161,52 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const authContext = useAuth();
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
+  const [scripts, setScripts] = useState<Script[]>([]);
+  // Scripts Firestore CRUD
+  const loadScripts = useCallback(async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'scripts'));
+      const loadedScripts: Script[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Script[];
+      setScripts(loadedScripts);
+      console.log('📜 Loaded scripts from Firestore:', loadedScripts);
+    } catch (error) {
+      console.error('❌ Failed to load scripts:', error);
+      alert('Failed to load scripts. Please try again.');
+    }
+  }, []);
+
+  const saveScript = useCallback(async (script: Script) => {
+    try {
+      const scriptRef = script.id
+        ? doc(db, 'scripts', script.id)
+        : doc(collection(db, 'scripts'));
+      await setDoc(scriptRef, {
+        title: script.title,
+        content: script.content,
+        updatedAt: Timestamp.now(),
+      });
+      console.log('✅ Script saved to Firestore:', script);
+      loadScripts();
+    } catch (error) {
+      console.error('❌ Failed to save script:', error);
+      alert('Failed to save script. Please try again.');
+    }
+  }, [loadScripts]);
+
+  const deleteScript = useCallback(async (id: string) => {
+    try {
+      const scriptRef = doc(db, 'scripts', id);
+      await deleteDoc(scriptRef);
+      console.log('🗑️ Script deleted from Firestore:', id);
+      loadScripts();
+    } catch (error) {
+      console.error('❌ Failed to delete script:', error);
+      alert('Failed to delete script. Please try again.');
+    }
+  }, [loadScripts]);
 
   // Load all Vostcards from IndexedDB and restore their blobs
   const loadAllLocalVostcards = useCallback(async () => {
@@ -760,6 +811,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadAllLocalVostcards,
         deletePrivateVostcard,
         deleteVostcardsWithWrongUsername,
+        scripts,
+        loadScripts,
+        saveScript,
+        deleteScript,
       }}
     >
       {children}
