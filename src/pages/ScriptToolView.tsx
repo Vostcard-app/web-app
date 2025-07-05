@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { generateScript } from "../utils/openaiHelper";
+import { useNavigate } from 'react-router-dom';
 
 const scriptStyles = [
   "Bullet Points",
@@ -14,6 +15,7 @@ export default function ScriptToolView() {
   const [script, setScript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleGenerateScript = async () => {
     if (!topic.trim()) {
@@ -213,7 +215,7 @@ export default function ScriptToolView() {
           disabled={!script.trim()}
           onClick={() => {
             if (script.trim()) {
-              window.location.href = `/scrolling-camera?script=${encodeURIComponent(script)}`;
+              navigate(`/scrolling-camera?script=${encodeURIComponent(script)}`);
             }
           }}
           style={{
