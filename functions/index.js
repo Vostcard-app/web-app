@@ -1,21 +1,20 @@
 const functions = require('firebase-functions');
 const cors = require('cors')({ 
-  origin: ['https://vostcard.com', 'http://localhost:5173', 'http://localhost:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: true, // Allow all origins for now
+  credentials: true
 });
 
 // OpenAI API key from Firebase environment
 const OPENAI_API_KEY = functions.config().openai?.api_key;
 
 exports.generateScript = functions.https.onRequest((req, res) => {
+  // Set CORS headers for all requests
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.set('Access-Control-Max-Age', '3600');
     res.status(204).send('');
     return;
   }
@@ -34,7 +33,7 @@ exports.generateScript = functions.https.onRequest((req, res) => {
       }
 
       if (!OPENAI_API_KEY) {
-        console.error('❌ OpenAI API key not configured');
+        console.error('OpenAI API key not configured');
         return res.status(500).json({ error: 'OpenAI API key not configured' });
       }
 
@@ -42,9 +41,8 @@ exports.generateScript = functions.https.onRequest((req, res) => {
       Make it engaging, conversational, and perfect for a short video. 
       Keep it under 100 words and make it sound natural when spoken.`;
 
-      console.log(' Calling OpenAI API...');
+      console.log('Calling OpenAI API...');
 
-      // Use node-fetch or built-in fetch (Node.js 18+)
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -65,17 +63,17 @@ exports.generateScript = functions.https.onRequest((req, res) => {
       const data = await response.json();
       
       if (!response.ok) {
-        console.error('❌ OpenAI API error:', data);
+        console.error('OpenAI API error:', data);
         return res.status(response.status).json({ 
           error: `OpenAI API error: ${data.error?.message || 'Unknown error'}`,
           details: data
         });
       }
 
-      console.log('✅ Successfully generated script');
+      console.log('Successfully generated script');
       res.json(data);
     } catch (error) {
-      console.error('❌ Function error:', error);
+      console.error('Function error:', error);
       res.status(500).json({ 
         error: 'Script generation failed', 
         details: error.message 
