@@ -106,6 +106,7 @@ const VostcardDetailView: React.FC = () => {
                 alt={`photo${idx+1}`}
                 style={{ width: 120, height: 110, borderRadius: 16, objectFit: 'cover', cursor: 'pointer' }}
                 onClick={() => setSelectedPhoto(url)}
+                onContextMenu={e => e.preventDefault()}
               />
             ))
           ) : (
@@ -164,6 +165,41 @@ const VostcardDetailView: React.FC = () => {
         <FaFlag size={36} color="#e53935" style={{ cursor: 'pointer' }} />
         <FaSyncAlt size={36} color="#007aff" style={{ cursor: 'pointer' }} />
       </div>
+
+      {/* Modal for full-size photo */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            cursor: 'zoom-out',
+          }}
+          onClick={() => setSelectedPhoto(null)}
+          onContextMenu={e => e.preventDefault()}
+        >
+          <img
+            src={selectedPhoto}
+            alt="Full size"
+            style={{
+              width: '100vw',
+              height: '100vh',
+              objectFit: 'contain',
+              borderRadius: 0,
+              boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+              background: '#000',
+              userSelect: 'none',
+              pointerEvents: 'auto',
+            }}
+            draggable={false}
+            onContextMenu={e => e.preventDefault()}
+          />
+        </div>
+      )}
     </div>
   );
 };
