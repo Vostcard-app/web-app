@@ -89,7 +89,7 @@ const VostcardDetailView: React.FC = () => {
       <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 32, margin: '16px 0 8px 0' }}>{title}</div>
 
       {/* Media Thumbnails */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '0 0 16px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
         <div style={{ width: 180, height: 240, background: '#111', borderRadius: 16, overflow: 'hidden', cursor: videoUrl ? 'pointer' : 'default' }}>
           {videoUrl ? (
             <video src={videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} controls />
