@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { generateScript } from "../utils/openaiHelper";
 
 const scriptStyles = [
   "Bullet Points",
@@ -11,6 +12,48 @@ export default function ScriptToolView() {
   const [topic, setTopic] = useState("");
   const [style, setStyle] = useState(scriptStyles[0]);
   const [script, setScript] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleGenerateScript = async () => {
+    if (!topic.trim()) {
+      setError("Please enter a topic");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const generatedScript = await generateScript(topic, style);
+      setScript(generatedScript);
+    } catch (err) {
+      setError("Failed to generate script. Please try again.");
+      console.error("Script generation error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePolishScript = async () => {
+    if (!script.trim()) {
+      setError("Please enter a script to polish");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const polishedScript = await generateScript(`Polish this script: ${script}`, "Professional");
+      setScript(polishedScript);
+    } catch (err) {
+      setError("Failed to polish script. Please try again.");
+      console.error("Script polishing error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -112,31 +155,54 @@ export default function ScriptToolView() {
           }}
         />
 
+        {/* Error message */}
+        {error && (
+          <div style={{
+            color: "red",
+            marginBottom: 16,
+            padding: 8,
+            background: "#ffe6e6",
+            borderRadius: 4
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* AI Buttons (side by side) */}
         <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-          <button style={{
-            flex: 1,
-            background: "orange",
-            color: "white",
-            padding: 14,
-            borderRadius: 8,
-            fontSize: 16,
-            border: "none",
-            fontWeight: 600
-          }}>
-            Generate Script with AI
+          <button 
+            onClick={handleGenerateScript}
+            disabled={loading || !topic.trim()}
+            style={{
+              flex: 1,
+              background: loading ? "#ccc" : "orange",
+              color: "white",
+              padding: 14,
+              borderRadius: 8,
+              fontSize: 16,
+              border: "none",
+              fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer"
+            }}
+          >
+            {loading ? "Generating..." : "Generate Script with AI"}
           </button>
-          <button style={{
-            flex: 1,
-            background: "purple",
-            color: "white",
-            padding: 14,
-            borderRadius: 8,
-            fontSize: 16,
-            border: "none",
-            fontWeight: 600
-          }}>
-            Polish My Script
+          <button 
+            onClick={handlePolishScript}
+            disabled={loading || !script.trim()}
+            style={{
+              flex: 1,
+              background: loading ? "#ccc" : "purple",
+              color: "white",
+              padding: 14,
+              borderRadius: 8,
+              fontSize: 16,
+              border: "none",
+              fontWeight: 600,
+              cursor: loading ? "not-allowed" : "pointer"
+            }}
+          >
+            {loading ? "Polishing..." : "Polish My Script"}
           </button>
         </div>
 
