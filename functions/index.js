@@ -1,10 +1,25 @@
 const functions = require('firebase-functions');
-const cors = require('cors')({ origin: true });
+const cors = require('cors')({ 
+  origin: ['https://vostcard.com', 'http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+});
 
 // OpenAI API key from Firebase environment
 const OPENAI_API_KEY = functions.config().openai?.api_key;
 
 exports.generateScript = functions.https.onRequest((req, res) => {
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '3600');
+    res.status(204).send('');
+    return;
+  }
+
   cors(req, res, async () => {
     try {
       // Only allow POST requests
@@ -29,6 +44,7 @@ exports.generateScript = functions.https.onRequest((req, res) => {
 
       console.log(' Calling OpenAI API...');
 
+      // Use node-fetch or built-in fetch (Node.js 18+)
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
