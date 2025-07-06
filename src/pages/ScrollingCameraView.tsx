@@ -207,7 +207,7 @@ const ScrollingCameraView: React.FC = () => {
               position: 'absolute',
               left: 0,
               width: '100%',
-              top: '33%', // Start at 1/3 from the top
+              top: '66%', // Start 2/3 from the top (closer to bottom)
               color: 'white',
               fontSize: '24px',
               fontWeight: 'bold',
