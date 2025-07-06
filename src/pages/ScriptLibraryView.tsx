@@ -26,13 +26,13 @@ const ScriptLibraryView: React.FC = () => {
     navigate('/script-editor'); // Navigate to script editor page
   };
 
-  const handleUseScript = (scriptContent: string) => {
-    if (!scriptContent) {
+  const handleUseScript = (script: any) => {
+    if (!script?.content) {
       alert('This script has no content.');
       return;
     }
-    setCurrentScript(scriptContent); // Save script in context
-    localStorage.setItem('selectedScript', scriptContent); // Persist for script tool
+    setCurrentScript(script); // Save full script object in context
+    localStorage.setItem('selectedScript', JSON.stringify(script)); // Persist for script tool
     navigate('/script-editor'); // Navigate to ScriptEditor for polishing
   };
 
@@ -87,7 +87,7 @@ const ScriptLibraryView: React.FC = () => {
                   Created {script.createdAt?.toDate().toLocaleDateString() ?? 'recently'}
                 </div>
                 <button
-                  onClick={() => handleUseScript(script.content)}
+                  onClick={() => handleUseScript(script)}
                   style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     color: 'white',

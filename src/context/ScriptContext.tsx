@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { ScriptService, Script } from '../services/scriptService';
+import { Script } from '../types/ScriptModel';
+import { ScriptService } from '../services/scriptService';
 
 interface ScriptContextType {
   scripts: Script[];
@@ -42,7 +43,7 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setLoading(true);
       setError(null);
       console.log('📜 Loading scripts for user:', userID);
-      
+
       const userScripts = await ScriptService.getUserScripts(userID);
       setScripts(userScripts);
       console.log(`✅ Loaded ${userScripts.length} scripts`);
@@ -80,17 +81,17 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       setError(null);
       await ScriptService.updateScript(userID, scriptId, title, content);
-      
-      setScripts(prev => prev.map(script => 
-        script.id === scriptId 
-          ? { ...script, title, content, updatedAt: new Date() }
+
+      setScripts(prev => prev.map(script =>
+        script.id === scriptId
+          ? { ...script, title, content, updatedAt: new Date().toISOString() }
           : script
       ));
-      
+
       if (currentScript?.id === scriptId) {
-        setCurrentScript(prev => prev ? { ...prev, title, content, updatedAt: new Date() } : null);
+        setCurrentScript(prev => prev ? { ...prev, title, content, updatedAt: new Date().toISOString() } : null);
       }
-      
+
       console.log('✅ Script updated in state');
     } catch (err) {
       console.error('❌ Error updating script:', err);
@@ -107,13 +108,13 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       setError(null);
       await ScriptService.deleteScript(userID, scriptId);
-      
+
       setScripts(prev => prev.filter(script => script.id !== scriptId));
-      
+
       if (currentScript?.id === scriptId) {
         setCurrentScript(null);
       }
-      
+
       console.log('✅ Script deleted from state');
     } catch (err) {
       console.error('❌ Error deleting script:', err);

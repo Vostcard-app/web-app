@@ -1,7 +1,7 @@
 // src/context/ScriptLibraryContext.ts
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { Script } from "../types/Script";
+import { Script } from "../types/ScriptModel";
 
 // Define the context type
 interface ScriptLibraryContextType {
