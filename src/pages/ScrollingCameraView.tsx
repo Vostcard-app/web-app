@@ -126,7 +126,7 @@ const ScrollingCameraView: React.FC = () => {
       const blob = new Blob(recordedChunks, { type: mimeType });
       setVideo(blob);
       setScript(scriptText); // Save script in context for next step
-      navigate('/create-step1');
+      navigate('/create-step1'); // Move user to Step 1 after recording stops
     };
 
     mediaRecorder.start();
