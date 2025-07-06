@@ -68,6 +68,11 @@ const ScrollingCameraView: React.FC = () => {
 
   // Handle recording
   const handleRecord = () => {
+    if (recording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+      return;
+    }
     if (!user) {
       alert('❌ Please log in again.');
       navigate('/');
@@ -209,7 +214,7 @@ const ScrollingCameraView: React.FC = () => {
               textAlign: 'center',
               whiteSpace: 'pre-wrap',
               willChange: 'transform',
-              transform: 'translateY(100%)',
+              transform: 'translateY(66%)',
             }}
           >
             {scriptText}
@@ -258,7 +263,7 @@ const ScrollingCameraView: React.FC = () => {
 
         {/* Record Button */}
         <div
-          onClick={recording ? undefined : handleRecord}
+          onClick={handleRecord}
           style={{
             backgroundColor: 'red',
             width: 90,
