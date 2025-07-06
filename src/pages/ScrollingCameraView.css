@@ -32,7 +32,7 @@ body {
   height: 100%;
   overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* 👈 Start script near the top */
   justify-content: center;
   padding: 20px;
   z-index: 2;
@@ -44,15 +44,20 @@ body {
   line-height: 1.6;
   text-align: center;
   max-width: 800px;
-  animation: scrollText 30s linear infinite;
+
+  /* 👇 Start text 2/3 up the screen */
+  position: absolute;
+  top: 66%; /* 👈 Adjusts vertical start */
+  transform: translateY(0);
+  animation: scrollText 30s linear forwards;
 }
 
 @keyframes scrollText {
   0% {
-    transform: translateY(100%);
+    transform: translateY(0%);
   }
   100% {
-    transform: translateY(-100%);
+    transform: translateY(-200%); /* 👈 Scroll further to make full text move */
   }
 }
 
