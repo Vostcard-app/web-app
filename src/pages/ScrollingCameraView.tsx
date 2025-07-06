@@ -209,14 +209,14 @@ const ScrollingCameraView: React.FC = () => {
             ref={overlayRef}
             style={{
               color: 'white',
-              fontSize: '24px',
+              fontSize: '32px',
               fontWeight: 'bold',
               textShadow: '2px 2px 5px black',
               textAlign: 'center',
               whiteSpace: 'pre-wrap',
               willChange: 'transform',
-              marginBottom: '33%', // Push up from the bottom by 1/3 of the overlay height
-              transform: 'translateY(0%)', // Start at normal position
+              marginBottom: '15%',
+              transform: 'translateY(0%)',
             }}
           >
             {scriptText}
