@@ -31,3 +31,5 @@ export const ScriptLibraryProvider = ({ children }: { children: ReactNode }) => 
     </ScriptLibraryContext.Provider>
   );
 };
+
+export default ScriptLibraryProvider;
