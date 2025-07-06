@@ -197,9 +197,6 @@ const ScrollingCameraView: React.FC = () => {
             width: '100%',
             height: '200px',
             overflow: 'hidden',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
             pointerEvents: 'none',
             zIndex: 2,
           }}
@@ -207,6 +204,10 @@ const ScrollingCameraView: React.FC = () => {
           <div
             ref={overlayRef}
             style={{
+              position: 'absolute',
+              left: 0,
+              width: '100%',
+              top: '33%', // Start at 1/3 from the top
               color: 'white',
               fontSize: '24px',
               fontWeight: 'bold',
@@ -214,7 +215,7 @@ const ScrollingCameraView: React.FC = () => {
               textAlign: 'center',
               whiteSpace: 'pre-wrap',
               willChange: 'transform',
-              transform: 'translateY(66%)',
+              transform: 'translateY(100%)',
             }}
           >
             {scriptText}
