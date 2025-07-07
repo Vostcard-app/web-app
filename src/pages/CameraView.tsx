@@ -13,6 +13,7 @@ const CameraView: React.FC = () => {
 
   const { setVideo } = useVostcard();
   const [isRecording, setIsRecording] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
 
@@ -31,7 +32,31 @@ const CameraView: React.FC = () => {
       }
     };
 
+    // Get user location
+    const getCurrentLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+          setUserLocation(location);
+          console.log('📍 Location captured for video:', location);
+        },
+        (error) => {
+          console.error('❌ Error getting location:', error);
+          // Continue without location - user can add it later
+        },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 10000, 
+          maximumAge: 300000 
+        }
+      );
+    };
+
     startCamera();
+    getCurrentLocation();
 
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
@@ -91,7 +116,14 @@ const CameraView: React.FC = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks.current, { type: mimeType });
-        setVideo(blob);
+        // Pass location to setVideo if available
+        if (userLocation) {
+          setVideo(blob, userLocation);
+          console.log('📍 Video saved with location:', userLocation);
+        } else {
+          setVideo(blob);
+          console.log('📍 Video saved without location');
+        }
         navigate(-1);
       };
 

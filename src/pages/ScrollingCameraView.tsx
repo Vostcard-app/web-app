@@ -16,6 +16,7 @@ const ScrollingCameraView: React.FC = () => {
   const [script, setScript] = useState('');
   const [recordingTime, setRecordingTime] = useState(30);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -28,6 +29,33 @@ const ScrollingCameraView: React.FC = () => {
       setScript(decodeURIComponent(scriptParam));
     }
   }, [location.search]);
+
+  // Get user location on mount
+  useEffect(() => {
+    const getCurrentLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          };
+          setUserLocation(location);
+          console.log('📍 Location captured for video:', location);
+        },
+        (error) => {
+          console.error('❌ Error getting location:', error);
+          // Continue without location - user can add it later
+        },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 10000, 
+          maximumAge: 300000 
+        }
+      );
+    };
+
+    getCurrentLocation();
+  }, []);
 
   // Start camera
   useEffect(() => {
@@ -86,7 +114,14 @@ const ScrollingCameraView: React.FC = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks.current, { type: mimeType });
-        setVideo(blob);
+        // Pass location to setVideo if available
+        if (userLocation) {
+          setVideo(blob, userLocation);
+          console.log('📍 Video saved with location:', userLocation);
+        } else {
+          setVideo(blob);
+          console.log('📍 Video saved without location');
+        }
         // Navigate back to script tool with the script preserved
         navigate(`/script-tool?script=${encodeURIComponent(script)}`);
       };
@@ -150,6 +185,11 @@ const ScrollingCameraView: React.FC = () => {
       <div className="recording-timer">
         {isRecording && <div className="recording-dot"></div>}
         <span>{formatTime(recordingTime)}</span>
+      </div>
+
+      {/* Location indicator */}
+      <div className="location-indicator">
+        {userLocation ? '📍' : '📍?'}
       </div>
 
       {/* Top Controls */}

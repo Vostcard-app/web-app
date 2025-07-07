@@ -140,16 +140,20 @@ export default function ScriptToolView() {
         </div>
 
         {/* Script Library Button */}
-        <button style={{
-          width: "100%",
-          background: "#007aff",
-          color: "white",
-          padding: 12,
-          borderRadius: 8,
-          fontSize: 20,
-          marginBottom: 16,
-          border: "none"
-        }}>
+        <button 
+          onClick={() => navigate('/script-library')}
+          style={{
+            width: "100%",
+            background: "#007aff",
+            color: "white",
+            padding: 12,
+            borderRadius: 8,
+            fontSize: 20,
+            marginBottom: 16,
+            border: "none",
+            cursor: "pointer"
+          }}
+        >
           Script Library
         </button>
 
