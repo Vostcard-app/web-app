@@ -28,6 +28,7 @@ const VostcardDetailView: React.FC = () => {
   const [showPrivateShareModal, setShowPrivateShareModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
   const [ratingStats, setRatingStats] = useState<RatingStats>({
     vostcardID: '',
     averageRating: 0,
@@ -171,6 +172,39 @@ const VostcardDetailView: React.FC = () => {
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [showVideoModal]);
+
+  // Handle video orientation detection
+  const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
+    const { videoWidth, videoHeight } = videoElement;
+    const aspectRatio = videoWidth / videoHeight;
+    
+    console.log('📱 Video dimensions:', {
+      videoWidth,
+      videoHeight,
+      aspectRatio: aspectRatio.toFixed(2),
+      userAgent: navigator.userAgent.includes('iPhone') ? 'iPhone' : 'Other'
+    });
+
+    // Enhanced detection for iPhone portrait videos
+    // iPhone portrait videos are often recorded at 1080x1920 but may show as 1920x1080 due to rotation metadata
+    const isLikelyiPhonePortrait = (
+      // Check if dimensions suggest it should be portrait but appear as landscape
+      aspectRatio > 1.5 && aspectRatio < 2.0 && // Common iPhone aspect ratios when rotated incorrectly
+      (
+        (videoWidth === 1920 && videoHeight === 1080) || // Common iPhone recording size
+        (videoWidth === 1280 && videoHeight === 720) ||  // Lower quality iPhone recording
+        aspectRatio >= 1.77 && aspectRatio <= 1.78       // 16:9 ratio that should be 9:16
+      )
+    );
+
+    if (isLikelyiPhonePortrait) {
+      setVideoOrientation('portrait');
+      console.log('📱 Detected iPhone portrait video (applying 90° rotation)');
+    } else {
+      setVideoOrientation('landscape');
+      console.log('📱 Detected landscape video (no rotation needed)');
+    }
+  };
 
   // Handle like toggle
   const handleLikeToggle = useCallback(async () => {
@@ -341,9 +375,12 @@ const VostcardDetailView: React.FC = () => {
                   width: '100%', 
                   height: '100%', 
                   objectFit: 'cover',
-                  pointerEvents: 'none'
+                  pointerEvents: 'none',
+                  transform: videoOrientation === 'portrait' ? 'rotate(90deg)' : 'none',
+                  transformOrigin: 'center center'
                 }}
                 muted
+                onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
               />
               {/* Play overlay */}
               <div style={{
@@ -664,17 +701,20 @@ const VostcardDetailView: React.FC = () => {
             <video
               src={videoUrl}
               style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
+                maxWidth: videoOrientation === 'portrait' ? '100vh' : '100%',
+                maxHeight: videoOrientation === 'portrait' ? '100vw' : '100%',
                 objectFit: 'contain',
                 borderRadius: 0,
                 boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+                transform: videoOrientation === 'portrait' ? 'rotate(90deg)' : 'none',
+                transformOrigin: 'center center',
               }}
               controls
               autoPlay
               playsInline
               onClick={(e) => e.stopPropagation()}
               onContextMenu={e => e.preventDefault()}
+              onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
             />
           </div>
         </div>
