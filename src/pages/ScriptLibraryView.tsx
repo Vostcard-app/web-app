@@ -42,12 +42,22 @@ const ScriptLibraryView: React.FC = () => {
 
   return (
     <div style={{ 
-      maxWidth: 1200, 
-      margin: '0 auto', 
-      padding: 20, 
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
+      height: '100vh',
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
+      <div style={{
+        maxWidth: 1200,
+        margin: '0 auto',
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 20,
+        boxSizing: 'border-box'
+      }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
@@ -88,7 +98,12 @@ const ScriptLibraryView: React.FC = () => {
       </div>
 
       {/* Scripts List */}
-      <div>
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto', 
+        paddingRight: 8,
+        marginRight: -8 
+      }}>
         {!scripts || scripts.length === 0 ? (
           <div style={{ 
             textAlign: 'center', 
@@ -192,6 +207,7 @@ const ScriptLibraryView: React.FC = () => {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );
