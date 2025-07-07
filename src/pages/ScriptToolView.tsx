@@ -273,9 +273,12 @@ export default function ScriptToolView() {
               cursor: loading ? "not-allowed" : "pointer"
             }}
           >
-            {loading ? "Saving..." : "Save & Continue to Step 2"}
+            {loading ? "Saving..." : "Save & Continue"}
           </button>
         )}
+git add .
+git commit -m "Ready for Netlify deploy"
+git push origin main
 
         {/* Roll Cameras Button */}
         <button
