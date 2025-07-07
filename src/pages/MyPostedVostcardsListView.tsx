@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 
 interface PostedVostcard {
   id: string;
@@ -18,6 +18,7 @@ const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
   const [postedVostcards, setPostedVostcards] = useState<PostedVostcard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadPostedVostcards();
@@ -50,6 +51,40 @@ const MyPostedVostcardsListView = () => {
       console.error('Error loading posted Vostcards:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUnpostVostcard = async (vostcardId: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to un-post "${title}"? It will be moved back to your private Vōstcards.`)) {
+      return;
+    }
+
+    try {
+      // Add to unposting set to show loading state
+      setUnpostingIds(prev => new Set(prev.add(vostcardId)));
+
+      // Update the vostcard in Firestore to change state from 'posted' to 'private'
+      const vostcardRef = doc(db, 'vostcards', vostcardId);
+      await updateDoc(vostcardRef, {
+        state: 'private',
+        updatedAt: new Date()
+      });
+
+      // Remove from local state
+      setPostedVostcards(prev => prev.filter(v => v.id !== vostcardId));
+
+      console.log(`✅ Vostcard "${title}" successfully un-posted and moved to private.`);
+      
+    } catch (error) {
+      console.error('❌ Error un-posting vostcard:', error);
+      alert('Failed to un-post vostcard. Please try again.');
+    } finally {
+      // Remove from unposting set
+      setUnpostingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(vostcardId);
+        return newSet;
+      });
     }
   };
 
@@ -108,19 +143,37 @@ const MyPostedVostcardsListView = () => {
               <h2 style={{ margin: '0 0 8px 0' }}>{vostcard.title || 'Untitled Vōstcard'}</h2>
               <p><strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}</p>
               <p><strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}</p>
-              <button
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => navigate(`/vostcard/${vostcard.id}`)}
-              >
-                View on Map
-              </button>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <button
+                  style={{
+                    backgroundColor: '#002B4D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => navigate(`/vostcard/${vostcard.id}`)}
+                >
+                  View on Map
+                </button>
+                <button
+                  style={{
+                    backgroundColor: '#ff4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    cursor: 'pointer',
+                    opacity: unpostingIds.has(vostcard.id) ? 0.6 : 1,
+                    pointerEvents: unpostingIds.has(vostcard.id) ? 'none' : 'auto'
+                  }}
+                  onClick={() => handleUnpostVostcard(vostcard.id, vostcard.title || 'Untitled Vōstcard')}
+                  disabled={unpostingIds.has(vostcard.id)}
+                >
+                  {unpostingIds.has(vostcard.id) ? 'Un-posting...' : 'Un-Post'}
+                </button>
+              </div>
             </div>
           ))
         )}
