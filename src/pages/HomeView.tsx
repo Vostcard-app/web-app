@@ -236,8 +236,8 @@ const HomeView = () => {
             style={{ 
               marginRight: 20, 
               cursor: 'pointer',
-              width: 30,
-              height: 30,
+              width: 60,
+              height: 60,
               borderRadius: '50%',
               overflow: 'hidden',
               display: 'flex',
@@ -263,9 +263,9 @@ const HomeView = () => {
                 }}
                 onError={() => setUserAvatar(null)} // Fallback if image fails to load
               />
-            ) : (
-              <FaUserCircle size={30} color="white" />
-            )}
+                         ) : (
+               <FaUserCircle size={60} color="white" />
+             )}
           </div>
           <FaBars
             size={30}
