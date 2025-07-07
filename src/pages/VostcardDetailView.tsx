@@ -6,8 +6,10 @@ import { doc, getDoc, collection, onSnapshot } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import FollowButton from '../components/FollowButton';
 import RatingStars from '../components/RatingStars';
-import CommentsSection from '../components/CommentsSection';
+import CommentsModal from '../components/CommentsModal';
+import PrivateShareModal from '../components/PrivateShareModal';
 import { RatingService, type RatingStats } from '../services/ratingService';
+import type { Vostcard } from '../context/VostcardContext';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +25,8 @@ const VostcardDetailView: React.FC = () => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [currentUserRating, setCurrentUserRating] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
+  const [showPrivateShareModal, setShowPrivateShareModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [ratingStats, setRatingStats] = useState<RatingStats>({
     vostcardID: '',
     averageRating: 0,
@@ -209,6 +213,39 @@ const VostcardDetailView: React.FC = () => {
     navigate(`/flag/${id}/${encodedTitle}/${encodedUsername}`);
   };
 
+  // Handle private sharing
+  const handleShareClick = () => {
+    if (!vostcard) return;
+    setShowPrivateShareModal(true);
+  };
+
+  // Convert posted vostcard to shareable format
+  const createShareableVostcard = (): Vostcard | null => {
+    if (!vostcard) return null;
+
+    // Create a mock Blob for video to prevent modal errors
+    // In practice, sharing posted Vostcards would use a different approach
+    const mockVideoBlob = new Blob(['mock'], { type: 'video/webm' });
+    
+    return {
+      id: id || '',
+      state: 'private' as const,
+      video: vostcard.videoURL ? mockVideoBlob : null,
+      title: vostcard.title || 'Shared Vostcard',
+      description: vostcard.description || '',
+      photos: [], // Mock empty photos array
+      categories: vostcard.categories || [],
+      geo: vostcard.geo || null,
+      username: vostcard.username || 'Unknown',
+      userID: vostcard.userID || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      // Store original URLs for reference
+      videoURL: vostcard.videoURL,
+      photoURLs: vostcard.photoURLs,
+    } as Vostcard & { videoURL?: string; photoURLs?: string[] };
+  };
+
   let createdAt = '';
   if (vostcard.createdAt) {
     if (typeof vostcard.createdAt.toDate === 'function') {
@@ -330,12 +367,7 @@ const VostcardDetailView: React.FC = () => {
             cursor: 'pointer',
             transition: 'transform 0.1s'
           }}
-          onClick={() => {
-            const commentsSection = document.getElementById('comments-section');
-            if (commentsSection) {
-              commentsSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
+          onClick={() => setShowCommentsModal(true)}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -343,7 +375,17 @@ const VostcardDetailView: React.FC = () => {
           <FaRegComment size={32} color="#222" style={{ marginBottom: 4 }} />
           <div style={{ fontSize: 18 }}>{commentCount}</div>
         </div>
-        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
+        <div 
+          style={{ 
+            textAlign: 'center', 
+            cursor: 'pointer',
+            transition: 'transform 0.1s'
+          }}
+          onClick={handleShareClick}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
           <FaShare size={32} color="#222" style={{ marginBottom: 4 }} />
         </div>
       </div>
@@ -394,10 +436,13 @@ const VostcardDetailView: React.FC = () => {
         <FaSyncAlt size={36} color="#007aff" style={{ cursor: 'pointer' }} />
       </div>
 
-      {/* Comments Section */}
-      <div id="comments-section" style={{ margin: '32px 24px 40px 24px' }}>
-        <CommentsSection vostcardID={id!} />
-      </div>
+      {/* Comments Modal */}
+      <CommentsModal
+        isOpen={showCommentsModal}
+        onClose={() => setShowCommentsModal(false)}
+        vostcardID={id!}
+        vostcardTitle={vostcard?.title}
+      />
 
       {/* Modal for full-size photo */}
       {selectedPhoto && (
@@ -502,6 +547,15 @@ const VostcardDetailView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Private Share Modal */}
+      {showPrivateShareModal && createShareableVostcard() && (
+        <PrivateShareModal
+          isOpen={showPrivateShareModal}
+          onClose={() => setShowPrivateShareModal(false)}
+          vostcard={createShareableVostcard()!}
+        />
       )}
     </div>
   );
