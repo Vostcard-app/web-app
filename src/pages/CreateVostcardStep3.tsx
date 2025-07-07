@@ -159,13 +159,24 @@ const CreateVostcardStep3: React.FC = () => {
       navigate('/home');
       return;
     }
+    
     try {
+      console.log('📥 Starting vostcard post process...');
       await postVostcard();
+      
+      // Clear the current vostcard state
       clearVostcard();
-      navigate('/home');
+      
+      console.log('✅ Vostcard posted successfully, navigating to home');
+      
+      // Navigate to home with a slight delay to ensure proper state cleanup
+      setTimeout(() => {
+        navigate('/home', { replace: true, state: { refresh: true } });
+      }, 100);
+      
     } catch (error) {
-      console.error('Error posting:', error);
-      alert('Failed to post. Try again.');
+      console.error('❌ Error posting vostcard:', error);
+      alert('Failed to post vostcard. Please try again.');
     }
   };
 

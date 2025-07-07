@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,7 @@ import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'fireb
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import { signOut } from 'firebase/auth';
+import './HomeView.css';
 
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
@@ -27,10 +28,12 @@ const offerIcon = new L.Icon({
 });
 
 const userIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-  iconSize: [30, 30],
-  iconAnchor: [15, 30],
-  popupAnchor: [0, -30],
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
 });
 
 const ZoomControls = () => {
@@ -69,6 +72,7 @@ function getVostcardIcon(isOffer: boolean = false) {
 
 const HomeView = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { deleteVostcardsWithWrongUsername, clearVostcard } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -76,6 +80,12 @@ const HomeView = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loadingVostcards, setLoadingVostcards] = useState(true);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
+
+  // Check for refresh state from navigation
+  const shouldRefresh = location.state?.refresh;
 
   // Debug authentication state
   useEffect(() => {
@@ -85,9 +95,10 @@ const HomeView = () => {
       userID,
       userRole,
       loading,
-      authCurrentUser: !!auth.currentUser
+      authCurrentUser: !!auth.currentUser,
+      shouldRefresh
     });
-  }, [user, username, userID, userRole, loading]);
+  }, [user, username, userID, userRole, loading, shouldRefresh]);
 
   const handleLogout = async () => {
     try {
@@ -131,30 +142,80 @@ const HomeView = () => {
     }
   };
 
-  const loadVostcards = async () => {
+  const loadVostcards = async (forceRefresh: boolean = false) => {
     try {
       setLoadingVostcards(true);
+      setMapError(null);
+      
+      if (forceRefresh) {
+        console.log('🔄 Force refreshing vostcards after posting');
+      }
+      
       const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
       const querySnapshot = await getDocs(q);
       const postedVostcardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      console.log('📍 Loaded vostcards:', postedVostcardsData.length);
       setVostcards(postedVostcardsData);
+      setRetryCount(0); // Reset retry count on success
+      setLastUpdateTime(Date.now());
+      
     } catch (error) {
       console.error('Error loading Vostcards:', error);
+      setMapError('Failed to load vostcards from the map');
     } finally {
       setLoadingVostcards(false);
     }
   };
 
+  // Get user location with error handling
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      pos => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-      err => console.error('Error getting location', err),
-      { enableHighAccuracy: true }
-    );
+    const getUserLocation = () => {
+      if (!navigator.geolocation) {
+        console.error('Geolocation is not supported by this browser');
+        setMapError('Geolocation not supported');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const location: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          console.log('📍 User location acquired:', location);
+          setUserLocation(location);
+        },
+        (err) => {
+          console.error('Error getting location', err);
+          setMapError('Could not get your location. Please enable location services.');
+        },
+        { 
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 
+        }
+      );
+    };
+
+    getUserLocation();
   }, []);
 
+  // Load vostcards on mount and when coming back to the page
   useEffect(() => {
-    loadVostcards();
+    loadVostcards(shouldRefresh);
+    
+    // Clear the refresh state after handling it
+    if (shouldRefresh) {
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [shouldRefresh]);
+
+  // Auto-refresh vostcards periodically (every 30 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('⏰ Auto-refreshing vostcards');
+      loadVostcards();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   // Fetch user avatar
@@ -195,15 +256,19 @@ const HomeView = () => {
         longitude: lng,
         geo: { latitude: lat, longitude: lng }
       });
-      loadVostcards();
+      loadVostcards(true);
     } catch (error) {
       console.error('Error adding coordinates:', error);
       alert('Error adding coordinates. Check console for details.');
     }
   };
 
+  // Reload vostcards when window gains focus
   useEffect(() => {
-    const handleFocus = () => loadVostcards();
+    const handleFocus = () => {
+      console.log('🔄 Window gained focus, reloading vostcards');
+      loadVostcards(true);
+    };
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
@@ -213,9 +278,27 @@ const HomeView = () => {
     navigate('/create-step1');
   };
 
-      const menuItems = [
-      { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },
-      { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
+  const handleRetryLoad = () => {
+    setRetryCount(prev => prev + 1);
+    loadVostcards(true);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (isMenuOpen && !target.closest('[data-menu]')) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
+
+  const menuItems = [
+    { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },
+    { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
     { label: 'Suggestion Box', route: '/suggestion-box' },
@@ -224,26 +307,31 @@ const HomeView = () => {
     { label: 'Logout', route: null },
   ];
 
+  // Format last update time for display
+  const formatLastUpdate = () => {
+    const secondsAgo = Math.floor((Date.now() - lastUpdateTime) / 1000);
+    if (secondsAgo < 60) return `${secondsAgo}s ago`;
+    const minutesAgo = Math.floor(secondsAgo / 60);
+    if (minutesAgo < 60) return `${minutesAgo}m ago`;
+    const hoursAgo = Math.floor(minutesAgo / 60);
+    return `${hoursAgo}h ago`;
+  };
+
   return (
-    <div style={{ height: '100vh', width: '100vw' }}>
+    <div style={containerStyle}>
       {/* Header */}
       <div style={headerStyle}>
-        <h1 style={logoStyle}>Vōstcard</h1>
+        <div style={logoContainerStyle}>
+          <h1 style={logoStyle}>Vōstcard</h1>
+          {/* Small update indicator */}
+          <div style={updateIndicatorStyle}>
+            {vostcards.length} • {formatLastUpdate()}
+          </div>
+        </div>
         <div style={headerRight}>
           {/* User Avatar */}
           <div
-            style={{ 
-              marginRight: 20, 
-              cursor: 'pointer',
-              width: 60,
-              height: 60,
-              borderRadius: '50%',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: userAvatar ? 'transparent' : 'rgba(255,255,255,0.2)'
-            }}
+            style={avatarContainerStyle}
             onClick={() => {
               if (user?.uid) {
                 navigate(`/profile/${user.uid}`);
@@ -254,17 +342,12 @@ const HomeView = () => {
               <img
                 src={userAvatar}
                 alt="User Avatar"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  borderRadius: '50%',
-                }}
+                style={avatarImageStyle}
                 onError={() => setUserAvatar(null)} // Fallback if image fails to load
               />
-                         ) : (
-               <FaUserCircle size={60} color="white" />
-             )}
+            ) : (
+              <FaUserCircle size={60} color="white" />
+            )}
           </div>
           <FaBars
             size={30}
@@ -276,7 +359,7 @@ const HomeView = () => {
 
       {/* Hamburger Menu */}
       {isMenuOpen && (
-        <div style={menuStyle} role="menu" aria-label="Main menu">
+        <div style={menuStyle} data-menu role="menu" aria-label="Main menu">
           {menuItems.map(({ label, route }) => (
             <div
               key={label}
@@ -321,27 +404,102 @@ const HomeView = () => {
         </button>
       </div>
 
-      {/* Loading Indicator */}
+      {/* Map Container */}
+      <div style={mapContainerStyle}>
+        {mapError ? (
+          <div style={errorOverlayStyle}>
+            <div style={errorContentStyle}>
+              <h3>Map Error</h3>
+              <p>{mapError}</p>
+              <button onClick={handleRetryLoad} style={retryButtonStyle}>
+                Retry {retryCount > 0 && `(${retryCount})`}
+              </button>
+            </div>
+          </div>
+        ) : !userLocation ? (
+          <div style={loadingOverlayStyle}>
+            <div style={loadingContentStyle}>
+              Getting your location...
+            </div>
+          </div>
+        ) : (
+          <MapContainer 
+            center={userLocation} 
+            zoom={16} 
+            style={{ height: '100%', width: '100%' }} 
+            zoomControl={false}
+          >
+            <TileLayer 
+              attribution="&copy; OpenStreetMap contributors" 
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+            />
+
+            <Marker position={userLocation} icon={userIcon}>
+              <Popup>Your Location</Popup>
+            </Marker>
+
+            {vostcards.map(v => {
+              const lat = v.latitude || v.geo?.latitude;
+              const lng = v.longitude || v.geo?.longitude;
+              if (!lat || !lng) return null;
+              return (
+                <Marker
+                  key={v.id}
+                  position={[lat, lng]}
+                  icon={getVostcardIcon(v.isOffer)}
+                  eventHandlers={{
+                    click: () => {
+                      console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
+                      navigate(`/vostcard/${v.id}`);
+                    }
+                  }}
+                >
+                  <Popup>
+                    <h3>{v.title || 'Untitled'}</h3>
+                    <p>{v.description || 'No description'}</p>
+                    {v.isOffer && v.offerDetails?.discount && (
+                      <div style={offerPopupStyle}>
+                        <strong>🎁 Special Offer:</strong> {v.offerDetails.discount}
+                        {v.offerDetails.validUntil && <div><small>Valid until: {v.offerDetails.validUntil}</small></div>}
+                      </div>
+                    )}
+                    {v.categories && Array.isArray(v.categories) && v.categories.length > 0 && (
+                      <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
+                    )}
+                    <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
+                  </Popup>
+                </Marker>
+              );
+            })}
+
+            <ZoomControls />
+            <RecenterControl userLocation={userLocation} />
+            <MapCenter userLocation={userLocation} />
+          </MapContainer>
+        )}
+      </div>
+
+      {/* Loading Overlay for Vostcards */}
+      {loadingVostcards && (
+        <div style={vostcardsLoadingOverlayStyle}>
+          <div style={loadingContentStyle}>
+            {shouldRefresh ? 'Refreshing map...' : 'Loading Vōstcards...'}
+          </div>
+        </div>
+      )}
+
+      {/* Auth Loading Overlay */}
       {loading && (
-        <div style={loadingStyle}>
-          Loading Vostcards...
+        <div style={authLoadingOverlayStyle}>
+          <div style={loadingContentStyle}>
+            Authenticating...
+          </div>
         </div>
       )}
 
       {/* Debug Section - Remove in production */}
       {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          position: 'fixed',
-          top: '80px',
-          right: '10px',
-          background: 'rgba(0,0,0,0.8)',
-          color: 'white',
-          padding: '10px',
-          borderRadius: '5px',
-          fontSize: '12px',
-          zIndex: 1000,
-          maxWidth: '300px'
-        }}>
+        <div style={debugStyle}>
           <div><strong>Auth Debug:</strong></div>
           <div>User: {user ? '✅' : '❌'}</div>
           <div>Username: {username || 'N/A'}</div>
@@ -350,71 +508,11 @@ const HomeView = () => {
           <div>Loading: {loading ? '🔄' : '✅'}</div>
           <div>Auth Current: {auth.currentUser ? '✅' : '❌'}</div>
           <div>Vostcards: {vostcards.length}</div>
-          <button 
-            onClick={clearAuthState}
-            style={{
-              background: '#ff4444',
-              color: 'white',
-              border: 'none',
-              padding: '5px 10px',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              marginTop: '5px',
-              fontSize: '10px'
-            }}
-          >
+          <div>Last Update: {formatLastUpdate()}</div>
+          <button onClick={clearAuthState} style={debugButtonStyle}>
             Clear Auth State
           </button>
         </div>
-      )}
-
-      {/* Map */}
-      {userLocation && (
-        <MapContainer center={userLocation} zoom={16} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-          <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
-          <Marker position={userLocation} icon={userIcon}>
-            <Popup>Your Location</Popup>
-          </Marker>
-
-          {vostcards.map(v => {
-            const lat = v.latitude || v.geo?.latitude;
-            const lng = v.longitude || v.geo?.longitude;
-            if (!lat || !lng) return null;
-            return (
-              <Marker
-                key={v.id}
-                position={[lat, lng]}
-                icon={getVostcardIcon(v.isOffer)}
-                eventHandlers={{
-                  click: () => {
-                    console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
-                    navigate(`/vostcard/${v.id}`);
-                  }
-                }}
-              >
-                <Popup>
-                  <h3>{v.title || 'Untitled'}</h3>
-                  <p>{v.description || 'No description'}</p>
-                  {v.isOffer && v.offerDetails?.discount && (
-                    <div style={offerPopupStyle}>
-                      <strong>🎁 Special Offer:</strong> {v.offerDetails.discount}
-                      {v.offerDetails.validUntil && <div><small>Valid until: {v.offerDetails.validUntil}</small></div>}
-                    </div>
-                  )}
-                  {v.categories && Array.isArray(v.categories) && v.categories.length > 0 && (
-                    <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
-                  )}
-                  <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
-                </Popup>
-              </Marker>
-            );
-          })}
-
-          <ZoomControls />
-          <RecenterControl userLocation={userLocation} />
-          <MapCenter userLocation={userLocation} />
-        </MapContainer>
       )}
 
       {/* Create Vostcard Button */}
@@ -427,10 +525,17 @@ const HomeView = () => {
   );
 };
 
-// Styles
+// Enhanced Styles with proper z-index hierarchy and better organization
+
+const containerStyle = {
+  height: '100vh',
+  width: '100vw',
+  position: 'relative' as const,
+  overflow: 'hidden'
+};
 
 const headerStyle = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   top: 0,
   left: 0,
   right: 0,
@@ -441,13 +546,27 @@ const headerStyle = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '0 20px',
-  zIndex: 1000,
+  zIndex: 100, // High priority UI element
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+};
+
+const logoContainerStyle = {
+  display: 'flex',
+  flexDirection: 'column' as const,
 };
 
 const logoStyle = {
   fontSize: '24px',
   fontWeight: 'bold',
   margin: 0,
+  lineHeight: 1,
+};
+
+const updateIndicatorStyle = {
+  fontSize: '12px',
+  opacity: 0.8,
+  marginTop: '2px',
+  color: 'rgba(255,255,255,0.9)'
 };
 
 const headerRight = {
@@ -455,14 +574,34 @@ const headerRight = {
   alignItems: 'center',
 };
 
+const avatarContainerStyle = {
+  marginRight: 20,
+  cursor: 'pointer',
+  width: 60,
+  height: 60,
+  borderRadius: '50%',
+  overflow: 'hidden',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'rgba(255,255,255,0.2)'
+};
+
+const avatarImageStyle = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover' as const,
+  borderRadius: '50%',
+};
+
 const menuStyle = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   top: 70,
   right: 0,
   background: 'white',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+  boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
   borderRadius: '0 0 10px 10px',
-  zIndex: 1001,
+  zIndex: 101, // Just above header
   minWidth: 220,
   padding: '10px 0',
 };
@@ -474,13 +613,14 @@ const menuItemStyle = {
   color: '#002B4D',
   borderBottom: '1px solid #f0f0f0',
   background: 'transparent',
+  transition: 'background-color 0.2s ease'
 };
 
 const listViewButtonContainer = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   top: 80,
   left: 20,
-  zIndex: 1002,
+  zIndex: 20, // UI controls layer
 };
 
 const listViewButton = {
@@ -493,27 +633,130 @@ const listViewButton = {
   fontWeight: 600,
   cursor: 'pointer',
   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  transition: 'opacity 0.2s ease'
 };
 
-const loadingStyle = {
-  position: 'absolute' as 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  background: 'rgba(255,255,255,0.9)',
-  padding: '30px 50px',
-  borderRadius: 12,
-  fontSize: 20,
-  color: '#002B4D',
-  zIndex: 2000,
+const mapContainerStyle = {
+  position: 'absolute' as const,
+  top: 70,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  zIndex: 1, // Base layer
+};
+
+const errorOverlayStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: '#f8f9fa',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 2,
+};
+
+const errorContentStyle = {
+  background: 'white',
+  padding: '30px',
+  borderRadius: '12px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  textAlign: 'center' as const,
+  maxWidth: '300px'
+};
+
+const retryButtonStyle = {
+  background: '#007aff',
+  color: 'white',
+  border: 'none',
+  borderRadius: '8px',
+  padding: '10px 20px',
+  cursor: 'pointer',
+  marginTop: '10px'
+};
+
+const loadingOverlayStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255,255,255,0.9)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 2,
+};
+
+const vostcardsLoadingOverlayStyle = {
+  position: 'absolute' as const,
+  top: 70,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255,255,255,0.8)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 50, // Above map but below critical UI
+  pointerEvents: 'none' as const
+};
+
+const authLoadingOverlayStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255,255,255,0.95)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 200, // Highest priority for auth
+};
+
+const loadingContentStyle = {
+  background: 'rgba(0,43,77,0.9)',
+  color: 'white',
+  padding: '20px 30px',
+  borderRadius: '12px',
+  fontSize: '18px',
+  fontWeight: 600,
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+};
+
+const debugStyle = {
+  position: 'absolute' as const,
+  top: '80px',
+  right: '10px',
+  background: 'rgba(0,0,0,0.8)',
+  color: 'white',
+  padding: '10px',
+  borderRadius: '5px',
+  fontSize: '12px',
+  zIndex: 150, // High but not blocking
+  maxWidth: '300px'
+};
+
+const debugButtonStyle = {
+  background: '#ff4444',
+  color: 'white',
+  border: 'none',
+  padding: '5px 10px',
+  borderRadius: '3px',
+  cursor: 'pointer',
+  marginTop: '5px',
+  fontSize: '10px'
 };
 
 const createButtonContainer = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   bottom: 40,
   left: '50%',
   transform: 'translateX(-50%)',
-  zIndex: 1002,
+  zIndex: 20, // UI controls layer
 };
 
 const createButton = {
@@ -525,16 +768,17 @@ const createButton = {
   fontSize: 22,
   fontWeight: 700,
   cursor: 'pointer',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+  boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
 };
 
 const zoomControlStyle = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   top: 100,
   right: 20,
-  zIndex: 1003,
+  zIndex: 10, // Map controls layer
   display: 'flex',
-  flexDirection: 'column' as 'column',
+  flexDirection: 'column' as const,
   gap: 8,
 };
 
@@ -548,13 +792,14 @@ const zoomButton = {
   cursor: 'pointer',
   marginBottom: 4,
   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  transition: 'opacity 0.2s ease'
 };
 
 const recenterControlStyle = {
-  position: 'absolute' as 'absolute',
+  position: 'absolute' as const,
   top: 180,
   right: 20,
-  zIndex: 1003,
+  zIndex: 10, // Map controls layer
 };
 
 const offerPopupStyle = {

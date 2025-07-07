@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
@@ -7,21 +7,32 @@ const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
   const { currentVostcard } = useVostcard();
   const video = currentVostcard?.video ?? null;
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   console.log('➡️ currentVostcard:', currentVostcard);
   console.log('🎥 video object:', video);
 
   const videoURL = useMemo(() => {
     if (video instanceof Blob) {
-      const url = URL.createObjectURL(video);
-      console.log('Generated Blob URL:', url);
-      return url;
+      try {
+        const url = URL.createObjectURL(video);
+        console.log('Generated Blob URL:', url);
+        setVideoError(null);
+        return url;
+      } catch (error) {
+        console.error('❌ Error creating video URL:', error);
+        setVideoError('Failed to create video URL');
+        return null;
+      }
     } else if (typeof video === 'string') {
       console.log('Using stored video URL:', video);
+      setVideoError(null);
       return video;
     }
     return null;
-  }, [video]);
+  }, [video, retryCount]);
 
   useEffect(() => {
     return () => {
@@ -32,7 +43,7 @@ const CreateVostcardStep1: React.FC = () => {
   }, [videoURL, video]);
 
   const handleRecord = () => {
-    if (!currentVostcard?.username) {
+    if (currentVostcard && !currentVostcard.username) {
       console.warn('⚠️ Username missing. Using fallback Anonymous username.');
       currentVostcard.username = 'Anonymous';
     }
@@ -48,7 +59,60 @@ const CreateVostcardStep1: React.FC = () => {
       return;
     }
 
+    if (videoError) {
+      alert('❌ Video has errors. Please record a new video.');
+      return;
+    }
+
     navigate('/create-step2');
+  };
+
+  const handleVideoError = (error: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const target = error.target as HTMLVideoElement;
+    const errorMessage = target.error?.message || 'Unknown video error';
+    
+    console.error('❌ Video playback error:', {
+      error: target.error,
+      message: errorMessage,
+      code: target.error?.code,
+      videoURL,
+      videoType: video?.type || typeof video
+    });
+
+    setVideoError(`Video playback error: ${errorMessage}`);
+    setIsVideoLoading(false);
+  };
+
+  const handleVideoLoadStart = () => {
+    console.log('📹 Video loading started');
+    setIsVideoLoading(true);
+    setVideoError(null);
+  };
+
+  const handleVideoLoadedData = () => {
+    console.log('📹 Video data loaded successfully');
+    setIsVideoLoading(false);
+    setVideoError(null);
+  };
+
+  const handleVideoCanPlay = () => {
+    console.log('📹 Video can play');
+    setIsVideoLoading(false);
+    setVideoError(null);
+  };
+
+  const handleRetryVideo = () => {
+    console.log('🔄 Retrying video load');
+    setRetryCount(prev => prev + 1);
+    setVideoError(null);
+    setIsVideoLoading(true);
+  };
+
+  const handleRecordNew = () => {
+    console.log('🎬 Recording new video');
+    setVideoError(null);
+    setRetryCount(0);
+    navigate('/scrolling-camera');
   };
 
   return (
@@ -89,21 +153,100 @@ const CreateVostcardStep1: React.FC = () => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
+          padding: '20px',
         }}
       >
         {videoURL ? (
-          <video
-            src={videoURL}
-            controls
-            style={{
-              width: '192px',
-              height: '272px',
-              borderRadius: 16,
-              backgroundColor: '#F2F2F2',
-              objectFit: 'cover',
-            }}
-            onError={() => console.error('❌ Error loading video at', videoURL)}
-          />
+          <div style={{ position: 'relative', width: '192px', height: '272px' }}>
+            <video
+              src={videoURL}
+              controls
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: 16,
+                backgroundColor: '#F2F2F2',
+                objectFit: 'cover',
+              }}
+              onError={handleVideoError}
+              onLoadStart={handleVideoLoadStart}
+              onLoadedData={handleVideoLoadedData}
+              onCanPlay={handleVideoCanPlay}
+              playsInline
+            />
+            
+            {/* Loading indicator */}
+            {isVideoLoading && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 16,
+                color: 'white',
+                fontSize: '14px'
+              }}>
+                Loading video...
+              </div>
+            )}
+            
+            {/* Error overlay */}
+            {videoError && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(255, 0, 0, 0.9)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 16,
+                color: 'white',
+                fontSize: '12px',
+                padding: '10px',
+                textAlign: 'center'
+              }}>
+                <div style={{ marginBottom: '10px' }}>❌ {videoError}</div>
+                <button
+                  onClick={handleRetryVideo}
+                  style={{
+                    backgroundColor: 'white',
+                    color: 'red',
+                    border: 'none',
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    marginBottom: '6px'
+                  }}
+                >
+                  Retry
+                </button>
+                <button
+                  onClick={handleRecordNew}
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    border: '1px solid white',
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Record New
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <div
             onClick={handleRecord}
@@ -183,20 +326,36 @@ const CreateVostcardStep1: React.FC = () => {
         {/* ✅ Save & Continue */}
         <button
           onClick={handleSaveAndContinue}
-          disabled={!video}
+          disabled={!video || !!videoError}
           style={{
-            backgroundColor: video ? '#002B4D' : '#888',
+            backgroundColor: (video && !videoError) ? '#002B4D' : '#888',
             color: 'white',
             border: 'none',
             width: '100%',
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
-            cursor: video ? 'pointer' : 'not-allowed',
+            cursor: (video && !videoError) ? 'pointer' : 'not-allowed',
           }}
         >
-          Save & Continue
+          {videoError ? 'Fix Video to Continue' : 'Save & Continue'}
         </button>
+        
+        {/* Error message */}
+        {videoError && (
+          <div style={{
+            backgroundColor: '#ffebee',
+            color: '#c62828',
+            padding: '12px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            textAlign: 'center',
+            width: '100%',
+            marginTop: '8px'
+          }}>
+            Video Error: {videoError}
+          </div>
+        )}
       </div>
     </div>
   );

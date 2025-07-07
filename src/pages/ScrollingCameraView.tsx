@@ -21,6 +21,10 @@ const ScrollingCameraView: React.FC = () => {
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Device detection
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isIPhone = /iPhone/.test(navigator.userAgent);
+
   // Get script from URL params
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -57,19 +61,62 @@ const ScrollingCameraView: React.FC = () => {
     getCurrentLocation();
   }, []);
 
-  // Start camera
+  // Start camera with improved constraints for iPhone
   useEffect(() => {
     const startCamera = async () => {
       try {
+        // Enhanced video constraints for better iPhone compatibility
+        const videoConstraints: MediaTrackConstraints = {
+          facingMode,
+          width: { ideal: 1920, max: 1920 },
+          height: { ideal: 1080, max: 1080 },
+          frameRate: { ideal: 30, max: 30 }
+        };
+
+        // For iPhone, prioritize portrait orientation
+        if (isIPhone) {
+          videoConstraints.width = { ideal: 1080, max: 1080 };
+          videoConstraints.height = { ideal: 1920, max: 1920 };
+          console.log('📱 iPhone detected - using portrait video constraints');
+        }
+
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode } 
+          video: videoConstraints,
+          audio: false
         });
+        
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+
+        // Log actual video track settings
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const settings = videoTrack.getSettings();
+          console.log('📱 Video track settings:', {
+            width: settings.width,
+            height: settings.height,
+            facingMode: settings.facingMode,
+            frameRate: settings.frameRate
+          });
+        }
+
       } catch (err) {
         console.error('Error accessing camera:', err);
+        // Fallback to basic constraints if enhanced ones fail
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode } 
+          });
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+          console.log('📱 Using fallback camera constraints');
+        } catch (fallbackErr) {
+          console.error('Fallback camera access also failed:', fallbackErr);
+        }
       }
     };
 
@@ -78,31 +125,52 @@ const ScrollingCameraView: React.FC = () => {
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
-  }, [facingMode]);
+  }, [facingMode, isIPhone]);
 
   const handleStartRecording = () => {
     if (streamRef.current) {
+      // Enhanced MIME type detection with better fallbacks
       const getSupportedMimeType = () => {
         const types = [
-          'video/mp4;codecs=h264',
-          'video/webm;codecs=h264',
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm'
+          'video/mp4;codecs=avc1.42E01E,mp4a.40.2', // H.264 + AAC (best compatibility)
+          'video/mp4;codecs=avc1.42E01E', // H.264 video only
+          'video/webm;codecs=vp9,opus', // VP9 + Opus
+          'video/webm;codecs=vp9', // VP9 video only
+          'video/webm;codecs=vp8,opus', // VP8 + Opus
+          'video/webm;codecs=vp8', // VP8 video only
+          'video/webm;codecs=h264,opus', // H.264 in WebM + Opus
+          'video/webm;codecs=h264', // H.264 in WebM
+          'video/webm', // WebM fallback
+          'video/mp4', // MP4 fallback
+          '' // Let browser decide
         ];
         
         for (const type of types) {
-          if (MediaRecorder.isTypeSupported(type)) {
-            return type;
+          if (type === '' || MediaRecorder.isTypeSupported(type)) {
+            console.log('📹 Selected MIME type:', type || 'browser default');
+            return type || undefined;
           }
         }
-        return 'video/webm';
+        console.warn('⚠️ No supported MIME types found, using browser default');
+        return undefined;
       };
 
       const mimeType = getSupportedMimeType();
-      const mediaRecorder = new MediaRecorder(streamRef.current, {
-        mimeType,
-      });
+      
+      // Create MediaRecorder with improved options
+      const options: MediaRecorderOptions = {};
+      if (mimeType) {
+        options.mimeType = mimeType;
+      }
+      
+      // Add bitrate for better quality/size balance
+      try {
+        options.videoBitsPerSecond = 2500000; // 2.5 Mbps
+      } catch (err) {
+        console.log('📹 Bitrate setting not supported, using default');
+      }
+
+      const mediaRecorder = new MediaRecorder(streamRef.current, options);
       mediaRecorderRef.current = mediaRecorder;
       recordedChunks.current = [];
 
@@ -113,7 +181,16 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks.current, { type: mimeType });
+        const finalMimeType = mimeType || 'video/webm';
+        const blob = new Blob(recordedChunks.current, { type: finalMimeType });
+        
+        console.log('📹 Video recording completed:', {
+          size: blob.size,
+          type: blob.type,
+          isIPhone,
+          chunks: recordedChunks.current.length
+        });
+
         // Pass location to setVideo if available
         if (userLocation) {
           setVideo(blob, userLocation);
@@ -130,6 +207,16 @@ const ScrollingCameraView: React.FC = () => {
         } else {
           // If no script, we came from create step 1
           navigate('/create-step1');
+        }
+      };
+
+      mediaRecorder.onerror = (event) => {
+        console.error('📹 MediaRecorder error:', event);
+        alert('❌ Recording error occurred. Please try again.');
+        setIsRecording(false);
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
         }
       };
 
@@ -199,6 +286,23 @@ const ScrollingCameraView: React.FC = () => {
         {userLocation ? '📍' : '📍?'}
       </div>
 
+      {/* Device info for debugging */}
+      {isIPhone && (
+        <div style={{
+          position: 'absolute',
+          top: '160px',
+          left: '20px',
+          background: 'rgba(0, 0, 0, 0.7)',
+          color: 'white',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 10
+        }}>
+          📱 iPhone Mode
+        </div>
+      )}
+
       {/* Top Controls */}
       <div className="top-controls">
         {/* Close Button */}
@@ -214,6 +318,9 @@ const ScrollingCameraView: React.FC = () => {
         playsInline
         muted
         className="camera-preview"
+        style={{
+          transform: isIPhone && facingMode === 'user' ? 'scaleX(-1)' : 'none' // Mirror front camera on iPhone
+        }}
       />
 
       {/* Scrolling Script Overlay */}
