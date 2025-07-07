@@ -111,7 +111,14 @@ const UserSettingsView: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      height: '100vh',
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
       {/* Header */}
       <div style={{
         backgroundColor: '#07345c',
@@ -122,6 +129,7 @@ const UserSettingsView: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
+        flexShrink: 0,
       }}>
         <h1 style={{
           color: 'white',
@@ -148,7 +156,14 @@ const UserSettingsView: React.FC = () => {
         </button>
       </div>
 
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
+      {/* Scrollable Content */}
+      <div style={{ 
+        flex: 1,
+        overflow: 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: 'touch'
+      }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
         {/* Avatar Section */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{
@@ -458,6 +473,7 @@ const UserSettingsView: React.FC = () => {
             placeholder="Enter your public message..."
           />
         </div>
+       </div>
       </div>
     </div>
   );
