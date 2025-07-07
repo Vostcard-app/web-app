@@ -31,6 +31,7 @@ import ScriptToolView from './pages/ScriptToolView';
 import LikedVostcardsView from './pages/LikedVostcardsView';
 import FollowingView from './pages/FollowingView';
 import UserProfileView from './pages/UserProfileView';
+import UserSettingsView from './pages/UserSettingsView';
 
 function App() {
   return (
@@ -80,6 +81,7 @@ function App() {
 
             {/* ⚙️ Settings */}
             <Route path="/settings" element={<SettingsView />} />
+            <Route path="/user-settings" element={<UserSettingsView />} />
             <Route path="/account-settings" element={<AccountSettingsView />} />
 
             {/* 📣 Advertiser Portal */}

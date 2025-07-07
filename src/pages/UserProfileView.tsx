@@ -222,6 +222,26 @@ const UserProfileView: React.FC = () => {
           </div>
         )}
         <h2>{profile.username}</h2>
+        
+        {/* ✏️ Edit Profile Button */}
+        {isCurrentUser && (
+          <button
+            onClick={() => navigate('/user-settings')}
+            style={{
+              background: '#007aff',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              padding: '8px 16px',
+              cursor: 'pointer',
+              fontSize: 14,
+              margin: '10px 0',
+            }}
+          >
+            Edit Profile
+          </button>
+        )}
+        
         {profile.message && (
           <p style={{ color: '#666', fontStyle: 'italic' }}>
             "{profile.message}"
@@ -252,37 +272,23 @@ const UserProfileView: React.FC = () => {
         </div>
       </div>
 
-      {/* ✏️ Edit or Follow */}
-      {isCurrentUser ? (
-        <button
-          onClick={() => navigate('/settings')}
-          style={{
-            background: '#007aff',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            padding: '10px 16px',
-            cursor: 'pointer',
-            marginBottom: 20,
-          }}
-        >
-          <FaUserEdit /> Edit Profile
-        </button>
-      ) : (
-        <button
-          onClick={handleFollowToggle}
-          style={{
-            background: isFollowing ? '#888' : '#007aff',
-            color: 'white',
-            border: 'none',
-            borderRadius: 6,
-            padding: '10px 16px',
-            cursor: 'pointer',
-            marginBottom: 20,
-          }}
-        >
-          {isFollowing ? 'Unfollow' : 'Follow'}
-        </button>
+      {/* ✏️ Follow Button for other users */}
+      {!isCurrentUser && (
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <button
+            onClick={handleFollowToggle}
+            style={{
+              background: isFollowing ? '#888' : '#007aff',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              padding: '10px 16px',
+              cursor: 'pointer',
+            }}
+          >
+            {isFollowing ? 'Unfollow' : 'Follow'}
+          </button>
+        </div>
       )}
 
       {/* 📷 Posted Vostcards Grid */}
