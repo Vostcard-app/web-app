@@ -65,7 +65,7 @@ export default function RegistrationPage() {
 
       // Send email verification
       await sendEmailVerification(user);
-      window.alert('Registration successful! Check your email to verify your account.');
+      window.alert('Registration successful! Please verify your email before logging in. It may go to spam.');
 
       // Save extra info to Firestore
       if (formType === "user") {
@@ -90,7 +90,7 @@ export default function RegistrationPage() {
       await auth.signOut();
 
       // Redirect to login page with a success message
-      navigate("/login", { state: { message: "Registration successful! Please verify your email before logging in." } });
+      navigate("/login", { state: { message: "Registration successful! Please verify your email before logging in. It may go to spam." } });
     } catch (err: any) {
       console.error('Registration error:', err.code, err.message, err);
       setError((err.code ? err.code + ': ' : '') + (err.message || 'Registration failed.'));

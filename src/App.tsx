@@ -30,6 +30,7 @@ import ScriptEditorView from './pages/ScriptEditorView';
 import ScriptToolView from './pages/ScriptToolView';
 import LikedVostcardsView from './pages/LikedVostcardsView';
 import FollowingView from './pages/FollowingView';
+import UserProfileView from './pages/UserProfileView';
 
 function App() {
   return (
@@ -73,6 +74,9 @@ function App() {
 
             {/* 📄 Vostcard Detail */}
             <Route path="/vostcard/:id" element={<VostcardDetailView />} />
+
+            {/* 👤 User Profile */}
+            <Route path="/profile/:userId" element={<UserProfileView />} />
 
             {/* ⚙️ Settings */}
             <Route path="/settings" element={<SettingsView />} />

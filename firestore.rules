@@ -21,8 +21,9 @@ service cloud.firestore {
     
     // Allow authenticated users to read and write their own user profiles
     // Allow any authenticated user to read basic user info for following functionality
+    // Allow unauthenticated reads for username uniqueness check during registration
     match /users/{userId} {
-      allow read: if request.auth != null; // Allow authenticated users to read user profiles (for following)
+      allow read: if true; // Allow unauthenticated reads for username checking and authenticated reads for following
       allow write: if request.auth != null && request.auth.uid == userId; // Only allow users to write their own profile
       allow create: if request.auth != null && request.auth.uid == userId; // Explicitly allow creating user documents
       
