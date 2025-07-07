@@ -33,6 +33,7 @@ import FollowingView from './pages/FollowingView';
 import UserProfileView from './pages/UserProfileView';
 import UserSettingsView from './pages/UserSettingsView';
 import SuggestionBoxView from './pages/SuggestionBoxView';
+import FlagFormView from './pages/FlagFormView';
 
 function App() {
   return (
@@ -76,6 +77,9 @@ function App() {
 
             {/* 📄 Vostcard Detail */}
             <Route path="/vostcard/:id" element={<VostcardDetailView />} />
+
+            {/* 🚩 Flag Vostcard */}
+            <Route path="/flag/:vostcardID/:title/:username" element={<FlagFormView />} />
 
             {/* 👤 User Profile */}
             <Route path="/profile/:userId" element={<UserProfileView />} />
