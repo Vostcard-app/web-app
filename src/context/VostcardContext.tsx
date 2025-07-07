@@ -20,6 +20,7 @@ export interface Vostcard {
   geo: { latitude: number; longitude: number } | null;
   username: string;
   userID: string;
+  recipientUserID?: string; // For private sharing - who receives this private Vostcard
   createdAt: string;
   updatedAt: string;
   isOffer?: boolean; // New field for offers

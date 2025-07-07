@@ -29,6 +29,13 @@ service cloud.firestore {
         allow read: if true; // Anyone can read rating statistics
         allow write: if request.auth != null; // Only authenticated users can update stats
       }
+      
+      // Allow authenticated users to manage comments
+      match /comments/{commentId} {
+        allow read: if true; // Anyone can read comments
+        allow create: if request.auth != null; // Authenticated users can create comments
+        allow delete: if request.auth != null && request.auth.uid == resource.data.userID; // Users can only delete their own comments
+      }
     }
     
     // Allow authenticated users to read and write their own user profiles
@@ -57,6 +64,23 @@ service cloud.firestore {
       allow create: if request.auth != null; // Allow authenticated users to create flag reports
       allow read: if request.auth != null && request.auth.uid == resource.data.flaggedBy; // Users can only read their own flags
       // Note: Updates and deletes should only be allowed for admins (not implemented yet)
+    }
+    
+    // Allow authenticated users to manage private Vostcards
+    match /privateVostcards/{privateVostcardId} {
+      allow create: if request.auth != null; // Allow authenticated users to create private Vostcards
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.senderUserID || 
+        request.auth.uid == resource.data.recipientUserID
+      ); // Users can only read private Vostcards they sent or received
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.senderUserID || 
+        request.auth.uid == resource.data.recipientUserID
+      ); // Users can only update private Vostcards they sent or received
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.senderUserID || 
+        request.auth.uid == resource.data.recipientUserID
+      ); // Users can only delete private Vostcards they sent or received
     }
   }
 } 

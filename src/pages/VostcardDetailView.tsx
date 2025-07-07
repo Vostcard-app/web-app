@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import FollowButton from '../components/FollowButton';
 import RatingStars from '../components/RatingStars';
+import CommentsSection from '../components/CommentsSection';
 import { RatingService, type RatingStats } from '../services/ratingService';
 
 const VostcardDetailView: React.FC = () => {
@@ -21,6 +22,7 @@ const VostcardDetailView: React.FC = () => {
   const [imageLoadError, setImageLoadError] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [currentUserRating, setCurrentUserRating] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
   const [ratingStats, setRatingStats] = useState<RatingStats>({
     vostcardID: '',
     averageRating: 0,
@@ -137,6 +139,18 @@ const VostcardDetailView: React.FC = () => {
       unsubscribeStats();
       unsubscribeUserRating();
     };
+  }, [id]);
+
+  // Set up real-time comment count listener
+  useEffect(() => {
+    if (!id) return;
+
+    const commentsRef = collection(db, 'vostcards', id, 'comments');
+    const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
+      setCommentCount(snapshot.size);
+    });
+
+    return unsubscribe;
   }, [id]);
 
   // Handle like toggle
@@ -310,9 +324,24 @@ const VostcardDetailView: React.FC = () => {
           <FaStar size={32} color="#ffc107" style={{ marginBottom: 4 }} />
           <div style={{ fontSize: 18 }}>{ratingStats.averageRating.toFixed(1)}</div>
         </div>
-        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
+        <div 
+          style={{ 
+            textAlign: 'center', 
+            cursor: 'pointer',
+            transition: 'transform 0.1s'
+          }}
+          onClick={() => {
+            const commentsSection = document.getElementById('comments-section');
+            if (commentsSection) {
+              commentsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
           <FaRegComment size={32} color="#222" style={{ marginBottom: 4 }} />
-          <div style={{ fontSize: 18 }}>{comments}</div>
+          <div style={{ fontSize: 18 }}>{commentCount}</div>
         </div>
         <div style={{ textAlign: 'center', cursor: 'pointer' }}>
           <FaShare size={32} color="#222" style={{ marginBottom: 4 }} />
@@ -363,6 +392,11 @@ const VostcardDetailView: React.FC = () => {
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         />
         <FaSyncAlt size={36} color="#007aff" style={{ cursor: 'pointer' }} />
+      </div>
+
+      {/* Comments Section */}
+      <div id="comments-section" style={{ margin: '32px 24px 40px 24px' }}>
+        <CommentsSection vostcardID={id!} />
       </div>
 
       {/* Modal for full-size photo */}
