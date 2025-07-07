@@ -3,10 +3,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { FaArrowLeft, FaUserEdit } from 'react-icons/fa';
+import { useVostcard } from '../context/VostcardContext';
+import { FaArrowLeft, FaUserEdit, FaHome, FaHeart } from 'react-icons/fa';
 
 interface UserProfile {
   id: string;
@@ -15,29 +16,72 @@ interface UserProfile {
   followerCount: number;
   followingCount: number;
   message?: string;
+  postedCount?: number;
+}
+
+interface PostedVostcard {
+  id: string;
+  title: string;
+  description: string;
+  photoURLs?: string[];
+  videoURL?: string;
+  createdAt?: any;
+  [key: string]: any;
 }
 
 const UserProfileView: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getLikeCount } = useVostcard();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [postedVostcards, setPostedVostcards] = useState<PostedVostcard[]>([]);
+  const [likeCounts, setLikeCounts] = useState<{ [vostcardId: string]: number }>({});
 
   const isCurrentUser = user?.uid === userId;
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndVostcards = async () => {
       try {
         if (!userId) return;
-        console.log('📥 Fetching user profile:', userId);
+        console.log('📥 Fetching user profile and vostcards:', userId);
 
+        // Fetch user profile
         const docRef = doc(db, 'users', userId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data();
+          
+          // Fetch posted vostcards count and data
+          const vostcardsQuery = query(
+            collection(db, 'vostcards'),
+            where('userID', '==', userId),
+            where('state', '==', 'posted')
+          );
+          const vostcardsSnapshot = await getDocs(vostcardsQuery);
+          const vostcardsData = vostcardsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as PostedVostcard[];
+
+          setPostedVostcards(vostcardsData);
+
+          // Load like counts for each vostcard
+          const counts: { [key: string]: number } = {};
+          for (const vostcard of vostcardsData) {
+            try {
+              const count = await getLikeCount(vostcard.id);
+              counts[vostcard.id] = count;
+            } catch (error) {
+              console.error(`Error loading like count for ${vostcard.id}:`, error);
+              counts[vostcard.id] = 0;
+            }
+          }
+          setLikeCounts(counts);
+
           setProfile({
             id: userId,
             username: data.username || 'Unknown User',
@@ -45,6 +89,7 @@ const UserProfileView: React.FC = () => {
             followerCount: data.followerCount || 0,
             followingCount: data.followingCount || 0,
             message: data.message || '',
+            postedCount: vostcardsData.length,
           });
 
           if (user && user.uid !== userId) {
@@ -62,8 +107,8 @@ const UserProfileView: React.FC = () => {
       }
     };
 
-    fetchProfile();
-  }, [userId, user]);
+    fetchProfileAndVostcards();
+  }, [userId, user, getLikeCount]);
 
   const handleFollowToggle = async () => {
     if (!user || !userId || isCurrentUser) return;
@@ -105,22 +150,44 @@ const UserProfileView: React.FC = () => {
   if (!profile) return <p>User not found.</p>;
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
-      {/* 🔙 Back */}
-      <button
-        onClick={() => navigate(-1)}
-        style={{
-          background: '#007aff',
+    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#07345c',
+        color: 'white',
+        padding: '32px 24px 24px 24px',
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <h1 style={{
           color: 'white',
-          border: 'none',
-          borderRadius: 6,
-          padding: '8px 12px',
-          marginBottom: 20,
-          cursor: 'pointer',
-        }}
-      >
-        <FaArrowLeft /> Back
-      </button>
+          fontWeight: 700,
+          fontSize: '2.5rem',
+          margin: 0,
+        }}>Vōstcard</h1>
+        <button
+          onClick={() => navigate("/home")}
+          style={{
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 56,
+            height: 56,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+            cursor: 'pointer',
+          }}
+        >
+          <FaHome style={{ color: 'white', fontSize: 28 }} />
+        </button>
+      </div>
+
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
 
       {/* 🖼️ Avatar */}
       <div style={{ textAlign: 'center' }}>
@@ -171,12 +238,16 @@ const UserProfileView: React.FC = () => {
           marginBottom: 20,
         }}
       >
-        <div>
-          <strong>{profile.followerCount}</strong>
+        <div style={{ textAlign: 'center' }}>
+          <strong style={{ color: '#007aff', fontSize: '1.5rem' }}>{profile.postedCount || 0}</strong>
+          <p style={{ color: '#999', margin: 0 }}>Posted</p>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <strong style={{ fontSize: '1.5rem' }}>{profile.followerCount}</strong>
           <p style={{ color: '#999', margin: 0 }}>Followers</p>
         </div>
-        <div>
-          <strong>{profile.followingCount}</strong>
+        <div style={{ textAlign: 'center' }}>
+          <strong style={{ fontSize: '1.5rem' }}>{profile.followingCount}</strong>
           <p style={{ color: '#999', margin: 0 }}>Following</p>
         </div>
       </div>
@@ -192,6 +263,7 @@ const UserProfileView: React.FC = () => {
             borderRadius: 6,
             padding: '10px 16px',
             cursor: 'pointer',
+            marginBottom: 20,
           }}
         >
           <FaUserEdit /> Edit Profile
@@ -206,19 +278,85 @@ const UserProfileView: React.FC = () => {
             borderRadius: 6,
             padding: '10px 16px',
             cursor: 'pointer',
+            marginBottom: 20,
           }}
         >
           {isFollowing ? 'Unfollow' : 'Follow'}
         </button>
       )}
+
+      {/* 📷 Posted Vostcards Grid */}
+      {postedVostcards.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 10,
+            marginTop: 10,
+          }}>
+            {postedVostcards.map((vostcard) => (
+              <div
+                key={vostcard.id}
+                style={{
+                  position: 'relative',
+                  aspectRatio: '1',
+                  backgroundColor: '#ddd',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigate(`/vostcard/${vostcard.id}`)}
+              >
+                {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
+                  <img
+                    src={vostcard.photoURLs[0]}
+                    alt={vostcard.title || 'Vostcard'}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#999',
+                    fontSize: 14,
+                  }}>
+                    No Photo
+                  </div>
+                )}
+                
+                {/* Like count overlay */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: 12,
+                  fontSize: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}>
+                  <FaHeart style={{ color: '#ff3040' }} />
+                  {likeCounts[vostcard.id] || 0}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      </div>
     </div>
   );
 };
 
 export default UserProfileView;
-
-// ✅ Add route in src/App.tsx:
-// <Route path="/profile/:userId" element={<UserProfileView />} />
-
-// ✅ Add link to this view anywhere user profiles are shown:
-// <Link to={`/profile/${userId}`}>View Profile</Link>
