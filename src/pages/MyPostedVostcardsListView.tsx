@@ -106,7 +106,6 @@ const MyPostedVostcardsListView = () => {
               background: 'white',
             }}>
               <h2 style={{ margin: '0 0 8px 0' }}>{vostcard.title || 'Untitled Vōstcard'}</h2>
-              <p>{vostcard.description || 'No description provided.'}</p>
               <p><strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}</p>
               <p><strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}</p>
               <button
