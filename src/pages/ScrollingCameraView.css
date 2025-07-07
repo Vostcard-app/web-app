@@ -43,7 +43,8 @@ body {
   font-size: 48px;
   line-height: 1.6;
   text-align: left;
-  width: 95%;
+  width: calc(95% - 65px);
+  padding: 0 40px 0 25px;
   font-weight: bold;
 
   /* 👇 Position text 1/4 down the screen */
