@@ -19,6 +19,7 @@ const VostcardDetailView: React.FC = () => {
   const [isLikedStatus, setIsLikedStatus] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
   useEffect(() => {
@@ -273,9 +274,21 @@ const VostcardDetailView: React.FC = () => {
 
       {/* Description Link */}
       <div style={{ textAlign: 'center', margin: '16px 0 0 0' }}>
-        <a href="#description" style={{ color: '#007aff', fontWeight: 700, fontSize: 24, textDecoration: 'underline', cursor: 'pointer' }}>Description</a>
+        <button 
+          onClick={() => setShowDescriptionModal(true)}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: '#007aff', 
+            fontWeight: 700, 
+            fontSize: 24, 
+            textDecoration: 'underline', 
+            cursor: 'pointer' 
+          }}
+        >
+          Description
+        </button>
       </div>
-      <div id="description" style={{ margin: '16px 24px 0 24px', color: '#444', fontSize: 18, textAlign: 'center' }}>{description}</div>
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>Posted: {createdAt}</div>
 
       {/* Bottom Icons */}
@@ -316,6 +329,76 @@ const VostcardDetailView: React.FC = () => {
             draggable={false}
             onContextMenu={e => e.preventDefault()}
           />
+        </div>
+      )}
+
+      {/* Description Modal */}
+      {showDescriptionModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px',
+          }}
+          onClick={() => setShowDescriptionModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: 16,
+              padding: '24px',
+              maxWidth: '90%',
+              maxHeight: '80%',
+              overflow: 'auto',
+              position: 'relative',
+              boxShadow: '0 4px 32px rgba(0,0,0,0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowDescriptionModal(false)}
+              style={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                background: 'none',
+                border: 'none',
+                fontSize: 24,
+                cursor: 'pointer',
+                color: '#666',
+                padding: 0,
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ×
+            </button>
+            
+            {/* Header */}
+            <h2 style={{ margin: '0 0 16px 0', fontSize: 24, fontWeight: 700, color: '#002B4D' }}>
+              Description
+            </h2>
+            
+            {/* Description content */}
+            <div style={{ 
+              color: '#444', 
+              fontSize: 16, 
+              lineHeight: 1.5,
+              whiteSpace: 'pre-wrap',
+              wordWrap: 'break-word'
+            }}>
+              {description || 'No description available.'}
+            </div>
+          </div>
         </div>
       )}
     </div>
