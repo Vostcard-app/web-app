@@ -179,8 +179,8 @@ const ScrollingCameraView: React.FC = () => {
           <div
             style={{
               backgroundColor: 'white',
-              width: '24px',
-              height: '24px',
+              width: '16px',
+              height: '16px',
               borderRadius: '2px',
             }}
           />
