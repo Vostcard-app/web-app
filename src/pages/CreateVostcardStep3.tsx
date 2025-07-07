@@ -169,10 +169,8 @@ const CreateVostcardStep3: React.FC = () => {
       
       console.log('✅ Vostcard posted successfully, navigating to home');
       
-      // Navigate to home with a slight delay to ensure proper state cleanup
-      setTimeout(() => {
-        navigate('/home', { replace: true, state: { refresh: true } });
-      }, 100);
+      // Simple navigation without complex state management
+      navigate('/home', { replace: true });
       
     } catch (error) {
       console.error('❌ Error posting vostcard:', error);

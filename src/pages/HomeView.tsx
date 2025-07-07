@@ -84,8 +84,7 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
 
-  // Check for refresh state from navigation
-  const shouldRefresh = location.state?.refresh;
+  // No complex refresh state management needed
 
   // Debug authentication state
   useEffect(() => {
@@ -95,10 +94,9 @@ const HomeView = () => {
       userID,
       userRole,
       loading,
-      authCurrentUser: !!auth.currentUser,
-      shouldRefresh
+      authCurrentUser: !!auth.currentUser
     });
-  }, [user, username, userID, userRole, loading, shouldRefresh]);
+  }, [user, username, userID, userRole, loading]);
 
   const handleLogout = async () => {
     try {
@@ -198,15 +196,10 @@ const HomeView = () => {
     getUserLocation();
   }, []);
 
-  // Load vostcards on mount and when coming back to the page
+  // Load vostcards on mount
   useEffect(() => {
-    loadVostcards(shouldRefresh);
-    
-    // Clear the refresh state after handling it
-    if (shouldRefresh) {
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [shouldRefresh]);
+    loadVostcards();
+  }, []);
 
   // Auto-refresh vostcards periodically (every 30 seconds)
   useEffect(() => {
@@ -483,7 +476,7 @@ const HomeView = () => {
       {loadingVostcards && (
         <div style={vostcardsLoadingOverlayStyle}>
           <div style={loadingContentStyle}>
-            {shouldRefresh ? 'Refreshing map...' : 'Loading Vōstcards...'}
+            Loading Vōstcards...
           </div>
         </div>
       )}
