@@ -54,7 +54,14 @@ const MyPostedVostcardsListView = () => {
   };
 
   return (
-    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5', position: 'relative' }}>
+    <div style={{ 
+      height: '100vh', 
+      width: '100vw', 
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
       {/* 🔵 Header with Home Icon */}
       <div style={{
         backgroundColor: '#002B4D',
@@ -64,8 +71,7 @@ const MyPostedVostcardsListView = () => {
         justifyContent: 'space-between',
         padding: '0 20px',
         color: 'white',
-        position: 'sticky',
-        top: 0,
+        flexShrink: 0,
         zIndex: 10
       }}>
         <h1 style={{ fontSize: '24px', margin: 0 }}>My Posted Vōstcards</h1>
@@ -78,14 +84,12 @@ const MyPostedVostcardsListView = () => {
 
       {/* 🔲 List of Posted Vostcards (Scrollable) */}
       <div style={{
-        position: 'absolute',
-        top: 70,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        flex: 1,
         overflowY: 'auto',
+        overflowX: 'hidden',
         padding: '20px',
         background: '#f5f5f5',
+        WebkitOverflowScrolling: 'touch', // Enable smooth scrolling on iOS
       }}>
         {loading ? (
           <p>Loading your posted Vostcards...</p>
