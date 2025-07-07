@@ -276,9 +276,6 @@ export default function ScriptToolView() {
             {loading ? "Saving..." : "Save & Continue"}
           </button>
         )}
-git add .
-git commit -m "Ready for Netlify deploy"
-git push origin main
 
         {/* Roll Cameras Button */}
         <button
