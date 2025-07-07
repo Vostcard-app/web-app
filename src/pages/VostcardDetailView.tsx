@@ -4,6 +4,7 @@ import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt 
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
+import FollowButton from '../components/FollowButton';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -125,9 +126,19 @@ const VostcardDetailView: React.FC = () => {
       </div>
 
       {/* User Info */}
-      <div style={{ display: 'flex', alignItems: 'center', margin: '24px 0 0 24px' }}>
-        <img src={avatarUrl} alt="avatar" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', marginRight: 16 }} />
-        <span style={{ fontWeight: 500, fontSize: 24 }}>{username}</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '24px 24px 0 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img src={avatarUrl} alt="avatar" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', marginRight: 16 }} />
+          <span style={{ fontWeight: 500, fontSize: 24 }}>{username}</span>
+        </div>
+        {vostcard.userID && (
+          <FollowButton 
+            targetUserId={vostcard.userID} 
+            targetUsername={username}
+            size="small"
+            variant="secondary"
+          />
+        )}
       </div>
 
       {/* Title */}

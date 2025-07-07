@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { VostcardProvider } from "./context/VostcardContext";
 import { ScriptProvider } from "./context/ScriptContext";
+import { FollowingProvider } from "./context/FollowingContext";
 
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -28,12 +29,14 @@ import ScriptLibraryView from './pages/ScriptLibraryView';
 import ScriptEditorView from './pages/ScriptEditorView';
 import ScriptToolView from './pages/ScriptToolView';
 import LikedVostcardsView from './pages/LikedVostcardsView';
+import FollowingView from './pages/FollowingView';
 
 function App() {
   return (
     <VostcardProvider>
       <ScriptProvider>
-        <Router>
+        <FollowingProvider>
+          <Router>
           <Routes>
             {/* 🔑 Authentication */}
             <Route path="/" element={<LandingPage />} />
@@ -48,6 +51,7 @@ function App() {
             <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
             <Route path="/edit-my-vostcards" element={<EditMyVostcardListView />} />
             <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
+            <Route path="/following" element={<FollowingView />} />
 
             {/* 📜 Script Management */}
             <Route path="/scripts" element={<ScriptLibraryView />} />
@@ -87,6 +91,7 @@ function App() {
             <Route path="/script-tool" element={<ScriptToolView />} />
           </Routes>
         </Router>
+        </FollowingProvider>
       </ScriptProvider>
     </VostcardProvider>
   );
