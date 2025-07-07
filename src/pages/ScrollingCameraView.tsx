@@ -149,7 +149,7 @@ const ScrollingCameraView: React.FC = () => {
       {/* Recording Timer - Always visible and centered */}
       <div className="recording-timer">
         {isRecording && <div className="recording-dot"></div>}
-        {formatTime(recordingTime)}
+        <span>{formatTime(recordingTime)}</span>
       </div>
 
       {/* Top Controls */}

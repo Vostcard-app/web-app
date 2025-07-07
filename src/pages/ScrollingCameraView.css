@@ -163,14 +163,15 @@ body {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.9);
   color: white;
   padding: 12px 20px;
   border-radius: 25px;
   font-size: 36px;
   font-weight: bold;
   font-family: monospace;
-  z-index: 3;
+  z-index: 10;
+  border: 2px solid white;
 }
 
 .recording-dot {
