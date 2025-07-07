@@ -40,12 +40,26 @@ const LikedVostcardsView: React.FC = () => {
         // Load liked vostcard IDs from the new like system
         await loadLikedVostcards();
         
-        if (contextLikedVostcards.length === 0) {
-          setLikedVostcards([]);
-          setLoading(false);
-          return;
-        }
+      } catch (err: any) {
+        console.error('Failed to fetch liked Vōstcards:', err);
+        setError('Failed to load liked Vōstcards. Please try again.');
+        setLoading(false);
+      }
+    };
 
+    fetchLikedVostcards();
+  }, [user, loadLikedVostcards]);
+
+  // Separate effect to handle the liked vostcards data
+  useEffect(() => {
+    const fetchVostcardDetails = async () => {
+      if (contextLikedVostcards.length === 0) {
+        setLikedVostcards([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
         // Fetch the actual vostcard data
         const vostcardIDs = contextLikedVostcards.map(like => like.vostcardID);
         
@@ -69,15 +83,15 @@ const LikedVostcardsView: React.FC = () => {
 
         setLikedVostcards(vostcards);
       } catch (err: any) {
-        console.error('Failed to fetch liked Vōstcards:', err);
-        setError('Failed to load liked Vōstcards. Please try again.');
+        console.error('Failed to fetch Vōstcard details:', err);
+        setError('Failed to load Vōstcard details. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLikedVostcards();
-  }, [user, loadLikedVostcards, contextLikedVostcards]);
+    fetchVostcardDetails();
+  }, [contextLikedVostcards]);
 
   const handleGoHome = () => navigate('/home');
 
