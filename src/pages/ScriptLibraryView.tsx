@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaHome } from 'react-icons/fa';
+import { FaPlus, FaHome, FaTrash } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const ScriptLibraryView: React.FC = () => {
   const navigate = useNavigate();
-  const { scripts, loadScripts } = useVostcard();
+  const { scripts, loadScripts, deleteScript } = useVostcard();
 
   useEffect(() => {
     console.log('📜 Loading scripts in Script Library...');
@@ -19,7 +19,7 @@ const ScriptLibraryView: React.FC = () => {
   }, [loadScripts]);
 
   const handleCreateNew = () => {
-    navigate('/script-tool'); // Navigate to script tool to create new script
+    navigate('/script-editor/new'); // Navigate to script editor to create new script
   };
 
   const handleUseScript = (script: any) => {
@@ -38,6 +38,17 @@ const ScriptLibraryView: React.FC = () => {
     }
     // Navigate to script editor with the script ID
     navigate(`/script-editor/${script.id}`);
+  };
+
+  const handleDeleteScript = (script: any) => {
+    if (!script?.id) {
+      alert('Script ID not found.');
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to delete "${script.title || 'Untitled'}"? This action cannot be undone.`)) {
+      deleteScript(script.id);
+    }
   };
 
   return (
@@ -173,34 +184,53 @@ const ScriptLibraryView: React.FC = () => {
                 }}>
                   Created {script.createdAt ? new Date(script.createdAt).toLocaleDateString() : 'recently'}
                 </div>
-                <div style={{ display: 'flex', gap: 8, alignSelf: 'flex-start' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      onClick={() => handleUseScript(script)}
+                      style={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      Load Script
+                    </button>
+                    <button
+                      onClick={() => handleEditScript(script)}
+                      style={{
+                        background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 16px',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      Edit
+                    </button>
+                  </div>
                   <button
-                    onClick={() => handleUseScript(script)}
+                    onClick={() => handleDeleteScript(script)}
                     style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
                       color: 'white',
                       border: 'none',
-                      padding: '8px 16px',
+                      padding: '8px 12px',
                       borderRadius: 8,
                       cursor: 'pointer',
-                      fontSize: '0.9rem'
+                      fontSize: '0.9rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   >
-                    Load Script
-                  </button>
-                  <button
-                    onClick={() => handleEditScript(script)}
-                    style={{
-                      background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-                      color: 'white',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      fontSize: '0.9rem'
-                    }}
-                  >
-                    Edit
+                    <FaTrash />
                   </button>
                 </div>
               </div>
