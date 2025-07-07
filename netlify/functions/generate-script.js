@@ -27,9 +27,11 @@ exports.handler = async (event, context) => {
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'OpenAI API key not configured' }) };
     }
 
-    const prompt = `Write a 30-second video script in a "${style}" style about: ${topic}. 
-    Make it engaging, conversational, and perfect for a short video. 
-    Keep it under 100 words and make it sound natural when spoken.`;
+    const prompt = `Write a 30-second spoken dialog in a "${style}" style about: ${topic}. 
+    Write ONLY the words that should be spoken directly to the camera - no stage directions, no camera instructions, no scene descriptions, no action cues.
+    Make it engaging, conversational, and perfect for speaking directly to viewers.
+    Keep it under 100 words and make it sound natural when spoken aloud.
+    Do not include any brackets, parentheses, or formatting - just the pure spoken text.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
