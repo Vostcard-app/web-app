@@ -1,13 +1,12 @@
 import { db } from '../firebase/firebaseConfig';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, Timestamp, setDoc } from 'firebase/firestore';
 import type { Script } from '../types/ScriptModel';
 
 export const ScriptService = {
   async getUserScripts(userID: string): Promise<Script[]> {
     try {
-      const scriptsRef = collection(db, 'scripts');
-      const q = query(scriptsRef, where('authorId', '==', userID));
-      const querySnapshot = await getDocs(q);
+      const scriptsCol = collection(db, 'scripts', userID, 'userScripts');
+      const querySnapshot = await getDocs(scriptsCol);
 
       const scripts: Script[] = [];
       querySnapshot.forEach((docSnap) => {
@@ -16,9 +15,9 @@ export const ScriptService = {
           id: docSnap.id,
           title: data.title,
           content: data.content,
-          createdAt: data.createdAt?.toDate().toISOString() || '',
-          updatedAt: data.updatedAt?.toDate().toISOString() || '',
-          authorId: data.authorId || '',
+          createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : data.createdAt || '',
+          updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : data.updatedAt || '',
+          authorId: userID,
           tags: data.tags || [],
         });
       });
@@ -32,24 +31,25 @@ export const ScriptService = {
 
   async createScript(userID: string, title: string, content: string): Promise<Script> {
     try {
-      const scriptsRef = collection(db, 'scripts');
-      const docRef = await addDoc(scriptsRef, {
+      const scriptId = Date.now().toString();
+      const scriptRef = doc(db, 'scripts', userID, 'userScripts', scriptId);
+      const newScript = {
         title,
         content,
-        authorId: userID,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        tags: [],
-      });
-      console.log('✅ Script created with ID:', docRef.id);
-
-      return {
-        id: docRef.id,
-        title,
-        content,
-        authorId: userID,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        tags: [],
+      };
+      await setDoc(scriptRef, newScript);
+      console.log('✅ Script created with ID:', scriptId);
+
+      return {
+        id: scriptId,
+        title,
+        content,
+        authorId: userID,
+        createdAt: newScript.createdAt,
+        updatedAt: newScript.updatedAt,
         tags: [],
       };
     } catch (error) {
@@ -60,11 +60,11 @@ export const ScriptService = {
 
   async updateScript(userID: string, scriptId: string, title: string, content: string): Promise<void> {
     try {
-      const scriptRef = doc(db, 'scripts', scriptId);
+      const scriptRef = doc(db, 'scripts', userID, 'userScripts', scriptId);
       await updateDoc(scriptRef, {
         title,
         content,
-        updatedAt: Timestamp.now(),
+        updatedAt: new Date().toISOString(),
       });
       console.log('✅ Script updated successfully');
     } catch (error) {
@@ -75,7 +75,7 @@ export const ScriptService = {
 
   async deleteScript(userID: string, scriptId: string): Promise<void> {
     try {
-      const scriptRef = doc(db, 'scripts', scriptId);
+      const scriptRef = doc(db, 'scripts', userID, 'userScripts', scriptId);
       await deleteDoc(scriptRef);
       console.log('✅ Script deleted successfully');
     } catch (error) {
@@ -86,9 +86,8 @@ export const ScriptService = {
 
   async searchScripts(userID: string, searchTerm: string): Promise<Script[]> {
     try {
-      const scriptsRef = collection(db, 'scripts');
-      const q = query(scriptsRef, where('authorId', '==', userID));
-      const querySnapshot = await getDocs(q);
+      const scriptsCol = collection(db, 'scripts', userID, 'userScripts');
+      const querySnapshot = await getDocs(scriptsCol);
 
       const scripts: Script[] = [];
       querySnapshot.forEach((docSnap) => {
@@ -98,9 +97,9 @@ export const ScriptService = {
             id: docSnap.id,
             title: data.title,
             content: data.content,
-            createdAt: data.createdAt?.toDate().toISOString() || '',
-            updatedAt: data.updatedAt?.toDate().toISOString() || '',
-            authorId: data.authorId || '',
+            createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : data.createdAt || '',
+            updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : data.updatedAt || '',
+            authorId: userID,
             tags: data.tags || [],
           });
         }

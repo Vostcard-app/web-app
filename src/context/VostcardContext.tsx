@@ -5,6 +5,7 @@ import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, o
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
+import { ScriptService } from '../services/scriptService';
 
 export interface Vostcard {
   id: string;
@@ -175,14 +176,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      const scriptsRef = collection(db, 'scripts');
-      const q = query(scriptsRef, where('authorId', '==', user.uid));
-      const snapshot = await getDocs(q);
-      
-      const loadedScripts: Script[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Script[];
+      const loadedScripts = await ScriptService.getUserScripts(user.uid);
       setScripts(loadedScripts);
       console.log('📜 Loaded scripts from Firestore:', loadedScripts);
     } catch (error) {
@@ -194,14 +188,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const saveScript = useCallback(async (script: Script) => {
     try {
-      const scriptRef = script.id
-        ? doc(db, 'scripts', script.id)
-        : doc(collection(db, 'scripts'));
-      await setDoc(scriptRef, {
-        title: script.title,
-        content: script.content,
-        updatedAt: Timestamp.now(),
-      });
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      if (script.id) {
+        // Update existing script
+        await ScriptService.updateScript(user.uid, script.id, script.title, script.content);
+      } else {
+        // Create new script
+        await ScriptService.createScript(user.uid, script.title, script.content);
+      }
+      
       console.log('✅ Script saved to Firestore:', script);
       loadScripts();
     } catch (error) {
@@ -212,8 +211,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const deleteScript = useCallback(async (id: string) => {
     try {
-      const scriptRef = doc(db, 'scripts', id);
-      await deleteDoc(scriptRef);
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      await ScriptService.deleteScript(user.uid, id);
       console.log('🗑️ Script deleted from Firestore:', id);
       loadScripts();
     } catch (error) {
@@ -224,11 +227,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateScriptTitle = useCallback(async (scriptId: string, newTitle: string) => {
     try {
-      const scriptRef = doc(db, 'scripts', scriptId);
-      await updateDoc(scriptRef, {
-        title: newTitle,
-        updatedAt: Timestamp.now(),
-      });
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      // Get current script to preserve content
+      const currentScript = scripts.find(s => s.id === scriptId);
+      if (!currentScript) {
+        throw new Error('Script not found');
+      }
+
+      await ScriptService.updateScript(user.uid, scriptId, newTitle, currentScript.content);
       console.log('✅ Script title updated in Firestore:', scriptId, newTitle);
       // Don't reload scripts automatically to avoid permission errors
     } catch (error) {
@@ -236,16 +246,16 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Don't show alert for script title update failures, just log it
       console.log('Script title update failed, but continuing...');
     }
-  }, []);
+  }, [scripts]);
 
   const updateScript = useCallback(async (scriptId: string, title: string, content: string) => {
     try {
-      const scriptRef = doc(db, 'scripts', scriptId);
-      await updateDoc(scriptRef, {
-        title: title,
-        content: content,
-        updatedAt: Timestamp.now(),
-      });
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      await ScriptService.updateScript(user.uid, scriptId, title, content);
       console.log('✅ Script updated in Firestore:', scriptId);
       // Update local scripts state
       setScripts(prev => prev.map(script => 

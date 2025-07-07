@@ -2,9 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Allow authenticated users to read and write their own scripts
-    match /scripts/{scriptId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.authorId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.authorId;
+    match /scripts/{userId}/userScripts/{scriptId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
     // Allow authenticated users to read and write their own vostcards
