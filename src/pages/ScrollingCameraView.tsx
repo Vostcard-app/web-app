@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
+import { MdCameraswitch } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
 import './ScrollingCameraView.css';
 
@@ -14,6 +15,7 @@ const ScrollingCameraView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [script, setScript] = useState('');
   const [recordingTime, setRecordingTime] = useState(30);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -31,7 +33,9 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode } 
+        });
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -46,7 +50,7 @@ const ScrollingCameraView: React.FC = () => {
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
-  }, []);
+  }, [facingMode]);
 
   const handleStartRecording = () => {
     if (streamRef.current) {
@@ -129,6 +133,16 @@ const ScrollingCameraView: React.FC = () => {
     return seconds.toString();
   };
 
+  // Switch camera
+  const handleSwitchCamera = () => {
+    setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+  };
+
+  // Dismiss/close camera
+  const handleDismiss = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="scrolling-camera-container">
       {/* Recording Timer - Always visible and centered */}
@@ -163,29 +177,42 @@ const ScrollingCameraView: React.FC = () => {
         </div>
       )}
 
-      {/* Record Button */}
-      <button
-        className="record-button"
-        onClick={isRecording ? handleStopRecording : handleStartRecording}
-        style={{
-          backgroundColor: 'red',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {isRecording && (
-          <div
-            style={{
-              backgroundColor: 'white',
-              width: '16px',
-              height: '16px',
-              borderRadius: '2px',
-            }}
-          />
-        )}
-      </button>
+      {/* Bottom Controls */}
+      <div className="bottom-controls">
+        {/* Dismiss Button */}
+        <button className="bottom-control-button" onClick={handleDismiss}>
+          <AiOutlineClose size={24} color="white" />
+        </button>
+
+        {/* Record Button */}
+        <button
+          className="record-button"
+          onClick={isRecording ? handleStopRecording : handleStartRecording}
+          style={{
+            backgroundColor: 'red',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {isRecording && (
+            <div
+              style={{
+                backgroundColor: 'white',
+                width: '16px',
+                height: '16px',
+                borderRadius: '2px',
+              }}
+            />
+          )}
+        </button>
+
+        {/* Camera Switch Button */}
+        <button className="bottom-control-button" onClick={handleSwitchCamera}>
+          <MdCameraswitch size={24} color="white" />
+        </button>
+      </div>
     </div>
   );
 };

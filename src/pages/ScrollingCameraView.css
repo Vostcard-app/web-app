@@ -55,7 +55,7 @@ body {
 }
 
 .script-text.scrolling {
-  animation: scrollText 25s linear forwards;
+  animation: scrollText 20s linear forwards;
 }
 
 @keyframes scrollText {
@@ -67,10 +67,18 @@ body {
   }
 }
 
+/* ✅ Bottom Controls */
+.bottom-controls {
+  position: absolute;
+  bottom: 80px;
+  width: 100%;
+  height: 66px;
+  z-index: 3;
+}
+
 /* ✅ Record Button */
 .record-button {
   position: absolute;
-  bottom: 50px;
   left: 50%;
   transform: translateX(-50%);
   width: 66px;
@@ -80,11 +88,45 @@ body {
   border: none;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
   cursor: pointer;
-  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .record-button:hover {
   opacity: 0.8;
+}
+
+/* ✅ Bottom Control Buttons */
+.bottom-control-button {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  top: 8px; /* Center vertically within the 66px container */
+}
+
+.bottom-control-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* ✅ Dismiss Button (left side) */
+.bottom-control-button:first-child {
+  left: 25%; /* Halfway between left edge (0%) and center (50%) */
+  transform: translateX(-50%);
+}
+
+/* ✅ Camera Switch Button (right side) */
+.bottom-control-button:last-child {
+  right: 25%; /* Halfway between center (50%) and right edge (0%) */
+  transform: translateX(50%);
 }
 
 /* ✅ Top Controls */
