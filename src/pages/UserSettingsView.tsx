@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebaseConfig';
-import { FaArrowLeft, FaCamera } from 'react-icons/fa';
+import { db, storage } from '../firebase/firebaseConfig';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { FaArrowLeft, FaCamera, FaImage, FaTimes } from 'react-icons/fa';
 
 interface UserProfile {
   username: string;
@@ -27,6 +28,10 @@ const UserSettingsView: React.FC = () => {
   const [tempValue, setTempValue] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showAvatarOptions, setShowAvatarOptions] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -92,8 +97,78 @@ const UserSettingsView: React.FC = () => {
   };
 
   const handleUpdateAvatar = () => {
-    // TODO: Implement avatar upload functionality
-    alert('Avatar update functionality coming soon!');
+    setShowAvatarOptions(true);
+  };
+
+  const handleTakePhoto = () => {
+    setShowAvatarOptions(false);
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleChoosePhoto = () => {
+    setShowAvatarOptions(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const uploadAvatarImage = async (file: File) => {
+    if (!user) return;
+
+    setUploading(true);
+    try {
+      // Create a unique filename
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `avatar_${user.uid}_${timestamp}.${fileExtension}`;
+      
+      // Upload to Firebase Storage
+      const storageRef = ref(storage, `avatars/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // Update user profile with new avatar URL
+      const docRef = doc(db, 'users', user.uid);
+      await updateDoc(docRef, {
+        avatarURL: downloadURL
+      });
+
+      // Update local state
+      setProfile(prev => ({
+        ...prev,
+        avatarURL: downloadURL
+      }));
+
+      alert('Avatar updated successfully!');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      alert('Failed to update avatar. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image file must be less than 5MB.');
+        return;
+      }
+
+      uploadAvatarImage(file);
+    }
+    // Reset the input
+    event.target.value = '';
   };
 
   if (loading) {
@@ -196,18 +271,19 @@ const UserSettingsView: React.FC = () => {
           </div>
           <button
             onClick={handleUpdateAvatar}
+            disabled={uploading}
             style={{
-              background: '#007aff',
+              background: uploading ? '#ccc' : '#007aff',
               color: 'white',
               border: 'none',
               borderRadius: 8,
               padding: '10px 20px',
               fontSize: 16,
-              cursor: 'pointer',
+              cursor: uploading ? 'not-allowed' : 'pointer',
               fontWeight: 600,
             }}
           >
-            Update Avatar
+            {uploading ? 'Uploading...' : 'Update Avatar'}
           </button>
         </div>
 
@@ -473,8 +549,117 @@ const UserSettingsView: React.FC = () => {
             placeholder="Enter your public message..."
           />
         </div>
+
+        {/* Hidden File Inputs */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileSelect}
+          style={{ display: 'none' }}
+        />
        </div>
       </div>
+
+      {/* Avatar Options Modal */}
+      {showAvatarOptions && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: 12,
+            padding: 20,
+            margin: 20,
+            maxWidth: 300,
+            width: '100%',
+            position: 'relative',
+          }}>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowAvatarOptions(false)}
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                background: 'transparent',
+                border: 'none',
+                fontSize: 20,
+                cursor: 'pointer',
+                color: '#666',
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            <h3 style={{ margin: '0 0 20px 0', textAlign: 'center' }}>
+              Update Avatar
+            </h3>
+
+            {/* Take Photo Button */}
+            <button
+              onClick={handleTakePhoto}
+              style={{
+                width: '100%',
+                padding: '15px',
+                marginBottom: 10,
+                background: '#007aff',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 16,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+              }}
+            >
+              <FaCamera />
+              Take Photo
+            </button>
+
+            {/* Choose Photo Button */}
+            <button
+              onClick={handleChoosePhoto}
+              style={{
+                width: '100%',
+                padding: '15px',
+                background: '#34C759',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 16,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+              }}
+            >
+              <FaImage />
+              Choose from Gallery
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
