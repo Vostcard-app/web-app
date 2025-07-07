@@ -167,7 +167,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Scripts Firestore CRUD
   const loadScripts = useCallback(async () => {
     try {
-      const snapshot = await getDocs(collection(db, 'scripts'));
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('📜 No user logged in, skipping script load');
+        setScripts([]);
+        return;
+      }
+
+      const scriptsRef = collection(db, 'scripts');
+      const q = query(scriptsRef, where('authorId', '==', user.uid));
+      const snapshot = await getDocs(q);
+      
       const loadedScripts: Script[] = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
@@ -176,7 +186,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('📜 Loaded scripts from Firestore:', loadedScripts);
     } catch (error) {
       console.error('❌ Failed to load scripts:', error);
-      alert('Failed to load scripts. Please try again.');
+      // Don't show alert for script loading failures in step 3, just log it
+      console.log('Script loading failed, but continuing...');
     }
   }, []);
 
@@ -218,12 +229,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         updatedAt: Timestamp.now(),
       });
       console.log('✅ Script title updated in Firestore:', scriptId, newTitle);
-      loadScripts();
+      // Don't reload scripts automatically to avoid permission errors
     } catch (error) {
       console.error('❌ Failed to update script title:', error);
-      alert('Failed to update script title. Please try again.');
+      // Don't show alert for script title update failures, just log it
+      console.log('Script title update failed, but continuing...');
     }
-  }, [loadScripts]);
+  }, []);
 
   // Load all Vostcards from IndexedDB and restore their blobs
   const loadAllLocalVostcards = useCallback(async () => {
