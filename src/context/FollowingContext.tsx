@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { db } from '../firebase/firebaseConfig';
-import { doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 
 interface FollowingContextType {
@@ -33,12 +33,12 @@ export const FollowingProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setFollowing(snapshot.data().following || []);
         console.log('✅ Following list refreshed:', snapshot.data().following?.length || 0);
       } else {
-        console.log('📝 User document does not exist, creating...');
-        // Create user document if it doesn't exist
-        await updateDoc(userRef, { 
+        console.log('📝 User document does not exist, creating following fields...');
+        // Create or merge following fields into user document
+        await setDoc(userRef, { 
           following: [],
           followers: []
-        });
+        }, { merge: true });
         setFollowing([]);
       }
     } catch (error) {
