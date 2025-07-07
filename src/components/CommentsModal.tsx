@@ -267,23 +267,24 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                           if (fallback) fallback.style.display = 'flex';
                         }}
                       />
-                    ) : null}
-                    <div 
-                      className="avatar-fallback"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: '#007aff',
-                        color: 'white',
-                        display: (comment.avatarURL && comment.avatarURL.trim() !== '') ? 'none' : 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '16px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {(comment.username || 'U').charAt(0).toUpperCase()}
-                    </div>
+                    ) : (
+                      <div 
+                        className="avatar-fallback"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          backgroundColor: '#007aff',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '16px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        {(comment.username || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
                   </div>
 
                   {/* Comment Content */}
