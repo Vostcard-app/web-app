@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { Script } from '../types/ScriptModel';
+import type { Script } from '../types/ScriptModel';
 import { ScriptService } from '../services/scriptService';
 
 interface ScriptContextType {

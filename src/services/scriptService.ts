@@ -1,6 +1,6 @@
 import { db } from '../firebase/firebaseConfig';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { Script } from '../types/ScriptModel';
+import type { Script } from '../types/ScriptModel';
 
 export const ScriptService = {
   async getUserScripts(userID: string): Promise<Script[]> {
