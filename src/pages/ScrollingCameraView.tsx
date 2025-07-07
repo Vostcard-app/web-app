@@ -122,8 +122,15 @@ const ScrollingCameraView: React.FC = () => {
           setVideo(blob);
           console.log('📍 Video saved without location');
         }
-        // Navigate back to script tool with the script preserved
-        navigate(`/script-tool?script=${encodeURIComponent(script)}`);
+        
+        // Navigate back to the correct location based on where we came from
+        if (script && script.trim()) {
+          // If we have a script, we came from the script tool
+          navigate(`/script-tool?script=${encodeURIComponent(script)}`);
+        } else {
+          // If no script, we came from create step 1
+          navigate('/create-step1');
+        }
       };
 
       mediaRecorder.start();
