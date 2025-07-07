@@ -77,12 +77,22 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                       `User_${user.uid.slice(0, 8)}`;
       
       console.log("💬 Adding comment with user data:", {
-        username,
+        finalUsername: username,
         authUsername: authUsername,
         displayName: user.displayName,
         email: user.email,
+        emailUsername: user.email?.split('@')[0],
         photoURL: user.photoURL,
         uid: user.uid
+      });
+
+      // Show detailed username selection process
+      console.log("🔍 Username selection process:", {
+        step1_authUsername: authUsername ? `✅ Using: ${authUsername}` : "❌ Not available",
+        step2_displayName: user.displayName ? `Available: ${user.displayName}` : "❌ Not available", 
+        step3_emailUsername: user.email?.split('@')[0] ? `Available: ${user.email?.split('@')[0]}` : "❌ Not available",
+        step4_fallback: `User_${user.uid.slice(0, 8)}`,
+        selectedUsername: username
       });
 
       await addDoc(commentsRef, {
