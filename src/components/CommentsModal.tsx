@@ -11,7 +11,8 @@ import {
   onSnapshot,
   serverTimestamp,
   deleteDoc,
-  doc
+  doc,
+  getDoc
 } from "firebase/firestore";
 
 interface Comment {
@@ -40,6 +41,30 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userAvatarURL, setUserAvatarURL] = useState<string>("");
+
+  // Fetch user's avatar URL from Firestore
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            setUserAvatarURL(userData.avatarURL || "");
+            console.log("👤 Fetched user avatar URL:", userData.avatarURL);
+          }
+        } catch (error) {
+          console.error('Error fetching user avatar:', error);
+        }
+      } else {
+        setUserAvatarURL("");
+      }
+    };
+
+    fetchUserAvatar();
+  }, [user]);
 
   useEffect(() => {
     if (!vostcardID || !isOpen) return;
@@ -82,7 +107,9 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
         displayName: user.displayName,
         email: user.email,
         emailUsername: user.email?.split('@')[0],
-        photoURL: user.photoURL,
+        firebasePhotoURL: user.photoURL,
+        firestoreAvatarURL: userAvatarURL,
+        finalAvatarURL: userAvatarURL || user.photoURL || "",
         uid: user.uid
       });
 
@@ -98,7 +125,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
       await addDoc(commentsRef, {
         text: newComment.trim(),
         username: username,
-        avatarURL: user.photoURL || "",
+        avatarURL: userAvatarURL || user.photoURL || "",
         userID: user.uid,
         dateCreated: serverTimestamp(),
       });
@@ -227,7 +254,18 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {comments.map((comment) => (
+              {comments.map((comment) => {
+                console.log("🎨 Rendering comment avatar:", {
+                  commentId: comment.id,
+                  username: comment.username,
+                  avatarURL: comment.avatarURL,
+                  avatarURLType: typeof comment.avatarURL,
+                  avatarURLTrimmed: comment.avatarURL?.trim(),
+                  hasAvatar: !!(comment.avatarURL && comment.avatarURL.trim() !== ''),
+                  firstLetter: (comment.username || 'U').charAt(0).toUpperCase()
+                });
+                
+                return (
                 <div
                   key={comment.id}
                   style={{
@@ -338,7 +376,8 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
