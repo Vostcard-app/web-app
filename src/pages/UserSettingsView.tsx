@@ -122,18 +122,23 @@ const UserSettingsView: React.FC = () => {
       // Create a unique filename
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
-      const fileName = `avatar_${user.uid}_${timestamp}.${fileExtension}`;
+      const fileName = `avatar_${timestamp}.${fileExtension}`;
       
-      // Upload to Firebase Storage
-      const storageRef = ref(storage, `avatars/${fileName}`);
+      // Upload to Firebase Storage with userId-based path structure
+      const storageRef = ref(storage, `avatars/${user.uid}/${fileName}`);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
+
+      console.log('✅ Avatar uploaded successfully:', downloadURL);
 
       // Update user profile with new avatar URL
       const docRef = doc(db, 'users', user.uid);
       await updateDoc(docRef, {
-        avatarURL: downloadURL
+        avatarURL: downloadURL,
+        avatarUpdatedAt: new Date().toISOString()
       });
+
+      console.log('✅ User profile updated with new avatar URL');
 
       // Update local state
       setProfile(prev => ({
@@ -142,9 +147,22 @@ const UserSettingsView: React.FC = () => {
       }));
 
       alert('Avatar updated successfully!');
-    } catch (error) {
-      console.error('Error uploading avatar:', error);
-      alert('Failed to update avatar. Please try again.');
+    } catch (error: any) {
+      console.error('❌ Error uploading avatar:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to update avatar. Please try again.';
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = 'Permission denied. Please make sure you are logged in.';
+      } else if (error.code === 'storage/canceled') {
+        errorMessage = 'Upload was canceled.';
+      } else if (error.code === 'storage/unknown') {
+        errorMessage = 'An unknown error occurred. Please check your internet connection.';
+      } else if (error.message) {
+        errorMessage = `Upload failed: ${error.message}`;
+      }
+      
+      alert(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -153,19 +171,39 @@ const UserSettingsView: React.FC = () => {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log('📁 File selected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        sizeInMB: (file.size / (1024 * 1024)).toFixed(2)
+      });
+
       // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file.');
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        alert('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Image file must be less than 5MB.');
+        alert(`Image file must be less than 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
         return;
       }
 
-      uploadAvatarImage(file);
+      // Validate minimum dimensions (optional)
+      const img = new Image();
+      img.onload = () => {
+        if (img.width < 50 || img.height < 50) {
+          alert('Image must be at least 50x50 pixels.');
+          return;
+        }
+        uploadAvatarImage(file);
+      };
+      img.onerror = () => {
+        alert('Invalid image file. Please try another image.');
+      };
+      img.src = URL.createObjectURL(file);
     }
     // Reset the input
     event.target.value = '';
@@ -554,14 +592,14 @@ const UserSettingsView: React.FC = () => {
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
           onChange={handleFileSelect}
           style={{ display: 'none' }}
         />
         <input
           ref={cameraInputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
           capture="environment"
           onChange={handleFileSelect}
           style={{ display: 'none' }}
