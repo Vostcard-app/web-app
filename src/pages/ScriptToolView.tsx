@@ -92,8 +92,8 @@ export default function ScriptToolView() {
         scriptId: savedScript.id 
       });
       
-      // Navigate to step 2 (assuming this is create vostcard step 2)
-      navigate('/create-vostcard-step2');
+      // Navigate to step 2 (create vostcard step 2)
+      navigate('/create-step2');
     } catch (err) {
       setError("Failed to save script. Please try again.");
       console.error("Script saving error:", err);
