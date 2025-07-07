@@ -208,7 +208,15 @@ const HomeView = () => {
       <div style={headerStyle}>
         <h1 style={logoStyle}>Vōstcard</h1>
         <div style={headerRight}>
-          <FaUserCircle size={30} style={{ marginRight: 20 }} />
+          <FaUserCircle 
+            size={30} 
+            style={{ marginRight: 20, cursor: 'pointer' }} 
+            onClick={() => {
+              if (user?.uid) {
+                navigate(`/profile/${user.uid}`);
+              }
+            }}
+          />
           <FaBars
             size={30}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
