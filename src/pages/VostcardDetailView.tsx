@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
+import { useVostcard } from '../context/VostcardContext';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,9 @@ const VostcardDetailView: React.FC = () => {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLikedStatus, setIsLikedStatus] = useState(false);
+  const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -34,6 +38,47 @@ const VostcardDetailView: React.FC = () => {
     };
     if (id) fetchVostcard();
   }, [id]);
+
+  // Load like data and set up real-time listeners
+  useEffect(() => {
+    if (!id) return;
+
+    const loadLikeData = async () => {
+      try {
+        const [count, liked] = await Promise.all([
+          getLikeCount(id),
+          isLiked(id)
+        ]);
+        setLikeCount(count);
+        setIsLikedStatus(liked);
+      } catch (error) {
+        console.error('Error loading like data:', error);
+      }
+    };
+
+    loadLikeData();
+
+    // Set up real-time listeners
+    const unsubscribe = setupLikeListeners(
+      id,
+      (count) => setLikeCount(count),
+      (liked) => setIsLikedStatus(liked)
+    );
+
+    return unsubscribe;
+  }, [id, getLikeCount, isLiked, setupLikeListeners]);
+
+  // Handle like toggle
+  const handleLikeToggle = useCallback(async () => {
+    if (!id) return;
+    
+    try {
+      await toggleLike(id);
+      // Real-time listeners will update the state automatically
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
+  }, [id, toggleLike]);
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
@@ -120,9 +165,26 @@ const VostcardDetailView: React.FC = () => {
 
       {/* Action Icons */}
       <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', margin: '16px 0 0 0' }}>
-        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
-          <FaHeart size={32} color="#222" style={{ marginBottom: 4 }} />
-          <div style={{ fontSize: 18 }}>{likes}</div>
+        <div 
+          style={{ 
+            textAlign: 'center', 
+            cursor: 'pointer',
+            transition: 'transform 0.1s'
+          }}
+          onClick={handleLikeToggle}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <FaHeart 
+            size={32} 
+            color={isLikedStatus ? "#ff4444" : "#222"} 
+            style={{ 
+              marginBottom: 4,
+              transition: 'color 0.2s'
+            }} 
+          />
+          <div style={{ fontSize: 18 }}>{likeCount}</div>
         </div>
         <div style={{ textAlign: 'center', cursor: 'pointer' }}>
           <FaStar size={32} color="#ffc107" style={{ marginBottom: 4 }} />

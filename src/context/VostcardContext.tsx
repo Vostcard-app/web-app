@@ -6,6 +6,7 @@ import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { ScriptService } from '../services/scriptService';
+import { LikeService, type Like } from '../services/likeService';
 
 export interface Vostcard {
   id: string;
@@ -54,6 +55,13 @@ interface VostcardContextProps {
   deleteScript: (id: string) => Promise<void>;
   updateScriptTitle: (scriptId: string, newTitle: string) => Promise<void>;
   updateScript: (scriptId: string, title: string, content: string) => Promise<void>;
+  // Like system
+  likedVostcards: Like[];
+  toggleLike: (vostcardID: string) => Promise<boolean>;
+  isLiked: (vostcardID: string) => Promise<boolean>;
+  getLikeCount: (vostcardID: string) => Promise<number>;
+  loadLikedVostcards: () => Promise<void>;
+  setupLikeListeners: (vostcardID: string, onLikeCountChange: (count: number) => void, onLikeStatusChange: (isLiked: boolean) => void) => () => void;
 }
 
 // IndexedDB configuration
@@ -166,6 +174,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
   const [scripts, setScripts] = useState<Script[]>([]);
+  const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
   // Scripts Firestore CRUD
   const loadScripts = useCallback(async () => {
     console.log('📜 Starting loadScripts...');
@@ -195,7 +204,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (loadedScripts.length === 0) {
         console.log('📜 No scripts found for user. This could be normal if no scripts have been created yet.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to load scripts - Full error details:', error);
       console.error('❌ Error message:', error.message);
       console.error('❌ Error stack:', error.stack);
@@ -294,6 +303,63 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Failed to update script:', error);
       throw error;
     }
+  }, []);
+
+  // Like system functions
+  const toggleLike = useCallback(async (vostcardID: string): Promise<boolean> => {
+    try {
+      const isLiked = await LikeService.toggleLike(vostcardID);
+      console.log('✅ Toggle like result:', isLiked);
+      // Note: Real-time listeners will update the like status automatically
+      return isLiked;
+    } catch (error) {
+      console.error('❌ Failed to toggle like:', error);
+      throw error;
+    }
+  }, []);
+
+  const isLiked = useCallback(async (vostcardID: string): Promise<boolean> => {
+    try {
+      return await LikeService.isLiked(vostcardID);
+    } catch (error) {
+      console.error('❌ Failed to check like status:', error);
+      return false;
+    }
+  }, []);
+
+  const getLikeCount = useCallback(async (vostcardID: string): Promise<number> => {
+    try {
+      return await LikeService.getLikeCount(vostcardID);
+    } catch (error) {
+      console.error('❌ Failed to get like count:', error);
+      return 0;
+    }
+  }, []);
+
+  const loadLikedVostcards = useCallback(async () => {
+    try {
+      const liked = await LikeService.fetchLikedVostcards();
+      setLikedVostcards(liked);
+      console.log('✅ Loaded liked vostcards:', liked.length);
+    } catch (error) {
+      console.error('❌ Failed to load liked vostcards:', error);
+      setLikedVostcards([]);
+    }
+  }, []);
+
+  const setupLikeListeners = useCallback((
+    vostcardID: string,
+    onLikeCountChange: (count: number) => void,
+    onLikeStatusChange: (isLiked: boolean) => void
+  ): (() => void) => {
+    const unsubscribeLikeCount = LikeService.listenToLikeCount(vostcardID, onLikeCountChange);
+    const unsubscribeLikeStatus = LikeService.listenToLikeStatus(vostcardID, onLikeStatusChange);
+    
+    // Return function to unsubscribe from both listeners
+    return () => {
+      unsubscribeLikeCount();
+      unsubscribeLikeStatus();
+    };
   }, []);
 
   // Load all Vostcards from IndexedDB and restore their blobs
@@ -905,6 +971,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         deleteScript,
         updateScriptTitle,
         updateScript,
+        // Like system
+        likedVostcards,
+        toggleLike,
+        isLiked,
+        getLikeCount,
+        loadLikedVostcards,
+        setupLikeListeners,
       }}
     >
       {children}

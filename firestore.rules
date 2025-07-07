@@ -11,11 +11,22 @@ service cloud.firestore {
       allow read: if true; // Allow all users to read vostcards (for the map)
       allow write: if request.auth != null && request.auth.uid == resource.data.userID;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
+      
+      // Allow authenticated users to read and write like counts
+      match /likeCount/{document} {
+        allow read: if true; // Anyone can read like counts
+        allow write: if request.auth != null; // Only authenticated users can modify like counts
+      }
     }
     
     // Allow authenticated users to read and write their own user profiles
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow authenticated users to manage their own likes
+      match /likes/{vostcardId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
   }
 } 
