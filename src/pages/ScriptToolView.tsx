@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { generateScript } from "../utils/openaiHelper";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useScripts } from '../context/ScriptContext';
 
 const scriptStyles = [
   "Bullet Points",
@@ -15,7 +16,20 @@ export default function ScriptToolView() {
   const [script, setScript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showSaveButton, setShowSaveButton] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { createScript } = useScripts();
+
+  // Check for script parameter from URL (when returning from camera)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const scriptParam = urlParams.get('script');
+    if (scriptParam) {
+      setScript(decodeURIComponent(scriptParam));
+      setShowSaveButton(true);
+    }
+  }, [location.search]);
 
   const handleGenerateScript = async () => {
     if (!topic.trim()) {
@@ -52,6 +66,29 @@ export default function ScriptToolView() {
     } catch (err) {
       setError("Failed to polish script. Please try again.");
       console.error("Script polishing error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveAndContinue = async () => {
+    if (!script.trim()) {
+      setError("Please enter a script to save");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      
+      // Save script to library
+      await createScript(topic || "Untitled Script", script);
+      
+      // Navigate to step 2 (assuming this is create vostcard step 2)
+      navigate('/create-vostcard-step2');
+    } catch (err) {
+      setError("Failed to save script. Please try again.");
+      console.error("Script saving error:", err);
     } finally {
       setLoading(false);
     }
@@ -209,6 +246,28 @@ export default function ScriptToolView() {
             {loading ? "Polishing..." : "Polish My Script"}
           </button>
         </div>
+
+        {/* Save and Continue Button (shown after recording) */}
+        {showSaveButton && (
+          <button
+            onClick={handleSaveAndContinue}
+            disabled={loading || !script.trim()}
+            style={{
+              width: "100%",
+              background: loading ? "#ccc" : "#28a745",
+              color: "white",
+              padding: 16,
+              borderRadius: 8,
+              fontSize: 20,
+              border: "none",
+              fontWeight: 600,
+              marginBottom: 16,
+              cursor: loading ? "not-allowed" : "pointer"
+            }}
+          >
+            {loading ? "Saving..." : "Save & Continue to Step 2"}
+          </button>
+        )}
 
         {/* Roll Cameras Button */}
         <button

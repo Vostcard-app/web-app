@@ -87,7 +87,8 @@ const ScrollingCameraView: React.FC = () => {
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks.current, { type: mimeType });
         setVideo(blob);
-        navigate(-1);
+        // Navigate back to script tool with the script preserved
+        navigate(`/script-tool?script=${encodeURIComponent(script)}`);
       };
 
       mediaRecorder.start();
