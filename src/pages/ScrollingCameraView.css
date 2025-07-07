@@ -56,7 +56,7 @@ body {
 }
 
 .script-text.scrolling {
-  animation: scrollText 20s linear forwards;
+  animation: scrollText 15s linear forwards;
 }
 
 @keyframes scrollText {
