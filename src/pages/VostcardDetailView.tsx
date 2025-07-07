@@ -120,7 +120,8 @@ const VostcardDetailView: React.FC = () => {
   }
 
   // Fallbacks for missing data
-  const avatarUrl = userProfile?.avatar || vostcard.avatarURL || null;
+  const avatarUrl = userProfile?.avatarURL || vostcard.avatarURL || null;
+  
   const photoUrls = vostcard.photoURLs || [];
   const videoUrl = vostcard.videoURL || '';
   const title = vostcard.title || 'Untitled';
