@@ -37,6 +37,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('❌ Failed to set Firebase Auth persistence:', error);
       });
 
+    // Add timeout for loading state to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.warn('⏰ AuthProvider: Loading state timeout after 10 seconds, forcing loading to false');
+      setLoading(false);
+    }, 10000);
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log('🔐 AuthProvider: Auth state changed:', {
         hasUser: !!currentUser,
@@ -45,6 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAnonymous: currentUser?.isAnonymous
       });
 
+      // Clear the timeout since we got an auth state change
+      clearTimeout(loadingTimeout);
       setLoading(true);
       
       try {
@@ -60,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           setUserID(currentUser.uid);
 
-          // Fetch username from Firestore
+          // Fetch username from Firestore with timeout
           try {
             const userDocRef = doc(db, "users", currentUser.uid);
             const userDocSnap = await getDoc(userDocRef);
@@ -94,15 +102,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserID(null);
         setUserRole(null);
       } finally {
+        console.log('🔐 AuthProvider: Setting loading to false');
         setLoading(false);
       }
     }, (error) => {
       console.error('❌ Firebase Auth state change error:', error);
+      clearTimeout(loadingTimeout);
       setLoading(false);
     });
 
     return () => {
       console.log('🔐 AuthProvider: Cleaning up Firebase Auth listener');
+      clearTimeout(loadingTimeout);
       unsubscribe();
     };
   }, []);

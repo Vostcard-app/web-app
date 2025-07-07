@@ -83,10 +83,11 @@ const HomeView = () => {
   const [mapError, setMapError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
+  const [showAuthLoading, setShowAuthLoading] = useState(true);
 
   // No complex refresh state management needed
 
-  // Debug authentication state
+  // Debug authentication state and manage auth loading overlay
   useEffect(() => {
     console.log('🏠 HomeView: Auth state:', {
       user: !!user,
@@ -96,7 +97,23 @@ const HomeView = () => {
       loading,
       authCurrentUser: !!auth.currentUser
     });
-  }, [user, username, userID, userRole, loading]);
+    
+    // Hide auth loading overlay after 3 seconds to prevent blocking UI
+    if (loading && showAuthLoading) {
+      console.log('🏠 HomeView: Auth loading detected, will hide overlay after 3 seconds');
+      const loadingTimeout = setTimeout(() => {
+        console.log('⏰ HomeView: Hiding auth loading overlay to prevent UI blocking');
+        setShowAuthLoading(false);
+      }, 3000);
+      
+      return () => clearTimeout(loadingTimeout);
+    }
+    
+    // Reset auth loading overlay when not loading
+    if (!loading) {
+      setShowAuthLoading(true);
+    }
+  }, [user, username, userID, userRole, loading, showAuthLoading]);
 
   const handleLogout = async () => {
     try {
@@ -481,8 +498,8 @@ const HomeView = () => {
         </div>
       )}
 
-      {/* Auth Loading Overlay */}
-      {loading && (
+      {/* Auth Loading Overlay - Only show for first 3 seconds */}
+      {loading && showAuthLoading && (
         <div style={authLoadingOverlayStyle}>
           <div style={loadingContentStyle}>
             Authenticating...
