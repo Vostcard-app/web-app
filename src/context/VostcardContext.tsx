@@ -26,6 +26,7 @@ export interface Vostcard {
     terms?: string;
   };
   script?: string; // Add script field
+  scriptId?: string; // Add script ID field to track associated script
   _videoBase64?: string | null; // For IndexedDB serialization
   _photosBase64?: string[]; // For IndexedDB serialization
 }
@@ -50,6 +51,7 @@ interface VostcardContextProps {
   loadScripts: () => Promise<void>;
   saveScript: (script: Script) => Promise<void>;
   deleteScript: (id: string) => Promise<void>;
+  updateScriptTitle: (scriptId: string, newTitle: string) => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -205,6 +207,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('❌ Failed to delete script:', error);
       alert('Failed to delete script. Please try again.');
+    }
+  }, [loadScripts]);
+
+  const updateScriptTitle = useCallback(async (scriptId: string, newTitle: string) => {
+    try {
+      const scriptRef = doc(db, 'scripts', scriptId);
+      await updateDoc(scriptRef, {
+        title: newTitle,
+        updatedAt: Timestamp.now(),
+      });
+      console.log('✅ Script title updated in Firestore:', scriptId, newTitle);
+      loadScripts();
+    } catch (error) {
+      console.error('❌ Failed to update script title:', error);
+      alert('Failed to update script title. Please try again.');
     }
   }, [loadScripts]);
 
@@ -815,6 +832,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadScripts,
         saveScript,
         deleteScript,
+        updateScriptTitle,
       }}
     >
       {children}

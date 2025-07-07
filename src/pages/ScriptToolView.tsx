@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { generateScript } from "../utils/openaiHelper";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useScripts } from '../context/ScriptContext';
+import { useVostcard } from '../context/VostcardContext';
 
 const scriptStyles = [
   "Bullet Points",
@@ -20,6 +21,7 @@ export default function ScriptToolView() {
   const navigate = useNavigate();
   const location = useLocation();
   const { createScript } = useScripts();
+  const { updateVostcard } = useVostcard();
 
   // Check for script parameter from URL (when returning from camera)
   useEffect(() => {
@@ -82,7 +84,13 @@ export default function ScriptToolView() {
       setError("");
       
       // Save script to library
-      await createScript(topic || "Untitled Script", script);
+      const savedScript = await createScript(topic || "Untitled Script", script);
+      
+      // Update the current vostcard with the script and script ID
+      updateVostcard({ 
+        script: script,
+        scriptId: savedScript.id 
+      });
       
       // Navigate to step 2 (assuming this is create vostcard step 2)
       navigate('/create-vostcard-step2');

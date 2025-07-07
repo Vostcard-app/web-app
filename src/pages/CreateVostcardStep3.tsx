@@ -16,6 +16,7 @@ const CreateVostcardStep3: React.FC = () => {
     clearLocalStorage,
     postVostcard,
     clearVostcard,
+    updateScriptTitle,
   } = useVostcard();
   const { title = '', description = '', categories = [], photos = [] } = currentVostcard || {};
 
@@ -128,6 +129,22 @@ const CreateVostcardStep3: React.FC = () => {
     }
   };
 
+  const handleTitleChange = async (newTitle: string) => {
+    // Update the vostcard title
+    updateVostcard({ title: newTitle });
+    
+    // If there's an associated script, update its title too
+    if (currentVostcard?.scriptId && newTitle.trim() !== '') {
+      try {
+        await updateScriptTitle(currentVostcard.scriptId, newTitle);
+        console.log('✅ Script title updated to match vostcard title:', newTitle);
+      } catch (error) {
+        console.error('❌ Failed to update script title:', error);
+        // Don't show an alert here as it might be disruptive to the user experience
+      }
+    }
+  };
+
   const handleSaveChanges = async () => {
     // This saves as private (updates the existing private Vostcard)
     await saveLocalVostcard();
@@ -194,7 +211,7 @@ const CreateVostcardStep3: React.FC = () => {
           </label>
           <input
             value={title}
-            onChange={(e) => updateVostcard({ title: e.target.value })}
+            onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="Enter Title"
             style={inputStyle}
           />
