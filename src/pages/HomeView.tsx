@@ -214,7 +214,7 @@ const HomeView = () => {
   };
 
   const menuItems = [
-    { label: 'My Private Vōstcards', route: '/my-private-vostcards' },
+
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Edit My Vōstcards', route: '/edit-my-vostcards' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
