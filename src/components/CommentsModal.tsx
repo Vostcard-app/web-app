@@ -36,7 +36,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
   vostcardID, 
   vostcardTitle 
 }) => {
-  const { user } = useAuth();
+  const { user, username: authUsername } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -70,13 +70,15 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
     try {
       const commentsRef = collection(db, "vostcards", vostcardID, "comments");
       
-      // Better username fallback logic
-      const username = user.displayName || 
+      // Get username from AuthContext (Firestore user document) first, then fallback to Auth data
+      const username = authUsername || 
+                      user.displayName || 
                       user.email?.split('@')[0] || 
                       `User_${user.uid.slice(0, 8)}`;
       
       console.log("💬 Adding comment with user data:", {
         username,
+        authUsername: authUsername,
         displayName: user.displayName,
         email: user.email,
         photoURL: user.photoURL,
