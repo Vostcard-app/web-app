@@ -53,6 +53,8 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
         ...doc.data(),
         dateCreated: doc.data().dateCreated?.toDate(),
       })) as Comment[];
+      
+      console.log("💬 Fetched comments:", fetchedComments);
       setComments(fetchedComments);
     });
 
@@ -67,9 +69,23 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
 
     try {
       const commentsRef = collection(db, "vostcards", vostcardID, "comments");
+      
+      // Better username fallback logic
+      const username = user.displayName || 
+                      user.email?.split('@')[0] || 
+                      `User_${user.uid.slice(0, 8)}`;
+      
+      console.log("💬 Adding comment with user data:", {
+        username,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid
+      });
+
       await addDoc(commentsRef, {
         text: newComment.trim(),
-        username: user.displayName || user.email || "Anonymous",
+        username: username,
         avatarURL: user.photoURL || "",
         userID: user.uid,
         dateCreated: serverTimestamp(),
@@ -223,31 +239,39 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                    {comment.avatarURL ? (
+                    {comment.avatarURL && comment.avatarURL.trim() !== '' ? (
                       <img
                         src={comment.avatarURL}
-                        alt={comment.username}
+                        alt={comment.username || 'User'}
                         style={{
                           width: '100%',
                           height: '100%',
                           objectFit: 'cover',
                         }}
+                        onError={(e) => {
+                          // Hide broken image and show fallback
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div style={{
+                    ) : null}
+                    <div 
+                      className="avatar-fallback"
+                      style={{
                         width: '100%',
                         height: '100%',
                         backgroundColor: '#007aff',
                         color: 'white',
-                        display: 'flex',
+                        display: (comment.avatarURL && comment.avatarURL.trim() !== '') ? 'none' : 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '16px',
                         fontWeight: 600,
-                      }}>
-                        {comment.username.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                      }}
+                    >
+                      {(comment.username || 'U').charAt(0).toUpperCase()}
+                    </div>
                   </div>
 
                   {/* Comment Content */}
@@ -263,7 +287,7 @@ const CommentsModal: React.FC<CommentsModalProps> = ({
                         fontSize: '15px',
                         color: '#002B4D',
                       }}>
-                        {comment.username}
+                        {comment.username || 'Anonymous User'}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{
