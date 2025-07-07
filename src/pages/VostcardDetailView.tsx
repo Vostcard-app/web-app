@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -17,6 +17,8 @@ const VostcardDetailView: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [likeCount, setLikeCount] = useState(0);
   const [isLikedStatus, setIsLikedStatus] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
   useEffect(() => {
@@ -39,6 +41,32 @@ const VostcardDetailView: React.FC = () => {
     };
     if (id) fetchVostcard();
   }, [id]);
+
+  // Fetch user profile when vostcard is loaded
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!vostcard?.userID) return;
+      
+      try {
+        const userRef = doc(db, 'users', vostcard.userID);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserProfile(userSnap.data());
+        }
+      } catch (err) {
+        console.error('Failed to load user profile:', err);
+      }
+    };
+    
+    if (vostcard?.userID) {
+      fetchUserProfile();
+    }
+  }, [vostcard?.userID]);
+
+  // Reset image error state when user profile changes
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [userProfile]);
 
   // Load like data and set up real-time listeners
   useEffect(() => {
@@ -92,7 +120,7 @@ const VostcardDetailView: React.FC = () => {
   }
 
   // Fallbacks for missing data
-  const avatarUrl = vostcard.avatarURL || 'https://randomuser.me/api/portraits/men/32.jpg';
+  const avatarUrl = userProfile?.avatar || vostcard.avatarURL || null;
   const photoUrls = vostcard.photoURLs || [];
   const videoUrl = vostcard.videoURL || '';
   const title = vostcard.title || 'Untitled';
@@ -128,7 +156,23 @@ const VostcardDetailView: React.FC = () => {
       {/* User Info */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '24px 24px 0 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img src={avatarUrl} alt="avatar" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', marginRight: 16 }} />
+          <div style={{ width: 64, height: 64, borderRadius: '50%', marginRight: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0' }}>
+            {avatarUrl && !imageLoadError ? (
+              <img 
+                src={avatarUrl} 
+                alt="avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={() => {
+                  setImageLoadError(true);
+                }}
+              />
+            ) : (
+              <FaUserCircle 
+                size={64} 
+                color="#ccc" 
+              />
+            )}
+          </div>
           <span style={{ fontWeight: 500, fontSize: 24 }}>{username}</span>
         </div>
         {vostcard.userID && (

@@ -32,6 +32,7 @@ import LikedVostcardsView from './pages/LikedVostcardsView';
 import FollowingView from './pages/FollowingView';
 import UserProfileView from './pages/UserProfileView';
 import UserSettingsView from './pages/UserSettingsView';
+import SuggestionBoxView from './pages/SuggestionBoxView';
 
 function App() {
   return (
@@ -83,6 +84,7 @@ function App() {
             <Route path="/settings" element={<SettingsView />} />
             <Route path="/user-settings" element={<UserSettingsView />} />
             <Route path="/account-settings" element={<AccountSettingsView />} />
+            <Route path="/suggestion-box" element={<SuggestionBoxView />} />
 
             {/* 📣 Advertiser Portal */}
             <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
