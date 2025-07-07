@@ -49,6 +49,7 @@ function App() {
 
             {/* 📜 Script Management */}
             <Route path="/scripts" element={<ScriptLibraryView />} />
+            <Route path="/script-library" element={<ScriptLibraryView />} />
             <Route path="/script-editor" element={<ScriptEditorView />} />
             <Route path="/script-editor/:scriptId" element={<ScriptEditorView />} />
 

@@ -1,26 +1,17 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaHome } from 'react-icons/fa';
-import { useScriptLibrary } from '../context/ScriptLibraryContext'; // 🆕 Firebase-backed script manager
-import { useVostcard } from '../context/VostcardContext'; // 🆕 To pass selected script to ScrollingCameraView
+import { useVostcard } from '../context/VostcardContext'; // For script management
 
 const ScriptLibraryView: React.FC = () => {
   const navigate = useNavigate();
-  const { scripts, fetchScripts } = useScriptLibrary();
-  const { setCurrentScript } = useVostcard();
+  const { scripts, loadScripts } = useVostcard();
 
   useEffect(() => {
-    fetchScripts().catch((err) => {
-      console.error('⚠️ Failed to fetch scripts from Firebase, loading fallback:', err);
-      const fallbackScripts = [
-        { id: 'fallback1', title: 'Welcome Script', content: 'This is a fallback script example.', updatedAt: new Date() },
-        { id: 'fallback2', title: 'Demo Script', content: 'Use this fallback if Firebase is offline.', updatedAt: new Date() }
-      ];
-      setCurrentScript(null);
-      // Properly set fallback scripts in context
-      fetchScripts.setFallbackScripts(fallbackScripts);
+    loadScripts().catch((err: any) => {
+      console.error('⚠️ Failed to fetch scripts from Firebase:', err);
     });
-  }, []);
+  }, [loadScripts]);
 
   const handleCreateNew = () => {
     navigate('/script-editor'); // Navigate to script editor page
@@ -31,13 +22,18 @@ const ScriptLibraryView: React.FC = () => {
       alert('This script has no content.');
       return;
     }
-    setCurrentScript(script); // Save full script object in context
-    localStorage.setItem('selectedScript', JSON.stringify(script)); // Persist for script tool
-    navigate('/script-editor'); // Navigate to ScriptEditor for polishing
+    // Navigate to script tool with the script content
+    navigate(`/script-tool?script=${encodeURIComponent(script.content)}&title=${encodeURIComponent(script.title || '')}`);
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
+    <div style={{ 
+      maxWidth: 1200, 
+      margin: '0 auto', 
+      padding: 20, 
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5'
+    }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
@@ -84,7 +80,7 @@ const ScriptLibraryView: React.FC = () => {
                   {script.content.split('\n')[0].substring(0, 100)}...
                 </p>
                 <div style={{ fontSize: '0.85rem', color: '#999', marginBottom: 10 }}>
-                  Created {script.createdAt?.toDate().toLocaleDateString() ?? 'recently'}
+                  Created {script.createdAt ? new Date(script.createdAt).toLocaleDateString() : 'recently'}
                 </div>
                 <button
                   onClick={() => handleUseScript(script)}

@@ -23,13 +23,19 @@ export default function ScriptToolView() {
   const { createScript } = useScripts();
   const { updateVostcard } = useVostcard();
 
-  // Check for script parameter from URL (when returning from camera)
+  // Check for script parameter from URL (when returning from camera or script library)
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const scriptParam = urlParams.get('script');
+    const titleParam = urlParams.get('title');
+    
     if (scriptParam) {
       setScript(decodeURIComponent(scriptParam));
       setShowSaveButton(true);
+    }
+    
+    if (titleParam) {
+      setTopic(decodeURIComponent(titleParam));
     }
   }, [location.search]);
 
