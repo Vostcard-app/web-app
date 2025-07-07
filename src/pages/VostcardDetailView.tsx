@@ -27,6 +27,7 @@ const VostcardDetailView: React.FC = () => {
   const [commentCount, setCommentCount] = useState(0);
   const [showPrivateShareModal, setShowPrivateShareModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const [ratingStats, setRatingStats] = useState<RatingStats>({
     vostcardID: '',
     averageRating: 0,
@@ -156,6 +157,20 @@ const VostcardDetailView: React.FC = () => {
 
     return unsubscribe;
   }, [id]);
+
+  // Keyboard event handler for closing video modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showVideoModal) {
+        setShowVideoModal(false);
+      }
+    };
+
+    if (showVideoModal) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showVideoModal]);
 
   // Handle like toggle
   const handleLikeToggle = useCallback(async () => {
@@ -306,9 +321,55 @@ const VostcardDetailView: React.FC = () => {
 
       {/* Media Thumbnails */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
-        <div style={{ width: 180, height: 240, background: '#111', borderRadius: 16, overflow: 'hidden', cursor: videoUrl ? 'pointer' : 'default' }}>
+        <div 
+          style={{ 
+            width: 180, 
+            height: 240, 
+            background: '#111', 
+            borderRadius: 16, 
+            overflow: 'hidden', 
+            cursor: videoUrl ? 'pointer' : 'default',
+            position: 'relative'
+          }}
+          onClick={() => videoUrl && setShowVideoModal(true)}
+        >
           {videoUrl ? (
-            <video src={videoUrl} style={{ width: '100%', height: '100%', objectFit: 'cover' }} controls />
+            <>
+              <video 
+                src={videoUrl} 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover',
+                  pointerEvents: 'none'
+                }}
+                muted
+              />
+              {/* Play overlay */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                borderRadius: '50%',
+                width: '60px',
+                height: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none'
+              }}>
+                <div style={{
+                  width: 0,
+                  height: 0,
+                  borderLeft: '20px solid white',
+                  borderTop: '12px solid transparent',
+                  borderBottom: '12px solid transparent',
+                  marginLeft: '4px'
+                }} />
+              </div>
+            </>
           ) : (
             <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>No Video</div>
           )}
@@ -545,6 +606,76 @@ const VostcardDetailView: React.FC = () => {
             }}>
               {description || 'No description available.'}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-screen Video Modal */}
+      {showVideoModal && videoUrl && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1001,
+            cursor: 'pointer',
+          }}
+          onClick={() => setShowVideoModal(false)}
+        >
+          <div style={{
+            position: 'relative',
+            width: '100vw',
+            height: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {/* Close button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowVideoModal(false);
+              }}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(0,0,0,0.6)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '50px',
+                height: '50px',
+                color: 'white',
+                fontSize: '24px',
+                cursor: 'pointer',
+                zIndex: 1002,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              ×
+            </button>
+            
+            {/* Video */}
+            <video
+              src={videoUrl}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain',
+                borderRadius: 0,
+                boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+              }}
+              controls
+              autoPlay
+              playsInline
+              onClick={(e) => e.stopPropagation()}
+              onContextMenu={e => e.preventDefault()}
+            />
           </div>
         </div>
       )}
