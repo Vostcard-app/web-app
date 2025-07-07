@@ -31,6 +31,15 @@ const ScriptLibraryView: React.FC = () => {
     navigate(`/script-tool?script=${encodeURIComponent(script.content)}&title=${encodeURIComponent(script.title || '')}`);
   };
 
+  const handleEditScript = (script: any) => {
+    if (!script?.id) {
+      alert('Script ID not found.');
+      return;
+    }
+    // Navigate to script editor with the script ID
+    navigate(`/script-editor/${script.id}`);
+  };
+
   return (
     <div style={{ 
       maxWidth: 1200, 
@@ -149,21 +158,36 @@ const ScriptLibraryView: React.FC = () => {
                 }}>
                   Created {script.createdAt ? new Date(script.createdAt).toLocaleDateString() : 'recently'}
                 </div>
-                <button
-                  onClick={() => handleUseScript(script)}
-                  style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    alignSelf: 'flex-start',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  Load Script
-                </button>
+                <div style={{ display: 'flex', gap: 8, alignSelf: 'flex-start' }}>
+                  <button
+                    onClick={() => handleUseScript(script)}
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Load Script
+                  </button>
+                  <button
+                    onClick={() => handleEditScript(script)}
+                    style={{
+                      background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Edit
+                  </button>
+                </div>
               </div>
             ))}
           </div>

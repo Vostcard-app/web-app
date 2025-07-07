@@ -52,6 +52,7 @@ interface VostcardContextProps {
   saveScript: (script: Script) => Promise<void>;
   deleteScript: (id: string) => Promise<void>;
   updateScriptTitle: (scriptId: string, newTitle: string) => Promise<void>;
+  updateScript: (scriptId: string, title: string, content: string) => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -234,6 +235,27 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Failed to update script title:', error);
       // Don't show alert for script title update failures, just log it
       console.log('Script title update failed, but continuing...');
+    }
+  }, []);
+
+  const updateScript = useCallback(async (scriptId: string, title: string, content: string) => {
+    try {
+      const scriptRef = doc(db, 'scripts', scriptId);
+      await updateDoc(scriptRef, {
+        title: title,
+        content: content,
+        updatedAt: Timestamp.now(),
+      });
+      console.log('✅ Script updated in Firestore:', scriptId);
+      // Update local scripts state
+      setScripts(prev => prev.map(script => 
+        script.id === scriptId 
+          ? { ...script, title, content, updatedAt: new Date().toISOString() }
+          : script
+      ));
+    } catch (error) {
+      console.error('❌ Failed to update script:', error);
+      throw error;
     }
   }, []);
 
@@ -845,6 +867,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         saveScript,
         deleteScript,
         updateScriptTitle,
+        updateScript,
       }}
     >
       {children}
