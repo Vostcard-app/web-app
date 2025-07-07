@@ -1,18 +1,30 @@
 // ✅ src/pages/LikedVostcardsView.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { PostedVostcard } from '../types/Vostcard';
+import { useVostcard } from '../context/VostcardContext';
 import { FaHeart, FaHome } from 'react-icons/fa';
 
+interface LikedVostcard {
+  id: string;
+  title: string;
+  description: string;
+  photoURLs?: string[];
+  username?: string;
+  likeCount?: number;
+  createdAt?: any;
+  [key: string]: any;
+}
+
 const LikedVostcardsView: React.FC = () => {
-  const [likedVostcards, setLikedVostcards] = useState<PostedVostcard[]>([]);
+  const [likedVostcards, setLikedVostcards] = useState<LikedVostcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { loadLikedVostcards, likedVostcards: contextLikedVostcards } = useVostcard();
 
   useEffect(() => {
     const fetchLikedVostcards = async () => {
@@ -24,32 +36,36 @@ const LikedVostcardsView: React.FC = () => {
 
       try {
         setLoading(true);
-        const likesRef = collection(db, 'likes');
-        const q = query(
-          likesRef,
-          where('userID', '==', user.uid),
-          orderBy('createdAt', 'desc')
-        );
-        const snapshot = await getDocs(q);
+        
+        // Load liked vostcard IDs from the new like system
+        await loadLikedVostcards();
+        
+        if (contextLikedVostcards.length === 0) {
+          setLikedVostcards([]);
+          setLoading(false);
+          return;
+        }
 
-        const vostcardIDs = snapshot.docs.map(doc => doc.data().vostcardID);
-
+        // Fetch the actual vostcard data
+        const vostcardIDs = contextLikedVostcards.map(like => like.vostcardID);
+        
         if (vostcardIDs.length === 0) {
           setLikedVostcards([]);
           setLoading(false);
           return;
         }
 
+        // Use documentId() syntax for __name__ queries
         const vostcardsQuery = query(
           collection(db, 'vostcards'),
-          where('id', 'in', vostcardIDs)
+          where('__name__', 'in', vostcardIDs)
         );
 
         const vostcardSnapshot = await getDocs(vostcardsQuery);
-        const vostcards: PostedVostcard[] = vostcardSnapshot.docs.map(doc => ({
+        const vostcards: LikedVostcard[] = vostcardSnapshot.docs.map(doc => ({
           ...doc.data(),
           id: doc.id
-        })) as PostedVostcard[];
+        })) as LikedVostcard[];
 
         setLikedVostcards(vostcards);
       } catch (err: any) {
@@ -61,9 +77,13 @@ const LikedVostcardsView: React.FC = () => {
     };
 
     fetchLikedVostcards();
-  }, [user]);
+  }, [user, loadLikedVostcards, contextLikedVostcards]);
 
   const handleGoHome = () => navigate('/home');
+
+  const handleVostcardClick = (vostcardId: string) => {
+    navigate(`/vostcard/${vostcardId}`);
+  };
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
@@ -103,10 +123,18 @@ const LikedVostcardsView: React.FC = () => {
           gap: 16
         }}>
           {likedVostcards.map((vostcard) => (
-            <div key={vostcard.id} style={{
-              background: 'white', borderRadius: 15, padding: 10,
-              boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-            }}>
+            <div 
+              key={vostcard.id} 
+              style={{
+                background: 'white', borderRadius: 15, padding: 10,
+                boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}
+              onClick={() => handleVostcardClick(vostcard.id)}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
               <img
                 src={vostcard.photoURLs?.[0] || '/placeholder.jpg'}
                 alt={vostcard.title || 'Untitled'}

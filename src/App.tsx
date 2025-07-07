@@ -27,6 +27,7 @@ import VostcardDetailView from './pages/VostcardDetailView';
 import ScriptLibraryView from './pages/ScriptLibraryView';
 import ScriptEditorView from './pages/ScriptEditorView';
 import ScriptToolView from './pages/ScriptToolView';
+import LikedVostcardsView from './pages/LikedVostcardsView';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
             <Route path="/my-private-vostcards" element={<MyPrivateVostcardsListView />} />
             <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
             <Route path="/edit-my-vostcards" element={<EditMyVostcardListView />} />
+            <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
 
             {/* 📜 Script Management */}
             <Route path="/scripts" element={<ScriptLibraryView />} />
