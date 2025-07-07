@@ -186,14 +186,14 @@ const VostcardDetailView: React.FC = () => {
 
   // Handle flag submission
   const handleFlagClick = useCallback(() => {
-    if (!id) return;
+    if (!id || !vostcard) return;
     
     // URL-encode the parameters to handle special characters
-    const encodedTitle = encodeURIComponent(title);
-    const encodedUsername = encodeURIComponent(username);
+    const encodedTitle = encodeURIComponent(vostcard.title || 'Untitled');
+    const encodedUsername = encodeURIComponent(vostcard.username || 'Unknown');
     
     navigate(`/flag/${id}/${encodedTitle}/${encodedUsername}`);
-  }, [id, title, username, navigate]);
+  }, [id, vostcard, navigate]);
 
   let createdAt = '';
   if (vostcard.createdAt) {
