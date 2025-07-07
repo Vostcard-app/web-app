@@ -168,21 +168,48 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [scripts, setScripts] = useState<Script[]>([]);
   // Scripts Firestore CRUD
   const loadScripts = useCallback(async () => {
+    console.log('📜 Starting loadScripts...');
     try {
       const user = auth.currentUser;
+      console.log('📜 Current user:', {
+        uid: user?.uid,
+        email: user?.email,
+        isAnonymous: user?.isAnonymous,
+        hasUser: !!user
+      });
+      
       if (!user) {
         console.log('📜 No user logged in, skipping script load');
         setScripts([]);
         return;
       }
 
+      console.log('📜 Attempting to load scripts for user:', user.uid);
       const loadedScripts = await ScriptService.getUserScripts(user.uid);
+      console.log('📜 ScriptService.getUserScripts returned:', loadedScripts);
+      console.log('📜 Number of scripts loaded:', loadedScripts.length);
+      
       setScripts(loadedScripts);
-      console.log('📜 Loaded scripts from Firestore:', loadedScripts);
+      console.log('📜 Scripts set in state. Total count:', loadedScripts.length);
+      
+      if (loadedScripts.length === 0) {
+        console.log('📜 No scripts found for user. This could be normal if no scripts have been created yet.');
+      }
     } catch (error) {
-      console.error('❌ Failed to load scripts:', error);
-      // Don't show alert for script loading failures in step 3, just log it
-      console.log('Script loading failed, but continuing...');
+      console.error('❌ Failed to load scripts - Full error details:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      
+      // Provide more specific error information
+      if (error.code === 'permission-denied') {
+        console.error('❌ Permission denied - Check Firestore rules');
+      } else if (error.code === 'unauthenticated') {
+        console.error('❌ User not authenticated - Check auth state');
+      }
+      
+      // Show alert for debugging
+      alert(`Failed to load scripts: ${error.message}. Check console for details.`);
+      setScripts([]);
     }
   }, []);
 
