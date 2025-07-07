@@ -194,7 +194,7 @@ const HomeView = () => {
     { label: 'My Private Vōstcards', route: '/my-private-vostcards' },
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Edit My Vōstcards', route: '/edit-my-vostcards' },
-    { label: 'Liked Vōstcard', route: '/liked-vostcards' },
+    { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
     { label: 'Suggestion Box', route: '/suggestion-box' },
     { label: 'Report a Bug', route: '/report-bug' },
