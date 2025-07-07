@@ -7,7 +7,7 @@ import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow } from 'react-ic
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import { signOut } from 'firebase/auth';
@@ -75,6 +75,7 @@ const HomeView = () => {
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loadingVostcards, setLoadingVostcards] = useState(true);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   // Debug authentication state
   useEffect(() => {
@@ -156,6 +157,28 @@ const HomeView = () => {
     loadVostcards();
   }, []);
 
+  // Fetch user avatar
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            setUserAvatar(userData.avatarURL || null);
+          }
+        } catch (error) {
+          console.error('Error fetching user avatar:', error);
+        }
+      } else {
+        setUserAvatar(null);
+      }
+    };
+
+    fetchUserAvatar();
+  }, [user]);
+
   const addCoordinatesToVostcard = async (vostcardId: string, lat: number, lng: number) => {
     try {
       const currentUser = auth.currentUser;
@@ -208,15 +231,42 @@ const HomeView = () => {
       <div style={headerStyle}>
         <h1 style={logoStyle}>Vōstcard</h1>
         <div style={headerRight}>
-          <FaUserCircle 
-            size={30} 
-            style={{ marginRight: 20, cursor: 'pointer' }} 
+          {/* User Avatar */}
+          <div
+            style={{ 
+              marginRight: 20, 
+              cursor: 'pointer',
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: userAvatar ? 'transparent' : 'rgba(255,255,255,0.2)'
+            }}
             onClick={() => {
               if (user?.uid) {
                 navigate(`/profile/${user.uid}`);
               }
             }}
-          />
+          >
+            {userAvatar ? (
+              <img
+                src={userAvatar}
+                alt="User Avatar"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  borderRadius: '50%',
+                }}
+                onError={() => setUserAvatar(null)} // Fallback if image fails to load
+              />
+            ) : (
+              <FaUserCircle size={30} color="white" />
+            )}
+          </div>
           <FaBars
             size={30}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
