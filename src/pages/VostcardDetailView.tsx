@@ -5,6 +5,8 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import FollowButton from '../components/FollowButton';
+import RatingStars from '../components/RatingStars';
+import { RatingService, type RatingStats } from '../services/ratingService';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,14 +14,19 @@ const VostcardDetailView: React.FC = () => {
   const [vostcard, setVostcard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [likeCount, setLikeCount] = useState(0);
   const [isLikedStatus, setIsLikedStatus] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [imageLoadError, setImageLoadError] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [currentUserRating, setCurrentUserRating] = useState(0);
+  const [ratingStats, setRatingStats] = useState<RatingStats>({
+    vostcardID: '',
+    averageRating: 0,
+    ratingCount: 0,
+    lastUpdated: ''
+  });
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
   useEffect(() => {
@@ -98,6 +105,40 @@ const VostcardDetailView: React.FC = () => {
     return unsubscribe;
   }, [id, getLikeCount, isLiked, setupLikeListeners]);
 
+  // Load rating data and set up real-time listeners
+  useEffect(() => {
+    if (!id) return;
+
+    const loadRatingData = async () => {
+      try {
+        const [userRating, stats] = await Promise.all([
+          RatingService.getCurrentUserRating(id),
+          RatingService.getRatingStats(id)
+        ]);
+        setCurrentUserRating(userRating);
+        setRatingStats(stats);
+      } catch (error) {
+        console.error('Error loading rating data:', error);
+      }
+    };
+
+    loadRatingData();
+
+    // Set up real-time listeners
+    const unsubscribeStats = RatingService.listenToRatingStats(id, (stats) => {
+      setRatingStats(stats);
+    });
+
+    const unsubscribeUserRating = RatingService.listenToUserRating(id, (rating) => {
+      setCurrentUserRating(rating);
+    });
+
+    return () => {
+      unsubscribeStats();
+      unsubscribeUserRating();
+    };
+  }, [id]);
+
   // Handle like toggle
   const handleLikeToggle = useCallback(async () => {
     if (!id) return;
@@ -109,6 +150,18 @@ const VostcardDetailView: React.FC = () => {
       console.error('Error toggling like:', error);
     }
   }, [id, toggleLike]);
+
+  // Handle rating submission
+  const handleRatingSubmit = useCallback(async (rating: number) => {
+    if (!id) return;
+    
+    try {
+      await RatingService.submitRating(id, rating);
+      // Real-time listeners will update the state automatically
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    }
+  }, [id]);
 
   if (loading) {
     return <div style={{ padding: 40, textAlign: 'center' }}>Loading...</div>;
@@ -128,7 +181,6 @@ const VostcardDetailView: React.FC = () => {
   const title = vostcard.title || 'Untitled';
   const username = vostcard.username || 'Unknown';
   const likes = vostcard.likes || 0;
-  const avgRating = vostcard.avgRating || 0.0;
   const comments = vostcard.comments || 0;
   const description = vostcard.description || '';
 
@@ -245,7 +297,7 @@ const VostcardDetailView: React.FC = () => {
         </div>
         <div style={{ textAlign: 'center', cursor: 'pointer' }}>
           <FaStar size={32} color="#ffc107" style={{ marginBottom: 4 }} />
-          <div style={{ fontSize: 18 }}>{avgRating.toFixed(1)}</div>
+          <div style={{ fontSize: 18 }}>{ratingStats.averageRating.toFixed(1)}</div>
         </div>
         <div style={{ textAlign: 'center', cursor: 'pointer' }}>
           <FaRegComment size={32} color="#222" style={{ marginBottom: 4 }} />
@@ -256,20 +308,15 @@ const VostcardDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* Worth Seeing? 5-Star Widget */}
+      {/* Worth Seeing? Rating System */}
       <div style={{ textAlign: 'center', margin: '16px 0 0 0', fontSize: 18 }}>Worth Seeing?</div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 4, margin: '4px 0 0 0' }}>
-        {[1,2,3,4,5].map((star) => (
-          <FaStar
-            key={star}
-            size={28}
-            color={hoverRating >= star || rating >= star ? '#ffc107' : '#ddd'}
-            style={{ cursor: 'pointer' }}
-            onMouseEnter={() => setHoverRating(star)}
-            onMouseLeave={() => setHoverRating(0)}
-            onClick={() => setRating(star)}
-          />
-        ))}
+      <div style={{ margin: '8px 0 0 0' }}>
+        <RatingStars
+          currentRating={currentUserRating}
+          averageRating={ratingStats.averageRating}
+          ratingCount={ratingStats.ratingCount}
+          onRate={handleRatingSubmit}
+        />
       </div>
 
       {/* Description Link */}

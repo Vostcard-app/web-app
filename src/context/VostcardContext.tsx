@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './AuthContext';
 import { ScriptService } from '../services/scriptService';
 import { LikeService, type Like } from '../services/likeService';
+import { RatingService, type Rating, type RatingStats } from '../services/ratingService';
 
 export interface Vostcard {
   id: string;
@@ -62,6 +63,11 @@ interface VostcardContextProps {
   getLikeCount: (vostcardID: string) => Promise<number>;
   loadLikedVostcards: () => Promise<void>;
   setupLikeListeners: (vostcardID: string, onLikeCountChange: (count: number) => void, onLikeStatusChange: (isLiked: boolean) => void) => () => void;
+  // Rating system
+  submitRating: (vostcardID: string, rating: number) => Promise<void>;
+  getCurrentUserRating: (vostcardID: string) => Promise<number>;
+  getRatingStats: (vostcardID: string) => Promise<RatingStats>;
+  setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => () => void;
 }
 
 // IndexedDB configuration
@@ -978,6 +984,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         getLikeCount,
         loadLikedVostcards,
         setupLikeListeners,
+        // Rating system
+        submitRating: RatingService.submitRating,
+        getCurrentUserRating: RatingService.getCurrentUserRating,
+        getRatingStats: RatingService.getRatingStats,
+        setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => {
+          const unsubscribeStats = RatingService.listenToRatingStats(vostcardID, onStatsChange);
+          const unsubscribeUserRating = RatingService.listenToUserRating(vostcardID, onUserRatingChange);
+          
+          return () => {
+            unsubscribeStats();
+            unsubscribeUserRating();
+          };
+        },
       }}
     >
       {children}
