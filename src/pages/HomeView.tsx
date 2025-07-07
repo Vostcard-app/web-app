@@ -213,10 +213,9 @@ const HomeView = () => {
     navigate('/create-step1');
   };
 
-  const menuItems = [
-
-    { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
-    { label: 'Edit My Vōstcards', route: '/edit-my-vostcards' },
+      const menuItems = [
+      { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },
+      { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
     { label: 'Suggestion Box', route: '/suggestion-box' },
