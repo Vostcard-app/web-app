@@ -184,6 +184,17 @@ const VostcardDetailView: React.FC = () => {
   const comments = vostcard.comments || 0;
   const description = vostcard.description || '';
 
+  // Handle flag submission
+  const handleFlagClick = useCallback(() => {
+    if (!id) return;
+    
+    // URL-encode the parameters to handle special characters
+    const encodedTitle = encodeURIComponent(title);
+    const encodedUsername = encodeURIComponent(username);
+    
+    navigate(`/flag/${id}/${encodedTitle}/${encodedUsername}`);
+  }, [id, title, username, navigate]);
+
   let createdAt = '';
   if (vostcard.createdAt) {
     if (typeof vostcard.createdAt.toDate === 'function') {
@@ -340,7 +351,17 @@ const VostcardDetailView: React.FC = () => {
 
       {/* Bottom Icons */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '32px 24px 0 24px' }}>
-        <FaFlag size={36} color="#e53935" style={{ cursor: 'pointer' }} />
+        <FaFlag 
+          size={36} 
+          color="#e53935" 
+          style={{ 
+            cursor: 'pointer',
+            transition: 'transform 0.2s',
+          }} 
+          onClick={handleFlagClick}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        />
         <FaSyncAlt size={36} color="#007aff" style={{ cursor: 'pointer' }} />
       </div>
 
