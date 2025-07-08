@@ -53,21 +53,9 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Fetch user role from Firestore using modular syntax
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      const advertiserDocRef = doc(db, "advertisers", user.uid);
-      const advertiserDocSnap = await getDoc(advertiserDocRef);
-
-      if (userDocSnap.exists()) {
-        navigate("/home");
-      } else if (advertiserDocSnap.exists()) {
-        navigate("/advertiser-portal");
-      } else {
-        await auth.signOut();
-        setError("Account does not have an assigned role. Contact support.");
-      }
+      // ✅ Let AuthContext handle the redirection based on user role
+      // The AuthContext will automatically detect the user role and the useEffect above will redirect accordingly
+      console.log("✅ Login successful, AuthContext will handle redirection");
 
     } catch (err: any) {
       console.error("Login error:", err.code, err.message);
