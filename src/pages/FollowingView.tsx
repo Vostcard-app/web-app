@@ -85,7 +85,7 @@ const FollowingView: React.FC = () => {
       )}
 
       {/* ✅ Followed Users List */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 15 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 15 }}>
         {followedUsers.map((user) => (
           <div
             key={user.id}
