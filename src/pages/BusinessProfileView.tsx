@@ -1,15 +1,61 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { db } from "../firebase/firebaseConfig";
+import { doc, updateDoc } from "firebase/firestore";
 
 const BusinessProfileView: React.FC = () => {
   const navigate = useNavigate();
   const { businessId } = useParams();
 
+  const [detectedAddress, setDetectedAddress] = useState<string | null>(null);
+
+  const fetchLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log("📍 Latitude:", latitude, "Longitude:", longitude);
+
+        try {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`
+          );
+          const data = await response.json();
+          if (data.status === "OK" && data.results.length > 0) {
+            const address = data.results[0].formatted_address;
+            setDetectedAddress(address);
+            // 🔥 Save to Firebase
+            if (businessId) {
+              const businessRef = doc(db, 'businesses', businessId);
+              await updateDoc(businessRef, { address });
+              console.log('📤 Updated address in Firebase:', address);
+            }
+            alert(`📍 Address detected: ${address}`);
+          } else {
+            alert("Unable to retrieve address from coordinates");
+          }
+        } catch (error) {
+          console.error("Error fetching address:", error);
+          alert("Error fetching address");
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        alert("Failed to get location");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   // Simulate loading business data (replace this with API call in real app)
   const business = {
     photoUrl: "/default-store.png", // fallback image
     name: "Sample Business",
-    address: "123 Main Street, Dublin, Ireland",
+    address: detectedAddress || "123 Main Street, Dublin, Ireland",
     contactPerson: "Jane Doe",
     phone: "+353 1 234 5678",
     email: "contact@samplebusiness.com",
@@ -27,10 +73,25 @@ const BusinessProfileView: React.FC = () => {
           padding: "8px 12px",
           borderRadius: "6px",
           cursor: "pointer",
-          marginBottom: "20px",
+          marginBottom: "10px",
         }}
       >
         ← Back
+      </button>
+
+      <button
+        onClick={fetchLocation}
+        style={{
+          backgroundColor: "#002B4D",
+          color: "#fff",
+          border: "none",
+          padding: "10px 15px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          marginBottom: "20px",
+        }}
+      >
+        📍 Use My Location
       </button>
 
       <div style={{ textAlign: "center", marginBottom: "20px" }}>

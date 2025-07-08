@@ -32,11 +32,11 @@ const CreateOfferView: React.FC = () => {
 
       try {
         console.log('📄 Loading offer and store profile data for user:', user.uid);
-        const advertiserRef = doc(db, "advertisers", user.uid);
-        const advertiserSnap = await getDoc(advertiserRef);
+        const businessRef = doc(db, "businesses", user.uid);
+        const businessSnap = await getDoc(businessRef);
 
-        if (advertiserSnap.exists()) {
-          const data = advertiserSnap.data();
+        if (businessSnap.exists()) {
+          const data = businessSnap.data();
           
           // Store the store profile data
           setStoreProfile(data);
@@ -179,8 +179,8 @@ const CreateOfferView: React.FC = () => {
         updatedAt: new Date(),
       };
 
-      const advertiserRef = doc(db, "advertisers", user.uid);
-      await setDoc(advertiserRef, { 
+      const businessRef = doc(db, "businesses", user.uid);
+      await setDoc(businessRef, { 
         currentOffer: advertiserOfferData 
       }, { merge: true });
 
