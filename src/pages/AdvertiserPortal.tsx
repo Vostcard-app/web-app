@@ -13,11 +13,34 @@ const AdvertiserPortal: React.FC = () => {
         backgroundColor: '#002B4D',
         color: 'white',
         padding: '16px',
-        textAlign: 'center',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         fontSize: '24px',
         fontWeight: 'bold',
       }}>
-        Vōstcard Advertiser Portal
+        <span>Vōstcard Advertiser Portal</span>
+        <button
+          onClick={() => {
+            // sign out the user and navigate to login
+            import('../firebase/firebaseConfig').then(({ auth }) => {
+              auth.signOut().then(() => {
+                navigate('/login');
+              });
+            });
+          }}
+          style={{
+            backgroundColor: '#ff4d4f',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '8px 16px',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}
+        >
+          Log Out
+        </button>
       </div>
       <div style={{ maxWidth: "900px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
         <h1 style={{ textAlign: "center", color: "#002B4D" }}>Advertiser Portal</h1>
