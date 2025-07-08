@@ -97,7 +97,8 @@ const BusinessProfileView: React.FC = () => {
             padding: "10px 15px",
             borderRadius: "6px",
             cursor: "pointer",
-            marginTop: "8px",
+            display: "block",
+            margin: "10px auto",
           }}
         >
           📍 Use My Location
