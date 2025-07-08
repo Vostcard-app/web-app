@@ -84,7 +84,10 @@ const BusinessProfileView: React.FC = () => {
           }}
         />
         <h1 style={{ margin: "16px 0", color: "#002B4D" }}>{business.name}</h1>
+      </div>
 
+      <div style={{ lineHeight: "1.6" }}>
+        <p><strong>Address:</strong> {business.address}</p>
         <button
           onClick={fetchLocation}
           style={{
@@ -94,15 +97,11 @@ const BusinessProfileView: React.FC = () => {
             padding: "10px 15px",
             borderRadius: "6px",
             cursor: "pointer",
-            marginTop: "10px",
+            marginTop: "8px",
           }}
         >
           📍 Use My Location
         </button>
-      </div>
-
-      <div style={{ lineHeight: "1.6" }}>
-        <p><strong>Address:</strong> {business.address}</p>
         <p><strong>Contact Person:</strong> {business.contactPerson}</p>
         <p><strong>Phone:</strong> {business.phone}</p>
         <p><strong>Email:</strong> {business.email}</p>
