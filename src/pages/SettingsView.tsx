@@ -111,8 +111,18 @@ const SettingsView = () => {
 
         <section className="settings-section">
           <h2>Other</h2>
-          <button style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Suggestion Box</button>
-          <button style={{ fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}>Report a Bug</button>
+          <button 
+            style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}
+            onClick={() => navigate('/suggestion-box')}
+          >
+            Suggestion Box
+          </button>
+          <button 
+            style={{ fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}
+            onClick={() => navigate('/report-bug')}
+          >
+            Report a Bug
+          </button>
         </section>
       </div>
     </div>

@@ -34,6 +34,7 @@ import UserProfileView from './pages/UserProfileView';
 import UserSettingsView from './pages/UserSettingsView';
 import SuggestionBoxView from './pages/SuggestionBoxView';
 import FlagFormView from './pages/FlagFormView';
+import ReportBugView from './pages/ReportBugView';
 
 function App() {
   return (
@@ -89,6 +90,7 @@ function App() {
             <Route path="/user-settings" element={<UserSettingsView />} />
             <Route path="/account-settings" element={<AccountSettingsView />} />
             <Route path="/suggestion-box" element={<SuggestionBoxView />} />
+            <Route path="/report-bug" element={<ReportBugView />} />
 
             {/* 📣 Advertiser Portal */}
             <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
