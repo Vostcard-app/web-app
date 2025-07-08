@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, addDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
+import { GeocodingService } from "../services/geocodingService";
 
 const CreateOfferView: React.FC = () => {
   const navigate = useNavigate();
@@ -18,22 +19,28 @@ const CreateOfferView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [storeProfile, setStoreProfile] = useState<any>(null);
+  const [offerId, setOfferId] = useState<string | null>(null);
 
-  // Load existing offer data on component mount
+  // Load existing offer and store profile data on component mount
   useEffect(() => {
-    const loadOfferData = async () => {
+    const loadData = async () => {
       if (!user?.uid) {
         setDataLoading(false);
         return;
       }
 
       try {
-        console.log('📄 Loading offer data for user:', user.uid);
+        console.log('📄 Loading offer and store profile data for user:', user.uid);
         const advertiserRef = doc(db, "advertisers", user.uid);
         const advertiserSnap = await getDoc(advertiserRef);
 
         if (advertiserSnap.exists()) {
           const data = advertiserSnap.data();
+          
+          // Store the store profile data
+          setStoreProfile(data);
+          
           const offerData = data.currentOffer;
           
           if (offerData) {
@@ -45,22 +52,28 @@ const CreateOfferView: React.FC = () => {
             setPhone(offerData.phone || "");
             setEmail(offerData.email || "");
             setIsEditing(true);
+            
+            // If offer has a vostcard ID, store it for updates
+            if (offerData.vostcardId) {
+              setOfferId(offerData.vostcardId);
+            }
           } else {
             console.log('📄 No existing offer found, creating new offer');
             setIsEditing(false);
           }
         } else {
           console.log('📄 No advertiser document found');
+          setError('Store profile not found. Please set up your store profile first.');
         }
       } catch (error) {
-        console.error('❌ Error loading offer data:', error);
-        setError('Failed to load offer data');
+        console.error('❌ Error loading data:', error);
+        setError('Failed to load data');
       } finally {
         setDataLoading(false);
       }
     };
 
-    loadOfferData();
+    loadData();
   }, [user?.uid]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +89,22 @@ const CreateOfferView: React.FC = () => {
       return;
     }
 
+    if (!storeProfile) {
+      setError("Store profile not found. Please set up your store profile first.");
+      return;
+    }
+
+    // Validate store address for geocoding
+    if (!GeocodingService.validateAddress(
+      storeProfile.streetAddress,
+      storeProfile.city,
+      storeProfile.stateProvince,
+      storeProfile.country
+    )) {
+      setError("Store address is incomplete. Please update your store profile with a complete address.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess(false);
@@ -83,18 +112,76 @@ const CreateOfferView: React.FC = () => {
     try {
       console.log("💾 Saving offer for user:", user.uid);
       
-      const offerData = {
+      // Step 1: Geocode the store address
+      console.log("🌍 Geocoding store address...");
+      const geocodingResult = await GeocodingService.geocodeAddress(
+        storeProfile.streetAddress,
+        storeProfile.city,
+        storeProfile.stateProvince,
+        storeProfile.postalCode || "",
+        storeProfile.country
+      );
+
+      // Step 2: Prepare offer data for vostcards collection
+      const vostcardData = {
+        title,
+        description,
+        latitude: geocodingResult.latitude,
+        longitude: geocodingResult.longitude,
+        geo: {
+          latitude: geocodingResult.latitude,
+          longitude: geocodingResult.longitude
+        },
+        state: 'posted',
+        isOffer: true,
+        userID: user.uid,
+        userId: user.uid, // Both formats for compatibility
+        username: storeProfile.storeName || storeProfile.businessName || 'Business',
+        createdAt: isEditing ? undefined : new Date(),
+        updatedAt: new Date(),
+        categories: ['offer'], // Default category for offers
+        offerDetails: {
+          storeName: storeProfile.storeName || storeProfile.businessName,
+          storeAddress: geocodingResult.displayAddress,
+          phone: phone || storeProfile.contactPhone,
+          email: email || storeProfile.contactEmail,
+          storeHours: storeProfile.storeHours,
+          contactPerson: storeProfile.contactPerson
+        }
+      };
+
+      let vostcardId = offerId;
+
+      // Step 3: Save/update in vostcards collection
+      if (isEditing && offerId) {
+        // Update existing offer
+        console.log("📝 Updating existing offer in vostcards collection...");
+        const vostcardRef = doc(db, "vostcards", offerId);
+        await setDoc(vostcardRef, vostcardData, { merge: true });
+        console.log("✅ Offer updated in vostcards collection");
+      } else {
+        // Create new offer
+        console.log("📝 Creating new offer in vostcards collection...");
+        const vostcardRef = await addDoc(collection(db, "vostcards"), vostcardData);
+        vostcardId = vostcardRef.id;
+        setOfferId(vostcardId);
+        console.log("✅ New offer created in vostcards collection with ID:", vostcardId);
+      }
+
+      // Step 4: Update advertiser document with reference to vostcard
+      const advertiserOfferData = {
         title,
         description,
         phone,
         email,
-        createdAt: isEditing ? undefined : new Date(), // Only set createdAt for new offers
+        vostcardId,
+        createdAt: isEditing ? undefined : new Date(),
         updatedAt: new Date(),
       };
 
       const advertiserRef = doc(db, "advertisers", user.uid);
       await setDoc(advertiserRef, { 
-        currentOffer: offerData 
+        currentOffer: advertiserOfferData 
       }, { merge: true });
 
       console.log("✅ Offer saved successfully");
@@ -108,7 +195,8 @@ const CreateOfferView: React.FC = () => {
 
     } catch (error) {
       console.error("❌ Error saving offer:", error);
-      setError("Failed to save offer. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to save offer. Please try again.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -145,6 +233,55 @@ const CreateOfferView: React.FC = () => {
       <h1 style={{ textAlign: "center", color: "#002B4D" }}>
         {isEditing ? "Edit Offer" : "Create Offer"}
       </h1>
+      
+      {/* Store Profile Status */}
+      {storeProfile && (
+        <div style={{
+          backgroundColor: GeocodingService.validateAddress(
+            storeProfile.streetAddress,
+            storeProfile.city,
+            storeProfile.stateProvince,
+            storeProfile.country
+          ) ? "#d4edda" : "#f8d7da",
+          color: GeocodingService.validateAddress(
+            storeProfile.streetAddress,
+            storeProfile.city,
+            storeProfile.stateProvince,
+            storeProfile.country
+          ) ? "#155724" : "#721c24",
+          padding: "12px",
+          borderRadius: "6px",
+          marginBottom: "16px",
+          border: `1px solid ${GeocodingService.validateAddress(
+            storeProfile.streetAddress,
+            storeProfile.city,
+            storeProfile.stateProvince,
+            storeProfile.country
+          ) ? "#c3e6cb" : "#f5c6cb"}`
+        }}>
+          {GeocodingService.validateAddress(
+            storeProfile.streetAddress,
+            storeProfile.city,
+            storeProfile.stateProvince,
+            storeProfile.country
+          ) ? (
+            <span>✅ Store address is complete. Your offer will appear on the map at: {storeProfile.storeName || "Your Store"}</span>
+          ) : (
+            <span>⚠️ Store address is incomplete. Please <button 
+              onClick={() => navigate("/store-profile-page")}
+              style={{
+                color: "#721c24",
+                textDecoration: "underline",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                font: "inherit"
+              }}
+            >update your store profile</button> with a complete address for your offer to appear on the map.</span>
+          )}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <label>
           Offer Title<span style={{ color: "red" }}>*</span>
