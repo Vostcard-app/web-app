@@ -68,31 +68,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           setUserID(currentUser.uid);
 
-          // Fetch user data from Firestore - check both users and advertisers collections
+          // Fetch user data from Firestore - check both collections simultaneously
           try {
             const userDocRef = doc(db, "users", currentUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
+            const advertiserDocRef = doc(db, "advertisers", currentUser.uid);
+            
+            // Check both collections simultaneously
+            const [userDocSnap, advertiserDocSnap] = await Promise.all([
+              getDoc(userDocRef),
+              getDoc(advertiserDocRef)
+            ]);
 
-            if (userDocSnap.exists()) {
+            console.log('🔍 AuthContext Debug:', {
+              userExists: userDocSnap.exists(),
+              advertiserExists: advertiserDocSnap.exists(),
+              userUID: currentUser.uid,
+              userEmail: currentUser.email
+            });
+
+            // Prioritize advertiser role
+            if (advertiserDocSnap.exists()) {
+              const data = advertiserDocSnap.data();
+              console.log('📄 Firestore advertiser document found:', data);
+              console.log('✅ Setting userRole to: advertiser');
+              setUsername(data.businessName || data.name || null);
+              setUserRole('advertiser'); // Set as advertiser
+            } else if (userDocSnap.exists()) {
               const data = userDocSnap.data();
-              console.log('📄 Firestore user document:', data);
+              console.log('📄 Firestore user document found:', data);
+              console.log('✅ Setting userRole to: user');
               setUsername(data.username || null);
               setUserRole(data.role || 'user'); // Set as regular user
             } else {
-              // Check advertisers collection
-              const advertiserDocRef = doc(db, "advertisers", currentUser.uid);
-              const advertiserDocSnap = await getDoc(advertiserDocRef);
-
-              if (advertiserDocSnap.exists()) {
-                const data = advertiserDocSnap.data();
-                console.log('📄 Firestore advertiser document:', data);
-                setUsername(data.businessName || data.name || null);
-                setUserRole('advertiser'); // Set as advertiser
-              } else {
-                console.warn("No user or advertiser document found for:", currentUser.uid);
-                setUsername(null);
-                setUserRole(null);
-              }
+              console.warn("❌ No user or advertiser document found for:", currentUser.uid);
+              setUsername(null);
+              setUserRole(null);
             }
           } catch (error) {
             console.error("Error fetching user data:", error);
