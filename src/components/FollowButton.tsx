@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFollowing } from '../context/FollowingContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,28 +15,43 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   size = 'medium',
   variant = 'primary'
 }) => {
-  const { isFollowing, followUser, unfollowUser } = useFollowing();
+  const { isFollowing, followUser, unfollowUser, following } = useFollowing();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [followingState, setFollowingState] = useState(false);
 
   // Don't show button if user is trying to follow themselves
   if (user?.uid === targetUserId) {
     return null;
   }
 
+  // Update local following state when context changes
+  useEffect(() => {
+    const currentlyFollowing = isFollowing(targetUserId);
+    setFollowingState(currentlyFollowing);
+    console.log('🔄 FollowButton: Following state updated for', targetUserId, ':', currentlyFollowing);
+  }, [following, targetUserId, isFollowing]);
+
   const handleFollowToggle = async () => {
     if (isLoading) return;
     
     setIsLoading(true);
+    console.log('🔄 FollowButton: Toggling follow for', targetUserId, 'currently following:', followingState);
+    
     try {
-      if (isFollowing(targetUserId)) {
+      if (followingState) {
         await unfollowUser(targetUserId);
+        setFollowingState(false); // Immediately update local state
+        console.log('✅ FollowButton: Unfollowed', targetUserId);
       } else {
         await followUser(targetUserId);
+        setFollowingState(true); // Immediately update local state
+        console.log('✅ FollowButton: Followed', targetUserId);
       }
     } catch (error) {
-      console.error('Error toggling follow status:', error);
-      // Could add toast notification here
+      console.error('❌ FollowButton: Error toggling follow status:', error);
+      // Revert local state on error
+      setFollowingState(!followingState);
     } finally {
       setIsLoading(false);
     }
@@ -62,21 +77,20 @@ const FollowButton: React.FC<FollowButtonProps> = ({
       large: { padding: '12px 24px', fontSize: '16px' }
     };
 
-    const following = isFollowing(targetUserId);
     const variantStyles = {
       primary: {
-        background: following ? '#6b7280' : '#007aff',
+        background: followingState ? '#6b7280' : '#007aff',
         color: 'white',
         '&:hover': {
-          background: following ? '#4b5563' : '#0056b3'
+          background: followingState ? '#4b5563' : '#0056b3'
         }
       },
       secondary: {
-        background: following ? '#f3f4f6' : 'transparent',
-        color: following ? '#6b7280' : '#007aff',
-        border: `1px solid ${following ? '#d1d5db' : '#007aff'}`,
+        background: followingState ? '#f3f4f6' : 'transparent',
+        color: followingState ? '#6b7280' : '#007aff',
+        border: `1px solid ${followingState ? '#d1d5db' : '#007aff'}`,
         '&:hover': {
-          background: following ? '#e5e7eb' : '#f0f8ff'
+          background: followingState ? '#e5e7eb' : '#f0f8ff'
         }
       }
     };
@@ -88,8 +102,8 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     };
   };
 
-  const buttonText = isFollowing(targetUserId) ? 'Following' : 'Follow';
-  const loadingText = isFollowing(targetUserId) ? 'Unfollowing...' : 'Following...';
+  const buttonText = followingState ? 'Following' : 'Follow';
+  const loadingText = followingState ? 'Unfollowing...' : 'Following...';
 
   return (
     <button
@@ -98,21 +112,19 @@ const FollowButton: React.FC<FollowButtonProps> = ({
       style={getButtonStyle()}
       onMouseEnter={(e) => {
         if (!isLoading) {
-          const following = isFollowing(targetUserId);
           if (variant === 'primary') {
-            e.currentTarget.style.background = following ? '#4b5563' : '#0056b3';
+            e.currentTarget.style.background = followingState ? '#4b5563' : '#0056b3';
           } else {
-            e.currentTarget.style.background = following ? '#e5e7eb' : '#f0f8ff';
+            e.currentTarget.style.background = followingState ? '#e5e7eb' : '#f0f8ff';
           }
         }
       }}
       onMouseLeave={(e) => {
         if (!isLoading) {
-          const following = isFollowing(targetUserId);
           if (variant === 'primary') {
-            e.currentTarget.style.background = following ? '#6b7280' : '#007aff';
+            e.currentTarget.style.background = followingState ? '#6b7280' : '#007aff';
           } else {
-            e.currentTarget.style.background = following ? '#f3f4f6' : 'transparent';
+            e.currentTarget.style.background = followingState ? '#f3f4f6' : 'transparent';
           }
         }
       }}
