@@ -350,7 +350,7 @@ const CreateOfferView: React.FC = () => {
             fontSize: "16px",
           }}
         >
-          {loading ? "Saving..." : (isEditing ? "Update Offer" : "Create Offer")}
+          {loading ? "Saving..." : (isEditing ? "Post Offer" : "Create Offer")}
         </button>
       </form>
     </div>
