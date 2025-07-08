@@ -5,7 +5,9 @@ export interface GeocodingResult {
 }
 
 export class GeocodingService {
-  private static readonly BASE_URL = 'https://nominatim.openstreetmap.org/search';
+  private static readonly BACKEND_URL = process.env.NODE_ENV === 'production' 
+    ? 'https://vostcard-backend.onrender.com'  // Update with your actual backend URL
+    : 'http://localhost:3002';
   
   /**
    * Geocode an address to get coordinates
@@ -18,45 +20,34 @@ export class GeocodingService {
     country: string
   ): Promise<GeocodingResult> {
     try {
-      // Build the query string
-      const addressParts = [streetAddress, city, stateProvince, postalCode, country]
-        .filter(part => part && part.trim())
-        .join(', ');
+      console.log('🌍 Geocoding store address...');
       
-      console.log('🌍 Geocoding address:', addressParts);
-      
-      const params = new URLSearchParams({
-        q: addressParts,
-        format: 'json',
-        limit: '1',
-        addressdetails: '1'
+      const response = await fetch(`${this.BACKEND_URL}/geocode`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          streetAddress,
+          city,
+          stateProvince,
+          postalCode,
+          country
+        }),
       });
-      
-      const response = await fetch(`${this.BASE_URL}?${params}`);
+
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(`Geocoding API error: ${response.status}`);
+        throw new Error(data.error || `Backend error: ${response.status}`);
       }
-      
-      if (!data || data.length === 0) {
-        throw new Error('No results found for this address');
-      }
-      
-      const result = data[0];
-      const latitude = parseFloat(result.lat);
-      const longitude = parseFloat(result.lon);
-      
-      if (isNaN(latitude) || isNaN(longitude)) {
-        throw new Error('Invalid coordinates received from geocoding service');
-      }
-      
-      console.log('✅ Geocoding successful:', { latitude, longitude });
+
+      console.log('✅ Geocoding successful:', data);
       
       return {
-        latitude,
-        longitude,
-        displayAddress: result.display_name || addressParts
+        latitude: data.latitude,
+        longitude: data.longitude,
+        displayAddress: data.displayAddress
       };
       
     } catch (error) {
