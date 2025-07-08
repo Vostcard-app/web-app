@@ -1,7 +1,5 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { db } from "../firebase/firebaseConfig";
-import { doc, updateDoc } from "firebase/firestore";
 
 const BusinessProfileView: React.FC = () => {
   const navigate = useNavigate();
@@ -28,12 +26,6 @@ const BusinessProfileView: React.FC = () => {
           if (data.status === "OK" && data.results.length > 0) {
             const address = data.results[0].formatted_address;
             setDetectedAddress(address);
-            // 🔥 Save to Firebase
-            if (businessId) {
-              const businessRef = doc(db, 'businesses', businessId);
-              await updateDoc(businessRef, { address });
-              console.log('📤 Updated address in Firebase:', address);
-            }
             alert(`📍 Address detected: ${address}`);
           } else {
             alert("Unable to retrieve address from coordinates");
@@ -79,21 +71,6 @@ const BusinessProfileView: React.FC = () => {
         ← Back
       </button>
 
-      <button
-        onClick={fetchLocation}
-        style={{
-          backgroundColor: "#002B4D",
-          color: "#fff",
-          border: "none",
-          padding: "10px 15px",
-          borderRadius: "6px",
-          cursor: "pointer",
-          marginBottom: "20px",
-        }}
-      >
-        📍 Use My Location
-      </button>
-
       <div style={{ textAlign: "center", marginBottom: "20px" }}>
         <img
           src={business.photoUrl}
@@ -107,6 +84,21 @@ const BusinessProfileView: React.FC = () => {
           }}
         />
         <h1 style={{ margin: "16px 0", color: "#002B4D" }}>{business.name}</h1>
+
+        <button
+          onClick={fetchLocation}
+          style={{
+            backgroundColor: "#002B4D",
+            color: "#fff",
+            border: "none",
+            padding: "10px 15px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            marginTop: "10px",
+          }}
+        >
+          📍 Use My Location
+        </button>
       </div>
 
       <div style={{ lineHeight: "1.6" }}>
