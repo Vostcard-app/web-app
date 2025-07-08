@@ -13,6 +13,7 @@ const EditStoreProfileView: React.FC = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [contactPerson, setContactPerson] = useState("");
   const [description, setDescription] = useState("");
+  const [storeHours, setStoreHours] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
@@ -42,6 +43,7 @@ const EditStoreProfileView: React.FC = () => {
       stateProvince,
       postalCode,
       country,
+      storeHours,
       storePhoto,
       contactEmail,
       contactPerson,
@@ -128,6 +130,15 @@ const EditStoreProfileView: React.FC = () => {
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               required
+              style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
+            />
+          </label>
+          <label>
+            Store Hours
+            <input
+              type="text"
+              value={storeHours}
+              onChange={(e) => setStoreHours(e.target.value)}
               style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
             />
           </label>
