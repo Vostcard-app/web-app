@@ -5,10 +5,6 @@ export interface GeocodingResult {
 }
 
 export class GeocodingService {
-  private static readonly BACKEND_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://vostcard-backend.onrender.com'  // Update with your actual backend URL
-    : 'http://localhost:3002';
-  
   /**
    * Geocode an address to get coordinates
    */
@@ -22,7 +18,7 @@ export class GeocodingService {
     try {
       console.log('🌍 Geocoding store address...');
       
-      const response = await fetch(`${this.BACKEND_URL}/geocode`, {
+      const response = await fetch('/.netlify/functions/geocode', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -39,7 +35,7 @@ export class GeocodingService {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || `Backend error: ${response.status}`);
+        throw new Error(data.error || `Geocoding error: ${response.status}`);
       }
 
       console.log('✅ Geocoding successful:', data);
