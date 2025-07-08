@@ -296,7 +296,7 @@ const UserProfileView: React.FC = () => {
         <div style={{ marginTop: 20 }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 10,
             marginTop: 10,
           }}>
