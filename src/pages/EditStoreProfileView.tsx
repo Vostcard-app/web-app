@@ -1,5 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
 
 const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");
@@ -16,10 +19,55 @@ const EditStoreProfileView: React.FC = () => {
   const [storeHours, setStoreHours] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load existing profile data on component mount
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (!user?.uid) {
+        setDataLoading(false);
+        return;
+      }
+
+      try {
+        console.log('📄 Loading store profile for user:', user.uid);
+        const profileRef = doc(db, "advertisers", user.uid);
+        const profileSnap = await getDoc(profileRef);
+
+        if (profileSnap.exists()) {
+          const data = profileSnap.data();
+          console.log('✅ Store profile loaded:', data);
+          
+          // Populate form fields with existing data
+          setStoreName(data.storeName || "");
+          setStreetAddress(data.streetAddress || "");
+          setCity(data.city || "");
+          setStateProvince(data.stateProvince || "");
+          setPostalCode(data.postalCode || "");
+          setCountry(data.country || "");
+          setContactEmail(data.contactEmail || "");
+          setContactPerson(data.contactPerson || "");
+          setDescription(data.description || "");
+          setStoreHours(data.storeHours || "");
+        } else {
+          console.log('📄 No existing store profile found');
+        }
+      } catch (error) {
+        console.error('❌ Error loading store profile:', error);
+        setError('Failed to load profile data');
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [user?.uid]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate required fields
@@ -35,24 +83,69 @@ const EditStoreProfileView: React.FC = () => {
       return;
     }
 
-    // Simulate save process
-    console.log("Store Profile Saved:", {
-      storeName,
-      streetAddress,
-      city,
-      stateProvince,
-      postalCode,
-      country,
-      storeHours,
-      storePhoto,
-      contactEmail,
-      contactPerson,
-      description,
-    });
+    if (!user?.uid) {
+      setError("User not authenticated");
+      return;
+    }
 
+    setLoading(true);
     setError("");
-    setSuccess(true);
+    setSuccess(false);
+
+    try {
+      console.log("💾 Saving store profile for user:", user.uid);
+      
+      const profileData = {
+        storeName,
+        streetAddress,
+        city,
+        stateProvince,
+        postalCode,
+        country,
+        storeHours,
+        contactEmail,
+        contactPerson,
+        description,
+        updatedAt: new Date(),
+        // Keep existing fields from advertiser registration
+        name: storeName, // Use storeName as the display name
+        businessName: storeName,
+        email: user.email,
+        role: "advertiser"
+      };
+
+      const profileRef = doc(db, "advertisers", user.uid);
+      await setDoc(profileRef, profileData, { merge: true });
+
+      console.log("✅ Store profile saved successfully");
+      setSuccess(true);
+
+      // Auto-redirect back to portal after 2 seconds
+      setTimeout(() => {
+        navigate("/advertiser-portal");
+      }, 2000);
+
+    } catch (error) {
+      console.error("❌ Error saving store profile:", error);
+      setError("Failed to save profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  // Show loading spinner while data is loading
+  if (dataLoading) {
+    return (
+      <div style={{ overflowY: "auto", height: "100vh" }}>
+        <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+          <h1 style={{ textAlign: "center", color: "#002B4D" }}>Store Profile</h1>
+          <div style={{ textAlign: "center", padding: "40px" }}>
+            <p>Loading profile data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ overflowY: "auto", height: "100vh" }}>
@@ -180,21 +273,26 @@ const EditStoreProfileView: React.FC = () => {
             />
           </label>
           {error && <p style={{ color: "red" }}>{error}</p>}
-          {success && <p style={{ color: "green" }}>Store profile saved successfully!</p>}
+          {success && (
+            <p style={{ color: "green" }}>
+              ✅ Store profile saved successfully! Redirecting to portal...
+            </p>
+          )}
           <button
             type="submit"
+            disabled={loading}
             style={{
-              backgroundColor: "#002B4D",
+              backgroundColor: loading ? "#ccc" : "#002B4D",
               color: "#fff",
               border: "none",
               padding: "12px 20px",
               borderRadius: "8px",
               width: "100%",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               fontSize: "16px",
             }}
           >
-            Save Profile
+            {loading ? "Saving..." : "Save Profile"}
           </button>
         </form>
       </div>
