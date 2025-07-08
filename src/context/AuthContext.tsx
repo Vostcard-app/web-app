@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           setUserID(currentUser.uid);
 
-          // Fetch username from Firestore with timeout
+          // Fetch user data from Firestore - check both users and advertisers collections
           try {
             const userDocRef = doc(db, "users", currentUser.uid);
             const userDocSnap = await getDoc(userDocRef);
@@ -77,14 +77,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const data = userDocSnap.data();
               console.log('📄 Firestore user document:', data);
               setUsername(data.username || null);
-              setUserRole(data.userRole || null);
+              setUserRole(data.role || 'user'); // Set as regular user
             } else {
-              console.warn("No user document found for:", currentUser.uid);
-              setUsername(null);
-              setUserRole(null);
+              // Check advertisers collection
+              const advertiserDocRef = doc(db, "advertisers", currentUser.uid);
+              const advertiserDocSnap = await getDoc(advertiserDocRef);
+
+              if (advertiserDocSnap.exists()) {
+                const data = advertiserDocSnap.data();
+                console.log('📄 Firestore advertiser document:', data);
+                setUsername(data.businessName || data.name || null);
+                setUserRole('advertiser'); // Set as advertiser
+              } else {
+                console.warn("No user or advertiser document found for:", currentUser.uid);
+                setUsername(null);
+                setUserRole(null);
+              }
             }
           } catch (error) {
-            console.error("Error fetching username:", error);
+            console.error("Error fetching user data:", error);
             setUsername(null);
             setUserRole(null);
           }

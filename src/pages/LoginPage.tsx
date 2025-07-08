@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase/firebaseConfig";
@@ -21,7 +21,7 @@ export default function LoginPage() {
   // Redirect based on user role after successful login
   useEffect(() => {
     if (userRole) {
-      if (userRole === 'Advertiser') {
+      if (userRole === 'advertiser') {
         navigate('/advertiser-portal');
       } else {
         navigate('/home');
@@ -46,7 +46,7 @@ export default function LoginPage() {
         await auth.signOut();
         setError("Please verify your email before logging in. We've sent you another verification email.");
         try {
-          await user.sendEmailVerification();
+          await sendEmailVerification(user);
         } catch (verificationError) {
           console.error("Failed to send verification email:", verificationError);
         }
