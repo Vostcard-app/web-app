@@ -26,17 +26,32 @@ const CreateOfferView: React.FC = () => {
     try {
       setConnectionStatus('Testing Firebase connection...');
       
-      // Test basic Firebase connectivity
-      const testRef = doc(db, "test", "connection");
-      console.log('🔍 Testing Firebase connection with test document');
+      // Test actual Firebase operations that we'll need
+      console.log('🔍 Testing Firebase connection and permissions for user:', user?.uid);
       
-      // This will fail if Firebase isn't connected
+      if (!user?.uid) {
+        throw new Error('No authenticated user for connection test');
+      }
+      
+      // Test reading from advertisers collection (the actual operation we need)
+      const testRef = doc(db, "advertisers", user.uid);
+      console.log('🔍 Testing advertisers collection access...');
+      
+      // This tests the actual permission we need
       await getDoc(testRef);
-      setConnectionStatus('Firebase connection successful');
+      
+      setConnectionStatus('Firebase connection and permissions verified');
+      console.log('✅ Firebase connection test passed');
       return true;
     } catch (error) {
       console.error('❌ Firebase connection test failed:', error);
-      setConnectionStatus(`Firebase connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      let errorMessage = 'Unknown connection error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setConnectionStatus(`Firebase connection test failed: ${errorMessage}`);
       return false;
     }
   };
@@ -58,7 +73,7 @@ const CreateOfferView: React.FC = () => {
         console.log('🔍 Testing Firebase connectivity...');
         const isConnected = await testFirebaseConnection();
         if (!isConnected) {
-          throw new Error('Firebase connection failed. Please check your internet connection.');
+          throw new Error('Firebase connection test failed - see connection status above for details');
         }
         
         console.log('📊 Database instance:', db);
@@ -75,7 +90,13 @@ const CreateOfferView: React.FC = () => {
         const advertiserRef = doc(db, "advertisers", user.uid);
         console.log('📄 Attempting to load advertiser document:', advertiserRef.path);
         
-        const advertiserSnap = await getDoc(advertiserRef);
+        let advertiserSnap;
+        try {
+          advertiserSnap = await getDoc(advertiserRef);
+        } catch (profileError) {
+          console.error('❌ Failed to load store profile:', profileError);
+          throw new Error(`Failed to load store profile: ${profileError instanceof Error ? profileError.message : 'Unknown error'}`);
+        }
 
         if (advertiserSnap.exists()) {
           const advertiserData = advertiserSnap.data();
@@ -90,7 +111,16 @@ const CreateOfferView: React.FC = () => {
           const businessRef = doc(db, "businesses", user.uid);
           console.log('📄 Attempting to load business document:', businessRef.path);
           
-          const businessSnap = await getDoc(businessRef);
+          let businessSnap;
+          try {
+            businessSnap = await getDoc(businessRef);
+          } catch (businessError) {
+            console.warn('⚠️ Failed to load business document (this is OK for new offers):', businessError);
+            // Business document not existing is OK - just means no existing offer
+            setConnectionStatus('Ready to create new offer');
+            setIsEditing(false);
+            return;
+          }
           
           if (businessSnap.exists()) {
             const businessData = businessSnap.data();
@@ -355,7 +385,7 @@ const CreateOfferView: React.FC = () => {
             <li>User Email: {user?.email ? `✅ ${user.email}` : '❌ Missing'}</li>
             <li>User Role: {userRole ? `✅ ${userRole}` : '❌ Missing'}</li>
             <li>Email Verified: {user?.emailVerified ? '✅ Yes' : '⚠️ No'}</li>
-            <li>Firebase Connection: {db ? '✅ Connected' : '❌ Failed'}</li>
+            <li>Connection Status: {connectionStatus.includes('failed') ? '❌' : connectionStatus.includes('successful') || connectionStatus.includes('verified') ? '✅' : '🔄'} {connectionStatus}</li>
           </ul>
           
           <h4 style={{ margin: "12px 0 8px 0", fontSize: "16px" }}>Troubleshooting steps:</h4>
