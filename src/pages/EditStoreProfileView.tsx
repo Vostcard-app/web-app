@@ -3,16 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import { GeocodingService } from "../services/geocodingService";
+import { GeocodingService, LocationData } from "../services/geocodingService";
 
 const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");
-  // New address fields
+  
+  // Address input fields
   const [streetAddress, setStreetAddress] = useState("");
   const [city, setCity] = useState("");
   const [stateProvince, setStateProvince] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [country, setCountry] = useState("");
+  
+  // Location data (primary storage)
+  const [storeLocation, setStoreLocation] = useState<LocationData | null>(null);
   const [storePhoto, setStorePhoto] = useState<File | null>(null);
   const [contactEmail, setContactEmail] = useState("");
   const [contactPerson, setContactPerson] = useState("");

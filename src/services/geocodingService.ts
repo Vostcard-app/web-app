@@ -4,6 +4,18 @@ export interface GeocodingResult {
   displayAddress: string;
 }
 
+export interface LocationData {
+  latitude: number;
+  longitude: number;
+  displayAddress: string;
+  // Optional: keep original address components for reference
+  streetAddress?: string;
+  city?: string;
+  stateProvince?: string;
+  postalCode?: string;
+  country?: string;
+}
+
 export class GeocodingService {
   /**
    * Geocode an address to get coordinates
@@ -118,5 +130,49 @@ export class GeocodingService {
         return await this.geocodeAddress('', '', stateProvince, postalCode, country);
       }
     }
+  }
+
+  /**
+   * Geocode address and return location data immediately
+   */
+  static async geocodeToLocation(
+    streetAddress: string,
+    city: string,
+    stateProvince: string,
+    postalCode: string,
+    country: string
+  ): Promise<LocationData> {
+    try {
+      const result = await this.geocodeAddressWithFallback(
+        streetAddress,
+        city,
+        stateProvince,
+        postalCode,
+        country
+      );
+
+      return {
+        latitude: result.latitude,
+        longitude: result.longitude,
+        displayAddress: result.displayAddress,
+        streetAddress,
+        city,
+        stateProvince,
+        postalCode,
+        country
+      };
+    } catch (error) {
+      throw new Error(`Failed to geocode address: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Validate location data
+   */
+  static validateLocation(location: LocationData | null): boolean {
+    if (!location) return false;
+    return !isNaN(location.latitude) && !isNaN(location.longitude) && 
+           location.latitude >= -90 && location.latitude <= 90 &&
+           location.longitude >= -180 && location.longitude <= 180;
   }
 } 
