@@ -1,59 +1,351 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
+import { FaArrowLeft, FaSpinner } from 'react-icons/fa';
 
 interface Offer {
   id: string;
   title: string;
-  businessName: string;
-  distance: number; // distance in meters
+  description: string;
+  username: string;
+  latitude: number;
+  longitude: number;
+  photoURLs?: string[];
+  createdAt: any;
+  offerDetails?: {
+    storeName?: string;
+    storeAddress?: string;
+    phone?: string;
+    email?: string;
+  };
 }
 
 const OffersListView: React.FC = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     console.log("OffersListView mounted"); // Debug log
-    // Placeholder: fetch offers from backend or context
-    const mockOffers: Offer[] = [
-      { id: '1', title: '50% Off Coffee', businessName: 'Cafe Aroma', distance: 150 },
-      { id: '2', title: 'Free Dessert', businessName: 'Sweet Treats', distance: 350 },
-    ];
-    setOffers(mockOffers);
+    fetchOffers();
   }, []);
+
+  const fetchOffers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Query for offers from vostcards collection
+      const q = query(
+        collection(db, 'vostcards'),
+        where('isOffer', '==', true),
+        where('state', '==', 'posted'),
+        orderBy('createdAt', 'desc')
+      );
+
+      const querySnapshot = await getDocs(q);
+      const fetchedOffers: Offer[] = [];
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedOffers.push({
+          id: doc.id,
+          title: data.title || 'Untitled Offer',
+          description: data.description || 'No description',
+          username: data.username || 'Unknown Store',
+          latitude: data.latitude || 0,
+          longitude: data.longitude || 0,
+          photoURLs: data.photoURLs || [],
+          createdAt: data.createdAt,
+          offerDetails: data.offerDetails || {}
+        });
+      });
+
+      setOffers(fetchedOffers);
+      console.log(`✅ Fetched ${fetchedOffers.length} offers`);
+    } catch (err) {
+      console.error('❌ Error fetching offers:', err);
+      setError('Failed to load offers. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOfferClick = (offerId: string) => {
     console.log(`Navigating to offer ${offerId}`); // Debug log
     navigate(`/offer/${offerId}`);
   };
 
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        backgroundColor: '#f8f9fa'
+      }}>
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <FaSpinner className="fa-spin" size={24} color="#002B4D" />
+          <div style={{ fontSize: '18px', color: '#666', marginTop: '16px' }}>
+            Loading offers...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        backgroundColor: '#f8f9fa'
+      }}>
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '40px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontSize: '18px', color: '#dc3545', marginBottom: '16px' }}>
+            {error}
+          </div>
+          <button
+            onClick={fetchOffers}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              marginRight: '12px'
+            }}
+          >
+            Try Again
+          </button>
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px'
+            }}
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <div style={{ padding: '16px' }}>
-        <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>Nearby Offers</h1>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {offers.map((offer) => (
-            <li
-              key={offer.id}
-              onClick={() => handleOfferClick(offer.id)}
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#f8f9fa',
+      paddingBottom: '40px'
+    }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#002B4D',
+        padding: '16px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px'
+      }}>
+        <button
+          onClick={() => navigate('/home')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <FaArrowLeft size={20} />
+        </button>
+        <h1 style={{
+          color: 'white',
+          margin: 0,
+          fontSize: '24px',
+          fontWeight: 600
+        }}>
+          Available Offers ({offers.length})
+        </h1>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '20px' }}>
+        {offers.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '60px 20px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{ color: '#666', fontSize: '24px', marginBottom: '16px' }}>
+              No Offers Available
+            </h2>
+            <p style={{ color: '#888', fontSize: '16px', marginBottom: '24px' }}>
+              There are currently no offers posted in your area.
+            </p>
+            <button
+              onClick={() => navigate('/home')}
               style={{
-                padding: '12px',
-                marginBottom: '8px',
-                border: '1px solid #ccc',
+                padding: '12px 24px',
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer',
+                fontSize: '16px'
               }}
             >
-              <h2 style={{ margin: '0 0 4px 0' }}>{offer.title}</h2>
-              <p style={{ margin: '0 0 4px 0', color: '#555' }}>{offer.businessName}</p>
-              <p style={{ margin: 0, color: '#888' }}>
-                {offer.distance} meters away
-              </p>
-            </li>
-          ))}
-        </ul>
+              Back to Map
+            </button>
+          </div>
+        ) : (
+          <div style={{ 
+            display: 'grid', 
+            gap: '16px',
+            maxWidth: '800px',
+            margin: '0 auto'
+          }}>
+            {offers.map((offer) => (
+              <div
+                key={offer.id}
+                onClick={() => handleOfferClick(offer.id)}
+                style={{
+                  backgroundColor: 'white',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  display: 'flex',
+                  gap: '16px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }}
+              >
+                {/* Offer Image */}
+                <div style={{ flexShrink: 0 }}>
+                  {offer.photoURLs && offer.photoURLs.length > 0 ? (
+                    <img
+                      src={offer.photoURLs[0]}
+                      alt={offer.title}
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '8px',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '80px',
+                      height: '80px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#666',
+                      fontSize: '24px'
+                    }}>
+                      🎁
+                    </div>
+                  )}
+                </div>
+
+                {/* Offer Details */}
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ 
+                    margin: '0 0 8px 0', 
+                    color: '#002B4D',
+                    fontSize: '18px',
+                    fontWeight: 600
+                  }}>
+                    {offer.title}
+                  </h3>
+                  <p style={{ 
+                    margin: '0 0 8px 0', 
+                    color: '#666',
+                    fontSize: '14px',
+                    lineHeight: 1.4
+                  }}>
+                    {offer.description.length > 100 
+                      ? offer.description.substring(0, 100) + '...' 
+                      : offer.description}
+                  </p>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '12px'
+                  }}>
+                    <span style={{ 
+                      color: '#28a745',
+                      fontWeight: 600,
+                      fontSize: '14px'
+                    }}>
+                      {offer.offerDetails?.storeName || offer.username}
+                    </span>
+                    <span style={{ 
+                      color: '#888',
+                      fontSize: '12px'
+                    }}>
+                      {offer.createdAt ? new Date(offer.createdAt.seconds * 1000).toLocaleDateString() : 'Recent'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 };
 
