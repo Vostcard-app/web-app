@@ -69,7 +69,7 @@ const CreateOfferView: React.FC = () => {
       const fileName = `offer_${timestamp}.${fileExtension}`;
       
       // Upload to Firebase Storage with userId-based path structure
-      const storageRef = ref(storage, `offers/${userId}/${offerId}/${fileName}`);
+      const storageRef = ref(storage, `vostcards/${userId}/${offerId}/${fileName}`);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
 
