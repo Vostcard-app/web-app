@@ -162,18 +162,25 @@ const OfferView: React.FC = () => {
   const profileImage = storeProfile?.profileImageUrl;
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f8f9fa',
-      paddingBottom: '40px'
-    }}>
+    <div 
+      className="offer-view-container"
+      style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#f8f9fa',
+        paddingBottom: '40px',
+        overflowY: 'auto',
+        position: 'relative'
+      }}>
       {/* Header */}
       <div style={{
         backgroundColor: '#002B4D',
         padding: '16px 20px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px'
+        gap: '16px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10
       }}>
         <button
           onClick={() => navigate(-1)}
@@ -201,273 +208,321 @@ const OfferView: React.FC = () => {
         </h1>
       </div>
 
-      {/* Content */}
+      {/* Scrollable Content Container */}
       <div style={{
-        maxWidth: '600px',
-        margin: '0 auto',
-        padding: '20px',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        marginTop: '20px',
-        marginLeft: '20px',
-        marginRight: '20px'
+        height: 'calc(100vh - 80px)', // Account for header height
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        scrollBehavior: 'smooth',
+        WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
       }}>
-        <div style={{ 
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          marginBottom: '20px'
-        }}>
-          {/* Offer Image */}
-          {offer.photoURLs && offer.photoURLs.length > 0 && offer.photoURLs[0] && (
-            <div style={{ 
-              width: '100%', 
-              maxWidth: '400px',
-              margin: '0 auto 20px auto',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              backgroundColor: '#f8f9fa'
+        {/* Content */}
+        <div 
+          className="offer-view-content"
+          style={{
+            maxWidth: '600px',
+            margin: '0 auto',
+            padding: 'clamp(16px, 4vw, 20px)', // Responsive padding
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            marginTop: '20px',
+            marginLeft: 'clamp(10px, 4vw, 20px)', // Responsive margins
+            marginRight: 'clamp(10px, 4vw, 20px)',
+            marginBottom: '40px', // Extra space at bottom for better scrolling
+            minHeight: 'fit-content'
+          }}>
+          <div style={{ 
+            padding: '20px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            marginBottom: '20px'
+          }}>
+            {/* Offer Image */}
+            {offer.photoURLs && offer.photoURLs.length > 0 && offer.photoURLs[0] && (
+              <div style={{ 
+                width: '100%', 
+                maxWidth: '400px',
+                margin: '0 auto 20px auto',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                backgroundColor: '#f8f9fa'
+              }}>
+                <img 
+                  src={offer.photoURLs[0]} 
+                  alt={offer.title}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    maxHeight: '300px',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    // Hide image container if it fails to load
+                    const container = e.currentTarget.parentElement;
+                    if (container) {
+                      container.style.display = 'none';
+                    }
+                  }}
+                />
+              </div>
+            )}
+            
+            <h1 style={{ 
+              fontSize: '28px', 
+              fontWeight: 'bold', 
+              color: '#002B4D',
+              marginBottom: '16px',
+              textAlign: 'center'
             }}>
-              <img 
-                src={offer.photoURLs[0]} 
-                alt={offer.title}
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  maxHeight: '300px',
-                  objectFit: 'cover'
-                }}
-                onError={(e) => {
-                  // Hide image container if it fails to load
-                  const container = e.currentTarget.parentElement;
-                  if (container) {
-                    container.style.display = 'none';
-                  }
-                }}
-              />
-            </div>
-          )}
-          
-          <h1 style={{ 
-            fontSize: '28px', 
-            fontWeight: 'bold', 
-            color: '#002B4D',
-            marginBottom: '16px',
-            textAlign: 'center'
-          }}>
-            {offer.title}
-          </h1>
-        </div>
-
-        {/* 3. Description */}
-        <div style={{
-          marginBottom: '24px',
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          border: '1px solid #e9ecef'
-        }}>
-          <h3 style={{
-            fontSize: '18px',
-            fontWeight: 600,
-            color: '#002B4D',
-            margin: '0 0 12px 0'
-          }}>
-            Description
-          </h3>
-          <p style={{
-            fontSize: '16px',
-            lineHeight: 1.6,
-            color: '#444',
-            margin: 0,
-            whiteSpace: 'pre-wrap'
-          }}>
-            {offer.description || 'No description available.'}
-          </p>
-        </div>
-
-        {/* 4. Store Address */}
-        {storeAddress && (
-          <div style={{
-            marginBottom: '16px',
-            padding: '16px',
-            backgroundColor: '#fff',
-            border: '1px solid #e9ecef',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '12px'
-          }}>
-            <FaMapMarkerAlt 
-              size={18} 
-              color="#dc3545" 
-              style={{ marginTop: '2px', flexShrink: 0 }}
-            />
-            <div>
-              <h4 style={{
-                fontSize: '16px',
-                fontWeight: 600,
-                color: '#002B4D',
-                margin: '0 0 4px 0'
-              }}>
-                Store Address
-              </h4>
-              <p style={{
-                fontSize: '15px',
-                color: '#666',
-                margin: 0,
-                lineHeight: 1.4
-              }}>
-                {storeAddress}
-              </p>
-            </div>
+              {offer.title}
+            </h1>
           </div>
-        )}
 
-        {/* 5. Phone Number */}
-        {phone && (
-          <div style={{
-            marginBottom: '16px',
-            padding: '16px',
-            backgroundColor: '#fff',
-            border: '1px solid #e9ecef',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <FaPhone 
-              size={16} 
-              color="#28a745" 
-              style={{ flexShrink: 0 }}
-            />
-            <div style={{ flex: 1 }}>
-              <h4 style={{
-                fontSize: '16px',
-                fontWeight: 600,
-                color: '#002B4D',
-                margin: '0 0 4px 0'
-              }}>
-                Phone Number
-              </h4>
-              <a 
-                href={`tel:${phone}`}
-                style={{
-                  fontSize: '15px',
-                  color: '#28a745',
-                  textDecoration: 'none',
-                  fontWeight: 500
-                }}
-              >
-                {phone}
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* 6. Email Address */}
-        {email && (
+          {/* 3. Description */}
           <div style={{
             marginBottom: '24px',
-            padding: '16px',
-            backgroundColor: '#fff',
-            border: '1px solid #e9ecef',
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
             borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px'
+            border: '1px solid #e9ecef'
           }}>
-            <FaEnvelope 
-              size={16} 
-              color="#007bff" 
-              style={{ flexShrink: 0 }}
-            />
-            <div style={{ flex: 1 }}>
-              <h4 style={{
-                fontSize: '16px',
-                fontWeight: 600,
-                color: '#002B4D',
-                margin: '0 0 4px 0'
-              }}>
-                Email Address
-              </h4>
-              <a 
-                href={`mailto:${email}`}
-                style={{
-                  fontSize: '15px',
-                  color: '#007bff',
-                  textDecoration: 'none',
-                  fontWeight: 500
-                }}
-              >
-                {email}
-              </a>
-            </div>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#002B4D',
+              margin: '0 0 12px 0'
+            }}>
+              Description
+            </h3>
+            <p style={{
+              fontSize: '16px',
+              lineHeight: 1.6,
+              color: '#444',
+              margin: 0,
+              whiteSpace: 'pre-wrap'
+            }}>
+              {offer.description || 'No description available.'}
+            </p>
           </div>
-        )}
 
-        {/* 7. Profile Image */}
-        <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px',
-          border: '1px solid #e9ecef'
-        }}>
-          <h4 style={{
-            fontSize: '16px',
-            fontWeight: 600,
-            color: '#002B4D',
-            margin: '0 0 16px 0'
+          {/* 4. Store Address */}
+          {storeAddress && (
+            <div style={{
+              marginBottom: '16px',
+              padding: '16px',
+              backgroundColor: '#fff',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '12px'
+            }}>
+              <FaMapMarkerAlt 
+                size={18} 
+                color="#dc3545" 
+                style={{ marginTop: '2px', flexShrink: 0 }}
+              />
+              <div>
+                <h4 style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#002B4D',
+                  margin: '0 0 4px 0'
+                }}>
+                  Store Address
+                </h4>
+                <p style={{
+                  fontSize: '15px',
+                  color: '#666',
+                  margin: 0,
+                  lineHeight: 1.4
+                }}>
+                  {storeAddress}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* 5. Phone Number */}
+          {phone && (
+            <div style={{
+              marginBottom: '16px',
+              padding: '16px',
+              backgroundColor: '#fff',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <FaPhone 
+                size={16} 
+                color="#28a745" 
+                style={{ flexShrink: 0 }}
+              />
+              <div style={{ flex: 1 }}>
+                <h4 style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#002B4D',
+                  margin: '0 0 4px 0'
+                }}>
+                  Phone Number
+                </h4>
+                <a 
+                  href={`tel:${phone}`}
+                  style={{
+                    fontSize: '15px',
+                    color: '#28a745',
+                    textDecoration: 'none',
+                    fontWeight: 500
+                  }}
+                >
+                  {phone}
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* 6. Email Address */}
+          {email && (
+            <div style={{
+              marginBottom: '24px',
+              padding: '16px',
+              backgroundColor: '#fff',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <FaEnvelope 
+                size={16} 
+                color="#007bff" 
+                style={{ flexShrink: 0 }}
+              />
+              <div style={{ flex: 1 }}>
+                <h4 style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#002B4D',
+                  margin: '0 0 4px 0'
+                }}>
+                  Email Address
+                </h4>
+                <a 
+                  href={`mailto:${email}`}
+                  style={{
+                    fontSize: '15px',
+                    color: '#007bff',
+                    textDecoration: 'none',
+                    fontWeight: 500
+                  }}
+                >
+                  {email}
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* 7. Profile Image */}
+          <div style={{
+            textAlign: 'center',
+            padding: '20px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
           }}>
-            {storeName}
-          </h4>
-          {profileImage ? (
-            <img
-              src={profileImage}
-              alt={`${storeName} profile`}
-              style={{
+            <h4 style={{
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#002B4D',
+              margin: '0 0 16px 0'
+            }}>
+              {storeName}
+            </h4>
+            {profileImage ? (
+              <img
+                src={profileImage}
+                alt={`${storeName} profile`}
+                style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '3px solid #002B4D',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
+              />
+            ) : (
+              <div style={{
                 width: '80px',
                 height: '80px',
                 borderRadius: '50%',
-                objectFit: 'cover',
-                border: '3px solid #002B4D',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}
-            />
-          ) : (
+                backgroundColor: '#002B4D',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto',
+                fontSize: '32px',
+                fontWeight: 600
+              }}>
+                <FaStore />
+              </div>
+            )}
+          </div>
+
+          {/* Additional Info */}
+          {offer.createdAt && (
             <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '50%',
-              backgroundColor: '#002B4D',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto',
-              fontSize: '32px',
-              fontWeight: 600
+              marginTop: '20px',
+              textAlign: 'center',
+              color: '#666',
+              fontSize: '14px'
             }}>
-              <FaStore />
+              Posted: {new Date(offer.createdAt.seconds * 1000).toLocaleDateString()}
             </div>
           )}
         </div>
-
-        {/* Additional Info */}
-        {offer.createdAt && (
-          <div style={{
-            marginTop: '20px',
-            textAlign: 'center',
-            color: '#666',
-            fontSize: '14px'
-          }}>
-            Posted: {new Date(offer.createdAt.seconds * 1000).toLocaleDateString()}
-          </div>
-        )}
       </div>
+      
+      {/* CSS for better scrolling and mobile optimization */}
+      <style>{`
+        /* Improve scrollbar appearance on webkit browsers */
+        .offer-view-container div::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        .offer-view-container div::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 4px;
+        }
+        
+        .offer-view-container div::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 4px;
+        }
+        
+        .offer-view-container div::-webkit-scrollbar-thumb:hover {
+          background: #555;
+        }
+        
+        /* Mobile viewport optimization */
+        @media (max-width: 768px) {
+          .offer-view-container {
+            padding: 10px !important;
+          }
+          
+          .offer-view-content {
+            margin-left: 10px !important;
+            margin-right: 10px !important;
+            padding: 16px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
