@@ -37,6 +37,7 @@ import UserSettingsView from './pages/UserSettingsView';
 import SuggestionBoxView from './pages/SuggestionBoxView';
 import FlagFormView from './pages/FlagFormView';
 import ReportBugView from './pages/ReportBugView';
+import PinPlacerTool from './pages/PinPlacerTool';
 
 function App() {
   return (
@@ -107,6 +108,9 @@ function App() {
 
             {/* 📄 Script Tool */}
             <Route path="/script-tool" element={<ScriptToolView />} />
+
+            {/* 📍 Pin Placer */}
+            <Route path="/pin-placer" element={<PinPlacerTool />} />
           </Routes>
         </Router>
         </FollowingProvider>

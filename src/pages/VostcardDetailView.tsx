@@ -528,9 +528,20 @@ const VostcardDetailView: React.FC = () => {
         }}>
           <button
             onClick={() => {
-              // TODO: Wire up Pin Placer functionality
-              console.log('Pin Placer clicked for vostcard:', vostcard?.id);
-              alert('Pin Placer feature coming soon!');
+              // Navigate to Pin Placer tool with vostcard data
+              navigate('/pin-placer', {
+                state: {
+                  pinData: {
+                    id: vostcard.id || id,
+                    title: vostcard.title || 'Untitled Vostcard',
+                    description: vostcard.description || 'No description',
+                    latitude: vostcard.latitude || vostcard.geo?.latitude || 0,
+                    longitude: vostcard.longitude || vostcard.geo?.longitude || 0,
+                    isOffer: false,
+                    userID: vostcard.userID
+                  }
+                }
+              });
             }}
             style={{
               backgroundColor: '#ff6b35',

@@ -9,7 +9,14 @@ interface OfferData {
   id: string;
   title: string;
   description: string;
+  userID?: string;
+  userId?: string;
+  username?: string;
   photoURLs?: string[];
+  latitude: number;
+  longitude: number;
+  createdAt?: any;
+  updatedAt?: any;
   offerDetails?: {
     storeName?: string;
     storeAddress?: string;
@@ -18,11 +25,6 @@ interface OfferData {
     contactPerson?: string;
     storeHours?: string;
   };
-  username?: string;
-  userID?: string;
-  userId?: string;
-  createdAt?: any;
-  updatedAt?: any;
 }
 
 interface StoreProfile {
@@ -437,9 +439,21 @@ const OfferView: React.FC = () => {
             }}>
               <button
                 onClick={() => {
-                  // TODO: Wire up Pin Placer functionality
-                  console.log('Pin Placer clicked for offer:', offer.id);
-                  alert('Pin Placer feature coming soon!');
+                  // Navigate to Pin Placer tool with offer data
+                  navigate('/pin-placer', {
+                    state: {
+                      pinData: {
+                        id: offer.id,
+                        title: offer.title,
+                        description: offer.description,
+                        latitude: offer.latitude,
+                        longitude: offer.longitude,
+                        isOffer: true,
+                        userID: offer.userID,
+                        userId: offer.userId
+                      }
+                    }
+                  });
                 }}
                 style={{
                   backgroundColor: '#ff6b35',
