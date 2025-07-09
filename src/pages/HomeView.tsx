@@ -332,10 +332,6 @@ const HomeView = () => {
       <div style={headerStyle}>
         <div style={logoContainerStyle}>
           <h1 style={logoStyle}>Vōstcard</h1>
-          {/* Small update indicator */}
-          <div style={updateIndicatorStyle}>
-            {vostcards.length} • {formatLastUpdate()}
-          </div>
         </div>
         <div style={headerRight}>
           {/* User Avatar */}
