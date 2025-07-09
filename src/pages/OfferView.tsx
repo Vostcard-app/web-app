@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
-import { FaArrowLeft, FaPhone, FaEnvelope, FaMapMarkerAlt, FaStore } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { FaArrowLeft, FaPhone, FaEnvelope, FaMapMarkerAlt, FaStore, FaMapPin } from 'react-icons/fa';
 
 interface OfferData {
   id: string;
@@ -44,6 +45,7 @@ const OfferView: React.FC = () => {
   const [storeProfile, setStoreProfile] = useState<StoreProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!id) {
@@ -424,6 +426,51 @@ const OfferView: React.FC = () => {
                   {email}
                 </a>
               </div>
+            </div>
+          )}
+
+          {/* Pin Placer Button - Only visible to creator */}
+          {user && (user.uid === offer.userID || user.uid === offer.userId) && (
+            <div style={{
+              marginBottom: '24px',
+              textAlign: 'center'
+            }}>
+              <button
+                onClick={() => {
+                  // TODO: Wire up Pin Placer functionality
+                  console.log('Pin Placer clicked for offer:', offer.id);
+                  alert('Pin Placer feature coming soon!');
+                }}
+                style={{
+                  backgroundColor: '#ff6b35',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  margin: '0 auto',
+                  boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e55a2b';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 53, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ff6b35';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 53, 0.3)';
+                }}
+              >
+                <FaMapPin size={16} />
+                Pin Placer
+              </button>
             </div>
           )}
 

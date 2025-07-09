@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, onSnapshot } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
+import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
 import RatingStars from '../components/RatingStars';
 import CommentsModal from '../components/CommentsModal';
@@ -14,6 +15,7 @@ import type { Vostcard } from '../context/VostcardContext';
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [vostcard, setVostcard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -517,6 +519,51 @@ const VostcardDetailView: React.FC = () => {
         </button>
       </div>
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>Posted: {createdAt}</div>
+
+      {/* Pin Placer Button - Only visible to creator */}
+      {user && user.uid === vostcard?.userID && (
+        <div style={{
+          textAlign: 'center',
+          margin: '24px 0 16px 0'
+        }}>
+          <button
+            onClick={() => {
+              // TODO: Wire up Pin Placer functionality
+              console.log('Pin Placer clicked for vostcard:', vostcard?.id);
+              alert('Pin Placer feature coming soon!');
+            }}
+            style={{
+              backgroundColor: '#ff6b35',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              margin: '0 auto',
+              boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#e55a2b';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 53, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#ff6b35';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 53, 0.3)';
+            }}
+          >
+            <FaMapPin size={16} />
+            Pin Placer
+          </button>
+        </div>
+      )}
 
       {/* Bottom Icons */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '32px 24px 0 24px' }}>
