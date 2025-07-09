@@ -12,7 +12,6 @@ interface AuthContextType {
   userRole: string | null;
   loading: boolean;
   logout: () => Promise<void>;
-  setUserTypeHint: (type: "user" | "advertiser" | null) => void;
 }
 
 // Create context
@@ -25,7 +24,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userID, setUserID] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [userTypeHint, setUserTypeHint] = useState<"user" | "advertiser" | null>(null);
 
   useEffect(() => {
     console.log('🔐 AuthProvider: Setting up Firebase Auth listener...');
@@ -104,60 +102,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             let userDocSnap, advertiserDocSnap;
 
-            if (userTypeHint) {
-              console.log(`🎯 Using type hint: ${userTypeHint} for faster query`);
-              
-              // Use hint to check the expected collection first
-              if (userTypeHint === "advertiser") {
-                advertiserDocSnap = await Promise.race([
-                  getDoc(advertiserDocRef),
-                  new Promise<never>((_, reject) => 
-                    setTimeout(() => reject(new Error('Firestore query timeout')), 1500)
-                  )
-                ]);
-                
-                // If advertiser doc exists, we're done. Otherwise, check users collection as fallback
-                if (advertiserDocSnap.exists()) {
-                  userDocSnap = null; // No need to check users collection
-                } else {
-                  userDocSnap = await Promise.race([
-                    getDoc(userDocRef),
-                    new Promise<never>((_, reject) => 
-                      setTimeout(() => reject(new Error('Firestore query timeout')), 1500)
-                    )
-                  ]);
-                }
-              } else {
-                // userTypeHint === "user"
-                userDocSnap = await Promise.race([
-                  getDoc(userDocRef),
-                  new Promise<never>((_, reject) => 
-                    setTimeout(() => reject(new Error('Firestore query timeout')), 1500)
-                  )
-                ]);
-                
-                // If user doc exists, we're done. Otherwise, check advertisers collection as fallback
-                if (userDocSnap.exists()) {
-                  advertiserDocSnap = null; // No need to check advertisers collection
-                } else {
-                  advertiserDocSnap = await Promise.race([
-                    getDoc(advertiserDocRef),
-                    new Promise<never>((_, reject) => 
-                      setTimeout(() => reject(new Error('Firestore query timeout')), 1500)
-                    )
-                  ]);
-                }
-              }
-            } else {
-              // No hint - check both collections simultaneously (fallback to original behavior)
-              console.log('🔍 No type hint provided, checking both collections');
-              [userDocSnap, advertiserDocSnap] = await Promise.race([
-                Promise.all([getDoc(userDocRef), getDoc(advertiserDocRef)]),
-                new Promise<never>((_, reject) => 
-                  setTimeout(() => reject(new Error('Firestore query timeout')), 1800)
-                )
-              ]);
-            }
+            [userDocSnap, advertiserDocSnap] = await Promise.race([
+              Promise.all([getDoc(userDocRef), getDoc(advertiserDocRef)]),
+              new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error('Firestore query timeout')), 1800)
+              )
+            ]);
 
             // Clear the Firestore timeout since we got results
             clearTimeout(firestoreTimeout);
@@ -207,7 +157,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUsername(null);
           setUserID(null);
           setUserRole(null);
-          setUserTypeHint(null); // Clear any type hint when no user is authenticated
         }
       } catch (error) {
         console.error('❌ Error in auth state change handler:', error);
@@ -215,7 +164,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUsername(null);
         setUserID(null);
         setUserRole(null);
-        setUserTypeHint(null); // Clear any type hint on auth errors
       } finally {
         console.log('🔐 AuthProvider: Setting loading to false');
         setLoading(false);
@@ -225,7 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearTimeout(loadingTimeout);
       clearTimeout(quickAuthCheck);
       setLoading(false);
-      setUserTypeHint(null); // Clear any type hint on auth state errors
     });
 
     return () => {
@@ -239,7 +186,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       console.log('🔐 Logging out user...');
-      setUserTypeHint(null); // Clear any type hint on logout
       await signOut(auth);
       console.log('✅ User logged out successfully');
     } catch (error) {
@@ -255,7 +201,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userRole,
     loading,
     logout,
-    setUserTypeHint,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

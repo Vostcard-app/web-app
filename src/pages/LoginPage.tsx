@@ -11,8 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [loginType, setLoginType] = useState<"user" | "advertiser">("user");
-  const { userRole, setUserTypeHint } = useAuth();
+  const { userRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [successMessage, setSuccessMessage] = useState(location.state?.message || "");
@@ -39,18 +38,12 @@ export default function LoginPage() {
     }
 
     try {
-      // Set the user type hint for faster authentication
-      console.log(`🎯 Setting user type hint: ${loginType}`);
-      setUserTypeHint(loginType);
-
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log("Logged in:", user);
 
       if (!user.emailVerified) {
         await auth.signOut();
-        // Clear the hint on failed login
-        setUserTypeHint(null);
         setError("Please verify your email before logging in. We've sent you another verification email.");
         try {
           await sendEmailVerification(user);
@@ -66,9 +59,6 @@ export default function LoginPage() {
 
     } catch (err: any) {
       console.error("Login error:", err.code, err.message);
-      
-      // Clear the hint on failed login
-      setUserTypeHint(null);
 
       if (err.code === "auth/invalid-credential") {
         setError("Invalid email or password.");
@@ -167,54 +157,6 @@ export default function LoginPage() {
         fontSize: '2rem',
         fontWeight: 500,
       }}>Welcome</h2>
-
-      {/* Login Type Toggle */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        margin: '0 auto 24px auto',
-        width: '90%',
-        maxWidth: 400,
-      }}>
-        <button
-          type="button"
-          onClick={() => setLoginType("user")}
-          style={{
-            flex: 1,
-            padding: '12px 0',
-            background: loginType === "user" ? "#07345c" : "#f0f0f0",
-            color: loginType === "user" ? "#fff" : "#07345c",
-            border: 'none',
-            borderRadius: '12px 0 0 12px',
-            fontWeight: 600,
-            fontSize: 18,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: loginType === "user" ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
-          }}
-        >
-          👤 User
-        </button>
-        <button
-          type="button"
-          onClick={() => setLoginType("advertiser")}
-          style={{
-            flex: 1,
-            padding: '12px 0',
-            background: loginType === "advertiser" ? "#07345c" : "#f0f0f0",
-            color: loginType === "advertiser" ? "#fff" : "#07345c",
-            border: 'none',
-            borderRadius: '0 12px 12px 0',
-            fontWeight: 600,
-            fontSize: 18,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: loginType === "advertiser" ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
-          }}
-        >
-          🏪 Advertiser
-        </button>
-      </div>
 
       {/* Username/Email */}
       <input
