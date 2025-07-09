@@ -68,10 +68,26 @@ const CreateOfferView: React.FC = () => {
               }
             } else {
               console.log('📄 No existing offer found, creating new offer');
+              console.log('📄 Auto-populating with business profile data:', {
+                phone: advertiserData.contactPhone,
+                email: advertiserData.contactEmail
+              });
+              
+              // Auto-populate with business profile data for new offers
+              setPhone(advertiserData.contactPhone || "");
+              setEmail(advertiserData.contactEmail || "");
               setIsEditing(false);
             }
           } else {
             console.log('📄 No business document found, creating new offer');
+            console.log('📄 Auto-populating with business profile data:', {
+              phone: advertiserData.contactPhone,
+              email: advertiserData.contactEmail
+            });
+            
+            // Auto-populate with business profile data for new offers
+            setPhone(advertiserData.contactPhone || "");
+            setEmail(advertiserData.contactEmail || "");
             setIsEditing(false);
           }
         } else {
@@ -295,6 +311,41 @@ const CreateOfferView: React.FC = () => {
           )}
         </div>
       )}
+      
+      {/* Business Profile Info */}
+      {storeProfile && (
+        <div style={{
+          backgroundColor: "#e7f3ff",
+          border: "1px solid #bee5eb",
+          borderRadius: "6px",
+          padding: "12px",
+          marginBottom: "16px",
+          fontSize: "14px",
+          color: "#0c5460"
+        }}>
+          <strong>📋 Auto-populated from your business profile:</strong>
+          <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px" }}>
+            <li><strong>Store Location:</strong> {storeProfile.streetAddress}, {storeProfile.city}, {storeProfile.stateProvince} {storeProfile.postalCode}</li>
+            {storeProfile.contactPhone && <li><strong>Phone:</strong> {storeProfile.contactPhone}</li>}
+            {storeProfile.contactEmail && <li><strong>Email:</strong> {storeProfile.contactEmail}</li>}
+          </ul>
+          <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#666" }}>
+            You can edit the phone and email fields above if needed. To update your store address, go to your <button 
+              onClick={() => navigate("/store-profile-page")}
+              style={{
+                color: "#0c5460",
+                textDecoration: "underline",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                font: "inherit"
+              }}
+            >store profile</button>.
+          </p>
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit}>
         <label>
           Offer Title<span style={{ color: "red" }}>*</span>
@@ -326,20 +377,22 @@ const CreateOfferView: React.FC = () => {
           />
         </label>
         <label>
-          Phone Number
+          Phone Number {storeProfile?.contactPhone && <span style={{ fontSize: "12px", color: "#666" }}>(from business profile)</span>}
           <input
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder={storeProfile?.contactPhone ? "Auto-populated from business profile" : "Enter phone number"}
             style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
           />
         </label>
         <label>
-          Email Address
+          Email Address {storeProfile?.contactEmail && <span style={{ fontSize: "12px", color: "#666" }}>(from business profile)</span>}
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder={storeProfile?.contactEmail ? "Auto-populated from business profile" : "Enter email address"}
             style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
           />
         </label>
