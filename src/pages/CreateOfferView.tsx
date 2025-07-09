@@ -7,7 +7,7 @@ import { GeocodingService } from "../services/geocodingService";
 
 const CreateOfferView: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -24,6 +24,8 @@ const CreateOfferView: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!user?.uid) {
+        console.log('❌ No user authenticated');
+        setError('User not authenticated. Please log in again.');
         setDataLoading(false);
         return;
       }
@@ -31,8 +33,21 @@ const CreateOfferView: React.FC = () => {
       try {
         console.log('📄 Loading offer and store profile data for user:', user.uid);
         
+        // Test Firebase connectivity
+        console.log('🔍 Testing Firebase connectivity...');
+        console.log('📊 Database instance:', db);
+        
+        // Check user authentication and role
+        console.log('👤 User authentication check:');
+        console.log('   - User UID:', user.uid);
+        console.log('   - User Email:', user.email);
+        console.log('   - User Role:', userRole);
+        console.log('   - User Email Verified:', user.emailVerified);
+        
         // Load store profile from advertisers collection
         const advertiserRef = doc(db, "advertisers", user.uid);
+        console.log('📄 Attempting to load advertiser document:', advertiserRef.path);
+        
         const advertiserSnap = await getDoc(advertiserRef);
 
         if (advertiserSnap.exists()) {
@@ -44,6 +59,8 @@ const CreateOfferView: React.FC = () => {
           
           // Try to load existing offer from businesses collection
           const businessRef = doc(db, "businesses", user.uid);
+          console.log('📄 Attempting to load business document:', businessRef.path);
+          
           const businessSnap = await getDoc(businessRef);
           
           if (businessSnap.exists()) {
@@ -72,11 +89,25 @@ const CreateOfferView: React.FC = () => {
           }
         } else {
           console.log('📄 No advertiser document found');
-          setError('Store profile not found. Please set up your store profile first.');
+          setError('Store profile not found. Please set up your store profile first by going to the Advertiser Portal.');
         }
       } catch (error) {
         console.error('❌ Error loading data:', error);
-        setError('Failed to load data');
+        
+        // Provide more specific error messages
+        if (error instanceof Error) {
+          if (error.message.includes('permission')) {
+            setError('Permission denied. Please check your account permissions.');
+          } else if (error.message.includes('network')) {
+            setError('Network error. Please check your internet connection and try again.');
+          } else if (error.message.includes('auth')) {
+            setError('Authentication error. Please log out and log back in.');
+          } else {
+            setError(`Failed to load data: ${error.message}`);
+          }
+        } else {
+          setError('Failed to load data. Please try again.');
+        }
       } finally {
         setDataLoading(false);
       }
@@ -216,6 +247,82 @@ const CreateOfferView: React.FC = () => {
         <h1 style={{ textAlign: "center", color: "#002B4D" }}>Loading Offer...</h1>
         <div style={{ textAlign: "center", padding: "40px" }}>
           <p>Loading offer data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with detailed information
+  if (error) {
+    return (
+      <div style={{ maxWidth: "700px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+        <button
+          onClick={() => navigate("/advertiser-portal")}
+          style={{
+            backgroundColor: "#ccc",
+            color: "#333",
+            border: "none",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            marginBottom: "16px",
+          }}
+        >
+          ← Back to Portal
+        </button>
+        
+        <h1 style={{ textAlign: "center", color: "#dc3545" }}>Error Loading Offer</h1>
+        
+        <div style={{
+          backgroundColor: "#f8d7da",
+          border: "1px solid #f5c6cb",
+          borderRadius: "6px",
+          padding: "16px",
+          marginBottom: "20px",
+          color: "#721c24"
+        }}>
+          <h3 style={{ margin: "0 0 8px 0", fontSize: "18px" }}>What went wrong:</h3>
+          <p style={{ margin: "0 0 12px 0", fontSize: "16px" }}>{error}</p>
+          
+          <h4 style={{ margin: "12px 0 8px 0", fontSize: "16px" }}>Troubleshooting steps:</h4>
+          <ol style={{ paddingLeft: "20px", margin: 0 }}>
+            <li>Check your internet connection</li>
+            <li>Make sure you're logged in as an advertiser</li>
+            <li>Set up your store profile first in the Advertiser Portal</li>
+            <li>Try refreshing the page</li>
+            <li>If the problem persists, try logging out and back in</li>
+          </ol>
+        </div>
+        
+        <div style={{ textAlign: "center", gap: "12px", display: "flex", justifyContent: "center" }}>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              padding: "12px 20px",
+              backgroundColor: "#007bff",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "16px"
+            }}
+          >
+            Try Again
+          </button>
+          <button
+            onClick={() => navigate("/store-profile-page")}
+            style={{
+              padding: "12px 20px",
+              backgroundColor: "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "16px"
+            }}
+          >
+            Set Up Store Profile
+          </button>
         </div>
       </div>
     );
