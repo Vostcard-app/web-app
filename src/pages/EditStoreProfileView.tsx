@@ -1,3 +1,105 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
+import { GeocodingService } from "../services/geocodingService";
+
+const EditStoreProfileView: React.FC = () => {
+  const [storeName, setStoreName] = useState("");
+  // New address fields
+  const [streetAddress, setStreetAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [stateProvince, setStateProvince] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [country, setCountry] = useState("");
+  const [storePhoto, setStorePhoto] = useState<File | null>(null);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [description, setDescription] = useState("");
+  const [storeHours, setStoreHours] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [addressValidation, setAddressValidation] = useState<{
+    isValid: boolean;
+    missingFields: string[];
+  }>({ isValid: false, missingFields: [] });
+
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Handle "Use my location" functionality
+  const handleUseMyLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLocationLoading(true);
+    setError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('📍 Location detected:', { latitude, longitude });
+        
+        try {
+          // Use Netlify function for reverse geocoding
+          const response = await fetch('/.netlify/functions/geocode', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'reverse',
+              latitude,
+              longitude
+            }),
+          });
+
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || `Reverse geocoding error: ${response.status}`);
+          }
+          
+          // Populate address fields with the returned data
+          setStreetAddress(data.streetAddress || '');
+          setCity(data.city || '');
+          setStateProvince(data.stateProvince || '');
+          setPostalCode(data.postalCode || '');
+          setCountry(data.country || '');
+          
+          console.log('✅ Address populated from location:', data);
+          
+          alert('📍 Location detected and address fields populated!');
+        } catch (error) {
+          console.error('❌ Reverse geocoding error:', error);
+          setError('Failed to fetch address from location.');
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (error) => {
+        console.error('❌ Geolocation error:', error);
+        setError('Failed to get current location. Please ensure location services are enabled.');
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  };
+
+  // Add test address function
+  const handleTestAddress = async () => {
+    if (!addressValidation.isValid) {
+      setError(`Cannot test address: ${addressValidation.missingFields.join(', ')} missing`);
       return;
     }
 
@@ -260,8 +362,25 @@
             >
               {locationLoading ? "🔄 Getting Location..." : "📍 Use My Location"}
             </button>
+            <button
+              type="button"
+              onClick={handleTestAddress}
+              disabled={!addressValidation.isValid || locationLoading}
+              style={{
+                backgroundColor: !addressValidation.isValid || locationLoading ? "#ccc" : "#28a745",
+                color: "white",
+                border: "none",
+                padding: "10px 18px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                cursor: !addressValidation.isValid || locationLoading ? "not-allowed" : "pointer",
+                marginLeft: "8px"
+              }}
+            >
+              🧪 Test Address
+            </button>
             <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
-              Automatically populate address fields based on your current location
+              Use your location or test address geocoding
             </div>
           </div>
 
@@ -355,11 +474,6 @@
         </form>
       </div>
     </div>
-  );
-};
-
-export default EditStoreProfileView;
-export default EditStoreProfileView;
   );
 };
 
