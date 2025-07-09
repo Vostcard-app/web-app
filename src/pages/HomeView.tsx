@@ -458,8 +458,13 @@ const HomeView = () => {
                   icon={getVostcardIcon(v.isOffer)}
                   eventHandlers={{
                     click: () => {
-                      console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
-                      navigate(`/vostcard/${v.id}`);
+                      if (v.isOffer) {
+                        console.log("📍 Navigating to Offer view for ID:", v.id);
+                        navigate(`/offer/${v.id}`);
+                      } else {
+                        console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
+                        navigate(`/vostcard/${v.id}`);
+                      }
                     }
                   }}
                 >

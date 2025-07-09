@@ -12,8 +12,6 @@ const CreateOfferView: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [itemPhoto, setItemPhoto] = useState<File | null>(null);
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -58,8 +56,6 @@ const CreateOfferView: React.FC = () => {
               // Populate form fields with existing offer data
               setTitle(offerData.title || "");
               setDescription(offerData.description || "");
-              setPhone(offerData.phone || "");
-              setEmail(offerData.email || "");
               setIsEditing(true);
               
               // If offer has a vostcard ID, store it for updates
@@ -68,26 +64,10 @@ const CreateOfferView: React.FC = () => {
               }
             } else {
               console.log('📄 No existing offer found, creating new offer');
-              console.log('📄 Auto-populating with business profile data:', {
-                phone: advertiserData.contactPhone,
-                email: advertiserData.contactEmail
-              });
-              
-              // Auto-populate with business profile data for new offers
-              setPhone(advertiserData.contactPhone || "");
-              setEmail(advertiserData.contactEmail || "");
               setIsEditing(false);
             }
           } else {
             console.log('📄 No business document found, creating new offer');
-            console.log('📄 Auto-populating with business profile data:', {
-              phone: advertiserData.contactPhone,
-              email: advertiserData.contactEmail
-            });
-            
-            // Auto-populate with business profile data for new offers
-            setPhone(advertiserData.contactPhone || "");
-            setEmail(advertiserData.contactEmail || "");
             setIsEditing(false);
           }
         } else {
@@ -172,8 +152,8 @@ const CreateOfferView: React.FC = () => {
         offerDetails: {
           storeName: storeProfile.storeName || storeProfile.businessName,
           storeAddress: geocodingResult.displayAddress,
-          phone: phone || storeProfile.contactPhone,
-          email: email || storeProfile.contactEmail,
+          phone: storeProfile.contactPhone,
+          email: storeProfile.contactEmail,
           storeHours: storeProfile.storeHours,
           contactPerson: storeProfile.contactPerson
         }
@@ -201,8 +181,6 @@ const CreateOfferView: React.FC = () => {
       const advertiserOfferData = {
         title,
         description,
-        phone,
-        email,
         vostcardId,
         createdAt: isEditing ? undefined : new Date(),
         updatedAt: new Date(),
@@ -312,40 +290,6 @@ const CreateOfferView: React.FC = () => {
         </div>
       )}
       
-      {/* Business Profile Info */}
-      {storeProfile && (
-        <div style={{
-          backgroundColor: "#e7f3ff",
-          border: "1px solid #bee5eb",
-          borderRadius: "6px",
-          padding: "12px",
-          marginBottom: "16px",
-          fontSize: "14px",
-          color: "#0c5460"
-        }}>
-          <strong>📋 Auto-populated from your business profile:</strong>
-          <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px" }}>
-            <li><strong>Store Location:</strong> {storeProfile.streetAddress}, {storeProfile.city}, {storeProfile.stateProvince} {storeProfile.postalCode}</li>
-            {storeProfile.contactPhone && <li><strong>Phone:</strong> {storeProfile.contactPhone}</li>}
-            {storeProfile.contactEmail && <li><strong>Email:</strong> {storeProfile.contactEmail}</li>}
-          </ul>
-          <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#666" }}>
-            You can edit the phone and email fields above if needed. To update your store address, go to your <button 
-              onClick={() => navigate("/store-profile-page")}
-              style={{
-                color: "#0c5460",
-                textDecoration: "underline",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                font: "inherit"
-              }}
-            >store profile</button>.
-          </p>
-        </div>
-      )}
-      
       <form onSubmit={handleSubmit}>
         <label>
           Offer Title<span style={{ color: "red" }}>*</span>
@@ -374,26 +318,6 @@ const CreateOfferView: React.FC = () => {
             accept="image/*"
             onChange={(e) => setItemPhoto(e.target.files ? e.target.files[0] : null)}
             style={{ display: "block", width: "100%", marginBottom: "12px" }}
-          />
-        </label>
-        <label>
-          Phone Number {storeProfile?.contactPhone && <span style={{ fontSize: "12px", color: "#666" }}>(from business profile)</span>}
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder={storeProfile?.contactPhone ? "Auto-populated from business profile" : "Enter phone number"}
-            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
-          />
-        </label>
-        <label>
-          Email Address {storeProfile?.contactEmail && <span style={{ fontSize: "12px", color: "#666" }}>(from business profile)</span>}
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={storeProfile?.contactEmail ? "Auto-populated from business profile" : "Enter email address"}
-            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
           />
         </label>
         {error && <p style={{ color: "red" }}>{error}</p>}

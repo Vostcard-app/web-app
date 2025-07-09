@@ -25,6 +25,7 @@ import CreateOfferView from './pages/CreateOfferView';
 import AllPostedVostcardsView from './pages/AllPostedVostcardsView';
 import EditStoreProfileView from './pages/EditStoreProfileView';
 import VostcardDetailView from './pages/VostcardDetailView';
+import OfferView from './pages/OfferView';
 import ScriptLibraryView from './pages/ScriptLibraryView';
 import ScriptEditorView from './pages/ScriptEditorView';
 import ScriptToolView from './pages/ScriptToolView';
@@ -78,8 +79,9 @@ function App() {
 
             {/* 📄 Vostcard Detail */}
             <Route path="/vostcard/:id" element={<VostcardDetailView />} />
+            <Route path="/offer/:id" element={<OfferView />} />
 
-            {/* 🚩 Flag Vostcard */}
+            {/* �� Flag Vostcard */}
             <Route path="/flag/:vostcardID/:title/:username" element={<FlagFormView />} />
 
             {/* 👤 User Profile */}
