@@ -39,9 +39,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Add timeout for loading state to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
-      console.warn('⏰ AuthProvider: Loading state timeout after 10 seconds, forcing loading to false');
+      console.warn('⏰ AuthProvider: Loading state timeout after 15 seconds, forcing loading to false');
       setLoading(false);
-    }, 10000);
+    }, 15000); // Increased to 15 seconds
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log('🔐 AuthProvider: Auth state changed:', {
@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAnonymous: currentUser?.isAnonymous
       });
 
-      // Clear the timeout since we got an auth state change
+      // Clear the main timeout since we got an auth state change
       clearTimeout(loadingTimeout);
       setLoading(true);
       
@@ -68,16 +68,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           setUserID(currentUser.uid);
 
+          // Add timeout for Firestore queries specifically
+          const firestoreTimeout = setTimeout(() => {
+            console.warn('⏰ AuthProvider: Firestore query timeout after 8 seconds, proceeding with basic auth');
+            setLoading(false);
+          }, 8000);
+
           // Fetch user data from Firestore - check both collections simultaneously
           try {
             const userDocRef = doc(db, "users", currentUser.uid);
             const advertiserDocRef = doc(db, "advertisers", currentUser.uid);
             
-            // Check both collections simultaneously
-            const [userDocSnap, advertiserDocSnap] = await Promise.all([
-              getDoc(userDocRef),
-              getDoc(advertiserDocRef)
+            // Check both collections simultaneously with timeout
+            const [userDocSnap, advertiserDocSnap] = await Promise.race([
+              Promise.all([getDoc(userDocRef), getDoc(advertiserDocRef)]),
+              new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error('Firestore query timeout')), 7000)
+              )
             ]);
+
+            // Clear the Firestore timeout since we got results
+            clearTimeout(firestoreTimeout);
 
             console.log('🔍 AuthContext Debug:', {
               userExists: userDocSnap.exists(),
@@ -105,9 +116,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setUserRole(null);
             }
           } catch (error) {
-            console.error("Error fetching user data:", error);
+            console.error("❌ Error fetching user data:", error);
+            // Clear the Firestore timeout on error
+            clearTimeout(firestoreTimeout);
             setUsername(null);
             setUserRole(null);
+            
+            // If it's a timeout error, we can still proceed with basic auth
+            if (error instanceof Error && error.message === 'Firestore query timeout') {
+              console.warn('⏰ Proceeding with basic authentication due to Firestore timeout');
+            }
           }
         } else {
           console.log('🔐 No user authenticated');

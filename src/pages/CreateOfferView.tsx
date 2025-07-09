@@ -32,33 +32,46 @@ const CreateOfferView: React.FC = () => {
 
       try {
         console.log('📄 Loading offer and store profile data for user:', user.uid);
-        const businessRef = doc(db, "businesses", user.uid);
-        const businessSnap = await getDoc(businessRef);
+        
+        // Load store profile from advertisers collection
+        const advertiserRef = doc(db, "advertisers", user.uid);
+        const advertiserSnap = await getDoc(advertiserRef);
 
-        if (businessSnap.exists()) {
-          const data = businessSnap.data();
+        if (advertiserSnap.exists()) {
+          const advertiserData = advertiserSnap.data();
+          console.log('✅ Store profile loaded from advertisers collection:', advertiserData);
           
           // Store the store profile data
-          setStoreProfile(data);
+          setStoreProfile(advertiserData);
           
-          const offerData = data.currentOffer;
+          // Try to load existing offer from businesses collection
+          const businessRef = doc(db, "businesses", user.uid);
+          const businessSnap = await getDoc(businessRef);
           
-          if (offerData) {
-            console.log('✅ Existing offer loaded:', offerData);
+          if (businessSnap.exists()) {
+            const businessData = businessSnap.data();
+            const offerData = businessData.currentOffer;
             
-            // Populate form fields with existing offer data
-            setTitle(offerData.title || "");
-            setDescription(offerData.description || "");
-            setPhone(offerData.phone || "");
-            setEmail(offerData.email || "");
-            setIsEditing(true);
-            
-            // If offer has a vostcard ID, store it for updates
-            if (offerData.vostcardId) {
-              setOfferId(offerData.vostcardId);
+            if (offerData) {
+              console.log('✅ Existing offer loaded:', offerData);
+              
+              // Populate form fields with existing offer data
+              setTitle(offerData.title || "");
+              setDescription(offerData.description || "");
+              setPhone(offerData.phone || "");
+              setEmail(offerData.email || "");
+              setIsEditing(true);
+              
+              // If offer has a vostcard ID, store it for updates
+              if (offerData.vostcardId) {
+                setOfferId(offerData.vostcardId);
+              }
+            } else {
+              console.log('📄 No existing offer found, creating new offer');
+              setIsEditing(false);
             }
           } else {
-            console.log('📄 No existing offer found, creating new offer');
+            console.log('📄 No business document found, creating new offer');
             setIsEditing(false);
           }
         } else {
