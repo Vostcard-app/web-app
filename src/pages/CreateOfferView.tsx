@@ -181,16 +181,9 @@ const CreateOfferView: React.FC = () => {
         updatedAt: new Date(),
         categories: ['offer'],
         offerDetails: {
-          storeName: storeProfile.storeName || storeProfile.businessName,
-          storeAddress: displayAddress, // For contact info only
-          phone: storeProfile.contactPhone,
-          email: storeProfile.contactEmail,
-          storeHours: storeProfile.storeHours,
-          contactPerson: storeProfile.contactPerson
-        }
-      };
-
-      let vostcardId = offerId;
+          storeName: storeProfile.storeName || storeProfile.businessName || '',
+          storeAddress: displayAddress || '', // For contact info only
+          phone: storeProfile.contactPhone || '',        // 🔧 Fix: fallback to empty string
 
       // Step 4: Save/update in vostcards collection
       if (isEditing && offerId) {
