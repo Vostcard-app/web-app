@@ -405,13 +405,13 @@ const HomeView = () => {
       {/* List View and Offers Buttons */}
       <div style={listViewButtonContainer}>
         <div style={{ display: 'inline-block', marginRight: 8 }}>
-          <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
-            List View
+          <button style={listViewButton}>
+            Offers
           </button>
         </div>
         <div style={{ display: 'inline-block' }}>
-          <button style={listViewButton}>
-            Offers
+          <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
+            List View
           </button>
         </div>
       </div>
