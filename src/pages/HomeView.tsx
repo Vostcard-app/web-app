@@ -409,7 +409,7 @@ const HomeView = () => {
         </button>
       </div>
       <div style={listViewButtonContainerRight}>
-        <button style={listViewButton}>
+        <button style={listViewButton} onClick={() => navigate('/offers-list')}>
           Offers
         </button>
       </div>
