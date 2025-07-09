@@ -19,6 +19,27 @@ const CreateOfferView: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [storeProfile, setStoreProfile] = useState<any>(null);
   const [offerId, setOfferId] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<string>('Checking...');
+
+  // Test Firebase connectivity
+  const testFirebaseConnection = async () => {
+    try {
+      setConnectionStatus('Testing Firebase connection...');
+      
+      // Test basic Firebase connectivity
+      const testRef = doc(db, "test", "connection");
+      console.log('🔍 Testing Firebase connection with test document');
+      
+      // This will fail if Firebase isn't connected
+      await getDoc(testRef);
+      setConnectionStatus('Firebase connection successful');
+      return true;
+    } catch (error) {
+      console.error('❌ Firebase connection test failed:', error);
+      setConnectionStatus(`Firebase connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
+  };
 
   // Load existing offer and store profile data on component mount
   useEffect(() => {
@@ -33,8 +54,13 @@ const CreateOfferView: React.FC = () => {
       try {
         console.log('📄 Loading offer and store profile data for user:', user.uid);
         
-        // Test Firebase connectivity
+        // Test Firebase connectivity first
         console.log('🔍 Testing Firebase connectivity...');
+        const isConnected = await testFirebaseConnection();
+        if (!isConnected) {
+          throw new Error('Firebase connection failed. Please check your internet connection.');
+        }
+        
         console.log('📊 Database instance:', db);
         
         // Check user authentication and role
@@ -45,6 +71,7 @@ const CreateOfferView: React.FC = () => {
         console.log('   - User Email Verified:', user.emailVerified);
         
         // Load store profile from advertisers collection
+        setConnectionStatus('Loading store profile...');
         const advertiserRef = doc(db, "advertisers", user.uid);
         console.log('📄 Attempting to load advertiser document:', advertiserRef.path);
         
@@ -56,8 +83,10 @@ const CreateOfferView: React.FC = () => {
           
           // Store the store profile data
           setStoreProfile(advertiserData);
+          setConnectionStatus('Store profile loaded successfully');
           
           // Try to load existing offer from businesses collection
+          setConnectionStatus('Checking for existing offers...');
           const businessRef = doc(db, "businesses", user.uid);
           console.log('📄 Attempting to load business document:', businessRef.path);
           
@@ -69,6 +98,7 @@ const CreateOfferView: React.FC = () => {
             
             if (offerData) {
               console.log('✅ Existing offer loaded:', offerData);
+              setConnectionStatus('Existing offer loaded for editing');
               
               // Populate form fields with existing offer data
               setTitle(offerData.title || "");
@@ -81,31 +111,47 @@ const CreateOfferView: React.FC = () => {
               }
             } else {
               console.log('📄 No existing offer found, creating new offer');
+              setConnectionStatus('Ready to create new offer');
               setIsEditing(false);
             }
           } else {
             console.log('📄 No business document found, creating new offer');
+            setConnectionStatus('Ready to create new offer');
             setIsEditing(false);
           }
         } else {
           console.log('📄 No advertiser document found');
+          setConnectionStatus('Store profile not found');
           setError('Store profile not found. Please set up your store profile first by going to the Advertiser Portal.');
         }
       } catch (error) {
         console.error('❌ Error loading data:', error);
+        setConnectionStatus('Error occurred during loading');
         
-        // Provide more specific error messages
+        // Enhanced error handling with specific messages
         if (error instanceof Error) {
-          if (error.message.includes('permission')) {
-            setError('Permission denied. Please check your account permissions.');
-          } else if (error.message.includes('network')) {
+          console.log('🔍 Error details:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+          });
+          
+          // Firebase-specific error handling
+          if (error.message.includes('permission-denied')) {
+            setError('Permission denied. Your account may not have advertiser permissions. Please contact support.');
+          } else if (error.message.includes('not-found')) {
+            setError('Store profile not found. Please set up your store profile first in the Advertiser Portal.');
+          } else if (error.message.includes('network-request-failed')) {
             setError('Network error. Please check your internet connection and try again.');
           } else if (error.message.includes('auth')) {
             setError('Authentication error. Please log out and log back in.');
+          } else if (error.message.includes('unavailable')) {
+            setError('Firebase service temporarily unavailable. Please try again in a few minutes.');
           } else {
             setError(`Failed to load data: ${error.message}`);
           }
         } else {
+          console.log('🔍 Non-Error object thrown:', error);
           setError('Failed to load data. Please try again.');
         }
       } finally {
@@ -114,7 +160,7 @@ const CreateOfferView: React.FC = () => {
     };
 
     loadData();
-  }, [user?.uid]);
+  }, [user?.uid, userRole]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,8 +292,27 @@ const CreateOfferView: React.FC = () => {
       <div style={{ maxWidth: "700px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
         <h1 style={{ textAlign: "center", color: "#002B4D" }}>Loading Offer...</h1>
         <div style={{ textAlign: "center", padding: "40px" }}>
-          <p>Loading offer data...</p>
+          <div style={{ 
+            display: "inline-block", 
+            width: "20px", 
+            height: "20px", 
+            border: "2px solid #f3f3f3", 
+            borderTop: "2px solid #002B4D", 
+            borderRadius: "50%", 
+            animation: "spin 1s linear infinite",
+            marginBottom: "16px"
+          }}></div>
+          <p style={{ fontSize: "16px", color: "#666", marginBottom: "8px" }}>Loading offer data...</p>
+          <p style={{ fontSize: "14px", color: "#999" }}>Status: {connectionStatus}</p>
         </div>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
       </div>
     );
   }
@@ -284,6 +349,15 @@ const CreateOfferView: React.FC = () => {
           <h3 style={{ margin: "0 0 8px 0", fontSize: "18px" }}>What went wrong:</h3>
           <p style={{ margin: "0 0 12px 0", fontSize: "16px" }}>{error}</p>
           
+          <h4 style={{ margin: "12px 0 8px 0", fontSize: "16px" }}>System Status:</h4>
+          <ul style={{ paddingLeft: "20px", margin: "0 0 12px 0" }}>
+            <li>User ID: {user?.uid ? '✅ Available' : '❌ Missing'}</li>
+            <li>User Email: {user?.email ? `✅ ${user.email}` : '❌ Missing'}</li>
+            <li>User Role: {userRole ? `✅ ${userRole}` : '❌ Missing'}</li>
+            <li>Email Verified: {user?.emailVerified ? '✅ Yes' : '⚠️ No'}</li>
+            <li>Firebase Connection: {db ? '✅ Connected' : '❌ Failed'}</li>
+          </ul>
+          
           <h4 style={{ margin: "12px 0 8px 0", fontSize: "16px" }}>Troubleshooting steps:</h4>
           <ol style={{ paddingLeft: "20px", margin: 0 }}>
             <li>Check your internet connection</li>
@@ -291,10 +365,11 @@ const CreateOfferView: React.FC = () => {
             <li>Set up your store profile first in the Advertiser Portal</li>
             <li>Try refreshing the page</li>
             <li>If the problem persists, try logging out and back in</li>
+            <li>Check browser console (F12) for detailed error messages</li>
           </ol>
         </div>
         
-        <div style={{ textAlign: "center", gap: "12px", display: "flex", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", gap: "12px", display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
           <button
             onClick={() => window.location.reload()}
             style={{
@@ -304,10 +379,11 @@ const CreateOfferView: React.FC = () => {
               border: "none",
               borderRadius: "8px",
               cursor: "pointer",
-              fontSize: "16px"
+              fontSize: "16px",
+              margin: "4px"
             }}
           >
-            Try Again
+            🔄 Try Again
           </button>
           <button
             onClick={() => navigate("/store-profile-page")}
@@ -318,10 +394,35 @@ const CreateOfferView: React.FC = () => {
               border: "none",
               borderRadius: "8px",
               cursor: "pointer",
-              fontSize: "16px"
+              fontSize: "16px",
+              margin: "4px"
             }}
           >
-            Set Up Store Profile
+            🏪 Set Up Store Profile
+          </button>
+          <button
+            onClick={() => {
+              console.log('🔍 System Debug Info:', {
+                user: user,
+                userRole: userRole,
+                db: db,
+                error: error,
+                timestamp: new Date().toISOString()
+              });
+              alert('Debug info logged to console. Press F12 to view.');
+            }}
+            style={{
+              padding: "12px 20px",
+              backgroundColor: "#6c757d",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "16px",
+              margin: "4px"
+            }}
+          >
+            🐛 Debug Info
           </button>
         </div>
       </div>

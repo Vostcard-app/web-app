@@ -353,7 +353,7 @@ const OffersListView: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ))}
+          ))}
           </div>
         )}
       </div>
