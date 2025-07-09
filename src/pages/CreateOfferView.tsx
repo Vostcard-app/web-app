@@ -152,37 +152,48 @@ const CreateOfferView: React.FC = () => {
     try {
       console.log("💾 Saving offer for user:", user.uid);
       
-      // Step 1: Geocode the store address
-      console.log("🌍 Geocoding store address...");
-      const geocodingResult = await GeocodingService.geocodeAddress(
-        storeProfile.streetAddress,
-        storeProfile.city,
-        storeProfile.stateProvince,
-        storeProfile.postalCode || "",
-        storeProfile.country
-      );
+      // Check if store has valid location coordinates
+      if (storeProfile.latitude === undefined || storeProfile.longitude === undefined || 
+          storeProfile.latitude === null || storeProfile.longitude === null) {
+        throw new Error("Store location not set. Please update your store profile and use 'Use My Location' to set your coordinates.");
+      }
+      
+      console.log("✅ Using store location coordinates:", { 
+        latitude: storeProfile.latitude, 
+        longitude: storeProfile.longitude 
+      });
+      
+      // Step 1: Use stored coordinates for positioning
+      const latitude = storeProfile.latitude;
+      const longitude = storeProfile.longitude;
+      
+      // Step 2: Format business address for display
+      const businessAddress = storeProfile.businessAddress;
+      const displayAddress = businessAddress ? 
+        GeocodingService.formatBusinessAddress(businessAddress) : 
+        `${storeProfile.streetAddress || ""}, ${storeProfile.city || ""}, ${storeProfile.stateProvince || ""}, ${storeProfile.country || ""}`.replace(/^,\s*|,\s*$/g, '');
 
-      // Step 2: Prepare offer data for vostcards collection
+      // Step 3: Prepare offer data for vostcards collection
       const vostcardData = {
         title,
         description,
-        latitude: geocodingResult.latitude,
-        longitude: geocodingResult.longitude,
+        latitude,
+        longitude,
         geo: {
-          latitude: geocodingResult.latitude,
-          longitude: geocodingResult.longitude
+          latitude,
+          longitude
         },
         state: 'posted',
         isOffer: true,
         userID: user.uid,
-        userId: user.uid, // Both formats for compatibility
+        userId: user.uid,
         username: storeProfile.storeName || storeProfile.businessName || 'Business',
         createdAt: isEditing ? undefined : new Date(),
         updatedAt: new Date(),
-        categories: ['offer'], // Default category for offers
+        categories: ['offer'],
         offerDetails: {
           storeName: storeProfile.storeName || storeProfile.businessName,
-          storeAddress: geocodingResult.displayAddress,
+          storeAddress: displayAddress,
           phone: storeProfile.contactPhone,
           email: storeProfile.contactEmail,
           storeHours: storeProfile.storeHours,
@@ -192,7 +203,7 @@ const CreateOfferView: React.FC = () => {
 
       let vostcardId = offerId;
 
-      // Step 3: Save/update in vostcards collection
+      // Step 4: Save/update in vostcards collection
       if (isEditing && offerId) {
         // Update existing offer
         console.log("📝 Updating existing offer in vostcards collection...");
@@ -208,7 +219,7 @@ const CreateOfferView: React.FC = () => {
         console.log("✅ New offer created in vostcards collection with ID:", vostcardId);
       }
 
-      // Step 4: Update advertiser document with reference to vostcard
+      // Step 5: Update advertiser document with reference to vostcard
       const advertiserOfferData = {
         title,
         description,
@@ -350,68 +361,75 @@ const CreateOfferView: React.FC = () => {
       
       {/* Store Profile Status */}
       {storeProfile && (
-        <div style={{
-          backgroundColor: (() => {
-            const validation = GeocodingService.validateAddress(
-              storeProfile.streetAddress,
-              storeProfile.city,
-              storeProfile.stateProvince,
-              storeProfile.country
-            );
-            return validation.isValid ? "#d4edda" : "#f8d7da";
-          })(),
-          color: (() => {
-            const validation = GeocodingService.validateAddress(
-              storeProfile.streetAddress,
-              storeProfile.city,
-              storeProfile.stateProvince,
-              storeProfile.country
-            );
-            return validation.isValid ? "#155724" : "#721c24";
-          })(),
-          padding: "12px",
-          borderRadius: "6px",
-          marginBottom: "16px",
-          border: `1px solid ${(() => {
-            const validation = GeocodingService.validateAddress(
-              storeProfile.streetAddress,
-              storeProfile.city,
-              storeProfile.stateProvince,
-              storeProfile.country
-            );
-            return validation.isValid ? "#c3e6cb" : "#f5c6cb";
-          })()}`
-        }}>
-          {(() => {
-            const validation = GeocodingService.validateAddress(
-              storeProfile.streetAddress,
-              storeProfile.city,
-              storeProfile.stateProvince,
-              storeProfile.country
-            );
-            return validation.isValid ? (
-              <span>✅ Store address is complete: {GeocodingService.formatAddressForGeocoding(
-                storeProfile.streetAddress,
-                storeProfile.city,
-                storeProfile.stateProvince,
-                storeProfile.postalCode || '',
-                storeProfile.country
-              )}</span>
-            ) : (
-              <span>⚠️ Store address is missing: {validation.missingFields.join(', ')}. Please <button 
-                onClick={() => navigate("/store-profile-page")}
-                style={{
-                  color: "#721c24",
-                  textDecoration: "underline",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  font: "inherit"
-                }}
-              >update your store profile</button> to complete these fields.</span>
-            );
-          })()}
+        <div style={{ marginBottom: "16px" }}>
+          {/* Business Address Status */}
+          <div style={{
+            backgroundColor: (() => {
+              const addressValidation = GeocodingService.validateBusinessAddress(storeProfile.businessAddress);
+              return addressValidation.isValid ? "#d4edda" : "#f8d7da";
+            })(),
+            color: (() => {
+              const addressValidation = GeocodingService.validateBusinessAddress(storeProfile.businessAddress);
+              return addressValidation.isValid ? "#155724" : "#721c24";
+            })(),
+            padding: "12px",
+            borderRadius: "6px",
+            marginBottom: "8px",
+            border: `1px solid ${(() => {
+              const addressValidation = GeocodingService.validateBusinessAddress(storeProfile.businessAddress);
+              return addressValidation.isValid ? "#c3e6cb" : "#f5c6cb";
+            })()}`
+          }}>
+            <strong>Business Address:</strong>
+            <div style={{ marginTop: "4px" }}>
+              {(() => {
+                const addressValidation = GeocodingService.validateBusinessAddress(storeProfile.businessAddress);
+                return addressValidation.isValid ? (
+                  <span>✅ {GeocodingService.formatBusinessAddress(storeProfile.businessAddress)}</span>
+                ) : (
+                  <span>⚠️ Business address incomplete</span>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Location Coordinates Status */}
+          <div style={{
+            backgroundColor: (storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
+                            storeProfile.latitude !== null && storeProfile.longitude !== null) ? "#d4edda" : "#f8d7da",
+            color: (storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
+                   storeProfile.latitude !== null && storeProfile.longitude !== null) ? "#155724" : "#721c24",
+            padding: "12px",
+            borderRadius: "6px",
+            border: `1px solid ${(storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
+                                 storeProfile.latitude !== null && storeProfile.longitude !== null) ? "#c3e6cb" : "#f5c6cb"}`
+          }}>
+            <strong>Location Coordinates:</strong>
+            <div style={{ marginTop: "4px" }}>
+              {(storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
+                storeProfile.latitude !== null && storeProfile.longitude !== null) ? (
+                <div>
+                  <div>✅ Location set</div>
+                  <div style={{ fontSize: "12px", marginTop: "4px" }}>
+                    📍 {storeProfile.latitude.toFixed(6)}, {storeProfile.longitude.toFixed(6)}
+                  </div>
+                </div>
+              ) : (
+                <span>⚠️ Location coordinates not set. Please <button 
+                  onClick={() => navigate("/store-profile-page")}
+                  style={{
+                    color: "#721c24",
+                    textDecoration: "underline",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    font: "inherit"
+                  }}
+                >update your store profile</button> to complete these fields.</span>
+              )}
+            </div>
+          </div>
         </div>
       )}
       
