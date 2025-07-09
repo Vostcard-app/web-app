@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
+import { GeocodingService } from "../services/geocodingService";
 
 const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");
@@ -22,6 +22,10 @@ const EditStoreProfileView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [addressValidation, setAddressValidation] = useState<{
+    isValid: boolean;
+    missingFields: string[];
+  }>({ isValid: false, missingFields: [] });
 
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -133,8 +137,24 @@ const EditStoreProfileView: React.FC = () => {
     loadProfileData();
   }, [user?.uid]);
 
+  useEffect(() => {
+    const validation = GeocodingService.validateAddress(
+      streetAddress,
+      city,
+      stateProvince,
+      country
+    );
+    setAddressValidation(validation);
+  }, [streetAddress, city, stateProvince, country]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Enhanced validation
+    if (!addressValidation.isValid) {
+      setError(`Missing required address fields: ${addressValidation.missingFields.join(', ')}`);
+      return;
+    }
 
     // Validate required fields
     if (
@@ -316,6 +336,25 @@ const EditStoreProfileView: React.FC = () => {
             </button>
             <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
               Automatically populate address fields based on your current location
+            </div>
+          </div>
+
+          {/* Address Preview Section */}
+          <div style={{
+            backgroundColor: addressValidation.isValid ? "#d4edda" : "#f8d7da",
+            color: addressValidation.isValid ? "#155724" : "#721c24",
+            padding: "12px",
+            borderRadius: "6px",
+            marginBottom: "16px",
+            border: `1px solid ${addressValidation.isValid ? "#c3e6cb" : "#f5c6cb"}`
+          }}>
+            <strong>Address Preview:</strong>
+            <div style={{ marginTop: "8px" }}>
+              {addressValidation.isValid ? (
+                <span>✅ {GeocodingService.formatAddressForGeocoding(streetAddress, city, stateProvince, postalCode, country)}</span>
+              ) : (
+                <span>⚠️ Missing required fields: {addressValidation.missingFields.join(', ')}</span>
+              )}
             </div>
           </div>
 

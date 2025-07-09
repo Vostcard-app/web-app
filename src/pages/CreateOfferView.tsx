@@ -140,7 +140,7 @@ const CreateOfferView: React.FC = () => {
       storeProfile.city,
       storeProfile.stateProvince,
       storeProfile.country
-    )) {
+    ).isValid) {
       setError("Store address is incomplete. Please update your store profile with a complete address.");
       return;
     }
@@ -351,49 +351,67 @@ const CreateOfferView: React.FC = () => {
       {/* Store Profile Status */}
       {storeProfile && (
         <div style={{
-          backgroundColor: GeocodingService.validateAddress(
-            storeProfile.streetAddress,
-            storeProfile.city,
-            storeProfile.stateProvince,
-            storeProfile.country
-          ) ? "#d4edda" : "#f8d7da",
-          color: GeocodingService.validateAddress(
-            storeProfile.streetAddress,
-            storeProfile.city,
-            storeProfile.stateProvince,
-            storeProfile.country
-          ) ? "#155724" : "#721c24",
+          backgroundColor: (() => {
+            const validation = GeocodingService.validateAddress(
+              storeProfile.streetAddress,
+              storeProfile.city,
+              storeProfile.stateProvince,
+              storeProfile.country
+            );
+            return validation.isValid ? "#d4edda" : "#f8d7da";
+          })(),
+          color: (() => {
+            const validation = GeocodingService.validateAddress(
+              storeProfile.streetAddress,
+              storeProfile.city,
+              storeProfile.stateProvince,
+              storeProfile.country
+            );
+            return validation.isValid ? "#155724" : "#721c24";
+          })(),
           padding: "12px",
           borderRadius: "6px",
           marginBottom: "16px",
-          border: `1px solid ${GeocodingService.validateAddress(
-            storeProfile.streetAddress,
-            storeProfile.city,
-            storeProfile.stateProvince,
-            storeProfile.country
-          ) ? "#c3e6cb" : "#f5c6cb"}`
+          border: `1px solid ${(() => {
+            const validation = GeocodingService.validateAddress(
+              storeProfile.streetAddress,
+              storeProfile.city,
+              storeProfile.stateProvince,
+              storeProfile.country
+            );
+            return validation.isValid ? "#c3e6cb" : "#f5c6cb";
+          })()}`
         }}>
-          {GeocodingService.validateAddress(
-            storeProfile.streetAddress,
-            storeProfile.city,
-            storeProfile.stateProvince,
-            storeProfile.country
-          ) ? (
-            <span>✅ Store address is complete. Your offer will appear on the map at: {storeProfile.storeName || "Your Store"}</span>
-          ) : (
-            <span>⚠️ Store address is incomplete. Please <button 
-              onClick={() => navigate("/store-profile-page")}
-              style={{
-                color: "#721c24",
-                textDecoration: "underline",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                padding: 0,
-                font: "inherit"
-              }}
-            >update your store profile</button> with a complete address for your offer to appear on the map.</span>
-          )}
+          {(() => {
+            const validation = GeocodingService.validateAddress(
+              storeProfile.streetAddress,
+              storeProfile.city,
+              storeProfile.stateProvince,
+              storeProfile.country
+            );
+            return validation.isValid ? (
+              <span>✅ Store address is complete: {GeocodingService.formatAddressForGeocoding(
+                storeProfile.streetAddress,
+                storeProfile.city,
+                storeProfile.stateProvince,
+                storeProfile.postalCode || '',
+                storeProfile.country
+              )}</span>
+            ) : (
+              <span>⚠️ Store address is missing: {validation.missingFields.join(', ')}. Please <button 
+                onClick={() => navigate("/store-profile-page")}
+                style={{
+                  color: "#721c24",
+                  textDecoration: "underline",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  font: "inherit"
+                }}
+              >update your store profile</button> to complete these fields.</span>
+            );
+          })()}
         </div>
       )}
       
