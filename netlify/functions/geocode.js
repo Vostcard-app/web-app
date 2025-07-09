@@ -1,5 +1,20 @@
 // ✅ Netlify Function: Geocode Address
 
+// Helper: Fetch with retry
+async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
+      console.warn(`Attempt ${i + 1} failed: ${res.status}`);
+    } catch (err) {
+      console.warn(`Attempt ${i + 1} error: ${err.message}`);
+    }
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  throw new Error('All retries failed');
+}
+
 exports.handler = async (event, context) => {
   // CORS headers
   const headers = {
@@ -81,11 +96,20 @@ exports.handler = async (event, context) => {
         addressdetails: '1'
       });
 
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`);
+      const response = await fetchWithRetry(
+        `https://nominatim.openstreetmap.org/reverse?${params}`,
+        {
+          headers: {
+            'User-Agent': 'VostcardWebApp/1.0 (https://vostcard.com)',
+            'Accept-Language': 'en'
+          }
+        }
+      );
       const data = await response.json();
 
       if (!response.ok) {
-        return { statusCode: response.status, headers, body: JSON.stringify({ error: `Reverse geocoding API error: ${response.status}` }) };
+        console.error(`Reverse geocoding API error: ${response.status} - ${response.statusText}`);
+        return { statusCode: response.status, headers, body: JSON.stringify({ error: 'Reverse geocoding failed' }) };
       }
 
       if (!data || !data.address) {
@@ -117,4 +141,4 @@ exports.handler = async (event, context) => {
   } catch (error) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Geocoding failed', details: error.message }) };
   }
-}; 
+};
