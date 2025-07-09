@@ -263,14 +263,15 @@ const OffersListView: React.FC = () => {
                 key={offer.id}
                 onClick={() => handleOfferClick(offer.id)}
                 style={{
+                  display: 'flex',
+                  padding: '16px',
+                  marginBottom: '16px',
                   backgroundColor: 'white',
-                  padding: '20px',
                   borderRadius: '12px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   cursor: 'pointer',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  display: 'flex',
-                  gap: '16px'
+                  transition: 'transform 0.2s ease',
+                  border: '1px solid #e9ecef'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
@@ -282,36 +283,34 @@ const OffersListView: React.FC = () => {
                 }}
               >
                 {/* Offer Image */}
-                <div style={{ flexShrink: 0 }}>
-                  {offer.photoURLs && offer.photoURLs.length > 0 ? (
-                    <img
-                      src={offer.photoURLs[0]}
+                {offer.photoURLs && offer.photoURLs.length > 0 && offer.photoURLs[0] && (
+                  <div style={{ 
+                    width: '80px', 
+                    height: '80px', 
+                    marginRight: '16px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    backgroundColor: '#f8f9fa',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <img 
+                      src={offer.photoURLs[0]} 
                       alt={offer.title}
                       style={{
-                        width: '80px',
-                        height: '80px',
-                        borderRadius: '8px',
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'cover'
                       }}
+                      onError={(e) => {
+                        // Hide image if it fails to load
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
-                  ) : (
-                    <div style={{
-                      width: '80px',
-                      height: '80px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#666',
-                      fontSize: '24px'
-                    }}>
-                      🎁
-                    </div>
-                  )}
-                </div>
-
-                {/* Offer Details */}
+                  </div>
+                )}
+                
                 <div style={{ flex: 1 }}>
                   <h3 style={{ 
                     margin: '0 0 8px 0', 

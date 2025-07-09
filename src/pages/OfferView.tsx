@@ -213,37 +213,53 @@ const OfferView: React.FC = () => {
         marginLeft: '20px',
         marginRight: '20px'
       }}>
-        {/* 1. Title */}
-        <h2 style={{
-          fontSize: '28px',
-          fontWeight: 700,
-          color: '#002B4D',
-          margin: '0 0 20px 0',
-          textAlign: 'center'
+        <div style={{ 
+          padding: '20px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          marginBottom: '20px'
         }}>
-          {offer.title}
-        </h2>
-
-        {/* 2. Offer Image */}
-        {offer.photoURLs && offer.photoURLs.length > 0 && (
-          <div style={{
-            marginBottom: '24px',
+          {/* Offer Image */}
+          {offer.photoURLs && offer.photoURLs.length > 0 && offer.photoURLs[0] && (
+            <div style={{ 
+              width: '100%', 
+              maxWidth: '400px',
+              margin: '0 auto 20px auto',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              backgroundColor: '#f8f9fa'
+            }}>
+              <img 
+                src={offer.photoURLs[0]} 
+                alt={offer.title}
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  maxHeight: '300px',
+                  objectFit: 'cover'
+                }}
+                onError={(e) => {
+                  // Hide image container if it fails to load
+                  const container = e.currentTarget.parentElement;
+                  if (container) {
+                    container.style.display = 'none';
+                  }
+                }}
+              />
+            </div>
+          )}
+          
+          <h1 style={{ 
+            fontSize: '28px', 
+            fontWeight: 'bold', 
+            color: '#002B4D',
+            marginBottom: '16px',
             textAlign: 'center'
           }}>
-            <img
-              src={offer.photoURLs[0]}
-              alt={offer.title}
-              style={{
-                width: '100%',
-                maxWidth: '400px',
-                height: 'auto',
-                borderRadius: '12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                objectFit: 'cover'
-              }}
-            />
-          </div>
-        )}
+            {offer.title}
+          </h1>
+        </div>
 
         {/* 3. Description */}
         <div style={{

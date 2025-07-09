@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc, collection, addDoc } from "firebase/firestore";
-import { db } from "../firebase/firebaseConfig";
+import { db, storage } from "../firebase/firebaseConfig";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { GeocodingService } from "../services/geocodingService";
 
 const CreateOfferView: React.FC = () => {
@@ -20,6 +21,7 @@ const CreateOfferView: React.FC = () => {
   const [storeProfile, setStoreProfile] = useState<any>(null);
   const [offerId, setOfferId] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<string>('Checking...');
+  const [uploadedImageURL, setUploadedImageURL] = useState<string>('');
 
   // Test Firebase connectivity
   const testFirebaseConnection = async () => {
@@ -53,6 +55,29 @@ const CreateOfferView: React.FC = () => {
       
       setConnectionStatus(`Firebase connection test failed: ${errorMessage}`);
       return false;
+    }
+  };
+
+  // Upload offer image to Firebase Storage
+  const uploadOfferImage = async (file: File, userId: string, offerId: string): Promise<string> => {
+    try {
+      console.log('📤 Uploading offer image...');
+      
+      // Create a unique filename
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `offer_${timestamp}.${fileExtension}`;
+      
+      // Upload to Firebase Storage with userId-based path structure
+      const storageRef = ref(storage, `offers/${userId}/${offerId}/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      console.log('✅ Offer image uploaded successfully:', downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error('❌ Error uploading offer image:', error);
+      throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -238,7 +263,32 @@ const CreateOfferView: React.FC = () => {
         GeocodingService.formatBusinessAddress(businessAddress) : 
         `${storeProfile.streetAddress || ""}, ${storeProfile.city || ""}, ${storeProfile.stateProvince || ""}, ${storeProfile.country || ""}`.replace(/^,\s*|,\s*$/g, '');
 
-      // Step 3: Prepare offer data for vostcards collection
+      // Step 3: Generate or use existing offer ID
+      let vostcardId = offerId;
+      if (!vostcardId) {
+        // Generate unique ID for new offers
+        vostcardId = `offer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+
+      // Step 4: Upload offer image if provided
+      let photoURL = '';
+      if (itemPhoto) {
+        try {
+          setConnectionStatus('Uploading offer image...');
+          photoURL = await uploadOfferImage(itemPhoto, user.uid, vostcardId);
+          console.log('✅ Offer image uploaded:', photoURL);
+          setConnectionStatus('Offer image uploaded successfully');
+          setUploadedImageURL(photoURL);
+        } catch (imageError) {
+          console.error('❌ Failed to upload offer image:', imageError);
+          setConnectionStatus('Image upload failed, continuing without image');
+          setUploadedImageURL('');
+          // Continue without image rather than failing completely
+          alert('⚠️ Failed to upload image, but offer will be saved without image.');
+        }
+      }
+
+      // Step 5: Prepare offer data for vostcards collection
       const vostcardData = {
         title,
         description,
@@ -255,6 +305,9 @@ const CreateOfferView: React.FC = () => {
         username: storeProfile.storeName || storeProfile.businessName || 'Business',
         updatedAt: new Date(),
         categories: ['offer'],
+        // Include offer image if uploaded
+        photoURLs: photoURL ? [photoURL] : [],
+        hasPhotos: !!photoURL,
         offerDetails: {
           storeName: storeProfile.storeName || storeProfile.businessName || '',
           storeAddress: displayAddress || '', // For contact info only
@@ -267,9 +320,7 @@ const CreateOfferView: React.FC = () => {
         ...(isEditing ? {} : { createdAt: new Date() })
       };
 
-      let vostcardId = offerId;
-
-      // Step 4: Save/update in vostcards collection
+      // Step 6: Save/update in vostcards collection
       if (isEditing && offerId) {
         // Update existing offer
         console.log("📝 Updating existing offer in vostcards collection...");
@@ -285,7 +336,7 @@ const CreateOfferView: React.FC = () => {
         console.log("✅ New offer created in vostcards collection with ID:", vostcardId);
       }
 
-      // Step 5: Update advertiser document with reference to vostcard
+      // Step 7: Update advertiser document with reference to vostcard
       const advertiserOfferData = {
         title,
         description,
@@ -303,6 +354,7 @@ const CreateOfferView: React.FC = () => {
       console.log("✅ Offer saved successfully");
       setSuccess(true);
       setIsEditing(true); // Now we're in edit mode
+      setConnectionStatus(`Offer ${isEditing ? 'updated' : 'created'} successfully${photoURL ? ' with image' : ''}`);
 
       // Auto-redirect back to portal after 2 seconds
       setTimeout(() => {
@@ -569,14 +621,52 @@ const CreateOfferView: React.FC = () => {
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setItemPhoto(e.target.files ? e.target.files[0] : null)}
+            onChange={(e) => {
+              const file = e.target.files ? e.target.files[0] : null;
+              if (file) {
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                if (!allowedTypes.includes(file.type.toLowerCase())) {
+                  alert('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+                  e.target.value = '';
+                  return;
+                }
+                
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                  alert(`Image file must be less than 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+                  e.target.value = '';
+                  return;
+                }
+                
+                console.log('📁 Offer image selected:', {
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  sizeInMB: (file.size / (1024 * 1024)).toFixed(2)
+                });
+              }
+              setItemPhoto(file);
+            }}
             style={{ display: "block", width: "100%", marginBottom: "12px" }}
           />
+          {itemPhoto && (
+            <div style={{ 
+              marginTop: "8px", 
+              padding: "8px", 
+              backgroundColor: "#f8f9fa", 
+              borderRadius: "4px",
+              fontSize: "14px",
+              color: "#666"
+            }}>
+              📷 Selected: {itemPhoto.name} ({(itemPhoto.size / (1024 * 1024)).toFixed(2)}MB)
+            </div>
+          )}
         </label>
         {error && <p style={{ color: "red" }}>{error}</p>}
         {success && (
           <p style={{ color: "green" }}>
-            ✅ Offer {isEditing ? "updated" : "created"} successfully! Redirecting to portal...
+            ✅ Offer {isEditing ? "updated" : "created"} successfully{itemPhoto ? (uploadedImageURL ? " with image" : " (image upload failed)") : ""}! Redirecting to portal...
           </p>
         )}
         <button
@@ -593,7 +683,11 @@ const CreateOfferView: React.FC = () => {
             fontSize: "16px",
           }}
         >
-          {loading ? "Saving..." : (isEditing ? "Update Offer" : "Create Offer")}
+          {loading ? (
+            itemPhoto ? "Uploading image and saving..." : "Saving..."
+          ) : (
+            isEditing ? "Update Offer" : "Create Offer"
+          )}
         </button>
       </form>
     </div>
