@@ -24,6 +24,7 @@ export class GeocodingService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          type: 'forward',
           streetAddress,
           city,
           stateProvince,

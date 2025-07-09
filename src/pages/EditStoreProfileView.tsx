@@ -42,36 +42,35 @@ const EditStoreProfileView: React.FC = () => {
         console.log('📍 Location detected:', { latitude, longitude });
         
         try {
-          // Use reverse geocoding to get address from coordinates
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+          // Use Netlify function for reverse geocoding
+          const response = await fetch('/.netlify/functions/geocode', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'reverse',
+              latitude,
+              longitude
+            }),
+          });
+
           const data = await response.json();
           
-          if (data && data.address) {
-            const address = data.address;
-            
-            // Parse and populate address fields
-            const houseNumber = address.house_number || '';
-            const road = address.road || '';
-            const fullStreetAddress = `${houseNumber} ${road}`.trim();
-            
-            setStreetAddress(fullStreetAddress || address.amenity || '');
-            setCity(address.city || address.town || address.village || '');
-            setStateProvince(address.state || address.county || '');
-            setPostalCode(address.postcode || '');
-            setCountry(address.country || '');
-            
-            console.log('✅ Address populated from location:', {
-              streetAddress: fullStreetAddress,
-              city: address.city || address.town || address.village,
-              stateProvince: address.state || address.county,
-              postalCode: address.postcode,
-              country: address.country
-            });
-            
-            alert('📍 Location detected and address fields populated!');
-          } else {
-            setError('Unable to find address for current location.');
+          if (!response.ok) {
+            throw new Error(data.error || `Reverse geocoding error: ${response.status}`);
           }
+          
+          // Populate address fields with the returned data
+          setStreetAddress(data.streetAddress || '');
+          setCity(data.city || '');
+          setStateProvince(data.stateProvince || '');
+          setPostalCode(data.postalCode || '');
+          setCountry(data.country || '');
+          
+          console.log('✅ Address populated from location:', data);
+          
+          alert('📍 Location detected and address fields populated!');
         } catch (error) {
           console.error('❌ Reverse geocoding error:', error);
           setError('Failed to fetch address from location.');
