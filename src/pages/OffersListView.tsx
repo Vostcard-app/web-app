@@ -37,12 +37,13 @@ const OffersListView: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      // Query for offers from vostcards collection
+      console.log('🔍 Fetching offers from vostcards collection...');
+      
+      // Simplified query to avoid composite index requirement
+      // First get all posted vostcards, then filter for offers
       const q = query(
         collection(db, 'vostcards'),
-        where('isOffer', '==', true),
-        where('state', '==', 'posted'),
-        orderBy('createdAt', 'desc')
+        where('state', '==', 'posted')
       );
 
       const querySnapshot = await getDocs(q);
@@ -50,17 +51,28 @@ const OffersListView: React.FC = () => {
 
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        fetchedOffers.push({
-          id: doc.id,
-          title: data.title || 'Untitled Offer',
-          description: data.description || 'No description',
-          username: data.username || 'Unknown Store',
-          latitude: data.latitude || 0,
-          longitude: data.longitude || 0,
-          photoURLs: data.photoURLs || [],
-          createdAt: data.createdAt,
-          offerDetails: data.offerDetails || {}
-        });
+        
+        // Filter for offers only
+        if (data.isOffer === true) {
+          fetchedOffers.push({
+            id: doc.id,
+            title: data.title || 'Untitled Offer',
+            description: data.description || 'No description',
+            username: data.username || 'Unknown Store',
+            latitude: data.latitude || 0,
+            longitude: data.longitude || 0,
+            photoURLs: data.photoURLs || [],
+            createdAt: data.createdAt,
+            offerDetails: data.offerDetails || {}
+          });
+        }
+      });
+
+      // Sort by createdAt in client-side (most recent first)
+      fetchedOffers.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(0);
+        const dateB = b.createdAt?.toDate?.() || new Date(0);
+        return dateB.getTime() - dateA.getTime();
       });
 
       setOffers(fetchedOffers);
