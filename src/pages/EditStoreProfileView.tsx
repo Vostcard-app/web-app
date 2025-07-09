@@ -1,98 +1,24 @@
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../firebase/firebaseConfig";
-import { GeocodingService } from "../services/geocodingService";
-
-const EditStoreProfileView: React.FC = () => {
-  const [storeName, setStoreName] = useState("");
-  // New address fields
-  const [streetAddress, setStreetAddress] = useState("");
-  const [city, setCity] = useState("");
-  const [stateProvince, setStateProvince] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("");
-  const [storePhoto, setStorePhoto] = useState<File | null>(null);
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPerson, setContactPerson] = useState("");
-  const [description, setDescription] = useState("");
-  const [storeHours, setStoreHours] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [addressValidation, setAddressValidation] = useState<{
-    isValid: boolean;
-    missingFields: string[];
-  }>({ isValid: false, missingFields: [] });
-
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  // Handle "Use my location" functionality
-  const handleUseMyLocation = async () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
       return;
     }
 
     setLocationLoading(true);
     setError("");
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        console.log('📍 Location detected:', { latitude, longitude });
-        
-        try {
-          // Use Netlify function for reverse geocoding
-          const response = await fetch('/.netlify/functions/geocode', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              type: 'reverse',
-              latitude,
-              longitude
-            }),
-          });
-
-          const data = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(data.error || `Reverse geocoding error: ${response.status}`);
-          }
-          
-          // Populate address fields with the returned data
-          setStreetAddress(data.streetAddress || '');
-          setCity(data.city || '');
-          setStateProvince(data.stateProvince || '');
-          setPostalCode(data.postalCode || '');
-          setCountry(data.country || '');
-          
-          console.log('✅ Address populated from location:', data);
-          
-          alert('📍 Location detected and address fields populated!');
-        } catch (error) {
-          console.error('❌ Reverse geocoding error:', error);
-          setError('Failed to fetch address from location.');
-        } finally {
-          setLocationLoading(false);
-        }
-      },
-      (error) => {
-        console.error('❌ Geolocation error:', error);
-        setError('Failed to get current location. Please ensure location services are enabled.');
-        setLocationLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000
-      }
-    );
+    try {
+      const result = await GeocodingService.geocodeAddressWithFallback(
+        streetAddress,
+        city,
+        stateProvince,
+        postalCode,
+        country
+      );
+      
+      alert(`✅ Address geocoded successfully!\nCoordinates: ${result.latitude}, ${result.longitude}\nDisplay: ${result.displayAddress}`);
+    } catch (error) {
+      setError(`❌ Geocoding test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setLocationLoading(false);
+    }
   };
 
   // Load existing profile data on component mount
@@ -429,6 +355,11 @@ const EditStoreProfileView: React.FC = () => {
         </form>
       </div>
     </div>
+  );
+};
+
+export default EditStoreProfileView;
+export default EditStoreProfileView;
   );
 };
 
