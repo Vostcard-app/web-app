@@ -21,9 +21,76 @@ const EditStoreProfileView: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Handle "Use my location" functionality
+  const handleUseMyLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setLocationLoading(true);
+    setError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log('📍 Location detected:', { latitude, longitude });
+        
+        try {
+          // Use reverse geocoding to get address from coordinates
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`);
+          const data = await response.json();
+          
+          if (data && data.address) {
+            const address = data.address;
+            
+            // Parse and populate address fields
+            const houseNumber = address.house_number || '';
+            const road = address.road || '';
+            const fullStreetAddress = `${houseNumber} ${road}`.trim();
+            
+            setStreetAddress(fullStreetAddress || address.amenity || '');
+            setCity(address.city || address.town || address.village || '');
+            setStateProvince(address.state || address.county || '');
+            setPostalCode(address.postcode || '');
+            setCountry(address.country || '');
+            
+            console.log('✅ Address populated from location:', {
+              streetAddress: fullStreetAddress,
+              city: address.city || address.town || address.village,
+              stateProvince: address.state || address.county,
+              postalCode: address.postcode,
+              country: address.country
+            });
+            
+            alert('📍 Location detected and address fields populated!');
+          } else {
+            setError('Unable to find address for current location.');
+          }
+        } catch (error) {
+          console.error('❌ Reverse geocoding error:', error);
+          setError('Failed to fetch address from location.');
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      (error) => {
+        console.error('❌ Geolocation error:', error);
+        setError('Failed to get current location. Please ensure location services are enabled.');
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  };
 
   // Load existing profile data on component mount
   useEffect(() => {
@@ -226,6 +293,33 @@ const EditStoreProfileView: React.FC = () => {
               style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
             />
           </label>
+          
+          {/* Use My Location Button */}
+          <div style={{ textAlign: "center", marginBottom: "16px" }}>
+            <button
+              type="button"
+              onClick={handleUseMyLocation}
+              disabled={locationLoading}
+              style={{
+                backgroundColor: locationLoading ? "#ccc" : "#007bff",
+                color: "white",
+                border: "none",
+                padding: "10px 18px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                cursor: locationLoading ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px"
+              }}
+            >
+              {locationLoading ? "🔄 Getting Location..." : "📍 Use My Location"}
+            </button>
+            <div style={{ fontSize: "12px", color: "#666", marginTop: "4px" }}>
+              Automatically populate address fields based on your current location
+            </div>
+          </div>
+
           <label>
             Store Hours
             <input

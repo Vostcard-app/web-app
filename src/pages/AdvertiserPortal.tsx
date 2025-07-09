@@ -73,48 +73,6 @@ const AdvertiserPortal: React.FC = () => {
             Update your store profile details to ensure your offers appear correctly in the app.
           </p>
           <button
-            onClick={async () => {
-              if (!navigator.geolocation) {
-                alert('Geolocation is not supported by your browser.');
-                return;
-              }
-              navigator.geolocation.getCurrentPosition(async (position) => {
-                const { latitude, longitude } = position.coords;
-                try {
-                  const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`);
-                  const data = await response.json();
-                  if (data.results && data.results[0]) {
-                    const formattedAddress = data.results[0].formatted_address;
-                    alert(`Detected location: ${formattedAddress}\n\nYou can now update your profile with this address.`);
-                    // Optionally navigate to store profile page and pre-fill the address
-                    navigate('/store-profile-page', { state: { detectedAddress: formattedAddress, lat: latitude, lng: longitude } });
-                  } else {
-                    alert('Unable to find address for current location.');
-                  }
-                } catch (error) {
-                  console.error('Geocoding error:', error);
-                  alert('Failed to fetch address from location.');
-                }
-              }, (error) => {
-                console.error('Geolocation error:', error);
-                alert('Failed to get current location.');
-              });
-            }}
-            style={{
-              marginTop: '12px',
-              marginBottom: '12px',
-              padding: '10px 18px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              cursor: 'pointer'
-            }}
-          >
-            📍 Use My Location
-          </button>
-          <button
             onClick={() => navigate('/store-profile-page')}
             style={{
               marginTop: '16px',
