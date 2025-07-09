@@ -16,6 +16,22 @@ export interface LocationData {
   country?: string;
 }
 
+export interface BusinessAddress {
+  streetAddress: string;
+  city: string;
+  stateProvince: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface MapLocation {
+  latitude: number;
+  longitude: number;
+  displayAddress: string; // Human-readable description of the location
+  setBy: 'user' | 'address'; // How the location was set
+  setAt: Date; // When it was set
+}
+
 export class GeocodingService {
   /**
    * Geocode an address to get coordinates
@@ -174,5 +190,116 @@ export class GeocodingService {
     return !isNaN(location.latitude) && !isNaN(location.longitude) && 
            location.latitude >= -90 && location.latitude <= 90 &&
            location.longitude >= -180 && location.longitude <= 180;
+  }
+
+  /**
+   * Validate business address
+   */
+  static validateBusinessAddress(address: BusinessAddress | null): { isValid: boolean; missingFields: string[] } {
+    if (!address) return { isValid: false, missingFields: ['All address fields'] };
+    
+    const missingFields: string[] = [];
+    
+    if (!address.streetAddress?.trim()) missingFields.push('Street Address');
+    if (!address.city?.trim()) missingFields.push('City');
+    if (!address.stateProvince?.trim()) missingFields.push('State/Province');
+    if (!address.country?.trim()) missingFields.push('Country');
+    
+    return {
+      isValid: missingFields.length === 0,
+      missingFields
+    };
+  }
+
+  /**
+   * Validate map location
+   */
+  static validateMapLocation(location: MapLocation | null): boolean {
+    if (!location) return false;
+    return !isNaN(location.latitude) && !isNaN(location.longitude) && 
+           location.latitude >= -90 && location.latitude <= 90 &&
+           location.longitude >= -180 && location.longitude <= 180;
+  }
+
+  /**
+   * Format business address for display
+   */
+  static formatBusinessAddress(address: BusinessAddress): string {
+    const parts = [
+      address.streetAddress?.trim(),
+      address.city?.trim(),
+      address.stateProvince?.trim(),
+      address.postalCode?.trim(),
+      address.country?.trim()
+    ].filter(part => part);
+    
+    return parts.join(', ');
+  }
+
+  /**
+   * Create map location from coordinates
+   */
+  static async createMapLocationFromCoordinates(
+    latitude: number,
+    longitude: number
+  ): Promise<MapLocation> {
+    try {
+      // Get human-readable address for these coordinates
+      const response = await fetch('/.netlify/functions/geocode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'reverse',
+          latitude,
+          longitude
+        }),
+      });
+
+      const data = await response.json();
+      
+      return {
+        latitude,
+        longitude,
+        displayAddress: data.displayAddress || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+        setBy: 'user',
+        setAt: new Date()
+      };
+    } catch (error) {
+      // Fallback if reverse geocoding fails
+      return {
+        latitude,
+        longitude,
+        displayAddress: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+        setBy: 'user',
+        setAt: new Date()
+      };
+    }
+  }
+
+  /**
+   * Create map location from business address (optional feature)
+   */
+  static async createMapLocationFromAddress(address: BusinessAddress): Promise<MapLocation> {
+    try {
+      const result = await this.geocodeAddressWithFallback(
+        address.streetAddress,
+        address.city,
+        address.stateProvince,
+        address.postalCode,
+        address.country
+      );
+
+      return {
+        latitude: result.latitude,
+        longitude: result.longitude,
+        displayAddress: result.displayAddress,
+        setBy: 'address',
+        setAt: new Date()
+      };
+    } catch (error) {
+      throw new Error(`Failed to create location from address: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 } 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import { GeocodingService, LocationData } from "../services/geocodingService";
+import { GeocodingService, BusinessAddress, MapLocation } from "../services/geocodingService";
 
 const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");
@@ -16,7 +16,7 @@ const EditStoreProfileView: React.FC = () => {
   const [country, setCountry] = useState("");
   
   // Location data (primary storage)
-  const [storeLocation, setStoreLocation] = useState<LocationData | null>(null);
+  const [storeLocation, setStoreLocation] = useState<MapLocation | null>(null);
   const [storePhoto, setStorePhoto] = useState<File | null>(null);
   const [contactEmail, setContactEmail] = useState("");
   const [contactPerson, setContactPerson] = useState("");
@@ -170,12 +170,12 @@ const EditStoreProfileView: React.FC = () => {
   }, [user?.uid]);
 
   useEffect(() => {
-    const validation = GeocodingService.validateAddress(
+    const validation = GeocodingService.validateBusinessAddress({
       streetAddress,
       city,
       stateProvince,
       country
-    );
+    });
     setAddressValidation(validation);
   }, [streetAddress, city, stateProvince, country]);
 
@@ -400,7 +400,7 @@ const EditStoreProfileView: React.FC = () => {
             <strong>Address Preview:</strong>
             <div style={{ marginTop: "8px" }}>
               {addressValidation.isValid ? (
-                <span>✅ {GeocodingService.formatAddressForGeocoding(streetAddress, city, stateProvince, postalCode, country)}</span>
+                <span>✅ {GeocodingService.formatBusinessAddress({ streetAddress, city, stateProvince, postalCode, country })}</span>
               ) : (
                 <span>⚠️ Missing required fields: {addressValidation.missingFields.join(', ')}</span>
               )}
