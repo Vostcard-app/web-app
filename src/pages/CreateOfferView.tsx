@@ -253,7 +253,6 @@ const CreateOfferView: React.FC = () => {
         userID: user.uid,
         userId: user.uid,
         username: storeProfile.storeName || storeProfile.businessName || 'Business',
-        createdAt: isEditing ? undefined : new Date(),
         updatedAt: new Date(),
         categories: ['offer'],
         offerDetails: {
@@ -263,7 +262,9 @@ const CreateOfferView: React.FC = () => {
           email: storeProfile.contactEmail || '',        // 🔧 Fix: fallback to empty string
           storeHours: storeProfile.storeHours || '',     // 🔧 Fix: fallback to empty string
           contactPerson: storeProfile.contactPerson || '' // 🔧 Fix: fallback to empty string
-        }
+        },
+        // Only include createdAt for new offers (not when editing)
+        ...(isEditing ? {} : { createdAt: new Date() })
       };
 
       let vostcardId = offerId;
@@ -289,8 +290,9 @@ const CreateOfferView: React.FC = () => {
         title,
         description,
         vostcardId,
-        createdAt: isEditing ? undefined : new Date(),
         updatedAt: new Date(),
+        // Only include createdAt for new offers (not when editing)
+        ...(isEditing ? {} : { createdAt: new Date() })
       };
 
       const businessRef = doc(db, "businesses", user.uid);
