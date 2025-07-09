@@ -403,17 +403,15 @@ const HomeView = () => {
       )}
 
       {/* List View and Offers Buttons */}
-      <div style={listViewButtonContainer}>
-        <div style={{ display: 'inline-block', marginRight: 8 }}>
-          <button style={listViewButton}>
-            Offers
-          </button>
-        </div>
-        <div style={{ display: 'inline-block' }}>
-          <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
-            List View
-          </button>
-        </div>
+      <div style={listViewButtonContainerLeft}>
+        <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
+          List View
+        </button>
+      </div>
+      <div style={listViewButtonContainerRight}>
+        <button style={listViewButton}>
+          Offers
+        </button>
       </div>
 
       {/* Map Container */}
@@ -633,11 +631,18 @@ const menuItemStyle = {
   transition: 'background-color 0.2s ease'
 };
 
-const listViewButtonContainer = {
+const listViewButtonContainerLeft = {
   position: 'absolute' as const,
   top: 80,
   left: 20,
-  zIndex: 20, // UI controls layer
+  zIndex: 20,
+};
+
+const listViewButtonContainerRight = {
+  position: 'absolute' as const,
+  top: 80,
+  right: 20,
+  zIndex: 20,
 };
 
 const listViewButton = {
