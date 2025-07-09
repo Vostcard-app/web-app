@@ -37,11 +37,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('❌ Failed to set Firebase Auth persistence:', error);
       });
 
-    // Add timeout for loading state to prevent infinite loading
+    // Much shorter timeout for initial load to prevent slow experience
     const loadingTimeout = setTimeout(() => {
-      console.warn('⏰ AuthProvider: Loading state timeout after 8 seconds, forcing loading to false');
+      console.warn('⏰ AuthProvider: Loading state timeout after 3 seconds, forcing loading to false');
       setLoading(false);
-    }, 8000); // Reduced from 15 to 8 seconds
+    }, 3000); // Reduced from 8 to 3 seconds
+
+    // Quick check for immediate auth state
+    const quickAuthCheck = setTimeout(() => {
+      if (loading && !auth.currentUser) {
+        console.log('⚡ AuthProvider: No user detected after 1 second, proceeding with no auth');
+        setLoading(false);
+        setUser(null);
+        setUsername(null);
+        setUserID(null);
+        setUserRole(null);
+      }
+    }, 1000); // Check after 1 second
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log('🔐 AuthProvider: Auth state changed:', {
@@ -51,8 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAnonymous: currentUser?.isAnonymous
       });
 
-      // Clear the main timeout since we got an auth state change
+      // Clear both timeouts since we got an auth state change
       clearTimeout(loadingTimeout);
+      clearTimeout(quickAuthCheck);
       setLoading(true);
       
       try {
@@ -74,13 +87,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.log('⚡ AuthProvider: Proceeding with basic auth for speed');
               setLoading(false);
             }
-          }, 2000); // Allow user to proceed after 2 seconds
+          }, 1500); // Reduced from 2000 to 1500ms
 
           // Add timeout for Firestore queries specifically
           const firestoreTimeout = setTimeout(() => {
-            console.warn('⏰ AuthProvider: Firestore query timeout after 3 seconds, proceeding with basic auth');
+            console.warn('⏰ AuthProvider: Firestore query timeout after 2 seconds, proceeding with basic auth');
             setLoading(false);
-          }, 3000); // Reduced from 8 to 3 seconds
+          }, 2000); // Reduced from 3 to 2 seconds
 
           // Fetch user data from Firestore - check both collections simultaneously
           try {
@@ -91,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const [userDocSnap, advertiserDocSnap] = await Promise.race([
               Promise.all([getDoc(userDocRef), getDoc(advertiserDocRef)]),
               new Promise<never>((_, reject) => 
-                setTimeout(() => reject(new Error('Firestore query timeout')), 2500) // Reduced from 7 to 2.5 seconds
+                setTimeout(() => reject(new Error('Firestore query timeout')), 1800) // Reduced from 2500 to 1800ms
               )
             ]);
 
@@ -138,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
         } else {
-          console.log('🔐 No user authenticated');
+          console.log('🔐 No user authenticated - setting up guest state immediately');
           setUser(null);
           setUsername(null);
           setUserID(null);
@@ -157,12 +170,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, (error) => {
       console.error('❌ Firebase Auth state change error:', error);
       clearTimeout(loadingTimeout);
+      clearTimeout(quickAuthCheck);
       setLoading(false);
     });
 
     return () => {
       console.log('🔐 AuthProvider: Cleaning up Firebase Auth listener');
       clearTimeout(loadingTimeout);
+      clearTimeout(quickAuthCheck);
       unsubscribe();
     };
   }, []);
