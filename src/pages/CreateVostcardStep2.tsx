@@ -46,6 +46,8 @@ export default function CreateVostcardStep2() {
     cursor: 'pointer',
     border: 'none',
     outline: 'none',
+    position: 'relative' as const,
+    overflow: 'hidden' as const,
   };
 
   const buttonStyle = {
@@ -125,25 +127,6 @@ export default function CreateVostcardStep2() {
         maxHeight: 'calc(100vh - 120px)',
         overflowY: 'auto'
       }}>
-        {/* Thumbnails for selected photos (now grouped with Add Photo) */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-          {selectedPhotos.map((file, idx) => (
-            file ? (
-              <img
-                key={idx}
-                src={URL.createObjectURL(file)}
-                alt={`Selected ${idx + 1}`}
-                style={{
-                  width: 80,
-                  height: 80,
-                  objectFit: 'cover',
-                  borderRadius: 12,
-                  border: '2px solid #002B4D',
-                }}
-              />
-            ) : null
-          ))}
-        </div>
         {[0, 1].map(idx => (
           <button
             key={idx}
@@ -156,18 +139,27 @@ export default function CreateVostcardStep2() {
                 src={URL.createObjectURL(selectedPhotos[idx]!)}
                 alt={idx === 0 ? "Distant" : "Near"}
                 style={{
-                  width: 80,
-                  height: 80,
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
-                  borderRadius: 12,
-                  border: '2px solid #002B4D',
-                  marginBottom: 16,
+                  borderRadius: 24,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
                 }}
               />
             ) : (
               <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
             )}
-            <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: 24, 
+              color: selectedPhotos[idx] ? 'white' : '#002B4D', 
+              fontWeight: 600, 
+              textAlign: 'center',
+              position: 'relative',
+              zIndex: 1,
+              textShadow: selectedPhotos[idx] ? '2px 2px 4px rgba(0,0,0,0.7)' : 'none'
+            }}>
               {idx === 0 ? "Distant" : "Near"}<br />(Suggested)
             </div>
           </button>
