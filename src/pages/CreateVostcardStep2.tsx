@@ -106,6 +106,24 @@ export default function CreateVostcardStep2() {
         </button>
       </div>
 
+      {/* Thumbnails for selected photos */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 24, marginTop: 24 }}>
+        {selectedPhotos.map((file, idx) => (
+          <img
+            key={idx}
+            src={URL.createObjectURL(file)}
+            alt={`Selected ${idx + 1}`}
+            style={{
+              width: 80,
+              height: 80,
+              objectFit: 'cover',
+              borderRadius: 12,
+              border: '2px solid #002B4D',
+            }}
+          />
+        ))}
+      </div>
+
       {/* Options - now scrollable */}
       <div style={{
         flex: 1,
