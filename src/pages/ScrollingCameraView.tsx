@@ -22,7 +22,7 @@ const ScrollingCameraView: React.FC = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Zoom state and pinch-to-zoom logic
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(1); // Standard focal length
   const lastPinchDistance = useRef<number | null>(null);
 
   // Device detection
@@ -365,8 +365,8 @@ const ScrollingCameraView: React.FC = () => {
         style={{
           touchAction: 'none', // Prevent browser pinch-zoom
           transform: isIPhone && facingMode === 'user'
-            ? `scaleX(-1) scale(${zoom})`
-            : `scale(${zoom})`,
+            ? `scaleX(-1)`
+            : `scale(1)`,
           transition: 'transform 0.2s'
         }}
         onTouchStart={handleTouchStart}
