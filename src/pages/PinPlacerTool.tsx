@@ -279,7 +279,8 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         borderTop: '1px solid #e0e0e0',
         display: 'flex',
         gap: '12px',
-        alignItems: 'center'
+        alignItems: 'center',
+        zIndex: 1001
       }}>
         {/* Recenter Button */}
         <button
@@ -387,7 +388,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
           padding: '12px',
           borderRadius: '8px',
           fontSize: '14px',
-          zIndex: 1000
+          zIndex: 1002
         }}>
           {error}
         </div>
