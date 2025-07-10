@@ -142,7 +142,7 @@ const CreateVostcardStep1: React.FC = () => {
           size={28}
           color="white"
           style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/homeview')}
         />
       </div>
 

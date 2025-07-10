@@ -333,13 +333,16 @@ const ScrollingCameraView: React.FC = () => {
       )}
 
       {/* Bottom Controls */}
-      <div className="bottom-controls" style={{
-        position: 'absolute',
-        bottom: 100, // Changed from 80 to 100 (moving up 20px)
-        width: '100%',
-        height: 66,
-        zIndex: 3,
-      }}>
+      <div
+        className="bottom-controls"
+        style={{
+          position: 'absolute',
+          bottom: 100, // Changed from 80 to 100 (move up 20px)
+          width: '100%',
+          height: 66,
+          zIndex: 3,
+        }}
+      >
         {/* Dismiss Button */}
         <button className="bottom-control-button" onClick={handleDismiss}>
           <AiOutlineClose size={24} color="white" />
