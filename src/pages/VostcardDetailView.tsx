@@ -1,3 +1,395 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin } from 'react-icons/fa';
+import { db } from '../firebase/firebaseConfig';
+import { doc, getDoc, collection, onSnapshot } from 'firebase/firestore';
+import { useVostcard } from '../context/VostcardContext';
+import { useAuth } from '../context/AuthContext';
+import FollowButton from '../components/FollowButton';
+import RatingStars from '../components/RatingStars';
+import CommentsModal from '../components/CommentsModal';
+import PrivateShareModal from '../components/PrivateShareModal';
+import { RatingService, type RatingStats } from '../services/ratingService';
+import type { Vostcard } from '../context/VostcardContext';
+
+const VostcardDetailView: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [vostcard, setVostcard] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLikedStatus, setIsLikedStatus] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [imageLoadError, setImageLoadError] = useState(false);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [currentUserRating, setCurrentUserRating] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
+  const [showPrivateShareModal, setShowPrivateShareModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
+  const [ratingStats, setRatingStats] = useState<RatingStats>({
+    vostcardID: '',
+    averageRating: 0,
+    ratingCount: 0,
+    lastUpdated: ''
+  });
+  const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+
+  useEffect(() => {
+    const fetchVostcard = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const docRef = doc(db, 'vostcards', id!);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setVostcard(docSnap.data());
+        } else {
+          setError('Vostcard not found.');
+        }
+      } catch (err) {
+        setError('Failed to load Vostcard.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) fetchVostcard();
+  }, [id]);
+
+  // Fetch user profile when vostcard is loaded
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!vostcard?.userID) return;
+      
+      try {
+        const userRef = doc(db, 'users', vostcard.userID);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserProfile(userSnap.data());
+        }
+      } catch (err) {
+        console.error('Failed to load user profile:', err);
+      }
+    };
+    
+    if (vostcard?.userID) {
+      fetchUserProfile();
+    }
+  }, [vostcard?.userID]);
+
+  // Reset image error state when user profile changes
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [userProfile]);
+
+  // Load like data and set up real-time listeners
+  useEffect(() => {
+    if (!id) return;
+
+    const loadLikeData = async () => {
+      try {
+        const [count, liked] = await Promise.all([
+          getLikeCount(id),
+          isLiked(id)
+        ]);
+        setLikeCount(count);
+        setIsLikedStatus(liked);
+      } catch (error) {
+        console.error('Error loading like data:', error);
+      }
+    };
+
+    loadLikeData();
+
+    // Set up real-time listeners
+    const unsubscribe = setupLikeListeners(
+      id,
+      (count) => setLikeCount(count),
+      (liked) => setIsLikedStatus(liked)
+    );
+
+    return unsubscribe;
+  }, [id, getLikeCount, isLiked, setupLikeListeners]);
+
+  // Load rating data and set up real-time listeners
+  useEffect(() => {
+    if (!id) return;
+
+    const loadRatingData = async () => {
+      try {
+        const [userRating, stats] = await Promise.all([
+          RatingService.getCurrentUserRating(id),
+          RatingService.getRatingStats(id)
+        ]);
+        setCurrentUserRating(userRating);
+        setRatingStats(stats);
+      } catch (error) {
+        console.error('Error loading rating data:', error);
+      }
+    };
+
+    loadRatingData();
+
+    // Set up real-time listeners
+    const unsubscribeStats = RatingService.listenToRatingStats(id, (stats) => {
+      setRatingStats(stats);
+    });
+
+    const unsubscribeUserRating = RatingService.listenToUserRating(id, (rating) => {
+      setCurrentUserRating(rating);
+    });
+
+    return () => {
+      unsubscribeStats();
+      unsubscribeUserRating();
+    };
+  }, [id]);
+
+  // Set up real-time comment count listener
+  useEffect(() => {
+    if (!id) return;
+
+    const commentsRef = collection(db, 'vostcards', id, 'comments');
+    const unsubscribe = onSnapshot(commentsRef, (snapshot) => {
+      setCommentCount(snapshot.size);
+    });
+
+    return unsubscribe;
+  }, [id]);
+
+  // Handle like toggle
+  const handleLikeToggle = useCallback(async () => {
+    if (!id) return;
+    try {
+      await toggleLike(id);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
+  }, [id, toggleLike]);
+
+  // Handle rating submission
+  const handleRatingSubmit = useCallback(async (rating: number) => {
+    if (!id) return;
+    try {
+      await RatingService.submitRating(id, rating);
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    }
+  }, [id]);
+
+  // Handle video orientation detection
+  const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
+    const { videoWidth, videoHeight } = videoElement;
+    const aspectRatio = videoWidth / videoHeight;
+    
+    console.log('📱 Video dimensions:', {
+      videoWidth,
+      videoHeight,
+      aspectRatio: aspectRatio.toFixed(2),
+      userAgent: navigator.userAgent.includes('iPhone') ? 'iPhone' : 'Other'
+    });
+
+    // Enhanced detection for iPhone portrait videos
+    const isLikelyiPhonePortrait = (
+      aspectRatio > 1.5 && aspectRatio < 2.0 &&
+      (
+        (videoWidth === 1920 && videoHeight === 1080) ||
+        (videoWidth === 1280 && videoHeight === 720) ||
+        aspectRatio >= 1.77 && aspectRatio <= 1.78
+      )
+    );
+
+    if (isLikelyiPhonePortrait) {
+      console.log('📱 Detected iPhone portrait video, applying rotation');
+      setVideoOrientation('portrait');
+    } else {
+      setVideoOrientation('landscape');
+    }
+  };
+
+  const handleFlagClick = () => {
+    navigate('/flag-form', { state: { vostcardId: id, vostcardTitle: vostcard?.title } });
+  };
+
+  const handleShareClick = () => {
+    setShowPrivateShareModal(true);
+  };
+
+  const createShareableVostcard = (): Vostcard | null => {
+    if (!vostcard) return null;
+    
+    return {
+      id: vostcard.id || id || '',
+                    title: vostcard.title || 'Untitled Vostcard',
+                    description: vostcard.description || 'No description',
+      username: vostcard.username || 'Unknown',
+      photoURLs: vostcard.photoURLs || [],
+      videoURL: vostcard.videoURL || '',
+      createdAt: vostcard.createdAt,
+      userID: vostcard.userID || '',
+      categories: vostcard.categories || [],
+                    latitude: vostcard.latitude || vostcard.geo?.latitude || 0,
+                    longitude: vostcard.longitude || vostcard.geo?.longitude || 0,
+      state: vostcard.state || 'private'
+    };
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ color: 'red' }}>{error}</div>
+      </div>
+    );
+  }
+
+  if (!vostcard) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div>Vostcard not found</div>
+        </div>
+    );
+  }
+
+  const { title, description, photoURLs = [], videoURL, username } = vostcard;
+  const avatarUrl = userProfile?.avatarURL;
+
+  // Format creation date
+  let createdAt = '';
+  if (vostcard.createdAt) {
+    if (typeof vostcard.createdAt.toDate === 'function') {
+      createdAt = vostcard.createdAt.toDate().toLocaleString();
+    } else if (vostcard.createdAt instanceof Date) {
+      createdAt = vostcard.createdAt.toLocaleString();
+    } else if (typeof vostcard.createdAt === 'string' || typeof vostcard.createdAt === 'number') {
+      createdAt = new Date(vostcard.createdAt).toLocaleString();
+    } else {
+      createdAt = String(vostcard.createdAt);
+    }
+  }
+
+  return (
+          <div style={{
+      background: '#fff', 
+      minHeight: '100vh', 
+      fontFamily: 'system-ui, sans-serif',
+      overflow: 'auto'
+    }}>
+      {/* Banner */}
+      <div style={{ background: '#07345c', padding: '32px 0 24px 0', borderBottomLeftRadius: 24, borderBottomRightRadius: 24, position: 'relative', textAlign: 'center' }}>
+        <button style={{ position: 'absolute', right: 16, top: 36, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
+          <FaHome color="#fff" size={28} />
+            </button>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
+        </div>
+
+      {/* User Info */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '24px 24px 0 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '50%', marginRight: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0' }}>
+            {avatarUrl && !imageLoadError ? (
+              <img 
+                src={avatarUrl} 
+                alt="avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={() => {
+                  setImageLoadError(true);
+                }}
+              />
+            ) : (
+              <FaUserCircle 
+                size={64} 
+                color="#ccc" 
+              />
+            )}
+          </div>
+          <span style={{ fontWeight: 500, fontSize: 24 }}>{username}</span>
+        </div>
+        {vostcard.userID && (
+          <FollowButton 
+            targetUserId={vostcard.userID} 
+            targetUsername={username}
+            size="small"
+            variant="secondary"
+          />
+        )}
+      </div>
+
+      {/* Title */}
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 32, margin: '16px 0 8px 0' }}>{title}</div>
+
+      {/* Media Thumbnails */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
+        <div 
+          style={{ 
+            width: 180, 
+            height: 240, 
+            background: '#111', 
+            borderRadius: 16, 
+            overflow: 'hidden', 
+            cursor: videoURL ? 'pointer' : 'default',
+            position: 'relative'
+          }}
+          onClick={() => videoURL && setShowVideoModal(true)}
+        >
+          {videoURL ? (
+            <>
+              <video 
+                src={videoURL} 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover',
+                  pointerEvents: 'none',
+                  transform: videoOrientation === 'portrait' ? 'rotate(90deg)' : 'none',
+                  transformOrigin: 'center center'
+                }}
+                muted
+                onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
+              />
+              {/* Play overlay */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                backgroundColor: 'rgba(0,0,0,0.6)',
+                borderRadius: '50%',
+                width: '60px',
+                height: '60px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'none'
+              }}>
+                <div style={{
+                  width: 0,
+                  height: 0,
+                  borderLeft: '20px solid white',
+                  borderTop: '12px solid transparent',
+                  borderBottom: '12px solid transparent',
+                  marginLeft: '4px'
+                }} />
+              </div>
+            </>
+          ) : (
+            <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>No Video</div>
+          )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {photoURLs.length > 0 ? (
+            photoURLs.slice(0, 2).map((url: string, idx: number) => (
               <img
                 key={idx}
                 src={url}
@@ -6,7 +398,7 @@
                 onClick={() => setSelectedPhoto(url)}
                 onContextMenu={e => e.preventDefault()}
               />
-            )
+            ))
           ) : (
             <>
               <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>No Photo</div>
@@ -288,7 +680,7 @@
       )}
 
       {/* Full-screen Video Modal */}
-      {showVideoModal && videoUrl && (
+      {showVideoModal && videoURL && (
         <div
           style={{
             position: 'fixed',
@@ -339,7 +731,7 @@
             
             {/* Video */}
             <video
-              src={videoUrl}
+              src={videoURL}
               style={{
                 maxWidth: videoOrientation === 'portrait' ? '100vh' : '100%',
                 maxHeight: videoOrientation === 'portrait' ? '100vw' : '100%',
