@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { Icon, LatLng } from 'leaflet';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
-import { FaArrowLeft, FaCheck, FaTimes, FaMapMarkerAlt, FaCrosshairs } from 'react-icons/fa';
+import { FaHome, FaCheck, FaTimes, FaMapMarkerAlt, FaCrosshairs } from 'react-icons/fa';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default markers in react-leaflet
@@ -28,9 +28,7 @@ interface PinData {
   userID?: string;
   userId?: string;
 }
-git add .
-git commit -m "Ready for Netlify deploy"
-git push origin main
+
 interface PinPlacerToolProps {
   pinData?: PinData;
 }
@@ -201,7 +199,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         alignItems: 'center',
         gap: '12px'
       }}>
-        <FaArrowLeft 
+        <FaHome 
           size={20} 
           color="#007aff" 
           style={{ cursor: 'pointer' }}
