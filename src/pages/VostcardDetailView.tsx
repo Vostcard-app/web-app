@@ -6,7 +6,7 @@
                 onClick={() => setSelectedPhoto(url)}
                 onContextMenu={e => e.preventDefault()}
               />
-            ))
+            )
           ) : (
             <>
               <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>No Photo</div>
