@@ -84,6 +84,24 @@ const HomeView = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
 
+  // Check for fresh load state from navigation
+  useEffect(() => {
+    const navigationState = location.state as any;
+    if (navigationState?.freshLoad) {
+      console.log('🔄 Fresh load requested after posting vostcard');
+      // Force a complete refresh like first login
+      setVostcards([]);
+      setUserLocation(null);
+      setLoadingVostcards(true);
+      setMapError(null);
+      setRetryCount(0);
+      setLastUpdateTime(Date.now());
+      
+      // Clear the navigation state to prevent repeated fresh loads
+      window.history.replaceState({}, '', location.pathname);
+    }
+  }, [location.state, location.pathname]);
+
   // No complex refresh state management needed
 
   // Debug authentication state and manage auth loading overlay
@@ -212,9 +230,9 @@ const HomeView = () => {
     getUserLocation();
   }, []);
 
-  // Load vostcards on mount
+  // Load vostcards on mount and when fresh load is requested
   useEffect(() => {
-    loadVostcards();
+    loadVostcards(true); // Always force refresh on mount
   }, []);
 
   // Auto-refresh vostcards periodically (every 30 seconds)

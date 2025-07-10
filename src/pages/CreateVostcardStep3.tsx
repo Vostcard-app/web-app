@@ -169,8 +169,14 @@ const CreateVostcardStep3: React.FC = () => {
       
       console.log('✅ Vostcard posted successfully, navigating to home');
       
-      // Simple navigation without complex state management
-      navigate('/home', { replace: true });
+      // Navigate to home with fresh state - same as first login
+      navigate('/home', { 
+        replace: true,
+        state: { 
+          freshLoad: true,
+          timestamp: Date.now() 
+        }
+      });
       
     } catch (error) {
       console.error('❌ Error posting vostcard:', error);
