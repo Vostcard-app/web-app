@@ -106,24 +106,6 @@ export default function CreateVostcardStep2() {
         </button>
       </div>
 
-      {/* Thumbnails for selected photos */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, marginTop: 24 }}>
-        {selectedPhotos.map((file, idx) => (
-          <img
-            key={idx}
-            src={URL.createObjectURL(file)}
-            alt={`Selected ${idx + 1}`}
-            style={{
-              width: 80,
-              height: 80,
-              objectFit: 'cover',
-              borderRadius: 12,
-              border: '2px solid #002B4D',
-            }}
-          />
-        ))}
-      </div>
-
       {/* Options - now scrollable */}
       <div style={{
         flex: 1,
@@ -137,6 +119,23 @@ export default function CreateVostcardStep2() {
         maxHeight: 'calc(100vh - 120px)',
         overflowY: 'auto'
       }}>
+        {/* Thumbnails for selected photos (now grouped with Add Photo) */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+          {selectedPhotos.map((file, idx) => (
+            <img
+              key={idx}
+              src={URL.createObjectURL(file)}
+              alt={`Selected ${idx + 1}`}
+              style={{
+                width: 80,
+                height: 80,
+                objectFit: 'cover',
+                borderRadius: 12,
+                border: '2px solid #002B4D',
+              }}
+            />
+          ))}
+        </div>
         <button style={optionStyle} onClick={handleAddPhoto}>
           <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
           <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
@@ -149,7 +148,10 @@ export default function CreateVostcardStep2() {
             Near<br />(Suggested)
           </div>
         </button>
-        <button style={buttonStyle} onClick={handleSaveAndContinue}>
+        <button
+          style={{ ...buttonStyle, marginTop: 4 }}
+          onClick={handleSaveAndContinue}
+        >
           Save & Continue
         </button>
       </div>
