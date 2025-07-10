@@ -275,9 +275,11 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         backgroundColor: 'white',
         padding: '16px',
         borderTop: '1px solid #e0e0e0',
+        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
         display: 'flex',
         gap: '12px',
-        alignItems: 'center'
+        alignItems: 'center',
+        zIndex: 1000
       }}>
         {/* Recenter Button */}
         <button
@@ -287,13 +289,14 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             backgroundColor: hasChanges ? '#666' : '#e0e0e0',
             color: hasChanges ? 'white' : '#999',
             border: 'none',
-            padding: '12px',
+            padding: '12px 16px',
             borderRadius: '8px',
             fontSize: '14px',
             cursor: hasChanges ? 'pointer' : 'not-allowed',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '6px',
+            minWidth: '80px'
           }}
         >
           <FaCrosshairs size={14} />
@@ -321,42 +324,46 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             backgroundColor: '#f5f5f5',
             color: '#666',
             border: '1px solid #ddd',
-            padding: '12px 20px',
+            padding: '12px 16px',
             borderRadius: '8px',
             fontSize: '14px',
             cursor: isLoading ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '6px',
+            minWidth: '80px'
           }}
         >
           <FaTimes size={14} />
           Cancel
         </button>
 
-        {/* Save Button */}
+        {/* Save Button - Enhanced visibility */}
         <button
           onClick={handleSave}
           disabled={isLoading || !hasChanges}
           style={{
-            backgroundColor: hasChanges ? '#ff6b35' : '#e0e0e0',
+            backgroundColor: hasChanges ? '#002B4D' : '#e0e0e0',
             color: hasChanges ? 'white' : '#999',
             border: 'none',
-            padding: '12px 20px',
+            padding: '14px 20px',
             borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: 600,
+            fontSize: '16px',
+            fontWeight: 700,
             cursor: (hasChanges && !isLoading) ? 'pointer' : 'not-allowed',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px'
+            gap: '8px',
+            minWidth: '100px',
+            boxShadow: hasChanges ? '0 2px 8px rgba(0,43,77,0.2)' : 'none',
+            transition: 'all 0.2s ease'
           }}
         >
           {isLoading ? (
             <>
               <div style={{
-                width: '14px',
-                height: '14px',
+                width: '16px',
+                height: '16px',
                 border: '2px solid #fff',
                 borderTop: '2px solid transparent',
                 borderRadius: '50%',
@@ -366,7 +373,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             </>
           ) : (
             <>
-              <FaCheck size={14} />
+              <FaCheck size={16} />
               Save
             </>
           )}
