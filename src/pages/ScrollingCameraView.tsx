@@ -126,6 +126,11 @@ const ScrollingCameraView: React.FC = () => {
     };
   }, [facingMode, isIPhone]);
 
+  // Reset zoom to 1 when camera is switched
+  useEffect(() => {
+    setZoom(1);
+  }, [facingMode]);
+
   // Pinch-to-zoom handlers
   function getDistance(touch1: Touch, touch2: Touch) {
     return Math.hypot(
@@ -148,7 +153,7 @@ const ScrollingCameraView: React.FC = () => {
       if (Math.abs(delta) > 2) {
         setZoom(z => {
           let next = z + delta * 0.005;
-          next = Math.max(1, Math.min(2, next));
+          next = Math.max(1, Math.min(2, next)); // Clamp between 1 and 2
           return next;
         });
         lastPinchDistance.current = dist;
