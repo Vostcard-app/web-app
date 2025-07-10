@@ -157,11 +157,12 @@ const ScrollingCameraView: React.FC = () => {
       if (Math.abs(delta) > 2) {
         setZoom(z => {
           let next = z + delta * 0.005;
-          next = Math.max(1, Math.min(2, next)); // Clamp between 1 and 2
+          next = Math.max(1, Math.min(2, next));
           return next;
         });
         lastPinchDistance.current = dist;
       }
+      e.preventDefault(); // Prevent page zoom
     }
   };
 
@@ -376,7 +377,7 @@ const ScrollingCameraView: React.FC = () => {
           transition: 'transform 0.2s'
         }}
         onTouchStart={handleTouchStart}
-        onTouchMove={e => { handleTouchMove(e); if (canZoom) e.preventDefault(); }}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       />
 
