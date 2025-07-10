@@ -5,17 +5,15 @@ import { Icon, LatLng } from 'leaflet';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { FaHome, FaCheck, FaTimes, FaMapMarkerAlt, FaCrosshairs } from 'react-icons/fa';
+import VostcardPin from '../assets/Vostcard_pin.png';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default markers in react-leaflet
+// Use Vostcard_pin for the marker icon
 const defaultIcon = new Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+  iconUrl: VostcardPin,
+  iconSize: [100, 100],
+  iconAnchor: [50, 100],
+  popupAnchor: [0, -100],
 });
 
 interface PinData {

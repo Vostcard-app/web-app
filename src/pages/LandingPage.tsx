@@ -86,7 +86,7 @@ export default function LandingPage() {
           borderRadius: '5px'
         }}>
           Tap count: {tapCount}/3
-      </div>
+        </div>
       )}
     </div>
   );

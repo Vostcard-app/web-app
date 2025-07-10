@@ -512,23 +512,6 @@ const HomeView = () => {
         </div>
       )}
 
-      {/* Debug Section - Remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={debugStyle}>
-          <div><strong>Auth Debug:</strong></div>
-          <div>User: {user ? '✅' : '❌'}</div>
-          <div>Username: {username || 'N/A'}</div>
-          <div>UserID: {userID || 'N/A'}</div>
-          <div>Role: {userRole || 'N/A'}</div>
-          <div>Loading: {loading ? '🔄' : '✅'}</div>
-          <div>Auth Current: {auth.currentUser ? '✅' : '❌'}</div>
-          <div>Vostcards: {vostcards.length}</div>
-          <div>Last Update: {formatLastUpdate()}</div>
-          <button onClick={clearAuthState} style={debugButtonStyle}>
-            Clear Auth State
-          </button>
-        </div>
-      )}
 
       {/* Create Vostcard Button */}
       <div style={createButtonContainer}>
@@ -646,7 +629,7 @@ const listViewButtonContainerRight = {
 };
 
 const listViewButton = {
-  background: '#007aff',
+  background: '#002B4D', // Changed from '#007aff' to match Create a Vostcard button
   color: 'white',
   border: 'none',
   borderRadius: 8,

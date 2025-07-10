@@ -8,6 +8,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: true, // This will expose to network for iPhone access
     proxy: {
       '/api': {
         target: 'http://localhost:5001/vostcard-a3b71/us-central1/generateScript',

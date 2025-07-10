@@ -344,11 +344,7 @@ const ScrollingCameraView: React.FC = () => {
           className="record-button"
           onClick={isRecording ? handleStopRecording : handleStartRecording}
           style={{
-            backgroundColor: 'red',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            borderRadius: '50%'
           }}
         >
           {isRecording && (

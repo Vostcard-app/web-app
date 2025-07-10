@@ -3,7 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import { GeocodingService, BusinessAddress } from "../services/geocodingService";
+import { GeocodingService } from "../services/geocodingService";
+
+// Temporary interface definition until module loading is fixed
+interface BusinessAddress {
+  streetAddress: string;
+  city: string;
+  stateProvince: string;
+  postalCode: string;
+  country: string;
+}
 
 const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");

@@ -4,9 +4,11 @@ import { VostcardProvider } from "./context/VostcardContext";
 import { ScriptProvider } from "./context/ScriptContext";
 import { FollowingProvider } from "./context/FollowingContext";
 
+import RootView from "./pages/RootView";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegistrationPage from "./pages/RegistrationPage";
+import UserGuideView from "./pages/UserGuideView";
 import HomeView from "./pages/HomeView";
 import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
 import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
@@ -47,9 +49,11 @@ function App() {
           <Router>
           <Routes>
             {/* 🔑 Authentication */}
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<RootView />} />
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegistrationPage />} />
+            <Route path="/user-guide" element={<UserGuideView />} />
 
             {/* 🏠 Main */}
             <Route path="/home" element={<HomeView />} />
