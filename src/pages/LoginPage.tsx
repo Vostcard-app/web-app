@@ -12,7 +12,13 @@ export default function LoginPage() {
       height: '100vh',
       background: '#f5f5f5',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      position: 'fixed', // Prevent shifting by fixing position
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      overflow: 'hidden' // Prevent scrolling that could cause shifts
     }}>
       {/* Header */}
       <div style={{
@@ -22,7 +28,8 @@ export default function LoginPage() {
         padding: '20px',
         display: 'flex',
         alignItems: 'center',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        flexShrink: 0 // Prevent header from shrinking
       }}>
         <span style={{
           fontSize: '2.2rem',
@@ -40,7 +47,9 @@ export default function LoginPage() {
         flexDirection: 'column',
         alignItems: 'center',
         padding: '40px 20px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        overflowY: 'auto', // Allow scrolling within content area only
+        minHeight: 0 // Prevent flex item from growing beyond container
       }}>
         {/* Welcome */}
         <h1 style={{
@@ -56,7 +65,7 @@ export default function LoginPage() {
 
         {/* Email Input */}
         <input
-          type="text"
+          type="email" // Changed from "text" to "email"
           placeholder="Username or Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -65,11 +74,12 @@ export default function LoginPage() {
             maxWidth: 400,
             fontSize: 18,
             padding: '16px 20px',
-            borderRadius: 25, // Matches the button border radius exactly
+            borderRadius: 25,
             border: '1px solid #ddd',
             marginBottom: 20,
             backgroundColor: 'white',
-            outline: 'none'
+            outline: 'none',
+            boxSizing: 'border-box'
           }}
         />
 
@@ -89,7 +99,7 @@ export default function LoginPage() {
               width: '100%',
               fontSize: 18,
               padding: '16px 20px',
-              borderRadius: 25, // Matches the button border radius exactly
+              borderRadius: 25,
               border: '1px solid #ddd',
               backgroundColor: 'white',
               outline: 'none',
@@ -122,7 +132,7 @@ export default function LoginPage() {
             background: '#07345c',
             color: 'white',
             border: 'none',
-            borderRadius: 25, // Button border radius unchanged
+            borderRadius: 25,
             fontSize: 20,
             fontWeight: 600,
             cursor: 'pointer',
@@ -152,7 +162,7 @@ export default function LoginPage() {
             background: '#07345c',
             color: 'white',
             border: 'none',
-            borderRadius: 25, // Button border radius unchanged
+            borderRadius: 25,
             fontSize: 20,
             fontWeight: 600,
             cursor: 'pointer',

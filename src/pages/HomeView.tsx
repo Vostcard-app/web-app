@@ -534,7 +534,7 @@ const containerStyle = {
 
 const headerStyle = {
   position: 'absolute' as const,
-  top: 0,
+  top: 95, // Changed from 80 to 95 (80 + 15)
   left: 0,
   right: 0,
   height: '70px',
@@ -594,7 +594,7 @@ const avatarImageStyle = {
 
 const menuStyle = {
   position: 'absolute' as const,
-  top: 70,
+  top: 165, // Changed from 150 to 165 (150 + 15)
   right: 0,
   background: 'white',
   boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
@@ -616,14 +616,14 @@ const menuItemStyle = {
 
 const listViewButtonContainerLeft = {
   position: 'absolute' as const,
-  top: 80,
+  top: 175, // Changed from 160 to 175 (160 + 15)
   left: 20,
   zIndex: 20,
 };
 
 const listViewButtonContainerRight = {
   position: 'absolute' as const,
-  top: 80,
+  top: 175, // Changed from 160 to 175 (160 + 15)
   right: 20,
   zIndex: 20,
 };
@@ -643,7 +643,7 @@ const listViewButton = {
 
 const mapContainerStyle = {
   position: 'absolute' as const,
-  top: 70,
+  top: 165, // Changed from 150 to 165 (150 + 15)
   left: 0,
   right: 0,
   bottom: 0,
@@ -697,7 +697,7 @@ const loadingOverlayStyle = {
 
 const vostcardsLoadingOverlayStyle = {
   position: 'absolute' as const,
-  top: 70,
+  top: 165, // Changed from 150 to 165 (150 + 15)
   left: 0,
   right: 0,
   bottom: 0,
@@ -780,7 +780,7 @@ const createButton = {
 
 const zoomControlStyle = {
   position: 'absolute' as const,
-  top: 100,
+  top: 195, // Changed from 180 to 195 (180 + 15)
   right: 20,
   zIndex: 10, // Map controls layer
   display: 'flex',
@@ -803,7 +803,7 @@ const zoomButton = {
 
 const recenterControlStyle = {
   position: 'absolute' as const,
-  top: 180,
+  top: 275, // Changed from 260 to 275 (260 + 15)
   right: 20,
   zIndex: 10, // Map controls layer
 };

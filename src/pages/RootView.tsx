@@ -185,7 +185,7 @@ const RootView: React.FC = () => {
       {/* Log In Button at Bottom */}
       <div style={{
         position: 'absolute',
-        bottom: 32,
+        bottom: 92, // Changed from 82 to 92 (adding 10px more)
         left: 0,
         width: '100%',
         display: 'flex',

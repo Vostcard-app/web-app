@@ -122,6 +122,7 @@ const CreateVostcardStep1: React.FC = () => {
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
+        position: 'relative' // Add relative positioning for absolute child
       }}
     >
       {/* 🔵 Header */}
@@ -133,6 +134,11 @@ const CreateVostcardStep1: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 16px',
+          position: 'absolute', // Change to absolute positioning
+          top: 85, // Changed from 90 to 85 (bringing it up 5px)
+          left: 0,
+          right: 0,
+          zIndex: 10
         }}
       >
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
@@ -154,6 +160,7 @@ const CreateVostcardStep1: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
           padding: '20px',
+          paddingTop: '185px' // Adjusted from 190px to 185px (85px + 80px height + 20px spacing)
         }}
       >
         {videoURL ? (
