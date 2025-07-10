@@ -68,18 +68,15 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        let videoConstraints: MediaTrackConstraints;
-        if (facingMode === 'environment') {
-          videoConstraints = {
-            facingMode,
-            width: { ideal: 1920, max: 1920 },
-            height: { ideal: 1080, max: 1080 },
-            frameRate: { ideal: 30, max: 30 }
-          };
-        } else {
-          videoConstraints = { facingMode }; // No width/height for front camera!
-        }
+        // Enhanced video constraints for better iPhone compatibility
+        const videoConstraints: MediaTrackConstraints = {
+          facingMode,
+          width: { ideal: 1920, max: 1920 },
+          height: { ideal: 1080, max: 1080 },
+          frameRate: { ideal: 30, max: 30 }
+        };
 
+        // For iPhone, prioritize portrait orientation
         if (isIPhone) {
           videoConstraints.width = { ideal: 1080, max: 1080 };
           videoConstraints.height = { ideal: 1920, max: 1920 };
@@ -96,6 +93,7 @@ const ScrollingCameraView: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
 
+        // Log actual video track settings
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
@@ -109,6 +107,7 @@ const ScrollingCameraView: React.FC = () => {
 
       } catch (err) {
         console.error('Error accessing camera:', err);
+        // Fallback to basic constraints if enhanced ones fail
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { facingMode } 
@@ -366,7 +365,7 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
-      {/* Camera Preview with Pinch-to-Zoom (only for back camera) */}
+      {/* Camera Preview */}
       <video
         ref={videoRef}
         autoPlay
@@ -374,16 +373,9 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          touchAction: 'none',
-          transform:
-            isIPhone && facingMode === 'user'
-              ? `scaleX(-1)` // Only mirror, no scale!
-              : `scale(${zoom})`,
+          transform: isIPhone && facingMode === 'user' ? 'scaleX(-1)' : undefined,
           transition: 'transform 0.2s'
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       />
 
       {/* Scrolling Script Overlay */}
