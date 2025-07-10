@@ -21,8 +21,9 @@ const ScrollingCameraView: React.FC = () => {
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Zoom state
+  // Zoom state and pinch-to-zoom logic
   const [zoom, setZoom] = useState(1);
+  const lastPinchDistance = useRef<number | null>(null);
 
   // Device detection
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -124,6 +125,42 @@ const ScrollingCameraView: React.FC = () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
   }, [facingMode, isIPhone]);
+
+  // Pinch-to-zoom handlers
+  const handleTouchStart = (e: React.TouchEvent<HTMLVideoElement>) => {
+    if (e.touches.length === 2) {
+      const dist = getDistance(e.touches[0], e.touches[1]);
+      lastPinchDistance.current = dist;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLVideoElement>) => {
+    if (e.touches.length === 2 && lastPinchDistance.current !== null) {
+      const dist = getDistance(e.touches[0], e.touches[1]);
+      const delta = dist - lastPinchDistance.current;
+      if (Math.abs(delta) > 2) { // threshold to avoid jitter
+        setZoom(z => {
+          let next = z + delta * 0.005; // adjust sensitivity as needed
+          next = Math.max(1, Math.min(2, next));
+          return next;
+        });
+        lastPinchDistance.current = dist;
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLVideoElement>) => {
+    if (e.touches.length < 2) {
+      lastPinchDistance.current = null;
+    }
+  };
+
+  function getDistance(touch1: Touch, touch2: Touch) {
+    return Math.hypot(
+      touch2.clientX - touch1.clientX,
+      touch2.clientY - touch1.clientY
+    );
+  }
 
   const handleStartRecording = () => {
     if (streamRef.current) {
@@ -342,7 +379,7 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
-      {/* Camera Preview */}
+      {/* Camera Preview with Pinch-to-Zoom */}
       <video
         ref={videoRef}
         autoPlay
@@ -355,6 +392,9 @@ const ScrollingCameraView: React.FC = () => {
             : `scale(${zoom})`,
           transition: 'transform 0.2s'
         }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       />
 
       {/* Scrolling Script Overlay */}
