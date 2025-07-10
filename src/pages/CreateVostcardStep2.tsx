@@ -31,17 +31,17 @@ export default function CreateVostcardStep2() {
     }
   };
 
-  // Updated option style with reduced padding
+  // Square thumbnail style
   const optionStyle = {
     background: '#f4f6f8',
     borderRadius: 24,
-    padding: '24px 0',
     marginBottom: 32,
-    width: '100%',
-    maxWidth: 340,
+    width: 300,
+    height: 300,
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
+    justifyContent: 'center',
     boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
     cursor: 'pointer',
     border: 'none',
@@ -139,8 +139,8 @@ export default function CreateVostcardStep2() {
                 src={URL.createObjectURL(selectedPhotos[idx]!)}
                 alt={idx === 0 ? "Distant" : "Near"}
                 style={{
-                  width: '100%',
-                  height: '100%',
+                  width: 300,
+                  height: 300,
                   objectFit: 'cover',
                   borderRadius: 24,
                   position: 'absolute',
