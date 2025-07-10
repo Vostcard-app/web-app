@@ -280,19 +280,22 @@ const VostcardDetailView: React.FC = () => {
   }
 
   return (
-          <div style={{
+    <div style={{ 
       background: '#fff', 
       minHeight: '100vh', 
       fontFamily: 'system-ui, sans-serif',
-      overflow: 'auto'
+      overflow: 'auto',
+      WebkitOverflowScrolling: 'touch', // Enable smooth scrolling on iOS Safari
+      scrollBehavior: 'smooth', // Smooth scrolling for modern browsers
+      height: '100vh' // Ensure full viewport height for proper scrolling container
     }}>
       {/* Banner */}
       <div style={{ background: '#07345c', padding: '32px 0 24px 0', borderBottomLeftRadius: 24, borderBottomRightRadius: 24, position: 'relative', textAlign: 'center' }}>
         <button style={{ position: 'absolute', right: 16, top: 36, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
           <FaHome color="#fff" size={28} />
-            </button>
+        </button>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
-        </div>
+      </div>
 
       {/* User Info */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '24px 24px 0 24px' }}>
