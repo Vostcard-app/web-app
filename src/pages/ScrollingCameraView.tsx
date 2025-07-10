@@ -314,35 +314,6 @@ const ScrollingCameraView: React.FC = () => {
 
   return (
     <div className="scrolling-camera-container">
-      {/* Zoom Slider Control */}
-      <div style={{
-        position: 'absolute',
-        top: 120,
-        right: 20,
-        zIndex: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        background: 'rgba(255,255,255,0.85)',
-        borderRadius: 12,
-        padding: '12px 10px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-      }}>
-        <label style={{ fontSize: 14, color: '#002B4D', marginBottom: 8 }}>Zoom</label>
-        <input
-          type="range"
-          min={1}
-          max={2}
-          step={0.01}
-          value={zoom}
-          onChange={e => setZoom(Number(e.target.value))}
-          style={{ width: 100 }}
-        />
-        <span style={{ fontSize: 12, color: '#002B4D', marginTop: 4 }}>
-          {zoom.toFixed(2)}x
-        </span>
-      </div>
-
       {/* Recording Timer - Always visible and centered */}
       <div className="recording-timer">
         {isRecording && <div className="recording-dot"></div>}
@@ -387,13 +358,14 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
+          touchAction: 'none', // Prevent browser pinch-zoom
           transform: isIPhone && facingMode === 'user'
             ? `scaleX(-1) scale(${zoom})`
             : `scale(${zoom})`,
           transition: 'transform 0.2s'
         }}
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
+        onTouchMove={e => { handleTouchMove(e); e.preventDefault(); }} // Prevent default pinch-zoom
         onTouchEnd={handleTouchEnd}
       />
 
