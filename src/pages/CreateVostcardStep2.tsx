@@ -1,259 +1,110 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaCamera } from 'react-icons/fa';
-import { useVostcard } from '../context/VostcardContext';
-import { useAuth } from '../context/AuthContext';
+import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
 
-const CreateVostcardStep2 = () => {
+const optionStyle = {
+  background: '#f4f6f8',
+  borderRadius: 24,
+  padding: '48px 0',
+  marginBottom: 32,
+  width: '100%',
+  maxWidth: 340,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+  cursor: 'pointer',
+  border: 'none',
+  outline: 'none',
+};
+
+const buttonStyle = {
+  background: '#002B4D',
+  color: 'white',
+  border: 'none',
+  borderRadius: 16,
+  fontSize: 24,
+  fontWeight: 600,
+  padding: '20px 0',
+  width: '100%',
+  maxWidth: 380,
+  margin: '0 auto',
+  marginTop: 24,
+  boxShadow: '0 4px 12px rgba(0,43,77,0.12)',
+  cursor: 'pointer',
+  letterSpacing: '0.01em',
+};
+
+export default function CreateVostcardStep2() {
   const navigate = useNavigate();
-  const { currentVostcard, updateVostcard, saveLocalVostcard, loadLocalVostcard } = useVostcard();
-  const { user } = useAuth();
-
-  const [distantPhoto, setDistantPhoto] = useState<string | null>(null);
-  const [nearPhoto, setNearPhoto] = useState<string | null>(null);
-
-  const distantInputRef = useRef<HTMLInputElement>(null);
-  const nearInputRef = useRef<HTMLInputElement>(null);
-
-  // Always reload the Vostcard from IndexedDB on mount
-  useEffect(() => {
-    const load = async () => {
-      if (currentVostcard?.id) {
-        await loadLocalVostcard(currentVostcard.id);
-        console.log('Step 2 loaded Vostcard:', currentVostcard);
-      }
-    };
-    load();
-  }, []);
-
-  useEffect(() => {
-    if (currentVostcard?.photos) {
-      if (currentVostcard.photos[0]) {
-        setDistantPhoto(URL.createObjectURL(currentVostcard.photos[0]));
-      }
-      if (currentVostcard.photos[1]) {
-        setNearPhoto(URL.createObjectURL(currentVostcard.photos[1]));
-      }
-    }
-  }, [currentVostcard]);
-
-  useEffect(() => {
-    if (!user) {
-      alert('Sorry, something went wrong. Please start again.');
-      navigate('/home');
-    }
-  }, [user, navigate]);
-
-  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'distant' | 'near') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const photoURL = URL.createObjectURL(file);
-
-    if (type === 'distant') {
-      setDistantPhoto(photoURL);
-    } else {
-      setNearPhoto(photoURL);
-    }
-
-    const currentPhotos = (currentVostcard?.photos || []).filter(Boolean) as Blob[];
-    const updatedPhotos: Blob[] = [
-      type === 'distant' ? file : currentPhotos[0],
-      type === 'near' ? file : currentPhotos[1],
-    ].filter(Boolean) as Blob[];
-
-    updateVostcard({ photos: updatedPhotos });
-
-    try {
-      await saveLocalVostcard();
-    } catch (error) {
-      console.error('Failed to save photo locally:', error);
-      alert('Failed to save photo. Please try again.');
-    }
-
-    e.target.value = '';
-  };
-
-  const handleChooseOption = (type: 'distant' | 'near') => {
-    const choice = window.confirm('Tap OK to Take Photo, Cancel to Select from Files');
-    if (choice) {
-      // Open camera
-      if (type === 'distant') {
-        distantInputRef.current?.setAttribute('capture', 'environment');
-        distantInputRef.current?.click();
-      } else {
-        nearInputRef.current?.setAttribute('capture', 'environment');
-        nearInputRef.current?.click();
-      }
-    } else {
-      // Open file picker
-      if (type === 'distant') {
-        distantInputRef.current?.removeAttribute('capture');
-        distantInputRef.current?.click();
-      } else {
-        nearInputRef.current?.removeAttribute('capture');
-        nearInputRef.current?.click();
-      }
-    }
-  };
-
-  const handleSaveAndContinue = async () => {
-    try {
-      await saveLocalVostcard();
-      navigate('/create-step3');
-    } catch (error) {
-      console.error('Save failed:', error);
-      alert('Save failed, check console.');
-    }
-  };
 
   return (
-    <div style={container}>
-      {/* Header */}
-      <div style={header}>
-        <h1 style={logo}>Vōstcard</h1>
-        <FaArrowLeft
-          size={24}
-          color="white"
-          style={{ cursor: 'pointer' }}
-          onClick={() => navigate('/create-step1')}
-        />
+    <div style={{
+      minHeight: '100vh',
+      background: 'white',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center'
+    }}>
+      {/* Banner */}
+      <div style={{
+        width: '100%',
+        background: '#002B4D',
+        color: 'white',
+        height: 80,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 24px',
+        boxSizing: 'border-box',
+        position: 'relative'
+      }}>
+        <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.01em' }}>Vōstcard</span>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            background: 'rgba(255,255,255,0.12)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          <FaArrowLeft size={28} color="white" />
+        </button>
       </div>
 
-      {/* Thumbnails */}
-      <div style={thumbnailsContainer}>
-        {/* Distant */}
-        <div style={thumbnail} onClick={() => handleChooseOption('distant')}>
-          {distantPhoto ? (
-            <img src={distantPhoto} alt="Distant" style={imageStyle} />
-          ) : (
-            <div style={placeholder}>
-              <FaCamera size={32} color="#002B4D" />
-              <span>Distant (Suggested)</span>
-            </div>
-          )}
-          <input
-            ref={distantInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={(e) => handlePhotoSelect(e, 'distant')}
-          />
-        </div>
-
-        {/* Near */}
-        <div style={thumbnail} onClick={() => handleChooseOption('near')}>
-          {nearPhoto ? (
-            <img src={nearPhoto} alt="Near" style={imageStyle} />
-          ) : (
-            <div style={placeholder}>
-              <FaCamera size={32} color="#002B4D" />
-              <span>Near (Suggested)</span>
-            </div>
-          )}
-          <input
-            ref={nearInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={(e) => handlePhotoSelect(e, 'near')}
-          />
-        </div>
-      </div>
-
-      {/* Save & Continue */}
-      <div style={buttonContainer}>
-        <button style={saveButton} onClick={handleSaveAndContinue}>
+      {/* Options */}
+      <div style={{
+        flex: 1,
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '40px 20px 0 20px',
+        boxSizing: 'border-box'
+      }}>
+        <button style={optionStyle}>
+          <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
+          <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
+            Distant<br />(Suggested)
+          </div>
+        </button>
+        <button style={optionStyle}>
+          <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
+          <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
+            Near<br />(Suggested)
+          </div>
+        </button>
+        <button style={buttonStyle}>
           Save & Continue
         </button>
       </div>
     </div>
   );
-};
-
-const container = {
-  height: '100vh',
-  width: '100vw',
-  backgroundColor: 'white',
-  display: 'flex',
-  flexDirection: 'column' as const,
-  alignItems: 'center',
-};
-
-const header = {
-  backgroundColor: '#002B4D',
-  height: '70px',
-  width: '100%',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '0 20px',
-  boxSizing: 'border-box' as const,
-};
-
-const logo = {
-  color: 'white',
-  fontSize: '24px',
-  margin: 0,
-};
-
-const thumbnailsContainer = {
-  display: 'flex',
-  flexDirection: 'column' as const,
-  gap: '20px',
-  padding: '20px',
-  width: '100%',
-  maxWidth: '400px',
-  flex: 1,
-};
-
-const thumbnail = {
-  width: '100%',
-  height: '200px',
-  borderRadius: '16px',
-  backgroundColor: '#F5F5F5',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  cursor: 'pointer',
-};
-
-const placeholder = {
-  display: 'flex',
-  flexDirection: 'column' as const,
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: '#002B4D',
-  fontWeight: 500,
-  gap: '8px',
-};
-
-const imageStyle = {
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover' as const,
-  borderRadius: '16px',
-};
-
-const buttonContainer = {
-  padding: '20px',
-  width: '100%',
-  maxWidth: '400px',
-  position: 'fixed' as const,
-  bottom: '20px',
-  left: '50%',
-  transform: 'translateX(-50%)',
-};
-
-const saveButton = {
-  backgroundColor: '#002B4D',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  padding: '14px',
-  fontSize: '18px',
-  cursor: 'pointer',
-  width: '100%',
-};
-
-export default CreateVostcardStep2;
+}
