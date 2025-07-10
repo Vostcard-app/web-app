@@ -529,12 +529,13 @@ const containerStyle = {
   height: '100vh',
   width: '100vw',
   position: 'relative' as const,
-  overflow: 'hidden'
+  overflow: 'hidden',
+  backgroundColor: '#f5f5f5' // Add a light background to fill the space
 };
 
 const headerStyle = {
   position: 'absolute' as const,
-  top: 95, // Changed from 80 to 95 (80 + 15)
+  top: 0, // Moved back to top from 95
   left: 0,
   right: 0,
   height: '70px',
@@ -544,7 +545,7 @@ const headerStyle = {
   alignItems: 'center',
   justifyContent: 'space-between',
   padding: '0 20px',
-  zIndex: 100, // High priority UI element
+  zIndex: 100,
   boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
 };
 
@@ -594,12 +595,12 @@ const avatarImageStyle = {
 
 const menuStyle = {
   position: 'absolute' as const,
-  top: 165, // Changed from 150 to 165 (150 + 15)
+  top: 70, // Moved back from 165 to 70
   right: 0,
   background: 'white',
   boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
   borderRadius: '0 0 10px 10px',
-  zIndex: 101, // Just above header
+  zIndex: 101,
   minWidth: 220,
   padding: '10px 0',
 };
@@ -616,14 +617,14 @@ const menuItemStyle = {
 
 const listViewButtonContainerLeft = {
   position: 'absolute' as const,
-  top: 175, // Changed from 160 to 175 (160 + 15)
+  top: 80, // Moved back from 175 to 80
   left: 20,
   zIndex: 20,
 };
 
 const listViewButtonContainerRight = {
   position: 'absolute' as const,
-  top: 175, // Changed from 160 to 175 (160 + 15)
+  top: 80, // Moved back from 175 to 80
   right: 20,
   zIndex: 20,
 };
@@ -643,11 +644,11 @@ const listViewButton = {
 
 const mapContainerStyle = {
   position: 'absolute' as const,
-  top: 165, // Changed from 150 to 165 (150 + 15)
+  top: 70, // Moved back from 165 to 70
   left: 0,
   right: 0,
   bottom: 0,
-  zIndex: 1, // Base layer
+  zIndex: 1,
 };
 
 const errorOverlayStyle = {
@@ -697,7 +698,7 @@ const loadingOverlayStyle = {
 
 const vostcardsLoadingOverlayStyle = {
   position: 'absolute' as const,
-  top: 165, // Changed from 150 to 165 (150 + 15)
+  top: 70, // Moved back from 165 to 70
   left: 0,
   right: 0,
   bottom: 0,
@@ -705,7 +706,7 @@ const vostcardsLoadingOverlayStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  zIndex: 50, // Above map but below critical UI
+  zIndex: 50,
   pointerEvents: 'none' as const
 };
 
@@ -780,9 +781,9 @@ const createButton = {
 
 const zoomControlStyle = {
   position: 'absolute' as const,
-  top: 195, // Changed from 180 to 195 (180 + 15)
+  top: 100, // Moved back from 195 to 100
   right: 20,
-  zIndex: 10, // Map controls layer
+  zIndex: 10,
   display: 'flex',
   flexDirection: 'column' as const,
   gap: 8,
@@ -803,9 +804,9 @@ const zoomButton = {
 
 const recenterControlStyle = {
   position: 'absolute' as const,
-  top: 275, // Changed from 260 to 275 (260 + 15)
+  top: 180, // Moved back from 275 to 180
   right: 20,
-  zIndex: 10, // Map controls layer
+  zIndex: 10,
 };
 
 const offerPopupStyle = {
