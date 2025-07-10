@@ -269,7 +269,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
       {/* Controls */}
       <div style={{
         position: 'absolute',
-        bottom: 0,
+        bottom: 75,
         left: 0,
         right: 0,
         backgroundColor: 'white',
@@ -338,7 +338,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
           Cancel
         </button>
 
-        {/* Save Button - Enhanced visibility */}
+        {/* Save Button */}
         <button
           onClick={handleSave}
           disabled={isLoading || !hasChanges}
