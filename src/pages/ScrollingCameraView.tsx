@@ -68,12 +68,17 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const videoConstraints: MediaTrackConstraints = {
-          facingMode,
-          width: { ideal: 1920, max: 1920 },
-          height: { ideal: 1080, max: 1080 },
-          frameRate: { ideal: 30, max: 30 }
-        };
+        let videoConstraints: MediaTrackConstraints;
+        if (facingMode === 'environment') {
+          videoConstraints = {
+            facingMode,
+            width: { ideal: 1920, max: 1920 },
+            height: { ideal: 1080, max: 1080 },
+            frameRate: { ideal: 30, max: 30 }
+          };
+        } else {
+          videoConstraints = { facingMode }; // No width/height for front camera!
+        }
 
         if (isIPhone) {
           videoConstraints.width = { ideal: 1080, max: 1080 };
@@ -372,7 +377,7 @@ const ScrollingCameraView: React.FC = () => {
           touchAction: 'none',
           transform:
             isIPhone && facingMode === 'user'
-              ? `scaleX(-1) scale(1)` // Always 1x for front camera
+              ? `scaleX(-1)` // Only mirror, no scale!
               : `scale(${zoom})`,
           transition: 'transform 0.2s'
         }}
