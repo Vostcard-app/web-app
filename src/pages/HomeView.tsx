@@ -776,8 +776,8 @@ const debugButtonStyle = {
 const createButtonContainer = {
   position: 'absolute' as const,
   bottom: 40,
-  left: '50%',
-  transform: 'translateX(-50%)',
+  left: 15,
+  right: 15,
   zIndex: 20, // UI controls layer
 };
 
@@ -791,7 +791,8 @@ const createButton = {
   fontWeight: 700,
   cursor: 'pointer',
   boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  width: '100%'
 };
 
 const zoomControlStyle = {
