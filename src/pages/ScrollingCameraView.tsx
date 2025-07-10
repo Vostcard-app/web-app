@@ -346,9 +346,20 @@ const ScrollingCameraView: React.FC = () => {
       )}
 
       {/* Bottom Controls */}
-      <div className="bottom-controls">
+      <div
+        className="bottom-controls"
+        style={{
+          marginBottom: 20, // Keeps the controls up by 20px
+        }}
+      >
         {/* Dismiss Button */}
-        <button className="bottom-control-button" onClick={handleDismiss}>
+        <button
+          className="bottom-control-button"
+          onClick={handleDismiss}
+          style={{
+            marginRight: 15, // <-- Move dismiss icon 15px to the left
+          }}
+        >
           <AiOutlineClose size={24} color="white" />
         </button>
 
@@ -362,9 +373,9 @@ const ScrollingCameraView: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 64,                // <-- makes the button a circle
-            height: 64,               // <-- makes the button a circle
-            borderRadius: '50%',      // <-- makes the button a circle
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
           }}
         >
           {isRecording && (
@@ -380,7 +391,13 @@ const ScrollingCameraView: React.FC = () => {
         </button>
 
         {/* Camera Switch Button */}
-        <button className="bottom-control-button" onClick={handleSwitchCamera}>
+        <button
+          className="bottom-control-button"
+          onClick={handleSwitchCamera}
+          style={{
+            marginLeft: 15, // <-- Move camera chooser 15px to the right
+          }}
+        >
           <MdCameraswitch size={24} color="white" />
         </button>
       </div>
