@@ -349,6 +349,9 @@ const ScrollingCameraView: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            width: 64,                // <-- makes the button a circle
+            height: 64,               // <-- makes the button a circle
+            borderRadius: '50%',      // <-- makes the button a circle
           }}
         >
           {isRecording && (
