@@ -73,7 +73,10 @@ const ScrollingCameraView: React.FC = () => {
           width: { ideal: 1920, max: 1920 },
           height: { ideal: 1080, max: 1080 },
           frameRate: { ideal: 30, max: 30 },
-          advanced: [{ zoom: 1.0 }]
+          advanced: [
+            { zoom: 1.0, pan: 0, tilt: 0 },
+            { torch: false } // explicitly turn off torch
+          ]
         };
 
         if (isIPhone) {
