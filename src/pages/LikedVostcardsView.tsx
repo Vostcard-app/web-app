@@ -81,7 +81,10 @@ const LikedVostcardsView: React.FC = () => {
           id: doc.id
         })) as LikedVostcard[];
 
-        setLikedVostcards(vostcards);
+        // Filter out offers - only show regular vostcards in liked view
+        const regularVostcards = vostcards.filter(v => !v.isOffer);
+
+        setLikedVostcards(regularVostcards);
       } catch (err: any) {
         console.error('Failed to fetch Vōstcard details:', err);
         setError('Failed to load Vōstcard details. Please try again.');

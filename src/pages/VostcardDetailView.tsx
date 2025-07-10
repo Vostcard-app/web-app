@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, onSnapshot } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -314,8 +314,8 @@ const VostcardDetailView: React.FC = () => {
     <div style={{ background: '#fff', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       {/* Banner */}
       <div style={{ background: '#07345c', padding: '32px 0 24px 0', borderBottomLeftRadius: 24, borderBottomRightRadius: 24, position: 'relative', textAlign: 'center' }}>
-        <button style={{ position: 'absolute', left: 16, top: 36, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate(-1)}>
-          <FaArrowLeft color="#fff" size={28} />
+        <button style={{ position: 'absolute', right: 16, top: 36, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
+          <FaHome color="#fff" size={28} />
         </button>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
       </div>

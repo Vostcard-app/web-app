@@ -45,7 +45,7 @@ const MyPostedVostcardsListView = () => {
           id: doc.id,
           ...doc.data()
         } as PostedVostcard))
-        .filter(v => v.state === 'posted');
+        .filter(v => v.state === 'posted' && !v.isOffer); // Filter out offers - only show regular vostcards
       setPostedVostcards(vostcards);
     } catch (error) {
       console.error('Error loading posted Vostcards:', error);

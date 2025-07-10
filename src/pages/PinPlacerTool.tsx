@@ -28,7 +28,9 @@ interface PinData {
   userID?: string;
   userId?: string;
 }
-
+git add .
+git commit -m "Ready for Netlify deploy"
+git push origin main
 interface PinPlacerToolProps {
   pinData?: PinData;
 }
@@ -279,8 +281,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         borderTop: '1px solid #e0e0e0',
         display: 'flex',
         gap: '12px',
-        alignItems: 'center',
-        zIndex: 1001
+        alignItems: 'center'
       }}>
         {/* Recenter Button */}
         <button
@@ -388,7 +389,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
           padding: '12px',
           borderRadius: '8px',
           fontSize: '14px',
-          zIndex: 1002
+          zIndex: 1000
         }}>
           {error}
         </div>

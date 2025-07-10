@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { FaArrowLeft, FaPhone, FaEnvelope, FaMapMarkerAlt, FaStore, FaMapPin } from 'react-icons/fa';
+import { FaHome, FaPhone, FaEnvelope, FaMapMarkerAlt, FaStore, FaMapPin } from 'react-icons/fa';
 
 interface OfferData {
   id: string;
@@ -181,13 +181,21 @@ const OfferView: React.FC = () => {
         padding: '16px 20px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px',
+        justifyContent: 'space-between',
         position: 'sticky',
         top: 0,
         zIndex: 10
       }}>
+        <h1 style={{
+          color: 'white',
+          margin: 0,
+          fontSize: '24px',
+          fontWeight: 600
+        }}>
+          {storeName}
+        </h1>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/home')}
           style={{
             background: 'none',
             border: 'none',
@@ -200,16 +208,8 @@ const OfferView: React.FC = () => {
             justifyContent: 'center'
           }}
         >
-          <FaArrowLeft size={20} />
+          <FaHome size={20} />
         </button>
-        <h1 style={{
-          color: 'white',
-          margin: 0,
-          fontSize: '24px',
-          fontWeight: 600
-        }}>
-          {storeName}
-        </h1>
       </div>
 
       {/* Scrollable Content Container */}
