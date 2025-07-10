@@ -9,26 +9,25 @@ export default function CreateVostcardStep2() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos
-  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
+  const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null]);
+  const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
 
   // Handler for when a thumbnail is tapped
-  const handleAddPhoto = () => {
-    if (selectedPhotos.length >= 2) {
-      alert('You can only add up to 2 photos.');
-      return;
-    }
+  const handleAddPhoto = (index: number) => {
+    setActiveThumbnail(index);
     fileInputRef.current?.click();
   };
 
   // Handle file selection (camera or library)
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && activeThumbnail !== null) {
       setSelectedPhotos(prev => {
-        if (prev.length >= 2) return prev; // Prevent adding more than 2
-        return [...prev, file];
+        const updated = [...prev];
+        updated[activeThumbnail] = file;
+        return updated;
       });
-      // Optionally, you can limit the number of photos or replace instead of append
+      setActiveThumbnail(null);
     }
   };
 
@@ -68,8 +67,8 @@ export default function CreateVostcardStep2() {
 
   // Save and continue handler
   const handleSaveAndContinue = () => {
-    // Save selected photos to the vostcard context
-    updateVostcard({ photos: selectedPhotos });
+    // Save selected photos to the vostcard context, filtering out empty slots
+    updateVostcard({ photos: selectedPhotos.filter(Boolean) });
     navigate('/create-step3');
   };
 
@@ -129,62 +128,50 @@ export default function CreateVostcardStep2() {
         {/* Thumbnails for selected photos (now grouped with Add Photo) */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
           {selectedPhotos.map((file, idx) => (
-            <img
-              key={idx}
-              src={URL.createObjectURL(file)}
-              alt={`Selected ${idx + 1}`}
-              style={{
-                width: 80,
-                height: 80,
-                objectFit: 'cover',
-                borderRadius: 12,
-                border: '2px solid #002B4D',
-              }}
-            />
+            file ? (
+              <img
+                key={idx}
+                src={URL.createObjectURL(file)}
+                alt={`Selected ${idx + 1}`}
+                style={{
+                  width: 80,
+                  height: 80,
+                  objectFit: 'cover',
+                  borderRadius: 12,
+                  border: '2px solid #002B4D',
+                }}
+              />
+            ) : null
           ))}
         </div>
-        <button style={optionStyle} onClick={handleAddPhoto}>
-          {selectedPhotos[0] ? (
-            <img
-              src={URL.createObjectURL(selectedPhotos[0])}
-              alt="Distant"
-              style={{
-                width: 80,
-                height: 80,
-                objectFit: 'cover',
-                borderRadius: 12,
-                border: '2px solid #002B4D',
-                marginBottom: 16,
-              }}
-            />
-          ) : (
-            <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
-          )}
-          <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
-            Distant<br />(Suggested)
-          </div>
-        </button>
-        <button style={optionStyle} onClick={handleAddPhoto}>
-          {selectedPhotos[1] ? (
-            <img
-              src={URL.createObjectURL(selectedPhotos[1])}
-              alt="Near"
-              style={{
-                width: 80,
-                height: 80,
-                objectFit: 'cover',
-                borderRadius: 12,
-                border: '2px solid #002B4D',
-                marginBottom: 16,
-              }}
-            />
-          ) : (
-            <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
-          )}
-          <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
-            Near<br />(Suggested)
-          </div>
-        </button>
+        {[0, 1].map(idx => (
+          <button
+            key={idx}
+            style={optionStyle}
+            onClick={() => handleAddPhoto(idx)}
+            type="button"
+          >
+            {selectedPhotos[idx] ? (
+              <img
+                src={URL.createObjectURL(selectedPhotos[idx]!)}
+                alt={idx === 0 ? "Distant" : "Near"}
+                style={{
+                  width: 80,
+                  height: 80,
+                  objectFit: 'cover',
+                  borderRadius: 12,
+                  border: '2px solid #002B4D',
+                  marginBottom: 16,
+                }}
+              />
+            ) : (
+              <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
+            )}
+            <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
+              {idx === 0 ? "Distant" : "Near"}<br />(Suggested)
+            </div>
+          </button>
+        ))}
         <button
           style={{ ...buttonStyle, marginTop: 4 }}
           onClick={handleSaveAndContinue}
