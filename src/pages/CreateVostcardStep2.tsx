@@ -1,11 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
+import { useVostcard } from '../context/VostcardContext';
 
 export default function CreateVostcardStep2() {
   const navigate = useNavigate();
+  const { updateVostcard } = useVostcard();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Track selected photos
+  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
 
   // Handler for when a thumbnail is tapped
   const handleAddPhoto = () => {
@@ -21,9 +26,8 @@ export default function CreateVostcardStep2() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Handle the selected file (preview, upload, etc.)
-      // For now, just log it
-      console.log('Selected file:', file);
+      setSelectedPhotos(prev => [...prev, file]);
+      // Optionally, you can limit the number of photos or replace instead of append
     }
   };
 
@@ -31,7 +35,7 @@ export default function CreateVostcardStep2() {
   const optionStyle = {
     background: '#f4f6f8',
     borderRadius: 24,
-    padding: '24px 0', // Reduced from 48px
+    padding: '24px 0',
     marginBottom: 32,
     width: '100%',
     maxWidth: 340,
@@ -59,6 +63,13 @@ export default function CreateVostcardStep2() {
     boxShadow: '0 4px 12px rgba(0,43,77,0.12)',
     cursor: 'pointer',
     letterSpacing: '0.01em',
+  };
+
+  // Save and continue handler
+  const handleSaveAndContinue = () => {
+    // Save selected photos to the vostcard context
+    updateVostcard({ photos: selectedPhotos });
+    navigate('/create-step3');
   };
 
   return (
@@ -111,7 +122,7 @@ export default function CreateVostcardStep2() {
         justifyContent: 'center',
         padding: '40px 20px 0 20px',
         boxSizing: 'border-box',
-        maxHeight: 'calc(100vh - 120px)', // Adjust for banner and button
+        maxHeight: 'calc(100vh - 120px)',
         overflowY: 'auto'
       }}>
         <button style={optionStyle} onClick={handleAddPhoto}>
@@ -126,7 +137,7 @@ export default function CreateVostcardStep2() {
             Near<br />(Suggested)
           </div>
         </button>
-        <button style={buttonStyle}>
+        <button style={buttonStyle} onClick={handleSaveAndContinue}>
           Save & Continue
         </button>
       </div>

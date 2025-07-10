@@ -21,6 +21,9 @@ const ScrollingCameraView: React.FC = () => {
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Zoom state
+  const [zoom, setZoom] = useState(1);
+
   // Device detection
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isIPhone = /iPhone/.test(navigator.userAgent);
@@ -48,7 +51,6 @@ const ScrollingCameraView: React.FC = () => {
         },
         (error) => {
           console.error('❌ Error getting location:', error);
-          // Continue without location - user can add it later
         },
         { 
           enableHighAccuracy: true, 
@@ -65,7 +67,6 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Enhanced video constraints for better iPhone compatibility
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
           width: { ideal: 1920, max: 1920 },
@@ -73,7 +74,6 @@ const ScrollingCameraView: React.FC = () => {
           frameRate: { ideal: 30, max: 30 }
         };
 
-        // For iPhone, prioritize portrait orientation
         if (isIPhone) {
           videoConstraints.width = { ideal: 1080, max: 1080 };
           videoConstraints.height = { ideal: 1920, max: 1920 };
@@ -90,7 +90,6 @@ const ScrollingCameraView: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
 
-        // Log actual video track settings
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
@@ -104,7 +103,6 @@ const ScrollingCameraView: React.FC = () => {
 
       } catch (err) {
         console.error('Error accessing camera:', err);
-        // Fallback to basic constraints if enhanced ones fail
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { facingMode } 
@@ -273,12 +271,44 @@ const ScrollingCameraView: React.FC = () => {
     navigate(-1);
   };
 
+  // Zoom control handlers
+  const handleZoomIn = () => setZoom(z => Math.min(z + 0.1, 2));
+  const handleZoomOut = () => setZoom(z => Math.max(z - 0.1, 1));
+
   return (
     <div className="scrolling-camera-container">
+      {/* Zoom Controls */}
+      <div style={{
+        position: 'absolute',
+        top: 120,
+        right: 20,
+        zIndex: 20,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}>
+        <button onClick={handleZoomIn} style={{
+          background: '#fff',
+          border: '1px solid #ddd',
+          borderRadius: 8,
+          padding: 10,
+          fontSize: 18,
+          cursor: 'pointer',
+        }}>+</button>
+        <button onClick={handleZoomOut} style={{
+          background: '#fff',
+          border: '1px solid #ddd',
+          borderRadius: 8,
+          padding: 10,
+          fontSize: 18,
+          cursor: 'pointer',
+        }}>-</button>
+      </div>
+
       {/* Recording Timer - Always visible and centered */}
       <div className="recording-timer">
         {isRecording && <div className="recording-dot"></div>}
-        <span>{formatTime(recordingTime)}</span>
+        <span>{recordingTime}</span>
       </div>
 
       {/* Location indicator */}
@@ -319,7 +349,10 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          transform: isIPhone && facingMode === 'user' ? 'scaleX(-1)' : 'none' // Mirror front camera on iPhone
+          transform: isIPhone && facingMode === 'user'
+            ? `scaleX(-1) scale(${zoom})`
+            : `scale(${zoom})`,
+          transition: 'transform 0.2s'
         }}
       />
 
@@ -337,14 +370,14 @@ const ScrollingCameraView: React.FC = () => {
         className="bottom-controls"
         style={{
           position: 'absolute',
-          bottom: 100, // Changed from 80 to 100 (move up 20px)
+          bottom: 100,
           width: '100%',
           height: 66,
           zIndex: 3,
         }}
       >
         {/* Dismiss Button */}
-        <button className="bottom-control-button" onClick={handleDismiss}>
+        <button className="bottom-control-button" onClick={() => navigate(-1)}>
           <AiOutlineClose size={24} color="white" />
         </button>
 
