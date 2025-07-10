@@ -131,6 +131,8 @@ const ScrollingCameraView: React.FC = () => {
     setZoom(1);
   }, [facingMode]);
 
+  const canZoom = facingMode === 'environment';
+
   // Pinch-to-zoom handlers
   function getDistance(touch1: Touch, touch2: Touch) {
     return Math.hypot(
@@ -140,6 +142,7 @@ const ScrollingCameraView: React.FC = () => {
   }
 
   const handleTouchStart = (e: React.TouchEvent<HTMLVideoElement>) => {
+    if (!canZoom) return;
     if (e.touches.length === 2) {
       const dist = getDistance(e.touches[0], e.touches[1]);
       lastPinchDistance.current = dist;
@@ -147,6 +150,7 @@ const ScrollingCameraView: React.FC = () => {
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLVideoElement>) => {
+    if (!canZoom) return;
     if (e.touches.length === 2 && lastPinchDistance.current !== null) {
       const dist = getDistance(e.touches[0], e.touches[1]);
       const delta = dist - lastPinchDistance.current;
@@ -162,6 +166,7 @@ const ScrollingCameraView: React.FC = () => {
   };
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLVideoElement>) => {
+    if (!canZoom) return;
     if (e.touches.length < 2) {
       lastPinchDistance.current = null;
     }
@@ -355,7 +360,7 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
-      {/* Camera Preview with Pinch-to-Zoom */}
+      {/* Camera Preview with Pinch-to-Zoom (only for back camera) */}
       <video
         ref={videoRef}
         autoPlay
@@ -363,14 +368,15 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          touchAction: 'none', // Prevent browser pinch-zoom
-          transform: isIPhone && facingMode === 'user'
-            ? `scaleX(-1)`
-            : `scale(1)`,
+          touchAction: 'none',
+          transform:
+            isIPhone && facingMode === 'user'
+              ? `scaleX(-1) scale(1)` // Always 1x for front camera
+              : `scale(${zoom})`,
           transition: 'transform 0.2s'
         }}
         onTouchStart={handleTouchStart}
-        onTouchMove={e => { handleTouchMove(e); e.preventDefault(); }} // Prevent default pinch-zoom
+        onTouchMove={e => { handleTouchMove(e); if (canZoom) e.preventDefault(); }}
         onTouchEnd={handleTouchEnd}
       />
 
