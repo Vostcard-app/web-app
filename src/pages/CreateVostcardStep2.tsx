@@ -13,6 +13,10 @@ export default function CreateVostcardStep2() {
 
   // Handler for when a thumbnail is tapped
   const handleAddPhoto = () => {
+    if (selectedPhotos.length >= 2) {
+      alert('You can only add up to 2 photos.');
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -20,7 +24,10 @@ export default function CreateVostcardStep2() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedPhotos(prev => [...prev, file]);
+      setSelectedPhotos(prev => {
+        if (prev.length >= 2) return prev; // Prevent adding more than 2
+        return [...prev, file];
+      });
       // Optionally, you can limit the number of photos or replace instead of append
     }
   };
@@ -137,13 +144,43 @@ export default function CreateVostcardStep2() {
           ))}
         </div>
         <button style={optionStyle} onClick={handleAddPhoto}>
-          <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
+          {selectedPhotos[0] ? (
+            <img
+              src={URL.createObjectURL(selectedPhotos[0])}
+              alt="Distant"
+              style={{
+                width: 80,
+                height: 80,
+                objectFit: 'cover',
+                borderRadius: 12,
+                border: '2px solid #002B4D',
+                marginBottom: 16,
+              }}
+            />
+          ) : (
+            <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
+          )}
           <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
             Distant<br />(Suggested)
           </div>
         </button>
         <button style={optionStyle} onClick={handleAddPhoto}>
-          <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
+          {selectedPhotos[1] ? (
+            <img
+              src={URL.createObjectURL(selectedPhotos[1])}
+              alt="Near"
+              style={{
+                width: 80,
+                height: 80,
+                objectFit: 'cover',
+                borderRadius: 12,
+                border: '2px solid #002B4D',
+                marginBottom: 16,
+              }}
+            />
+          ) : (
+            <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
+          )}
           <div style={{ fontSize: 24, color: '#002B4D', fontWeight: 600, textAlign: 'center' }}>
             Near<br />(Suggested)
           </div>
