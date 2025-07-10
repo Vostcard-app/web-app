@@ -7,19 +7,13 @@ export default function CreateVostcardStep2() {
   const navigate = useNavigate();
   const { updateVostcard } = useVostcard();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos
   const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
 
   // Handler for when a thumbnail is tapped
   const handleAddPhoto = () => {
-    const choice = window.prompt('Type 1 to take a photo, 2 to choose from library:', '1 or 2');
-    if (choice === '1') {
-      cameraInputRef.current?.click();
-    } else if (choice === '2') {
-      fileInputRef.current?.click();
-    }
+    fileInputRef.current?.click();
   };
 
   // Handle file selection (camera or library)
@@ -147,14 +141,6 @@ export default function CreateVostcardStep2() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
