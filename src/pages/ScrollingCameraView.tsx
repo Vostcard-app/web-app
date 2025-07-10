@@ -127,6 +127,13 @@ const ScrollingCameraView: React.FC = () => {
   }, [facingMode, isIPhone]);
 
   // Pinch-to-zoom handlers
+  function getDistance(touch1: Touch, touch2: Touch) {
+    return Math.hypot(
+      touch2.clientX - touch1.clientX,
+      touch2.clientY - touch1.clientY
+    );
+  }
+
   const handleTouchStart = (e: React.TouchEvent<HTMLVideoElement>) => {
     if (e.touches.length === 2) {
       const dist = getDistance(e.touches[0], e.touches[1]);
@@ -138,9 +145,9 @@ const ScrollingCameraView: React.FC = () => {
     if (e.touches.length === 2 && lastPinchDistance.current !== null) {
       const dist = getDistance(e.touches[0], e.touches[1]);
       const delta = dist - lastPinchDistance.current;
-      if (Math.abs(delta) > 2) { // threshold to avoid jitter
+      if (Math.abs(delta) > 2) {
         setZoom(z => {
-          let next = z + delta * 0.005; // adjust sensitivity as needed
+          let next = z + delta * 0.005;
           next = Math.max(1, Math.min(2, next));
           return next;
         });
@@ -154,13 +161,6 @@ const ScrollingCameraView: React.FC = () => {
       lastPinchDistance.current = null;
     }
   };
-
-  function getDistance(touch1: Touch, touch2: Touch) {
-    return Math.hypot(
-      touch2.clientX - touch1.clientX,
-      touch2.clientY - touch1.clientY
-    );
-  }
 
   const handleStartRecording = () => {
     if (streamRef.current) {
