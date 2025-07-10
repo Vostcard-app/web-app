@@ -207,7 +207,8 @@ const CreateVostcardStep3: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px'
+        padding: '0 16px',
+        flexShrink: 0
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
         <FaArrowLeft
@@ -219,7 +220,12 @@ const CreateVostcardStep3: React.FC = () => {
       </div>
 
       {/* 📝 Form */}
-      <div style={{ padding: 16, flex: 1, overflowY: 'auto' }}>
+      <div style={{ 
+        padding: 16, 
+        flex: 1, 
+        overflowY: 'auto',
+        paddingBottom: 140 // Add space for the fixed buttons
+      }}>
         <div>
           <label style={labelStyle}>
             Title {validationState.hasTitle && <span style={{color: 'green'}}>✅</span>}
@@ -299,9 +305,18 @@ const CreateVostcardStep3: React.FC = () => {
         </div>
       </div>
 
-
-      {/* 🔘 Buttons */}
-      <div style={{ padding: 16 }}>
+      {/* 🔘 Fixed Bottom Buttons */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        padding: 16,
+        borderTop: '1px solid #e0e0e0',
+        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
+        zIndex: 100
+      }}>
         <button
           onClick={handleSaveChanges}
           style={saveButtonStyle}
