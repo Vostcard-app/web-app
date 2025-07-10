@@ -280,25 +280,26 @@ const VostcardDetailView: React.FC = () => {
   }
 
   return (
-    <div style={{ 
-      background: '#fff', 
-      minHeight: '100vh', 
-      fontFamily: 'system-ui, sans-serif',
-      overflow: 'auto',
-      WebkitOverflowScrolling: 'touch', // Enable smooth scrolling on iOS Safari
-      scrollBehavior: 'smooth', // Smooth scrolling for modern browsers
-      height: '100vh' // Ensure full viewport height for proper scrolling container
-    }}>
+    <div
+      style={{
+        background: '#fff',
+        minHeight: '100vh',
+        maxHeight: '100vh',
+        overflowY: 'scroll',
+        fontFamily: 'system-ui, sans-serif',
+        WebkitOverflowScrolling: 'touch',
+      }}
+    >
       {/* Banner */}
-      <div style={{ background: '#07345c', padding: '32px 0 24px 0', borderBottomLeftRadius: 24, borderBottomRightRadius: 24, position: 'relative', textAlign: 'center' }}>
-        <button style={{ position: 'absolute', right: 16, top: 36, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
-          <FaHome color="#fff" size={28} />
+      <div style={{ background: '#07345c', padding: '15px 0 24px 0', position: 'relative', textAlign: 'left', paddingLeft: '16px' }}>
+        <button style={{ position: 'absolute', right: 16, top: 26, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
+          <FaHome color="#fff" size={36} />
         </button>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
       </div>
 
       {/* User Info */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '24px 24px 0 24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '5px 24px 0 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ width: 64, height: 64, borderRadius: '50%', marginRight: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0' }}>
             {avatarUrl && !imageLoadError ? (
@@ -329,8 +330,9 @@ const VostcardDetailView: React.FC = () => {
         )}
       </div>
 
+
       {/* Title */}
-      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 32, margin: '16px 0 8px 0' }}>{title}</div>
+      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 24, margin: '2px 0 8px 0' }}>{title}</div>
 
       {/* Media Thumbnails */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
@@ -425,7 +427,7 @@ const VostcardDetailView: React.FC = () => {
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           <FaHeart 
-            size={32} 
+            size={24} 
             color={isLikedStatus ? "#ff4444" : "#222"} 
             style={{ 
               marginBottom: 4,
@@ -435,7 +437,7 @@ const VostcardDetailView: React.FC = () => {
           <div style={{ fontSize: 18 }}>{likeCount}</div>
         </div>
         <div style={{ textAlign: 'center', cursor: 'pointer' }}>
-          <FaStar size={32} color="#ffc107" style={{ marginBottom: 4 }} />
+          <FaStar size={24} color="#ffc107" style={{ marginBottom: 4 }} />
           <div style={{ fontSize: 18 }}>{ratingStats.averageRating.toFixed(1)}</div>
         </div>
         <div 
@@ -449,7 +451,7 @@ const VostcardDetailView: React.FC = () => {
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <FaRegComment size={32} color="#222" style={{ marginBottom: 4 }} />
+          <FaRegComment size={24} color="#222" style={{ marginBottom: 4 }} />
           <div style={{ fontSize: 18 }}>{commentCount}</div>
         </div>
         <div 
@@ -463,37 +465,61 @@ const VostcardDetailView: React.FC = () => {
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <FaShare size={32} color="#222" style={{ marginBottom: 4 }} />
+          <FaShare size={24} color="#222" style={{ marginBottom: 4 }} />
         </div>
       </div>
 
       {/* Worth Seeing? Rating System */}
-      <div style={{ textAlign: 'center', margin: '16px 0 0 0', fontSize: 18 }}>Worth Seeing?</div>
+      <div style={{ textAlign: 'center', margin: '5px 0 0 0', fontSize: 18 }}>Worth Seeing?</div>
       <div style={{ margin: '8px 0 0 0' }}>
         <RatingStars
           currentRating={currentUserRating}
           averageRating={ratingStats.averageRating}
-          ratingCount={ratingStats.ratingCount}
           onRate={handleRatingSubmit}
         />
       </div>
 
-      {/* Description Link */}
-      <div style={{ textAlign: 'center', margin: '16px 0 0 0' }}>
-        <button 
+      {/* Description Link with FaFlag and FaSyncAlt icons */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          margin: '16px 0 0 0',
+          width: '100%',
+          maxWidth: 420,
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
+      >
+        <FaFlag
+          size={24}
+          color="#e53935"
+          style={{ marginRight: 12, cursor: 'pointer', flex: '0 0 auto', padding: '5px' }}
+          onClick={handleFlagClick}
+        />
+        <button
           onClick={() => setShowDescriptionModal(true)}
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            color: '#007aff', 
-            fontWeight: 700, 
-            fontSize: 24, 
-            textDecoration: 'underline', 
-            cursor: 'pointer' 
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#007aff',
+            fontWeight: 700,
+            fontSize: 24,
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            padding: 0,
+            flex: '1 1 auto',
+            textAlign: 'center',
           }}
         >
           Description
         </button>
+        <FaSyncAlt
+          size={24}
+          color="#007aff"
+          style={{ marginLeft: 12, flex: '0 0 auto', padding: '5px' }}
+        />
       </div>
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>Posted: {createdAt}</div>
 
@@ -553,21 +579,7 @@ const VostcardDetailView: React.FC = () => {
         </div>
       )}
 
-      {/* Bottom Icons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '32px 24px 0 24px' }}>
-        <FaFlag 
-          size={36} 
-          color="#e53935" 
-          style={{ 
-            cursor: 'pointer',
-            transition: 'transform 0.2s',
-          }} 
-          onClick={handleFlagClick}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        />
-        <FaSyncAlt size={36} color="#007aff" style={{ cursor: 'pointer' }} />
-      </div>
+
 
       {/* Comments Modal */}
       <CommentsModal
