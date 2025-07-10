@@ -21,10 +21,6 @@ const ScrollingCameraView: React.FC = () => {
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Zoom state and pinch-to-zoom logic
-  const [zoom, setZoom] = useState(1); // Standard focal length
-  const lastPinchDistance = useRef<number | null>(null);
-
   // Device detection
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isIPhone = /iPhone/.test(navigator.userAgent);
@@ -52,6 +48,7 @@ const ScrollingCameraView: React.FC = () => {
         },
         (error) => {
           console.error('❌ Error getting location:', error);
+          // Continue without location - user can add it later
         },
         { 
           enableHighAccuracy: true, 
@@ -129,53 +126,6 @@ const ScrollingCameraView: React.FC = () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
   }, [facingMode, isIPhone]);
-
-  // Reset zoom to 1 when camera is switched
-  useEffect(() => {
-    setZoom(1);
-  }, [facingMode]);
-
-  const canZoom = facingMode === 'environment';
-
-  // Pinch-to-zoom handlers
-  function getDistance(touch1: Touch, touch2: Touch) {
-    return Math.hypot(
-      touch2.clientX - touch1.clientX,
-      touch2.clientY - touch1.clientY
-    );
-  }
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLVideoElement>) => {
-    if (!canZoom) return;
-    if (e.touches.length === 2) {
-      const dist = getDistance(e.touches[0], e.touches[1]);
-      lastPinchDistance.current = dist;
-    }
-  };
-
-  const handleTouchMove = (e: React.TouchEvent<HTMLVideoElement>) => {
-    if (!canZoom) return;
-    if (e.touches.length === 2 && lastPinchDistance.current !== null) {
-      const dist = getDistance(e.touches[0], e.touches[1]);
-      const delta = dist - lastPinchDistance.current;
-      if (Math.abs(delta) > 2) {
-        setZoom(z => {
-          let next = z + delta * 0.005;
-          next = Math.max(1, Math.min(2, next));
-          return next;
-        });
-        lastPinchDistance.current = dist;
-      }
-      e.preventDefault(); // Prevent page zoom
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent<HTMLVideoElement>) => {
-    if (!canZoom) return;
-    if (e.touches.length < 2) {
-      lastPinchDistance.current = null;
-    }
-  };
 
   const handleStartRecording = () => {
     if (streamRef.current) {
@@ -323,16 +273,12 @@ const ScrollingCameraView: React.FC = () => {
     navigate(-1);
   };
 
-  // Zoom control handlers
-  const handleZoomIn = () => setZoom(z => Math.min(z + 0.1, 2));
-  const handleZoomOut = () => setZoom(z => Math.max(z - 0.1, 1));
-
   return (
     <div className="scrolling-camera-container">
       {/* Recording Timer - Always visible and centered */}
       <div className="recording-timer">
         {isRecording && <div className="recording-dot"></div>}
-        <span>{recordingTime}</span>
+        <span>{formatTime(recordingTime)}</span>
       </div>
 
       {/* Location indicator */}
@@ -373,8 +319,7 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          transform: isIPhone && facingMode === 'user' ? 'scaleX(-1)' : undefined,
-          transition: 'transform 0.2s'
+          transform: isIPhone && facingMode === 'user' ? 'scaleX(-1)' : 'none' // Mirror front camera on iPhone
         }}
       />
 
@@ -388,18 +333,9 @@ const ScrollingCameraView: React.FC = () => {
       )}
 
       {/* Bottom Controls */}
-      <div
-        className="bottom-controls"
-        style={{
-          position: 'absolute',
-          bottom: 100,
-          width: '100%',
-          height: 66,
-          zIndex: 3,
-        }}
-      >
+      <div className="bottom-controls">
         {/* Dismiss Button */}
-        <button className="bottom-control-button" onClick={() => navigate(-1)}>
+        <button className="bottom-control-button" onClick={handleDismiss}>
           <AiOutlineClose size={24} color="white" />
         </button>
 
@@ -408,7 +344,11 @@ const ScrollingCameraView: React.FC = () => {
           className="record-button"
           onClick={isRecording ? handleStopRecording : handleStartRecording}
           style={{
-            borderRadius: '50%'
+            backgroundColor: 'red',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           {isRecording && (
