@@ -66,15 +66,28 @@ const ScrollingCameraView: React.FC = () => {
     const startCamera = async () => {
       try {
         // Enhanced video constraints for better iPhone compatibility
-        const videoConstraints: MediaTrackConstraints = {
-          facingMode,
-          width: { ideal: 1920, max: 1920 },
-          height: { ideal: 1080, max: 1080 },
-          frameRate: { ideal: 30, max: 30 }
-        };
+        let videoConstraints: MediaTrackConstraints;
 
-        // For iPhone, prioritize portrait orientation
-        if (isIPhone) {
+        if (facingMode === 'user') {
+          // Use more conservative constraints for front camera to avoid zoomed-in effect
+          videoConstraints = {
+            facingMode: 'user',
+            width: { ideal: 640, max: 1280 },
+            height: { ideal: 480, max: 720 },
+            aspectRatio: 4 / 3,
+          };
+        } else {
+          // Use higher resolution for back camera
+          videoConstraints = {
+            facingMode: 'environment',
+            width: { ideal: 1920, max: 1920 },
+            height: { ideal: 1080, max: 1080 },
+            frameRate: { ideal: 30, max: 30 }
+          };
+        }
+
+        // For iPhone, prioritize portrait orientation for back camera
+        if (isIPhone && facingMode === 'environment') {
           videoConstraints.width = { ideal: 1080, max: 1080 };
           videoConstraints.height = { ideal: 1920, max: 1920 };
           console.log('📱 iPhone detected - using portrait video constraints');
