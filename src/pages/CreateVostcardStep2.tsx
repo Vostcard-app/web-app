@@ -31,13 +31,13 @@ export default function CreateVostcardStep2() {
     }
   };
 
-  // Square thumbnail style
+  // Smaller square thumbnail style
   const optionStyle = {
     background: '#f4f6f8',
     borderRadius: 24,
-    marginBottom: 32,
-    width: 300,
-    height: 300,
+    marginBottom: 20,
+    width: 200,
+    height: 200,
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
@@ -139,8 +139,8 @@ export default function CreateVostcardStep2() {
                 src={URL.createObjectURL(selectedPhotos[idx]!)}
                 alt={idx === 0 ? "Distant" : "Near"}
                 style={{
-                  width: 300,
-                  height: 300,
+                  width: 200,
+                  height: 200,
                   objectFit: 'cover',
                   borderRadius: 24,
                   position: 'absolute',
@@ -152,7 +152,7 @@ export default function CreateVostcardStep2() {
               <FaRegImages size={48} color="#002B4D" style={{ marginBottom: 16 }} />
             )}
             <div style={{ 
-              fontSize: 24, 
+              fontSize: 20, 
               color: selectedPhotos[idx] ? 'white' : '#002B4D', 
               fontWeight: 600, 
               textAlign: 'center',
