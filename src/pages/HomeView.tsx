@@ -759,10 +759,10 @@ const debugButtonStyle = {
 
 const createButtonContainer = {
   position: 'absolute' as const,
-  bottom: 40,
+  bottom: 100, // Changed from 40 to 100 (moving up 60px)
   left: 15,
   right: 15,
-  zIndex: 20, // UI controls layer
+  zIndex: 20,
 };
 
 const createButton = {
