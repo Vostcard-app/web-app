@@ -14,14 +14,24 @@ const AdvertiserPortal: React.FC = () => {
   const handleCreateOffer = () => {
     console.log('🎯 Create Offer clicked:', {
       userRole,
-      userId: user?.uid
+      userId: user?.uid,
+      isAuthenticated: !!user
     });
     
+    if (!user) {
+      console.error('❌ No authenticated user');
+      alert('Please log in to create offers.');
+      navigate('/login');
+      return;
+    }
+
     if (userRole !== 'advertiser') {
+      console.error('❌ User is not an advertiser:', userRole);
       alert('You must be an advertiser to create offers.');
       return;
     }
-    
+
+    console.log('✅ Navigating to create offer page');
     navigate('/create-offer');
   };
 
