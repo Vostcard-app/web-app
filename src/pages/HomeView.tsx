@@ -539,7 +539,7 @@ const HomeView = () => {
   }, [isMenuOpen]);
 
   const menuItems = [
-    { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },
+    { label: 'My Private Vōstcards', route: '/my-vostcards' },  // Update this route
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },

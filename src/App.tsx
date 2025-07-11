@@ -21,7 +21,7 @@ import SettingsView from "./pages/SettingsView";
 import AccountSettingsView from "./pages/AccountSettingsView";
 
 import MyPostedVostcardsListView from "./pages/MyPostedVostcardsListView";
-import EditMyVostcardListView from "./pages/EditMyVostcardListView";
+import MyVostcardListView from "./pages/MyVostcardListView";
 import AdvertiserPortal from "./pages/AdvertiserPortal";
 import CreateOfferView from './pages/CreateOfferView';
 import AllPostedVostcardsView from './pages/AllPostedVostcardsView';
@@ -64,7 +64,7 @@ function App() {
               <Route path="/offers-list" element={<OffersListView />} />
     
               <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
-              <Route path="/edit-my-vostcards" element={<EditMyVostcardListView />} />
+              <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
               <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
               <Route path="/following" element={<FollowingView />} />
 
