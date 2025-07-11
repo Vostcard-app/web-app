@@ -502,64 +502,6 @@ const VostcardDetailView: React.FC = () => {
       </div>
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>Posted: {createdAt}</div>
 
-      {/* Pin Placer Button - Only visible to creator */}
-      {user && user.uid === vostcard?.userID && (
-        <div style={{
-          textAlign: 'center',
-          margin: '24px 0 16px 0'
-        }}>
-          <button
-            onClick={() => {
-              // Navigate to Pin Placer tool with vostcard data
-              navigate('/pin-placer', {
-                state: {
-                  pinData: {
-                    id: vostcard.id || id,
-                    title: vostcard.title || 'Untitled Vostcard',
-                    description: vostcard.description || 'No description',
-                    latitude: vostcard.latitude || vostcard.geo?.latitude || 0,
-                    longitude: vostcard.longitude || vostcard.geo?.longitude || 0,
-                    isOffer: false,
-                    userID: vostcard.userID
-                  }
-                }
-              });
-            }}
-            style={{
-              backgroundColor: '#ff6b35',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              margin: '0 auto',
-              boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#e55a2b';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 53, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#ff6b35';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 53, 0.3)';
-            }}
-          >
-            <FaMapPin size={16} />
-            Pin Placer
-          </button>
-        </div>
-      )}
-
-
-
       {/* Comments Modal */}
       <CommentsModal
         isOpen={showCommentsModal}

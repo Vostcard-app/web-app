@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome } from 'react-icons/fa';
+import { FaHome, FaMapPin } from 'react-icons/fa';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -262,7 +262,7 @@ const MyPostedVostcardsListView = () => {
                 <p style={{ margin: '8px 0', color: '#666' }}>
                   <strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
                 </p>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
                   <button
                     style={{
                       backgroundColor: '#002B4D',
@@ -277,7 +277,53 @@ const MyPostedVostcardsListView = () => {
                     }}
                     onClick={() => navigate(`/vostcard/${vostcard.id}`)}
                   >
-                    View on Map
+                    View
+                  </button>
+                  {/* Add Pin Placer Button */}
+                  <button
+                    onClick={() => {
+                      navigate('/pin-placer', {
+                        state: {
+                          pinData: {
+                            id: vostcard.id,
+                            title: vostcard.title || 'Untitled Vostcard',
+                            description: vostcard.description || 'No description',
+                            latitude: vostcard.latitude || vostcard.geo?.latitude || 0,
+                            longitude: vostcard.longitude || vostcard.geo?.longitude || 0,
+                            isOffer: false,
+                            userID: vostcard.userID
+                          }
+                        }
+                      });
+                    }}
+                    style={{
+                      backgroundColor: '#ff6b35',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#e55a2b';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 53, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = '#ff6b35';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 53, 0.3)';
+                    }}
+                  >
+                    <FaMapPin size={14} />
+                    Pin Placer
                   </button>
                   <button
                     style={{
