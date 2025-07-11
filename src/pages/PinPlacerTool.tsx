@@ -195,34 +195,43 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         gap: '12px'
       }}>
-        <FaHome 
-          size={20} 
-          color="#007aff" 
-          style={{ cursor: 'pointer' }}
-          onClick={handleCancel}
-        />
-        <div style={{ flex: 1 }}>
-          <h2 style={{ 
-            margin: 0, 
-            fontSize: '18px', 
-            fontWeight: 600,
-            color: '#333'
-          }}>
-            Pin Placer - {actualPinData.title}
-          </h2>
-          <p style={{ 
-            margin: 0, 
-            fontSize: '12px', 
-            color: '#666',
-            marginTop: '2px'
-          }}>
-            {actualPinData.isOffer ? 'Offer' : 'Vostcard'} • Tap or drag to adjust position
-          </p>
+        {/* Left section with home icon */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '12px',
+          flex: 1
+        }}>
+          <FaHome 
+            size={20} 
+            color="#007aff" 
+            style={{ cursor: 'pointer' }}
+            onClick={handleCancel}
+          />
+          <div>
+            <h2 style={{ 
+              margin: 0, 
+              fontSize: '18px', 
+              fontWeight: 600,
+              color: '#333'
+            }}>
+              Pin Placer - {actualPinData?.title}
+            </h2>
+            <p style={{ 
+              margin: 0, 
+              fontSize: '12px', 
+              color: '#666',
+              marginTop: '2px'
+            }}>
+              {actualPinData?.isOffer ? 'Offer' : 'Vostcard'} • Tap or drag to adjust position
+            </p>
+          </div>
         </div>
-        
-        {/* Save Button - Moved to upper right */}
+
+        {/* Save Button */}
         <button
           onClick={handleSave}
           disabled={isLoading || !hasChanges}
@@ -230,24 +239,25 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             backgroundColor: hasChanges ? '#002B4D' : '#e0e0e0',
             color: hasChanges ? 'white' : '#999',
             border: 'none',
-            padding: '10px 16px',
+            padding: '10px 20px',
             borderRadius: '8px',
-            fontSize: '14px',
+            fontSize: '16px',
             fontWeight: 600,
             cursor: (hasChanges && !isLoading) ? 'pointer' : 'not-allowed',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
-            minWidth: '80px',
+            gap: '8px',
+            minWidth: '100px',
             boxShadow: hasChanges ? '0 2px 8px rgba(0,43,77,0.2)' : 'none',
-            transition: 'all 0.2s ease'
+            transition: 'all 0.2s ease',
+            marginLeft: 'auto'  // Push to the right
           }}
         >
           {isLoading ? (
             <>
               <div style={{
-                width: '14px',
-                height: '14px',
+                width: '16px',
+                height: '16px',
                 border: '2px solid #fff',
                 borderTop: '2px solid transparent',
                 borderRadius: '50%',
@@ -257,7 +267,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             </>
           ) : (
             <>
-              <FaCheck size={14} />
+              <FaCheck size={16} />
               Save
             </>
           )}
