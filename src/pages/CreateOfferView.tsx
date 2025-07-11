@@ -521,162 +521,167 @@ const CreateOfferView: React.FC = () => {
 
   return (
     <div style={{ 
-      maxWidth: '800px', 
-      margin: '0 auto', 
-      padding: '20px',
+      minHeight: '100vh',
+      backgroundColor: 'white',
       fontFamily: 'system-ui, sans-serif'
     }}>
-      <h1 style={{ color: '#002B4D', marginBottom: '24px' }}>
-        {isEditing ? 'Edit Offer' : 'Create New Offer'}
-      </h1>
-
-      {/* Pin Placer Button */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '24px',
-        marginBottom: '24px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        textAlign: 'center'
+      <div style={{ 
+        maxWidth: '800px', 
+        margin: '0 auto', 
+        padding: '20px',
       }}>
-        <h2 style={{ margin: '0 0 16px 0', color: '#002B4D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <FaMapMarkerAlt style={{ marginRight: '8px' }} /> Set Location
-        </h2>
-        <p style={{ margin: '0 0 16px 0', color: '#666' }}>
-          Place a pin on the map to mark your offer's location
-        </p>
-        <button
-          onClick={handlePinPlacerClick}
-          style={{
-            backgroundColor: '#002B4D',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 24px',
-            fontSize: '16px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            margin: '0 auto',
-            transition: 'background-color 0.2s'
-          }}
-        >
-          <FaMapMarkerAlt style={{ marginRight: '8px' }} />
-          Open Pin Placer
-        </button>
-      </div>
+        <h1 style={{ color: '#002B4D', marginBottom: '24px' }}>
+          {isEditing ? 'Edit Offer' : 'Create New Offer'}
+        </h1>
 
-      {/* Rest of the form */}
-      <button
-        onClick={() => navigate("/advertiser-portal")}
-        style={{
-          backgroundColor: "#ccc",
-          color: "#333",
-          border: "none",
-          padding: "8px 12px",
-          borderRadius: "6px",
-          cursor: "pointer",
-          marginBottom: "16px",
-        }}
-      >
-        ← Back to Portal
-      </button>
-      
-      <form onSubmit={handleSubmit}>
-        <label>
-          Offer Title<span style={{ color: "red" }}>*</span>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
-          />
-        </label>
-        <label>
-          Description of the Offer<span style={{ color: "red" }}>*</span>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={4}
-            required
-            style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
-          />
-        </label>
-        <label>
-          Photo of the Item
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files ? e.target.files[0] : null;
-              if (file) {
-                // Validate file type
-                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                if (!allowedTypes.includes(file.type.toLowerCase())) {
-                  alert('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
-                  e.target.value = '';
-                  return;
-                }
-                
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                  alert(`Image file must be less than 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
-                  e.target.value = '';
-                  return;
-                }
-                
-                console.log('📁 Offer image selected:', {
-                  name: file.name,
-                  type: file.type,
-                  size: file.size,
-                  sizeInMB: (file.size / (1024 * 1024)).toFixed(2)
-                });
-              }
-              setItemPhoto(file);
-            }}
-            style={{ display: "block", width: "100%", marginBottom: "12px" }}
-          />
-          {itemPhoto && (
-            <div style={{ 
-              marginTop: "8px", 
-              padding: "8px", 
-              backgroundColor: "#f8f9fa", 
-              borderRadius: "4px",
-              fontSize: "14px",
-              color: "#666"
-            }}>
-              📷 Selected: {itemPhoto.name} ({(itemPhoto.size / (1024 * 1024)).toFixed(2)}MB)
-            </div>
-          )}
-        </label>
-        {error && <p style={{ color: "red" }}>{error}</p>}
-        {success && (
-          <p style={{ color: "green" }}>
-            ✅ Offer {isEditing ? "updated" : "created"} successfully{itemPhoto ? (uploadedImageURL ? " with image" : " (image upload failed)") : ""}! Redirecting to portal...
-          </p>
-        )}
+        {/* Form fields and other content */}
         <button
-          type="submit"
-          disabled={loading}
+          onClick={() => navigate("/advertiser-portal")}
           style={{
-            backgroundColor: loading ? "#ccc" : "#002B4D",
-            color: "#fff",
+            backgroundColor: "#ccc",
+            color: "#333",
             border: "none",
-            padding: "12px 20px",
-            borderRadius: "8px",
-            width: "100%",
-            cursor: loading ? "not-allowed" : "pointer",
-            fontSize: "16px",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            marginBottom: "16px",
           }}
         >
-          {loading ? (
-            itemPhoto ? "Uploading image and saving..." : "Saving..."
-          ) : (
-            isEditing ? "Update Offer" : "Create Offer"
-          )}
+          ← Back to Portal
         </button>
-      </form>
+      
+        <form onSubmit={handleSubmit}>
+          <label>
+            Offer Title<span style={{ color: "red" }}>*</span>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
+            />
+          </label>
+          <label>
+            Description of the Offer<span style={{ color: "red" }}>*</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              required
+              style={{ display: "block", width: "100%", marginBottom: "12px", padding: "8px" }}
+            />
+          </label>
+          <label>
+            Photo of the Item
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files ? e.target.files[0] : null;
+                if (file) {
+                  // Validate file type
+                  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                  if (!allowedTypes.includes(file.type.toLowerCase())) {
+                    alert('Please select a valid image file (JPEG, PNG, GIF, or WebP).');
+                    e.target.value = '';
+                    return;
+                  }
+                  
+                  // Validate file size (max 5MB)
+                  if (file.size > 5 * 1024 * 1024) {
+                    alert(`Image file must be less than 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB.`);
+                    e.target.value = '';
+                    return;
+                  }
+                  
+                  console.log('📁 Offer image selected:', {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    sizeInMB: (file.size / (1024 * 1024)).toFixed(2)
+                  });
+                }
+                setItemPhoto(file);
+              }}
+              style={{ display: "block", width: "100%", marginBottom: "12px" }}
+            />
+            {itemPhoto && (
+              <div style={{ 
+                marginTop: "8px", 
+                padding: "8px", 
+                backgroundColor: "#f8f9fa", 
+                borderRadius: "4px",
+                fontSize: "14px",
+                color: "#666"
+              }}>
+                📷 Selected: {itemPhoto.name} ({(itemPhoto.size / (1024 * 1024)).toFixed(2)}MB)
+              </div>
+            )}
+          </label>
+          {error && <p style={{ color: "red" }}>{error}</p>}
+          {success && (
+            <p style={{ color: "green" }}>
+              ✅ Offer {isEditing ? "updated" : "created"} successfully{itemPhoto ? (uploadedImageURL ? " with image" : " (image upload failed)") : ""}! Redirecting to portal...
+            </p>
+          )}
+
+          {/* Set Location Section - Now just above the Update button */}
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px',
+            border: '1px solid #e9ecef'
+          }}>
+            <h3 style={{ 
+              margin: '0 0 12px 0', 
+              color: '#002B4D', 
+              display: 'flex', 
+              alignItems: 'center'
+            }}>
+              <FaMapMarkerAlt style={{ marginRight: '8px' }} /> Set Location
+            </h3>
+            <button
+              onClick={handlePinPlacerClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              <FaMapMarkerAlt style={{ marginRight: '8px' }} />
+              Open Pin Placer
+            </button>
+          </div>
+
+          {/* Update/Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '16px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.7 : 1
+            }}
+          >
+            {loading ? 'Saving...' : (isEditing ? 'Update Offer' : 'Create Offer')}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
