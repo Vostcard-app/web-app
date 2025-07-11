@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
 
 interface PostedVostcard {
   id: string;
@@ -63,12 +63,27 @@ const MyPostedVostcardsListView = () => {
       // Add to unposting set to show loading state
       setUnpostingIds(prev => new Set(prev.add(vostcardId)));
 
-      // Update the vostcard in Firestore to change state from 'posted' to 'private'
+      // Get the current vostcard data
       const vostcardRef = doc(db, 'vostcards', vostcardId);
-      await updateDoc(vostcardRef, {
+      const vostcardSnap = await getDoc(vostcardRef);
+      
+      if (!vostcardSnap.exists()) {
+        throw new Error('Vostcard not found');
+      }
+
+      const vostcardData = vostcardSnap.data();
+
+      // Create a new document in the private collection
+      const privateVostcardsRef = collection(db, 'privateVostcards');
+      await addDoc(privateVostcardsRef, {
+        ...vostcardData,
         state: 'private',
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        originalPostedId: vostcardId // Keep reference to original
       });
+
+      // Delete the posted vostcard
+      await deleteDoc(vostcardRef);
 
       // Remove from local state
       setPostedVostcards(prev => prev.filter(v => v.id !== vostcardId));
