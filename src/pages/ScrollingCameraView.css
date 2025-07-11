@@ -120,13 +120,13 @@ body {
 
 /* ✅ Dismiss Button (left side) */
 .bottom-control-button:first-child {
-  left: 25%; /* Halfway between left edge (0%) and center (50%) */
+  left: 15%; /* Changed from 25% to 15% to move further left */
   transform: translateX(-50%);
 }
 
 /* ✅ Camera Switch Button (right side) */
 .bottom-control-button:last-child {
-  right: 25%; /* Halfway between center (50%) and right edge (0%) */
+  right: 15%; /* Changed from 25% to 15% to move further right */
   transform: translateX(50%);
 }
 
