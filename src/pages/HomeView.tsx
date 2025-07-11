@@ -341,6 +341,16 @@ const HomeView = () => {
     return `${hoursAgo}h ago`;
   };
 
+  const handleListViewClick = () => {
+    console.log('📋 Navigating to List View');
+    navigate('/all-posted-vostcards');
+  };
+
+  const handleOffersClick = () => {
+    console.log('🎁 Navigating to Offers List');
+    navigate('/offers-list');
+  };
+
   return (
     <div style={{ 
       height: '100vh', 
@@ -435,12 +445,18 @@ const HomeView = () => {
           <>
             {/* List View and Offers Buttons */}
             <div style={listViewButtonContainerLeft}>
-              <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
+              <button 
+                style={listViewButton} 
+                onClick={handleListViewClick}
+              >
                 List View
               </button>
             </div>
             <div style={listViewButtonContainerRight}>
-              <button style={listViewButton} onClick={() => navigate('/offers-list')}>
+              <button 
+                style={listViewButton} 
+                onClick={handleOffersClick}
+              >
                 Offers
               </button>
             </div>
@@ -536,7 +552,10 @@ const HomeView = () => {
 
             {/* Create Vostcard Button */}
             <div style={createButtonContainer}>
-              <button style={createButton} onClick={handleCreateVostcard}>
+              <button 
+                style={createButton} 
+                onClick={handleCreateVostcard}
+              >
                 Create a Vōstcard
               </button>
             </div>
