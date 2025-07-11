@@ -703,14 +703,14 @@ const menuItemStyle = {
 };
 
 const listViewButtonContainerLeft = {
-  position: 'absolute' as const,
+  position: 'fixed' as const,  // Changed to fixed to ensure it's relative to viewport
   top: 90,  // 80px header + 10px gap
   left: 20,
   zIndex: 1000,  // Match header z-index for consistency
 };
 
 const listViewButtonContainerRight = {
-  position: 'absolute' as const,
+  position: 'fixed' as const,  // Changed to fixed to ensure it's relative to viewport
   top: 90,  // 80px header + 10px gap
   right: 20,
   zIndex: 1000,  // Match header z-index for consistency
