@@ -18,7 +18,6 @@ const ScrollingCameraView: React.FC = () => {
   const [recordingTime, setRecordingTime] = useState(30);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [isLandscapeVideo, setIsLandscapeVideo] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -71,7 +70,8 @@ const ScrollingCameraView: React.FC = () => {
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
           width: { ideal: 1080 },
-          height: { ideal: 1920 }
+          height: { ideal: 1920 },
+          aspectRatio: 9 / 16
         };
         
         console.log('📱 Requesting portrait constraints:', videoConstraints);
@@ -96,15 +96,6 @@ const ScrollingCameraView: React.FC = () => {
             aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
             isPortrait: settings.height && settings.width ? settings.height > settings.width : 'unknown'
           });
-          
-          // Check if we got landscape video (need to rotate for portrait display)
-          if (settings.width && settings.height && settings.width > settings.height) {
-            console.log('📱 Got landscape video, will rotate for portrait display');
-            setIsLandscapeVideo(true);
-          } else {
-            console.log('📱 Got portrait video, no rotation needed');
-            setIsLandscapeVideo(false);
-          }
         }
 
       } catch (err) {
@@ -158,29 +149,14 @@ const ScrollingCameraView: React.FC = () => {
           // Save context
           ctx.save();
           
-          if (isLandscapeVideo) {
-            // Rotate landscape video to portrait
-            ctx.translate(canvas.width / 2, canvas.height / 2);
-            ctx.rotate(Math.PI / 2); // 90 degrees
-            
-            // Draw video (landscape source becomes portrait)
-            ctx.drawImage(
-              videoRef.current,
-              -canvas.height / 2,
-              -canvas.width / 2,
-              canvas.height,
-              canvas.width
-            );
-          } else {
-            // Video is already portrait, draw normally
-            ctx.drawImage(
-              videoRef.current,
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-          }
+          // Video is already portrait, draw normally
+          ctx.drawImage(
+            videoRef.current,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
           
           // Restore context
           ctx.restore();
@@ -362,16 +338,13 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          transform: `${facingMode === 'user' ? 'scaleX(-1)' : ''} ${isLandscapeVideo ? 'rotate(90deg)' : ''}`.trim(),
-          width: isLandscapeVideo ? '100vh' : '100vw',
-          height: isLandscapeVideo ? '100vw' : '100vh',
-          objectFit: 'contain', // Show full video without cropping
+          transform: `${facingMode === 'user' ? 'scaleX(-1)' : ''}`,
+          width: '100vw',
+          height: '100vh',
+          objectFit: 'cover',
           position: 'absolute',
-          top: isLandscapeVideo ? '50%' : '0',
-          left: isLandscapeVideo ? '50%' : '0',
-          transformOrigin: 'center center',
-          marginTop: isLandscapeVideo ? '-50vw' : '0',
-          marginLeft: isLandscapeVideo ? '-50vh' : '0',
+          top: '0',
+          left: '0',
           backgroundColor: 'black'
         }}
       />
