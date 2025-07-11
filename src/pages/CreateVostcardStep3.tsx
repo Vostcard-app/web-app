@@ -193,7 +193,17 @@ const CreateVostcardStep3: React.FC = () => {
   if (!validationState.hasPhotos) missingItems.push('Photos (need at least 2)');
 
   return (
-    <div style={{ backgroundColor: 'white', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ 
+      backgroundColor: 'white', 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      touchAction: 'manipulation',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+      WebkitTapHighlightColor: 'transparent'
+    }}>
       
       {/* 🔵 Header */}
       <div style={{
@@ -203,7 +213,8 @@ const CreateVostcardStep3: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        flexShrink: 0
+        flexShrink: 0,
+        touchAction: 'manipulation'
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
         <FaArrowLeft
@@ -219,7 +230,8 @@ const CreateVostcardStep3: React.FC = () => {
         padding: 16, 
         flex: 1, 
         overflowY: 'auto',
-        paddingBottom: 140 // Add space for the fixed buttons
+        paddingBottom: 140, // Add space for the fixed buttons
+        touchAction: 'manipulation'
       }}>
         <div>
           <label style={labelStyle}>
@@ -229,7 +241,7 @@ const CreateVostcardStep3: React.FC = () => {
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="Enter Title"
-            style={inputStyle}
+            style={{...inputStyle, touchAction: 'manipulation'}}
           />
         </div>
 
@@ -242,7 +254,7 @@ const CreateVostcardStep3: React.FC = () => {
             onChange={(e) => updateVostcard({ description: e.target.value })}
             placeholder="Enter Description"
             rows={4}
-            style={textareaStyle}
+            style={{...textareaStyle, touchAction: 'manipulation'}}
           />
         </div>
 
@@ -252,7 +264,7 @@ const CreateVostcardStep3: React.FC = () => {
           </label>
           <div
             onClick={() => setIsCategoryModalOpen(true)}
-            style={categorySelectStyle}
+            style={{...categorySelectStyle, touchAction: 'manipulation'}}
           >
             Select Categories
           </div>
@@ -260,7 +272,13 @@ const CreateVostcardStep3: React.FC = () => {
           {categories.length > 0 && (
             <div style={{ marginTop: 8, marginBottom: 8 }}>
               {categories.map((cat) => (
-                <div key={cat} style={{ backgroundColor: '#eee', padding: '6px 10px', borderRadius: 6, marginBottom: 4 }}>
+                <div key={cat} style={{ 
+                  backgroundColor: '#eee', 
+                  padding: '6px 10px', 
+                  borderRadius: 6, 
+                  marginBottom: 4,
+                  touchAction: 'manipulation'
+                }}>
                   {cat}
                 </div>
               ))}
@@ -271,11 +289,11 @@ const CreateVostcardStep3: React.FC = () => {
             placeholder="Add Custom Category"
             value={customCategory}
             onChange={(e) => setCustomCategory(e.target.value)}
-            style={{ ...inputStyle, marginTop: 8 }}
+            style={{ ...inputStyle, marginTop: 8, touchAction: 'manipulation' }}
           />
           <button
             onClick={handleAddCustomCategory}
-            style={addButtonStyle}
+            style={{...addButtonStyle, touchAction: 'manipulation'}}
           >
             +
           </button>
@@ -292,11 +310,12 @@ const CreateVostcardStep3: React.FC = () => {
         padding: 16,
         borderTop: '1px solid #e0e0e0',
         boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
-        zIndex: 100
+        zIndex: 100,
+        touchAction: 'manipulation'
       }}>
         <button
           onClick={handleSaveChanges}
-          style={saveButtonStyle}
+          style={{...saveButtonStyle, touchAction: 'manipulation'}}
         >
           Save Changes
         </button>
@@ -312,7 +331,8 @@ const CreateVostcardStep3: React.FC = () => {
           disabled={!isPostEnabled}
           style={{
             ...postButtonStyle,
-            backgroundColor: isPostEnabled ? '#002B4D' : '#aaa'
+            backgroundColor: isPostEnabled ? '#002B4D' : '#aaa',
+            touchAction: 'manipulation'
           }}
         >
           Post to Map
