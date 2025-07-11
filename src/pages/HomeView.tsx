@@ -549,6 +549,20 @@ const HomeView = () => {
     { label: 'Logout', route: null },
   ];
 
+  const handleMenuItemClick = (label: string, route: string | null, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsMenuOpen(false);
+    
+    if (label === 'Logout') {
+      handleLogout();
+    } else if (route && location.pathname !== route) {
+      console.log(`🔄 Navigating to ${label}`);
+      navigate(route);
+    }
+  };
+
   // Format last update time for display
   const formatLastUpdate = () => {
     const secondsAgo = Math.floor((Date.now() - lastUpdateTime) / 1000);
@@ -813,36 +827,34 @@ const HomeView = () => {
 
       {/* Menu overlay */}
       {isMenuOpen && (
-        <div style={menuStyle} data-menu role="menu" aria-label="Main menu">
+        <div 
+          style={menuStyle} 
+          data-menu 
+          role="menu" 
+          aria-label="Main menu"
+          onClick={(e) => e.stopPropagation()}
+        >
           {menuItems.map(({ label, route }) => (
             <div
               key={label}
-              style={menuItemStyle}
-              onClick={() => {
-                setIsMenuOpen(false);
-                if (label === 'Logout') {
-                  handleLogout();
-                } else if (route) {
-                  navigate(route);
-                }
+              style={{
+                ...menuItemStyle,
+                backgroundColor: route && location.pathname === route ? '#f0f0f0' : 'transparent',
               }}
+              onClick={(e) => handleMenuItemClick(label, route, e)}
               role="menuitem"
               tabIndex={0}
               onKeyDown={e => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                  setIsMenuOpen(false);
-                  if (label === 'Logout') {
-                    handleLogout();
-                  } else if (route) {
-                    navigate(route);
-                  }
+                  e.preventDefault();
+                  handleMenuItemClick(label, route, e as unknown as React.MouseEvent);
                 }
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                e.currentTarget.style.backgroundColor = route && location.pathname === route ? '#e8e8e8' : '#f5f5f5';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.backgroundColor = route && location.pathname === route ? '#f0f0f0' : 'transparent';
               }}
             >
               {label}
@@ -962,8 +974,9 @@ const menuItemStyle = {
   fontSize: 16,
   color: '#002B4D',
   borderBottom: '1px solid #f0f0f0',
-  background: 'transparent',
-  transition: 'background-color 0.2s ease'
+  transition: 'background-color 0.2s ease',
+  userSelect: 'none' as const,
+  WebkitTapHighlightColor: 'transparent',
 };
 
 export default HomeView;
