@@ -690,14 +690,14 @@ const menuItemStyle = {
 
 const listViewButtonContainerLeft = {
   position: 'absolute' as const,
-  top: 80, // Moved back from 175 to 80
+  top: 90, // Changed from 80 to 90 (moved down 10px)
   left: 20,
   zIndex: 20,
 };
 
 const listViewButtonContainerRight = {
   position: 'absolute' as const,
-  top: 80, // Moved back from 175 to 80
+  top: 90, // Changed from 80 to 90 (moved down 10px)
   right: 20,
   zIndex: 20,
 };
