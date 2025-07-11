@@ -9,6 +9,7 @@ const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { setVideo } = useVostcard();
   
@@ -132,14 +133,76 @@ const ScrollingCameraView: React.FC = () => {
   }, [facingMode]);
 
   const handleStartRecording = () => {
-    if (streamRef.current) {
-      // Simple recording - always portrait
+    if (streamRef.current && canvasRef.current && videoRef.current) {
+      console.log('📹 Starting PORTRAIT recording with canvas rotation');
+      
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        console.error('Could not get canvas context');
+        return;
+      }
+      
+      // FORCE portrait dimensions - 1080x1920
+      canvas.width = 1080;
+      canvas.height = 1920;
+      
+      let animationId: number;
+      
+      const drawFrame = () => {
+        if (videoRef.current && ctx && isRecording) {
+          // Clear canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Save context
+          ctx.save();
+          
+          if (isLandscapeVideo) {
+            // Rotate landscape video to portrait
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(Math.PI / 2); // 90 degrees
+            
+            // Draw video (landscape source becomes portrait)
+            ctx.drawImage(
+              videoRef.current,
+              -canvas.height / 2,
+              -canvas.width / 2,
+              canvas.height,
+              canvas.width
+            );
+          } else {
+            // Video is already portrait, draw normally
+            ctx.drawImage(
+              videoRef.current,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+          }
+          
+          // Restore context
+          ctx.restore();
+          
+          // Continue animation
+          animationId = requestAnimationFrame(drawFrame);
+        }
+      };
+      
+      // Start drawing frames
+      drawFrame();
+      
+      // Get portrait stream from canvas
+      const portraitStream = canvas.captureStream(30);
+      
+      // Record from the canvas (guaranteed portrait)
       const options: MediaRecorderOptions = {
         mimeType: 'video/mp4',
-        videoBitsPerSecond: 2000000 // 2Mbps
+        videoBitsPerSecond: 2000000
       };
 
-      const mediaRecorder = new MediaRecorder(streamRef.current, options);
+      const mediaRecorder = new MediaRecorder(portraitStream, options);
       mediaRecorderRef.current = mediaRecorder;
       recordedChunks.current = [];
 
@@ -150,11 +213,17 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
+        // Stop animation
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+        
         const blob = new Blob(recordedChunks.current, { type: 'video/mp4' });
         
-        console.log('📹 PORTRAIT video recorded:', {
+        console.log('📹 PORTRAIT video recorded from canvas:', {
           size: blob.size,
-          type: blob.type
+          type: blob.type,
+          dimensions: '1080x1920 (PORTRAIT)'
         });
 
         // Save video
@@ -174,6 +243,9 @@ const ScrollingCameraView: React.FC = () => {
 
       mediaRecorder.onerror = (event) => {
         console.error('📹 Recording error:', event);
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
         alert('❌ Recording error occurred. Please try again.');
         setIsRecording(false);
         if (timerRef.current) {
@@ -271,6 +343,16 @@ const ScrollingCameraView: React.FC = () => {
           <AiOutlineClose size={20} />
         </button>
       </div>
+
+      {/* Hidden canvas for portrait recording */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          display: 'none',
+          width: '1080px',
+          height: '1920px'
+        }}
+      />
 
       {/* Camera Preview - Show full video frame */}
       <video
