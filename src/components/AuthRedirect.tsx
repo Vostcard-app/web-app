@@ -8,16 +8,27 @@ export const AuthRedirect = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Add pin-placer to allowed paths
     const allowedPaths = [
       '/create-offer',
       '/store-profile-page',
       '/advertiser-portal',
-      '/pin-placer'  // Add this line
+      '/pin-placer',
+      '/home',
+      '/all-posted-vostcards',
+      '/offers-list',
+      '/create-step1',
+      '/list',
+      '/vostcard',
+      '/offer'
     ];
 
     if (!loading && user) {
-      if (!allowedPaths.includes(location.pathname)) {
+      // Check if current path starts with any of the allowed paths
+      const isAllowedPath = allowedPaths.some(path => 
+        location.pathname === path || location.pathname.startsWith(`${path}/`)
+      );
+
+      if (!isAllowedPath) {
         if (userRole === 'advertiser') {
           navigate('/advertiser-portal');
         } else {

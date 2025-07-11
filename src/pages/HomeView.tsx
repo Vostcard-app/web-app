@@ -561,14 +561,18 @@ const HomeView = () => {
 
   const handleListViewClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('📋 Navigating to List View');
-    navigate('/all-posted-vostcards');
+    if (location.pathname !== '/all-posted-vostcards') {
+      console.log('📋 Navigating to List View');
+      navigate('/all-posted-vostcards');
+    }
   };
 
   const handleOffersClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('🎁 Navigating to Offers List');
-    navigate('/offers-list');
+    if (location.pathname !== '/offers-list') {
+      console.log('🎁 Navigating to Offers List');
+      navigate('/offers-list');
+    }
   };
 
   return (
