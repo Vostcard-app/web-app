@@ -69,8 +69,9 @@ export default function CreateVostcardStep2() {
 
   // Save and continue handler
   const handleSaveAndContinue = () => {
-    // Save selected photos to the vostcard context, filtering out empty slots
-    updateVostcard({ photos: selectedPhotos.filter(Boolean) });
+    // Filter out null photos but allow saving even with just one photo
+    const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
+    updateVostcard({ photos: validPhotos });
     navigate('/create-step3');
   };
 

@@ -40,7 +40,7 @@ const CreateVostcardStep3: React.FC = () => {
     hasTitle: title.trim() !== '',
     hasDescription: description.trim() !== '',
     hasCategories: (categories?.length || 0) > 0,
-    hasPhotos: (photos?.length || 0) >= 2,
+    hasPhotos: (photos?.length || 0) > 0,  // Changed from >= 2 to > 0
     hasVideo: !!currentVostcard?.video,
     hasGeo: !!currentVostcard?.geo
   };
