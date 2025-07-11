@@ -550,14 +550,18 @@ const HomeView = () => {
   ];
 
   const handleMenuItemClick = (label: string, route: string | null) => {
-    console.log(`🔄 Menu click: ${label}`);
+    // Close menu first
     setIsMenuOpen(false);
-    
-    if (label === 'Logout') {
-      handleLogout();
-    } else if (route && location.pathname !== route) {
-      navigate(route);
-    }
+
+    // Add a small delay to allow menu to close before navigation
+    setTimeout(() => {
+      if (label === 'Logout') {
+        handleLogout();
+      } else if (route && location.pathname !== route) {
+        console.log(`🔄 Menu click: ${label}`);
+        navigate(route);
+      }
+    }, 100); // Small delay to allow menu to close
   };
 
   // Format last update time for display

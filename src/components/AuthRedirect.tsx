@@ -19,7 +19,15 @@ export const AuthRedirect = () => {
       '/create-step1',
       '/list',
       '/vostcard',
-      '/offer'
+      '/offer',
+      '/edit-my-vostcards',
+      '/my-posted-vostcards',
+      '/liked-vostcards',
+      '/following',
+      '/suggestion-box',
+      '/report-bug',
+      '/account-settings',
+      '/profile'
     ];
 
     if (!loading && user) {
@@ -28,7 +36,8 @@ export const AuthRedirect = () => {
         location.pathname === path || location.pathname.startsWith(`${path}/`)
       );
 
-      if (!isAllowedPath) {
+      // Only redirect if not on an allowed path and not already redirecting
+      if (!isAllowedPath && !location.pathname.includes('redirecting')) {
         if (userRole === 'advertiser') {
           navigate('/advertiser-portal');
         } else {
