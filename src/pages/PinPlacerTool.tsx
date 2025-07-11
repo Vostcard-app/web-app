@@ -250,7 +250,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             minWidth: '100px',
             boxShadow: hasChanges ? '0 2px 8px rgba(0,43,77,0.2)' : 'none',
             transition: 'all 0.2s ease',
-            marginLeft: 'auto'  // Push to the right
+            marginLeft: 'auto'
           }}
         >
           {isLoading ? (
@@ -317,7 +317,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         </MapContainer>
       </div>
 
-      {/* Controls - Save button removed */}
+      {/* Controls */}
       <div style={{
         position: 'absolute',
         bottom: 75,

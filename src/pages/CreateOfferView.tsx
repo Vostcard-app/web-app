@@ -523,7 +523,13 @@ const CreateOfferView: React.FC = () => {
     <div style={{ 
       minHeight: '100vh',
       backgroundColor: 'white',
-      fontFamily: 'system-ui, sans-serif'
+      fontFamily: 'system-ui, sans-serif',
+      overflowY: 'auto',  // Add this to enable scrolling
+      position: 'fixed',  // Add this to prevent body scrolling
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0
     }}>
       <div style={{ 
         maxWidth: '800px', 
