@@ -62,6 +62,11 @@ const ReportBugView: React.FC = () => {
         justifyContent: 'space-between'
       }}>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
+        <FaHome
+          size={50}
+          style={{ cursor: 'pointer', color: 'white' }}
+          onClick={() => navigate('/home')}
+        />
       </div>
 
       {/* Content Container */}

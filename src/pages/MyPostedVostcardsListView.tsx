@@ -246,22 +246,11 @@ const MyPostedVostcardsListView = () => {
         }}>
           Posted Vōstcards
         </h1>
-        <button 
+        <FaHome
+          size={50}
+          style={{ cursor: 'pointer', color: 'white' }}
           onClick={() => navigate('/home')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-        >
-          <FaHome size={20} />
-        </button>
+        />
       </div>
 
       {/* List of Posted Vostcards (Scrollable) */}

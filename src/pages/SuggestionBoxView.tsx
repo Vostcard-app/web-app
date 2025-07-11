@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { send } from 'emailjs-com';
-import { FaArrowLeft, FaPaperPlane } from 'react-icons/fa';
+import { FaArrowLeft, FaPaperPlane, FaHome } from 'react-icons/fa';
 
 const SuggestionBoxView: React.FC = () => {
   const navigate = useNavigate();
@@ -54,6 +54,11 @@ const SuggestionBoxView: React.FC = () => {
         justifyContent: 'space-between'
       }}>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
+        <FaHome
+          size={50}
+          style={{ cursor: 'pointer', color: 'white' }}
+          onClick={() => navigate('/home')}
+        />
       </div>
 
       {/* Content Container */}

@@ -174,7 +174,7 @@ const AllPostedVostcardsView: React.FC = () => {
             background: 'none', 
             border: 'none', 
             color: 'white', 
-            fontSize: 55, // Increased from 28 to 55 to match other views
+            fontSize: 50,
             cursor: 'pointer' 
           }}
           onClick={() => navigate('/home')}

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
-import { FaHome } from 'react-icons/fa';
+import { FaHome, FaArrowLeft } from 'react-icons/fa';
 
 const AccountSettingsView: React.FC = () => {
   const navigate = useNavigate();
@@ -52,98 +52,210 @@ const AccountSettingsView: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
-      {/* 🔵 Header */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
-        <button
+    <div style={{ 
+      minHeight: '100vh',
+      backgroundColor: 'white',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#07345c',
+        color: 'white',
+        padding: '15px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
+        <FaHome
+          size={50}
+          style={{ cursor: 'pointer', color: 'white' }}
           onClick={() => navigate('/home')}
-          style={{
-            background: '#002B4D',
-            color: 'white',
-            border: 'none',
-            padding: 10,
-            borderRadius: 8,
-            cursor: 'pointer',
-            marginRight: 10,
-          }}
-        >
-          <FaHome /> Home
-        </button>
-        <h1 style={{ color: '#002B4D', fontSize: '1.8rem' }}>Account Settings</h1>
+        />
       </div>
 
-      {/* 📝 Change Password Form */}
-      <div style={{ background: '#fff', padding: 20, borderRadius: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ marginBottom: 15 }}>Change Password</h2>
-        <input
-          type="password"
-          placeholder="Current Password"
-          value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
-          style={inputStyle}
-        />
-        <input
-          type="password"
-          placeholder="New Password"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          style={inputStyle}
-        />
-        <input
-          type="password"
-          placeholder="Confirm New Password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          style={inputStyle}
-        />
-        {errorMessage && <p style={{ color: 'red', marginTop: 10 }}>{errorMessage}</p>}
-        {successMessage && <p style={{ color: 'green', marginTop: 10 }}>{successMessage}</p>}
-        <button
-          onClick={handleUpdatePassword}
-          disabled={loading}
-          style={{
-            background: '#667eea',
-            color: 'white',
-            border: 'none',
-            padding: '12px 20px',
-            borderRadius: 8,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            marginTop: 15,
-          }}
-        >
-          {loading ? 'Updating...' : 'Update Password'}
-        </button>
-      </div>
+      {/* Content Container */}
+      <div style={{ 
+        maxWidth: 800, 
+        margin: '20px auto', 
+        padding: '20px',
+        flex: 1,
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* Back Button and Title */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: 20
+        }}>
+          <FaArrowLeft 
+            style={{ 
+              cursor: 'pointer',
+              fontSize: 24,
+              color: '#002B4D'
+            }} 
+            onClick={() => navigate(-1)} 
+          />
+          <h2 style={{ 
+            margin: '0 0 0 15px',
+            color: '#002B4D',
+            fontSize: 24
+          }}>
+            Account Settings
+          </h2>
+        </div>
 
-      {/* ☁️ Sync & Backup */}
-      <div style={{ marginTop: 40 }}>
-        <h2 style={{ color: '#002B4D' }}>Backup & Sync</h2>
-        <p>You can manage your data backup and sync settings here.</p>
-        <button
-          onClick={() => navigate('/sync-backup')}
-          style={{
-            background: '#764ba2',
-            color: 'white',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: 8,
-            cursor: 'pointer',
-            marginTop: 10,
-          }}
-        >
-          Sync & Backup
-        </button>
+        {/* Change Password Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: 12,
+          padding: 24,
+          marginBottom: 20,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 20px 0',
+            color: '#002B4D',
+            fontSize: 20
+          }}>
+            Change Password
+          </h3>
+          
+          <input
+            type="password"
+            placeholder="Current Password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #e0e0e0',
+              borderRadius: 8,
+              marginBottom: 12,
+              fontSize: 16,
+              boxSizing: 'border-box'
+            }}
+          />
+          <input
+            type="password"
+            placeholder="New Password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #e0e0e0',
+              borderRadius: 8,
+              marginBottom: 12,
+              fontSize: 16,
+              boxSizing: 'border-box'
+            }}
+          />
+          <input
+            type="password"
+            placeholder="Confirm New Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #e0e0e0',
+              borderRadius: 8,
+              marginBottom: 12,
+              fontSize: 16,
+              boxSizing: 'border-box'
+            }}
+          />
+
+          {/* Messages */}
+          {errorMessage && (
+            <div style={{ 
+              color: '#dc3545', 
+              backgroundColor: '#f8d7da',
+              padding: '12px',
+              borderRadius: 8,
+              marginBottom: 12
+            }}>
+              {errorMessage}
+            </div>
+          )}
+          
+          {successMessage && (
+            <div style={{ 
+              color: '#28a745', 
+              backgroundColor: '#d4edda',
+              padding: '12px',
+              borderRadius: 8,
+              marginBottom: 12
+            }}>
+              {successMessage}
+            </div>
+          )}
+
+          <button
+            onClick={handleUpdatePassword}
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              backgroundColor: loading ? '#e0e0e0' : '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: 16,
+              fontWeight: 600
+            }}
+          >
+            {loading ? 'Updating...' : 'Update Password'}
+          </button>
+        </div>
+
+        {/* Backup & Sync Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: 12,
+          padding: 24,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 12px 0',
+            color: '#002B4D',
+            fontSize: 20
+          }}>
+            Backup & Sync
+          </h3>
+          
+          <p style={{ 
+            color: '#666',
+            margin: '0 0 20px 0',
+            fontSize: 16
+          }}>
+            Manage your data backup and sync settings here.
+          </p>
+
+          <button
+            onClick={() => navigate('/sync-backup')}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              padding: '12px 20px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              fontSize: 16,
+              fontWeight: 600,
+              width: '100%'
+            }}
+          >
+            Sync & Backup Settings
+          </button>
+        </div>
       </div>
     </div>
   );
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px',
-  border: '1px solid #ccc',
-  borderRadius: 8,
-  marginBottom: 12,
 };
 
 export default AccountSettingsView;
