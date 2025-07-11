@@ -1,11 +1,37 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase/firebaseConfig";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // The AuthContext will handle loading the user role
+      // and the navigation will happen after the role is determined
+      // No need to navigate here as it will be handled by the auth state change
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("Failed to log in. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{
@@ -63,6 +89,16 @@ export default function LoginPage() {
           Welcome
         </h1>
 
+        {error && (
+          <div style={{
+            color: 'red',
+            marginBottom: '20px',
+            textAlign: 'center'
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* Email Input */}
         <input
           type="email" // Changed from "text" to "email"
@@ -95,6 +131,11 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleLogin();
+              }
+            }}
             style={{
               width: '100%',
               fontSize: 18,
@@ -124,7 +165,8 @@ export default function LoginPage() {
 
         {/* Log In Button */}
         <button
-          onClick={() => navigate("/home")}
+          onClick={handleLogin}
+          disabled={loading}
           style={{
             width: '90%',
             maxWidth: 400,
@@ -135,12 +177,13 @@ export default function LoginPage() {
             borderRadius: 25,
             fontSize: 20,
             fontWeight: 600,
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
-            marginBottom: 40
+            marginBottom: 40,
+            opacity: loading ? 0.7 : 1
           }}
         >
-          Log In
+          {loading ? 'Logging in...' : 'Log In'}
         </button>
 
         {/* Register Section */}
