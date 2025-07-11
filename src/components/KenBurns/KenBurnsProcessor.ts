@@ -63,7 +63,8 @@ export class KenBurnsProcessor {
     return new Promise((resolve, reject) => {
       this.video = document.createElement('video');
       this.video.crossOrigin = 'anonymous';
-      this.video.muted = true;
+      this.video.muted = false; // Keep audio enabled
+      this.video.volume = 1.0;
       
       this.video.onloadedmetadata = () => {
         if (this.video!.duration < this.config.videoDuration - 1 || 
@@ -109,19 +110,9 @@ export class KenBurnsProcessor {
   }
 
   private calculateKenBurnsParams(photo: KenBurnsPhoto): void {
-    // Random starting position (corner)
-    const corners = [
-      { x: 0, y: 0 },
-      { x: 1, y: 0 },
-      { x: 0, y: 1 },
-      { x: 1, y: 1 }
-    ];
-    
-    const startCorner = corners[Math.floor(Math.random() * corners.length)];
-    const endCorner = corners[Math.floor(Math.random() * corners.length)];
-    
-    photo.panX = startCorner.x;
-    photo.panY = startCorner.y;
+    // Random pan direction (-1 to 1)
+    photo.panX = (Math.random() - 0.5) * 2;
+    photo.panY = (Math.random() - 0.5) * 2;
     photo.scale = this.config.scaleRange.min;
   }
 
@@ -195,6 +186,8 @@ export class KenBurnsProcessor {
         const progress = (time - photoStart) / this.config.photoDisplayDuration;
         const opacity = this.calculateOpacity(time, photoStart, photoEnd);
         
+        console.log(`🎬 Rendering photo ${index + 1} at time ${time.toFixed(2)}s, opacity: ${opacity.toFixed(2)}, progress: ${progress.toFixed(2)}`);
+        
         if (opacity > 0) {
           this.renderPhotoWithKenBurns(photo, progress, opacity);
         }
@@ -223,17 +216,19 @@ export class KenBurnsProcessor {
     const scale = this.config.scaleRange.min + 
       (this.config.scaleRange.max - this.config.scaleRange.min) * progress;
     
-    const panX = photo.panX * (1 - progress);
-    const panY = photo.panY * (1 - progress);
+    // Calculate center position
+    const centerX = this.canvas.width / 2;
+    const centerY = this.canvas.height / 2;
     
-    // Apply transformations
-    this.ctx.translate(
-      this.canvas.width * panX * 0.2,
-      this.canvas.height * panY * 0.2
-    );
+    // Calculate pan offset (much smaller values for subtle movement)
+    const panOffsetX = photo.panX * 50 * (1 - progress); // Max 50px movement
+    const panOffsetY = photo.panY * 50 * (1 - progress); // Max 50px movement
+    
+    // Move to center + pan offset
+    this.ctx.translate(centerX + panOffsetX, centerY + panOffsetY);
     this.ctx.scale(scale, scale);
     
-    // Draw photo using the preloaded image
+    // Draw photo centered at origin
     this.ctx.drawImage(
       photo.image,
       -this.canvas.width / 2,
@@ -246,45 +241,87 @@ export class KenBurnsProcessor {
   }
 
   private async exportVideo(frames: ImageData[]): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      const stream = this.canvas.captureStream(this.config.frameRate);
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9'
-      });
-      
-      const chunks: Blob[] = [];
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data);
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Create video stream from canvas
+        const videoStream = this.canvas.captureStream(this.config.frameRate);
+        
+        // Try to get audio from the original video
+        let combinedStream = videoStream;
+        
+        if (this.video) {
+          try {
+            // Play the video to enable audio capture
+            this.video.currentTime = 0;
+            await this.video.play();
+            
+            // Create audio context and capture audio
+            const audioContext = new AudioContext();
+            const source = audioContext.createMediaElementSource(this.video);
+            const destination = audioContext.createMediaStreamDestination();
+            source.connect(destination);
+            source.connect(audioContext.destination); // Also connect to speakers
+            
+            // Combine video and audio streams
+            const audioTracks = destination.stream.getAudioTracks();
+            if (audioTracks.length > 0) {
+              combinedStream = new MediaStream([
+                ...videoStream.getVideoTracks(),
+                ...audioTracks
+              ]);
+              console.log('✅ Audio captured successfully');
+            } else {
+              console.warn('⚠️ No audio tracks found');
+            }
+          } catch (audioError) {
+            console.warn('⚠️ Could not capture audio:', audioError);
+          }
         }
-      };
-      
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        resolve(blob);
-      };
-      
-      mediaRecorder.onerror = (event) => {
-        reject(new Error('MediaRecorder error'));
-      };
-      
-      // Start recording
-      mediaRecorder.start();
-      
-      // Play back all frames
-      this.playbackFrames(frames).then(() => {
-        mediaRecorder.stop();
-      }).catch(reject);
+        
+        const mediaRecorder = new MediaRecorder(combinedStream, {
+          mimeType: 'video/webm;codecs=vp9,opus'
+        });
+        
+        const chunks: Blob[] = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          resolve(blob);
+        };
+        
+        mediaRecorder.onerror = (event) => {
+          reject(new Error('MediaRecorder error'));
+        };
+        
+        // Start recording
+        mediaRecorder.start();
+        
+        // Render frames in real-time for recording
+        this.renderFramesForRecording().then(() => {
+          mediaRecorder.stop();
+        }).catch(reject);
+        
+      } catch (error) {
+        reject(error);
+      }
     });
   }
   
-  private async playbackFrames(frames: ImageData[]): Promise<void> {
+  private async renderFramesForRecording(): Promise<void> {
+    const totalFrames = this.config.videoDuration * this.config.frameRate;
     const frameInterval = 1000 / this.config.frameRate;
     
-    for (let i = 0; i < frames.length; i++) {
-      // Draw frame to canvas
-      this.ctx.putImageData(frames[i], 0, 0);
+    for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+      const time = frameIndex / this.config.frameRate;
+      
+      // Render frame directly to canvas
+      await this.renderFrame(time);
       
       // Wait for next frame
       await new Promise(resolve => setTimeout(resolve, frameInterval));

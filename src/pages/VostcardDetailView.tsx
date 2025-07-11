@@ -29,7 +29,7 @@ const VostcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
-  const [showVideoControls, setShowVideoControls] = useState(false);
+  const [showVideoControls, setShowVideoControls] = useState(true);
   const [ratingStats, setRatingStats] = useState<RatingStats>({
     vostcardID: '',
     averageRating: 0,
@@ -692,7 +692,10 @@ const VostcardDetailView: React.FC = () => {
               }}
               onContextMenu={e => e.preventDefault()}
               onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
-              onPlay={() => setShowVideoControls(false)} // Hide controls when video starts playing
+              onPlay={() => {
+                // Hide controls after 3 seconds when video starts playing
+                setTimeout(() => setShowVideoControls(false), 3000);
+              }}
             />
           </div>
         </div>
