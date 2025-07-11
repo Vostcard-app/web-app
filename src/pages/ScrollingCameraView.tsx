@@ -65,14 +65,14 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // ALWAYS force portrait - no exceptions
+        // Try to get portrait video but be flexible
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
-          width: { exact: 1080 },
-          height: { exact: 1920 }
+          width: { ideal: 1080 },
+          height: { ideal: 1920 }
         };
         
-        console.log('📱 PORTRAIT ONLY - Using constraints:', videoConstraints);
+        console.log('📱 Requesting portrait constraints:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -84,35 +84,32 @@ const ScrollingCameraView: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
 
-        // Log what we got
+        // Log what we actually got
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log('📱 Portrait video settings:', {
+          console.log('📱 Actual video settings:', {
             width: settings.width,
             height: settings.height,
+            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
             isPortrait: settings.height && settings.width ? settings.height > settings.width : 'unknown'
           });
         }
 
       } catch (err) {
-        console.error('Portrait constraints failed:', err);
-        // Fallback - still try to force portrait
+        console.error('Video constraints failed:', err);
+        // Fallback - let the camera decide
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-              facingMode,
-              width: { ideal: 1080 },
-              height: { ideal: 1920 }
-            } 
+            video: { facingMode } 
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using fallback portrait constraints');
+          console.log('📱 Using basic camera constraints');
         } catch (fallbackErr) {
-          console.error('All portrait constraints failed:', fallbackErr);
+          console.error('All camera constraints failed:', fallbackErr);
         }
       }
     };
@@ -265,7 +262,7 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
-      {/* Camera Preview - ALWAYS PORTRAIT */}
+      {/* Camera Preview - Show actual aspect ratio */}
       <video
         ref={videoRef}
         autoPlay
@@ -274,12 +271,13 @@ const ScrollingCameraView: React.FC = () => {
         className="camera-preview"
         style={{
           transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
-          width: '100vw',
-          height: '100vh',
-          objectFit: 'cover',
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain', // Show full video without cropping
           position: 'absolute',
           top: 0,
-          left: 0
+          left: 0,
+          backgroundColor: 'black'
         }}
       />
 
