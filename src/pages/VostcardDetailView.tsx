@@ -278,9 +278,7 @@ const VostcardDetailView: React.FC = () => {
       createdAt = String(vostcard.createdAt);
     }
   }
-git add .
-git commit -m "Ready for Netlify deploy"
-git push origin main
+
   return (
     <div
       style={{
