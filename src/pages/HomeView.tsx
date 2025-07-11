@@ -549,16 +549,13 @@ const HomeView = () => {
     { label: 'Logout', route: null },
   ];
 
-  const handleMenuItemClick = (label: string, route: string | null, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handleMenuItemClick = (label: string, route: string | null) => {
+    console.log(`🔄 Menu click: ${label}`);
     setIsMenuOpen(false);
     
     if (label === 'Logout') {
       handleLogout();
     } else if (route && location.pathname !== route) {
-      console.log(`🔄 Navigating to ${label}`);
       navigate(route);
     }
   };
@@ -832,33 +829,23 @@ const HomeView = () => {
           data-menu 
           role="menu" 
           aria-label="Main menu"
-          onClick={(e) => e.stopPropagation()}
         >
           {menuItems.map(({ label, route }) => (
-            <div
+            <button
               key={label}
+              type="button"
               style={{
                 ...menuItemStyle,
                 backgroundColor: route && location.pathname === route ? '#f0f0f0' : 'transparent',
+                width: '100%',
+                textAlign: 'left',
+                display: 'block'
               }}
-              onClick={(e) => handleMenuItemClick(label, route, e)}
+              onClick={() => handleMenuItemClick(label, route)}
               role="menuitem"
-              tabIndex={0}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleMenuItemClick(label, route, e as unknown as React.MouseEvent);
-                }
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = route && location.pathname === route ? '#e8e8e8' : '#f5f5f5';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = route && location.pathname === route ? '#f0f0f0' : 'transparent';
-              }}
             >
               {label}
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -977,6 +964,15 @@ const menuItemStyle = {
   transition: 'background-color 0.2s ease',
   userSelect: 'none' as const,
   WebkitTapHighlightColor: 'transparent',
+  background: 'none',
+  border: 'none',
+  outline: 'none',
+  ':hover': {
+    backgroundColor: '#f5f5f5'
+  },
+  ':active': {
+    backgroundColor: '#e8e8e8'
+  }
 };
 
 export default HomeView;
