@@ -332,17 +332,17 @@ const VostcardDetailView: React.FC = () => {
               <video 
                 src={videoURL} 
                 style={{ 
-                  width: videoOrientation === 'portrait' ? '100%' : 'auto',
-                  height: videoOrientation === 'portrait' ? 'auto' : '100%',
+                  width: '100%',
+                  height: '100%',
                   objectFit: 'cover',
                   pointerEvents: 'none',
                   transformOrigin: 'center center',
-                  position: videoOrientation === 'portrait' ? 'absolute' : 'relative',
-                  top: videoOrientation === 'portrait' ? '50%' : 'auto',
-                  left: videoOrientation === 'portrait' ? '50%' : 'auto',
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
                   transform: videoOrientation === 'portrait' 
-                    ? 'translate(-50%, -50%) rotate(-90deg)' 
-                    : 'none',
+                    ? 'translate(-50%, -50%) rotate(90deg)' 
+                    : 'translate(-50%, -50%)',
                 }}
                 muted
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
@@ -737,8 +737,10 @@ const VostcardDetailView: React.FC = () => {
             <video
               src={videoURL}
               style={{
-                width: videoOrientation === 'portrait' ? '100vh' : '100vw',
-                height: videoOrientation === 'portrait' ? '100vw' : '100vh',
+                maxWidth: videoOrientation === 'portrait' ? '100vh' : '100vw',
+                maxHeight: videoOrientation === 'portrait' ? '100vw' : '100vh',
+                width: 'auto',
+                height: 'auto',
                 objectFit: 'contain',
                 borderRadius: 0,
                 boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
@@ -747,7 +749,7 @@ const VostcardDetailView: React.FC = () => {
                 top: '50%',
                 left: '50%',
                 transform: videoOrientation === 'portrait' 
-                  ? 'translate(-50%, -50%) rotate(-90deg)' 
+                  ? 'translate(-50%, -50%) rotate(90deg)' 
                   : 'translate(-50%, -50%)',
               }}
               controls
