@@ -182,29 +182,20 @@ const VostcardDetailView: React.FC = () => {
   // Handle video orientation detection
   const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
     const { videoWidth, videoHeight } = videoElement;
-    const aspectRatio = videoWidth / videoHeight;
     
     console.log('📱 Video dimensions:', {
       videoWidth,
       videoHeight,
-      aspectRatio: aspectRatio.toFixed(2),
-      userAgent: navigator.userAgent.includes('iPhone') ? 'iPhone' : 'Other'
+      aspectRatio: (videoWidth / videoHeight).toFixed(2),
+      userAgent: navigator.userAgent
     });
 
-    // Enhanced detection for iPhone portrait videos
-    const isLikelyiPhonePortrait = (
-      aspectRatio > 1.5 && aspectRatio < 2.0 &&
-      (
-        (videoWidth === 1920 && videoHeight === 1080) ||
-        (videoWidth === 1280 && videoHeight === 720) ||
-        aspectRatio >= 1.77 && aspectRatio <= 1.78
-      )
-    );
-
-    if (isLikelyiPhonePortrait) {
-      console.log('📱 Detected iPhone portrait video, applying rotation');
+    // If video is taller than it is wide, it's portrait
+    if (videoHeight > videoWidth) {
+      console.log('📱 Detected portrait video, applying rotation');
       setVideoOrientation('portrait');
     } else {
+      console.log('📱 Detected landscape video, no rotation needed');
       setVideoOrientation('landscape');
     }
   };
@@ -345,7 +336,7 @@ const VostcardDetailView: React.FC = () => {
                   height: '100%', 
                   objectFit: 'cover',
                   pointerEvents: 'none',
-                  transform: videoOrientation === 'portrait' ? 'rotate(90deg)' : 'none',
+                  transform: videoOrientation === 'portrait' ? 'rotate(-90deg)' : 'none',
                   transformOrigin: 'center center'
                 }}
                 muted
@@ -745,7 +736,7 @@ const VostcardDetailView: React.FC = () => {
                 objectFit: 'contain',
                 borderRadius: 0,
                 boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-                transform: videoOrientation === 'portrait' ? 'rotate(90deg)' : 'none',
+                transform: videoOrientation === 'portrait' ? 'rotate(-90deg)' : 'none',
                 transformOrigin: 'center center',
               }}
               controls
