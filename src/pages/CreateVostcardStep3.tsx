@@ -59,24 +59,19 @@ const CreateVostcardStep3: React.FC = () => {
     geo: !!currentVostcard?.geo
   });
 
-  // Check authentication status
+  // Check Firebase Auth
   useEffect(() => {
     const checkAuth = () => {
       const user = auth.currentUser;
       if (user) {
-        setAuthStatus(`✅ Logged in as: ${user.email || user.uid}`);
-        console.log('🔐 Auth status:', {
-          uid: user.uid,
-          email: user.email,
-          isAnonymous: user.isAnonymous
-        });
+        setAuthStatus(`✅ Authenticated: ${user.email}`);
       } else {
-        setAuthStatus('❌ Not logged in');
-        console.log('🔐 No user logged in');
+        setAuthStatus('❌ Not authenticated');
       }
     };
 
     checkAuth();
+    
     // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged(checkAuth);
     return () => unsubscribe();
@@ -284,24 +279,6 @@ const CreateVostcardStep3: React.FC = () => {
           >
             +
           </button>
-        </div>
-
-        {/* 📊 Validation Summary */}
-        <div style={{ 
-          marginTop: 20, 
-          padding: 12, 
-          backgroundColor: '#f5f5f5', 
-          borderRadius: 8,
-          fontSize: 14
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: 8 }}>Validation Status:</div>
-          <div>Authentication: {authStatus}</div>
-          <div>Video: {validationState.hasVideo ? '✅' : '❌'}</div>
-          <div>Location: {validationState.hasGeo ? '✅' : '❌'}</div>
-          <div>Photos: {validationState.hasPhotos ? `✅ (${photos?.length || 0})` : `❌ (${photos?.length || 0}/2)`}</div>
-          <div>Title: {validationState.hasTitle ? '✅' : '❌'}</div>
-          <div>Description: {validationState.hasDescription ? '✅' : '❌'}</div>
-          <div>Categories: {validationState.hasCategories ? `✅ (${categories?.length || 0})` : '❌'}</div>
         </div>
       </div>
 
