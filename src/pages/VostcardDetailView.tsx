@@ -332,12 +332,17 @@ const VostcardDetailView: React.FC = () => {
               <video 
                 src={videoURL} 
                 style={{ 
-                  width: '100%', 
-                  height: '100%', 
+                  width: videoOrientation === 'portrait' ? '100%' : 'auto',
+                  height: videoOrientation === 'portrait' ? 'auto' : '100%',
                   objectFit: 'cover',
                   pointerEvents: 'none',
-                  transform: videoOrientation === 'portrait' ? 'rotate(-90deg)' : 'none',
-                  transformOrigin: 'center center'
+                  transformOrigin: 'center center',
+                  position: videoOrientation === 'portrait' ? 'absolute' : 'relative',
+                  top: videoOrientation === 'portrait' ? '50%' : 'auto',
+                  left: videoOrientation === 'portrait' ? '50%' : 'auto',
+                  transform: videoOrientation === 'portrait' 
+                    ? 'translate(-50%, -50%) rotate(-90deg)' 
+                    : 'none',
                 }}
                 muted
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
@@ -355,7 +360,8 @@ const VostcardDetailView: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                pointerEvents: 'none'
+                pointerEvents: 'none',
+                zIndex: 1
               }}>
                 <div style={{
                   width: 0,
@@ -731,13 +737,18 @@ const VostcardDetailView: React.FC = () => {
             <video
               src={videoURL}
               style={{
-                maxWidth: videoOrientation === 'portrait' ? '100vh' : '100%',
-                maxHeight: videoOrientation === 'portrait' ? '100vw' : '100%',
+                width: videoOrientation === 'portrait' ? '100vh' : '100vw',
+                height: videoOrientation === 'portrait' ? '100vw' : '100vh',
                 objectFit: 'contain',
                 borderRadius: 0,
                 boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-                transform: videoOrientation === 'portrait' ? 'rotate(-90deg)' : 'none',
                 transformOrigin: 'center center',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: videoOrientation === 'portrait' 
+                  ? 'translate(-50%, -50%) rotate(-90deg)' 
+                  : 'translate(-50%, -50%)',
               }}
               controls
               autoPlay

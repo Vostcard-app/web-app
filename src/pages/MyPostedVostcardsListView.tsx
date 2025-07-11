@@ -127,27 +127,40 @@ const MyPostedVostcardsListView = () => {
       flexDirection: 'column',
       overflow: 'hidden'
     }}>
-      {/* 🔵 Header with Home Icon */}
-      <div style={{
-        backgroundColor: '#002B4D',
-        height: '70px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        color: 'white',
-        flexShrink: 0,
-        zIndex: 10
+      {/* Banner */}
+      <div style={{ 
+        background: '#07345c', 
+        padding: '15px 0 24px 0', 
+        position: 'relative', 
+        textAlign: 'left', 
+        paddingLeft: '16px',
+        marginBottom: '20px'
       }}>
-        <h1 style={{ fontSize: '24px', margin: 0 }}>My Posted Vōstcards</h1>
-        <FaHome
-          size={28}
-          style={{ cursor: 'pointer' }}
+        <button 
+          style={{ 
+            position: 'absolute', 
+            right: 16, 
+            top: 26, 
+            background: 'rgba(0,0,0,0.10)', 
+            border: 'none', 
+            borderRadius: '50%', 
+            width: 48, 
+            height: 48, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            cursor: 'pointer' 
+          }} 
           onClick={() => navigate('/home')}
-        />
+        >
+          <FaHome color="#fff" size={36} />
+        </button>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
+          Posted Vōstcards
+        </span>
       </div>
 
-      {/* 🔲 List of Posted Vostcards (Scrollable) */}
+      {/* List of Posted Vostcards (Scrollable) */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
@@ -157,31 +170,54 @@ const MyPostedVostcardsListView = () => {
         WebkitOverflowScrolling: 'touch', // Enable smooth scrolling on iOS
       }}>
         {loading ? (
-          <p>Loading your posted Vostcards...</p>
+          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+            <div style={{ fontSize: '18px', color: '#666' }}>Loading your posted Vōstcards...</div>
+          </div>
         ) : postedVostcards.length === 0 ? (
-          <p>No posted Vostcards found.</p>
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '60px 20px',
+            color: '#666'
+          }}>
+            <h3 style={{ margin: '0 0 12px 0', color: '#495057', fontSize: '24px' }}>
+              No Posted Vōstcards
+            </h3>
+            <p style={{ margin: 0, fontSize: '16px', lineHeight: 1.5 }}>
+              When you post a Vōstcard, it will appear here.<br />
+              You can always un-post them to move them back to private.
+            </p>
+          </div>
         ) : (
           postedVostcards.map((vostcard) => (
             <div key={vostcard.id} style={{
               border: '1px solid #ccc',
-              borderRadius: '8px',
-              padding: '12px',
-              marginBottom: '10px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '16px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               background: 'white',
             }}>
-              <h2 style={{ margin: '0 0 8px 0' }}>{vostcard.title || 'Untitled Vōstcard'}</h2>
-              <p><strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}</p>
-              <p><strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}</p>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#002B4D' }}>
+                {vostcard.title || 'Untitled Vōstcard'}
+              </h2>
+              <p style={{ margin: '8px 0', color: '#666' }}>
+                <strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}
+              </p>
+              <p style={{ margin: '8px 0', color: '#666' }}>
+                <strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+              </p>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
                 <button
                   style={{
                     backgroundColor: '#002B4D',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
-                    cursor: 'pointer'
+                    borderRadius: '8px',
+                    padding: '10px 16px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    transition: 'background-color 0.2s'
                   }}
                   onClick={() => navigate(`/vostcard/${vostcard.id}`)}
                 >
@@ -192,11 +228,14 @@ const MyPostedVostcardsListView = () => {
                     backgroundColor: '#ff4444',
                     color: 'white',
                     border: 'none',
-                    borderRadius: '6px',
-                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    padding: '10px 16px',
                     cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: 600,
                     opacity: unpostingIds.has(vostcard.id) ? 0.6 : 1,
-                    pointerEvents: unpostingIds.has(vostcard.id) ? 'none' : 'auto'
+                    pointerEvents: unpostingIds.has(vostcard.id) ? 'none' : 'auto',
+                    transition: 'all 0.2s'
                   }}
                   onClick={() => handleUnpostVostcard(vostcard.id, vostcard.title || 'Untitled Vōstcard')}
                   disabled={unpostingIds.has(vostcard.id)}
