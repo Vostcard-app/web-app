@@ -209,8 +209,6 @@ const VostcardDetailView: React.FC = () => {
     }
   };
 
-  // Remove createShareableVostcard function since it's no longer needed
-
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
