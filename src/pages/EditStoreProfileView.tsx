@@ -94,23 +94,50 @@ const EditStoreProfileView: React.FC = () => {
   // Upload store photo to Firebase Storage
   const uploadStorePhoto = async (file: File, userId: string): Promise<string> => {
     try {
-      console.log('📤 Uploading store photo...');
+      console.log('📤 Starting store photo upload...', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type,
+        userId: userId
+      });
       
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        throw new Error(`Invalid file type. Please use: ${allowedTypes.join(', ')}`);
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error(`File too large. Maximum size is 5MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+      }
+
       // Create a unique filename
       const timestamp = Date.now();
       const fileExtension = file.name.split('.').pop();
       const fileName = `store_photo_${timestamp}.${fileExtension}`;
       
+      console.log('📁 Preparing upload to path:', `stores/${userId}/${fileName}`);
+
       // Upload to Firebase Storage
       const storageRef = ref(storage, `stores/${userId}/${fileName}`);
+      console.log('📤 Starting upload to Firebase Storage...');
       const snapshot = await uploadBytes(storageRef, file);
+      console.log('✅ File uploaded, getting download URL...');
       const downloadURL = await getDownloadURL(snapshot.ref);
 
       console.log('✅ Store photo uploaded successfully:', downloadURL);
       return downloadURL;
     } catch (error) {
       console.error('❌ Error uploading store photo:', error);
-      throw new Error(`Failed to upload photo: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+      }
+      throw error;
     }
   };
 
@@ -203,29 +230,33 @@ const EditStoreProfileView: React.FC = () => {
     setSuccess(false);
 
     try {
-      console.log("💾 Saving store profile for user:", user.uid);
+      console.log("💾 Starting store profile save for user:", user.uid);
       
       // Upload store photo if provided
       let storePhotoURL = '';
       if (storePhoto) {
         try {
+          console.log('📸 Uploading store photo...');
           storePhotoURL = await uploadStorePhoto(storePhoto, user.uid);
+          console.log('✅ Store photo uploaded, URL:', storePhotoURL);
         } catch (photoError) {
-          console.error('❌ Failed to upload store photo:', photoError);
-          alert('⚠️ Failed to upload store photo, but profile will be saved without it.');
+          console.error('❌ Store photo upload error:', photoError);
+          setError(`Failed to upload store photo: ${photoError instanceof Error ? photoError.message : 'Unknown error'}`);
+          return;
         }
       }
 
       const profileData = {
         storeName,
-        businessAddress, // Business contact address
-        latitude, // Location coordinates
+        businessAddress,
+        latitude,
         longitude,
         storeHours,
         contactEmail,
         contactPerson,
         description,
         updatedAt: new Date(),
+        storePhotoURL, // Always include this field, even if empty
         
         // Keep legacy fields for backward compatibility
         streetAddress: businessAddress.streetAddress,
@@ -238,10 +269,10 @@ const EditStoreProfileView: React.FC = () => {
         name: storeName,
         businessName: storeName,
         email: user.email,
-        role: "advertiser",
-        // Add the store photo URL if uploaded
-        ...(storePhotoURL && { storePhotoURL }),
+        role: "advertiser"
       };
+
+      console.log('📝 Saving profile data:', profileData);
 
       const profileRef = doc(db, "advertisers", user.uid);
       await setDoc(profileRef, profileData, { merge: true });
@@ -256,7 +287,7 @@ const EditStoreProfileView: React.FC = () => {
 
     } catch (error) {
       console.error("❌ Error saving store profile:", error);
-      setError("Failed to save profile. Please try again.");
+      setError(`Failed to save profile: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
