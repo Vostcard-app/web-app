@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome } from 'react-icons/fa';
+import { FaHome, FaArrowLeft } from 'react-icons/fa';
 
 const ReportBugView: React.FC = () => {
   const navigate = useNavigate();
@@ -46,61 +46,132 @@ const ReportBugView: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
-      {/* 🔵 Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <button
-          onClick={() => navigate('/home')}
-          style={{ background: '#002B4D', color: 'white', border: 'none', padding: 10, borderRadius: 8, cursor: 'pointer' }}
-        >
-          <FaHome /> Home
-        </button>
-        <h1 style={{ color: '#002B4D' }}>Report a Bug</h1>
+    <div style={{ 
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#07345c',
+        color: 'white',
+        padding: '15px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
       </div>
 
-      {/* 📝 Bug Report Form */}
-      <textarea
-        value={messageBody}
-        onChange={(e) => setMessageBody(e.target.value)}
-        placeholder="Describe the issue you encountered..."
-        rows={8}
-        style={{
-          width: '100%',
-          border: '1px solid #ccc',
-          borderRadius: 8,
-          padding: 12,
-          marginTop: 20,
-          resize: 'vertical',
-        }}
-      />
+      {/* Content Container */}
+      <div style={{ 
+        maxWidth: 800, 
+        margin: '20px auto', 
+        padding: '20px',
+        flex: 1,
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* Back Button */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: 20
+        }}>
+          <FaArrowLeft 
+            style={{ 
+              cursor: 'pointer',
+              fontSize: 24,
+              color: '#002B4D'
+            }} 
+            onClick={() => navigate(-1)} 
+          />
+          <h2 style={{ 
+            margin: '0 0 0 15px',
+            color: '#002B4D',
+            fontSize: 24
+          }}>
+            Report a Bug
+          </h2>
+        </div>
 
-      <button
-        onClick={handleSubmit}
-        disabled={isSubmitting}
-        style={{
-          background: '#667eea',
-          color: 'white',
-          border: 'none',
-          padding: '12px 24px',
-          borderRadius: 10,
-          cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          marginTop: 20,
-        }}
-      >
-        {isSubmitting ? 'Submitting...' : 'Submit Bug Report'}
-      </button>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: 12,
+          padding: 20,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <p style={{ 
+            color: '#555', 
+            marginBottom: 20,
+            fontSize: 16
+          }}>
+            Please describe the issue you encountered and we'll look into it.
+          </p>
 
-      {/* 🟢 Feedback Message */}
-      {feedbackMessage && (
-        <p style={{ marginTop: 15, color: feedbackMessage.includes('✅') ? 'green' : 'red' }}>
-          {feedbackMessage}
-        </p>
-      )}
+          {/* Bug Report Form */}
+          <textarea
+            value={messageBody}
+            onChange={(e) => setMessageBody(e.target.value)}
+            placeholder="Describe the issue you encountered..."
+            style={{
+              width: '100%',
+              minHeight: 150,
+              border: '1px solid #e0e0e0',
+              borderRadius: 8,
+              padding: 12,
+              fontSize: 16,
+              marginBottom: 20,
+              boxSizing: 'border-box',
+              resize: 'vertical'
+            }}
+          />
 
-      {/* 📄 Footer */}
-      <p style={{ fontSize: '0.9rem', color: '#666', marginTop: 30 }}>
-        This bug report will be sent to the Vōstcard support team.
-      </p>
+          {/* Submit button */}
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              backgroundColor: isSubmitting ? '#e0e0e0' : '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
+              fontSize: 16,
+              fontWeight: 600
+            }}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Bug Report'}
+          </button>
+
+          {/* Feedback Message */}
+          {feedbackMessage && (
+            <p style={{ 
+              marginTop: 15, 
+              color: feedbackMessage.includes('✅') ? '#28a745' : '#dc3545',
+              textAlign: 'center',
+              padding: '10px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: 8
+            }}>
+              {feedbackMessage}
+            </p>
+          )}
+
+          {/* Footer */}
+          <p style={{ 
+            fontSize: 14, 
+            color: '#666', 
+            marginTop: 20,
+            textAlign: 'center'
+          }}>
+            This bug report will be sent to the Vōstcard support team.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

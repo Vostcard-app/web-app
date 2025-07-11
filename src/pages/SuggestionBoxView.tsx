@@ -38,80 +38,145 @@ const SuggestionBoxView: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
-      {/* ✅ Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          backgroundColor: '#002B4D',
-          color: 'white',
-          padding: '15px 20px',
-          borderRadius: 8,
-          marginBottom: 20
-        }}
-      >
-        <FaArrowLeft style={{ cursor: 'pointer' }} onClick={() => navigate(-1)} />
-        <h2 style={{ margin: '0 auto', textAlign: 'center' }}>Suggestion Box</h2>
+    <div style={{ 
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#07345c',
+        color: 'white',
+        padding: '15px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
       </div>
 
-      <p style={{ textAlign: 'center', color: '#555', marginBottom: 10 }}>
-        We'd love to hear your ideas for improving Vōstcard!
-      </p>
-
-      {/* ✅ Suggestion textarea */}
-      <textarea
-        value={suggestionText}
-        onChange={(e) => setSuggestionText(e.target.value)}
-        placeholder="Type your suggestion here..."
-        style={{
-          width: '100%',
-          minHeight: 150,
-          border: '1px solid #ccc',
-          borderRadius: 8,
-          padding: 12,
-          fontSize: 16,
+      {/* Content Container */}
+      <div style={{ 
+        maxWidth: 800, 
+        margin: '20px auto', 
+        padding: '20px',
+        flex: 1,
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* Back Button */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           marginBottom: 20
-        }}
-      ></textarea>
+        }}>
+          <FaArrowLeft 
+            style={{ 
+              cursor: 'pointer',
+              fontSize: 24,
+              color: '#002B4D'
+            }} 
+            onClick={() => navigate(-1)} 
+          />
+          <h2 style={{ 
+            margin: '0 0 0 15px',
+            color: '#002B4D',
+            fontSize: 24
+          }}>
+            Suggestion Box
+          </h2>
+        </div>
 
-      {/* ✅ Submit button */}
-      <button
-        onClick={handleSubmit}
-        disabled={isSubmitting || !suggestionText.trim()}
-        style={{
-          width: '100%',
-          padding: '12px 16px',
-          backgroundColor: isSubmitting || !suggestionText.trim() ? '#ccc' : '#002B4D',
-          color: 'white',
-          border: 'none',
-          borderRadius: 8,
-          cursor: isSubmitting || !suggestionText.trim() ? 'not-allowed' : 'pointer',
-          fontSize: 16,
-          fontWeight: 600
-        }}
-      >
-        {isSubmitting ? 'Submitting...' : (
-          <>
-            <FaPaperPlane style={{ marginRight: 8 }} />
-            Submit Suggestion
-          </>
-        )}
-      </button>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: 12,
+          padding: 20,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <p style={{ 
+            textAlign: 'center', 
+            color: '#555', 
+            marginBottom: 20,
+            fontSize: 16
+          }}>
+            We'd love to hear your ideas for improving Vōstcard!
+          </p>
 
-      {/* ✅ Success message */}
-      {success && (
-        <p style={{ color: 'green', marginTop: 10, textAlign: 'center' }}>
-          ✅ Thank you for your suggestion!
-        </p>
-      )}
+          {/* Suggestion textarea */}
+          <textarea
+            value={suggestionText}
+            onChange={(e) => setSuggestionText(e.target.value)}
+            placeholder="Type your suggestion here..."
+            style={{
+              width: '100%',
+              minHeight: 150,
+              border: '1px solid #e0e0e0',
+              borderRadius: 8,
+              padding: 12,
+              fontSize: 16,
+              marginBottom: 20,
+              boxSizing: 'border-box',
+              resize: 'vertical'
+            }}
+          />
 
-      {/* ❌ Error message */}
-      {error && (
-        <p style={{ color: 'red', marginTop: 10, textAlign: 'center' }}>
-          {error}
-        </p>
-      )}
+          {/* Submit button */}
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !suggestionText.trim()}
+            style={{
+              width: '100%',
+              padding: '12px 16px',
+              backgroundColor: isSubmitting || !suggestionText.trim() ? '#e0e0e0' : '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: isSubmitting || !suggestionText.trim() ? 'not-allowed' : 'pointer',
+              fontSize: 16,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8
+            }}
+          >
+            {isSubmitting ? 'Submitting...' : (
+              <>
+                <FaPaperPlane />
+                Submit Suggestion
+              </>
+            )}
+          </button>
+
+          {/* Messages */}
+          {success && (
+            <p style={{ 
+              color: '#28a745', 
+              marginTop: 15, 
+              textAlign: 'center',
+              padding: '10px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: 8
+            }}>
+              ✅ Thank you for your suggestion!
+            </p>
+          )}
+
+          {error && (
+            <p style={{ 
+              color: '#dc3545', 
+              marginTop: 15, 
+              textAlign: 'center',
+              padding: '10px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: 8
+            }}>
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
