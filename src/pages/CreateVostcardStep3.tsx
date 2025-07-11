@@ -32,9 +32,10 @@ const CreateVostcardStep3: React.FC = () => {
     'Museum',
     'Gallery',
     'Restaurant',
-    'Drive Mode Event'
-  ];
-
+    'Drive Mode Event',
+  'Wish you were here',
+  'Made for kids',]
+  
   // Debug validation state
   const validationState = {
     hasTitle: title.trim() !== '',
