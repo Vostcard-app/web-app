@@ -75,13 +75,40 @@ const MyPostedVostcardsListView = () => {
       const vostcardData = vostcardSnap.data();
       console.log('📄 Retrieved vostcard data:', vostcardData);
 
+      // First, fetch the video data from the URL
+      let videoBlob = null;
+      if (vostcardData.videoURL) {
+        try {
+          console.log('📥 Fetching video from URL:', vostcardData.videoURL);
+          const response = await fetch(vostcardData.videoURL);
+          videoBlob = await response.blob();
+          console.log('✅ Video fetched successfully, size:', videoBlob.size);
+        } catch (error) {
+          console.error('❌ Failed to fetch video:', error);
+        }
+      }
+
+      // Convert video blob to base64 if we have it
+      let videoBase64 = null;
+      if (videoBlob) {
+        try {
+          videoBase64 = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(videoBlob);
+          });
+          console.log('✅ Video converted to base64');
+        } catch (error) {
+          console.error('❌ Failed to convert video to base64:', error);
+        }
+      }
+
       // Create private vostcard with proper media handling
       const privateVostcard = {
         ...vostcardData,
         id: crypto.randomUUID(),
         state: 'private' as const,
-        // Store video URL in _videoBase64 for proper serialization
-        _videoBase64: vostcardData.videoURL || null,
+        _videoBase64: videoBase64, // Store the actual base64 data
         video: null, // Will be restored from _videoBase64 when loaded
         photos: vostcardData.photos || [],
         photoURLs: vostcardData.photoURLs || [],
