@@ -65,15 +65,28 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Force portrait orientation for recording
-        let videoConstraints: MediaTrackConstraints = {
-          facingMode,
-          width: { ideal: 1080, max: 1080 },
-          height: { ideal: 1920, max: 1920 },
-          aspectRatio: 9/16 // Force portrait aspect ratio
-        };
+        // Mobile-specific video constraints
+        let videoConstraints: MediaTrackConstraints;
         
-        console.log('📱 Using portrait video constraints:', videoConstraints);
+        if (isIPhone) {
+          // iPhone-specific constraints for portrait recording
+          videoConstraints = {
+            facingMode,
+            width: { ideal: 1080 },
+            height: { ideal: 1920 },
+            frameRate: { ideal: 30 }
+          };
+        } else {
+          // General mobile constraints
+          videoConstraints = {
+            facingMode,
+            width: { ideal: 1080 },
+            height: { ideal: 1920 },
+            aspectRatio: 9/16
+          };
+        }
+        
+        console.log('📱 Using mobile video constraints:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -97,56 +110,33 @@ const ScrollingCameraView: React.FC = () => {
             aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown'
           });
           
-          // If the camera is giving us landscape, we need to handle it differently
-          if (settings.width && settings.height && settings.width > settings.height) {
-            console.log('⚠️ Camera is providing landscape orientation, will need to rotate for portrait recording');
-          }
-          
-          // Try to apply portrait constraints to the video track
-          try {
-            await videoTrack.applyConstraints({
-              width: { ideal: 1080, max: 1080 },
-              height: { ideal: 1920, max: 1920 },
-              aspectRatio: 9/16
-            });
-            console.log('✅ Applied portrait constraints to video track');
-          } catch (constraintErr) {
-            console.log('⚠️ Could not apply portrait constraints:', constraintErr);
+          // For iPhone, the camera might still provide landscape, but we'll handle it in recording
+          if (settings.width && settings.height) {
+            if (settings.width > settings.height) {
+              console.log('📱 Camera providing landscape, will record as portrait');
+            } else {
+              console.log('📱 Camera providing portrait, perfect!');
+            }
           }
         }
 
       } catch (err) {
         console.error('Error accessing camera:', err);
-        // Fallback to basic constraints if enhanced ones fail
+        // Fallback for mobile devices
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
               facingMode,
-              width: { ideal: 1080 },
-              height: { ideal: 1920 },
-              aspectRatio: 9/16
+              // Don't specify dimensions, let the device decide
             } 
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using fallback camera constraints');
+          console.log('📱 Using fallback mobile camera constraints');
         } catch (fallbackErr) {
-          console.error('Fallback camera access also failed:', fallbackErr);
-          // Final fallback - let browser decide
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-              video: { facingMode } 
-            });
-            streamRef.current = stream;
-            if (videoRef.current) {
-              videoRef.current.srcObject = stream;
-            }
-            console.log('📱 Using basic camera constraints');
-          } catch (basicErr) {
-            console.error('All camera access attempts failed:', basicErr);
-          }
+          console.error('Mobile camera access failed:', fallbackErr);
         }
       }
     };
@@ -156,29 +146,23 @@ const ScrollingCameraView: React.FC = () => {
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
-  }, [facingMode]);
+  }, [facingMode, isIPhone]);
 
   const handleStartRecording = () => {
     if (streamRef.current) {
-      // Enhanced MIME type detection with better fallbacks
+      // Mobile-optimized MIME type detection
       const getSupportedMimeType = () => {
         const types = [
-          'video/mp4;codecs=avc1.42E01E,mp4a.40.2', // H.264 + AAC (best compatibility)
-          'video/mp4;codecs=avc1.42E01E', // H.264 video only
-          'video/webm;codecs=vp9,opus', // VP9 + Opus
-          'video/webm;codecs=vp9', // VP9 video only
-          'video/webm;codecs=vp8,opus', // VP8 + Opus
-          'video/webm;codecs=vp8', // VP8 video only
-          'video/webm;codecs=h264,opus', // H.264 in WebM + Opus
-          'video/webm;codecs=h264', // H.264 in WebM
+          'video/mp4', // Best for mobile compatibility
+          'video/webm;codecs=vp9', // VP9 fallback
+          'video/webm;codecs=vp8', // VP8 fallback
           'video/webm', // WebM fallback
-          'video/mp4', // MP4 fallback
           '' // Let browser decide
         ];
         
         for (const type of types) {
           if (type === '' || MediaRecorder.isTypeSupported(type)) {
-            console.log('📹 Selected MIME type:', type || 'browser default');
+            console.log('📹 Selected MIME type for mobile:', type || 'browser default');
             return type || undefined;
           }
         }
@@ -188,15 +172,15 @@ const ScrollingCameraView: React.FC = () => {
 
       const mimeType = getSupportedMimeType();
       
-      // Create MediaRecorder with improved options
+      // Create MediaRecorder with mobile-optimized options
       const options: MediaRecorderOptions = {};
       if (mimeType) {
         options.mimeType = mimeType;
       }
       
-      // Add bitrate for better quality/size balance
+      // Mobile-friendly bitrate
       try {
-        options.videoBitsPerSecond = 2500000; // 2.5 Mbps
+        options.videoBitsPerSecond = isIPhone ? 2000000 : 1500000; // 2Mbps for iPhone, 1.5Mbps for others
       } catch (err) {
         console.log('📹 Bitrate setting not supported, using default');
       }
@@ -212,10 +196,10 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const finalMimeType = mimeType || 'video/webm';
+        const finalMimeType = mimeType || 'video/mp4';
         const blob = new Blob(recordedChunks.current, { type: finalMimeType });
         
-        console.log('📹 Video recording completed:', {
+        console.log('📹 Mobile video recording completed:', {
           size: blob.size,
           type: blob.type,
           isIPhone,
@@ -242,7 +226,7 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onerror = (event) => {
-        console.error('📹 MediaRecorder error:', event);
+        console.error('📹 Mobile MediaRecorder error:', event);
         alert('❌ Recording error occurred. Please try again.');
         setIsRecording(false);
         if (timerRef.current) {
@@ -350,7 +334,7 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          transform: facingMode === 'user' ? 'scaleX(-1)' : 'none', // Mirror only front camera
+          transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
           width: '100vw',
           height: '100vh',
           objectFit: 'cover',

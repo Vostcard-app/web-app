@@ -3,6 +3,10 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: black;
+  /* Mobile viewport handling */
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* ✅ Main Container */
@@ -12,9 +16,12 @@ body {
   height: 100vh;
   overflow: hidden;
   background-color: black;
+  /* Mobile-specific properties */
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
 }
 
-/* ✅ Camera Preview */
+/* ✅ Camera Preview - Mobile Optimized */
 .camera-preview {
   width: 100vw;
   height: 100vh;
@@ -24,6 +31,37 @@ body {
   left: 0;
   z-index: 1;
   background-color: black;
+  /* Mobile video optimization */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Mobile-specific optimizations */
+@media screen and (max-width: 768px) {
+  .camera-preview {
+    /* Force GPU acceleration on mobile */
+    will-change: transform;
+  }
+  
+  .scrolling-camera-container {
+    /* Prevent bounce scrolling on iOS */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+/* iPhone-specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  .camera-preview {
+    /* iOS Safari specific optimizations */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 /* ✅ Scrolling Script Overlay */
