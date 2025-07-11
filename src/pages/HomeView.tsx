@@ -69,6 +69,222 @@ function getVostcardIcon(isOffer: boolean = false) {
   return isOffer ? offerIcon : vostcardIcon;
 }
 
+// Define style objects at the top
+const listViewButtonContainerLeft = {
+  position: 'fixed',
+  top: '96px', // 80px header + 16px margin
+  left: '16px',
+  zIndex: 1002
+};
+
+const listViewButtonContainerRight = {
+  position: 'fixed',
+  top: '96px', // 80px header + 16px margin
+  right: '16px',
+  zIndex: 1002
+};
+
+const listViewButton = {
+  backgroundColor: '#002B4D',
+  color: 'white',
+  border: 'none',
+  borderRadius: '8px',
+  padding: '12px 20px',
+  fontSize: '16px',
+  fontWeight: 500,
+  cursor: 'pointer',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+  pointerEvents: 'auto',
+  transition: 'transform 0.1s ease',
+  ':active': {
+    transform: 'scale(0.98)'
+  }
+};
+
+const mapContainerStyle = {
+  position: 'fixed' as const,
+  top: 80,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  zIndex: 1,
+};
+
+const errorOverlayStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: '#f8f9fa',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 2,
+};
+
+const errorContentStyle = {
+  background: 'white',
+  padding: '30px',
+  borderRadius: '12px',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  textAlign: 'center' as const,
+  maxWidth: '300px'
+};
+
+const retryButtonStyle = {
+  background: '#007aff',
+  color: 'white',
+  border: 'none',
+  borderRadius: '8px',
+  padding: '10px 20px',
+  cursor: 'pointer',
+  marginTop: '10px'
+};
+
+const loadingOverlayStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255,255,255,0.9)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 2,
+};
+
+const vostcardsLoadingOverlayStyle = {
+  position: 'absolute' as const,
+  top: 70, // Moved back from 165 to 70
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255,255,255,0.8)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 50,
+  pointerEvents: 'none' as const
+};
+
+const authLoadingOverlayStyle = {
+  position: 'absolute' as const,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(255,255,255,0.95)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 200, // Highest priority for auth
+};
+
+const loadingContentStyle = {
+  background: 'rgba(0,43,77,0.9)',
+  color: 'white',
+  padding: '20px 30px',
+  borderRadius: '12px',
+  fontSize: '18px',
+  fontWeight: 600,
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+};
+
+const debugStyle = {
+  position: 'absolute' as const,
+  top: '80px',
+  right: '10px',
+  background: 'rgba(0,0,0,0.8)',
+  color: 'white',
+  padding: '10px',
+  borderRadius: '5px',
+  fontSize: '12px',
+  zIndex: 150, // High but not blocking
+  maxWidth: '300px'
+};
+
+const debugButtonStyle = {
+  background: '#ff4444',
+  color: 'white',
+  border: 'none',
+  padding: '5px 10px',
+  borderRadius: '3px',
+  cursor: 'pointer',
+  marginTop: '5px',
+  fontSize: '10px'
+};
+
+const createButtonContainer = {
+  position: 'fixed' as const,
+  bottom: 40,
+  left: 15,
+  right: 15,
+  zIndex: 1000,
+};
+
+const createButton = {
+  background: '#002B4D',
+  color: 'white',
+  border: 'none',
+  borderRadius: 12,
+  padding: '18px 40px',
+  fontSize: 22,
+  fontWeight: 700,
+  cursor: 'pointer',
+  boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  width: '100%'
+};
+
+const zoomControlStyle = {
+  position: 'fixed' as const,
+  top: '50%',
+  right: 20,
+  transform: 'translateY(-50%)',
+  zIndex: 1000,
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 8,
+};
+
+const zoomButton = {
+  background: '#fff',
+  color: '#002B4D',
+  border: '1px solid #ddd',
+  borderRadius: 8,
+  width: 40,
+  height: 40,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 20,
+  cursor: 'pointer',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  transition: 'all 0.2s ease',
+  ':hover': {
+    opacity: 0.9,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+  }
+};
+
+const recenterControlStyle = {
+  position: 'fixed' as const,
+  bottom: '25%', // 1/4 up from bottom
+  left: 20,
+  zIndex: 1000,
+};
+
+const offerPopupStyle = {
+  background: '#f8f9fa',
+  borderRadius: 8,
+  padding: '8px 12px',
+  margin: '8px 0',
+  color: '#333',
+  fontSize: 15,
+};
+
 const HomeView = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -738,217 +954,6 @@ const menuItemStyle = {
   borderBottom: '1px solid #f0f0f0',
   background: 'transparent',
   transition: 'background-color 0.2s ease'
-};
-
-// Update style objects with higher z-index
-const listViewButtonContainerLeft = {
-  position: 'absolute',
-  top: '16px',
-  left: '16px',
-  zIndex: 1002  // Increase z-index to be above map
-};
-
-const listViewButtonContainerRight = {
-  position: 'absolute',
-  top: '16px',
-  right: '16px',
-  zIndex: 1002  // Increase z-index to be above map
-};
-
-const listViewButton = {
-  backgroundColor: '#002B4D',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  padding: '8px 16px',
-  fontSize: '16px',
-  cursor: 'pointer',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-  pointerEvents: 'auto'  // Ensure clicks are captured
-};
-
-const mapContainerStyle = {
-  position: 'fixed' as const,
-  top: 80,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  zIndex: 1,
-};
-
-const errorOverlayStyle = {
-  position: 'absolute' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: '#f8f9fa',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 2,
-};
-
-const errorContentStyle = {
-  background: 'white',
-  padding: '30px',
-  borderRadius: '12px',
-  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-  textAlign: 'center' as const,
-  maxWidth: '300px'
-};
-
-const retryButtonStyle = {
-  background: '#007aff',
-  color: 'white',
-  border: 'none',
-  borderRadius: '8px',
-  padding: '10px 20px',
-  cursor: 'pointer',
-  marginTop: '10px'
-};
-
-const loadingOverlayStyle = {
-  position: 'absolute' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(255,255,255,0.9)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 2,
-};
-
-const vostcardsLoadingOverlayStyle = {
-  position: 'absolute' as const,
-  top: 70, // Moved back from 165 to 70
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(255,255,255,0.8)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 50,
-  pointerEvents: 'none' as const
-};
-
-const authLoadingOverlayStyle = {
-  position: 'absolute' as const,
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(255,255,255,0.95)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  zIndex: 200, // Highest priority for auth
-};
-
-const loadingContentStyle = {
-  background: 'rgba(0,43,77,0.9)',
-  color: 'white',
-  padding: '20px 30px',
-  borderRadius: '12px',
-  fontSize: '18px',
-  fontWeight: 600,
-  boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-};
-
-const debugStyle = {
-  position: 'absolute' as const,
-  top: '80px',
-  right: '10px',
-  background: 'rgba(0,0,0,0.8)',
-  color: 'white',
-  padding: '10px',
-  borderRadius: '5px',
-  fontSize: '12px',
-  zIndex: 150, // High but not blocking
-  maxWidth: '300px'
-};
-
-const debugButtonStyle = {
-  background: '#ff4444',
-  color: 'white',
-  border: 'none',
-  padding: '5px 10px',
-  borderRadius: '3px',
-  cursor: 'pointer',
-  marginTop: '5px',
-  fontSize: '10px'
-};
-
-const createButtonContainer = {
-  position: 'fixed' as const,
-  bottom: 40,
-  left: 15,
-  right: 15,
-  zIndex: 1000,
-};
-
-const createButton = {
-  background: '#002B4D',
-  color: 'white',
-  border: 'none',
-  borderRadius: 12,
-  padding: '18px 40px',
-  fontSize: 22,
-  fontWeight: 700,
-  cursor: 'pointer',
-  boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
-  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  width: '100%'
-};
-
-const zoomControlStyle = {
-  position: 'fixed' as const,
-  top: '50%',
-  right: 20,
-  transform: 'translateY(-50%)',
-  zIndex: 1000,
-  display: 'flex',
-  flexDirection: 'column' as const,
-  gap: 8,
-};
-
-const zoomButton = {
-  background: '#fff',
-  color: '#002B4D',
-  border: '1px solid #ddd',
-  borderRadius: 8,
-  width: 40,
-  height: 40,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: 20,
-  cursor: 'pointer',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  transition: 'all 0.2s ease',
-  ':hover': {
-    opacity: 0.9,
-    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-  }
-};
-
-const recenterControlStyle = {
-  position: 'fixed' as const,
-  bottom: '25%', // 1/4 up from bottom
-  left: 20,
-  zIndex: 1000,
-};
-
-const offerPopupStyle = {
-  background: '#f8f9fa',
-  borderRadius: 8,
-  padding: '8px 12px',
-  margin: '8px 0',
-  color: '#333',
-  fontSize: 15,
 };
 
 export default HomeView;
