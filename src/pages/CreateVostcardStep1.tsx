@@ -310,14 +310,15 @@ const CreateVostcardStep1: React.FC = () => {
         <button
           onClick={() => navigate('/script-tool')}
           style={{
-            backgroundColor: '#002B4D',
-            color: 'white',
+            backgroundColor: '#FFD700',  // Changed to gold
+            color: '#000000',  // Changed to black for better contrast on gold
             border: 'none',
             width: '100%',
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
             cursor: 'pointer',
+            fontWeight: 600,  // Made text slightly bolder
           }}
         >
           Use Script Tool
