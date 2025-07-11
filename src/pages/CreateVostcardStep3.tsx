@@ -241,7 +241,12 @@ const CreateVostcardStep3: React.FC = () => {
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
             placeholder="Enter Title"
-            style={{...inputStyle, touchAction: 'manipulation'}}
+            style={{
+              ...inputStyle,
+              touchAction: 'manipulation',
+              fontSize: '16px',
+              WebkitTextSizeAdjust: '100%'
+            }}
           />
         </div>
 
