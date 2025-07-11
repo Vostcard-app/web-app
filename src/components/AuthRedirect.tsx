@@ -8,42 +8,19 @@ export const AuthRedirect = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const allowedPaths = [
-      '/create-offer',
-      '/store-profile-page',
-      '/advertiser-portal',
-      '/pin-placer',
-      '/home',
-      '/all-posted-vostcards',
-      '/offers-list',
-      '/create-step1',
-      '/list',
-      '/vostcard',
-      '/offer',
-      '/edit-my-vostcards',
-      '/my-posted-vostcards',
-      '/liked-vostcards',
-      '/following',
-      '/suggestion-box',
-      '/report-bug',
-      '/account-settings',
-      '/profile'
-    ];
-
-    if (!loading && user) {
-      // Check if current path starts with any of the allowed paths
-      const isAllowedPath = allowedPaths.some(path => 
-        location.pathname === path || location.pathname.startsWith(`${path}/`)
-      );
-
-      // Only redirect if not on an allowed path and not already redirecting
-      if (!isAllowedPath && !location.pathname.includes('redirecting')) {
-        if (userRole === 'advertiser') {
-          navigate('/advertiser-portal');
-        } else {
-          navigate('/home');
-        }
+    // Only redirect if not authenticated and trying to access protected routes
+    if (!loading && !user) {
+      // Public routes that don't require authentication
+      const publicRoutes = ['/', '/login', '/register', '/landing'];
+      
+      if (!publicRoutes.includes(location.pathname)) {
+        navigate('/login');
       }
+    }
+    
+    // Redirect advertisers to their portal if they're on the home page
+    if (!loading && user && userRole === 'advertiser' && location.pathname === '/home') {
+      navigate('/advertiser-portal');
     }
   }, [user, userRole, loading, navigate, location.pathname]);
 

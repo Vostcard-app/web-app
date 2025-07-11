@@ -550,18 +550,14 @@ const HomeView = () => {
   ];
 
   const handleMenuItemClick = (label: string, route: string | null) => {
-    // Close menu first
     setIsMenuOpen(false);
-
-    // Add a small delay to allow menu to close before navigation
-    setTimeout(() => {
-      if (label === 'Logout') {
-        handleLogout();
-      } else if (route && location.pathname !== route) {
-        console.log(`🔄 Menu click: ${label}`);
-        navigate(route);
-      }
-    }, 100); // Small delay to allow menu to close
+    
+    if (label === 'Logout') {
+      handleLogout();
+    } else if (route) {
+      console.log(`🔄 Navigating to: ${route}`);
+      navigate(route);
+    }
   };
 
   // Format last update time for display
@@ -576,18 +572,14 @@ const HomeView = () => {
 
   const handleListViewClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (location.pathname !== '/all-posted-vostcards') {
-      console.log('📋 Navigating to List View');
-      navigate('/all-posted-vostcards');
-    }
+    console.log('📋 Navigating to List View');
+    navigate('/all-posted-vostcards');
   };
 
   const handleOffersClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (location.pathname !== '/offers-list') {
-      console.log('🎁 Navigating to Offers List');
-      navigate('/offers-list');
-    }
+    console.log('🎁 Navigating to Offers List');
+    navigate('/offers-list');
   };
 
   return (
@@ -822,37 +814,50 @@ const HomeView = () => {
                 Create a Vōstcard
               </button>
             </div>
+
+            {/* Menu overlay */}
+            {isMenuOpen && (
+              <>
+                <div
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    zIndex: 1999
+                  }}
+                  onClick={() => setIsMenuOpen(false)}
+                />
+                
+                <div 
+                  style={menuStyle} 
+                  data-menu 
+                  role="menu" 
+                  aria-label="Main menu"
+                >
+                  {menuItems.map(({ label, route }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      style={{
+                        ...menuItemStyle,
+                        backgroundColor: route && location.pathname === route ? '#f0f0f0' : 'transparent',
+                        width: '100%',
+                        textAlign: 'left'
+                      }}
+                      onClick={() => handleMenuItemClick(label, route)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
-
-      {/* Menu overlay */}
-      {isMenuOpen && (
-        <div 
-          style={menuStyle} 
-          data-menu 
-          role="menu" 
-          aria-label="Main menu"
-        >
-          {menuItems.map(({ label, route }) => (
-            <button
-              key={label}
-              type="button"
-              style={{
-                ...menuItemStyle,
-                backgroundColor: route && location.pathname === route ? '#f0f0f0' : 'transparent',
-                width: '100%',
-                textAlign: 'left',
-                display: 'block'
-              }}
-              onClick={() => handleMenuItemClick(label, route)}
-              role="menuitem"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Loading Overlay for Vostcards */}
       {loadingVostcards && (
