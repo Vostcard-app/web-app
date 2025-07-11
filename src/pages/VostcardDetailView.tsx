@@ -332,7 +332,6 @@ const VostcardDetailView: React.FC = () => {
                   top: 0,
                   left: 0
                 }}
-                muted
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
               />
               {/* Play overlay */}
@@ -460,19 +459,25 @@ const VostcardDetailView: React.FC = () => {
       <div
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           alignItems: 'center',
           margin: '16px 0 0 0',
           width: '100%',
           maxWidth: 420,
           marginLeft: 'auto',
           marginRight: 'auto',
+          position: 'relative',
         }}
       >
         <FaFlag
           size={24}
           color="#e53935"
-          style={{ marginRight: -5, cursor: 'pointer', flex: '0 0 auto', padding: '5px' }}
+          style={{ 
+            cursor: 'pointer', 
+            padding: '5px',
+            position: 'absolute',
+            left: '80px'
+          }}
           onClick={handleFlagClick}
         />
         <button
@@ -486,8 +491,6 @@ const VostcardDetailView: React.FC = () => {
             textDecoration: 'underline',
             cursor: 'pointer',
             padding: 0,
-            flex: '1 1 auto',
-            textAlign: 'center',
           }}
         >
           Description
@@ -495,7 +498,11 @@ const VostcardDetailView: React.FC = () => {
         <FaSyncAlt
           size={24}
           color="#007aff"
-          style={{ marginLeft: -5, flex: '0 0 auto', padding: '5px' }}
+          style={{ 
+            padding: '5px',
+            position: 'absolute',
+            right: '80px'
+          }}
         />
       </div>
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>Posted: {createdAt}</div>
@@ -675,9 +682,7 @@ const VostcardDetailView: React.FC = () => {
                 left: 0
               }}
               controls={showVideoControls}
-              autoPlay
               loop
-              muted
               playsInline
               onClick={(e) => {
                 e.stopPropagation();
