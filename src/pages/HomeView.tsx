@@ -84,32 +84,6 @@ const HomeView = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
 
-  // Return early if not authenticated
-  if (!user && loading) {
-    return (
-      <div style={{ 
-        height: '100vh', 
-        width: '100vw', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        backgroundColor: 'white'
-      }}>
-        <div style={{
-          background: 'rgba(0,43,77,0.9)',
-          color: 'white',
-          padding: '20px 30px',
-          borderRadius: '12px',
-          fontSize: '18px',
-          fontWeight: 600,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-        }}>
-          Loading...
-        </div>
-      </div>
-    );
-  }
-
   // Check for fresh load state from navigation
   useEffect(() => {
     const navigationState = location.state as any;
@@ -127,8 +101,6 @@ const HomeView = () => {
       window.history.replaceState({}, '', location.pathname);
     }
   }, [location.state, location.pathname]);
-
-  // No complex refresh state management needed
 
   // Debug authentication state and manage auth loading overlay
   useEffect(() => {
@@ -380,7 +352,7 @@ const HomeView = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* 🔵 Header */}
+      {/* 🔵 Header - Always show the banner */}
       <div style={{
         backgroundColor: '#002B4D',
         height: 80,
@@ -428,7 +400,148 @@ const HomeView = () => {
         </div>
       </div>
 
-      {/* Hamburger Menu */}
+      {/* Main content area */}
+      <div style={{ flex: 1, position: 'relative' }}>
+        {/* Show loading state if not authenticated */}
+        {(!user && loading) ? (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'white',
+            zIndex: 999
+          }}>
+            <div style={{
+              background: 'rgba(0,43,77,0.9)',
+              color: 'white',
+              padding: '20px 30px',
+              borderRadius: '12px',
+              fontSize: '18px',
+              fontWeight: 600,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+            }}>
+              Loading...
+            </div>
+          </div>
+        ) : (
+          // Rest of the content (map, buttons, etc.)
+          <>
+            {/* List View and Offers Buttons */}
+            <div style={listViewButtonContainerLeft}>
+              <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
+                List View
+              </button>
+            </div>
+            <div style={listViewButtonContainerRight}>
+              <button style={listViewButton} onClick={() => navigate('/offers-list')}>
+                Offers
+              </button>
+            </div>
+
+            {/* Map Container */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 1
+            }}>
+              {/* Existing map content */}
+              {mapError ? (
+                <div style={errorOverlayStyle}>
+                  <div style={errorContentStyle}>
+                    <h3>Map Error</h3>
+                    <p>{mapError}</p>
+                    <button onClick={handleRetryLoad} style={retryButtonStyle}>
+                      Retry {retryCount > 0 && `(${retryCount})`}
+                    </button>
+                  </div>
+                </div>
+              ) : !userLocation ? (
+                <div style={loadingOverlayStyle}>
+                  <div style={loadingContentStyle}>
+                    Getting your location...
+                  </div>
+                </div>
+              ) : (
+                <MapContainer 
+                  center={userLocation} 
+                  zoom={16} 
+                  style={{ height: '100%', width: '100%' }} 
+                  zoomControl={false}
+                >
+                  <TileLayer 
+                    attribution="&copy; OpenStreetMap contributors" 
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+                  />
+
+                  <Marker position={userLocation} icon={userIcon}>
+                    <Popup>Your Location</Popup>
+                  </Marker>
+
+                  {vostcards.map(v => {
+                    const lat = v.latitude || v.geo?.latitude;
+                    const lng = v.longitude || v.geo?.longitude;
+                    if (!lat || !lng) return null;
+                    return (
+                      <Marker
+                        key={v.id}
+                        position={[lat, lng]}
+                        icon={getVostcardIcon(v.isOffer)}
+                        eventHandlers={{
+                          click: () => {
+                            if (v.isOffer) {
+                              console.log("📍 Navigating to Offer view for ID:", v.id);
+                              navigate(`/offer/${v.id}`);
+                            } else {
+                              console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
+                              navigate(`/vostcard/${v.id}`);
+                            }
+                          }
+                        }}
+                      >
+                        <Popup>
+                          <h3>{v.title || 'Untitled'}</h3>
+                          <p>{v.description || 'No description'}</p>
+                          {v.isOffer && v.offerDetails?.discount && (
+                            <div style={offerPopupStyle}>
+                              <strong>🎁 Special Offer:</strong> {v.offerDetails.discount}
+                              {v.offerDetails.validUntil && <div><small>Valid until: {v.offerDetails.validUntil}</small></div>}
+                            </div>
+                          )}
+                          {v.categories && Array.isArray(v.categories) && v.categories.length > 0 && (
+                            <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
+                          )}
+                          <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+
+                  <ZoomControls />
+                  <RecenterControl userLocation={userLocation} />
+                  <MapCenter userLocation={userLocation} />
+                </MapContainer>
+              )}
+            </div>
+
+            {/* Create Vostcard Button */}
+            <div style={createButtonContainer}>
+              <button style={createButton} onClick={handleCreateVostcard}>
+                Create a Vōstcard
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Menu overlay */}
       {isMenuOpen && (
         <div style={menuStyle} data-menu role="menu" aria-label="Main menu">
           {menuItems.map(({ label, route }) => (
@@ -467,105 +580,6 @@ const HomeView = () => {
           ))}
         </div>
       )}
-
-      {/* List View and Offers Buttons */}
-      <div style={listViewButtonContainerLeft}>
-        <button style={listViewButton} onClick={() => navigate('/all-posted-vostcards')}>
-          List View
-        </button>
-      </div>
-      <div style={listViewButtonContainerRight}>
-        <button style={listViewButton} onClick={() => navigate('/offers-list')}>
-          Offers
-        </button>
-      </div>
-
-      {/* Map Container */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 1
-      }}>
-        {mapError ? (
-          <div style={errorOverlayStyle}>
-            <div style={errorContentStyle}>
-              <h3>Map Error</h3>
-              <p>{mapError}</p>
-              <button onClick={handleRetryLoad} style={retryButtonStyle}>
-                Retry {retryCount > 0 && `(${retryCount})`}
-              </button>
-            </div>
-          </div>
-        ) : !userLocation ? (
-          <div style={loadingOverlayStyle}>
-            <div style={loadingContentStyle}>
-              Getting your location...
-            </div>
-          </div>
-        ) : (
-          <MapContainer 
-            center={userLocation} 
-            zoom={16} 
-            style={{ height: '100%', width: '100%' }} 
-            zoomControl={false}
-          >
-            <TileLayer 
-              attribution="&copy; OpenStreetMap contributors" 
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
-            />
-
-            <Marker position={userLocation} icon={userIcon}>
-              <Popup>Your Location</Popup>
-            </Marker>
-
-            {vostcards.map(v => {
-              const lat = v.latitude || v.geo?.latitude;
-              const lng = v.longitude || v.geo?.longitude;
-              if (!lat || !lng) return null;
-              return (
-                <Marker
-                  key={v.id}
-                  position={[lat, lng]}
-                  icon={getVostcardIcon(v.isOffer)}
-                  eventHandlers={{
-                    click: () => {
-                      if (v.isOffer) {
-                        console.log("📍 Navigating to Offer view for ID:", v.id);
-                        navigate(`/offer/${v.id}`);
-                      } else {
-                        console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
-                        navigate(`/vostcard/${v.id}`);
-                      }
-                    }
-                  }}
-                >
-                  <Popup>
-                    <h3>{v.title || 'Untitled'}</h3>
-                    <p>{v.description || 'No description'}</p>
-                    {v.isOffer && v.offerDetails?.discount && (
-                      <div style={offerPopupStyle}>
-                        <strong>🎁 Special Offer:</strong> {v.offerDetails.discount}
-                        {v.offerDetails.validUntil && <div><small>Valid until: {v.offerDetails.validUntil}</small></div>}
-                      </div>
-                    )}
-                    {v.categories && Array.isArray(v.categories) && v.categories.length > 0 && (
-                      <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
-                    )}
-                    <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
-                  </Popup>
-                </Marker>
-              );
-            })}
-
-            <ZoomControls />
-            <RecenterControl userLocation={userLocation} />
-            <MapCenter userLocation={userLocation} />
-          </MapContainer>
-        )}
-      </div>
 
       {/* Loading Overlay for Vostcards */}
       {loadingVostcards && (
