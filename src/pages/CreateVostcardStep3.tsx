@@ -20,7 +20,6 @@ const CreateVostcardStep3: React.FC = () => {
   } = useVostcard();
   const { title = '', description = '', categories = [], photos = [] } = currentVostcard || {};
 
-  const [customCategory, setCustomCategory] = useState('');
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
 
@@ -114,13 +113,6 @@ const CreateVostcardStep3: React.FC = () => {
       updateVostcard({ categories: categories.filter((c) => c !== category) });
     } else {
       updateVostcard({ categories: [...categories, category] });
-    }
-  };
-
-  const handleAddCustomCategory = () => {
-    if (customCategory.trim() !== '') {
-      updateVostcard({ categories: [...categories, customCategory.trim()] });
-      setCustomCategory('');
     }
   };
 
@@ -248,7 +240,7 @@ const CreateVostcardStep3: React.FC = () => {
             style={{
               ...inputStyle,
               touchAction: 'manipulation',
-              fontSize: '16px',
+              fontSize: '18px',
               WebkitTextSizeAdjust: '100%'
             }}
           />
@@ -263,7 +255,12 @@ const CreateVostcardStep3: React.FC = () => {
             onChange={(e) => updateVostcard({ description: e.target.value })}
             placeholder="Enter Description"
             rows={4}
-            style={{...textareaStyle, touchAction: 'manipulation'}}
+            style={{
+              ...textareaStyle,
+              touchAction: 'manipulation',
+              fontSize: '18px',
+              WebkitTextSizeAdjust: '100%'
+            }}
           />
         </div>
 
@@ -273,7 +270,12 @@ const CreateVostcardStep3: React.FC = () => {
           </label>
           <div
             onClick={() => setIsCategoryModalOpen(true)}
-            style={{...categorySelectStyle, touchAction: 'manipulation'}}
+            style={{
+              ...categorySelectStyle,
+              touchAction: 'manipulation',
+              fontSize: '18px',
+              WebkitTextSizeAdjust: '100%'
+            }}
           >
             Select Categories
           </div>
@@ -286,26 +288,14 @@ const CreateVostcardStep3: React.FC = () => {
                   padding: '6px 10px', 
                   borderRadius: 6, 
                   marginBottom: 4,
-                  touchAction: 'manipulation'
+                  touchAction: 'manipulation',
+                  fontSize: '18px'
                 }}>
                   {cat}
                 </div>
               ))}
             </div>
           )}
-
-          <input
-            placeholder="Add Custom Category"
-            value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value)}
-            style={{ ...inputStyle, marginTop: 8, touchAction: 'manipulation' }}
-          />
-          <button
-            onClick={handleAddCustomCategory}
-            style={{...addButtonStyle, touchAction: 'manipulation'}}
-          >
-            +
-          </button>
         </div>
       </div>
 
