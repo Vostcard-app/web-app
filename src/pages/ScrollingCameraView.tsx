@@ -17,6 +17,7 @@ const ScrollingCameraView: React.FC = () => {
   const [recordingTime, setRecordingTime] = useState(30);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isLandscapeVideo, setIsLandscapeVideo] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -94,6 +95,15 @@ const ScrollingCameraView: React.FC = () => {
             aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
             isPortrait: settings.height && settings.width ? settings.height > settings.width : 'unknown'
           });
+          
+          // Check if we got landscape video (need to rotate for portrait display)
+          if (settings.width && settings.height && settings.width > settings.height) {
+            console.log('📱 Got landscape video, will rotate for portrait display');
+            setIsLandscapeVideo(true);
+          } else {
+            console.log('📱 Got portrait video, no rotation needed');
+            setIsLandscapeVideo(false);
+          }
         }
 
       } catch (err) {
@@ -262,7 +272,7 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
-      {/* Camera Preview - Show actual aspect ratio */}
+      {/* Camera Preview - Rotate if needed for portrait display */}
       <video
         ref={videoRef}
         autoPlay
@@ -270,13 +280,16 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain', // Show full video without cropping
+          transform: `${facingMode === 'user' ? 'scaleX(-1)' : ''} ${isLandscapeVideo ? 'rotate(90deg)' : ''}`.trim(),
+          width: isLandscapeVideo ? '100vh' : '100vw',
+          height: isLandscapeVideo ? '100vw' : '100vh',
+          objectFit: 'cover', // Fill the screen
           position: 'absolute',
-          top: 0,
-          left: 0,
+          top: isLandscapeVideo ? '50%' : '0',
+          left: isLandscapeVideo ? '50%' : '0',
+          transformOrigin: 'center center',
+          marginTop: isLandscapeVideo ? '-50vw' : '0',
+          marginLeft: isLandscapeVideo ? '-50vh' : '0',
           backgroundColor: 'black'
         }}
       />

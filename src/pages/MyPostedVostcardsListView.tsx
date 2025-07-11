@@ -126,7 +126,10 @@ const MyPostedVostcardsListView = () => {
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
-      position: 'relative'
+      position: 'relative',
+      // Prevent bounce scrolling
+      touchAction: 'pan-y',
+      WebkitOverflowScrolling: 'touch'
     }}>
       {/* Banner - Fixed at top */}
       <div style={{ 
@@ -178,8 +181,14 @@ const MyPostedVostcardsListView = () => {
         paddingTop: '84px', // Account for fixed header (64px + 20px)
         background: '#f5f5f5',
         WebkitOverflowScrolling: 'touch',
-        minHeight: 0
-      }}>
+        minHeight: 0,
+        // Prevent bounce scrolling
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y',
+        // For older iOS versions
+        WebkitTransform: 'translateZ(0)',
+        transform: 'translateZ(0)'
+      } as React.CSSProperties}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
             <div style={{ fontSize: '18px', color: '#666' }}>Loading your posted Vōstcards...</div>
