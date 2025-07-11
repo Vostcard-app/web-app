@@ -68,7 +68,7 @@ const MyVostcardListView = () => {
       }}>
         <h1 style={{ fontSize: '24px', margin: 0 }}>My Vōstcards</h1>
         <FaHome
-          size={28}
+          size={45} // Changed from 28 to 45
           style={{ cursor: 'pointer' }}
           onClick={() => navigate('/home')}
         />
