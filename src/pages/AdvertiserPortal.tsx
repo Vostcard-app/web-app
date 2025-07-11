@@ -6,12 +6,17 @@ const AdvertiserPortal: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const handleUpdateProfile = () => {
+    console.log('🔄 Navigating to store profile page...');
+    navigate('/store-profile-page');
+  };
+
   return (
     <div style={{ 
       height: '100vh', 
       display: 'flex', 
       flexDirection: 'column',
-      overflow: 'hidden' // Prevent body scrolling
+      overflow: 'hidden'
     }}>
       {/* Fixed Header */}
       <div style={{
@@ -24,13 +29,12 @@ const AdvertiserPortal: React.FC = () => {
         alignItems: 'center',
         fontSize: '24px',
         fontWeight: 'bold',
-        flexShrink: 0, // Prevent header from shrinking
-        zIndex: 10 // Keep header above scrolling content
+        flexShrink: 0,
+        zIndex: 10
       }}>
         <span>Vōstcard Advertiser Portal</span>
         <button
           onClick={() => {
-            // sign out the user and navigate to login
             import('../firebase/firebaseConfig').then(({ auth }) => {
               auth.signOut().then(() => {
                 navigate('/login');
@@ -56,13 +60,13 @@ const AdvertiserPortal: React.FC = () => {
         flex: 1,
         overflowY: 'auto',
         padding: '20px',
-        backgroundColor: '#f5f5f5', // Light background for better contrast
-        WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
+        backgroundColor: '#f5f5f5',
+        WebkitOverflowScrolling: 'touch'
       }}>
         <div style={{ 
           maxWidth: "900px", 
           margin: "0 auto",
-          paddingBottom: "40px" // Add bottom padding for last item
+          paddingBottom: "40px"
         }}>
           <h1 style={{ textAlign: "center", color: "#002B4D", margin: "0 0 24px 0" }}>Advertiser Portal</h1>
 
@@ -94,7 +98,7 @@ const AdvertiserPortal: React.FC = () => {
               Update your store profile details to ensure your offers appear correctly in the app.
             </p>
             <button
-              onClick={() => navigate('/store-profile-page')}
+              onClick={handleUpdateProfile}
               style={{
                 marginTop: '16px',
                 padding: '12px 20px',
@@ -104,10 +108,7 @@ const AdvertiserPortal: React.FC = () => {
                 borderRadius: '8px',
                 fontSize: '16px',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                ':hover': {
-                  backgroundColor: '#003b6a'
-                }
+                transition: 'background-color 0.2s'
               }}
             >
               Update Store Profile
@@ -140,10 +141,7 @@ const AdvertiserPortal: React.FC = () => {
                 borderRadius: '8px',
                 fontSize: '16px',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
-                ':hover': {
-                  backgroundColor: '#218838'
-                }
+                transition: 'background-color 0.2s'
               }}
             >
               Create Offer
@@ -156,13 +154,13 @@ const AdvertiserPortal: React.FC = () => {
             justifyContent: "space-between", 
             gap: "16px", 
             marginBottom: "24px",
-            flexWrap: "wrap" // Allow cards to wrap on smaller screens
+            flexWrap: "wrap"
           }}>
             <div style={{
               backgroundColor: 'white',
               borderRadius: '12px',
               padding: '24px',
-              flex: '1 1 calc(50% - 8px)', // Allow cards to wrap on smaller screens
+              flex: '1 1 calc(50% - 8px)',
               minWidth: '200px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               textAlign: 'center'
@@ -174,7 +172,7 @@ const AdvertiserPortal: React.FC = () => {
               backgroundColor: 'white',
               borderRadius: '12px',
               padding: '24px',
-              flex: '1 1 calc(50% - 8px)', // Allow cards to wrap on smaller screens
+              flex: '1 1 calc(50% - 8px)',
               minWidth: '200px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               textAlign: 'center'
@@ -197,11 +195,6 @@ const AdvertiserPortal: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-export default AdvertiserPortal;
-
   );
 };
 
