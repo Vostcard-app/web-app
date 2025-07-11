@@ -128,18 +128,20 @@ const MyPostedVostcardsListView = () => {
       overflow: 'hidden',
       position: 'relative'
     }}>
-      {/* Banner */}
+      {/* Banner - Fixed at top */}
       <div style={{ 
         background: '#07345c', 
         padding: '16px 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        position: 'sticky',
+        position: 'fixed',
         top: 0,
-        zIndex: 10,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        flexShrink: 0
+        height: '64px'
       }}>
         <h1 style={{ 
           color: 'white', 
@@ -173,10 +175,10 @@ const MyPostedVostcardsListView = () => {
         overflowY: 'auto',
         overflowX: 'hidden',
         padding: '20px',
+        paddingTop: '84px', // Account for fixed header (64px + 20px)
         background: '#f5f5f5',
         WebkitOverflowScrolling: 'touch',
-        minHeight: 0, // Important for flex scrolling
-        height: 'calc(100vh - 80px)' // Subtract header height
+        minHeight: 0
       }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
