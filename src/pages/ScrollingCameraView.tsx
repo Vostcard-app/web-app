@@ -9,7 +9,6 @@ const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { setVideo } = useVostcard();
   
@@ -66,15 +65,14 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Try to get portrait video but be flexible
+        // FORCE portrait video from camera - no compromise
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
-          width: { ideal: 1080 },
-          height: { ideal: 1920 },
-          aspectRatio: 9 / 16
+          width: { exact: 1080 },
+          height: { exact: 1920 }
         };
         
-        console.log('📱 Requesting portrait constraints:', videoConstraints);
+        console.log('📱 FORCING portrait video from camera:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -86,32 +84,43 @@ const ScrollingCameraView: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
 
-        // Log what we actually got
+        // Verify we got portrait
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log('📱 Actual video settings:', {
+          console.log('📱 Camera provided:', {
             width: settings.width,
             height: settings.height,
-            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
             isPortrait: settings.height && settings.width ? settings.height > settings.width : 'unknown'
           });
+          
+          // We only accept portrait - no landscape handling
+          if (settings.width && settings.height && settings.height > settings.width) {
+            console.log('✅ SUCCESS: Camera provided portrait video');
+          } else {
+            console.log('❌ FAILED: Camera did not provide portrait video');
+            // We'll still try to record but warn user
+          }
         }
 
       } catch (err) {
-        console.error('Video constraints failed:', err);
-        // Fallback - let the camera decide
+        console.error('Failed to get portrait video:', err);
+        // If exact constraints fail, try ideal
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode } 
+            video: { 
+              facingMode,
+              width: { ideal: 1080 },
+              height: { ideal: 1920 }
+            } 
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using basic camera constraints');
+          console.log('📱 Using ideal portrait constraints');
         } catch (fallbackErr) {
-          console.error('All camera constraints failed:', fallbackErr);
+          console.error('All portrait constraints failed:', fallbackErr);
         }
       }
     };
@@ -124,61 +133,16 @@ const ScrollingCameraView: React.FC = () => {
   }, [facingMode]);
 
   const handleStartRecording = () => {
-    if (streamRef.current && canvasRef.current && videoRef.current) {
-      console.log('📹 Starting PORTRAIT recording with canvas rotation');
+    if (streamRef.current) {
+      console.log('📹 Recording directly from camera stream (portrait)');
       
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        console.error('Could not get canvas context');
-        return;
-      }
-      
-      // FORCE portrait dimensions - 1080x1920
-      canvas.width = 1080;
-      canvas.height = 1920;
-      
-      let animationId: number;
-      
-      const drawFrame = () => {
-        if (videoRef.current && ctx && isRecording) {
-          // Clear canvas
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Save context
-          ctx.save();
-          
-          // Video is already portrait, draw normally
-          ctx.drawImage(
-            videoRef.current,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-          );
-          
-          // Restore context
-          ctx.restore();
-          
-          // Continue animation
-          animationId = requestAnimationFrame(drawFrame);
-        }
-      };
-      
-      // Start drawing frames
-      drawFrame();
-      
-      // Get portrait stream from canvas
-      const portraitStream = canvas.captureStream(30);
-      
-      // Record from the canvas (guaranteed portrait)
+      // Simple recording - directly from camera stream
       const options: MediaRecorderOptions = {
         mimeType: 'video/mp4',
         videoBitsPerSecond: 2000000
       };
 
-      const mediaRecorder = new MediaRecorder(portraitStream, options);
+      const mediaRecorder = new MediaRecorder(streamRef.current, options);
       mediaRecorderRef.current = mediaRecorder;
       recordedChunks.current = [];
 
@@ -189,17 +153,11 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        // Stop animation
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-        }
-        
         const blob = new Blob(recordedChunks.current, { type: 'video/mp4' });
         
-        console.log('📹 PORTRAIT video recorded from canvas:', {
+        console.log('📹 PORTRAIT video recorded directly from camera:', {
           size: blob.size,
-          type: blob.type,
-          dimensions: '1080x1920 (PORTRAIT)'
+          type: blob.type
         });
 
         // Save video
@@ -219,9 +177,6 @@ const ScrollingCameraView: React.FC = () => {
 
       mediaRecorder.onerror = (event) => {
         console.error('📹 Recording error:', event);
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-        }
         alert('❌ Recording error occurred. Please try again.');
         setIsRecording(false);
         if (timerRef.current) {
@@ -320,17 +275,7 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
-      {/* Hidden canvas for portrait recording */}
-      <canvas
-        ref={canvasRef}
-        style={{
-          display: 'none',
-          width: '1080px',
-          height: '1920px'
-        }}
-      />
-
-      {/* Camera Preview - Show full video frame */}
+      {/* Camera Preview - Portrait only */}
       <video
         ref={videoRef}
         autoPlay
@@ -338,13 +283,13 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          transform: `${facingMode === 'user' ? 'scaleX(-1)' : ''}`,
+          transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
           width: '100vw',
           height: '100vh',
           objectFit: 'cover',
           position: 'absolute',
-          top: '0',
-          left: '0',
+          top: 0,
+          left: 0,
           backgroundColor: 'black'
         }}
       />
