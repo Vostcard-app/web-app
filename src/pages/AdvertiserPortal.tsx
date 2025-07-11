@@ -4,11 +4,25 @@ import { useAuth } from "../context/AuthContext";
 
 const AdvertiserPortal: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
   const handleUpdateProfile = () => {
     console.log('🔄 Navigating to store profile page...');
     navigate('/store-profile-page');
+  };
+
+  const handleCreateOffer = () => {
+    console.log('🎯 Create Offer clicked:', {
+      userRole,
+      userId: user?.uid
+    });
+    
+    if (userRole !== 'advertiser') {
+      alert('You must be an advertiser to create offers.');
+      return;
+    }
+    
+    navigate('/create-offer');
   };
 
   return (
@@ -131,7 +145,7 @@ const AdvertiserPortal: React.FC = () => {
               You must update your profile before creating an offer.
             </p>
             <button
-              onClick={() => navigate('/create-offer')}
+              onClick={handleCreateOffer}
               style={{
                 marginTop: '16px',
                 padding: '12px 20px',
