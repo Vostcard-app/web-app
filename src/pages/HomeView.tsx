@@ -513,7 +513,8 @@ const HomeView = () => {
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
-  const handleCreateVostcard = () => {
+  const handleCreateVostcard = (e: React.MouseEvent) => {
+    e.preventDefault();
     console.log('📝 Navigating to Create Vostcard');
     clearVostcard();
     navigate('/create-step1');
@@ -558,12 +559,14 @@ const HomeView = () => {
     return `${hoursAgo}h ago`;
   };
 
-  const handleListViewClick = () => {
+  const handleListViewClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     console.log('📋 Navigating to List View');
     navigate('/all-posted-vostcards');
   };
 
-  const handleOffersClick = () => {
+  const handleOffersClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     console.log('🎁 Navigating to Offers List');
     navigate('/offers-list');
   };
@@ -667,6 +670,7 @@ const HomeView = () => {
             {/* List View and Offers Buttons - Always visible */}
             <div style={listViewButtonContainerLeft}>
               <button 
+                type="button"
                 style={listViewButton} 
                 onClick={handleListViewClick}
               >
@@ -675,6 +679,7 @@ const HomeView = () => {
             </div>
             <div style={listViewButtonContainerRight}>
               <button 
+                type="button"
                 style={listViewButton} 
                 onClick={handleOffersClick}
               >
@@ -780,6 +785,7 @@ const HomeView = () => {
               zIndex: 1002
             }}>
               <button
+                type="button"
                 onClick={handleCreateVostcard}
                 style={{
                   backgroundColor: '#002B4D',
