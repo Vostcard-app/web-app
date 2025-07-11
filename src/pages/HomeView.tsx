@@ -473,6 +473,7 @@ const HomeView = () => {
                 <MapContainer 
                   center={userLocation} 
                   zoom={16} 
+                  maxZoom={22}  // Set very high max zoom level
                   style={{ height: '100%', width: '100%' }} 
                   zoomControl={false}
                 >
