@@ -103,77 +103,138 @@ const LikedVostcardsView: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#f5f5f5', // Light background like other views
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       {/* Header */}
       <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30
+        backgroundColor: '#07345c', // Match the standard header color
+        color: 'white',
+        padding: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}>
+        <h1 style={{ 
+          fontSize: '2.2rem',
+          fontWeight: 700,
+          margin: 0 
+        }}>Liked Vōstcards</h1>
         <button
           onClick={handleGoHome}
           style={{
-            background: '#667eea', color: 'white', border: 'none',
-            padding: 12, borderRadius: 10, cursor: 'pointer'
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 55,
+            height: 55,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
           }}
         >
-          <FaHome /> Home
+          <FaHome size={28} color="white" />
         </button>
-        <h1>Liked Vōstcards</h1>
       </div>
 
       {/* Content */}
-      {loading ? (
-        <p>Loading liked Vōstcards...</p>
-      ) : error ? (
-        <p style={{ color: 'red' }}>{error}</p>
-      ) : likedVostcards.length === 0 ? (
-        <div style={{
-          textAlign: 'center', padding: 60,
-          background: 'white', borderRadius: 15,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-        }}>
-          <h3>You haven't liked any Vōstcards yet.</h3>
-          <p>Tap the ❤️ icon on a Vōstcard to add it here.</p>
-        </div>
-      ) : (
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: 16
-        }}>
-          {likedVostcards.map((vostcard) => (
-            <div 
-              key={vostcard.id} 
-              style={{
-                background: 'white', borderRadius: 15, padding: 10,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                cursor: 'pointer',
-                transition: 'transform 0.2s'
-              }}
-              onClick={() => handleVostcardClick(vostcard.id)}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              <img
-                src={vostcard.photoURLs?.[0] || '/placeholder.jpg'}
-                alt={vostcard.title || 'Untitled'}
+      <div style={{ 
+        flex: 1,
+        padding: '20px',
+        overflowY: 'auto'
+      }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
+            <p>Loading liked Vōstcards...</p>
+          </div>
+        ) : error ? (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#dc3545' }}>
+            <p>{error}</p>
+          </div>
+        ) : likedVostcards.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            background: 'white',
+            borderRadius: 15,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            margin: '20px 0'
+          }}>
+            <h3 style={{ color: '#333' }}>You haven't liked any Vōstcards yet.</h3>
+            <p style={{ color: '#666' }}>Tap the ❤️ icon on a Vōstcard to add it here.</p>
+          </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+            gap: '20px',
+            padding: '10px 0'
+          }}>
+            {likedVostcards.map((vostcard) => (
+              <div 
+                key={vostcard.id} 
                 style={{
-                  width: '100%', height: 150, objectFit: 'cover',
-                  borderRadius: 10, marginBottom: 10
+                  background: 'white',
+                  borderRadius: 15,
+                  padding: '15px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
-              />
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>
-                {vostcard.title || 'Untitled'}
-              </h3>
-              <p style={{ margin: '8px 0', color: '#555' }}>
-                {vostcard.description?.slice(0, 60)}...
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <FaHeart color="red" />
-                <span>{vostcard.likeCount || 0} likes</span>
+                onClick={() => handleVostcardClick(vostcard.id)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }}
+              >
+                <img
+                  src={vostcard.photoURLs?.[0] || '/placeholder.jpg'}
+                  alt={vostcard.title || 'Untitled'}
+                  style={{
+                    width: '100%',
+                    height: 150,
+                    objectFit: 'cover',
+                    borderRadius: 10,
+                    marginBottom: 10
+                  }}
+                />
+                <h3 style={{ 
+                  margin: 0,
+                  fontSize: '1.1rem',
+                  color: '#333'
+                }}>
+                  {vostcard.title || 'Untitled'}
+                </h3>
+                <p style={{ 
+                  margin: '8px 0',
+                  color: '#666',
+                  fontSize: '0.9rem'
+                }}>
+                  {vostcard.description?.slice(0, 60)}...
+                </p>
+                <div style={{ 
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  color: '#666'
+                }}>
+                  <FaHeart color="#ff4444" />
+                  <span>{vostcard.likeCount || 0} likes</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

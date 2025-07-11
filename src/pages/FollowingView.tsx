@@ -62,73 +62,144 @@ const FollowingView: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
-      {/* ✅ Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div style={{ 
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#07345c',
+        color: 'white',
+        padding: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      }}>
+        <h1 style={{ 
+          fontSize: '2.2rem',
+          fontWeight: 700,
+          margin: 0 
+        }}>Following</h1>
         <button
           onClick={() => navigate('/home')}
-          style={{ background: '#007aff', color: 'white', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer' }}
+          style={{
+            background: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 55,
+            height: 55,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
         >
-          <FaHome /> Home
+          <FaHome size={28} color="white" />
         </button>
-        <h1>Following</h1>
       </div>
 
-      {/* ✅ Loading */}
-      {loading && <p>Loading followed users...</p>}
+      {/* Content */}
+      <div style={{ 
+        flex: 1,
+        padding: '20px',
+        overflowY: 'auto'
+      }}>
+        {/* Loading */}
+        {loading && (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
+            <p>Loading followed users...</p>
+          </div>
+        )}
 
-      {/* ✅ No users */}
-      {!loading && followedUsers.length === 0 && (
-        <p style={{ color: '#666', textAlign: 'center' }}>
-          You are not following anyone yet.
-        </p>
-      )}
+        {/* No users */}
+        {!loading && followedUsers.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            background: 'white',
+            borderRadius: 15,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            margin: '20px 0'
+          }}>
+            <h3 style={{ color: '#333' }}>You are not following anyone yet.</h3>
+            <p style={{ color: '#666' }}>Follow other users to see their updates here.</p>
+          </div>
+        )}
 
-      {/* ✅ Followed Users List */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 15 }}>
-        {followedUsers.map((user) => (
-          <div
-            key={user.id}
-            style={{
-              background: 'white',
-              borderRadius: 10,
-              padding: 15,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              cursor: 'pointer'
-            }}
-            onClick={() => handleViewProfile(user.id)}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
-              {user.avatarURL ? (
-                <img
-                  src={user.avatarURL}
-                  alt={user.username}
-                  style={{ width: 50, height: 50, borderRadius: '50%', marginRight: 10, objectFit: 'cover' }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 50,
-                    height: 50,
+        {/* Followed Users Grid */}
+        <div style={{ 
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+          gap: '20px',
+          padding: '10px 0'
+        }}>
+          {followedUsers.map((user) => (
+            <div
+              key={user.id}
+              style={{
+                background: 'white',
+                borderRadius: 15,
+                padding: '20px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+              onClick={() => handleViewProfile(user.id)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                {user.avatarURL ? (
+                  <img
+                    src={user.avatarURL}
+                    alt={user.username}
+                    style={{ 
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: 60,
+                    height: 60,
                     borderRadius: '50%',
-                    background: '#ccc',
+                    background: '#eee',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'white',
-                    marginRight: 10
-                  }}
-                >
-                  ?
+                    color: '#666',
+                    fontSize: '24px'
+                  }}>
+                    ?
+                  </div>
+                )}
+                <div>
+                  <h3 style={{ 
+                    margin: 0,
+                    color: '#333',
+                    fontSize: '1.2rem'
+                  }}>{user.username}</h3>
+                  <p style={{ 
+                    margin: '5px 0 0 0',
+                    color: '#666',
+                    fontSize: '0.9rem'
+                  }}>Tap to view profile</p>
                 </div>
-              )}
-              <div>
-                <h3 style={{ margin: 0 }}>{user.username}</h3>
-                <p style={{ margin: 0, color: '#999', fontSize: 14 }}>Tap to view profile</p>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
