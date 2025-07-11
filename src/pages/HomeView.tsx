@@ -89,9 +89,8 @@ const HomeView = () => {
     const navigationState = location.state as any;
     if (navigationState?.freshLoad) {
       console.log('🔄 Fresh load requested after posting vostcard');
-      // Force a complete refresh like first login
+      // Force a refresh of vostcards but keep location
       setVostcards([]);
-      setUserLocation(null);
       setLoadingVostcards(true);
       setMapError(null);
       setRetryCount(0);
@@ -218,9 +217,9 @@ const HomeView = () => {
           setMapError('Could not get your location. Please enable location services.');
         },
         { 
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 
+          enableHighAccuracy: false, // Faster, still accurate enough for our needs
+          timeout: 5000,  // Shorter timeout
+          maximumAge: 600000  // Cache location for 10 minutes
         }
       );
     };
