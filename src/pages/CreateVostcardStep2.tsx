@@ -164,7 +164,7 @@ export default function CreateVostcardStep2() {
           </button>
         ))}
         <button
-          style={{ ...buttonStyle, marginTop: -16 }}
+          style={{ ...buttonStyle, marginTop: 15 }}
           onClick={handleSaveAndContinue}
         >
           Save & Continue
