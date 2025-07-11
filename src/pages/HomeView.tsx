@@ -685,14 +685,16 @@ const avatarImageStyle = {
 };
 
 const menuStyle = {
-  position: 'absolute' as const,
-  top: 70, // Moved back from 165 to 70
-  right: 0,
+  position: 'fixed' as const,
+  top: 80, // Align with bottom of header
+  right: 16, // Match header padding
   background: 'white',
   boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-  borderRadius: '0 0 10px 10px',
-  zIndex: 101,
+  borderRadius: 12,
+  zIndex: 2000, // Higher than other UI elements
   minWidth: 220,
+  maxHeight: 'calc(100vh - 100px)', // Prevent extending beyond screen
+  overflowY: 'auto' as const,
   padding: '10px 0',
 };
 
