@@ -623,19 +623,19 @@ const HomeView = () => {
                 src={userAvatar}
                 alt="User Avatar"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 55,  // Changed from 40 to 55
+                  height: 55, // Changed from 40 to 55
                   borderRadius: '50%',
                   objectFit: 'cover'
                 }}
                 onError={() => setUserAvatar(null)}
               />
             ) : (
-              <FaUserCircle size={40} color="white" />
+              <FaUserCircle size={55} color="white" /> // Changed from 40 to 55
             )}
           </div>
           <FaBars
-            size={30}
+            size={55} // Changed from 30 to 55
             color="white"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             style={{ cursor: 'pointer' }}
@@ -966,9 +966,9 @@ const menuStyle = {
 };
 
 const menuItemStyle = {
-  padding: '12px 24px',
+  padding: '16px 24px', // Increased padding to accommodate larger font
   cursor: 'pointer',
-  fontSize: 16,
+  fontSize: 22, // Increased from 16 to 22
   color: '#002B4D',
   borderBottom: '1px solid #f0f0f0',
   transition: 'background-color 0.2s ease',
@@ -977,6 +977,9 @@ const menuItemStyle = {
   background: 'none',
   border: 'none',
   outline: 'none',
+  fontWeight: 500, // Added to make text more visible
+  width: '100%',
+  textAlign: 'left',
   ':hover': {
     backgroundColor: '#f5f5f5'
   },
