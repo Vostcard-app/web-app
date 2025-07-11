@@ -210,7 +210,9 @@ const CreateVostcardStep3: React.FC = () => {
         justifyContent: 'space-between',
         padding: '0 16px',
         flexShrink: 0,
-        touchAction: 'manipulation'
+        touchAction: 'manipulation',
+        position: 'relative',
+        zIndex: 1000  // Higher than the modal overlay
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
         <FaArrowLeft
@@ -445,7 +447,7 @@ const modalOverlayStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  zIndex: 999,
+  zIndex: 998,  // Lower than the header
 };
 
 const modalContentStyle: React.CSSProperties = {
@@ -454,6 +456,8 @@ const modalContentStyle: React.CSSProperties = {
   borderRadius: 12,
   width: '80%',
   maxWidth: 400,
+  position: 'relative',
+  zIndex: 999  // Higher than overlay but lower than header
 };
 
 const categoryItemStyle: React.CSSProperties = {
