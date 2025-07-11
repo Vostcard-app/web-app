@@ -84,6 +84,32 @@ const HomeView = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
 
+  // Return early if not authenticated
+  if (!user && loading) {
+    return (
+      <div style={{ 
+        height: '100vh', 
+        width: '100vw', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: 'white'
+      }}>
+        <div style={{
+          background: 'rgba(0,43,77,0.9)',
+          color: 'white',
+          padding: '20px 30px',
+          borderRadius: '12px',
+          fontSize: '18px',
+          fontWeight: 600,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
   // Check for fresh load state from navigation
   useEffect(() => {
     const navigationState = location.state as any;
@@ -345,35 +371,57 @@ const HomeView = () => {
   };
 
   return (
-    <div style={containerStyle}>
-      {/* Header */}
-      <div style={headerStyle}>
-        <div style={logoContainerStyle}>
-          <h1 style={logoStyle}>Vōstcard</h1>
-        </div>
-        <div style={headerRight}>
-          {/* User Avatar */}
+    <div style={{ 
+      height: '100vh', 
+      width: '100vw', 
+      position: 'relative',
+      overflow: 'hidden',
+      backgroundColor: 'white',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* 🔵 Header */}
+      <div style={{
+        backgroundColor: '#002B4D',
+        height: 80,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 16px',
+        flexShrink: 0,
+        touchAction: 'manipulation',
+        position: 'relative',
+        zIndex: 1000
+      }}>
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div
-            style={avatarContainerStyle}
             onClick={() => {
               if (user?.uid) {
                 navigate(`/profile/${user.uid}`);
               }
             }}
+            style={{ cursor: 'pointer' }}
           >
             {userAvatar ? (
               <img
                 src={userAvatar}
                 alt="User Avatar"
-                style={avatarImageStyle}
-                onError={() => setUserAvatar(null)} // Fallback if image fails to load
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  objectFit: 'cover'
+                }}
+                onError={() => setUserAvatar(null)}
               />
             ) : (
-              <FaUserCircle size={60} color="white" />
+              <FaUserCircle size={40} color="white" />
             )}
           </div>
           <FaBars
             size={30}
+            color="white"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             style={{ cursor: 'pointer' }}
           />
@@ -433,7 +481,14 @@ const HomeView = () => {
       </div>
 
       {/* Map Container */}
-      <div style={mapContainerStyle}>
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1
+      }}>
         {mapError ? (
           <div style={errorOverlayStyle}>
             <div style={errorContentStyle}>
