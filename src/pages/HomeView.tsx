@@ -15,16 +15,16 @@ import './HomeView.css';
 
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
-  iconSize: [100, 100],
-  iconAnchor: [50, 100],
-  popupAnchor: [0, -100],
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],  // Center-bottom of the 75px icon
+  popupAnchor: [0, -75],   // Popup 75px above the anchor
 });
 
 const offerIcon = new L.Icon({
   iconUrl: OfferPin,
-  iconSize: [100, 100],
-  iconAnchor: [50, 100],
-  popupAnchor: [0, -100],
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],  // Center-bottom of the 75px icon
+  popupAnchor: [0, -75],   // Popup 75px above the anchor
 });
 
 const userIcon = new L.DivIcon({
@@ -704,14 +704,14 @@ const menuItemStyle = {
 
 const listViewButtonContainerLeft = {
   position: 'absolute' as const,
-  top: 130, // 80px header + 50px padding
+  top: 90, // 80px header + 10px padding
   left: 20,
   zIndex: 20,
 };
 
 const listViewButtonContainerRight = {
   position: 'absolute' as const,
-  top: 130, // 80px header + 50px padding
+  top: 90, // 80px header + 10px padding
   right: 20,
   zIndex: 20,
 };
