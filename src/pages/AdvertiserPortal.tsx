@@ -4,45 +4,10 @@ import { useAuth } from "../context/AuthContext";
 
 const AdvertiserPortal: React.FC = () => {
   const navigate = useNavigate();
-  const { user, userRole } = useAuth();
-
-  const handleUpdateProfile = () => {
-    console.log('🔄 Navigating to store profile page...');
-    navigate('/store-profile-page');
-  };
-
-  const handleCreateOffer = () => {
-    console.log('🎯 Create Offer clicked:', {
-      userRole,
-      userId: user?.uid,
-      isAuthenticated: !!user
-    });
-    
-    if (!user) {
-      console.error('❌ No authenticated user');
-      alert('Please log in to create offers.');
-      navigate('/login');
-      return;
-    }
-
-    if (userRole !== 'advertiser') {
-      console.error('❌ User is not an advertiser:', userRole);
-      alert('You must be an advertiser to create offers.');
-      return;
-    }
-
-    console.log('✅ Navigating to create offer page');
-    navigate('/create-offer');
-  };
+  const { user } = useAuth();
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
-      {/* Fixed Header */}
+    <>
       <div style={{
         width: '100%',
         backgroundColor: '#002B4D',
@@ -53,12 +18,11 @@ const AdvertiserPortal: React.FC = () => {
         alignItems: 'center',
         fontSize: '24px',
         fontWeight: 'bold',
-        flexShrink: 0,
-        zIndex: 10
       }}>
         <span>Vōstcard Advertiser Portal</span>
         <button
           onClick={() => {
+            // sign out the user and navigate to login
             import('../firebase/firebaseConfig').then(({ auth }) => {
               auth.signOut().then(() => {
                 navigate('/login');
@@ -78,147 +42,123 @@ const AdvertiserPortal: React.FC = () => {
           Log Out
         </button>
       </div>
+      <div style={{ maxWidth: "900px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+        <h1 style={{ textAlign: "center", color: "#002B4D" }}>Advertiser Portal</h1>
 
-      {/* Scrollable Content Area */}
-      <div style={{ 
-        flex: 1,
-        overflowY: 'auto',
-        padding: '20px',
-        backgroundColor: '#f5f5f5',
-        WebkitOverflowScrolling: 'touch'
-      }}>
-        <div style={{ 
-          maxWidth: "900px", 
-          margin: "0 auto",
-          paddingBottom: "40px"
+        {/* Store Profile Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          textAlign: 'center'
         }}>
-          <h1 style={{ textAlign: "center", color: "#002B4D", margin: "0 0 24px 0" }}>Advertiser Portal</h1>
+          <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>
+            Store Profile
+          </h2>
+          <img
+            src={user?.photoURL || '/default-store.png'}
+            alt="Store Profile"
+            style={{
+              width: '120px',
+              height: '120px',
+              objectFit: 'cover',
+              borderRadius: '12px',
+              marginBottom: '12px',
+              border: '2px solid #002B4D'
+            }}
+          />
+          <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
+            Update your store profile details to ensure your offers appear correctly in the app.
+          </p>
+          <button
+            onClick={() => navigate('/store-profile-page')}
+            style={{
+              marginTop: '16px',
+              padding: '12px 20px',
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Update Store Profile
+          </button>
+        </div>
 
-          {/* Store Profile Section */}
+        {/* Create Offer Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          textAlign: 'center'
+        }}>
+          <h2 style={{ margin: '0 0 8px 0', color: '#28a745' }}>
+            Create an Offer
+          </h2>
+          <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
+            You must update your profile before creating an offer.
+          </p>
+          <button
+            onClick={() => navigate('/create-offer')}
+            style={{
+              marginTop: '16px',
+              padding: '12px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: 'pointer'
+            }}
+          >
+            Create Offer
+          </button>
+        </div>
+
+        {/* Stats Cards */}
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", marginBottom: "24px" }}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
             padding: '24px',
-            marginBottom: '24px',
+            flex: 1,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             textAlign: 'center'
           }}>
-            <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>
-              Store Profile
-            </h2>
-            <img
-              src={user?.photoURL || '/default-store.png'}
-              alt="Store Profile"
-              style={{
-                width: '120px',
-                height: '120px',
-                objectFit: 'cover',
-                borderRadius: '12px',
-                marginBottom: '12px',
-                border: '2px solid #002B4D'
-              }}
-            />
-            <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
-              Update your store profile details to ensure your offers appear correctly in the app.
-            </p>
-            <button
-              onClick={handleUpdateProfile}
-              style={{
-                marginTop: '16px',
-                padding: '12px 20px',
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              Update Store Profile
-            </button>
+            <h3>Total Views</h3>
+            <p>0</p>
           </div>
-
-          {/* Create Offer Section */}
           <div style={{
             backgroundColor: 'white',
             borderRadius: '12px',
             padding: '24px',
-            marginBottom: '24px',
+            flex: 1,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             textAlign: 'center'
           }}>
-            <h2 style={{ margin: '0 0 8px 0', color: '#28a745' }}>
-              Create an Offer
-            </h2>
-            <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
-              You must update your profile before creating an offer.
-            </p>
-            <button
-              onClick={handleCreateOffer}
-              style={{
-                marginTop: '16px',
-                padding: '12px 20px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-            >
-              Create Offer
-            </button>
-          </div>
-
-          {/* Stats Cards */}
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            gap: "16px", 
-            marginBottom: "24px",
-            flexWrap: "wrap"
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              flex: '1 1 calc(50% - 8px)',
-              minWidth: '200px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <h3 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>Total Views</h3>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>0</p>
-            </div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              flex: '1 1 calc(50% - 8px)',
-              minWidth: '200px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <h3 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>Total Likes</h3>
-              <p style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>0</p>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ color: '#002B4D', margin: '0 0 16px 0' }}>Recent Activity</h2>
-            <p style={{ margin: 0, color: '#666' }}>No recent activity yet.</p>
+            <h3>Total Likes</h3>
+            <p>0</p>
           </div>
         </div>
+
+        {/* Recent Activity */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{ color: '#002B4D' }}>Recent Activity</h2>
+          <p>No recent activity yet.</p>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

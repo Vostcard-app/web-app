@@ -298,6 +298,7 @@ const HomeView = () => {
   }, []);
 
   const handleCreateVostcard = () => {
+    console.log('📝 Navigating to Create Vostcard');
     clearVostcard();
     navigate('/create-step1');
   };
@@ -413,7 +414,11 @@ const HomeView = () => {
       </div>
 
       {/* Main content area */}
-      <div style={{ flex: 1, position: 'relative' }}>
+      <div style={{ 
+        flex: 1, 
+        position: 'relative',
+        marginTop: '80px' // Add margin to account for fixed header
+      }}>
         {/* Show loading state if not authenticated */}
         {(!user && loading) ? (
           <div style={{
@@ -443,7 +448,7 @@ const HomeView = () => {
         ) : (
           // Rest of the content (map, buttons, etc.)
           <>
-            {/* List View and Offers Buttons */}
+            {/* List View and Offers Buttons - Always visible */}
             <div style={listViewButtonContainerLeft}>
               <button 
                 style={listViewButton} 
@@ -550,11 +555,27 @@ const HomeView = () => {
               )}
             </div>
 
-            {/* Create Vostcard Button */}
-            <div style={createButtonContainer}>
-              <button 
-                style={createButton} 
+            {/* Create Vostcard Button - Always visible */}
+            <div style={{
+              position: 'fixed',
+              bottom: '40px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 1000
+            }}>
+              <button
                 onClick={handleCreateVostcard}
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '15px 25px',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  whiteSpace: 'nowrap'
+                }}
               >
                 Create a Vōstcard
               </button>
@@ -620,14 +641,6 @@ const HomeView = () => {
           </div>
         </div>
       )}
-
-
-      {/* Create Vostcard Button */}
-      <div style={createButtonContainer}>
-        <button style={createButton} onClick={handleCreateVostcard}>
-          Create a Vōstcard
-        </button>
-      </div>
     </div>
   );
 };
