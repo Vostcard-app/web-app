@@ -179,25 +179,18 @@ const VostcardDetailView: React.FC = () => {
     }
   }, [id]);
 
-  // Handle video orientation detection
+  // Handle video orientation - ALWAYS PORTRAIT
   const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
     const { videoWidth, videoHeight } = videoElement;
     
-    console.log('📱 Video dimensions:', {
+    console.log('📱 Video dimensions (ALWAYS PORTRAIT):', {
       videoWidth,
       videoHeight,
-      aspectRatio: (videoWidth / videoHeight).toFixed(2),
-      userAgent: navigator.userAgent
+      aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(2) : 'unknown'
     });
 
-    // If video is taller than it is wide, it's portrait
-    if (videoHeight > videoWidth) {
-      console.log('📱 Detected portrait video, applying rotation');
-      setVideoOrientation('portrait');
-    } else {
-      console.log('📱 Detected landscape video, no rotation needed');
-      setVideoOrientation('landscape');
-    }
+    // All videos are portrait
+    setVideoOrientation('portrait');
   };
 
   const handleFlagClick = () => {
@@ -340,9 +333,7 @@ const VostcardDetailView: React.FC = () => {
                   position: 'absolute',
                   top: '50%',
                   left: '50%',
-                  transform: videoOrientation === 'portrait' 
-                    ? 'translate(-50%, -50%) rotate(90deg)' 
-                    : 'translate(-50%, -50%)',
+                  transform: 'translate(-50%, -50%)', // No rotation needed - always portrait
                 }}
                 muted
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
@@ -683,7 +674,7 @@ const VostcardDetailView: React.FC = () => {
         </div>
       )}
 
-      {/* Full-screen Video Modal */}
+      {/* Full-screen Video Modal - ALWAYS PORTRAIT */}
       {showVideoModal && videoURL && (
         <div
           style={{
@@ -733,12 +724,12 @@ const VostcardDetailView: React.FC = () => {
               ×
             </button>
             
-            {/* Video */}
+            {/* Video - ALWAYS PORTRAIT */}
             <video
               src={videoURL}
               style={{
-                maxWidth: videoOrientation === 'portrait' ? '100vh' : '100vw',
-                maxHeight: videoOrientation === 'portrait' ? '100vw' : '100vh',
+                maxWidth: '100vh', // Portrait video in portrait screen
+                maxHeight: '100vw',
                 width: 'auto',
                 height: 'auto',
                 objectFit: 'contain',
@@ -748,9 +739,7 @@ const VostcardDetailView: React.FC = () => {
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                transform: videoOrientation === 'portrait' 
-                  ? 'translate(-50%, -50%) rotate(90deg)' 
-                  : 'translate(-50%, -50%)',
+                transform: 'translate(-50%, -50%)', // No rotation - always portrait
               }}
               controls
               autoPlay
