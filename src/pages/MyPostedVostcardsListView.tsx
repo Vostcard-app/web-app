@@ -130,34 +130,39 @@ const MyPostedVostcardsListView = () => {
       {/* Banner */}
       <div style={{ 
         background: '#07345c', 
-        padding: '15px 0 24px 0', 
-        position: 'relative', 
-        textAlign: 'left', 
-        paddingLeft: '16px',
-        marginBottom: '20px'
+        padding: '16px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}>
-        <button 
-          style={{ 
-            position: 'absolute', 
-            right: 16, 
-            top: 26, 
-            background: 'rgba(0,0,0,0.10)', 
-            border: 'none', 
-            borderRadius: '50%', 
-            width: 48, 
-            height: 48, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            cursor: 'pointer' 
-          }} 
-          onClick={() => navigate('/home')}
-        >
-          <FaHome color="#fff" size={36} />
-        </button>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
+        <h1 style={{ 
+          color: 'white', 
+          margin: 0,
+          fontSize: '24px',
+          fontWeight: 600
+        }}>
           Posted Vōstcards
-        </span>
+        </h1>
+        <button 
+          onClick={() => navigate('/home')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <FaHome size={20} />
+        </button>
       </div>
 
       {/* List of Posted Vostcards (Scrollable) */}

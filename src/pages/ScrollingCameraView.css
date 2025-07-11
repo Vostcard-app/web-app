@@ -23,6 +23,24 @@ body {
   top: 0;
   left: 0;
   z-index: 1;
+  background-color: black;
+}
+
+/* Ensure proper aspect ratio for portrait mode */
+@media (orientation: portrait) {
+  .camera-preview {
+    width: 100vw;
+    height: 100vh;
+  }
+}
+
+@media (orientation: landscape) {
+  .camera-preview {
+    width: 100vh;
+    height: 100vw;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 /* ✅ Scrolling Script Overlay */

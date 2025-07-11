@@ -66,32 +66,20 @@ const ScrollingCameraView: React.FC = () => {
     const startCamera = async () => {
       try {
         // Enhanced video constraints for better iPhone compatibility
-        let videoConstraints: MediaTrackConstraints;
+        let videoConstraints: MediaTrackConstraints = {
+          facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        };
 
-        if (facingMode === 'user') {
-          // Use more conservative constraints for front camera to avoid zoomed-in effect
-          videoConstraints = {
-            facingMode: 'user',
-            width: { ideal: 640, max: 1280 },
-            height: { ideal: 480, max: 720 },
-            aspectRatio: 4 / 3,
-          };
-        } else {
-          // Use higher resolution for back camera
-          videoConstraints = {
-            facingMode: 'environment',
-            width: { ideal: 1920, max: 1920 },
-            height: { ideal: 1080, max: 1080 },
-            frameRate: { ideal: 30, max: 30 }
-          };
-        }
-
-        // For iPhone, prioritize portrait orientation for back camera
-        if (isIPhone && facingMode === 'environment') {
-          videoConstraints.width = { ideal: 1080, max: 1080 };
-          videoConstraints.height = { ideal: 1920, max: 1920 };
-          console.log('📱 iPhone detected - using portrait video constraints');
-        }
+        // For all devices, prioritize portrait orientation
+        videoConstraints = {
+          ...videoConstraints,
+          width: { ideal: 1080, max: 1080 },
+          height: { ideal: 1920, max: 1920 }
+        };
+        
+        console.log('📱 Using portrait video constraints:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -120,7 +108,11 @@ const ScrollingCameraView: React.FC = () => {
         // Fallback to basic constraints if enhanced ones fail
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode } 
+            video: { 
+              facingMode,
+              width: { ideal: 1080 },
+              height: { ideal: 1920 }
+            } 
           });
           streamRef.current = stream;
           if (videoRef.current) {
@@ -138,7 +130,7 @@ const ScrollingCameraView: React.FC = () => {
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
-  }, [facingMode, isIPhone]);
+  }, [facingMode]);
 
   const handleStartRecording = () => {
     if (streamRef.current) {
@@ -332,7 +324,10 @@ const ScrollingCameraView: React.FC = () => {
         muted
         className="camera-preview"
         style={{
-          transform: isIPhone && facingMode === 'user' ? 'scaleX(-1)' : 'none' // Mirror front camera on iPhone
+          transform: facingMode === 'user' ? 'scaleX(-1)' : 'none', // Mirror only front camera
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover'
         }}
       />
 
