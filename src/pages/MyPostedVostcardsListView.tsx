@@ -125,7 +125,8 @@ const MyPostedVostcardsListView = () => {
       backgroundColor: '#f5f5f5',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      position: 'relative'
     }}>
       {/* Banner */}
       <div style={{ 
@@ -137,7 +138,8 @@ const MyPostedVostcardsListView = () => {
         position: 'sticky',
         top: 0,
         zIndex: 10,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        flexShrink: 0
       }}>
         <h1 style={{ 
           color: 'white', 
@@ -172,7 +174,9 @@ const MyPostedVostcardsListView = () => {
         overflowX: 'hidden',
         padding: '20px',
         background: '#f5f5f5',
-        WebkitOverflowScrolling: 'touch', // Enable smooth scrolling on iOS
+        WebkitOverflowScrolling: 'touch',
+        minHeight: 0, // Important for flex scrolling
+        height: 'calc(100vh - 80px)' // Subtract header height
       }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px 20px' }}>
@@ -193,63 +197,79 @@ const MyPostedVostcardsListView = () => {
             </p>
           </div>
         ) : (
-          postedVostcards.map((vostcard) => (
-            <div key={vostcard.id} style={{
-              border: '1px solid #ccc',
-              borderRadius: '12px',
-              padding: '16px',
-              marginBottom: '16px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              background: 'white',
-            }}>
-              <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#002B4D' }}>
-                {vostcard.title || 'Untitled Vōstcard'}
-              </h2>
-              <p style={{ margin: '8px 0', color: '#666' }}>
-                <strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}
-              </p>
-              <p style={{ margin: '8px 0', color: '#666' }}>
-                <strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
-              </p>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                <button
-                  style={{
-                    backgroundColor: '#002B4D',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 16px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    transition: 'background-color 0.2s'
-                  }}
-                  onClick={() => navigate(`/vostcard/${vostcard.id}`)}
-                >
-                  View on Map
-                </button>
-                <button
-                  style={{
-                    backgroundColor: '#ff4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 16px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    opacity: unpostingIds.has(vostcard.id) ? 0.6 : 1,
-                    pointerEvents: unpostingIds.has(vostcard.id) ? 'none' : 'auto',
-                    transition: 'all 0.2s'
-                  }}
-                  onClick={() => handleUnpostVostcard(vostcard.id, vostcard.title || 'Untitled Vōstcard')}
-                  disabled={unpostingIds.has(vostcard.id)}
-                >
-                  {unpostingIds.has(vostcard.id) ? 'Un-posting...' : 'Un-Post'}
-                </button>
+          <div style={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px',
+            paddingBottom: '20px' // Extra space at bottom for easier scrolling
+          }}>
+            {postedVostcards.map((vostcard) => (
+              <div key={vostcard.id} style={{
+                border: '1px solid #ccc',
+                borderRadius: '12px',
+                padding: '16px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                background: 'white',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+              }}>
+                <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#002B4D' }}>
+                  {vostcard.title || 'Untitled Vōstcard'}
+                </h2>
+                <p style={{ margin: '8px 0', color: '#666' }}>
+                  <strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}
+                </p>
+                <p style={{ margin: '8px 0', color: '#666' }}>
+                  <strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
+                </p>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+                  <button
+                    style={{
+                      backgroundColor: '#002B4D',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      transition: 'background-color 0.2s'
+                    }}
+                    onClick={() => navigate(`/vostcard/${vostcard.id}`)}
+                  >
+                    View on Map
+                  </button>
+                  <button
+                    style={{
+                      backgroundColor: '#ff4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      opacity: unpostingIds.has(vostcard.id) ? 0.6 : 1,
+                      pointerEvents: unpostingIds.has(vostcard.id) ? 'none' : 'auto',
+                      transition: 'all 0.2s'
+                    }}
+                    onClick={() => handleUnpostVostcard(vostcard.id, vostcard.title || 'Untitled Vōstcard')}
+                    disabled={unpostingIds.has(vostcard.id)}
+                  >
+                    {unpostingIds.has(vostcard.id) ? 'Un-posting...' : 'Un-Post'}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>
