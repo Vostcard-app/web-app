@@ -373,7 +373,20 @@ const CreateOfferView: React.FC = () => {
 
   const handlePinPlacerClick = () => {
     console.log('📍 Navigating to Pin Placer Tool');
-    navigate('/pin-placer');
+    
+    // Create pin data object
+    const pinData = {
+      id: offerId || `temp_${Date.now()}`,
+      title: title || 'New Offer',
+      description: description || '',
+      latitude: storeProfile?.latitude || 0,
+      longitude: storeProfile?.longitude || 0,
+      isOffer: true,
+      userID: user?.uid
+    };
+
+    // Navigate to pin placer with the offer data
+    navigate('/pin-placer', { state: { pinData } });
   };
 
   // Show loading spinner while data is loading

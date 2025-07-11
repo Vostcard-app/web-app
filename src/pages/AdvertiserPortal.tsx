@@ -1,10 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase/firebaseConfig";
 
 const AdvertiserPortal: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [storeProfile, setStoreProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const loadStoreProfile = async () => {
+      if (user?.uid) {
+        try {
+          const advertiserRef = doc(db, "advertisers", user.uid);
+          const advertiserSnap = await getDoc(advertiserRef);
+          if (advertiserSnap.exists()) {
+            setStoreProfile(advertiserSnap.data());
+          }
+        } catch (error) {
+          console.error('Error loading store profile:', error);
+        }
+      }
+    };
+
+    loadStoreProfile();
+  }, [user?.uid]);
 
   return (
     <div style={{ 
@@ -61,7 +82,7 @@ const AdvertiserPortal: React.FC = () => {
             Store Profile
           </h2>
           <img
-            src={user?.photoURL || '/default-store.png'}
+            src={storeProfile?.storePhotoURL || '/default-store.png'}
             alt="Store Profile"
             style={{
               width: '120px',
@@ -73,7 +94,7 @@ const AdvertiserPortal: React.FC = () => {
             }}
           />
           <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
-            Update your store profile details to ensure your offers appear correctly in the app.
+            {storeProfile?.storeName || 'Update your store profile details to ensure your offers appear correctly in the app.'}
           </p>
           <button
             onClick={() => navigate('/store-profile-page')}
