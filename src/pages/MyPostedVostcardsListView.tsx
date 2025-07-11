@@ -4,6 +4,8 @@ import { FaHome, FaMapPin } from 'react-icons/fa';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
+import { storage } from '../firebase/firebaseConfig'; // Added storage import
+import { ref, getDownloadURL } from 'firebase/storage'; // Added storage imports
 
 interface PostedVostcard {
   id: string;
@@ -75,12 +77,19 @@ const MyPostedVostcardsListView = () => {
       const vostcardData = vostcardSnap.data();
       console.log('📄 Retrieved vostcard data:', vostcardData);
 
-      // First, fetch the video data from the URL
+      // First, fetch the video data from Firebase Storage
       let videoBlob = null;
       if (vostcardData.videoURL) {
         try {
-          console.log('📥 Fetching video from URL:', vostcardData.videoURL);
-          const response = await fetch(vostcardData.videoURL);
+          console.log('📥 Fetching video from Firebase Storage:', vostcardData.videoURL);
+          
+          // Get a fresh download URL (in case the token expired)
+          const videoRef = ref(storage, vostcardData.videoURL.split('/o/')[1].split('?')[0]);
+          const freshVideoURL = await getDownloadURL(videoRef);
+          
+          // Fetch the video
+          const response = await fetch(freshVideoURL);
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           videoBlob = await response.blob();
           console.log('✅ Video fetched successfully, size:', videoBlob.size);
         } catch (error) {
@@ -88,7 +97,7 @@ const MyPostedVostcardsListView = () => {
         }
       }
 
-      // Convert video blob to base64 if we have it
+      // Convert video blob to base64
       let videoBase64 = null;
       if (videoBlob) {
         try {
@@ -108,14 +117,13 @@ const MyPostedVostcardsListView = () => {
         ...vostcardData,
         id: crypto.randomUUID(),
         state: 'private' as const,
-        _videoBase64: videoBase64, // Store the actual base64 data
-        video: null, // Will be restored from _videoBase64 when loaded
+        _videoBase64: videoBase64,
+        video: videoBlob, // Store the blob directly
         photos: vostcardData.photos || [],
         photoURLs: vostcardData.photoURLs || [],
         title: vostcardData.title || '',
         description: vostcardData.description || '',
         categories: vostcardData.categories || [],
-        // Ensure geo data is properly structured
         geo: vostcardData.geo || {
           latitude: vostcardData.latitude || 0,
           longitude: vostcardData.longitude || 0
@@ -133,7 +141,7 @@ const MyPostedVostcardsListView = () => {
       setCurrentVostcard(privateVostcard);
       
       // Wait a moment to ensure state is updated
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 500)); // Increased timeout
       
       // Then save to IndexedDB
       console.log('💾 Saving to local storage...');
@@ -155,7 +163,6 @@ const MyPostedVostcardsListView = () => {
       console.error('❌ Error un-posting vostcard:', error);
       alert(`❌ Failed to un-post "${title}". Please try again.\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      // Remove from unposting set
       setUnpostingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(vostcardId);
