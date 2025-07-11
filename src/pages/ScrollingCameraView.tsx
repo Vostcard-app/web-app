@@ -272,7 +272,7 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
-      {/* Camera Preview - Rotate if needed for portrait display */}
+      {/* Camera Preview - Show full video frame */}
       <video
         ref={videoRef}
         autoPlay
@@ -283,7 +283,7 @@ const ScrollingCameraView: React.FC = () => {
           transform: `${facingMode === 'user' ? 'scaleX(-1)' : ''} ${isLandscapeVideo ? 'rotate(90deg)' : ''}`.trim(),
           width: isLandscapeVideo ? '100vh' : '100vw',
           height: isLandscapeVideo ? '100vw' : '100vh',
-          objectFit: 'cover', // Fill the screen
+          objectFit: 'contain', // Show full video without cropping
           position: 'absolute',
           top: isLandscapeVideo ? '50%' : '0',
           left: isLandscapeVideo ? '50%' : '0',
