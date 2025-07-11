@@ -22,7 +22,10 @@ const MyVostcardListView = () => {
     navigate(`/view-vostcard/${vostcardId}`);
   };
 
-  const handleDelete = async (vostcardId: string) => {
+  const handleDelete = async (e: React.MouseEvent, vostcardId: string) => {
+    // Stop event propagation to prevent parent container click
+    e.stopPropagation();
+    
     if (window.confirm('Are you sure you want to delete this Vōstcard? This action cannot be undone.')) {
       try {
         await deletePrivateVostcard(vostcardId);
@@ -274,7 +277,7 @@ const MyVostcardListView = () => {
                         gap: '6px',
                         fontSize: '14px'
                       }}
-                      onClick={() => handleDelete(vostcard.id)}
+                      onClick={(e) => handleDelete(e, vostcard.id)}
                     >
                       <FaTrash size={12} />
                       Delete
