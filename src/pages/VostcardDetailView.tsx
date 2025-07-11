@@ -255,10 +255,10 @@ const VostcardDetailView: React.FC = () => {
       style={{
         background: '#fff',
         minHeight: '100vh',
-        maxHeight: '100vh',
-        overflowY: 'scroll',
+        overflowY: 'auto',
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
+        paddingBottom: '20px',
       }}
     >
       {/* Banner */}
@@ -476,7 +476,7 @@ const VostcardDetailView: React.FC = () => {
             cursor: 'pointer', 
             padding: '5px',
             position: 'absolute',
-            left: '80px'
+            left: '50px'
           }}
           onClick={handleFlagClick}
         />
@@ -501,7 +501,7 @@ const VostcardDetailView: React.FC = () => {
           style={{ 
             padding: '5px',
             position: 'absolute',
-            right: '80px'
+            right: '50px'
           }}
         />
       </div>

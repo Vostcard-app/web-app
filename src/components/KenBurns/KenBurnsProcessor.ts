@@ -16,6 +16,7 @@ export interface KenBurnsPhoto {
   scale: number;
   panX: number;
   panY: number;
+  image: HTMLImageElement;
 }
 
 export class KenBurnsProcessor {
@@ -90,7 +91,8 @@ export class KenBurnsProcessor {
             height: img.height,
             scale: 1.0,
             panX: 0,
-            panY: 0
+            panY: 0,
+            image: img
           };
           
           // Calculate Ken Burns parameters
@@ -231,11 +233,9 @@ export class KenBurnsProcessor {
     );
     this.ctx.scale(scale, scale);
     
-    // Draw photo
-    const img = new Image();
-    img.src = photo.src;
+    // Draw photo using the preloaded image
     this.ctx.drawImage(
-      img,
+      photo.image,
       -this.canvas.width / 2,
       -this.canvas.height / 2,
       this.canvas.width,
@@ -246,9 +246,49 @@ export class KenBurnsProcessor {
   }
 
   private async exportVideo(frames: ImageData[]): Promise<Blob> {
-    // This is a simplified version - in practice you'd use MediaRecorder
-    // For now, we'll return a placeholder
-    return new Blob(['placeholder'], { type: 'video/mp4' });
+    return new Promise((resolve, reject) => {
+      const stream = this.canvas.captureStream(this.config.frameRate);
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9'
+      });
+      
+      const chunks: Blob[] = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        resolve(blob);
+      };
+      
+      mediaRecorder.onerror = (event) => {
+        reject(new Error('MediaRecorder error'));
+      };
+      
+      // Start recording
+      mediaRecorder.start();
+      
+      // Play back all frames
+      this.playbackFrames(frames).then(() => {
+        mediaRecorder.stop();
+      }).catch(reject);
+    });
+  }
+  
+  private async playbackFrames(frames: ImageData[]): Promise<void> {
+    const frameInterval = 1000 / this.config.frameRate;
+    
+    for (let i = 0; i < frames.length; i++) {
+      // Draw frame to canvas
+      this.ctx.putImageData(frames[i], 0, 0);
+      
+      // Wait for next frame
+      await new Promise(resolve => setTimeout(resolve, frameInterval));
+    }
   }
 
   public stop(): void {

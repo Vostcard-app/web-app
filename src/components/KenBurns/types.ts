@@ -16,6 +16,7 @@ export interface KenBurnsPhoto {
   scale: number;
   panX: number;
   panY: number;
+  image: HTMLImageElement;
 }
 
 export interface KenBurnsResult {
