@@ -86,7 +86,7 @@ const ScriptLibraryView: React.FC = () => {
               justifyContent: 'center'
             }}
           >
-            <FaHome />
+            <FaHome size={50} />
           </button>
           <h1 style={{ margin: 0, color: '#333' }}>Script Library</h1>
         </div>
