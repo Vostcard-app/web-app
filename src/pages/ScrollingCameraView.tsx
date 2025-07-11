@@ -65,18 +65,12 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Enhanced video constraints for better iPhone compatibility
+        // Force portrait orientation for recording
         let videoConstraints: MediaTrackConstraints = {
           facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        };
-
-        // For all devices, prioritize portrait orientation
-        videoConstraints = {
-          ...videoConstraints,
           width: { ideal: 1080, max: 1080 },
-          height: { ideal: 1920, max: 1920 }
+          height: { ideal: 1920, max: 1920 },
+          aspectRatio: 9/16 // Force portrait aspect ratio
         };
         
         console.log('📱 Using portrait video constraints:', videoConstraints);
@@ -99,8 +93,26 @@ const ScrollingCameraView: React.FC = () => {
             width: settings.width,
             height: settings.height,
             facingMode: settings.facingMode,
-            frameRate: settings.frameRate
+            frameRate: settings.frameRate,
+            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown'
           });
+          
+          // If the camera is giving us landscape, we need to handle it differently
+          if (settings.width && settings.height && settings.width > settings.height) {
+            console.log('⚠️ Camera is providing landscape orientation, will need to rotate for portrait recording');
+          }
+          
+          // Try to apply portrait constraints to the video track
+          try {
+            await videoTrack.applyConstraints({
+              width: { ideal: 1080, max: 1080 },
+              height: { ideal: 1920, max: 1920 },
+              aspectRatio: 9/16
+            });
+            console.log('✅ Applied portrait constraints to video track');
+          } catch (constraintErr) {
+            console.log('⚠️ Could not apply portrait constraints:', constraintErr);
+          }
         }
 
       } catch (err) {
@@ -111,7 +123,8 @@ const ScrollingCameraView: React.FC = () => {
             video: { 
               facingMode,
               width: { ideal: 1080 },
-              height: { ideal: 1920 }
+              height: { ideal: 1920 },
+              aspectRatio: 9/16
             } 
           });
           streamRef.current = stream;
@@ -121,6 +134,19 @@ const ScrollingCameraView: React.FC = () => {
           console.log('📱 Using fallback camera constraints');
         } catch (fallbackErr) {
           console.error('Fallback camera access also failed:', fallbackErr);
+          // Final fallback - let browser decide
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+              video: { facingMode } 
+            });
+            streamRef.current = stream;
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+            }
+            console.log('📱 Using basic camera constraints');
+          } catch (basicErr) {
+            console.error('All camera access attempts failed:', basicErr);
+          }
         }
       }
     };
@@ -325,9 +351,12 @@ const ScrollingCameraView: React.FC = () => {
         className="camera-preview"
         style={{
           transform: facingMode === 'user' ? 'scaleX(-1)' : 'none', // Mirror only front camera
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover'
+          width: '100vw',
+          height: '100vh',
+          objectFit: 'cover',
+          position: 'absolute',
+          top: 0,
+          left: 0
         }}
       />
 
