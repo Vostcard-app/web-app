@@ -362,7 +362,10 @@ const HomeView = () => {
         padding: '0 16px',
         flexShrink: 0,
         touchAction: 'manipulation',
-        position: 'relative',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
         zIndex: 1000
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
@@ -731,8 +734,8 @@ const listViewButton = {
 };
 
 const mapContainerStyle = {
-  position: 'absolute' as const,
-  top: 70, // Moved back from 165 to 70
+  position: 'fixed' as const,
+  top: 80,
   left: 0,
   right: 0,
   bottom: 0,
@@ -846,11 +849,11 @@ const debugButtonStyle = {
 };
 
 const createButtonContainer = {
-  position: 'absolute' as const,
-  bottom: 100, // Changed from 40 to 100 (moving up 60px)
+  position: 'fixed' as const,
+  bottom: 40,
   left: 15,
   right: 15,
-  zIndex: 20,
+  zIndex: 1000,
 };
 
 const createButton = {
