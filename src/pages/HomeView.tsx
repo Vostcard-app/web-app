@@ -728,13 +728,14 @@ const HomeView = () => {
                 <MapContainer 
                   center={userLocation} 
                   zoom={16} 
-                  maxZoom={22}  // Set very high max zoom level
+                  maxZoom={22} 
                   style={{ height: '100%', width: '100%' }} 
                   zoomControl={false}
                 >
                   <TileLayer 
-                    attribution="&copy; OpenStreetMap contributors" 
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+                    maxZoom={22}
                   />
 
                   <Marker position={userLocation} icon={userIcon}>

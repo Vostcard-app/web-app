@@ -62,12 +62,9 @@ const MyPostedVostcardsListView = () => {
     }
 
     try {
-      // Add to unposting set to show loading state
       setUnpostingIds(prev => new Set(prev.add(vostcardId)));
-
       console.log(`🔄 Starting unpost process for: ${title}`);
 
-      // Get the current vostcard data
       const vostcardRef = doc(db, 'vostcards', vostcardId);
       const vostcardSnap = await getDoc(vostcardRef);
       
@@ -81,22 +78,26 @@ const MyPostedVostcardsListView = () => {
       // Create private vostcard with proper media handling
       const privateVostcard = {
         ...vostcardData,
-        id: crypto.randomUUID(), // Generate new ID for local storage
+        id: crypto.randomUUID(),
         state: 'private' as const,
-        // Keep the media URLs/data as they are - don't null them out
-        video: vostcardData.video || null,
+        // Store video URL in _videoBase64 for proper serialization
+        _videoBase64: vostcardData.videoURL || null,
+        video: null, // Will be restored from _videoBase64 when loaded
         photos: vostcardData.photos || [],
-        videoURL: vostcardData.videoURL || null, // Keep Firebase video URL
-        photoURLs: vostcardData.photoURLs || [], // Keep Firebase photo URLs
+        photoURLs: vostcardData.photoURLs || [],
         title: vostcardData.title || '',
         description: vostcardData.description || '',
         categories: vostcardData.categories || [],
-        geo: vostcardData.geo || null,
+        // Ensure geo data is properly structured
+        geo: vostcardData.geo || {
+          latitude: vostcardData.latitude || 0,
+          longitude: vostcardData.longitude || 0
+        },
         username: vostcardData.username || '',
         userID: vostcardData.userID || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        originalPostedId: vostcardId // Keep reference to original
+        originalPostedId: vostcardId
       };
 
       console.log('💾 Setting as current vostcard:', privateVostcard);
