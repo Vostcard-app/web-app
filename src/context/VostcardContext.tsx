@@ -937,7 +937,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       console.log('✅ Vostcard posted successfully to Firebase!');
-      alert('🎉 Vōstcard posted successfully! It will appear on the map with media.');
+      // Removing this alert since we show it in CreateVostcardStep3
+      // alert('🎉 Vōstcard posted successfully! It will appear on the map with media.');
 
       clearVostcard();
 
