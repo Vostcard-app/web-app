@@ -65,14 +65,15 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // FORCE portrait video from camera - no compromise
+        // Keep 9:16 aspect ratio but use MUCH higher resolution for wider field of view
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
-          width: { exact: 1080 },
-          height: { exact: 1920 }
+          width: { ideal: 2160 }, // 4K width for wider field of view
+          height: { ideal: 3840 }, // 4K height maintaining 9:16 ratio
+          aspectRatio: 9/16 // Ensure portrait aspect ratio
         };
         
-        console.log('📱 FORCING portrait video from camera:', videoConstraints);
+        console.log('📱 Requesting 9:16 with wide field of view:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -84,43 +85,55 @@ const ScrollingCameraView: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
 
-        // Verify we got portrait
+        // Check what we actually got
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
           console.log('📱 Camera provided:', {
             width: settings.width,
             height: settings.height,
-            isPortrait: settings.height && settings.width ? settings.height > settings.width : 'unknown'
+            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
+            resolution: `${settings.width}x${settings.height}`
           });
-          
-          // We only accept portrait - no landscape handling
-          if (settings.width && settings.height && settings.height > settings.width) {
-            console.log('✅ SUCCESS: Camera provided portrait video');
-          } else {
-            console.log('❌ FAILED: Camera did not provide portrait video');
-            // We'll still try to record but warn user
-          }
         }
 
       } catch (err) {
-        console.error('Failed to get portrait video:', err);
-        // If exact constraints fail, try ideal
+        console.error('Failed to get 4K portrait:', err);
+        // Fallback to 1440p portrait
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
               facingMode,
-              width: { ideal: 1080 },
-              height: { ideal: 1920 }
+              width: { ideal: 1440 },
+              height: { ideal: 2560 },
+              aspectRatio: 9/16
             } 
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using ideal portrait constraints');
+          console.log('📱 Using 1440p portrait fallback');
         } catch (fallbackErr) {
-          console.error('All portrait constraints failed:', fallbackErr);
+          console.error('Failed 1440p, trying 1080p portrait:', fallbackErr);
+          // Final fallback to 1080p portrait
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+              video: { 
+                facingMode,
+                width: { ideal: 1080 },
+                height: { ideal: 1920 },
+                aspectRatio: 9/16
+              } 
+            });
+            streamRef.current = stream;
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+            }
+            console.log('📱 Using 1080p portrait final fallback');
+          } catch (finalErr) {
+            console.error('All portrait resolutions failed:', finalErr);
+          }
         }
       }
     };
