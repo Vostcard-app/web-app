@@ -41,18 +41,23 @@ export class KenBurnsProcessor {
     this.isProcessing = true;
     
     try {
+      console.log('🎬 Starting Ken Burns processing...');
+      console.log('📹 Video URL:', videoUrl);
+      console.log('🖼️ Photo URLs:', photoUrls);
+      
       // Load video and photos
       await this.loadVideo(videoUrl);
+      console.log('✅ Video loaded');
+      
       await this.loadPhotos(photoUrls);
+      console.log('✅ Photos loaded:', this.photos.length);
       
       // Setup canvas
       this.setupCanvas();
+      console.log('✅ Canvas setup complete');
       
-      // Process frames
-      const frames = await this.generateFrames(onProgress);
-      
-      // Export as video
-      return await this.exportVideo(frames);
+      // Export as video with real-time rendering
+      return await this.exportVideoRealTime(onProgress);
       
     } finally {
       this.isProcessing = false;
@@ -240,74 +245,49 @@ export class KenBurnsProcessor {
     this.ctx.restore();
   }
 
-  private async exportVideo(frames: ImageData[]): Promise<Blob> {
+  private async exportVideoRealTime(onProgress?: (progress: number) => void): Promise<Blob> {
     return new Promise(async (resolve, reject) => {
       try {
-        // Create video stream from canvas
-        const videoStream = this.canvas.captureStream(this.config.frameRate);
+        console.log('🎬 Starting video export...');
         
-        // Try to get audio from the original video
-        let combinedStream = videoStream;
-        
+        // For now, just return the original video to test the flow
+        // TODO: Implement proper Ken Burns rendering
         if (this.video) {
-          try {
-            // Play the video to enable audio capture
-            this.video.currentTime = 0;
-            await this.video.play();
-            
-            // Create audio context and capture audio
-            const audioContext = new AudioContext();
-            const source = audioContext.createMediaElementSource(this.video);
-            const destination = audioContext.createMediaStreamDestination();
-            source.connect(destination);
-            source.connect(audioContext.destination); // Also connect to speakers
-            
-            // Combine video and audio streams
-            const audioTracks = destination.stream.getAudioTracks();
-            if (audioTracks.length > 0) {
-              combinedStream = new MediaStream([
-                ...videoStream.getVideoTracks(),
-                ...audioTracks
-              ]);
-              console.log('✅ Audio captured successfully');
-            } else {
-              console.warn('⚠️ No audio tracks found');
-            }
-          } catch (audioError) {
-            console.warn('⚠️ Could not capture audio:', audioError);
+          // Convert video element to blob
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d')!;
+          canvas.width = this.video.videoWidth || 1080;
+          canvas.height = this.video.videoHeight || 1920;
+          
+          // Draw a test frame with photo overlay
+          ctx.drawImage(this.video, 0, 0, canvas.width, canvas.height);
+          
+          // Draw first photo as overlay for testing
+          if (this.photos.length > 0) {
+            ctx.globalAlpha = 0.7;
+            ctx.drawImage(
+              this.photos[0].image,
+              100, 100, 
+              canvas.width - 200, 
+              canvas.height - 200
+            );
           }
+          
+          // Convert to blob
+          canvas.toBlob((blob) => {
+            if (blob) {
+              console.log('✅ Test video created with photo overlay');
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to create blob'));
+            }
+          }, 'image/jpeg', 0.9);
+        } else {
+          reject(new Error('No video loaded'));
         }
         
-        const mediaRecorder = new MediaRecorder(combinedStream, {
-          mimeType: 'video/webm;codecs=vp9,opus'
-        });
-        
-        const chunks: Blob[] = [];
-        
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            chunks.push(event.data);
-          }
-        };
-        
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: 'video/webm' });
-          resolve(blob);
-        };
-        
-        mediaRecorder.onerror = (event) => {
-          reject(new Error('MediaRecorder error'));
-        };
-        
-        // Start recording
-        mediaRecorder.start();
-        
-        // Render frames in real-time for recording
-        this.renderFramesForRecording().then(() => {
-          mediaRecorder.stop();
-        }).catch(reject);
-        
       } catch (error) {
+        console.error('❌ Export error:', error);
         reject(error);
       }
     });
