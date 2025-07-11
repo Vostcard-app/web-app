@@ -8,15 +8,15 @@ export const AuthRedirect = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // List of paths that should bypass the redirect
+    // Add pin-placer to allowed paths
     const allowedPaths = [
       '/create-offer',
       '/store-profile-page',
-      '/advertiser-portal'
+      '/advertiser-portal',
+      '/pin-placer'  // Add this line
     ];
 
     if (!loading && user) {
-      // Only redirect if we're not on an allowed path
       if (!allowedPaths.includes(location.pathname)) {
         if (userRole === 'advertiser') {
           navigate('/advertiser-portal');

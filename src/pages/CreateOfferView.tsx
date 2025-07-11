@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, collection, addDoc } from "firebase/firestore";
 import { db, storage } from "../firebase/firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { GeocodingService } from "../services/geocodingService";
+import { FaMapMarkerAlt } from 'react-icons/fa';  // Add this import
 
 const CreateOfferView: React.FC = () => {
   const navigate = useNavigate();
@@ -370,6 +371,11 @@ const CreateOfferView: React.FC = () => {
     }
   };
 
+  const handlePinPlacerClick = () => {
+    console.log('📍 Navigating to Pin Placer Tool');
+    navigate('/pin-placer');
+  };
+
   // Show loading spinner while data is loading
   if (dataLoading) {
     return (
@@ -514,7 +520,53 @@ const CreateOfferView: React.FC = () => {
   }
 
   return (
-    <div style={{ maxWidth: "700px", margin: "40px auto", padding: "20px", background: "#fff", borderRadius: "8px", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+    <div style={{ 
+      maxWidth: '800px', 
+      margin: '0 auto', 
+      padding: '20px',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      <h1 style={{ color: '#002B4D', marginBottom: '24px' }}>
+        {isEditing ? 'Edit Offer' : 'Create New Offer'}
+      </h1>
+
+      {/* Pin Placer Button */}
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        padding: '24px',
+        marginBottom: '24px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        textAlign: 'center'
+      }}>
+        <h2 style={{ margin: '0 0 16px 0', color: '#002B4D', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <FaMapMarkerAlt style={{ marginRight: '8px' }} /> Set Location
+        </h2>
+        <p style={{ margin: '0 0 16px 0', color: '#666' }}>
+          Place a pin on the map to mark your offer's location
+        </p>
+        <button
+          onClick={handlePinPlacerClick}
+          style={{
+            backgroundColor: '#002B4D',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            margin: '0 auto',
+            transition: 'background-color 0.2s'
+          }}
+        >
+          <FaMapMarkerAlt style={{ marginRight: '8px' }} />
+          Open Pin Placer
+        </button>
+      </div>
+
+      {/* Rest of the form */}
       <button
         onClick={() => navigate("/advertiser-portal")}
         style={{
@@ -529,71 +581,6 @@ const CreateOfferView: React.FC = () => {
       >
         ← Back to Portal
       </button>
-      <h1 style={{ textAlign: "center", color: "#002B4D" }}>
-        {isEditing ? "Edit Offer" : "Create Offer"}
-      </h1>
-      
-      {/* Store Profile Status */}
-      {storeProfile && (
-        <div style={{ marginBottom: "16px" }}>
-          {/* Location Coordinates Status - THIS IS THE ONLY VALIDATION NEEDED */}
-          <div style={{
-            backgroundColor: (storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
-                            storeProfile.latitude !== null && storeProfile.longitude !== null) ? "#d4edda" : "#f8d7da",
-            color: (storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
-                   storeProfile.latitude !== null && storeProfile.longitude !== null) ? "#155724" : "#721c24",
-            padding: "12px",
-            borderRadius: "6px",
-            border: `1px solid ${(storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
-                                 storeProfile.latitude !== null && storeProfile.longitude !== null) ? "#c3e6cb" : "#f5c6cb"}`
-          }}>
-            <strong>📍 Map Location:</strong>
-            <div style={{ marginTop: "4px" }}>
-              {(storeProfile.latitude !== undefined && storeProfile.longitude !== undefined && 
-                storeProfile.latitude !== null && storeProfile.longitude !== null) ? (
-                <div>
-                  <div>✅ Location set - offer will appear on map</div>
-                  <div style={{ fontSize: "12px", marginTop: "4px" }}>
-                    📍 {storeProfile.latitude.toFixed(6)}, {storeProfile.longitude.toFixed(6)}
-                  </div>
-                </div>
-              ) : (
-                <span>⚠️ Location not set. Please <button 
-                  onClick={() => navigate("/store-profile-page")}
-                  style={{
-                    color: "#721c24",
-                    textDecoration: "underline",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    font: "inherit"
-                  }}
-                >update your store profile</button> and use 'Use My Location' to set your coordinates.</span>
-              )}
-            </div>
-          </div>
-
-          {/* Optional: Show business address info if available */}
-          {storeProfile.businessAddress && (
-            <div style={{
-              backgroundColor: "#f8f9fa",
-              padding: "12px",
-              borderRadius: "6px",
-              border: "1px solid #dee2e6",
-              marginTop: "8px"
-            }}>
-              <strong>📍 Business Address:</strong>
-              <div style={{ marginTop: "4px", fontSize: "14px", color: "#666" }}>
-                {GeocodingService.formatBusinessAddress(storeProfile.businessAddress)}
-                <div style={{ fontSize: "12px", marginTop: "4px" }}>
-                  (For contact information only - map location uses GPS coordinates)
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
       
       <form onSubmit={handleSubmit}>
         <label>
