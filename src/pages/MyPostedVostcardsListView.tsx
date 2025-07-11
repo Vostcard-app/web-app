@@ -65,6 +65,8 @@ const MyPostedVostcardsListView = () => {
       // Add to unposting set to show loading state
       setUnpostingIds(prev => new Set(prev.add(vostcardId)));
 
+      console.log(`🔄 Starting unpost process for: ${title}`);
+
       // Get the current vostcard data
       const vostcardRef = doc(db, 'vostcards', vostcardId);
       const vostcardSnap = await getDoc(vostcardRef);
@@ -74,14 +76,18 @@ const MyPostedVostcardsListView = () => {
       }
 
       const vostcardData = vostcardSnap.data();
+      console.log('📄 Retrieved vostcard data:', vostcardData);
 
-      // Save to local storage (IndexedDB)
+      // Create private vostcard with proper media handling
       const privateVostcard = {
         ...vostcardData,
         id: crypto.randomUUID(), // Generate new ID for local storage
         state: 'private' as const,
-        video: null,
-        photos: [],
+        // Keep the media URLs/data as they are - don't null them out
+        video: vostcardData.video || null,
+        photos: vostcardData.photos || [],
+        videoURL: vostcardData.videoURL || null, // Keep Firebase video URL
+        photoURLs: vostcardData.photoURLs || [], // Keep Firebase photo URLs
         title: vostcardData.title || '',
         description: vostcardData.description || '',
         categories: vostcardData.categories || [],
@@ -93,21 +99,27 @@ const MyPostedVostcardsListView = () => {
         originalPostedId: vostcardId // Keep reference to original
       };
 
+      console.log('💾 Saving private vostcard to local storage:', privateVostcard);
+
       // Set as current vostcard and save to IndexedDB
       setCurrentVostcard(privateVostcard);
       await saveLocalVostcard();
 
+      console.log('✅ Saved to local storage successfully');
+
       // Delete the posted vostcard from Firebase
       await deleteDoc(vostcardRef);
+      console.log('🗑️ Deleted from Firebase successfully');
 
       // Remove from local state
       setPostedVostcards(prev => prev.filter(v => v.id !== vostcardId));
 
       console.log(`✅ Vostcard "${title}" successfully un-posted and moved to private.`);
+      alert(`✅ "${title}" has been moved to your private Vōstcards.`);
       
     } catch (error) {
       console.error('❌ Error un-posting vostcard:', error);
-      alert('Failed to un-post vostcard. Please try again.');
+      alert(`❌ Failed to un-post "${title}". Please try again.\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       // Remove from unposting set
       setUnpostingIds(prev => {
@@ -175,13 +187,14 @@ const MyPostedVostcardsListView = () => {
       {/* List of Posted Vostcards (Scrollable) */}
       <div style={{
         flex: 1,
-        overflowY: 'auto',
+        overflowY: 'scroll', // Force scrollbar to appear
         overflowX: 'hidden',
         padding: '20px',
         paddingTop: '84px', // Account for fixed header (64px + 20px)
         background: '#f5f5f5',
         WebkitOverflowScrolling: 'touch',
         minHeight: 0,
+        maxHeight: 'calc(100vh - 64px)', // Ensure it doesn't exceed viewport
         // Prevent bounce scrolling
         overscrollBehavior: 'contain',
         touchAction: 'pan-y',
@@ -212,7 +225,8 @@ const MyPostedVostcardsListView = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: '16px',
-            paddingBottom: '20px' // Extra space at bottom for easier scrolling
+            paddingBottom: '40px', // Extra space at bottom for easier scrolling
+            minHeight: 'fit-content' // Ensure content can expand
           }}>
             {postedVostcards.map((vostcard) => (
               <div key={vostcard.id} style={{
@@ -222,7 +236,8 @@ const MyPostedVostcardsListView = () => {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 background: 'white',
                 transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                flexShrink: 0 // Prevent cards from shrinking
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)';
