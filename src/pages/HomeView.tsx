@@ -561,7 +561,7 @@ const HomeView = () => {
               bottom: '40px',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 1000
+              zIndex: 1002
             }}>
               <button
                 onClick={handleCreateVostcard}
@@ -574,7 +574,8 @@ const HomeView = () => {
                   fontSize: '18px',
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  pointerEvents: 'auto'
                 }}
               >
                 Create a Vōstcard
@@ -739,31 +740,31 @@ const menuItemStyle = {
   transition: 'background-color 0.2s ease'
 };
 
+// Update style objects with higher z-index
 const listViewButtonContainerLeft = {
-  position: 'fixed' as const,  // Changed to fixed to ensure it's relative to viewport
-  top: 90,  // 80px header + 10px gap
-  left: 20,
-  zIndex: 1000,  // Match header z-index for consistency
+  position: 'absolute',
+  top: '16px',
+  left: '16px',
+  zIndex: 1002  // Increase z-index to be above map
 };
 
 const listViewButtonContainerRight = {
-  position: 'fixed' as const,  // Changed to fixed to ensure it's relative to viewport
-  top: 90,  // 80px header + 10px gap
-  right: 20,
-  zIndex: 1000,  // Match header z-index for consistency
+  position: 'absolute',
+  top: '16px',
+  right: '16px',
+  zIndex: 1002  // Increase z-index to be above map
 };
 
 const listViewButton = {
-  background: '#002B4D', // Changed from '#007aff' to match Create a Vostcard button
+  backgroundColor: '#002B4D',
   color: 'white',
   border: 'none',
-  borderRadius: 8,
-  padding: '10px 20px',
-  fontSize: 16,
-  fontWeight: 600,
+  borderRadius: '8px',
+  padding: '8px 16px',
+  fontSize: '16px',
   cursor: 'pointer',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  transition: 'opacity 0.2s ease'
+  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+  pointerEvents: 'auto'  // Ensure clicks are captured
 };
 
 const mapContainerStyle = {
