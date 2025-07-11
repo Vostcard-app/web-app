@@ -170,7 +170,13 @@ const AllPostedVostcardsView: React.FC = () => {
       }}>
         <div style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 1 }}>Vōstcard</div>
         <button
-          style={{ background: 'none', border: 'none', color: 'white', fontSize: 28, cursor: 'pointer' }}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            color: 'white', 
+            fontSize: 55, // Increased from 28 to 55 to match other views
+            cursor: 'pointer' 
+          }}
           onClick={() => navigate('/home')}
         >
           <FaHome />
