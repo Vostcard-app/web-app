@@ -12,19 +12,38 @@ export const AuthRedirect = () => {
     if (loading) return;
 
     // Public routes that don't require auth
-    const publicRoutes = ['/', '/login', '/register', '/landing'];
+    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
-    if (!user && !isPublicRoute) {
-      // Not logged in and trying to access protected route
+    // Dynamic routes that should be allowed (with any ID)
+    const isDynamicRoute = [
+      '/vostcard/',
+      '/offer/',
+      '/profile/',
+      '/script-editor/',
+      '/flag/'
+    ].some(prefix => location.pathname.startsWith(prefix));
+
+    // If not authenticated and trying to access protected route
+    if (!user && !isPublicRoute && !isDynamicRoute) {
       navigate('/login');
-    } else if (user && isPublicRoute && location.pathname !== '/') {
-      // Logged in but on a public route (except root)
+      return;
+    }
+
+    // If authenticated but on a public route (except root)
+    if (user && isPublicRoute && location.pathname !== '/') {
       if (userRole === 'advertiser') {
         navigate('/advertiser-portal');
       } else {
         navigate('/home');
       }
+      return;
+    }
+
+    // Special case for advertisers
+    if (user && userRole === 'advertiser' && location.pathname === '/home') {
+      navigate('/advertiser-portal');
+      return;
     }
   }, [user, userRole, loading, navigate, location.pathname]);
 
