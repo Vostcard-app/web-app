@@ -221,6 +221,47 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             {actualPinData.isOffer ? 'Offer' : 'Vostcard'} • Tap or drag to adjust position
           </p>
         </div>
+        
+        {/* Save Button - Moved to upper right */}
+        <button
+          onClick={handleSave}
+          disabled={isLoading || !hasChanges}
+          style={{
+            backgroundColor: hasChanges ? '#002B4D' : '#e0e0e0',
+            color: hasChanges ? 'white' : '#999',
+            border: 'none',
+            padding: '10px 16px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: (hasChanges && !isLoading) ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            minWidth: '80px',
+            boxShadow: hasChanges ? '0 2px 8px rgba(0,43,77,0.2)' : 'none',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {isLoading ? (
+            <>
+              <div style={{
+                width: '14px',
+                height: '14px',
+                border: '2px solid #fff',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+              Saving...
+            </>
+          ) : (
+            <>
+              <FaCheck size={14} />
+              Save
+            </>
+          )}
+        </button>
       </div>
 
       {/* Map */}
@@ -266,7 +307,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         </MapContainer>
       </div>
 
-      {/* Controls */}
+      {/* Controls - Save button removed */}
       <div style={{
         position: 'absolute',
         bottom: 75,
@@ -336,47 +377,6 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         >
           <FaTimes size={14} />
           Cancel
-        </button>
-
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={isLoading || !hasChanges}
-          style={{
-            backgroundColor: hasChanges ? '#002B4D' : '#e0e0e0',
-            color: hasChanges ? 'white' : '#999',
-            border: 'none',
-            padding: '14px 20px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 700,
-            cursor: (hasChanges && !isLoading) ? 'pointer' : 'not-allowed',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            minWidth: '100px',
-            boxShadow: hasChanges ? '0 2px 8px rgba(0,43,77,0.2)' : 'none',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          {isLoading ? (
-            <>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '2px solid #fff',
-                borderTop: '2px solid transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }} />
-              Saving...
-            </>
-          ) : (
-            <>
-              <FaCheck size={16} />
-              Save
-            </>
-          )}
         </button>
       </div>
 
