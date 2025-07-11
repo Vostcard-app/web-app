@@ -99,10 +99,16 @@ const MyPostedVostcardsListView = () => {
         originalPostedId: vostcardId // Keep reference to original
       };
 
-      console.log('💾 Saving private vostcard to local storage:', privateVostcard);
+      console.log('💾 Setting as current vostcard:', privateVostcard);
 
-      // Set as current vostcard and save to IndexedDB
+      // Set as current vostcard FIRST
       setCurrentVostcard(privateVostcard);
+      
+      // Wait a moment to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Then save to IndexedDB
+      console.log('💾 Saving to local storage...');
       await saveLocalVostcard();
 
       console.log('✅ Saved to local storage successfully');
