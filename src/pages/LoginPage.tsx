@@ -11,7 +11,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
     if (!email || !password) {
       setError("Please fill in all fields");
       return;
@@ -22,9 +26,7 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // The AuthContext will handle loading the user role
-      // and the navigation will happen after the role is determined
-      // No need to navigate here as it will be handled by the auth state change
+      // Auth redirect will handle navigation
     } catch (err) {
       console.error("Login error:", err);
       setError("Failed to log in. Please check your credentials.");
@@ -34,17 +36,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
+    <form onSubmit={handleLogin} style={{
       height: '100vh',
       background: '#f5f5f5',
       display: 'flex',
       flexDirection: 'column',
-      position: 'fixed', // Prevent shifting by fixing position
+      position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      overflow: 'hidden' // Prevent scrolling that could cause shifts
+      overflow: 'hidden'
     }}>
       {/* Header */}
       <div style={{
@@ -165,7 +167,7 @@ export default function LoginPage() {
 
         {/* Log In Button */}
         <button
-          onClick={handleLogin}
+          type="submit"
           disabled={loading}
           style={{
             width: '90%',
@@ -196,7 +198,9 @@ export default function LoginPage() {
           If you don't have an account tap here
         </p>
 
+        {/* Register Button */}
         <button
+          type="button"
           onClick={() => navigate("/register")}
           style={{
             width: '90%',
@@ -215,6 +219,6 @@ export default function LoginPage() {
           Register
         </button>
       </div>
-    </div>
+    </form>
   );
 }

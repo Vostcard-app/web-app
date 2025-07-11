@@ -8,19 +8,23 @@ export const AuthRedirect = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Only redirect if not authenticated and trying to access protected routes
-    if (!loading && !user) {
-      // Public routes that don't require authentication
-      const publicRoutes = ['/', '/login', '/register', '/landing'];
-      
-      if (!publicRoutes.includes(location.pathname)) {
-        navigate('/login');
+    // Skip redirection if still loading
+    if (loading) return;
+
+    // Public routes that don't require auth
+    const publicRoutes = ['/', '/login', '/register', '/landing'];
+    const isPublicRoute = publicRoutes.includes(location.pathname);
+
+    if (!user && !isPublicRoute) {
+      // Not logged in and trying to access protected route
+      navigate('/login');
+    } else if (user && isPublicRoute && location.pathname !== '/') {
+      // Logged in but on a public route (except root)
+      if (userRole === 'advertiser') {
+        navigate('/advertiser-portal');
+      } else {
+        navigate('/home');
       }
-    }
-    
-    // Redirect advertisers to their portal if they're on the home page
-    if (!loading && user && userRole === 'advertiser' && location.pathname === '/home') {
-      navigate('/advertiser-portal');
     }
   }, [user, userRole, loading, navigate, location.pathname]);
 
