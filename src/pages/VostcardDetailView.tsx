@@ -474,7 +474,7 @@ const VostcardDetailView: React.FC = () => {
         <FaFlag
           size={24}
           color="#e53935"
-          style={{ marginRight: 12, cursor: 'pointer', flex: '0 0 auto', padding: '5px' }}
+          style={{ marginRight: 25, cursor: 'pointer', flex: '0 0 auto', padding: '5px' }}
           onClick={handleFlagClick}
         />
         <button
@@ -497,7 +497,7 @@ const VostcardDetailView: React.FC = () => {
         <FaSyncAlt
           size={24}
           color="#007aff"
-          style={{ marginLeft: 12, flex: '0 0 auto', padding: '5px' }}
+          style={{ marginLeft: 25, flex: '0 0 auto', padding: '5px' }}
         />
       </div>
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>Posted: {createdAt}</div>
