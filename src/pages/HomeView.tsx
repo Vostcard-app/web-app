@@ -899,7 +899,7 @@ const zoomButton = {
 
 const recenterControlStyle = {
   position: 'fixed' as const,
-  bottom: '75%', // 1/4 up from bottom
+  bottom: '25%', // 1/4 up from bottom
   left: 20,
   zIndex: 1000,
 };
