@@ -150,9 +150,8 @@ const CreateVostcardStep3: React.FC = () => {
     // Show success message immediately
     alert('Your Vōstcard will appear on the map in a minute or two.');
     
-    // Navigate to home immediately
+    // Navigate to home without replacing history
     navigate('/home', { 
-      replace: true,
       state: { 
         freshLoad: true,
         timestamp: Date.now() 
