@@ -254,9 +254,10 @@ const VostcardDetailView: React.FC = () => {
     <div
       style={{
         background: '#fff',
-        minHeight: '100vh',
+        minHeight: '150vh',
         fontFamily: 'system-ui, sans-serif',
-        paddingBottom: '40px',
+        paddingBottom: '100px',
+        overflow: 'visible',
       }}
     >
       {/* Banner */}
