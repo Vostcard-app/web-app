@@ -867,10 +867,11 @@ const createButton = {
 };
 
 const zoomControlStyle = {
-  position: 'absolute' as const,
-  top: 100, // Moved back from 195 to 100
+  position: 'fixed' as const,
+  top: '50%',
   right: 20,
-  zIndex: 10,
+  transform: 'translateY(-50%)',
+  zIndex: 1000,
   display: 'flex',
   flexDirection: 'column' as const,
   gap: 8,
@@ -881,19 +882,26 @@ const zoomButton = {
   color: '#002B4D',
   border: '1px solid #ddd',
   borderRadius: 8,
-  padding: 10,
-  fontSize: 18,
+  width: 40,
+  height: 40,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 20,
   cursor: 'pointer',
-  marginBottom: 4,
   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-  transition: 'opacity 0.2s ease'
+  transition: 'all 0.2s ease',
+  ':hover': {
+    opacity: 0.9,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+  }
 };
 
 const recenterControlStyle = {
-  position: 'absolute' as const,
-  top: 180, // Moved back from 275 to 180
-  right: 20,
-  zIndex: 10,
+  position: 'fixed' as const,
+  bottom: '75%', // 1/4 up from bottom
+  left: 20,
+  zIndex: 1000,
 };
 
 const offerPopupStyle = {
