@@ -327,13 +327,11 @@ const VostcardDetailView: React.FC = () => {
                 style={{ 
                   width: '100%',
                   height: '100%',
-                  objectFit: 'cover',
+                  objectFit: 'cover', // This will fill the container and crop if needed
                   pointerEvents: 'none',
-                  transformOrigin: 'center center',
                   position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)', // No rotation needed - always portrait
+                  top: 0,
+                  left: 0
                 }}
                 muted
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
@@ -724,22 +722,16 @@ const VostcardDetailView: React.FC = () => {
               ×
             </button>
             
-            {/* Video - ALWAYS PORTRAIT */}
+            {/* Video - Fill screen properly */}
             <video
               src={videoURL}
               style={{
-                maxWidth: '100vh', // Portrait video in portrait screen
-                maxHeight: '100vw',
-                width: 'auto',
-                height: 'auto',
-                objectFit: 'contain',
-                borderRadius: 0,
-                boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-                transformOrigin: 'center center',
+                width: '100vw',
+                height: '100vh',
+                objectFit: 'cover', // Fill the screen, crop if needed
                 position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)', // No rotation - always portrait
+                top: 0,
+                left: 0
               }}
               controls
               autoPlay
