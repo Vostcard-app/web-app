@@ -7,7 +7,10 @@ const AdvertiserPortal: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <>
+    <div style={{ 
+      height: '100vh',
+      overflowY: 'auto'
+    }}>
       <div style={{
         width: '100%',
         backgroundColor: '#002B4D',
@@ -158,7 +161,7 @@ const AdvertiserPortal: React.FC = () => {
           <p>No recent activity yet.</p>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
