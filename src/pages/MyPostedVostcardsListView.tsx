@@ -77,27 +77,42 @@ const MyPostedVostcardsListView = () => {
       const vostcardData = vostcardSnap.data();
       console.log('📄 Retrieved vostcard data:', vostcardData);
 
-      // First, fetch the video data from Firebase Storage
+      // Fetch video and photos from Firebase Storage URLs
       let videoBlob = null;
+      let photoBlobs = [];
+
+      // Fetch video if exists
       if (vostcardData.videoURL) {
         try {
-          console.log('📥 Fetching video from Firebase Storage:', vostcardData.videoURL);
-          
-          // Get a fresh download URL (in case the token expired)
-          const videoRef = ref(storage, vostcardData.videoURL.split('/o/')[1].split('?')[0]);
-          const freshVideoURL = await getDownloadURL(videoRef);
-          
-          // Fetch the video
-          const response = await fetch(freshVideoURL);
+          console.log('📥 Fetching video from URL:', vostcardData.videoURL);
+          const response = await fetch(vostcardData.videoURL);
           if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
           videoBlob = await response.blob();
+          videoBlob = new Blob([videoBlob], { type: 'video/webm' }); // Ensure correct MIME type
           console.log('✅ Video fetched successfully, size:', videoBlob.size);
         } catch (error) {
           console.error('❌ Failed to fetch video:', error);
         }
       }
 
-      // Convert video blob to base64
+      // Fetch photos if they exist
+      if (vostcardData.photoURLs && vostcardData.photoURLs.length > 0) {
+        try {
+          console.log('📥 Fetching photos...');
+          const photoPromises = vostcardData.photoURLs.map(async (url) => {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const blob = await response.blob();
+            return new Blob([blob], { type: 'image/jpeg' }); // Ensure correct MIME type
+          });
+          photoBlobs = await Promise.all(photoPromises);
+          console.log('✅ Photos fetched successfully, count:', photoBlobs.length);
+        } catch (error) {
+          console.error('❌ Failed to fetch photos:', error);
+        }
+      }
+
+      // Convert video to base64 if we have it
       let videoBase64 = null;
       if (videoBlob) {
         try {
@@ -112,15 +127,33 @@ const MyPostedVostcardsListView = () => {
         }
       }
 
+      // Convert photos to base64
+      let photosBase64 = [];
+      if (photoBlobs.length > 0) {
+        try {
+          const photoPromises = photoBlobs.map(blob => 
+            new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.readAsDataURL(blob);
+            })
+          );
+          photosBase64 = await Promise.all(photoPromises);
+          console.log('✅ Photos converted to base64, count:', photosBase64.length);
+        } catch (error) {
+          console.error('❌ Failed to convert photos to base64:', error);
+        }
+      }
+
       // Create private vostcard with proper media handling
       const privateVostcard = {
         ...vostcardData,
         id: crypto.randomUUID(),
         state: 'private' as const,
         _videoBase64: videoBase64,
-        video: videoBlob, // Store the blob directly
-        photos: vostcardData.photos || [],
-        photoURLs: vostcardData.photoURLs || [],
+        _photosBase64: photosBase64,
+        video: videoBlob,
+        photos: photoBlobs,
         title: vostcardData.title || '',
         description: vostcardData.description || '',
         categories: vostcardData.categories || [],
@@ -135,13 +168,19 @@ const MyPostedVostcardsListView = () => {
         originalPostedId: vostcardId
       };
 
-      console.log('💾 Setting as current vostcard:', privateVostcard);
+      console.log('💾 Setting as current vostcard:', {
+        ...privateVostcard,
+        _videoBase64: privateVostcard._videoBase64 ? 'present' : 'absent',
+        _photosBase64: privateVostcard._photosBase64.map(() => 'present'),
+        video: privateVostcard.video ? 'present' : 'absent',
+        photos: privateVostcard.photos.map(() => 'present')
+      });
 
       // Set as current vostcard FIRST
       setCurrentVostcard(privateVostcard);
       
-      // Wait a moment to ensure state is updated
-      await new Promise(resolve => setTimeout(resolve, 500)); // Increased timeout
+      // Wait longer to ensure state is updated and media is processed
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Then save to IndexedDB
       console.log('💾 Saving to local storage...');
