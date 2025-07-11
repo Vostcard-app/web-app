@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
 import { GeocodingService } from "../services/geocodingService";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase/firebaseConfig";
 
 // Temporary interface definition until module loading is fixed
 interface BusinessAddress {
@@ -87,6 +89,29 @@ const EditStoreProfileView: React.FC = () => {
         maximumAge: 300000
       }
     );
+  };
+
+  // Upload store photo to Firebase Storage
+  const uploadStorePhoto = async (file: File, userId: string): Promise<string> => {
+    try {
+      console.log('📤 Uploading store photo...');
+      
+      // Create a unique filename
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `store_photo_${timestamp}.${fileExtension}`;
+      
+      // Upload to Firebase Storage
+      const storageRef = ref(storage, `stores/${userId}/${fileName}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      console.log('✅ Store photo uploaded successfully:', downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error('❌ Error uploading store photo:', error);
+      throw new Error(`Failed to upload photo: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   // Load existing profile data
@@ -180,6 +205,17 @@ const EditStoreProfileView: React.FC = () => {
     try {
       console.log("💾 Saving store profile for user:", user.uid);
       
+      // Upload store photo if provided
+      let storePhotoURL = '';
+      if (storePhoto) {
+        try {
+          storePhotoURL = await uploadStorePhoto(storePhoto, user.uid);
+        } catch (photoError) {
+          console.error('❌ Failed to upload store photo:', photoError);
+          alert('⚠️ Failed to upload store photo, but profile will be saved without it.');
+        }
+      }
+
       const profileData = {
         storeName,
         businessAddress, // Business contact address
@@ -202,7 +238,9 @@ const EditStoreProfileView: React.FC = () => {
         name: storeName,
         businessName: storeName,
         email: user.email,
-        role: "advertiser"
+        role: "advertiser",
+        // Add the store photo URL if uploaded
+        ...(storePhotoURL && { storePhotoURL }),
       };
 
       const profileRef = doc(db, "advertisers", user.uid);
