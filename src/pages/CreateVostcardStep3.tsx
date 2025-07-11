@@ -155,6 +155,18 @@ const CreateVostcardStep3: React.FC = () => {
       return;
     }
     
+    // Show success message immediately
+    alert('Your Vōstcard will appear on the map in a minute or two.');
+    
+    // Navigate to home immediately
+    navigate('/home', { 
+      replace: true,
+      state: { 
+        freshLoad: true,
+        timestamp: Date.now() 
+      }
+    });
+    
     try {
       console.log('📥 Starting vostcard post process...');
       await postVostcard();
@@ -162,20 +174,12 @@ const CreateVostcardStep3: React.FC = () => {
       // Clear the current vostcard state
       clearVostcard();
       
-      console.log('✅ Vostcard posted successfully, navigating to home');
-      
-      // Navigate to home with fresh state - same as first login
-      navigate('/home', { 
-        replace: true,
-        state: { 
-          freshLoad: true,
-          timestamp: Date.now() 
-        }
-      });
+      console.log('✅ Vostcard posted successfully');
       
     } catch (error) {
       console.error('❌ Error posting vostcard:', error);
-      alert('Failed to post vostcard. Please try again.');
+      // Don't show error alert since user is already on home screen
+      // Instead, could implement a more subtle error notification if needed
     }
   };
 
