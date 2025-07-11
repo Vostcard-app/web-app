@@ -122,7 +122,7 @@ export default function CreateVostcardStep2() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '40px 20px 0 20px',
+        padding: '15px 20px 0 20px',
         boxSizing: 'border-box',
         maxHeight: 'calc(100vh - 120px)',
         overflowY: 'auto'
