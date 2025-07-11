@@ -1,16 +1,32 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 export default function CreateVostcardStep2() {
   const navigate = useNavigate();
-  const { updateVostcard } = useVostcard();
+  const { updateVostcard, currentVostcard } = useVostcard();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
+
+  // Load saved photos when component mounts
+  useEffect(() => {
+    if (currentVostcard?.photos) {
+      const photos = currentVostcard.photos;
+      setSelectedPhotos(prevPhotos => {
+        const newPhotos = [...prevPhotos];
+        photos.forEach((photo, index) => {
+          if (index < 2) { // Only use first two photos
+            newPhotos[index] = photo as File;
+          }
+        });
+        return newPhotos;
+      });
+    }
+  }, [currentVostcard]);
 
   // Handler for when a thumbnail is tapped
   const handleAddPhoto = (index: number) => {
