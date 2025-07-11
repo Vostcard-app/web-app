@@ -65,15 +65,13 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Keep 9:16 aspect ratio but use MUCH higher resolution for wider field of view
+        // Let camera use its natural wide-angle view without forcing resolution
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
-          width: { ideal: 2160 }, // 4K width for wider field of view
-          height: { ideal: 3840 }, // 4K height maintaining 9:16 ratio
-          aspectRatio: 9/16 // Ensure portrait aspect ratio
+          // Don't specify width/height - let camera use its widest natural view
         };
         
-        console.log('📱 Requesting 9:16 with wide field of view:', videoConstraints);
+        console.log('📱 Requesting natural wide camera view:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -89,51 +87,29 @@ const ScrollingCameraView: React.FC = () => {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log('📱 Camera provided:', {
+          console.log('📱 Camera natural view:', {
             width: settings.width,
             height: settings.height,
             aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
-            resolution: `${settings.width}x${settings.height}`
+            resolution: `${settings.width}x${settings.height}`,
+            fieldOfView: 'Natural camera wide angle'
           });
         }
 
       } catch (err) {
-        console.error('Failed to get 4K portrait:', err);
-        // Fallback to 1440p portrait
+        console.error('Failed to get natural camera view:', err);
+        // Fallback to basic constraints
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-              facingMode,
-              width: { ideal: 1440 },
-              height: { ideal: 2560 },
-              aspectRatio: 9/16
-            } 
+            video: true
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using 1440p portrait fallback');
+          console.log('📱 Using basic camera fallback');
         } catch (fallbackErr) {
-          console.error('Failed 1440p, trying 1080p portrait:', fallbackErr);
-          // Final fallback to 1080p portrait
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-              video: { 
-                facingMode,
-                width: { ideal: 1080 },
-                height: { ideal: 1920 },
-                aspectRatio: 9/16
-              } 
-            });
-            streamRef.current = stream;
-            if (videoRef.current) {
-              videoRef.current.srcObject = stream;
-            }
-            console.log('📱 Using 1080p portrait final fallback');
-          } catch (finalErr) {
-            console.error('All portrait resolutions failed:', finalErr);
-          }
+          console.error('All camera access failed:', fallbackErr);
         }
       }
     };
