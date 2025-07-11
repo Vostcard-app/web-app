@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where, doc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { useVostcard } from '../context/VostcardContext';
 
 interface PostedVostcard {
   id: string;
@@ -19,6 +20,7 @@ const MyPostedVostcardsListView = () => {
   const [postedVostcards, setPostedVostcards] = useState<PostedVostcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
+  const { setCurrentVostcard, saveLocalVostcard } = useVostcard();
 
   useEffect(() => {
     loadPostedVostcards();
@@ -73,16 +75,29 @@ const MyPostedVostcardsListView = () => {
 
       const vostcardData = vostcardSnap.data();
 
-      // Create a new document in the private collection
-      const privateVostcardsRef = collection(db, 'privateVostcards');
-      await addDoc(privateVostcardsRef, {
+      // Save to local storage (IndexedDB)
+      const privateVostcard = {
         ...vostcardData,
-        state: 'private',
-        updatedAt: new Date(),
+        id: crypto.randomUUID(), // Generate new ID for local storage
+        state: 'private' as const,
+        video: null,
+        photos: [],
+        title: vostcardData.title || '',
+        description: vostcardData.description || '',
+        categories: vostcardData.categories || [],
+        geo: vostcardData.geo || null,
+        username: vostcardData.username || '',
+        userID: vostcardData.userID || '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         originalPostedId: vostcardId // Keep reference to original
-      });
+      };
 
-      // Delete the posted vostcard
+      // Set as current vostcard and save to IndexedDB
+      setCurrentVostcard(privateVostcard);
+      await saveLocalVostcard();
+
+      // Delete the posted vostcard from Firebase
       await deleteDoc(vostcardRef);
 
       // Remove from local state

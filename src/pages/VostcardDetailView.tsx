@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
 import RatingStars from '../components/RatingStars';
 import CommentsModal from '../components/CommentsModal';
-import PrivateShareModal from '../components/PrivateShareModal';
 import { RatingService, type RatingStats } from '../services/ratingService';
 import type { Vostcard } from '../context/VostcardContext';
 
@@ -27,7 +26,6 @@ const VostcardDetailView: React.FC = () => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [currentUserRating, setCurrentUserRating] = useState(0);
   const [commentCount, setCommentCount] = useState(0);
-  const [showPrivateShareModal, setShowPrivateShareModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
@@ -216,27 +214,17 @@ const VostcardDetailView: React.FC = () => {
   };
 
   const handleShareClick = () => {
-    setShowPrivateShareModal(true);
+    // Remove private sharing functionality
+    if (navigator.share) {
+      navigator.share({
+        title: vostcard.title || 'Check out this Vostcard!',
+        text: vostcard.description || 'I found an interesting Vostcard',
+        url: window.location.href
+      }).catch(console.error);
+    }
   };
 
-  const createShareableVostcard = (): Vostcard | null => {
-    if (!vostcard) return null;
-    
-    return {
-      id: vostcard.id || id || '',
-                    title: vostcard.title || 'Untitled Vostcard',
-                    description: vostcard.description || 'No description',
-      username: vostcard.username || 'Unknown',
-      photoURLs: vostcard.photoURLs || [],
-      videoURL: vostcard.videoURL || '',
-      createdAt: vostcard.createdAt,
-      userID: vostcard.userID || '',
-      categories: vostcard.categories || [],
-                    latitude: vostcard.latitude || vostcard.geo?.latitude || 0,
-                    longitude: vostcard.longitude || vostcard.geo?.longitude || 0,
-      state: vostcard.state || 'private'
-    };
-  };
+  // Remove createShareableVostcard function since it's no longer needed
 
   if (loading) {
     return (
@@ -472,11 +460,15 @@ const VostcardDetailView: React.FC = () => {
       {/* Worth Seeing? Rating System */}
       <div style={{ textAlign: 'center', margin: '5px 0 0 0', fontSize: 18 }}>Worth Seeing?</div>
       <div style={{ margin: '8px 0 0 0' }}>
-        <RatingStars
-          currentRating={currentUserRating}
-          averageRating={ratingStats.averageRating}
-          onRate={handleRatingSubmit}
-        />
+        {/* Rating Stars */}
+        <div style={{ marginTop: '16px', textAlign: 'center' }}>
+          <RatingStars
+            currentRating={currentUserRating}
+            averageRating={ratingStats.averageRating}
+            ratingCount={ratingStats.ratingCount}
+            onRate={handleRatingSubmit}
+          />
+        </div>
       </div>
 
       {/* Description Link with FaFlag and FaSyncAlt icons */}
@@ -765,15 +757,6 @@ const VostcardDetailView: React.FC = () => {
             />
           </div>
         </div>
-      )}
-
-      {/* Private Share Modal */}
-      {showPrivateShareModal && createShareableVostcard() && (
-        <PrivateShareModal
-          isOpen={showPrivateShareModal}
-          onClose={() => setShowPrivateShareModal(false)}
-          vostcard={createShareableVostcard()!}
-        />
       )}
     </div>
   );
