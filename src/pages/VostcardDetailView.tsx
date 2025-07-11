@@ -255,14 +255,8 @@ const VostcardDetailView: React.FC = () => {
       style={{
         background: '#fff',
         minHeight: '100vh',
-        height: '100vh',
-        overflowY: 'auto',
-        overflowX: 'hidden',
         fontFamily: 'system-ui, sans-serif',
-        WebkitOverflowScrolling: 'touch',
         paddingBottom: '40px',
-        position: 'relative',
-        overscrollBehavior: 'contain',
       }}
     >
       {/* Banner */}

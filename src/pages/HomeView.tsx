@@ -412,7 +412,7 @@ const HomeView = () => {
       setLoadingVostcards(false);
     }
   };
-
+ 
   // Get user location with error handling
   useEffect(() => {
     const getUserLocation = () => {
