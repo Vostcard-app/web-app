@@ -15,7 +15,7 @@ const getStoredWordCount = () => {
   return stored ? parseInt(stored, 10) : 80;
 };
 
-export default function AIScriptTool({ onSave, onClose, initialPrompt = "" }: AIScriptToolProps) {
+export default function AIScriptTool({ onSave, onClose, initialPrompt = "", onRollCamera }: AIScriptToolProps & { onRollCamera?: (script: string) => void }) {
   const [prompt, setPrompt] = useState(initialPrompt);
   const [generatedScript, setGeneratedScript] = useState("");
   const [loading, setLoading] = useState(false);
@@ -151,6 +151,29 @@ export default function AIScriptTool({ onSave, onClose, initialPrompt = "" }: AI
               </div>
             </div>
           )}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginTop: 20 }}>
+          <button
+            style={{ flex: 1, background: '#007aff', color: 'white', border: 'none', borderRadius: 6, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            onClick={() => onSave && generatedScript && onSave(generatedScript)}
+            disabled={!generatedScript}
+          >
+            Save and Continue
+          </button>
+          <button
+            style={{ flex: 1, background: '#00b894', color: 'white', border: 'none', borderRadius: 6, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            onClick={() => onRollCamera && generatedScript && onRollCamera(generatedScript)}
+            disabled={!generatedScript}
+          >
+            Roll Camera
+          </button>
+          <button
+            style={{ flex: 1, background: '#e53935', color: 'white', border: 'none', borderRadius: 6, padding: '10px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            onClick={() => setGeneratedScript("")}
+            disabled={!generatedScript}
+          >
+            Reshoot
+          </button>
         </div>
       </div>
     </div>
