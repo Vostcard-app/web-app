@@ -258,7 +258,12 @@ const AllPostedVostcardsView: React.FC = () => {
                   transition: 'background 0.2s',
                   flexShrink: 0
                 }}
-                onClick={() => navigate(`/vostcard/${v.id}`)}
+                onClick={() => navigate(`/vostcard/${v.id}`, {
+                  state: {
+                    vostcardList: vostcards.map(vc => vc.id),
+                    currentIndex: idx
+                  }
+                })}
                 onMouseEnter={e => e.currentTarget.style.background = '#f5faff'}
                 onMouseLeave={e => e.currentTarget.style.background = 'white'}
                 tabIndex={0}
@@ -266,7 +271,12 @@ const AllPostedVostcardsView: React.FC = () => {
                 aria-label={`View details for ${v.title || 'Untitled'}`}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    navigate(`/vostcard/${v.id}`);
+                    navigate(`/vostcard/${v.id}`, {
+                      state: {
+                        vostcardList: vostcards.map(vc => vc.id),
+                        currentIndex: idx
+                      }
+                    });
                   }
                 }}
               >

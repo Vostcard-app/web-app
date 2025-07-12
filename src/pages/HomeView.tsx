@@ -271,9 +271,9 @@ const zoomButton = {
 
 const recenterControlStyle = {
   position: 'fixed' as const,
-  bottom: '25%', // 1/4 up from bottom
-  left: 20,
-  zIndex: 1000,
+  bottom: '120px', // Moved back from 25% to 120px
+  right: '16px', // Moved back from 20 to 16px
+  zIndex: 1002,
 };
 
 const offerPopupStyle = {
@@ -890,24 +890,6 @@ const HomeView = () => {
                 <span style={{ fontSize: '12px' }}>▼</span>
               </button>
 
-              {/* Area Info Panel */}
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                color: 'white',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                marginTop: '4px',
-                whiteSpace: 'nowrap',
-                zIndex: 1003
-              }}>
-                {vostcards.length} Vōstcards shown
-              </div>
-
               {/* Custom Distance Slider */}
               {showDistanceSlider && (
                 <div style={{
@@ -1219,15 +1201,17 @@ const HomeView = () => {
           background: '#002B4D',
           color: 'white',
           border: 'none',
-          borderRadius: '12px',
-          padding: '16px 24px',
-          fontSize: '20px',
-          fontWeight: 600,
-          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
+          borderRadius: '8px',
+          padding: '12px 20px',
+          fontSize: '16px',
+          fontWeight: 500,
           cursor: 'pointer',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          pointerEvents: 'auto',
+          transition: 'transform 0.1s ease',
+          ':active': {
+            transform: 'scale(0.98)'
+          }
         }}
         onClick={() => setShowFilterModal(true)}
       >
