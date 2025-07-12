@@ -13,6 +13,7 @@ const ScrollingCameraView: React.FC = () => {
   const { setVideo } = useVostcard();
   
   const [isRecording, setIsRecording] = useState(false);
+  const [isScriptScrolling, setIsScriptScrolling] = useState(false);
   const [script, setScript] = useState('');
   const [recordingTime, setRecordingTime] = useState(30);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
@@ -200,6 +201,7 @@ const ScrollingCameraView: React.FC = () => {
 
       mediaRecorder.start();
       setIsRecording(true);
+      setIsScriptScrolling(true);
       setRecordingTime(30);
       
       // Start countdown timer
@@ -210,6 +212,7 @@ const ScrollingCameraView: React.FC = () => {
               if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
                 mediaRecorderRef.current.stop();
                 setIsRecording(false);
+                // Note: Don't stop script scrolling - let it continue until finished
                 if (timerRef.current) {
                   clearInterval(timerRef.current);
                   timerRef.current = null;
@@ -227,6 +230,7 @@ const ScrollingCameraView: React.FC = () => {
   const handleStopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
+    // Note: Don't stop script scrolling - let it continue until finished
     
     // Stop timer
     if (timerRef.current) {
@@ -256,9 +260,12 @@ const ScrollingCameraView: React.FC = () => {
     setScrollSpeed(newSpeed);
   };
 
-  // Calculate animation duration based on speed
+  // Calculate animation duration based on script length only (independent of video duration)
   const getAnimationDuration = () => {
-    const baseDuration = 30; // Base 30 seconds
+    const scriptLength = script.length;
+    const wordsPerSecond = 3; // Average reading speed
+    const estimatedWords = scriptLength / 5; // Rough estimate: 5 characters per word
+    const baseDuration = Math.max(30, estimatedWords / wordsPerSecond); // Minimum 30 seconds
     return baseDuration / scrollSpeed;
   };
 
@@ -338,9 +345,13 @@ const ScrollingCameraView: React.FC = () => {
       {script && (
         <div className="script-overlay">
           <div 
-            className={`script-text ${isRecording ? 'scrolling' : ''}`}
+            className={`script-text ${isScriptScrolling ? 'scrolling' : ''}`}
             style={{
-              animationDuration: isRecording ? `${getAnimationDuration()}s` : undefined
+              animationDuration: isScriptScrolling ? `${getAnimationDuration()}s` : undefined
+            }}
+            onAnimationEnd={() => {
+              console.log('Script animation finished');
+              setIsScriptScrolling(false);
             }}
           >
             {script}

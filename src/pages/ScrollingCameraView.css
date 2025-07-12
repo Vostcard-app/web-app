@@ -103,7 +103,7 @@ body {
     transform: translateX(-50%);
   }
   100% {
-    transform: translate(-50%, -150vh); /* 👈 Scroll further off screen upward to ensure completion */
+    transform: translate(-50%, -300vh); /* 👈 Scroll much further off screen upward to ensure completion */
   }
 }
 
