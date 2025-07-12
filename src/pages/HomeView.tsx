@@ -307,6 +307,21 @@ const HomeView = () => {
   const [searchLocation, setSearchLocation] = useState<[number, number] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [browseLocation, setBrowseLocation] = useState<any>(null);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const availableCategories = [
+    'None',
+    'Landmark',
+    'Fun Fact',
+    'Architecture',
+    'Historical',
+    'Museum',
+    'Gallery',
+    'Restaurant',
+    'Drive Mode Event',
+    'Wish you were here',
+    'Made for kids',
+  ];
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   // Check for fresh load state from navigation
   const browseLocationState = location.state?.browseLocation;
@@ -635,6 +650,15 @@ const HomeView = () => {
     }
   };
 
+  // Filtering logic for Vostcards by category
+  const filterVostcardsByCategory = (vostcards: any[]) => {
+    if (selectedCategories.length === 0 || selectedCategories.includes('None')) return vostcards;
+    return vostcards.filter(v => {
+      if (!v.categories || !Array.isArray(v.categories)) return false;
+      return v.categories.some((cat: string) => selectedCategories.includes(cat));
+    });
+  };
+
   // Calculate distance between two points in kilometers
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371; // Earth's radius in kilometers
@@ -709,6 +733,8 @@ const HomeView = () => {
     console.log('🎁 Navigating to Offers List');
     navigate('/offers-list');
   };
+
+  const filteredVostcards: any[] = filterVostcardsByCategory(vostcards);
 
   return (
     <div style={{ 
@@ -1046,7 +1072,7 @@ const HomeView = () => {
                     <Popup>Your Location</Popup>
                   </Marker>
 
-                  {vostcards.map(v => {
+                  {filteredVostcards.map((v: any) => {
                     const lat = v.latitude || v.geo?.latitude;
                     const lng = v.longitude || v.geo?.longitude;
                     if (!lat || !lng) return null;
@@ -1178,6 +1204,113 @@ const HomeView = () => {
         <div style={authLoadingOverlayStyle}>
           <div style={loadingContentStyle}>
             Authenticating...
+          </div>
+        </div>
+      )}
+
+      {/* Filter Button - Lower Left */}
+      <button
+        className="filter-fab"
+        style={{
+          position: 'fixed',
+          bottom: '120px',
+          left: '16px',
+          zIndex: 1002,
+          background: '#002B4D',
+          color: 'white',
+          border: 'none',
+          borderRadius: '12px',
+          padding: '16px 24px',
+          fontSize: '20px',
+          fontWeight: 600,
+          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          cursor: 'pointer',
+        }}
+        onClick={() => setShowFilterModal(true)}
+      >
+        <span style={{ fontSize: '22px', marginRight: '8px' }}>☰</span> Filter
+      </button>
+
+      {/* Filter Modal (to be implemented next) */}
+      {showFilterModal && (
+        <div className="filter-modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.4)',
+          zIndex: 2000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div className="filter-modal" style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '32px 24px',
+            minWidth: '280px',
+            maxWidth: '90vw',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.2)',
+            color: '#002B4D',
+            position: 'relative',
+          }}>
+            <h2 style={{ marginTop: 0, marginBottom: '18px', fontSize: '22px', fontWeight: 700 }}>Filter by Category</h2>
+            {/* Category checkboxes will go here */}
+            <div style={{ marginBottom: '24px' }}>
+              {availableCategories.map((cat) => (
+                <label key={cat} style={{ display: 'block', marginBottom: '10px', fontSize: '18px', fontWeight: 500 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(cat)}
+                    onChange={() => {
+                      if (selectedCategories.includes(cat)) {
+                        setSelectedCategories(selectedCategories.filter(c => c !== cat));
+                      } else {
+                        setSelectedCategories([...selectedCategories, cat]);
+                      }
+                    }}
+                    style={{ marginRight: '10px', transform: 'scale(1.3)' }}
+                  />
+                  {cat}
+                </label>
+              ))}
+            </div>
+            <button
+              style={{
+                width: '100%',
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginTop: '8px',
+              }}
+              onClick={() => setShowFilterModal(false)}
+            >
+              Apply Filter
+            </button>
+            <button
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 16,
+                background: 'none',
+                border: 'none',
+                fontSize: '28px',
+                color: '#888',
+                cursor: 'pointer',
+              }}
+              onClick={() => setShowFilterModal(false)}
+            >
+              ×
+            </button>
           </div>
         </div>
       )}
