@@ -43,6 +43,11 @@ export default function ScriptToolView() {
     }
   }, [location.search]);
 
+  // Debug effect to log script changes
+  useEffect(() => {
+    console.log('Script state changed:', { script, scriptLength: script.length, hasContent: !!script.trim() });
+  }, [script]);
+
   const handleGenerateScript = async () => {
     if (!topic.trim()) {
       setError("Please enter a topic");
@@ -315,6 +320,7 @@ export default function ScriptToolView() {
           <button
             disabled={!script.trim()}
             onClick={() => {
+              console.log('Roll Camera clicked, script:', script);
               if (script.trim()) {
                 navigate(`/scrolling-camera?script=${encodeURIComponent(script)}`);
               }
@@ -332,7 +338,7 @@ export default function ScriptToolView() {
               cursor: script.trim() ? "pointer" : "not-allowed"
             }}
           >
-            Roll Camera! {script.trim() ? '(Enabled)' : '(Disabled)'}
+            Roll Camera! {script.trim() ? '(Enabled)' : '(Disabled)'} - Script length: {script.length}
           </button>
         </div>
       </div>
