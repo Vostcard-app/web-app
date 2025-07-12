@@ -111,23 +111,27 @@ export default function ScriptToolView() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "flex-end",
-        alignItems: "center",
-        paddingBottom: "16.66vh", // 1/6 of viewport height
-        boxSizing: "border-box",
-        background: "#fff"
+        background: "#fff",
+        overflow: "hidden"
       }}
     >
+      {/* Scrollable content area */}
       <div style={{
-        width: "100%",
-        maxWidth: 500,
-        margin: "0 auto",
-        padding: 24,
-        boxSizing: "border-box"
+        flex: 1,
+        overflow: "auto",
+        WebkitOverflowScrolling: "touch",
+        paddingBottom: 20
       }}>
+        <div style={{
+          width: "100%",
+          maxWidth: 500,
+          margin: "0 auto",
+          padding: 24,
+          boxSizing: "border-box"
+        }}>
         {/* Header */}
         <div style={{
           display: "flex",
@@ -287,29 +291,46 @@ export default function ScriptToolView() {
           </button>
         )}
 
-        {/* Roll Cameras Button */}
-        <button
-          disabled={!script.trim()}
-          onClick={() => {
-            if (script.trim()) {
-              navigate(`/scrolling-camera?script=${encodeURIComponent(script)}`);
-            }
-          }}
-          style={{
-            width: "100%",
-            background: script.trim() ? "#007aff" : "#888",
-            color: "white",
-            padding: 16,
-            borderRadius: 8,
-            fontSize: 20,
-            border: "none",
-            fontWeight: 600,
-            opacity: script.trim() ? 1 : 0.7,
-            cursor: script.trim() ? "pointer" : "not-allowed"
-          }}
-        >
-          Roll Cameras!
-        </button>
+
+        </div>
+      </div>
+      
+      {/* Fixed button area at bottom */}
+      <div style={{
+        padding: 16,
+        background: "#fff",
+        borderTop: "1px solid #eee",
+        boxSizing: "border-box"
+      }}>
+        <div style={{
+          width: "100%",
+          maxWidth: 500,
+          margin: "0 auto"
+        }}>
+          {/* Roll Camera Button - always visible at bottom */}
+          <button
+            disabled={!script.trim()}
+            onClick={() => {
+              if (script.trim()) {
+                navigate(`/scrolling-camera?script=${encodeURIComponent(script)}`);
+              }
+            }}
+            style={{
+              width: "100%",
+              background: script.trim() ? "#007aff" : "#888",
+              color: "white",
+              padding: 16,
+              borderRadius: 8,
+              fontSize: 20,
+              border: "none",
+              fontWeight: 600,
+              opacity: script.trim() ? 1 : 0.7,
+              cursor: script.trim() ? "pointer" : "not-allowed"
+            }}
+          >
+            Roll Camera!
+          </button>
+        </div>
       </div>
     </div>
   );
