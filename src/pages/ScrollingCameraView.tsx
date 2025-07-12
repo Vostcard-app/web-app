@@ -262,6 +262,9 @@ const ScrollingCameraView: React.FC = () => {
     return baseDuration / scrollSpeed;
   };
 
+  const increaseSpeed = () => setScrollSpeed(s => Math.min(2.0, +(s + 0.1).toFixed(1)));
+  const decreaseSpeed = () => setScrollSpeed(s => Math.max(0.5, +(s - 0.1).toFixed(1)));
+
   return (
     <div className="scrolling-camera-container">
       {/* Recording Timer - Always visible and centered */}
@@ -304,16 +307,11 @@ const ScrollingCameraView: React.FC = () => {
       {script && (
         <div className="speed-control">
           <label>Speed</label>
-          <input
-            type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
-            value={scrollSpeed}
-            onChange={handleSpeedChange}
-            disabled={isRecording}
-          />
-          <div className="speed-value">{scrollSpeed.toFixed(1)}x</div>
+          <div className="speed-control-vertical">
+            <button onClick={decreaseSpeed} disabled={scrollSpeed <= 0.5}>–</button>
+            <div className="speed-value">{scrollSpeed.toFixed(1)}x</div>
+            <button onClick={increaseSpeed} disabled={scrollSpeed >= 2.0}>+</button>
+          </div>
         </div>
       )}
 

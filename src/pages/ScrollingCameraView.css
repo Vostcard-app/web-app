@@ -301,3 +301,46 @@ body {
   text-align: center;
   margin: 0;
 }
+
+.speed-control-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  z-index: 20;
+}
+
+.speed-control-vertical button {
+  background: #002B4D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 0;
+  transition: background 0.2s;
+}
+
+.speed-control-vertical button:disabled {
+  background: #ccc;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.speed-control-vertical .speed-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #002B4D;
+  background: white;
+  border-radius: 6px;
+  padding: 4px 12px;
+  margin: 0 0 0 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
