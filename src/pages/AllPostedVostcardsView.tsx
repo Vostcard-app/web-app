@@ -63,6 +63,7 @@ const AllPostedVostcardsView: React.FC = () => {
     const fetchAllPostedVostcards = async () => {
       setLoading(true);
       try {
+        console.log('🔄 Fetching all posted vostcards...');
         const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
         const snapshot = await getDocs(q);
         const allVostcards = snapshot.docs.map(doc => ({
@@ -73,6 +74,7 @@ const AllPostedVostcardsView: React.FC = () => {
         // Filter out offers - only show regular vostcards in this view
         const regularVostcards = allVostcards.filter(v => !v.isOffer);
         
+        console.log('📋 Loaded vostcards:', regularVostcards.length);
         setVostcards(regularVostcards);
         setLastUpdated(new Date());
         
@@ -89,6 +91,23 @@ const AllPostedVostcardsView: React.FC = () => {
 
     fetchAllPostedVostcards();
   }, [loadData]);
+
+  // Add effect to handle page focus/visibility for refreshing
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('🔄 Page became visible, refreshing vostcards...');
+        // Refresh data when page becomes visible
+        setLoading(true);
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Set up real-time listeners for like and rating updates
   useEffect(() => {

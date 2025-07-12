@@ -254,10 +254,16 @@ const VostcardDetailView: React.FC = () => {
     <div
       style={{
         background: '#fff',
-        minHeight: '150vh',
+        minHeight: '100vh',
         fontFamily: 'system-ui, sans-serif',
         paddingBottom: '100px',
-        overflow: 'visible',
+        overflow: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y',
+        position: 'relative',
+        width: '100%',
+        height: '100vh'
       }}
     >
       {/* Banner */}
@@ -505,6 +511,21 @@ const VostcardDetailView: React.FC = () => {
         />
       </div>
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>Posted: {createdAt}</div>
+      
+      {/* Add extra content to ensure scrolling works */}
+      <div style={{ height: '50vh', padding: '20px', color: '#666', fontSize: 16, lineHeight: 1.6 }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px', fontSize: '18px', fontWeight: 600 }}>
+          Additional Information
+        </div>
+        <p>This Vōstcard shows content from the location where it was created. You can interact with it by liking, rating, or commenting.</p>
+        <p>Use the Description button above to read more details about this location or experience.</p>
+        <p>The rating system helps other users discover the most interesting Vōstcards in their area.</p>
+        <p>You can also follow the creator to see more of their content.</p>
+        <div style={{ height: '100px' }}></div>
+        <div style={{ textAlign: 'center', color: '#999', fontSize: 14 }}>
+          End of Vōstcard details
+        </div>
+      </div>
 
       {/* Comments Modal */}
       <CommentsModal

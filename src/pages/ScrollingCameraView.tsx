@@ -65,13 +65,15 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Let camera use its natural wide-angle view without forcing resolution
+        // Force portrait orientation for consistent video recording
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
-          // Don't specify width/height - let camera use its widest natural view
+          width: { ideal: 1080, max: 1080 },
+          height: { ideal: 1920, max: 1920 },
+          aspectRatio: { ideal: 0.5625 } // 9:16 portrait ratio
         };
         
-        console.log('📱 Requesting natural wide camera view:', videoConstraints);
+        console.log('📱 Requesting portrait camera view:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -87,12 +89,12 @@ const ScrollingCameraView: React.FC = () => {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log('📱 Camera natural view:', {
+          console.log('📱 Camera portrait view:', {
             width: settings.width,
             height: settings.height,
             aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
             resolution: `${settings.width}x${settings.height}`,
-            fieldOfView: 'Natural camera wide angle'
+            orientation: 'Portrait mode'
           });
         }
 

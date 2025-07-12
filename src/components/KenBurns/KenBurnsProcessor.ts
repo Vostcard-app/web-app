@@ -248,40 +248,42 @@ export class KenBurnsProcessor {
   private async exportVideoRealTime(onProgress?: (progress: number) => void): Promise<Blob> {
     return new Promise(async (resolve, reject) => {
       try {
-        console.log('🎬 Starting video export...');
+        console.log('🎬 Starting video export with audio preservation...');
         
-        // For now, just return the original video to test the flow
-        // TODO: Implement proper Ken Burns rendering
+        // For now, return the original video with audio intact
+        // TODO: Implement proper Ken Burns rendering with MediaRecorder
         if (this.video) {
-          // Convert video element to blob
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d')!;
-          canvas.width = this.video.videoWidth || 1080;
-          canvas.height = this.video.videoHeight || 1920;
+          console.log('🎵 Preserving original video with audio');
           
-          // Draw a test frame with photo overlay
-          ctx.drawImage(this.video, 0, 0, canvas.width, canvas.height);
+          // Create a temporary video element to capture the original video as blob
+          const tempVideo = document.createElement('video');
+          tempVideo.src = this.video.src;
+          tempVideo.crossOrigin = 'anonymous';
           
-          // Draw first photo as overlay for testing
-          if (this.photos.length > 0) {
-            ctx.globalAlpha = 0.7;
-            ctx.drawImage(
-              this.photos[0].image,
-              100, 100, 
-              canvas.width - 200, 
-              canvas.height - 200
-            );
+          // Wait for video to load
+          await new Promise((resolve, reject) => {
+            tempVideo.onloadedmetadata = resolve;
+            tempVideo.onerror = reject;
+          });
+          
+          // For now, just return the original video blob with audio
+          // This preserves audio while we work on the visual effects
+          const response = await fetch(this.video.src);
+          const blob = await response.blob();
+          
+          // Ensure it's a video blob with proper MIME type
+          const videoBlob = new Blob([blob], { type: 'video/webm' });
+          
+          console.log('✅ Video with audio preserved:', {
+            size: videoBlob.size,
+            type: videoBlob.type
+          });
+          
+          if (onProgress) {
+            onProgress(100);
           }
           
-          // Convert to blob
-          canvas.toBlob((blob) => {
-            if (blob) {
-              console.log('✅ Test video created with photo overlay');
-              resolve(blob);
-            } else {
-              reject(new Error('Failed to create blob'));
-            }
-          }, 'image/jpeg', 0.9);
+          resolve(videoBlob);
         } else {
           reject(new Error('No video loaded'));
         }
