@@ -17,6 +17,7 @@ const ScrollingCameraView: React.FC = () => {
   const [recordingTime, setRecordingTime] = useState(30);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [scrollSpeed, setScrollSpeed] = useState(1); // Speed multiplier (0.5x to 2x)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -249,6 +250,18 @@ const ScrollingCameraView: React.FC = () => {
     navigate(-1);
   };
 
+  // Handle speed control change
+  const handleSpeedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newSpeed = parseFloat(event.target.value);
+    setScrollSpeed(newSpeed);
+  };
+
+  // Calculate animation duration based on speed
+  const getAnimationDuration = () => {
+    const baseDuration = 30; // Base 30 seconds
+    return baseDuration / scrollSpeed;
+  };
+
   return (
     <div className="scrolling-camera-container">
       {/* Recording Timer - Always visible and centered */}
@@ -287,6 +300,23 @@ const ScrollingCameraView: React.FC = () => {
         </button>
       </div>
 
+      {/* Speed Control - Only show when script is present */}
+      {script && (
+        <div className="speed-control">
+          <label>Speed</label>
+          <input
+            type="range"
+            min="0.5"
+            max="2"
+            step="0.1"
+            value={scrollSpeed}
+            onChange={handleSpeedChange}
+            disabled={isRecording}
+          />
+          <div className="speed-value">{scrollSpeed.toFixed(1)}x</div>
+        </div>
+      )}
+
       {/* Camera Preview - Portrait only */}
       <video
         ref={videoRef}
@@ -309,7 +339,12 @@ const ScrollingCameraView: React.FC = () => {
       {/* Scrolling Script Overlay */}
       {script && (
         <div className="script-overlay">
-          <div className={`script-text ${isRecording ? 'scrolling' : ''}`}>
+          <div 
+            className={`script-text ${isRecording ? 'scrolling' : ''}`}
+            style={{
+              animationDuration: isRecording ? `${getAnimationDuration()}s` : undefined
+            }}
+          >
             {script}
           </div>
         </div>
