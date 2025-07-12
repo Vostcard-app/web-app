@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaMagic, FaSave, FaTimes } from 'react-icons/fa';
 import './AIScriptTool.css';
 
@@ -8,11 +8,23 @@ interface AIScriptToolProps {
   initialPrompt?: string;
 }
 
+const WORD_COUNT_OPTIONS = [50, 80, 100, 120, 150];
+
+const getStoredWordCount = () => {
+  const stored = localStorage.getItem('scriptWordCount');
+  return stored ? parseInt(stored, 10) : 80;
+};
+
 export default function AIScriptTool({ onSave, onClose, initialPrompt = "" }: AIScriptToolProps) {
   const [prompt, setPrompt] = useState(initialPrompt);
   const [generatedScript, setGeneratedScript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [wordCount, setWordCount] = useState(getStoredWordCount());
+
+  useEffect(() => {
+    localStorage.setItem('scriptWordCount', wordCount.toString());
+  }, [wordCount]);
 
   const generateScript = async () => {
     if (!prompt.trim()) {
@@ -26,7 +38,7 @@ export default function AIScriptTool({ onSave, onClose, initialPrompt = "" }: AI
     try {
       // For now, we'll use a mock AI response
       // In production, this would call your actual AI API
-      const mockResponse = await mockAIGenerateScript(prompt);
+      const mockResponse = await mockAIGenerateScript(prompt, wordCount);
       setGeneratedScript(mockResponse);
     } catch (error) {
       console.error("Error generating script:", error);
@@ -64,6 +76,20 @@ export default function AIScriptTool({ onSave, onClose, initialPrompt = "" }: AI
         </div>
 
         <div className="ai-script-content">
+          <div style={{ marginBottom: 16 }}>
+            <label htmlFor="wordCountDropdown" style={{ fontWeight: 600, marginRight: 8 }}>Script Length:</label>
+            <select
+              id="wordCountDropdown"
+              value={wordCount}
+              onChange={e => setWordCount(Number(e.target.value))}
+              style={{ fontSize: 16, padding: '4px 12px', borderRadius: 6 }}
+            >
+              {WORD_COUNT_OPTIONS.map(opt => (
+                <option key={opt} value={opt}>{opt} words</option>
+              ))}
+            </select>
+          </div>
+
           <div className="prompt-section">
             <label htmlFor="prompt">Describe your Vōstcard scene:</label>
             <textarea
@@ -132,7 +158,7 @@ export default function AIScriptTool({ onSave, onClose, initialPrompt = "" }: AI
 }
 
 // Mock AI function - replace with actual API call
-const mockAIGenerateScript = async (prompt: string): Promise<string> => {
+const mockAIGenerateScript = async (prompt: string, wordCount: number): Promise<string> => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 2000));
   
