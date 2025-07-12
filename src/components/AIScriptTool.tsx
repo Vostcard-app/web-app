@@ -75,82 +75,84 @@ export default function AIScriptTool({ onSave, onClose, initialPrompt = "", onRo
           )}
         </div>
 
-        <div className="ai-script-content">
-          <div style={{ marginBottom: 16 }}>
-            <label htmlFor="wordCountDropdown" style={{ fontWeight: 600, marginRight: 8 }}>Script Length:</label>
-            <select
-              id="wordCountDropdown"
-              value={wordCount}
-              onChange={e => setWordCount(Number(e.target.value))}
-              style={{ fontSize: 16, padding: '4px 12px', borderRadius: 6 }}
-            >
-              {WORD_COUNT_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{opt} words</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="prompt-section">
-            <label htmlFor="prompt">Describe your Vōstcard scene:</label>
-            <textarea
-              id="prompt"
-              placeholder="e.g., 'A cozy coffee shop in Dublin with vintage decor, serving artisanal coffee and pastries. The atmosphere is warm and inviting with soft jazz playing in the background.'"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              rows={4}
-            />
-            <div className="prompt-examples">
-              <p><strong>Examples:</strong></p>
-              <ul>
-                <li>"Historic castle with stunning views of the countryside"</li>
-                <li>"Trendy restaurant with modern decor and fusion cuisine"</li>
-                <li>"Hidden gem bookstore with rare first editions"</li>
-              </ul>
+        <div style={{ maxHeight: 'calc(100vh - 80px)', overflowY: 'auto', paddingBottom: 16 }}>
+          <div className="ai-script-content">
+            <div style={{ marginBottom: 16 }}>
+              <label htmlFor="wordCountDropdown" style={{ fontWeight: 600, marginRight: 8 }}>Script Length:</label>
+              <select
+                id="wordCountDropdown"
+                value={wordCount}
+                onChange={e => setWordCount(Number(e.target.value))}
+                style={{ fontSize: 16, padding: '4px 12px', borderRadius: 6 }}
+              >
+                {WORD_COUNT_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>{opt} words</option>
+                ))}
+              </select>
             </div>
-          </div>
 
-          <div className="generate-section">
-            <button 
-              onClick={generateScript} 
-              disabled={loading || !prompt.trim()}
-              className="generate-button"
-            >
-              {loading ? (
-                <>
-                  <div className="loading-spinner"></div>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <FaMagic />
-                  Generate Script
-                </>
-              )}
-            </button>
-          </div>
-
-          {error && (
-            <div className="error-message">
-              {error}
-            </div>
-          )}
-
-          {generatedScript && (
-            <div className="generated-script">
-              <h3>Generated Script:</h3>
-              <div className="script-content">
-                {generatedScript}
-              </div>
-              <div className="script-actions">
-                <button onClick={handleSave} className="save-button">
-                  <FaSave /> Save to Vōstcard
-                </button>
-                <button onClick={handleClear} className="clear-button">
-                  Clear & Start Over
-                </button>
+            <div className="prompt-section">
+              <label htmlFor="prompt">Describe your Vōstcard scene:</label>
+              <textarea
+                id="prompt"
+                placeholder="e.g., 'A cozy coffee shop in Dublin with vintage decor, serving artisanal coffee and pastries. The atmosphere is warm and inviting with soft jazz playing in the background.'"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={4}
+              />
+              <div className="prompt-examples">
+                <p><strong>Examples:</strong></p>
+                <ul>
+                  <li>"Historic castle with stunning views of the countryside"</li>
+                  <li>"Trendy restaurant with modern decor and fusion cuisine"</li>
+                  <li>"Hidden gem bookstore with rare first editions"</li>
+                </ul>
               </div>
             </div>
-          )}
+
+            <div className="generate-section">
+              <button 
+                onClick={generateScript} 
+                disabled={loading || !prompt.trim()}
+                className="generate-button"
+              >
+                {loading ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <FaMagic />
+                    Generate Script
+                  </>
+                )}
+              </button>
+            </div>
+
+            {error && (
+              <div className="error-message">
+                {error}
+              </div>
+            )}
+
+            {generatedScript && (
+              <div className="generated-script">
+                <h3>Generated Script:</h3>
+                <div className="script-content">
+                  {generatedScript}
+                </div>
+                <div className="script-actions">
+                  <button onClick={handleSave} className="save-button">
+                    <FaSave /> Save to Vōstcard
+                  </button>
+                  <button onClick={handleClear} className="clear-button">
+                    Clear & Start Over
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <div style={{ position: 'sticky', bottom: 0, background: '#fff', zIndex: 10, paddingTop: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
