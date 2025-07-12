@@ -24,7 +24,7 @@ export const generateScript = functions.https.onCall(async (data, context) => {
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant that creates engaging scripts for Vostcard videos. Keep scripts conversational, friendly, and around 30 seconds when spoken."
+          content: "You are a helpful assistant that creates engaging scripts for Vostcard videos. Keep scripts conversational, friendly, and around 80 words when written."
         },
         {
           role: "user",

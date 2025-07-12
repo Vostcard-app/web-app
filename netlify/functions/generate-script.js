@@ -30,7 +30,7 @@ exports.handler = async (event, context) => {
     const prompt = `Write a 30-second spoken dialog in a "${style}" style about: ${topic}. 
     Write ONLY the words that should be spoken directly to the camera - no stage directions, no camera instructions, no scene descriptions, no action cues.
     Make it engaging, conversational, and perfect for speaking directly to viewers.
-    Keep it under 100 words and make it sound natural when spoken aloud.
+    Keep it around 80 words and make it sound natural when spoken aloud.
     Do not include any brackets, parentheses, or formatting - just the pure spoken text.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

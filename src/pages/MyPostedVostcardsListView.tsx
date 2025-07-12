@@ -1,28 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaMapPin } from 'react-icons/fa';
+import { FaHome } from 'react-icons/fa';
 import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where, doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { useVostcard } from '../context/VostcardContext';
-import { storage } from '../firebase/firebaseConfig'; // Added storage import
-import { ref, getDownloadURL } from 'firebase/storage'; // Added storage imports
-
-interface PostedVostcard {
-  id: string;
-  title: string;
-  description: string;
-  categories: string[];
-  createdAt: any;
-  state: string;
-  [key: string]: any;
-}
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
-  const [postedVostcards, setPostedVostcards] = useState<PostedVostcard[]>([]);
+  const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
-  const { setCurrentVostcard, saveLocalVostcard } = useVostcard();
 
   useEffect(() => {
     loadPostedVostcards();
@@ -38,7 +23,7 @@ const MyPostedVostcardsListView = () => {
         return;
       }
 
-      // Fetch all vostcards by this user, then filter to show only posted ones
+      // Fetch all vostcards by this user, then filter out posted ones in code
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', currentUser.uid)
@@ -48,8 +33,8 @@ const MyPostedVostcardsListView = () => {
         .map(doc => ({
           id: doc.id,
           ...doc.data()
-        } as PostedVostcard))
-        .filter(v => v.state === 'posted' && !v.isOffer); // Filter out offers - only show regular vostcards
+        }))
+        .filter(v => v.state === 'posted');
       setPostedVostcards(vostcards);
     } catch (error) {
       console.error('Error loading posted Vostcards:', error);
@@ -58,359 +43,60 @@ const MyPostedVostcardsListView = () => {
     }
   };
 
-  const handleUnpostVostcard = async (vostcardId: string, title: string) => {
-    if (!window.confirm(`Are you sure you want to un-post "${title}"? It will be moved back to your private Vōstcards.`)) {
-      return;
-    }
-
-    try {
-      setUnpostingIds(prev => new Set(prev.add(vostcardId)));
-      console.log(`🔄 Starting unpost process for: ${title}`);
-
-      const vostcardRef = doc(db, 'vostcards', vostcardId);
-      const vostcardSnap = await getDoc(vostcardRef);
-      
-      if (!vostcardSnap.exists()) {
-        throw new Error('Vostcard not found');
-      }
-
-      const vostcardData = vostcardSnap.data();
-      console.log('📄 Retrieved vostcard data:', vostcardData);
-
-      // Fetch video and photos from Firebase Storage URLs
-      let videoBlob = null;
-      let photoBlobs = [];
-
-      // Fetch video if exists
-      if (vostcardData.videoURL) {
-        try {
-          console.log('📥 Fetching video from URL:', vostcardData.videoURL);
-          const response = await fetch(vostcardData.videoURL);
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          videoBlob = await response.blob();
-          videoBlob = new Blob([videoBlob], { type: 'video/webm' }); // Ensure correct MIME type
-          console.log('✅ Video fetched successfully, size:', videoBlob.size);
-        } catch (error) {
-          console.error('❌ Failed to fetch video:', error);
-        }
-      }
-
-      // Fetch photos if they exist
-      if (vostcardData.photoURLs && vostcardData.photoURLs.length > 0) {
-        try {
-          console.log('📥 Fetching photos...');
-          const photoPromises = vostcardData.photoURLs.map(async (url) => {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const blob = await response.blob();
-            return new Blob([blob], { type: 'image/jpeg' }); // Ensure correct MIME type
-          });
-          photoBlobs = await Promise.all(photoPromises);
-          console.log('✅ Photos fetched successfully, count:', photoBlobs.length);
-        } catch (error) {
-          console.error('❌ Failed to fetch photos:', error);
-        }
-      }
-
-      // Convert video to base64 if we have it
-      let videoBase64 = null;
-      if (videoBlob) {
-        try {
-          videoBase64 = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(videoBlob);
-          });
-          console.log('✅ Video converted to base64');
-        } catch (error) {
-          console.error('❌ Failed to convert video to base64:', error);
-        }
-      }
-
-      // Convert photos to base64
-      let photosBase64 = [];
-      if (photoBlobs.length > 0) {
-        try {
-          const photoPromises = photoBlobs.map(blob => 
-            new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.readAsDataURL(blob);
-            })
-          );
-          photosBase64 = await Promise.all(photoPromises);
-          console.log('✅ Photos converted to base64, count:', photosBase64.length);
-        } catch (error) {
-          console.error('❌ Failed to convert photos to base64:', error);
-        }
-      }
-
-      // Create private vostcard with proper media handling
-      const privateVostcard = {
-        ...vostcardData,
-        id: crypto.randomUUID(),
-        state: 'private' as const,
-        _videoBase64: videoBase64,
-        _photosBase64: photosBase64,
-        video: videoBlob,
-        photos: photoBlobs,
-        title: vostcardData.title || '',
-        description: vostcardData.description || '',
-        categories: vostcardData.categories || [],
-        geo: vostcardData.geo || {
-          latitude: vostcardData.latitude || 0,
-          longitude: vostcardData.longitude || 0
-        },
-        username: vostcardData.username || '',
-        userID: vostcardData.userID || '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        originalPostedId: vostcardId
-      };
-
-      console.log('💾 Setting as current vostcard:', {
-        ...privateVostcard,
-        _videoBase64: privateVostcard._videoBase64 ? 'present' : 'absent',
-        _photosBase64: privateVostcard._photosBase64.map(() => 'present'),
-        video: privateVostcard.video ? 'present' : 'absent',
-        photos: privateVostcard.photos.map(() => 'present')
-      });
-
-      // Set as current vostcard FIRST
-      setCurrentVostcard(privateVostcard);
-      
-      // Wait longer to ensure state is updated and media is processed
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Then save to IndexedDB
-      console.log('💾 Saving to local storage...');
-      await saveLocalVostcard();
-
-      console.log('✅ Saved to local storage successfully');
-
-      // Delete the posted vostcard from Firebase
-      await deleteDoc(vostcardRef);
-      console.log('🗑️ Deleted from Firebase successfully');
-
-      // Remove from local state
-      setPostedVostcards(prev => prev.filter(v => v.id !== vostcardId));
-
-      console.log(`✅ Vostcard "${title}" successfully un-posted and moved to private.`);
-      alert(`✅ "${title}" has been moved to your private Vōstcards.`);
-      
-    } catch (error) {
-      console.error('❌ Error un-posting vostcard:', error);
-      alert(`❌ Failed to un-post "${title}". Please try again.\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setUnpostingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(vostcardId);
-        return newSet;
-      });
-    }
-  };
-
   return (
-    <div style={{ 
-      height: '100vh', 
-      width: '100vw', 
-      backgroundColor: '#f5f5f5',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      position: 'relative',
-      // Prevent bounce scrolling
-      touchAction: 'pan-y',
-      WebkitOverflowScrolling: 'touch'
-    }}>
-      {/* Banner - Fixed at top */}
-      <div style={{ 
-        background: '#07345c', 
-        padding: '16px 20px',
+    <div style={{ height: '100vh', width: '100vw' }}>
+      {/* 🔵 Header with Home Icon */}
+      <div style={{
+        backgroundColor: '#002B4D',
+        height: '70px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        height: '64px'
+        padding: '0 20px',
+        color: 'white'
       }}>
-        <h1 style={{ 
-          color: 'white', 
-          margin: 0,
-          fontSize: '24px',
-          fontWeight: 600
-        }}>
-          Posted Vōstcards
-        </h1>
+        <h1 style={{ fontSize: '24px', margin: 0 }}>My Posted Vōstcards</h1>
         <FaHome
-          size={50}
-          style={{ cursor: 'pointer', color: 'white' }}
+          size={28}
+          style={{ cursor: 'pointer' }}
           onClick={() => navigate('/home')}
         />
       </div>
 
-      {/* List of Posted Vostcards (Scrollable) */}
-      <div style={{
-        flex: 1,
-        overflowY: 'scroll', // Force scrollbar to appear
-        overflowX: 'hidden',
-        padding: '20px',
-        paddingTop: '84px', // Account for fixed header (64px + 20px)
-        background: '#f5f5f5',
-        WebkitOverflowScrolling: 'touch',
-        minHeight: 0,
-        maxHeight: 'calc(100vh - 64px)', // Ensure it doesn't exceed viewport
-        // Prevent bounce scrolling
-        overscrollBehavior: 'contain',
-        touchAction: 'pan-y',
-        // For older iOS versions
-        WebkitTransform: 'translateZ(0)',
-        transform: 'translateZ(0)'
-      } as React.CSSProperties}>
+      {/* 🔲 List of Posted Vostcards */}
+      <div style={{ padding: '20px' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <div style={{ fontSize: '18px', color: '#666' }}>Loading your posted Vōstcards...</div>
-          </div>
+          <p>Loading your posted Vostcards...</p>
         ) : postedVostcards.length === 0 ? (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '60px 20px',
-            color: '#666'
-          }}>
-            <h3 style={{ margin: '0 0 12px 0', color: '#495057', fontSize: '24px' }}>
-              No Posted Vōstcards
-            </h3>
-            <p style={{ margin: 0, fontSize: '16px', lineHeight: 1.5 }}>
-              When you post a Vōstcard, it will appear here.<br />
-              You can always un-post them to move them back to private.
-            </p>
-          </div>
+          <p>No posted Vostcards found.</p>
         ) : (
-          <div style={{ 
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            paddingBottom: '40px', // Extra space at bottom for easier scrolling
-            minHeight: 'fit-content' // Ensure content can expand
-          }}>
-            {postedVostcards.map((vostcard) => (
-              <div key={vostcard.id} style={{
-                border: '1px solid #ccc',
-                borderRadius: '12px',
-                padding: '16px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                background: 'white',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                cursor: 'pointer',
-                flexShrink: 0 // Prevent cards from shrinking
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-              }}>
-                <h2 style={{ margin: '0 0 12px 0', fontSize: '20px', color: '#002B4D' }}>
-                  {vostcard.title || 'Untitled Vōstcard'}
-                </h2>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}
-                </p>
-                <p style={{ margin: '8px 0', color: '#666' }}>
-                  <strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}
-                </p>
-                <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
-                  <button
-                    style={{
-                      backgroundColor: '#002B4D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '10px 16px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      transition: 'background-color 0.2s'
-                    }}
-                    onClick={() => navigate(`/vostcard/${vostcard.id}`)}
-                  >
-                    View
-                  </button>
-                  {/* Add Pin Placer Button */}
-                  <button
-                    onClick={() => {
-                      navigate('/pin-placer', {
-                        state: {
-                          pinData: {
-                            id: vostcard.id,
-                            title: vostcard.title || 'Untitled Vostcard',
-                            description: vostcard.description || 'No description',
-                            latitude: vostcard.latitude || vostcard.geo?.latitude || 0,
-                            longitude: vostcard.longitude || vostcard.geo?.longitude || 0,
-                            isOffer: false,
-                            userID: vostcard.userID
-                          }
-                        }
-                      });
-                    }}
-                    style={{
-                      backgroundColor: '#ff6b35',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 16px',
-                      borderRadius: '8px',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: '0 2px 8px rgba(255, 107, 53, 0.3)',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#e55a2b';
-                      e.currentTarget.style.transform = 'translateY(-1px)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 107, 53, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#ff6b35';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(255, 107, 53, 0.3)';
-                    }}
-                  >
-                    <FaMapPin size={14} />
-                    Pin Placer
-                  </button>
-                  <button
-                    style={{
-                      backgroundColor: '#ff4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '10px 16px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      opacity: unpostingIds.has(vostcard.id) ? 0.6 : 1,
-                      pointerEvents: unpostingIds.has(vostcard.id) ? 'none' : 'auto',
-                      transition: 'all 0.2s'
-                    }}
-                    onClick={() => handleUnpostVostcard(vostcard.id, vostcard.title || 'Untitled Vōstcard')}
-                    disabled={unpostingIds.has(vostcard.id)}
-                  >
-                    {unpostingIds.has(vostcard.id) ? 'Un-posting...' : 'Un-Post'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          postedVostcards.map((vostcard) => (
+            <div key={vostcard.id} style={{
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '10px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+            }}>
+              <h2 style={{ margin: '0 0 8px 0' }}>{vostcard.title || 'Untitled Vōstcard'}</h2>
+              <p>{vostcard.description || 'No description provided.'}</p>
+              <p><strong>Categories:</strong> {vostcard.categories?.join(', ') || 'None'}</p>
+              <p><strong>Posted:</strong> {vostcard.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown'}</p>
+              <button
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  cursor: 'pointer'
+                }}
+                onClick={() => navigate(`/vostcard/${vostcard.id}`)}
+              >
+                View on Map
+              </button>
+            </div>
+          ))
         )}
       </div>
     </div>

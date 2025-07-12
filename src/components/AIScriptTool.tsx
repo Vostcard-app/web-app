@@ -137,13 +137,13 @@ const mockAIGenerateScript = async (prompt: string): Promise<string> => {
   await new Promise(resolve => setTimeout(resolve, 2000));
   
   const responses = [
-    `Welcome to this amazing ${prompt.toLowerCase().includes('coffee') ? 'coffee shop' : 'place'}! I'm here to share this incredible spot with you. The atmosphere is absolutely ${prompt.toLowerCase().includes('cozy') ? 'cozy and inviting' : 'wonderful'}, and I can't wait to tell you all about it.`,
+    `Welcome to this amazing ${prompt.toLowerCase().includes('coffee') ? 'coffee shop' : 'place'}! The atmosphere here is absolutely ${prompt.toLowerCase().includes('cozy') ? 'cozy and inviting' : 'wonderful'}. I can't wait to tell you all about this incredible spot.`,
     
     `Hey everyone! I just discovered this fantastic ${prompt.toLowerCase().includes('restaurant') ? 'restaurant' : 'location'} and I had to share it with you. The ${prompt.toLowerCase().includes('food') ? 'food is amazing' : 'experience here is incredible'}, and the vibe is absolutely perfect.`,
     
-    `You won't believe this amazing ${prompt.toLowerCase().includes('castle') ? 'castle' : 'spot'} I found! The history here is fascinating, and the views are absolutely breathtaking. I'm so excited to show you around this incredible place.`,
+    `You won't believe this amazing ${prompt.toLowerCase().includes('castle') ? 'castle' : 'spot'} I found! The history here is fascinating, and the views are absolutely breathtaking. I'm so excited to show you around.`,
     
-    `This is one of my favorite ${prompt.toLowerCase().includes('bookstore') ? 'bookstores' : 'places'} in the city! The selection here is incredible, and the atmosphere is so peaceful and inspiring. I could spend hours exploring every corner.`
+    `This is one of my favorite ${prompt.toLowerCase().includes('bookstore') ? 'bookstores' : 'places'} in the city! The selection here is incredible, and the atmosphere is so peaceful and inspiring.`
   ];
   
   // Return a random response based on the prompt

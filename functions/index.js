@@ -34,7 +34,7 @@ exports.generateScript = functions.https.onRequest((req, res) => {
 
     const prompt = `Write a 30-second video script in a "${style}" style about: ${topic}. 
     Make it engaging, conversational, and perfect for a short video. 
-    Keep it under 100 words and make it sound natural when spoken.`;
+    Keep it around 80 words and make it sound natural when spoken.`;
 
     console.log('Calling OpenAI API...');
 
