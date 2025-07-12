@@ -296,6 +296,22 @@ const VostcardDetailView: React.FC = () => {
     if (error || !vostcard) {
       return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red', fontSize: 24 }}>{error || 'Vostcard not found'}</div>;
     }
+    // All variables must be defined here for the current card
+    const { title, description, photoURLs = [], videoURL, username, createdAt: rawCreatedAt } = vostcard;
+    const avatarUrl = userProfile?.avatarURL;
+    // Format creation date
+    let createdAt = '';
+    if (rawCreatedAt) {
+      if (typeof rawCreatedAt.toDate === 'function') {
+        createdAt = rawCreatedAt.toDate().toLocaleString();
+      } else if (rawCreatedAt instanceof Date) {
+        createdAt = rawCreatedAt.toLocaleString();
+      } else if (typeof rawCreatedAt === 'string' || typeof rawCreatedAt === 'number') {
+        createdAt = new Date(rawCreatedAt).toLocaleString();
+      } else {
+        createdAt = String(rawCreatedAt);
+      }
+    }
     return (
       <AnimatePresence initial={false} custom={swipeDirection}>
         <motion.div
