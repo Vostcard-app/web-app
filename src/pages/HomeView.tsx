@@ -299,8 +299,10 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
-  const [mapAreaPreference, setMapAreaPreference] = useState<'my-area' | 'nearby' | 'popular' | 'recent'>('my-area');
+  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom'>('nearby');
+  const [customDistance, setCustomDistance] = useState(2); // Default 2 miles
   const [showAreaSelector, setShowAreaSelector] = useState(false);
+  const [showDistanceSlider, setShowDistanceSlider] = useState(false);
 
   // Check for fresh load state from navigation
   useEffect(() => {
@@ -533,10 +535,21 @@ const HomeView = () => {
   };
 
   // Handle area preference change
-  const handleAreaPreferenceChange = (area: 'my-area' | 'nearby' | 'popular' | 'recent') => {
+  const handleAreaPreferenceChange = (area: 'nearby' | '1-mile' | '5-miles' | 'custom') => {
     setMapAreaPreference(area);
     setShowAreaSelector(false);
-    loadVostcards(true); // Reload vostcards with new preference
+    if (area === 'custom') {
+      setShowDistanceSlider(true);
+    } else {
+      setShowDistanceSlider(false);
+      loadVostcards(true); // Reload vostcards with new preference
+    }
+  };
+
+  // Handle custom distance change
+  const handleCustomDistanceChange = (distance: number) => {
+    setCustomDistance(distance);
+    loadVostcards(true); // Reload vostcards with new distance
   };
 
   // Filter vostcards based on area preference
@@ -544,10 +557,6 @@ const HomeView = () => {
     if (!userLocation) return vostcards;
 
     switch (mapAreaPreference) {
-      case 'my-area':
-        // Show all vostcards (current behavior)
-        return vostcards;
-      
       case 'nearby':
         // Show vostcards within 5km of user location
         return vostcards.filter(v => {
@@ -562,20 +571,46 @@ const HomeView = () => {
           return distance <= 5; // 5km radius
         });
       
-      case 'popular':
-        // Show vostcards sorted by likes/ratings (for now, just show all)
-        return vostcards.sort((a, b) => {
-          const aLikes = a.likeCount || 0;
-          const bLikes = b.likeCount || 0;
-          return bLikes - aLikes;
+      case '1-mile':
+        // Show vostcards within 1 mile of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(
+            userLocation[0], userLocation[1],
+            lat, lng
+          );
+          return distance <= 1; // 1 mile radius
         });
       
-      case 'recent':
-        // Show vostcards sorted by creation date (most recent first)
-        return vostcards.sort((a, b) => {
-          const dateA = a.createdAt?.toDate?.() || new Date(0);
-          const dateB = b.createdAt?.toDate?.() || new Date(0);
-          return dateB.getTime() - dateA.getTime();
+      case '5-miles':
+        // Show vostcards within 5 miles of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(
+            userLocation[0], userLocation[1],
+            lat, lng
+          );
+          return distance <= 5; // 5 miles radius
+        });
+      
+      case 'custom':
+        // Show vostcards within the custom distance of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(
+            userLocation[0], userLocation[1],
+            lat, lng
+          );
+          return distance <= customDistance;
         });
       
       default:
@@ -802,7 +837,12 @@ const HomeView = () => {
                   gap: '8px'
                 }}
               >
-                <span>📍 {mapAreaPreference.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                <span>
+                  {mapAreaPreference === 'nearby' && '🚶 Nearby'}
+                  {mapAreaPreference === '1-mile' && '🏃 1 Mile'}
+                  {mapAreaPreference === '5-miles' && '🏃 5 Miles'}
+                  {mapAreaPreference === 'custom' && `🔍 ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
+                </span>
                 <span style={{ fontSize: '12px' }}>▼</span>
               </button>
 
@@ -824,8 +864,81 @@ const HomeView = () => {
                 {vostcards.length} Vōstcards shown
               </div>
 
+              {/* Custom Distance Slider */}
+              {showDistanceSlider && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  padding: '16px',
+                  marginTop: '4px',
+                  minWidth: '200px',
+                  zIndex: 1003
+                }}>
+                  <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+                    <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
+                      Custom Distance
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      {customDistance} mile{customDistance !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="10"
+                    step="0.5"
+                    value={customDistance}
+                    onChange={(e) => handleCustomDistanceChange(parseFloat(e.target.value))}
+                    style={{
+                      width: '100%',
+                      height: '6px',
+                      borderRadius: '3px',
+                      background: '#e0e0e0',
+                      outline: 'none',
+                      WebkitAppearance: 'none',
+                      appearance: 'none'
+                    }}
+                  />
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    fontSize: '10px', 
+                    color: '#666',
+                    marginTop: '4px'
+                  }}>
+                    <span>0.5 mi</span>
+                    <span>10 mi</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowDistanceSlider(false);
+                      setMapAreaPreference('custom');
+                    }}
+                    style={{
+                      width: '100%',
+                      backgroundColor: '#002B4D',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px',
+                      marginTop: '12px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+
               {/* Area Options Dropdown */}
-              {showAreaSelector && (
+              {showAreaSelector && !showDistanceSlider && (
                 <div style={{
                   position: 'absolute',
                   top: '100%',
@@ -840,10 +953,10 @@ const HomeView = () => {
                   zIndex: 1003
                 }}>
                   {[
-                    { key: 'my-area', label: '📍 My Area', description: 'All Vōstcards' },
                     { key: 'nearby', label: '🚶 Nearby', description: 'Within 5km' },
-                    { key: 'popular', label: '⭐ Popular', description: 'Most liked' },
-                    { key: 'recent', label: '🕒 Recent', description: 'Latest posts' }
+                    { key: '1-mile', label: '🏃 1 Mile', description: 'Within 1 mile' },
+                    { key: '5-miles', label: '🏃 5 Miles', description: 'Within 5 miles' },
+                    { key: 'custom', label: '🔍 Custom', description: 'Custom distance' }
                   ].map((option) => (
                     <button
                       key={option.key}
