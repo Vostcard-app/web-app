@@ -148,14 +148,17 @@ const AllPostedVostcardsView: React.FC = () => {
   const webCount = vostcards.length;
 
   return (
-    <div style={{ 
-      background: '#f5f5f5', 
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
+    <div 
+      key={`all-posted-${Date.now()}`}
+      style={{ 
+        background: '#f5f5f5', 
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
       {/* Header */}
       <div style={{
         background: '#002B4D',

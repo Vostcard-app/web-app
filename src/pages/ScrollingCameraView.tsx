@@ -126,8 +126,28 @@ const ScrollingCameraView: React.FC = () => {
       console.log('📹 Recording directly from camera stream (portrait)');
       
       // Simple recording - directly from camera stream
+      const getSupportedMimeType = () => {
+        const types = [
+          'video/webm;codecs=vp9',
+          'video/webm;codecs=vp8',
+          'video/webm',
+          'video/mp4;codecs=avc1.42E01E',
+          'video/mp4'
+        ];
+        
+        for (const type of types) {
+          if (MediaRecorder.isTypeSupported(type)) {
+            console.log('📹 Using MIME type:', type);
+            return type;
+          }
+        }
+        console.log('📹 Using default MIME type');
+        return 'video/webm'; // fallback
+      };
+
+      const mimeType = getSupportedMimeType();
       const options: MediaRecorderOptions = {
-        mimeType: 'video/mp4',
+        mimeType,
         videoBitsPerSecond: 2000000
       };
 
@@ -142,11 +162,12 @@ const ScrollingCameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks.current, { type: 'video/mp4' });
+        const blob = new Blob(recordedChunks.current, { type: mimeType });
         
         console.log('📹 PORTRAIT video recorded directly from camera:', {
           size: blob.size,
-          type: blob.type
+          type: blob.type,
+          mimeType: mimeType
         });
 
         // Save video

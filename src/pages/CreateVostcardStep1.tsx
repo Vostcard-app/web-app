@@ -18,7 +18,10 @@ const CreateVostcardStep1: React.FC = () => {
     if (video instanceof Blob) {
       try {
         const url = URL.createObjectURL(video);
-        console.log('Generated Blob URL:', url);
+        console.log('Generated Blob URL:', url, {
+          size: video.size,
+          type: video.type
+        });
         setVideoError(null);
         return url;
       } catch (error) {
@@ -31,6 +34,7 @@ const CreateVostcardStep1: React.FC = () => {
       setVideoError(null);
       return video;
     }
+    console.log('No video available:', video);
     return null;
   }, [video, retryCount]);
 
@@ -101,6 +105,30 @@ const CreateVostcardStep1: React.FC = () => {
     setVideoError(null);
   };
 
+  const handleVideoLoadedMetadata = () => {
+    console.log('📹 Video metadata loaded');
+    setIsVideoLoading(false);
+    setVideoError(null);
+  };
+
+  const handleVideoTimeUpdate = () => {
+    console.log('📹 Video time update - playback working');
+    setIsVideoLoading(false);
+    setVideoError(null);
+  };
+
+  // Add timeout fallback to prevent infinite loading
+  useEffect(() => {
+    if (isVideoLoading) {
+      const timeout = setTimeout(() => {
+        console.log('⏰ Video loading timeout - forcing completion');
+        setIsVideoLoading(false);
+      }, 5000); // 5 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isVideoLoading]);
+
   const handleRetryVideo = () => {
     console.log('🔄 Retrying video load');
     setRetryCount(prev => prev + 1);
@@ -159,6 +187,7 @@ const CreateVostcardStep1: React.FC = () => {
         {videoURL ? (
           <div style={{ position: 'relative', width: '192px', height: '272px' }}>
             <video
+              key={`video-${retryCount}-${videoURL}`}
               src={videoURL}
               controls
               style={{
@@ -172,7 +201,10 @@ const CreateVostcardStep1: React.FC = () => {
               onLoadStart={handleVideoLoadStart}
               onLoadedData={handleVideoLoadedData}
               onCanPlay={handleVideoCanPlay}
+              onLoadedMetadata={handleVideoLoadedMetadata}
+              onTimeUpdate={handleVideoTimeUpdate}
               playsInline
+              preload="metadata"
             />
             
             {/* Loading indicator */}
