@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaMapPin, FaArrowLeft } from 'react-icons/fa';
+import { GeocodingService } from '../services/geocodingService';
 import './BrowseAreaView.css';
 
 const BrowseAreaView: React.FC = () => {
@@ -9,36 +10,30 @@ const BrowseAreaView: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Mock search results - in real implementation, this would use a geocoding service
-  const mockSearchResults = [
-    { name: 'New York, NY', coordinates: [40.7128, -74.0060], type: 'city' },
-    { name: 'Los Angeles, CA', coordinates: [34.0522, -118.2437], type: 'city' },
-    { name: 'Chicago, IL', coordinates: [41.8781, -87.6298], type: 'city' },
-    { name: 'Houston, TX', coordinates: [29.7604, -95.3698], type: 'city' },
-    { name: 'Phoenix, AZ', coordinates: [33.4484, -112.0740], type: 'city' },
-    { name: 'Philadelphia, PA', coordinates: [39.9526, -75.1652], type: 'city' },
-    { name: 'San Antonio, TX', coordinates: [29.4241, -98.4936], type: 'city' },
-    { name: 'San Diego, CA', coordinates: [32.7157, -117.1611], type: 'city' },
-    { name: 'Dallas, TX', coordinates: [32.7767, -96.7970], type: 'city' },
-    { name: 'San Jose, CA', coordinates: [37.3382, -121.8863], type: 'city' },
-  ];
-
+  // Real search using GeocodingService
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
     setIsSearching(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Filter mock results based on search query
-    const filtered = mockSearchResults.filter(result =>
-      result.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    setSearchResults(filtered);
-    setIsSearching(false);
+    setSearchError(null);
+    setSearchResults([]);
+    setSelectedLocation(null);
+    try {
+      // Try to geocode as city, state, or postal code (country left blank for now)
+      const result = await GeocodingService.geocodeAddressWithFallback('', searchQuery, '', searchQuery, '');
+      setSearchResults([
+        {
+          name: result.displayAddress || searchQuery,
+          coordinates: [result.latitude, result.longitude],
+          type: 'location',
+        },
+      ]);
+    } catch (error: any) {
+      setSearchError(error.message || 'No results found.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleLocationSelect = (location: any) => {
@@ -47,14 +42,13 @@ const BrowseAreaView: React.FC = () => {
 
   const handleBrowseArea = () => {
     if (selectedLocation) {
-      // Navigate to HomeView with the selected location coordinates
-      navigate('/home', { 
-        state: { 
+      navigate('/home', {
+        state: {
           browseLocation: {
             coordinates: selectedLocation.coordinates,
-            name: selectedLocation.name
-          }
-        } 
+            name: selectedLocation.name,
+          },
+        },
       });
     }
   };
@@ -69,17 +63,11 @@ const BrowseAreaView: React.FC = () => {
     <div className="browse-area-container">
       {/* Header */}
       <div className="browse-area-header">
-        <button 
-          className="back-button"
-          onClick={() => navigate('/home')}
-        >
+        <button className="back-button" onClick={() => navigate('/home')}>
           <FaArrowLeft size={20} />
         </button>
         <h1>Browse Area</h1>
-        <button 
-          className="home-button"
-          onClick={() => navigate('/home')}
-        >
+        <button className="home-button" onClick={() => navigate('/home')}>
           <FaHome size={20} />
         </button>
       </div>
@@ -96,7 +84,7 @@ const BrowseAreaView: React.FC = () => {
             onKeyPress={handleKeyPress}
             className="search-input"
           />
-          <button 
+          <button
             onClick={handleSearch}
             disabled={isSearching || !searchQuery.trim()}
             className="search-button"
@@ -108,6 +96,11 @@ const BrowseAreaView: React.FC = () => {
             )}
           </button>
         </div>
+
+        {/* Error Message */}
+        {searchError && (
+          <div style={{ color: 'red', margin: '12px 0', textAlign: 'center' }}>{searchError}</div>
+        )}
 
         {/* Search Results */}
         {searchResults.length > 0 && (
@@ -138,34 +131,9 @@ const BrowseAreaView: React.FC = () => {
               <FaMapPin className="selected-icon" />
               <span>Browse Vōstcards in {selectedLocation.name}</span>
             </div>
-            <button 
-              onClick={handleBrowseArea}
-              className="browse-button"
-            >
+            <button onClick={handleBrowseArea} className="browse-button">
               Browse Area
             </button>
-          </div>
-        )}
-
-        {/* Popular Cities */}
-        {!searchQuery && searchResults.length === 0 && (
-          <div className="popular-cities">
-            <h3>Popular Cities</h3>
-            <div className="cities-grid">
-              {mockSearchResults.slice(0, 6).map((city, index) => (
-                <div
-                  key={index}
-                  className="city-card"
-                  onClick={() => {
-                    setSearchQuery(city.name);
-                    setSelectedLocation(city);
-                  }}
-                >
-                  <FaMapPin className="city-icon" />
-                  <span>{city.name.split(',')[0]}</span>
-                </div>
-              ))}
-            </div>
           </div>
         )}
       </div>
