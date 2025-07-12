@@ -306,7 +306,7 @@ export default function ScriptToolView() {
       
       {/* Fixed button area at bottom */}
       <div style={{
-        padding: 16,
+        padding: "16px 16px 66px 16px", // Increased bottom padding by 50px
         background: "#fff",
         borderTop: "1px solid #eee",
         boxSizing: "border-box"
