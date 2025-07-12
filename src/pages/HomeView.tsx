@@ -299,6 +299,8 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
+  const [mapAreaPreference, setMapAreaPreference] = useState<'my-area' | 'nearby' | 'popular' | 'recent'>('my-area');
+  const [showAreaSelector, setShowAreaSelector] = useState(false);
 
   // Check for fresh load state from navigation
   useEffect(() => {
@@ -401,7 +403,12 @@ const HomeView = () => {
       const postedVostcardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       console.log('📍 Loaded vostcards:', postedVostcardsData.length);
-      setVostcards(postedVostcardsData);
+      
+      // Apply area preference filter
+      const filteredVostcards = filterVostcardsByArea(postedVostcardsData);
+      console.log(`📍 Filtered to ${filteredVostcards.length} vostcards for area: ${mapAreaPreference}`);
+      
+      setVostcards(filteredVostcards);
       setRetryCount(0); // Reset retry count on success
       setLastUpdateTime(Date.now());
       
@@ -525,6 +532,70 @@ const HomeView = () => {
     loadVostcards(true);
   };
 
+  // Handle area preference change
+  const handleAreaPreferenceChange = (area: 'my-area' | 'nearby' | 'popular' | 'recent') => {
+    setMapAreaPreference(area);
+    setShowAreaSelector(false);
+    loadVostcards(true); // Reload vostcards with new preference
+  };
+
+  // Filter vostcards based on area preference
+  const filterVostcardsByArea = (vostcards: any[]) => {
+    if (!userLocation) return vostcards;
+
+    switch (mapAreaPreference) {
+      case 'my-area':
+        // Show all vostcards (current behavior)
+        return vostcards;
+      
+      case 'nearby':
+        // Show vostcards within 5km of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(
+            userLocation[0], userLocation[1],
+            lat, lng
+          );
+          return distance <= 5; // 5km radius
+        });
+      
+      case 'popular':
+        // Show vostcards sorted by likes/ratings (for now, just show all)
+        return vostcards.sort((a, b) => {
+          const aLikes = a.likeCount || 0;
+          const bLikes = b.likeCount || 0;
+          return bLikes - aLikes;
+        });
+      
+      case 'recent':
+        // Show vostcards sorted by creation date (most recent first)
+        return vostcards.sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || new Date(0);
+          return dateB.getTime() - dateA.getTime();
+        });
+      
+      default:
+        return vostcards;
+    }
+  };
+
+  // Calculate distance between two points in kilometers
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -532,11 +603,15 @@ const HomeView = () => {
       if (isMenuOpen && !target.closest('[data-menu]')) {
         setIsMenuOpen(false);
       }
+      // Close area selector when clicking outside
+      if (showAreaSelector && !target.closest('[data-area-selector]')) {
+        setShowAreaSelector(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, showAreaSelector]);
 
   const menuItems = [
     { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },  // Fix the route to match App.tsx
@@ -696,6 +771,104 @@ const HomeView = () => {
               >
                 Offers
               </button>
+            </div>
+
+            {/* Area Preference Selector */}
+            <div 
+              style={{
+                position: 'fixed',
+                top: '96px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 1002
+              }}
+              data-area-selector
+            >
+              <button
+                type="button"
+                onClick={() => setShowAreaSelector(!showAreaSelector)}
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>📍 {mapAreaPreference.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                <span style={{ fontSize: '12px' }}>▼</span>
+              </button>
+
+              {/* Area Info Panel */}
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                marginTop: '4px',
+                whiteSpace: 'nowrap',
+                zIndex: 1003
+              }}>
+                {vostcards.length} Vōstcards shown
+              </div>
+
+              {/* Area Options Dropdown */}
+              {showAreaSelector && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  padding: '8px 0',
+                  marginTop: '4px',
+                  minWidth: '140px',
+                  zIndex: 1003
+                }}>
+                  {[
+                    { key: 'my-area', label: '📍 My Area', description: 'All Vōstcards' },
+                    { key: 'nearby', label: '🚶 Nearby', description: 'Within 5km' },
+                    { key: 'popular', label: '⭐ Popular', description: 'Most liked' },
+                    { key: 'recent', label: '🕒 Recent', description: 'Latest posts' }
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      onClick={() => handleAreaPreferenceChange(option.key as any)}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        border: 'none',
+                        background: 'none',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        color: mapAreaPreference === option.key ? '#002B4D' : '#333',
+                        fontWeight: mapAreaPreference === option.key ? '600' : '400',
+                        borderBottom: '1px solid #f0f0f0'
+                      }}
+                    >
+                      <div style={{ fontWeight: '600' }}>{option.label}</div>
+                      <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                        {option.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Map Container */}
