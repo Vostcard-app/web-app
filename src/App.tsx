@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import RegistrationPage from "./pages/RegistrationPage";
 import UserGuideView from "./pages/UserGuideView";
 import HomeView from "./pages/HomeView";
+import BrowseAreaView from "./pages/BrowseAreaView";
 import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
 import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
 import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
@@ -59,6 +60,7 @@ function App() {
 
               {/* 🏠 Main */}
               <Route path="/home" element={<HomeView />} />
+              <Route path="/browse-area" element={<BrowseAreaView />} />
               <Route path="/list" element={<ListView />} />
               <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
               <Route path="/offers-list" element={<OffersListView />} />

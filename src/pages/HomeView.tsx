@@ -299,12 +299,29 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
-  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom'>('nearby');
+  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom' | 'search'>('nearby');
   const [customDistance, setCustomDistance] = useState(2); // Default 2 miles
   const [showAreaSelector, setShowAreaSelector] = useState(false);
   const [showDistanceSlider, setShowDistanceSlider] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchLocation, setSearchLocation] = useState<[number, number] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [browseLocation, setBrowseLocation] = useState<any>(null);
 
   // Check for fresh load state from navigation
+  const browseLocationState = location.state?.browseLocation;
+
+  // Handle browse location from navigation
+  useEffect(() => {
+    if (browseLocationState) {
+      setBrowseLocation(browseLocationState);
+      setUserLocation(browseLocationState.coordinates);
+      // Clear the state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [browseLocationState, navigate, location.pathname]);
+
+  // Handle fresh load state from navigation
   useEffect(() => {
     const navigationState = location.state as any;
     if (navigationState?.freshLoad) {
@@ -535,7 +552,7 @@ const HomeView = () => {
   };
 
   // Handle area preference change
-  const handleAreaPreferenceChange = (area: 'nearby' | '1-mile' | '5-miles' | 'custom') => {
+  const handleAreaPreferenceChange = (area: 'nearby' | '1-mile' | '5-miles' | 'custom' | 'search') => {
     setMapAreaPreference(area);
     setShowAreaSelector(false);
     if (area === 'custom') {
@@ -649,6 +666,7 @@ const HomeView = () => {
   }, [isMenuOpen, showAreaSelector]);
 
   const menuItems = [
+    { label: 'Browse Area', route: '/browse-area' },
     { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },  // Fix the route to match App.tsx
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
