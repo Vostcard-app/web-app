@@ -30,12 +30,16 @@ export default function ScriptToolView() {
     const titleParam = urlParams.get('title');
     
     if (scriptParam) {
-      setScript(decodeURIComponent(scriptParam));
+      const decodedScript = decodeURIComponent(scriptParam);
+      console.log('Loading script from URL:', decodedScript);
+      setScript(decodedScript);
       setShowSaveButton(true);
     }
     
     if (titleParam) {
-      setTopic(decodeURIComponent(titleParam));
+      const decodedTitle = decodeURIComponent(titleParam);
+      console.log('Loading title from URL:', decodedTitle);
+      setTopic(decodedTitle);
     }
   }, [location.search]);
 
@@ -328,7 +332,7 @@ export default function ScriptToolView() {
               cursor: script.trim() ? "pointer" : "not-allowed"
             }}
           >
-            Roll Camera!
+            Roll Camera! {script.trim() ? '(Enabled)' : '(Disabled)'}
           </button>
         </div>
       </div>
