@@ -282,81 +282,19 @@ const VostcardDetailView: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div style={{ color: 'red' }}>{error}</div>
-      </div>
-    );
-  }
-
-  if (!vostcard) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Vostcard not found</div>
-        </div>
-    );
-  }
-
-  const { title, description, photoURLs = [], videoURL, username } = vostcard;
-  const avatarUrl = userProfile?.avatarURL;
-
-  // Format creation date
-  let createdAt = '';
-  if (vostcard.createdAt) {
-    if (typeof vostcard.createdAt.toDate === 'function') {
-      createdAt = vostcard.createdAt.toDate().toLocaleString();
-    } else if (vostcard.createdAt instanceof Date) {
-      createdAt = vostcard.createdAt.toLocaleString();
-    } else if (typeof vostcard.createdAt === 'string' || typeof vostcard.createdAt === 'number') {
-      createdAt = new Date(vostcard.createdAt).toLocaleString();
-    } else {
-      createdAt = String(vostcard.createdAt);
-    }
-  }
-
-  const [isDragging, setIsDragging] = useState(false);
-  const y = useMotionValue(0);
-  const controls = useAnimation();
-
-  // Drag end handler
-  const handleDragEnd = (_: any, info: { offset: { y: number } }) => {
-    setIsDragging(false);
-    if (info.offset.y < -SWIPE_THRESHOLD && nextId) {
-      // Swiped up
-      controls.start({ y: -window.innerHeight, transition: { type: 'spring', stiffness: 400, damping: 30 } }).then(() => {
-        navigate(`/vostcard/${nextId}`, { state: { vostcardList, currentIndex: currentIndex + 1 } });
-        y.set(0);
-      });
-    } else if (info.offset.y > SWIPE_THRESHOLD && prevId) {
-      // Swiped down
-      controls.start({ y: window.innerHeight, transition: { type: 'spring', stiffness: 400, damping: 30 } }).then(() => {
-        navigate(`/vostcard/${prevId}`, { state: { vostcardList, currentIndex: currentIndex - 1 } });
-        y.set(0);
-      });
-    } else {
-      // Snap back
-      controls.start({ y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } });
-    }
-  };
-
-  // Reset y on id change
-  useEffect(() => { y.set(0); }, [id, y]);
-
   // Helper to render the card content (so we can use it for prev/next too)
   const renderCardContent = (vostcardId: string | null) => {
-    if (!vostcardId) return null;
-    // For simplicity, only render the current card fully; prev/next can be a placeholder or partial
+    if (!vostcardId) return <div style={{ height: '100vh', background: '#f0f0f0' }} />;
     if (vostcardId !== id) {
+      // Only render a placeholder for prev/next
       return <div style={{ height: '100vh', background: '#f0f0f0' }} />;
+    }
+    // If loading or error, show loading/error state
+    if (loading) {
+      return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>Loading...</div>;
+    }
+    if (error || !vostcard) {
+      return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red', fontSize: 24 }}>{error || 'Vostcard not found'}</div>;
     }
     return (
       <AnimatePresence initial={false} custom={swipeDirection}>
@@ -903,7 +841,7 @@ const VostcardDetailView: React.FC = () => {
         animate={controls}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       >
-        {renderCardContent(id)}
+        {renderCardContent(id || null)}
       </motion.div>
     </div>
   );
