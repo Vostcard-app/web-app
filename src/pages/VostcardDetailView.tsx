@@ -282,6 +282,34 @@ const VostcardDetailView: React.FC = () => {
     }
   };
 
+  const [isDragging, setIsDragging] = useState(false);
+  const y = useMotionValue(0);
+  const controls = useAnimation();
+
+  // Drag end handler
+  const handleDragEnd = (_: any, info: { offset: { y: number } }) => {
+    setIsDragging(false);
+    if (info.offset.y < -SWIPE_THRESHOLD && nextId) {
+      // Swiped up
+      controls.start({ y: -window.innerHeight, transition: { type: 'spring' as const, stiffness: 400, damping: 30 } }).then(() => {
+        navigate(`/vostcard/${nextId}`, { state: { vostcardList, currentIndex: currentIndex + 1 } });
+        y.set(0);
+      });
+    } else if (info.offset.y > SWIPE_THRESHOLD && prevId) {
+      // Swiped down
+      controls.start({ y: window.innerHeight, transition: { type: 'spring' as const, stiffness: 400, damping: 30 } }).then(() => {
+        navigate(`/vostcard/${prevId}`, { state: { vostcardList, currentIndex: currentIndex - 1 } });
+        y.set(0);
+      });
+    } else {
+      // Snap back
+      controls.start({ y: 0, transition: { type: 'spring' as const, stiffness: 400, damping: 30 } });
+    }
+  };
+
+  // Reset y on id change
+  useEffect(() => { y.set(0); }, [id, y]);
+
   // Helper to render the card content (so we can use it for prev/next too)
   const renderCardContent = (vostcardId: string | null) => {
     if (!vostcardId) return <div style={{ height: '100vh', background: '#f0f0f0' }} />;
@@ -844,7 +872,7 @@ const VostcardDetailView: React.FC = () => {
           height: '100vh',
           zIndex: 1,
           background: '#fff',
-          y,
+          y: y,
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch',
           overflow: 'auto',
@@ -855,7 +883,7 @@ const VostcardDetailView: React.FC = () => {
         onDragStart={() => setIsDragging(true)}
         onDragEnd={handleDragEnd}
         animate={controls}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        transition={{ type: 'spring' as const, stiffness: 400, damping: 30 }}
       >
         {renderCardContent(id || null)}
       </motion.div>
