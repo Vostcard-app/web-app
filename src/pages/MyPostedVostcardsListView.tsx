@@ -149,7 +149,7 @@ const MyPostedVostcardsListView = () => {
         color: 'white',
         position: 'relative'
       }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>My Posted Vōstcards</h1>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>Posted Vōstcards</h1>
         <FaHome
           size={48}
           style={{

@@ -26,146 +26,48 @@ const CameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Device detection for specific handling
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
-        const isMobile = isIOS || isAndroid;
+        console.log('📱 Starting camera with portrait constraints...');
         
-        console.log('📱 Device detection:', { isIOS, isAndroid, isMobile, userAgent: navigator.userAgent });
-        
-        // Multiple constraint strategies to force portrait
-        const constraintStrategies = [
-          // Strategy 1: Force portrait with exact constraints
-          {
-            name: 'Exact Portrait',
-            constraints: {
-              width: { exact: 720 },
-              height: { exact: 1280 },
-              frameRate: { ideal: 30, max: 30 }
-            }
+        // Simplified, focused portrait constraints
+        const portraitConstraints = {
+          video: {
+            width: { ideal: 720, min: 480, max: 1080 },
+            height: { ideal: 1280, min: 854, max: 1920 },
+            aspectRatio: { exact: 9/16 },
+            frameRate: { ideal: 30, max: 30 },
+            facingMode: 'environment' // Use back camera for better quality
           },
-          // Strategy 2: Ideal portrait with min/max
-          {
-            name: 'Ideal Portrait',
-            constraints: {
-              width: { ideal: 720, min: 480, max: 720 },
-              height: { ideal: 1280, min: 854, max: 1280 },
-              frameRate: { ideal: 30, max: 30 }
-            }
-          },
-          // Strategy 3: Aspect ratio focused
-          {
-            name: 'Aspect Ratio Portrait',
-            constraints: {
-              aspectRatio: { exact: 9/16 },
-              frameRate: { ideal: 30, max: 30 }
-            }
-          },
-          // Strategy 4: Mobile-specific portrait
-          {
-            name: 'Mobile Portrait',
-            constraints: {
-              width: { ideal: 720 },
-              height: { ideal: 1280 },
-              aspectRatio: { ideal: 9/16 },
-              frameRate: { ideal: 30, max: 30 }
-            }
-          }
-        ];
-        
-        let stream = null;
-        let usedStrategy = null;
-        
-        // Try each strategy until one works and gives us portrait
-        for (const strategy of constraintStrategies) {
-          try {
-            console.log(`📱 Trying strategy: ${strategy.name}`, strategy.constraints);
-            
-            stream = await navigator.mediaDevices.getUserMedia({ 
-              video: strategy.constraints,
-              audio: false
-            });
-            
-            // Check if we got portrait
-            const videoTrack = stream.getVideoTracks()[0];
-            if (videoTrack) {
-              const settings = videoTrack.getSettings();
-              const isPortrait = settings.width && settings.height ? settings.height > settings.width : false;
-              
-              console.log(`📱 Strategy ${strategy.name} result:`, {
-                width: settings.width,
-                height: settings.height,
-                isPortrait: isPortrait,
-                aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown',
-                frameRate: settings.frameRate
-              });
-              
-              if (isPortrait) {
-                usedStrategy = strategy;
-                console.log(`✅ SUCCESS: ${strategy.name} gave us portrait video!`);
-                break;
-              } else {
-                console.log(`❌ FAILED: ${strategy.name} gave us landscape, trying next strategy...`);
-                // Stop this stream and try next strategy
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-              }
-            }
-          } catch (error) {
-            console.log(`❌ Strategy ${strategy.name} failed:`, error instanceof Error ? error.message : String(error));
-            if (stream) {
-              stream.getTracks().forEach(track => track.stop());
-              stream = null;
-            }
-          }
-        }
-        
-        // If no strategy worked, try one final fallback
-        if (!stream) {
-          console.log('🔄 All strategies failed, trying final fallback...');
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-              video: true,
-              audio: false
-            });
-            usedStrategy = { name: 'Final Fallback', constraints: { video: true } };
-          } catch (error) {
-            console.error('❌ Final fallback also failed:', error);
-            throw error;
-          }
-        }
-        
-        if (stream) {
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
+          audio: false
+        };
 
-          // Final check and warning
-          const videoTrack = stream.getVideoTracks()[0];
-          if (videoTrack) {
-            const settings = videoTrack.getSettings();
-            const isPortrait = settings.width && settings.height ? settings.height > settings.width : false;
-            
-            console.log(`📱 FINAL RESULT using ${usedStrategy?.name}:`, {
-              width: settings.width,
-              height: settings.height,
-              aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown',
-              isPortrait: isPortrait,
-              orientation: isPortrait ? 'PORTRAIT ✅' : 'LANDSCAPE ❌',
-              frameRate: settings.frameRate,
-              facingMode: settings.facingMode
-            });
-            
-            if (!isPortrait) {
-              console.warn('⚠️⚠️⚠️ CRITICAL: Video is still LANDSCAPE! This will appear sideways when played back!');
-              console.warn('⚠️ Device may not support portrait video capture. Consider device rotation or different approach.');
-            }
+        const stream = await navigator.mediaDevices.getUserMedia(portraitConstraints);
+        streamRef.current = stream;
+        
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+
+        // Verify portrait orientation
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const settings = videoTrack.getSettings();
+          const isPortrait = settings.width && settings.height ? settings.height > settings.width : false;
+          
+          console.log('📱 Camera initialized:', {
+            width: settings.width,
+            height: settings.height,
+            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown',
+            isPortrait: isPortrait,
+            orientation: isPortrait ? 'PORTRAIT ✅' : 'LANDSCAPE ❌'
+          });
+          
+          if (!isPortrait) {
+            console.warn('⚠️ Camera returned landscape video. This may cause orientation issues.');
           }
         }
 
       } catch (err) {
-        console.error('❌ All camera access attempts failed:', err);
+        console.error('❌ Camera access failed:', err);
         alert('Camera access failed. Please check permissions and try again.');
       }
     };
@@ -199,7 +101,7 @@ const CameraView: React.FC = () => {
     return () => {
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
-  }, [isIPhone]);
+  }, []);
 
   const handleCapturePhoto = () => {
     const video = videoRef.current;
@@ -353,7 +255,7 @@ const CameraView: React.FC = () => {
         📱 Portrait 16:9 Mode
       </div>
 
-      {/* 🎥 Video Preview - Always Portrait 16:9 */}
+      {/* 🎥 Video Preview - Enforced Portrait 9:16 */}
       <video
         ref={videoRef}
         autoPlay
@@ -364,7 +266,6 @@ const CameraView: React.FC = () => {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          // Force portrait display - rotate if video is landscape
           aspectRatio: '9/16',
           maxWidth: '100%',
           maxHeight: '100%'
@@ -373,21 +274,21 @@ const CameraView: React.FC = () => {
           const video = e.currentTarget;
           const { videoWidth, videoHeight } = video;
           
-          console.log('📱 Video loaded metadata:', {
+          console.log('📱 Video preview loaded:', {
             videoWidth,
             videoHeight,
             isPortrait: videoHeight > videoWidth,
             aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
           });
           
-          // If video is landscape, rotate it to portrait
+          // Ensure portrait display - no rotation needed if camera constraints work
           if (videoWidth > videoHeight) {
-            console.log('🔄 Video is landscape, rotating to portrait');
+            console.log('🔄 Video is landscape, applying portrait display');
             video.style.transform = 'rotate(90deg)';
             video.style.width = '100vh';
             video.style.height = '100vw';
           } else {
-            console.log('✅ Video is already portrait');
+            console.log('✅ Video is portrait, no rotation needed');
             video.style.transform = 'none';
           }
         }}
