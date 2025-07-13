@@ -26,15 +26,16 @@ const CameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Request portrait video with flexible constraints that work across devices
+        // Ensure video is captured in portrait mode (height > width)
+        // For portrait video: width should be smaller than height (9:16 ratio)
         const videoConstraints: MediaTrackConstraints = {
-          width: { ideal: 1080, min: 720 },
-          height: { ideal: 1920, min: 1280 },
-          aspectRatio: { ideal: 0.5625 }, // 9:16 portrait ratio - ideal but not exact
+          width: { ideal: 720, min: 480, max: 1080 },  // Smaller dimension for portrait
+          height: { ideal: 1280, min: 854, max: 1920 }, // Larger dimension for portrait
+          aspectRatio: { ideal: 16/9 }, // 16:9 but height/width (portrait)
           frameRate: { ideal: 30, max: 30 }
         };
 
-        console.log('📱 Requesting portrait camera view:', videoConstraints);
+        console.log('📱 Requesting portrait camera capture:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -51,30 +52,39 @@ const CameraView: React.FC = () => {
         if (videoTrack) {
           const settings = videoTrack.getSettings();
           const actualAspectRatio = settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown';
+          const isPortrait = settings.width && settings.height ? settings.height > settings.width : false;
+          
           console.log('📱 Video track settings:', {
             width: settings.width,
             height: settings.height,
             facingMode: settings.facingMode,
             frameRate: settings.frameRate,
             aspectRatio: actualAspectRatio,
-            isPortrait: settings.width && settings.height ? settings.height > settings.width : 'unknown'
+            isPortrait: isPortrait,
+            orientation: isPortrait ? 'PORTRAIT ✅' : 'LANDSCAPE ❌'
           });
+          
+          // Warn if we got landscape instead of portrait
+          if (!isPortrait) {
+            console.warn('⚠️ Camera is recording in LANDSCAPE mode - video will appear sideways!');
+          }
         }
 
       } catch (err) {
         console.error('Error accessing camera with portrait constraints:', err);
-        // Fallback to basic constraints
+        // Fallback to basic constraints but still try for portrait
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
             video: {
-              // Don't specify aspect ratio in fallback to avoid conflicts
+              width: { ideal: 720 },
+              height: { ideal: 1280 }
             }
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using basic camera fallback');
+          console.log('📱 Using fallback camera with portrait preference');
         } catch (fallbackErr) {
           console.error('Fallback camera access also failed:', fallbackErr);
         }
