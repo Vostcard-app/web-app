@@ -496,89 +496,42 @@ const VostcardDetailView: React.FC = () => {
 
           {/* Media Thumbnails */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
-            <div 
-              style={{ 
-                width: 180, 
-                height: 240, 
-                background: '#111', 
-                borderRadius: 16, 
-                overflow: 'hidden', 
-                cursor: videoURL ? 'pointer' : 'default',
-                position: 'relative'
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (videoURL) setShowVideoModal(true);
-              }}
-            >
-              {videoURL ? (
-                <>
-                  <video 
-                    src={videoURL} 
-                    style={{ 
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover', // This will fill the container and crop if needed
-                      pointerEvents: 'none',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0
-                    }}
-                    onLoadedMetadata={(e) => {
-                      handleVideoLoadedMetadata(e.currentTarget);
-                      const video = e.currentTarget;
-                      const { videoWidth, videoHeight } = video;
-                      
-                      console.log('📱 Video playback metadata:', {
-                        videoWidth,
-                        videoHeight,
-                        isPortrait: videoHeight > videoWidth,
-                        aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
-                      });
-                      
-                      // If video is landscape, rotate it to portrait for playback
-                      if (videoWidth > videoHeight) {
-                        console.log('🔄 Video is landscape, rotating to portrait for playback');
-                        video.style.transform = 'rotate(90deg)';
-                        video.style.width = '100vh';
-                        video.style.height = '100vw';
-                      } else {
-                        console.log('✅ Video is already portrait for playback');
-                        video.style.transform = 'none';
-                      }
-                    }}
-                  />
-                  {/* Play overlay */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                    borderRadius: '50%',
-                    width: '60px',
-                    height: '60px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    pointerEvents: 'none',
-                    zIndex: 1
-                  }}>
-                    <div style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '20px solid white',
-                      borderTop: '12px solid transparent',
-                      borderBottom: '12px solid transparent',
-                      marginLeft: '4px',
-                      pointerEvents: 'none'
-                    }} />
-                  </div>
-                </>
-              ) : (
-                <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>No Video</div>
-              )}
-            </div>
+            {vostcard?.video && (
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '400px',
+                height: '711px', // 400 * (16/9) = 711 for 9:16 aspect ratio
+                margin: '0 auto',
+                borderRadius: 16,
+                overflow: 'hidden',
+                backgroundColor: '#000'
+              }}>
+                <video
+                  ref={videoRef}
+                  src={videoURL}
+                  controls
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover' // Fill the container
+                  }}
+                  onLoadedMetadata={(e) => {
+                    const video = e.currentTarget;
+                    const { videoWidth, videoHeight } = video;
+                    
+                    console.log('📱 Vostcard playback:', {
+                      videoWidth,
+                      videoHeight,
+                      isPortrait: videoHeight > videoWidth,
+                      aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
+                    });
+                  }}
+                  playsInline
+                  preload="metadata"
+                />
+              </div>
+            )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {photoURLs.length > 0 ? (
                 photoURLs.slice(0, 2).map((url: string, idx: number) => (
