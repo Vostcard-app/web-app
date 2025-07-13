@@ -153,16 +153,43 @@ const BrowseAreaView: React.FC = () => {
   }, []);
 
   return (
-    <div className="browse-area-container">
+    <div
+      className="browse-area-container"
+      style={{ backgroundColor: 'white', minHeight: '100vh' }}
+    >
       {/* Header */}
-      <div className="browse-area-header">
-        <button className="back-button" onClick={() => navigate('/home')}>
-          <FaArrowLeft size={20} />
-        </button>
-        <h1>Browse Area</h1>
-        <button className="home-button" onClick={() => navigate('/home')}>
-          <FaHome size={20} />
-        </button>
+      <div
+        style={{
+          backgroundColor: '#002B4D',
+          height: '30px',
+          padding: '15px 0 24px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'relative',
+          color: 'white'
+        }}
+      >
+        <h1 style={{ fontSize: '30px', margin: 0 }}>Browse Area</h1>
+        <FaHome
+          size={48}
+          color="white"
+          style={{
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+          onClick={() => navigate('/home')}
+        />
       </div>
 
       {/* Search Section */}
