@@ -149,6 +149,9 @@ const BrowseAreaView: React.FC = () => {
   };
 
   const handleBrowseArea = () => {
+    console.log('🗺️ Browse Area button clicked');
+    console.log('📍 Selected location:', selectedLocation);
+    
     if (selectedLocation) {
       navigate('/home', {
         state: {

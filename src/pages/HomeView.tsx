@@ -461,6 +461,12 @@ const HomeView = () => {
  
   // Get user location with error handling
   useEffect(() => {
+    // Don't get user location if we have a browse location from navigation
+    if (browseLocationState) {
+      console.log('🗺️ Skipping user location acquisition - browse location detected');
+      return;
+    }
+
     const getUserLocation = () => {
       if (!navigator.geolocation) {
         console.error('Geolocation is not supported by this browser');
@@ -487,7 +493,7 @@ const HomeView = () => {
     };
 
     getUserLocation();
-  }, []);
+  }, [browseLocationState]); // Add browseLocationState as dependency
 
   // Load vostcards on mount and when fresh load is requested
   useEffect(() => {
