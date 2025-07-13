@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useAnimation } from 'framer-motion';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin, FaLock, FaMap } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin, FaLock, FaMap, FaArrowLeft } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -88,6 +88,15 @@ const VostcardDetailView: React.FC = () => {
   }, [swipeDirection]);
 
   const { user } = useAuth();
+  const { 
+    toggleLike, 
+    getLikeCount, 
+    isLiked, 
+    setupLikeListeners, 
+    loadLocalVostcard, 
+    currentVostcard 
+  } = useVostcard();
+
   const [vostcard, setVostcard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -109,59 +118,120 @@ const VostcardDetailView: React.FC = () => {
     ratingCount: 0,
     lastUpdated: ''
   });
-  const { toggleLike, getLikeCount, isLiked, setupLikeListeners, loadLocalVostcard, currentVostcard } = useVostcard();
+  const [videoURL, setVideoURL] = useState<string | null>(null);
+  const [liked, setLiked] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
 
-  // Updated fetchVostcard function to handle both Firebase and IndexedDB
+  // Load Vostcard (Firebase or Local)
   useEffect(() => {
     const fetchVostcard = async () => {
+      if (!id) {
+        setError('No Vostcard ID provided');
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
+
       try {
-        // First, check if the Vostcard is already loaded in context (for private Vostcards)
+        console.log('🔍 Loading Vostcard:', id);
+
+        // First, check if it's already loaded in context (from MyVostcardListView)
         if (currentVostcard && currentVostcard.id === id) {
-          console.log('📂 Found Vostcard in context (private)');
+          console.log('✅ Using Vostcard from context');
           setVostcard(currentVostcard);
+          setIsPrivate(true); // Context Vostcards are private
           setLoading(false);
           return;
         }
 
-        // If not in context, try Firebase (for posted Vostcards)
-        const docRef = doc(db, 'vostcards', id!);
+        // Try to load from Firebase (posted Vostcards)
+        console.log('🔍 Trying Firebase...');
+        const docRef = doc(db, 'vostcards', id);
         const docSnap = await getDoc(docRef);
-        
+
         if (docSnap.exists()) {
-          // Found in Firebase - this is a posted Vostcard
-          console.log('📄 Found Vostcard in Firebase (posted)');
-          setVostcard(docSnap.data());
-        } else {
-          // Not found in Firebase, try loading from IndexedDB (for private Vostcards)
-          console.log(' Vostcard not found in Firebase, trying IndexedDB...');
-          try {
-            await loadLocalVostcard(id!);
-            // The loadLocalVostcard function will set the currentVostcard in context
-            // We'll check again in the next render cycle
-          } catch (localError) {
-            console.error('❌ Vostcard not found in IndexedDB either:', localError);
-            setError('Vostcard not found.');
-          }
+          console.log('✅ Found in Firebase');
+          const data = docSnap.data();
+          setVostcard({ id: docSnap.id, ...data });
+          setIsPrivate(false); // Firebase Vostcards are public
+          setLoading(false);
+          return;
         }
+
+        // Try to load from IndexedDB (private Vostcards)
+        console.log('🔍 Trying IndexedDB...');
+        await loadLocalVostcard(id);
+        
+        // Check if it was loaded into context
+        if (currentVostcard && currentVostcard.id === id) {
+          console.log('✅ Found in IndexedDB');
+          setVostcard(currentVostcard);
+          setIsPrivate(true); // Local Vostcards are private
+          setLoading(false);
+          return;
+        }
+
+        // Not found anywhere
+        console.log('❌ Vostcard not found');
+        setError('Vostcard not found');
+        setLoading(false);
+
       } catch (err) {
-        console.error('❌ Error fetching Vostcard:', err);
-        setError('Failed to load Vostcard.');
-      } finally {
+        console.error('❌ Error loading Vostcard:', err);
+        setError('Failed to load Vostcard');
         setLoading(false);
       }
     };
-    if (id) fetchVostcard();
+
+    fetchVostcard();
   }, [id, loadLocalVostcard, currentVostcard]);
 
-  // Additional effect to handle when currentVostcard changes (for private Vostcards)
+  // Create video URL when vostcard is loaded
   useEffect(() => {
-    if (currentVostcard && currentVostcard.id === id && !vostcard) {
-      console.log('📂 Setting Vostcard from context:', currentVostcard);
-      setVostcard(currentVostcard);
+    if (vostcard?.video) {
+      try {
+        let url: string;
+        
+        if (vostcard.video instanceof Blob) {
+          // Local Vostcard with Blob video
+          url = URL.createObjectURL(vostcard.video);
+          console.log('📹 Created Blob URL for local video');
+        } else if (typeof vostcard.video === 'string') {
+          // Firebase Vostcard with string URL
+          url = vostcard.video;
+          console.log('📹 Using Firebase video URL');
+        } else {
+          throw new Error('Invalid video format');
+        }
+        
+        setVideoURL(url);
+        
+        // Cleanup function for Blob URLs
+        return () => {
+          if (vostcard.video instanceof Blob) {
+            URL.revokeObjectURL(url);
+          }
+        };
+      } catch (err) {
+        console.error('❌ Error creating video URL:', err);
+        setError('Failed to load video');
+      }
     }
-  }, [currentVostcard, id, vostcard]);
+  }, [vostcard]);
+
+  // Setup like listeners for public Vostcards
+  useEffect(() => {
+    if (vostcard && !isPrivate && user) {
+      const cleanup = setupLikeListeners(vostcard.id, (count) => {
+        setLikeCount(count);
+      }, (isLiked) => {
+        setLiked(isLiked);
+      });
+      return cleanup;
+    }
+  }, [vostcard, isPrivate, user, setupLikeListeners]);
 
   // Fetch user profile when vostcard is loaded
   useEffect(() => {
@@ -496,7 +566,7 @@ const VostcardDetailView: React.FC = () => {
 
           {/* Media Thumbnails */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
-            {vostcard?.video && (
+            {videoURL && (
               <div style={{
                 position: 'relative',
                 width: '100%',
@@ -708,6 +778,67 @@ const VostcardDetailView: React.FC = () => {
       </AnimatePresence>
     );
   };
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: 'white'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', color: '#666' }}>Loading Vostcard...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: 'white'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', color: 'red', marginBottom: '16px' }}>{error}</div>
+          <button 
+            onClick={() => navigate(-1)}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vostcard) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundColor: 'white'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', color: '#666' }}>No Vostcard data</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#fff' }}>
