@@ -119,6 +119,7 @@ const VostcardDetailView: React.FC = () => {
     lastUpdated: ''
   });
   const [videoURL, setVideoURL] = useState<string | null>(null);
+  const [photoURLs, setPhotoURLs] = useState<string[]>([]);
   const [liked, setLiked] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
 
@@ -183,7 +184,7 @@ const VostcardDetailView: React.FC = () => {
     }
   }, [currentVostcard, id, loading]);
 
-  // Create video URL when vostcard is loaded
+  // Create video and photo URLs when vostcard is loaded
   useEffect(() => {
     if (vostcard?.video) {
       try {
@@ -196,7 +197,7 @@ const VostcardDetailView: React.FC = () => {
         } else if (typeof vostcard.video === 'string') {
           // Firebase Vostcard with string URL
           url = vostcard.video;
-          console.log('📹 Using Firebase video URL');
+          console.log('📹 Using Firebase URL for video');
         } else {
           throw new Error('Invalid video format');
         }
@@ -213,6 +214,42 @@ const VostcardDetailView: React.FC = () => {
         console.error('❌ Error creating video URL:', err);
         setError('Failed to load video');
       }
+    }
+  }, [vostcard]);
+
+  // Create photo URLs when vostcard is loaded
+  useEffect(() => {
+    if (vostcard?.photos && vostcard.photos.length > 0) {
+      try {
+        let urls: string[] = [];
+        
+        if (vostcard.photos[0] instanceof Blob) {
+          // Local Vostcard with Blob photos
+          urls = vostcard.photos.map((photo: Blob) => URL.createObjectURL(photo));
+          console.log('📸 Created Blob URLs for local photos, count:', urls.length);
+        } else if (typeof vostcard.photos[0] === 'string') {
+          // Firebase Vostcard with string URLs
+          urls = vostcard.photos;
+          console.log('📸 Using Firebase URLs for photos, count:', urls.length);
+        } else if (vostcard.photoURLs) {
+          // Fallback to photoURLs property
+          urls = vostcard.photoURLs;
+          console.log('📸 Using photoURLs property, count:', urls.length);
+        }
+        
+        setPhotoURLs(urls);
+        
+        // Cleanup function for Blob URLs
+        return () => {
+          if (vostcard.photos[0] instanceof Blob) {
+            urls.forEach(url => URL.revokeObjectURL(url));
+          }
+        };
+      } catch (err) {
+        console.error('❌ Error creating photo URLs:', err);
+      }
+    } else {
+      setPhotoURLs([]);
     }
   }, [vostcard]);
 
@@ -469,7 +506,7 @@ const VostcardDetailView: React.FC = () => {
 
   // Helper to render the card content (so we can use it for prev/next too)
   const renderCardContent = (vostcardId: string | null) => {
-    if (!vostcardId) return <div style={{ height: '100vh', background: '#f0f0f0' }} />;
+    if (!vostcard) return null;
     if (vostcardId !== id) {
       // Only render a placeholder for prev/next
       return <div style={{ height: '100vh', background: '#f0f0f0' }} />;
@@ -482,7 +519,7 @@ const VostcardDetailView: React.FC = () => {
       return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red', fontSize: 24 }}>{error || 'Vostcard not found'}</div>;
     }
     // All variables must be defined here for the current card
-    const { title, description, photoURLs = [], videoURL, username, createdAt: rawCreatedAt } = vostcard;
+    const { title, description, username, createdAt: rawCreatedAt } = vostcard;
     const avatarUrl = userProfile?.avatarURL;
     // Format creation date
     let createdAt = '';
