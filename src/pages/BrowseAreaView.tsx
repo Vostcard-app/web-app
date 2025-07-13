@@ -32,60 +32,76 @@ const BrowseAreaView: React.FC = () => {
     setSearchError(null);
     const handler = setTimeout(async () => {
       try {
-        // 1. Geocode for city/zip/place
-        let geoResults: any[] = [];
+        // Focus on location search only
+        let locationResults: any[] = [];
         try {
           // Check if we're in development mode
           const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
           
           if (isDevelopment) {
-            // In development, create mock geocoding results
-            geoResults = [{
-              name: `${searchQuery} (Mock Location)`,
-              coordinates: [53.3498 + (Math.random() - 0.5) * 0.1, -6.2603 + (Math.random() - 0.5) * 0.1],
+            // In development, create mock geocoding results for any search
+            console.log(`🗺️ Creating mock location for: "${searchQuery}"`);
+            
+            // Create mock coordinates based on search query
+            const mockCoordinates = searchQuery.toLowerCase().includes('commack') 
+              ? [40.8429, -73.2973] // Commack, NY coordinates
+              : searchQuery.toLowerCase().includes('dublin')
+              ? [53.3498, -6.2603] // Dublin, Ireland
+              : searchQuery.toLowerCase().includes('new york') || searchQuery.toLowerCase().includes('nyc')
+              ? [40.7128, -74.0060] // New York City
+              : searchQuery.toLowerCase().includes('london')
+              ? [51.5074, -0.1278] // London
+              : [40.7589 + (Math.random() - 0.5) * 0.1, -73.9851 + (Math.random() - 0.5) * 0.1]; // Default to NYC area with randomness
+            
+            locationResults = [{
+              name: `${searchQuery}`,
+              coordinates: mockCoordinates,
               type: 'location',
+              displayAddress: `${searchQuery}, Mock Location`
             }];
           } else {
             const geo = await GeocodingService.geocodeAddressWithFallback('', searchQuery, '', searchQuery, '');
-            geoResults = [{
+            locationResults = [{
               name: geo.displayAddress || searchQuery,
               coordinates: [geo.latitude, geo.longitude],
               type: 'location',
+              displayAddress: geo.displayAddress
             }];
           }
+          
+          console.log(`🗺️ Found location results:`, locationResults);
         } catch (e) {
-          // Ignore geocoding errors for now
+          console.log('❌ Location search failed, adding fallback suggestions');
+          // Add fallback suggestions if location search fails
+          const fallbackSuggestions = [
+            { name: 'Commack, NY', coordinates: [40.8429, -73.2973], type: 'location', displayAddress: 'Commack, NY, USA' },
+            { name: 'New York, NY', coordinates: [40.7128, -74.0060], type: 'location', displayAddress: 'New York, NY, USA' },
+            { name: 'Dublin, Ireland', coordinates: [53.3498, -6.2603], type: 'location', displayAddress: 'Dublin, Ireland' },
+            { name: 'London, UK', coordinates: [51.5074, -0.1278], type: 'location', displayAddress: 'London, UK' },
+            { name: 'Los Angeles, CA', coordinates: [34.0522, -118.2437], type: 'location', displayAddress: 'Los Angeles, CA, USA' }
+          ];
+          
+          // Find suggestions that match the search query
+          const matchingSuggestions = fallbackSuggestions.filter(s => 
+            s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            s.displayAddress.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+          
+          if (matchingSuggestions.length > 0) {
+            locationResults = matchingSuggestions;
+          } else {
+            // If no matching suggestions, show the first few popular ones
+            locationResults = fallbackSuggestions.slice(0, 3);
+          }
         }
-        // 2. Firestore search for Vostcard titles/places
-        let vostcardResults: any[] = [];
-        try {
-          const vostcardsCol = collection(db, 'vostcards');
-          const snapshot = await getDocs(vostcardsCol);
-          vostcardResults = [];
-          snapshot.forEach(docSnap => {
-            const data = docSnap.data();
-            if (
-              (data.title && data.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-              (data.place && data.place.toLowerCase().includes(searchQuery.toLowerCase()))
-            ) {
-              vostcardResults.push({
-                name: data.title,
-                coordinates: data.coordinates || null,
-                type: 'vostcard',
-                id: docSnap.id,
-                place: data.place || '',
-              });
-            }
-          });
-        } catch (e) {
-          // Ignore Firestore errors for now
-        }
-        // Merge and show
-        const merged = [...geoResults, ...vostcardResults];
-        setSearchResults(merged);
+        
+        console.log(`📋 Location search results: ${locationResults.length}`, locationResults);
+        
+        setSearchResults(locationResults);
         setShowDropdown(true);
         setHighlightedIndex(-1);
       } catch (error: any) {
+        console.error('❌ Search error:', error);
         setSearchError(error.message || 'No results found.');
         setSearchResults([]);
         setShowDropdown(false);
@@ -211,7 +227,7 @@ const BrowseAreaView: React.FC = () => {
           <input
             ref={inputRef}
             type="text"
-            placeholder="Enter city, zip code, Vōstcard title, or location..."
+            placeholder="Enter city, zip code, or location to browse..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -245,13 +261,19 @@ const BrowseAreaView: React.FC = () => {
                 onMouseEnter={() => setHighlightedIndex(index)}
               >
                 <FaMapPin className="result-icon" />
-                <span style={{ fontWeight: result.type === 'vostcard' ? 700 : 400 }}>
-                  {result.name}
-                  {result.type === 'vostcard' && result.place ? (
-                    <span style={{ color: '#888', fontWeight: 400, fontSize: 13 }}> — {result.place}</span>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontWeight: 600 }}>
+                    {result.name}
+                  </span>
+                  {result.displayAddress && result.displayAddress !== result.name ? (
+                    <span style={{ color: '#666', fontWeight: 400, fontSize: 13, display: 'block' }}>
+                      {result.displayAddress}
+                    </span>
                   ) : null}
+                </div>
+                <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
+                  Location
                 </span>
-                <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>{result.type}</span>
               </div>
             ))}
           </div>
