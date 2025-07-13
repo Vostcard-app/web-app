@@ -35,12 +35,24 @@ const BrowseAreaView: React.FC = () => {
         // 1. Geocode for city/zip/place
         let geoResults: any[] = [];
         try {
-          const geo = await GeocodingService.geocodeAddressWithFallback('', searchQuery, '', searchQuery, '');
-          geoResults = [{
-            name: geo.displayAddress || searchQuery,
-            coordinates: [geo.latitude, geo.longitude],
-            type: 'location',
-          }];
+          // Check if we're in development mode
+          const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          
+          if (isDevelopment) {
+            // In development, create mock geocoding results
+            geoResults = [{
+              name: `${searchQuery} (Mock Location)`,
+              coordinates: [53.3498 + (Math.random() - 0.5) * 0.1, -6.2603 + (Math.random() - 0.5) * 0.1],
+              type: 'location',
+            }];
+          } else {
+            const geo = await GeocodingService.geocodeAddressWithFallback('', searchQuery, '', searchQuery, '');
+            geoResults = [{
+              name: geo.displayAddress || searchQuery,
+              coordinates: [geo.latitude, geo.longitude],
+              type: 'location',
+            }];
+          }
         } catch (e) {
           // Ignore geocoding errors for now
         }

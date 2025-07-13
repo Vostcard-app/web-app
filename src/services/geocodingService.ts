@@ -46,6 +46,26 @@ export class GeocodingService {
     try {
       console.log('🌍 Geocoding store address...');
       
+      // Check if we're in development mode
+      const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      
+      if (isDevelopment) {
+        // In development, return mock data or use a different approach
+        console.log('🚧 Development mode: Using mock geocoding data');
+        
+        // Create a mock response based on the input
+        const fullAddress = [streetAddress, city, stateProvince, postalCode, country]
+          .filter(part => part && part.trim())
+          .join(', ');
+        
+        // Return mock coordinates (Dublin, Ireland area as fallback)
+        return {
+          latitude: 53.3498 + (Math.random() - 0.5) * 0.1, // Add some randomness
+          longitude: -6.2603 + (Math.random() - 0.5) * 0.1,
+          displayAddress: fullAddress || 'Mock Location'
+        };
+      }
+      
       const response = await fetch('/.netlify/functions/geocode', {
         method: 'POST',
         headers: {
