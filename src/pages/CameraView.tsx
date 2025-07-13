@@ -26,15 +26,15 @@ const CameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Always enforce portrait 16:9 aspect ratio for consistent video recording
+        // Request portrait video with flexible constraints that work across devices
         const videoConstraints: MediaTrackConstraints = {
-          width: { ideal: 1080, max: 1080 },
-          height: { ideal: 1920, max: 1920 },
-          aspectRatio: { ideal: 0.5625, exact: 0.5625 }, // 9:16 portrait ratio - exact enforcement
+          width: { ideal: 1080, min: 720 },
+          height: { ideal: 1920, min: 1280 },
+          aspectRatio: { ideal: 0.5625 }, // 9:16 portrait ratio - ideal but not exact
           frameRate: { ideal: 30, max: 30 }
         };
 
-        console.log('📱 Requesting portrait 16:9 camera view:', videoConstraints);
+        console.log('📱 Requesting portrait camera view:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -50,29 +50,31 @@ const CameraView: React.FC = () => {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log('📱 Video track settings (Portrait 16:9):', {
+          const actualAspectRatio = settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown';
+          console.log('📱 Video track settings:', {
             width: settings.width,
             height: settings.height,
             facingMode: settings.facingMode,
             frameRate: settings.frameRate,
-            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown'
+            aspectRatio: actualAspectRatio,
+            isPortrait: settings.width && settings.height ? settings.height > settings.width : 'unknown'
           });
         }
 
       } catch (err) {
-        console.error('Error accessing camera with portrait 16:9 constraints:', err);
-        // Fallback to basic constraints but still try for portrait
+        console.error('Error accessing camera with portrait constraints:', err);
+        // Fallback to basic constraints
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
             video: {
-              aspectRatio: { ideal: 0.5625 } // Still try for 9:16
+              // Don't specify aspect ratio in fallback to avoid conflicts
             }
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using fallback camera with portrait preference');
+          console.log('📱 Using basic camera fallback');
         } catch (fallbackErr) {
           console.error('Fallback camera access also failed:', fallbackErr);
         }
