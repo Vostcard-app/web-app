@@ -109,28 +109,59 @@ const VostcardDetailView: React.FC = () => {
     ratingCount: 0,
     lastUpdated: ''
   });
-  const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+  const { toggleLike, getLikeCount, isLiked, setupLikeListeners, loadLocalVostcard, currentVostcard } = useVostcard();
 
+  // Updated fetchVostcard function to handle both Firebase and IndexedDB
   useEffect(() => {
     const fetchVostcard = async () => {
       setLoading(true);
       setError(null);
       try {
+        // First, check if the Vostcard is already loaded in context (for private Vostcards)
+        if (currentVostcard && currentVostcard.id === id) {
+          console.log('📂 Found Vostcard in context (private)');
+          setVostcard(currentVostcard);
+          setLoading(false);
+          return;
+        }
+
+        // If not in context, try Firebase (for posted Vostcards)
         const docRef = doc(db, 'vostcards', id!);
         const docSnap = await getDoc(docRef);
+        
         if (docSnap.exists()) {
+          // Found in Firebase - this is a posted Vostcard
+          console.log('📄 Found Vostcard in Firebase (posted)');
           setVostcard(docSnap.data());
         } else {
-          setError('Vostcard not found.');
+          // Not found in Firebase, try loading from IndexedDB (for private Vostcards)
+          console.log(' Vostcard not found in Firebase, trying IndexedDB...');
+          try {
+            await loadLocalVostcard(id!);
+            // The loadLocalVostcard function will set the currentVostcard in context
+            // We'll check again in the next render cycle
+          } catch (localError) {
+            console.error('❌ Vostcard not found in IndexedDB either:', localError);
+            setError('Vostcard not found.');
+          }
         }
       } catch (err) {
+        console.error('❌ Error fetching Vostcard:', err);
         setError('Failed to load Vostcard.');
       } finally {
         setLoading(false);
       }
     };
     if (id) fetchVostcard();
-  }, [id]);
+  }, [id, loadLocalVostcard, currentVostcard]);
+
+  // Additional effect to handle when currentVostcard changes (for private Vostcards)
+  useEffect(() => {
+    if (currentVostcard && currentVostcard.id === id && !vostcard) {
+      console.log('📂 Setting Vostcard from context:', currentVostcard);
+      setVostcard(currentVostcard);
+    }
+  }, [currentVostcard, id, vostcard]);
 
   // Fetch user profile when vostcard is loaded
   useEffect(() => {
