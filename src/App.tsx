@@ -42,6 +42,7 @@ import FlagFormView from './pages/FlagFormView';
 import ReportBugView from './pages/ReportBugView';
 import PinPlacerTool from './pages/PinPlacerTool';
 import { AuthRedirect } from './components/AuthRedirect';
+import PublicVostcardView from './pages/PublicVostcardView';
 
 function App() {
   return (
@@ -57,6 +58,9 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegistrationPage />} />
               <Route path="/user-guide" element={<UserGuideView />} />
+
+              {/*  Public Access */}
+              <Route path="/share/:id" element={<PublicVostcardView />} />
 
               {/* 🏠 Main */}
               <Route path="/home" element={<HomeView />} />
