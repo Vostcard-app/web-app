@@ -1158,6 +1158,46 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // ✅ Post current vostcard to Firebase
+  const postVostcard = useCallback(async (): Promise<void> => {
+    if (!currentVostcard) {
+      console.error('❌ No current vostcard to post');
+      throw new Error('No current vostcard to post');
+    }
+
+    try {
+      setSyncStatus('syncing');
+      
+      // Upload video and photos to Firebase Storage
+      const videoUrl = currentVostcard.video ? await uploadVideo(currentVostcard.userID, currentVostcard.id, currentVostcard.video) : null;
+      const photoUrls = await Promise.all(
+        currentVostcard.photos.map((photo, index) => 
+          uploadPhoto(currentVostcard.userID, currentVostcard.id, index, photo)
+        )
+      );
+
+      // Prepare vostcard data for Firestore
+      const vostcardData = {
+        ...currentVostcard,
+        videoUrl,
+        photoUrls,
+        // Remove blob data since we now have URLs
+        video: null,
+        photos: []
+      };
+
+      // Add to Firestore
+      const docRef = await addDoc(collection(db, 'vostcards'), vostcardData);
+      console.log('✅ Vostcard posted to Firebase:', docRef.id);
+      
+      setSyncStatus('idle');
+    } catch (error) {
+      console.error('❌ Error posting vostcard:', error);
+      setSyncStatus('error');
+      throw error;
+    }
+  }, [currentVostcard]);
+
   return (
     <VostcardContext.Provider
       value={{
