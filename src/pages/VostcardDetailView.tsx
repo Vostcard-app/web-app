@@ -414,7 +414,10 @@ const VostcardDetailView: React.FC = () => {
                 cursor: videoURL ? 'pointer' : 'default',
                 position: 'relative'
               }}
-              onClick={() => videoURL && setShowVideoModal(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (videoURL) setShowVideoModal(true);
+              }}
             >
               {videoURL ? (
                 <>
@@ -453,7 +456,8 @@ const VostcardDetailView: React.FC = () => {
                       borderLeft: '20px solid white',
                       borderTop: '12px solid transparent',
                       borderBottom: '12px solid transparent',
-                      marginLeft: '4px'
+                      marginLeft: '4px',
+                      pointerEvents: 'none'
                     }} />
                   </div>
                 </>
