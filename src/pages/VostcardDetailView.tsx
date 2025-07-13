@@ -137,16 +137,7 @@ const VostcardDetailView: React.FC = () => {
       try {
         console.log('🔍 Loading Vostcard:', id);
 
-        // First, check if it's already loaded in context (from MyVostcardListView)
-        if (currentVostcard && currentVostcard.id === id) {
-          console.log('✅ Using Vostcard from context');
-          setVostcard(currentVostcard);
-          setIsPrivate(true); // Context Vostcards are private
-          setLoading(false);
-          return;
-        }
-
-        // Try to load from Firebase (posted Vostcards)
+        // First, try to load from Firebase (posted Vostcards)
         console.log('🔍 Trying Firebase...');
         const docRef = doc(db, 'vostcards', id);
         const docSnap = await getDoc(docRef);
@@ -164,20 +155,9 @@ const VostcardDetailView: React.FC = () => {
         console.log('🔍 Trying IndexedDB...');
         await loadLocalVostcard(id);
         
-        // Check if it was loaded into context
-        if (currentVostcard && currentVostcard.id === id) {
-          console.log('✅ Found in IndexedDB');
-          setVostcard(currentVostcard);
-          setIsPrivate(true); // Local Vostcards are private
-          setLoading(false);
-          return;
-        }
-
-        // Not found anywhere
-        console.log('❌ Vostcard not found');
-        setError('Vostcard not found');
-        setLoading(false);
-
+        // The loadLocalVostcard function will update currentVostcard
+        // We'll handle this in a separate useEffect below
+        
       } catch (err) {
         console.error('❌ Error loading Vostcard:', err);
         setError('Failed to load Vostcard');
@@ -186,7 +166,22 @@ const VostcardDetailView: React.FC = () => {
     };
 
     fetchVostcard();
-  }, [id, loadLocalVostcard, currentVostcard]);
+  }, [id, loadLocalVostcard]);
+
+  // Handle currentVostcard updates from IndexedDB
+  useEffect(() => {
+    if (currentVostcard && currentVostcard.id === id) {
+      console.log('✅ Using Vostcard from IndexedDB');
+      setVostcard(currentVostcard);
+      setIsPrivate(true); // Context Vostcards are private
+      setLoading(false);
+    } else if (currentVostcard === null && !loading) {
+      // If we tried to load from IndexedDB but got null, and we're not loading from Firebase
+      console.log('❌ Vostcard not found in IndexedDB');
+      setError('Vostcard not found');
+      setLoading(false);
+    }
+  }, [currentVostcard, id, loading]);
 
   // Create video URL when vostcard is loaded
   useEffect(() => {
