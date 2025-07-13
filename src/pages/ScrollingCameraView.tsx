@@ -9,6 +9,7 @@ const ScrollingCameraView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { setVideo } = useVostcard();
   
@@ -19,9 +20,11 @@ const ScrollingCameraView: React.FC = () => {
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [scrollSpeed, setScrollSpeed] = useState(1);
+  const [isLandscape, setIsLandscape] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const animationRef = useRef<number>();
 
   // Get script from URL params
   useEffect(() => {
@@ -58,18 +61,18 @@ const ScrollingCameraView: React.FC = () => {
     getCurrentLocation();
   }, []);
 
-  // Start camera with SIMPLE constraints
+  // Start camera and setup canvas for portrait recording
   useEffect(() => {
     const startCamera = async () => {
       try {
-        console.log('📱 Starting camera with simple constraints...');
+        console.log('📱 Starting camera...');
         
-        // SIMPLE, RELIABLE CONSTRAINTS - NO COMPLEX STRATEGIES
+        // Get any available camera stream first
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode,
-            width: { ideal: 720 },
-            height: { ideal: 1280 }
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
           },
           audio: false
         });
@@ -79,13 +82,17 @@ const ScrollingCameraView: React.FC = () => {
           videoRef.current.srcObject = stream;
         }
 
-        // Log what we got
+        // Check if we got landscape (which we probably did)
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
+          const isLandscapeStream = settings.width && settings.height && settings.width > settings.height;
+          setIsLandscape(isLandscapeStream);
+          
           console.log('📱 Camera settings:', {
             width: settings.width,
             height: settings.height,
+            isLandscape: isLandscapeStream,
             facingMode: settings.facingMode
           });
         }
@@ -99,89 +106,160 @@ const ScrollingCameraView: React.FC = () => {
     startCamera();
 
     return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
   }, [facingMode]);
 
-  const handleStartRecording = () => {
-    if (streamRef.current) {
-      console.log('📹 Starting recording...');
+  // Canvas drawing function to rotate landscape to portrait
+  const drawVideoToCanvas = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx || video.videoWidth === 0 || video.videoHeight === 0) return;
+
+    if (isLandscape) {
+      // Set canvas to portrait dimensions (rotate landscape video)
+      canvas.width = 720;  // Portrait width
+      canvas.height = 1280; // Portrait height
       
-      // Simple MIME type selection
-      const mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
+      // Clear canvas
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      const mediaRecorder = new MediaRecorder(streamRef.current, {
-        mimeType,
-        videoBitsPerSecond: 2000000
-      });
+      // Rotate and draw the video
+      ctx.save();
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(Math.PI / 2); // Rotate 90 degrees
       
-      mediaRecorderRef.current = mediaRecorder;
-      recordedChunks.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunks.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks.current, { type: mimeType });
-        
-        console.log('📹 Recording completed:', {
-          size: blob.size,
-          type: blob.type
-        });
-
-        // Save video
-        if (userLocation) {
-          setVideo(blob, userLocation);
-        } else {
-          setVideo(blob);
-        }
-        
-        // Navigate back
-        if (script && script.trim()) {
-          navigate(`/script-tool?script=${encodeURIComponent(script)}`);
-        } else {
-          navigate('/create-step1');
-        }
-      };
-
-      mediaRecorder.onerror = (event) => {
-        console.error('📹 Recording error:', event);
-        alert('❌ Recording error occurred. Please try again.');
-        setIsRecording(false);
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setIsScriptScrolling(true);
-      setRecordingTime(30);
+      // Scale to fill portrait canvas
+      const scale = Math.max(canvas.width / video.videoHeight, canvas.height / video.videoWidth);
+      ctx.scale(scale, scale);
       
-      // Start countdown timer
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          if (prev <= 1) {
-            setTimeout(() => {
-              if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-                mediaRecorderRef.current.stop();
-                setIsRecording(false);
-                if (timerRef.current) {
-                  clearInterval(timerRef.current);
-                  timerRef.current = null;
-                }
-              }
-            }, 0);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      // Draw video centered
+      ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
+      ctx.restore();
+    } else {
+      // Video is already portrait, draw normally
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
     }
+  };
+
+  // Animation loop for canvas
+  const animate = () => {
+    drawVideoToCanvas();
+    animationRef.current = requestAnimationFrame(animate);
+  };
+
+  // Start animation when video is ready
+  useEffect(() => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const handleLoadedMetadata = () => {
+        console.log('📱 Video metadata loaded, starting canvas animation');
+        animate();
+      };
+      
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      
+      return () => {
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
+    }
+  }, [isLandscape]);
+
+  const handleStartRecording = () => {
+    if (!canvasRef.current) {
+      alert('Canvas not ready for recording');
+      return;
+    }
+
+    console.log('📹 Starting PORTRAIT recording from canvas...');
+    
+    // Record from the canvas (which shows rotated portrait video)
+    const canvasStream = canvasRef.current.captureStream(30);
+    
+    const mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
+    
+    const mediaRecorder = new MediaRecorder(canvasStream, {
+      mimeType,
+      videoBitsPerSecond: 2000000
+    });
+    
+    mediaRecorderRef.current = mediaRecorder;
+    recordedChunks.current = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.current.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks.current, { type: mimeType });
+      
+      console.log('📹 PORTRAIT recording completed:', {
+        size: blob.size,
+        type: blob.type,
+        dimensions: '720x1280 (portrait)'
+      });
+
+      // Save video
+      if (userLocation) {
+        setVideo(blob, userLocation);
+      } else {
+        setVideo(blob);
+      }
+      
+      // Navigate back
+      if (script && script.trim()) {
+        navigate(`/script-tool?script=${encodeURIComponent(script)}`);
+      } else {
+        navigate('/create-step1');
+      }
+    };
+
+    mediaRecorder.onerror = (event) => {
+      console.error('📹 Recording error:', event);
+      alert('❌ Recording error occurred. Please try again.');
+      setIsRecording(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+
+    mediaRecorder.start();
+    setIsRecording(true);
+    setIsScriptScrolling(true);
+    setRecordingTime(30);
+    
+    // Start countdown timer
+    timerRef.current = setInterval(() => {
+      setRecordingTime(prev => {
+        if (prev <= 1) {
+          setTimeout(() => {
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+              mediaRecorderRef.current.stop();
+              setIsRecording(false);
+              if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+              }
+            }
+          }, 0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   const handleStopRecording = () => {
@@ -200,11 +278,6 @@ const ScrollingCameraView: React.FC = () => {
 
   const handleSwitchCamera = () => {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
-  };
-
-  const handleSpeedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newSpeed = parseFloat(event.target.value);
-    setScrollSpeed(newSpeed);
   };
 
   const getAnimationDuration = () => {
@@ -231,6 +304,21 @@ const ScrollingCameraView: React.FC = () => {
         {userLocation ? '📍' : '📍?'}
       </div>
 
+      {/* Debug info */}
+      <div style={{
+        position: 'absolute',
+        top: '160px',
+        left: '20px',
+        background: 'rgba(0, 0, 0, 0.7)',
+        color: 'white',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        zIndex: 10
+      }}>
+        📱 {isLandscape ? 'Landscape → Portrait' : 'Portrait'} Mode
+      </div>
+
       {/* Top Controls */}
       <div className="top-controls">
         <button className="control-button" onClick={() => navigate(-1)}>
@@ -250,12 +338,18 @@ const ScrollingCameraView: React.FC = () => {
         </div>
       )}
 
-      {/* SIMPLE Camera Preview - NO TRANSFORMS OR ROTATIONS */}
+      {/* Hidden video element for camera input */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
+        style={{ display: 'none' }}
+      />
+
+      {/* Canvas for portrait recording - THIS IS WHAT USER SEES */}
+      <canvas
+        ref={canvasRef}
         style={{
           width: '100%',
           height: '100%',
