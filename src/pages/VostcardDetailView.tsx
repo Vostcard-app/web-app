@@ -29,6 +29,9 @@ const VostcardDetailView: React.FC = () => {
   // Touch state for swipe detection
   const touchStartY = useRef<number | null>(null);
   const touchEndY = useRef<number | null>(null);
+  
+  // Video ref for video element
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
