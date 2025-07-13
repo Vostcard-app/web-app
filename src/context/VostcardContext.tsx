@@ -1100,6 +1100,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // ✅ Clear current vostcard
+  const clearVostcard = useCallback(() => {
+    setCurrentVostcard(null);
+  }, []);
+
   // ✅ Delete private Vostcard from IndexedDB
   const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
     try {
