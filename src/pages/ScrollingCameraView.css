@@ -3,7 +3,6 @@ body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: black;
-  /* Mobile viewport handling */
   -webkit-text-size-adjust: 100%;
   -webkit-user-select: none;
   user-select: none;
@@ -15,10 +14,6 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: black;
-  /* Mobile-specific properties */
-  -webkit-overflow-scrolling: touch;
-  touch-action: manipulation;
 }
 
 /* ✅ Camera Preview - Show actual video dimensions */

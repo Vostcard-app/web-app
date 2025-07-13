@@ -18,14 +18,10 @@ const ScrollingCameraView: React.FC = () => {
   const [recordingTime, setRecordingTime] = useState(30);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [scrollSpeed, setScrollSpeed] = useState(1); // Speed multiplier (0.5x to 2x)
+  const [scrollSpeed, setScrollSpeed] = useState(1);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Device detection
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isIPhone = /iPhone/.test(navigator.userAgent);
 
   // Get script from URL params
   useEffect(() => {
@@ -50,7 +46,6 @@ const ScrollingCameraView: React.FC = () => {
         },
         (error) => {
           console.error('❌ Error getting location:', error);
-          // Continue without location - user can add it later
         },
         { 
           enableHighAccuracy: true, 
@@ -63,148 +58,41 @@ const ScrollingCameraView: React.FC = () => {
     getCurrentLocation();
   }, []);
 
-  // Start camera with improved constraints for iPhone
+  // Start camera with SIMPLE constraints
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Device detection for specific handling
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
-        const isMobile = isIOS || isAndroid;
+        console.log('📱 Starting camera with simple constraints...');
         
-        console.log('📱 Device detection:', { isIOS, isAndroid, isMobile, userAgent: navigator.userAgent });
-        
-        // Multiple constraint strategies to force portrait
-        const constraintStrategies = [
-          // Strategy 1: Force portrait with exact constraints
-          {
-            name: 'Exact Portrait',
-            constraints: {
-              facingMode,
-              width: { exact: 720 },
-              height: { exact: 1280 }
-            }
+        // SIMPLE, RELIABLE CONSTRAINTS - NO COMPLEX STRATEGIES
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode,
+            width: { ideal: 720 },
+            height: { ideal: 1280 }
           },
-          // Strategy 2: Ideal portrait with min/max
-          {
-            name: 'Ideal Portrait',
-            constraints: {
-              facingMode,
-              width: { ideal: 720, min: 480, max: 720 },
-              height: { ideal: 1280, min: 854, max: 1280 }
-            }
-          },
-          // Strategy 3: Aspect ratio focused
-          {
-            name: 'Aspect Ratio Portrait',
-            constraints: {
-              facingMode,
-              aspectRatio: { exact: 9/16 }
-            }
-          },
-          // Strategy 4: Mobile-specific portrait
-          {
-            name: 'Mobile Portrait',
-            constraints: {
-              facingMode,
-              width: { ideal: 720 },
-              height: { ideal: 1280 },
-              aspectRatio: { ideal: 9/16 }
-            }
-          }
-        ];
+          audio: false
+        });
         
-        let stream = null;
-        let usedStrategy = null;
-        
-        // Try each strategy until one works and gives us portrait
-        for (const strategy of constraintStrategies) {
-          try {
-            console.log(`📱 Trying strategy: ${strategy.name}`, strategy.constraints);
-            
-            stream = await navigator.mediaDevices.getUserMedia({ 
-              video: strategy.constraints,
-              audio: false
-            });
-            
-            // Check if we got portrait
-            const videoTrack = stream.getVideoTracks()[0];
-            if (videoTrack) {
-              const settings = videoTrack.getSettings();
-              const isPortrait = settings.width && settings.height ? settings.height > settings.width : false;
-              
-              console.log(`📱 Strategy ${strategy.name} result:`, {
-                width: settings.width,
-                height: settings.height,
-                isPortrait: isPortrait,
-                aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown'
-              });
-              
-              if (isPortrait) {
-                usedStrategy = strategy;
-                console.log(`✅ SUCCESS: ${strategy.name} gave us portrait video!`);
-                break;
-              } else {
-                console.log(`❌ FAILED: ${strategy.name} gave us landscape, trying next strategy...`);
-                // Stop this stream and try next strategy
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-              }
-            }
-                     } catch (error) {
-             console.log(`❌ Strategy ${strategy.name} failed:`, error instanceof Error ? error.message : String(error));
-             if (stream) {
-               stream.getTracks().forEach(track => track.stop());
-               stream = null;
-             }
-           }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
         }
-        
-        // If no strategy worked, try one final fallback
-        if (!stream) {
-          console.log('🔄 All strategies failed, trying final fallback...');
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-              video: { facingMode },
-              audio: false
-            });
-            usedStrategy = { name: 'Final Fallback', constraints: { facingMode } };
-          } catch (error) {
-            console.error('❌ Final fallback also failed:', error);
-            throw error;
-          }
-        }
-        
-        if (stream) {
-          streamRef.current = stream;
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
 
-          // Final check and warning
-          const videoTrack = stream.getVideoTracks()[0];
-          if (videoTrack) {
-            const settings = videoTrack.getSettings();
-            const isPortrait = settings.width && settings.height ? settings.height > settings.width : false;
-            
-            console.log(`📱 FINAL RESULT using ${usedStrategy?.name}:`, {
-              width: settings.width,
-              height: settings.height,
-              aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown',
-              isPortrait: isPortrait,
-              orientation: isPortrait ? 'PORTRAIT ✅' : 'LANDSCAPE ❌'
-            });
-            
-            if (!isPortrait) {
-              console.warn('⚠️⚠️⚠️ CRITICAL: Video is still LANDSCAPE! This will appear sideways when played back!');
-              console.warn('⚠️ Device may not support portrait video capture. Consider device rotation or different approach.');
-            }
-          }
+        // Log what we got
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          const settings = videoTrack.getSettings();
+          console.log('📱 Camera settings:', {
+            width: settings.width,
+            height: settings.height,
+            facingMode: settings.facingMode
+          });
         }
 
       } catch (err) {
-        console.error('❌ All camera access attempts failed:', err);
-        alert('Camera access failed. Please check permissions and try again.');
+        console.error('❌ Camera failed:', err);
+        alert('Camera access failed. Please check permissions.');
       }
     };
 
@@ -217,35 +105,16 @@ const ScrollingCameraView: React.FC = () => {
 
   const handleStartRecording = () => {
     if (streamRef.current) {
-      console.log('📹 Recording directly from camera stream (portrait)');
+      console.log('📹 Starting recording...');
       
-      // Simple recording - directly from camera stream
-      const getSupportedMimeType = () => {
-        const types = [
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm',
-          'video/mp4;codecs=avc1.42E01E',
-          'video/mp4'
-        ];
-        
-        for (const type of types) {
-          if (MediaRecorder.isTypeSupported(type)) {
-            console.log('📹 Using MIME type:', type);
-            return type;
-          }
-        }
-        console.log('📹 Using default MIME type');
-        return 'video/webm'; // fallback
-      };
-
-      const mimeType = getSupportedMimeType();
-      const options: MediaRecorderOptions = {
+      // Simple MIME type selection
+      const mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
+      
+      const mediaRecorder = new MediaRecorder(streamRef.current, {
         mimeType,
         videoBitsPerSecond: 2000000
-      };
-
-      const mediaRecorder = new MediaRecorder(streamRef.current, options);
+      });
+      
       mediaRecorderRef.current = mediaRecorder;
       recordedChunks.current = [];
 
@@ -258,10 +127,9 @@ const ScrollingCameraView: React.FC = () => {
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks.current, { type: mimeType });
         
-        console.log('📹 PORTRAIT video recorded directly from camera:', {
+        console.log('📹 Recording completed:', {
           size: blob.size,
-          type: blob.type,
-          mimeType: mimeType
+          type: blob.type
         });
 
         // Save video
@@ -302,7 +170,6 @@ const ScrollingCameraView: React.FC = () => {
               if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
                 mediaRecorderRef.current.stop();
                 setIsRecording(false);
-                // Note: Don't stop script scrolling - let it continue until finished
                 if (timerRef.current) {
                   clearInterval(timerRef.current);
                   timerRef.current = null;
@@ -320,42 +187,31 @@ const ScrollingCameraView: React.FC = () => {
   const handleStopRecording = () => {
     mediaRecorderRef.current?.stop();
     setIsRecording(false);
-    // Note: Don't stop script scrolling - let it continue until finished
     
-    // Stop timer
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
   };
 
-  // Format time as just seconds
   const formatTime = (seconds: number) => {
     return seconds.toString();
   };
 
-  // Switch camera
   const handleSwitchCamera = () => {
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
-  // Dismiss/close camera
-  const handleDismiss = () => {
-    navigate(-1);
-  };
-
-  // Handle speed control change
   const handleSpeedChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSpeed = parseFloat(event.target.value);
     setScrollSpeed(newSpeed);
   };
 
-  // Calculate animation duration based on script length only (independent of video duration)
   const getAnimationDuration = () => {
     const scriptLength = script.length;
-    const wordsPerSecond = 3; // Average reading speed
-    const estimatedWords = scriptLength / 5; // Rough estimate: 5 characters per word
-    const baseDuration = Math.max(30, estimatedWords / wordsPerSecond); // Minimum 30 seconds
+    const wordsPerSecond = 3;
+    const estimatedWords = scriptLength / 5;
+    const baseDuration = Math.max(30, estimatedWords / wordsPerSecond);
     return baseDuration / scrollSpeed;
   };
 
@@ -364,7 +220,7 @@ const ScrollingCameraView: React.FC = () => {
 
   return (
     <div className="scrolling-camera-container">
-      {/* Recording Timer - Always visible and centered */}
+      {/* Recording Timer */}
       <div className="recording-timer">
         {isRecording && <div className="recording-dot"></div>}
         <span>{formatTime(recordingTime)}</span>
@@ -375,32 +231,14 @@ const ScrollingCameraView: React.FC = () => {
         {userLocation ? '📍' : '📍?'}
       </div>
 
-      {/* Device info for debugging */}
-      {isIPhone && (
-        <div style={{
-          position: 'absolute',
-          top: '160px',
-          left: '20px',
-          background: 'rgba(0, 0, 0, 0.7)',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          zIndex: 10
-        }}>
-          📱 iPhone Mode
-        </div>
-      )}
-
       {/* Top Controls */}
       <div className="top-controls">
-        {/* Close Button */}
         <button className="control-button" onClick={() => navigate(-1)}>
           <AiOutlineClose size={20} />
         </button>
       </div>
 
-      {/* Speed Control - Only show when script is present */}
+      {/* Speed Control */}
       {script && (
         <div className="speed-control">
           <label>Speed</label>
@@ -412,50 +250,21 @@ const ScrollingCameraView: React.FC = () => {
         </div>
       )}
 
-      {/* Camera Preview - Always Portrait 16:9 */}
+      {/* SIMPLE Camera Preview - NO TRANSFORMS OR ROTATIONS */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
-        className="camera-preview"
         style={{
-          transform: facingMode === 'user' ? 'scaleX(-1)' : 'none',
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          height: '100%',
           objectFit: 'cover',
           position: 'absolute',
           top: 0,
           left: 0,
           backgroundColor: 'black',
-          // Force portrait display - rotate if video is landscape
-          aspectRatio: '9/16',
-          maxWidth: '100vw',
-          maxHeight: '100vh'
-        }}
-        onLoadedMetadata={(e) => {
-          const video = e.currentTarget;
-          const { videoWidth, videoHeight } = video;
-          
-          console.log('📱 Video loaded metadata:', {
-            videoWidth,
-            videoHeight,
-            isPortrait: videoHeight > videoWidth,
-            aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
-          });
-          
-          // If video is landscape, rotate it to portrait
-          if (videoWidth > videoHeight) {
-            console.log('🔄 Video is landscape, rotating to portrait');
-            video.style.transform = facingMode === 'user' 
-              ? 'scaleX(-1) rotate(90deg)' 
-              : 'rotate(90deg)';
-            video.style.width = '100vh';
-            video.style.height = '100vw';
-          } else {
-            console.log('✅ Video is already portrait');
-            video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none';
-          }
+          transform: facingMode === 'user' ? 'scaleX(-1)' : 'none'
         }}
       />
 
@@ -478,19 +287,12 @@ const ScrollingCameraView: React.FC = () => {
       )}
 
       {/* Bottom Controls */}
-      <div
-        className="bottom-controls"
-        style={{
-          marginBottom: 20, // Keeps the controls up by 20px
-        }}
-      >
+      <div className="bottom-controls" style={{ marginBottom: 20 }}>
         {/* Dismiss Button */}
         <button
           className="bottom-control-button"
-          onClick={handleDismiss}
-          style={{
-            marginRight: 15, // <-- Move dismiss icon 15px to the left
-          }}
+          onClick={() => navigate(-1)}
+          style={{ marginRight: 15 }}
         >
           <AiOutlineClose size={24} color="white" />
         </button>
@@ -526,9 +328,7 @@ const ScrollingCameraView: React.FC = () => {
         <button
           className="bottom-control-button"
           onClick={handleSwitchCamera}
-          style={{
-            marginLeft: 15, // <-- Move camera chooser 15px to the right
-          }}
+          style={{ marginLeft: 15 }}
         >
           <MdCameraswitch size={24} color="white" />
         </button>
