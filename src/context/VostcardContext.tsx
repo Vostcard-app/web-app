@@ -1088,6 +1088,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             console.log('📂 Vostcard found in IndexedDB with ID:', id);
             resolve(restoredVostcard);
           } else {
+            console.log('📂 Vostcard not found in IndexedDB with ID:', id);
             console.log('�� Vostcard not found in IndexedDB with ID:', id);
             resolve(null);
           }
