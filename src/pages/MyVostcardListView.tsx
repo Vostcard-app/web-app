@@ -132,7 +132,9 @@ const MyVostcardListView = () => {
               </p>
             </div>
 
-            {savedVostcards.map((vostcard) => {
+            {[...savedVostcards]
+              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              .map((vostcard) => {
               const status = getVostcardStatus(vostcard);
               const statusColor = getStatusColor(status);
               
