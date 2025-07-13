@@ -29,6 +29,7 @@ const CameraView: React.FC = () => {
           video: {
             width: { ideal: 720 },
             height: { ideal: 1280 },
+            aspectRatio: 9 / 16,
             facingMode: 'environment'
           },
           audio: false
@@ -92,11 +93,11 @@ const CameraView: React.FC = () => {
     if (!video) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = 720;
+    canvas.height = 1280;
     
     const ctx = canvas.getContext('2d');
-    ctx?.drawImage(video, 0, 0);
+    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     canvas.toBlob((blob) => {
       if (blob && setPhoto) {
@@ -195,7 +196,8 @@ const CameraView: React.FC = () => {
         style={{
           width: '100%',
           height: '100%',
-          objectFit: 'cover'
+          objectFit: 'cover',
+          transform: 'rotate(0deg)'
         }}
       />
 
