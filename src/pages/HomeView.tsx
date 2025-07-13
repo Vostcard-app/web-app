@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaGripLines, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import { db, auth } from '../firebase/firebaseConfig';
@@ -793,8 +793,8 @@ const HomeView = () => {
               <FaUserCircle size={55} color="white" /> // Changed from 40 to 55
             )}
           </div>
-          <FaGripLines
-            size={55} // Changed from 30 to 55
+          <FaBars
+            size={48}
             color="white"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             style={{ cursor: 'pointer' }}
