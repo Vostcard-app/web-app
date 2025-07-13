@@ -624,14 +624,30 @@ const VostcardDetailView: React.FC = () => {
         paddingLeft: '16px',
         borderBottomLeftRadius: 0,
         borderBottomRightRadius: 0,
-        height: 70,
+        height: 30,
         display: 'flex',
         alignItems: 'center',
       }}>
-        <button style={{ position: 'absolute', right: 16, top: 26, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
+        <button
+          style={{
+            position: 'absolute',
+            right: 44, // Move more to the left
+            top: 15,   // Move higher
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+          onClick={() => navigate('/home')}
+        >
           <FaHome color="#fff" size={36} />
         </button>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem', marginLeft: 0 }}>Vōstcard</span>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
       </div>
       {/* Previous card (underneath, for swipe down) */}
       {prevId && (
