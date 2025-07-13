@@ -24,8 +24,12 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    console.log('🔐 Attempting login with:', { email, passwordLength: password.length });
+    console.log('🔐 Firebase auth object:', auth);
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      console.log('✅ Login successful');
       // Auth redirect will handle navigation
     } catch (err: any) {
       console.error("Login error:", err);
