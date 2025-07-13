@@ -164,22 +164,21 @@ const VostcardDetailView: React.FC = () => {
         // Try to load from IndexedDB (private Vostcards)
         console.log('🔍 Trying IndexedDB...');
         
-        // Load the Vostcard into context
-        await loadLocalVostcard(id);
+        // Load the Vostcard from IndexedDB and get it directly
+        const loadedVostcard = await loadLocalVostcard(id);
         
-        // Wait a bit longer for context to update
-        setTimeout(() => {
-          if (currentVostcard && currentVostcard.id === id) {
-            console.log('✅ Found in IndexedDB');
-            setVostcard(currentVostcard);
-            setIsPrivate(true); // Local Vostcards are private
-            setLoading(false);
-          } else {
-            console.log('❌ Vostcard not found in context after IndexedDB load');
-            setError('Vostcard not found');
-            setLoading(false);
-          }
-        }, 200); // Increased timeout
+        if (loadedVostcard) {
+          console.log('✅ Found in IndexedDB');
+          setVostcard(loadedVostcard);
+          setIsPrivate(true); // Local Vostcards are private
+          setLoading(false);
+          return;
+        }
+        
+        // If we get here, the Vostcard wasn't found
+        console.log('❌ Vostcard not found in IndexedDB');
+        setError('Vostcard not found');
+        setLoading(false);
 
       } catch (error) {
         console.error('❌ Error loading Vostcard:', error);

@@ -1,334 +1,3 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { Script } from '../types/ScriptModel';
-import { auth, db, storage } from '../firebase/firebaseConfig';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp, onSnapshot } from 'firebase/firestore';
-import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { v4 as uuidv4 } from 'uuid';
-import { useAuth } from './AuthContext';
-import { ScriptService } from '../services/scriptService';
-import { LikeService, type Like } from '../services/likeService';
-import { RatingService, type Rating, type RatingStats } from '../services/ratingService';
-
-interface Vostcard {
-  id: string;
-  visibility: 'public' | 'private';
-  video: Blob | null;
-  title: string;
-  description: string;
-  photos: Blob[];
-  categories: string[];
-  geo: { latitude: number; longitude: number } | null;
-  username: string;
-  userID: string;
-  recipientUserID?: string; // For private sharing - who receives this private Vostcard
-  createdAt: string;
-  updatedAt: string;
-  isOffer?: boolean; // New field for offers
-  offerDetails?: {
-    discount?: string;
-    validUntil?: string;
-    terms?: string;
-  };
-  script?: string; // Add script field
-  scriptId?: string; // Add script ID field to track associated script
-  _videoBase64?: string | null; // For IndexedDB serialization
-  _photosBase64?: string[]; // For IndexedDB serialization
-  // Firebase sync metadata
-  lastSyncedAt?: string;
-  needsSync?: boolean;
-}
-
-interface VostcardContextProps {
-  currentVostcard: Vostcard | null;
-  setCurrentVostcard: (vostcard: Vostcard | null) => void;
-  setVideo: (video: Blob, geoOverride?: { latitude: number; longitude: number }) => void;
-  setGeo: (geo: { latitude: number; longitude: number }) => void;
-  updateVostcard: (updates: Partial<Vostcard>) => void;
-  addPhoto: (photo: Blob) => void;
-  saveLocalVostcard: () => void;
-  loadLocalVostcard: (id: string) => void;
-  clearVostcard: () => void;
-  clearLocalStorage: () => void; // For testing
-  postVostcard: () => Promise<void>;
-  savedVostcards: Vostcard[];
-  loadAllLocalVostcards: () => void;
-  deletePrivateVostcard: (id: string) => Promise<void>;
-  deleteVostcardsWithWrongUsername: () => Promise<void>;
-  // Sync status
-  syncStatus: 'idle' | 'syncing' | 'error';
-  scripts: Script[];
-  loadScripts: () => Promise<void>;
-  saveScript: (script: Script) => Promise<void>;
-  deleteScript: (id: string) => Promise<void>;
-  updateScriptTitle: (scriptId: string, newTitle: string) => Promise<void>;
-  updateScript: (scriptId: string, title: string, content: string) => Promise<void>;
-  // Like system
-  likedVostcards: Like[];
-  toggleLike: (vostcardID: string) => Promise<boolean>;
-  isLiked: (vostcardID: string) => Promise<boolean>;
-  getLikeCount: (vostcardID: string) => Promise<number>;
-  loadLikedVostcards: () => Promise<void>;
-  setupLikeListeners: (vostcardID: string, onLikeCountChange: (count: number) => void, onLikeStatusChange: (isLiked: boolean) => void) => () => void;
-  // Rating system
-  submitRating: (vostcardID: string, rating: number) => Promise<void>;
-  getCurrentUserRating: (vostcardID: string) => Promise<number>;
-  getRatingStats: (vostcardID: string) => Promise<RatingStats>;
-  setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => () => void;
-}
-
-// IndexedDB configuration
-const DB_NAME = 'VostcardDB';
-const DB_VERSION = 2;
-const STORE_NAME = 'privateVostcards';
-
-// IndexedDB utility functions
-const openDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-      }
-    };
-  });
-};
-
-const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
-
-// Helper function to get correct username from AuthContext
-const getCorrectUsername = (authContext: any, currentUsername?: string): string => {
-  console.log('🔍 getCorrectUsername called with:', {
-    authContextUsername: authContext.username,
-    authContextUserEmail: authContext.user?.email,
-    authContextUserDisplayName: authContext.user?.displayName,
-    currentUsername: currentUsername
-  });
-  
-  // Use username from AuthContext (loaded from Firestore)
-  if (authContext.username) {
-    console.log('✅ Using username from AuthContext:', authContext.username);
-    return authContext.username;
-  }
-  
-  // Fallback to email username (preferred over displayName)
-  if (authContext.user?.email) {
-    const emailUsername = authContext.user.email.split('@')[0];
-    console.log('📧 Using email username as fallback:', emailUsername);
-    return emailUsername;
-  }
-  
-  // Only use displayName if it's not "info Web App"
-  if (authContext.user?.displayName && authContext.user.displayName !== 'info Web App') {
-    console.log('👤 Using displayName as fallback:', authContext.user.displayName);
-    return authContext.user.displayName;
-  }
-  
-  // Final fallback
-  console.log('⚠️ Using final fallback username:', currentUsername || 'Unknown');
-  return currentUsername || 'Unknown';
-};
-
-// Helper for video upload
-async function uploadVideo(userId: string, vostcardId: string, file: Blob): Promise<string> {
-  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/video.webm`);
-  const uploadTask = uploadBytesResumable(storageRef, file);
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log(`Video upload is ${progress}% done`);
-      },
-      (error) => {
-        console.error('Video upload failed:', error);
-        reject(error);
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        console.log('Video file available at', downloadURL);
-        resolve(downloadURL);
-      }
-    );
-  });
-}
-
-// Helper for photo upload
-async function uploadPhoto(userId: string, vostcardId: string, idx: number, file: Blob): Promise<string> {
-  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/photo${idx + 1}.jpg`);
-  const uploadTask = uploadBytesResumable(storageRef, file);
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log(`Photo ${idx + 1} upload is ${progress}% done`);
-      },
-      (error) => {
-        console.error(`Photo ${idx + 1} upload failed:`, error);
-        reject(error);
-      },
-      async () => {
-        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        console.log(`Photo ${idx + 1} file available at`, downloadURL);
-        resolve(downloadURL);
-      }
-    );
-  });
-}
-
-export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const authContext = useAuth();
-  const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
-  const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
-  const [scripts, setScripts] = useState<Script[]>([]);
-  const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
-
-  const { user, userID } = authContext;
-
-  // 🔄 REAL-TIME FIREBASE SYNC
-  useEffect(() => {
-    if (!user || !userID) {
-      console.log('🔄 No user, skipping Firebase sync setup');
-      return;
-    }
-
-    console.log('🔄 Setting up real-time Firebase sync for user:', userID);
-
-    // Query for user's private Vostcards
-    const privateVostcardsQuery = query(
-      collection(db, 'vostcards'),
-      where('userID', '==', userID),
-      where('visibility', '==', 'private'),
-      orderBy('updatedAt', 'desc')
-    );
-
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(privateVostcardsQuery, async (snapshot) => {
-      try {
-        console.log('🔄 Firebase snapshot received, changes:', snapshot.docChanges().length);
-        
-        const firebaseVostcards = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Vostcard[];
-
-        console.log('🔄 Firebase Vostcards:', firebaseVostcards.length);
-
-        // Merge with local IndexedDB
-        await mergeFirebaseWithLocal(firebaseVostcards);
-
-      } catch (error) {
-        console.error('❌ Error in Firebase sync listener:', error);
-        setSyncStatus('error');
-      }
-    });
-
-    return () => {
-      console.log('🔄 Cleaning up Firebase sync listener');
-      unsubscribe();
-    };
-  }, [user, userID]);
-
-  // 🔄 MERGE FIREBASE WITH LOCAL DATA
-  const mergeFirebaseWithLocal = useCallback(async (firebaseVostcards: Vostcard[]) => {
-    try {
-      setSyncStatus('syncing');
-      
-      // Load current local Vostcards
-      const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.getAll();
-
-      const localVostcards = await new Promise<Vostcard[]>((resolve, reject) => {
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const results = request.result as Vostcard[];
-          resolve(results);
-        };
-      });
-
-      console.log('🔄 Local Vostcards:', localVostcards.length);
-      console.log('🔄 Firebase Vostcards:', firebaseVostcards.length);
-
-      // Create a map for efficient lookups
-      const localMap = new Map(localVostcards.map(v => [v.id, v]));
-      const firebaseMap = new Map(firebaseVostcards.map(v => [v.id, v]));
-      
-      const updatedVostcards: Vostcard[] = [];
-      const toSaveLocally: Vostcard[] = [];
-
-      // Process Firebase Vostcards
-      for (const firebaseVostcard of firebaseVostcards) {
-        const localVostcard = localMap.get(firebaseVostcard.id);
-        
-        if (!localVostcard) {
-          // New Vostcard from Firebase - download and save locally
-          console.log('🔄 New Vostcard from Firebase:', firebaseVostcard.id);
-          const downloadedVostcard = await downloadFirebaseVostcard(firebaseVostcard);
-          toSaveLocally.push(downloadedVostcard);
-          updatedVostcards.push(downloadedVostcard);
-        } else {
-          // Compare timestamps to see which is newer
-          const firebaseTime = new Date(firebaseVostcard.updatedAt).getTime();
-          const localTime = new Date(localVostcard.updatedAt).getTime();
-          
-          if (firebaseTime > localTime) {
-            // Firebase version is newer - update local
-            console.log('🔄 Updating local Vostcard from Firebase:', firebaseVostcard.id);
-            const downloadedVostcard = await downloadFirebaseVostcard(firebaseVostcard);
-            toSaveLocally.push(downloadedVostcard);
-            updatedVostcards.push(downloadedVostcard);
-          } else {
-            // Local version is current
-            updatedVostcards.push(localVostcard);
-          }
-        }
-      }
-
-      // Add local-only Vostcards (not in Firebase yet)
-      for (const localVostcard of localVostcards) {
-        if (!firebaseMap.has(localVostcard.id) && localVostcard.visibility === 'private') {
-          updatedVostcards.push(localVostcard);
-          
-          // If it needs sync, sync it now
-          if (localVostcard.needsSync) {
-            console.log('🔄 Syncing local Vostcard to Firebase:', localVostcard.id);
-            await syncVostcardToFirebase(localVostcard);
-          }
-        }
-      }
-
-      // Save updated Vostcards to IndexedDB
-      if (toSaveLocally.length > 0) {
-        const saveTransaction = db.transaction([STORE_NAME], 'readwrite');
-        const saveStore = saveTransaction.objectStore(STORE_NAME);
-        
-        for (const vostcard of toSaveLocally) {
-          saveStore.put(vostcard);
-        }
-      }
-
-      // Update UI
-      const filteredVostcards = updatedVostcards.filter(v => v.visibility !== 'public');
-      setSavedVostcards(filteredVostcards);
-      setSyncStatus('idle');
-
-      console.log('🔄 Sync complete. Total Vostcards:', filteredVostcards.length);
-
-    } catch (error) {
-      console.error('❌ Error merging Firebase with local:', error);
-      setSyncStatus('error');
-    }
-  }, []);
-
-  // 🔄 DOWNLOAD FIREBASE VOSTCARD (convert URLs back to Blobs)
   const downloadFirebaseVostcard = useCallback(async (firebaseVostcard: any): Promise<Vostcard> => {
     try {
       console.log('📥 Downloading Firebase Vostcard:', firebaseVostcard.id);
@@ -738,6 +407,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const videoData = atob(v._videoBase64.split(',')[1]);
                 const videoArray = new Uint8Array(videoData.length);
                 for (let i = 0; i < videoData.length; i++) {
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
                   videoArray[i] = videoData.charCodeAt(i);
                 }
                 restored.video = new Blob([videoArray], { type: 'video/webm' });
@@ -1069,108 +739,762 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [currentVostcard, userID, loadAllLocalVostcards]);
 
   // ✅ Load from IndexedDB
-  const loadLocalVostcard = useCallback(async (id: string) => {
-    console.log('📂 loadLocalVostcard: Attempting to load Vostcard with ID:', id);
+  const loadLocalVostcard = useCallback(async (id: string): Promise<Vostcard | null> => {
+import type { Script } from '../types/ScriptModel';
+import { auth, db, storage } from '../firebase/firebaseConfig';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp, onSnapshot } from 'firebase/firestore';
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './AuthContext';
+import { ScriptService } from '../services/scriptService';
+import { LikeService, type Like } from '../services/likeService';
+import { RatingService, type Rating, type RatingStats } from '../services/ratingService';
+
+interface Vostcard {
+  id: string;
+  visibility: 'public' | 'private';
+  video: Blob | null;
+  title: string;
+  description: string;
+  photos: Blob[];
+  categories: string[];
+  geo: { latitude: number; longitude: number } | null;
+  username: string;
+  userID: string;
+  recipientUserID?: string; // For private sharing - who receives this private Vostcard
+  createdAt: string;
+  updatedAt: string;
+  isOffer?: boolean; // New field for offers
+  offerDetails?: {
+    discount?: string;
+    validUntil?: string;
+    terms?: string;
+  };
+  script?: string; // Add script field
+  scriptId?: string; // Add script ID field to track associated script
+  _videoBase64?: string | null; // For IndexedDB serialization
+  _photosBase64?: string[]; // For IndexedDB serialization
+  // Firebase sync metadata
+  lastSyncedAt?: string;
+  needsSync?: boolean;
+}
+
+interface VostcardContextProps {
+  currentVostcard: Vostcard | null;
+  setCurrentVostcard: (vostcard: Vostcard | null) => void;
+  setVideo: (video: Blob, geoOverride?: { latitude: number; longitude: number }) => void;
+  setGeo: (geo: { latitude: number; longitude: number }) => void;
+  updateVostcard: (updates: Partial<Vostcard>) => void;
+  addPhoto: (photo: Blob) => void;
+  saveLocalVostcard: () => void;
+  loadLocalVostcard: (id: string) => Promise<Vostcard | null>;
+  clearVostcard: () => void;
+  clearLocalStorage: () => void; // For testing
+  postVostcard: () => Promise<void>;
+  savedVostcards: Vostcard[];
+  loadAllLocalVostcards: () => void;
+  deletePrivateVostcard: (id: string) => Promise<void>;
+  deleteVostcardsWithWrongUsername: () => Promise<void>;
+  // Sync status
+  syncStatus: 'idle' | 'syncing' | 'error';
+  scripts: Script[];
+  loadScripts: () => Promise<void>;
+  saveScript: (script: Script) => Promise<void>;
+  deleteScript: (id: string) => Promise<void>;
+  updateScriptTitle: (scriptId: string, newTitle: string) => Promise<void>;
+  updateScript: (scriptId: string, title: string, content: string) => Promise<void>;
+  // Like system
+  likedVostcards: Like[];
+  toggleLike: (vostcardID: string) => Promise<boolean>;
+  isLiked: (vostcardID: string) => Promise<boolean>;
+  getLikeCount: (vostcardID: string) => Promise<number>;
+  loadLikedVostcards: () => Promise<void>;
+  setupLikeListeners: (vostcardID: string, onLikeCountChange: (count: number) => void, onLikeStatusChange: (isLiked: boolean) => void) => () => void;
+  // Rating system
+  submitRating: (vostcardID: string, rating: number) => Promise<void>;
+  getCurrentUserRating: (vostcardID: string) => Promise<number>;
+  getRatingStats: (vostcardID: string) => Promise<RatingStats>;
+  setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => () => void;
+}
+
+// IndexedDB configuration
+const DB_NAME = 'VostcardDB';
+const DB_VERSION = 2;
+const STORE_NAME = 'privateVostcards';
+
+// IndexedDB utility functions
+const openDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
     
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+  });
+};
+
+const VostcardContext = createContext<VostcardContextProps | undefined>(undefined);
+
+// Helper function to get correct username from AuthContext
+const getCorrectUsername = (authContext: any, currentUsername?: string): string => {
+  console.log('🔍 getCorrectUsername called with:', {
+    authContextUsername: authContext.username,
+    authContextUserEmail: authContext.user?.email,
+    authContextUserDisplayName: authContext.user?.displayName,
+    currentUsername: currentUsername
+  });
+  
+  // Use username from AuthContext (loaded from Firestore)
+  if (authContext.username) {
+    console.log('✅ Using username from AuthContext:', authContext.username);
+    return authContext.username;
+  }
+  
+  // Fallback to email username (preferred over displayName)
+  if (authContext.user?.email) {
+    const emailUsername = authContext.user.email.split('@')[0];
+    console.log('📧 Using email username as fallback:', emailUsername);
+    return emailUsername;
+  }
+  
+  // Only use displayName if it's not "info Web App"
+  if (authContext.user?.displayName && authContext.user.displayName !== 'info Web App') {
+    console.log('👤 Using displayName as fallback:', authContext.user.displayName);
+    return authContext.user.displayName;
+  }
+  
+  // Final fallback
+  console.log('⚠️ Using final fallback username:', currentUsername || 'Unknown');
+  return currentUsername || 'Unknown';
+};
+
+// Helper for video upload
+async function uploadVideo(userId: string, vostcardId: string, file: Blob): Promise<string> {
+  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/video.webm`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  return new Promise((resolve, reject) => {
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log(`Video upload is ${progress}% done`);
+      },
+      (error) => {
+        console.error('Video upload failed:', error);
+        reject(error);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log('Video file available at', downloadURL);
+        resolve(downloadURL);
+      }
+    );
+  });
+}
+
+// Helper for photo upload
+async function uploadPhoto(userId: string, vostcardId: string, idx: number, file: Blob): Promise<string> {
+  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/photo${idx + 1}.jpg`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  return new Promise((resolve, reject) => {
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log(`Photo ${idx + 1} upload is ${progress}% done`);
+      },
+      (error) => {
+        console.error(`Photo ${idx + 1} upload failed:`, error);
+        reject(error);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log(`Photo ${idx + 1} file available at`, downloadURL);
+        resolve(downloadURL);
+      }
+    );
+  });
+}
+
+export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const authContext = useAuth();
+  const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
+  const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
+
+  const { user, userID } = authContext;
+
+  // 🔄 REAL-TIME FIREBASE SYNC
+  useEffect(() => {
+    if (!user || !userID) {
+      console.log('🔄 No user, skipping Firebase sync setup');
+      return;
+    }
+
+    console.log('🔄 Setting up real-time Firebase sync for user:', userID);
+
+    // Query for user's private Vostcards
+    const privateVostcardsQuery = query(
+      collection(db, 'vostcards'),
+      where('userID', '==', userID),
+      where('visibility', '==', 'private'),
+      orderBy('updatedAt', 'desc')
+    );
+
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(privateVostcardsQuery, async (snapshot) => {
+      try {
+        console.log('🔄 Firebase snapshot received, changes:', snapshot.docChanges().length);
+        
+        const firebaseVostcards = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Vostcard[];
+
+        console.log('🔄 Firebase Vostcards:', firebaseVostcards.length);
+
+        // Merge with local IndexedDB
+        await mergeFirebaseWithLocal(firebaseVostcards);
+
+      } catch (error) {
+        console.error('❌ Error in Firebase sync listener:', error);
+        setSyncStatus('error');
+      }
+    });
+
+    return () => {
+      console.log('🔄 Cleaning up Firebase sync listener');
+      unsubscribe();
+    };
+  }, [user, userID]);
+
+  // 🔄 MERGE FIREBASE WITH LOCAL DATA
+  const mergeFirebaseWithLocal = useCallback(async (firebaseVostcards: Vostcard[]) => {
     try {
+      setSyncStatus('syncing');
+      
+      // Load current local Vostcards
       const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.get(id);
+      const request = store.getAll();
 
-      return new Promise<void>((resolve, reject) => {
-        request.onerror = () => {
-          console.error('❌ Failed to load Vostcard from IndexedDB:', request.error);
-          reject(request.error);
-        };
-
+      const localVostcards = await new Promise<Vostcard[]>((resolve, reject) => {
+        request.onerror = () => reject(request.error);
         request.onsuccess = () => {
-          const found = request.result;
+          const results = request.result as Vostcard[];
+          resolve(results);
+        };
+      });
+
+      console.log('🔄 Local Vostcards:', localVostcards.length);
+      console.log('🔄 Firebase Vostcards:', firebaseVostcards.length);
+
+      // Create a map for efficient lookups
+      const localMap = new Map(localVostcards.map(v => [v.id, v]));
+      const firebaseMap = new Map(firebaseVostcards.map(v => [v.id, v]));
+      
+      const updatedVostcards: Vostcard[] = [];
+      const toSaveLocally: Vostcard[] = [];
+
+      // Process Firebase Vostcards
+      for (const firebaseVostcard of firebaseVostcards) {
+        const localVostcard = localMap.get(firebaseVostcard.id);
+        
+        if (!localVostcard) {
+          // New Vostcard from Firebase - download and save locally
+          console.log('🔄 New Vostcard from Firebase:', firebaseVostcard.id);
+          const downloadedVostcard = await downloadFirebaseVostcard(firebaseVostcard);
+          toSaveLocally.push(downloadedVostcard);
+          updatedVostcards.push(downloadedVostcard);
+        } else {
+          // Compare timestamps to see which is newer
+          const firebaseTime = new Date(firebaseVostcard.updatedAt).getTime();
+          const localTime = new Date(localVostcard.updatedAt).getTime();
           
-          if (found) {
-            console.log('📂 Found Vostcard in IndexedDB:', {
-              id: found.id,
-              hasVideoBase64: !!found._videoBase64,
-              videoBase64Length: found._videoBase64?.length,
-              hasPhotosBase64: !!found._photosBase64,
-              photosBase64Count: found._photosBase64?.length,
-              title: found.title
-            });
-            
-            // Convert base64 strings back to Blob objects
-            const restoredVostcard = {
-              ...found,
-              video: null as Blob | null,
-              photos: [] as Blob[]
-            };
+          if (firebaseTime > localTime) {
+            // Firebase version is newer - update local
+            console.log('🔄 Updating local Vostcard from Firebase:', firebaseVostcard.id);
+            const downloadedVostcard = await downloadFirebaseVostcard(firebaseVostcard);
+            toSaveLocally.push(downloadedVostcard);
+            updatedVostcards.push(downloadedVostcard);
+          } else {
+            // Local version is current
+            updatedVostcards.push(localVostcard);
+          }
+        }
+      }
 
-            // Convert video base64 back to Blob
-            if (found._videoBase64) {
-              try {
-                console.log('📂 Converting video base64 back to Blob...');
-                const videoBase64 = found._videoBase64;
-                const videoBytes = atob(videoBase64.split(',')[1]);
-                const videoArray = new Uint8Array(videoBytes.length);
-                for (let i = 0; i < videoBytes.length; i++) {
-                  videoArray[i] = videoBytes.charCodeAt(i);
-                }
-                restoredVostcard.video = new Blob([videoArray], { type: 'video/webm' });
-                console.log('📂 Video restored, size:', restoredVostcard.video.size);
-              } catch (error) {
-                console.error('❌ Failed to restore video from base64:', error);
-              }
-            }
+      // Add local-only Vostcards (not in Firebase yet)
+      for (const localVostcard of localVostcards) {
+        if (!firebaseMap.has(localVostcard.id) && localVostcard.visibility === 'private') {
+          updatedVostcards.push(localVostcard);
+          
+          // If it needs sync, sync it now
+          if (localVostcard.needsSync) {
+            console.log('🔄 Syncing local Vostcard to Firebase:', localVostcard.id);
+            await syncVostcardToFirebase(localVostcard);
+          }
+        }
+      }
 
-            // Convert photos base64 back to Blobs
-            if (found._photosBase64 && found._photosBase64.length > 0) {
-              try {
-                console.log('📂 Converting photos base64 back to Blobs...');
-                const photoBlobs = found._photosBase64.map((photoBase64: string, index: number) => {
-                  const photoBytes = atob(photoBase64.split(',')[1]);
-                  const photoArray = new Uint8Array(photoBytes.length);
-                  for (let i = 0; i < photoBytes.length; i++) {
-                    photoArray[i] = photoBytes.charCodeAt(i);
-                  }
-                  const blob = new Blob([photoArray], { type: 'image/jpeg' });
-                  console.log(`📂 Photo ${index + 1} restored, size:`, blob.size);
-                  return blob;
-                });
-                restoredVostcard.photos = photoBlobs;
-                console.log('📂 All photos restored, count:', photoBlobs.length);
-              } catch (error) {
-                console.error('❌ Failed to restore photos from base64:', error);
-              }
-            }
+      // Save updated Vostcards to IndexedDB
+      if (toSaveLocally.length > 0) {
+        const saveTransaction = db.transaction([STORE_NAME], 'readwrite');
+        const saveStore = saveTransaction.objectStore(STORE_NAME);
+        
+        for (const vostcard of toSaveLocally) {
+          saveStore.put(vostcard);
+        }
+      }
 
-            // Remove the base64 fields from the restored object
-            delete restoredVostcard._videoBase64;
-            delete restoredVostcard._photosBase64;
+      // Update UI
+      const filteredVostcards = updatedVostcards.filter(v => v.visibility !== 'public');
+      setSavedVostcards(filteredVostcards);
+      setSyncStatus('idle');
 
-            console.log('📂 Loaded Vostcard from IndexedDB:', {
-              id: restoredVostcard.id,
-              hasVideo: !!restoredVostcard.video,
-              videoSize: restoredVostcard.video?.size,
-              photosCount: restoredVostcard.photos.length,
-              photoSizes: restoredVostcard.photos.map((p: Blob) => p.size),
-              title: restoredVostcard.title
-            });
+      console.log('🔄 Sync complete. Total Vostcards:', filteredVostcards.length);
 
-            setCurrentVostcard(restoredVostcard);
+    } catch (error) {
+      console.error('❌ Error merging Firebase with local:', error);
+      setSyncStatus('error');
+    }
+  }, []);
+
+  // 🔄 DOWNLOAD FIREBASE VOSTCARD (convert URLs back to Blobs)
+            resolve(restoredVostcard);
           } else {
             console.log('📂 Vostcard not found in IndexedDB with ID:', id);
+            resolve(null);
           }
-          resolve();
         };
       });
     } catch (error) {
       console.error('❌ Error in loadLocalVostcard:', error);
-      alert('Failed to load Vostcard. Please try again.');
+      throw error;
     }
   }, []);
 
   // ✅ Delete private Vostcard from IndexedDB
   const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
     try {
+  const downloadFirebaseVostcard = useCallback(async (firebaseVostcard: any): Promise<Vostcard> => {
+    try {
+      console.log('📥 Downloading Firebase Vostcard:', firebaseVostcard.id);
+      
+      // Download video if exists
+      let videoBlob: Blob | null = null;
+      let videoBase64: string | null = null;
+      
+      if (firebaseVostcard.video) {
+        try {
+          const videoResponse = await fetch(firebaseVostcard.video);
+          videoBlob = await videoResponse.blob();
+          
+          // Convert to base64 for IndexedDB storage
+          videoBase64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(videoBlob!);
+          });
+        } catch (error) {
+          console.warn('⚠️ Failed to download video:', error);
+        }
+      }
+
+      // Download photos if exist
+      const photoBlobs: Blob[] = [];
+      const photoBase64s: string[] = [];
+      
+      if (firebaseVostcard.photos && firebaseVostcard.photos.length > 0) {
+        for (const photoURL of firebaseVostcard.photos) {
+          try {
+            const photoResponse = await fetch(photoURL);
+            const photoBlob = await photoResponse.blob();
+            photoBlobs.push(photoBlob);
+            
+            // Convert to base64 for IndexedDB storage
+            const photoBase64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(photoBlob);
+            });
+            photoBase64s.push(photoBase64);
+          } catch (error) {
+            console.warn('⚠️ Failed to download photo:', error);
+          }
+        }
+      }
+
+      // Create local Vostcard with Blobs
+      const localVostcard: Vostcard = {
+        id: firebaseVostcard.id,
+        visibility: firebaseVostcard.visibility,
+        video: videoBlob,
+        title: firebaseVostcard.title,
+        description: firebaseVostcard.description,
+        photos: photoBlobs,
+        categories: firebaseVostcard.categories || [],
+        geo: firebaseVostcard.geo,
+        username: firebaseVostcard.username,
+        userID: firebaseVostcard.userID,
+        recipientUserID: firebaseVostcard.recipientUserID,
+        createdAt: firebaseVostcard.createdAt,
+        updatedAt: firebaseVostcard.updatedAt,
+        isOffer: firebaseVostcard.isOffer,
+        offerDetails: firebaseVostcard.offerDetails,
+        script: firebaseVostcard.script,
+        scriptId: firebaseVostcard.scriptId,
+        _videoBase64: videoBase64,
+        _photosBase64: photoBase64s,
+        lastSyncedAt: firebaseVostcard.lastSyncedAt,
+        needsSync: false // Just synced from Firebase
+      };
+
+      console.log('📥 Downloaded Vostcard successfully:', localVostcard.id);
+      return localVostcard;
+
+    } catch (error) {
+      console.error('❌ Error downloading Firebase Vostcard:', error);
+      throw error;
+    }
+  }, []);
+
+  // 🔄 SYNC VOSTCARD TO FIREBASE
+  const syncVostcardToFirebase = useCallback(async (vostcard: Vostcard) => {
+    try {
+      if (!userID) return;
+
+      console.log('📤 Syncing Vostcard to Firebase:', vostcard.id);
+
+      // Upload video if exists
+      let videoURL = '';
+      if (vostcard.video) {
+        videoURL = await uploadVideo(userID, vostcard.id, vostcard.video);
+      }
+
+      // Upload photos if exist
+      const photoURLs: string[] = [];
+      if (vostcard.photos && vostcard.photos.length > 0) {
+        const photoUploadPromises = vostcard.photos.map((photo, index) => 
+          uploadPhoto(userID, vostcard.id, index, photo)
+        );
+        const uploadedPhotoURLs = await Promise.all(photoUploadPromises);
+        photoURLs.push(...uploadedPhotoURLs);
+      }
+
+      // Save to Firebase
+      const firebaseVostcard = {
+        id: vostcard.id,
+        visibility: vostcard.visibility,
+        video: videoURL,
+        title: vostcard.title,
+        description: vostcard.description,
+        photos: photoURLs,
+        categories: vostcard.categories,
+        geo: vostcard.geo,
+        username: vostcard.username,
+        userID: vostcard.userID,
+        recipientUserID: vostcard.recipientUserID,
+        createdAt: vostcard.createdAt,
+        updatedAt: new Date().toISOString(),
+        isOffer: vostcard.isOffer,
+        offerDetails: vostcard.offerDetails,
+        script: vostcard.script,
+        scriptId: vostcard.scriptId,
+        lastSyncedAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, 'vostcards', vostcard.id), firebaseVostcard);
+      console.log('📤 Synced to Firebase successfully:', vostcard.id);
+
+    } catch (error) {
+      console.error('❌ Error syncing to Firebase:', error);
+      throw error;
+    }
+  }, [userID]);
+
+  // 🔄 PERIODIC SYNC FOR UNSAVED CHANGES
+  useEffect(() => {
+    if (!user || !userID) return;
+
+    const syncInterval = setInterval(async () => {
+      try {
+        console.log('🔄 Running periodic sync...');
+        
+        // Find Vostcards that need sync
+        const db = await openDB();
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
+
+        const localVostcards = await new Promise<Vostcard[]>((resolve, reject) => {
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result as Vostcard[]);
+        });
+
+        const vostcardsNeedingSync = localVostcards.filter(v => 
+          v.needsSync && v.visibility === 'private'
+        );
+
+        if (vostcardsNeedingSync.length > 0) {
+          console.log('🔄 Found Vostcards needing sync:', vostcardsNeedingSync.length);
+          
+          for (const vostcard of vostcardsNeedingSync) {
+            try {
+              await syncVostcardToFirebase(vostcard);
+              
+              // Update local record to mark as synced
+              const updateTransaction = db.transaction([STORE_NAME], 'readwrite');
+              const updateStore = updateTransaction.objectStore(STORE_NAME);
+              const updatedVostcard = {
+                ...vostcard,
+                lastSyncedAt: new Date().toISOString(),
+                needsSync: false
+              };
+              updateStore.put(updatedVostcard);
+              
+            } catch (error) {
+              console.warn('⚠️ Failed to sync Vostcard:', vostcard.id, error);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in periodic sync:', error);
+      }
+    }, 30000); // Every 30 seconds
+
+    return () => clearInterval(syncInterval);
+  }, [user, userID, syncVostcardToFirebase]);
+
+  // Scripts Firestore CRUD
+  const loadScripts = useCallback(async () => {
+    console.log('📜 Starting loadScripts...');
+    try {
+      const user = auth.currentUser;
+      console.log('📜 Current user:', {
+        uid: user?.uid,
+        email: user?.email,
+        isAnonymous: user?.isAnonymous,
+        hasUser: !!user
+      });
+      
+      if (!user) {
+        console.log('📜 No user logged in, skipping script load');
+        setScripts([]);
+        return;
+      }
+
+      console.log('📜 Attempting to load scripts for user:', user.uid);
+      const loadedScripts = await ScriptService.getUserScripts(user.uid);
+      console.log('📜 ScriptService.getUserScripts returned:', loadedScripts);
+      console.log('📜 Number of scripts loaded:', loadedScripts.length);
+      
+      setScripts(loadedScripts);
+      console.log('📜 Scripts set in state. Total count:', loadedScripts.length);
+      
+      if (loadedScripts.length === 0) {
+        console.log('📜 No scripts found for user. This could be normal if no scripts have been created yet.');
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to load scripts - Full error details:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      
+      // Provide more specific error information
+      if (error.code === 'permission-denied') {
+        console.error('❌ Permission denied - Check Firestore rules');
+      } else if (error.code === 'unauthenticated') {
+        console.error('❌ User not authenticated - Check auth state');
+      }
+      
+      // Show alert for debugging
+      alert(`Failed to load scripts: ${error.message}. Check console for details.`);
+      setScripts([]);
+    }
+  }, []);
+
+  const saveScript = useCallback(async (script: Script) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      if (script.id) {
+        // Update existing script
+        await ScriptService.updateScript(user.uid, script.id, script.title, script.content);
+      } else {
+        // Create new script
+        await ScriptService.createScript(user.uid, script.title, script.content);
+      }
+      
+      console.log('✅ Script saved to Firestore:', script);
+      loadScripts();
+    } catch (error) {
+      console.error('❌ Failed to save script:', error);
+      alert('Failed to save script. Please try again.');
+    }
+  }, [loadScripts]);
+
+  const deleteScript = useCallback(async (id: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      await ScriptService.deleteScript(user.uid, id);
+      console.log('🗑️ Script deleted from Firestore:', id);
+      loadScripts();
+    } catch (error) {
+      console.error('❌ Failed to delete script:', error);
+      alert('Failed to delete script. Please try again.');
+    }
+  }, [loadScripts]);
+
+  const updateScriptTitle = useCallback(async (scriptId: string, newTitle: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      // Get current script to preserve content
+      const currentScript = scripts.find(s => s.id === scriptId);
+      if (!currentScript) {
+        throw new Error('Script not found');
+      }
+
+      await ScriptService.updateScript(user.uid, scriptId, newTitle, currentScript.content);
+      console.log('✅ Script title updated in Firestore:', scriptId, newTitle);
+      // Don't reload scripts automatically to avoid permission errors
+    } catch (error) {
+      console.error('❌ Failed to update script title:', error);
+      // Don't show alert for script title update failures, just log it
+      console.log('Script title update failed, but continuing...');
+    }
+  }, [scripts]);
+
+  const updateScript = useCallback(async (scriptId: string, title: string, content: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      await ScriptService.updateScript(user.uid, scriptId, title, content);
+      console.log('✅ Script updated in Firestore:', scriptId);
+      // Update local scripts state
+      setScripts(prev => prev.map(script => 
+        script.id === scriptId 
+          ? { ...script, title, content, updatedAt: new Date().toISOString() }
+          : script
+      ));
+    } catch (error) {
+      console.error('❌ Failed to update script:', error);
+      throw error;
+    }
+  }, []);
+
+  // Like system functions
+  const toggleLike = useCallback(async (vostcardID: string): Promise<boolean> => {
+    try {
+      const isLiked = await LikeService.toggleLike(vostcardID);
+      console.log('✅ Toggle like result:', isLiked);
+      throw error;
+      // Note: Real-time listeners will update the like status automatically
+      return isLiked;
+    } catch (error) {
+      console.error('❌ Failed to toggle like:', error);
+      throw error;
+    }
+  }, []);
+
+  const isLiked = useCallback(async (vostcardID: string): Promise<boolean> => {
+    try {
+      return await LikeService.isLiked(vostcardID);
+    } catch (error) {
+      console.error('❌ Failed to check like status:', error);
+      return false;
+    }
+  }, []);
+
+  const getLikeCount = useCallback(async (vostcardID: string): Promise<number> => {
+    try {
+      return await LikeService.getLikeCount(vostcardID);
+    } catch (error) {
+      console.error('❌ Failed to get like count:', error);
+      return 0;
+    }
+  }, []);
+
+  const loadLikedVostcards = useCallback(async () => {
+    try {
+      const liked = await LikeService.fetchLikedVostcards();
+      setLikedVostcards(liked);
+      console.log('✅ Loaded liked vostcards:', liked.length);
+    } catch (error) {
+      console.error('❌ Failed to load liked vostcards:', error);
+      setLikedVostcards([]);
+    }
+  }, []);
+
+  const setupLikeListeners = useCallback((
+    vostcardID: string,
+    onLikeCountChange: (count: number) => void,
+    onLikeStatusChange: (isLiked: boolean) => void
+  ): (() => void) => {
+    const unsubscribeLikeCount = LikeService.listenToLikeCount(vostcardID, onLikeCountChange);
+    const unsubscribeLikeStatus = LikeService.listenToLikeStatus(vostcardID, onLikeStatusChange);
+    
+    // Return function to unsubscribe from both listeners
+    return () => {
+      unsubscribeLikeCount();
+      unsubscribeLikeStatus();
+    };
+  }, []);
+
+  // Load all Vostcards from IndexedDB and restore their blobs
+  const loadAllLocalVostcards = useCallback(async () => {
+    try {
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
+
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to load Vostcards from IndexedDB:', request.error);
+          reject(request.error);
+        };
+
+        request.onsuccess = () => {
+          const existing: any[] = request.result || [];
+          console.log('📂 Found', existing.length, 'Vostcards in IndexedDB');
+
+          const restoredVostcards = existing.map((v) => {
+            const restored: Vostcard = {
+              ...v,
+              video: null,
+              photos: [],
+            };
+
+            if (v._videoBase64) {
+              try {
+                const videoData = atob(v._videoBase64.split(',')[1]);
+                const videoArray = new Uint8Array(videoData.length);
+                for (let i = 0; i < videoData.length; i++) {
       const db = await openDB();
       const transaction = db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
