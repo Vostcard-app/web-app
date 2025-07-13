@@ -1105,6 +1105,32 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentVostcard(null);
   }, []);
 
+  // ✅ Clear local storage (IndexedDB) - For testing
+  const clearLocalStorage = useCallback(async () => {
+    try {
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.clear();
+
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to clear IndexedDB:', request.error);
+          reject(request.error);
+        };
+
+        request.onsuccess = () => {
+          console.log('✅ IndexedDB cleared successfully');
+          setSavedVostcards([]);
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ Error clearing IndexedDB:', error);
+      throw error;
+    }
+  }, []);
+
   // ✅ Delete private Vostcard from IndexedDB
   const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
     try {
