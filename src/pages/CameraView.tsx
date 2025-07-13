@@ -26,14 +26,41 @@ const CameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Ensure video is captured in portrait mode (height > width)
-        // For portrait video: width should be smaller than height (9:16 ratio)
-        const videoConstraints: MediaTrackConstraints = {
-          width: { ideal: 720, min: 480, max: 1080 },  // Smaller dimension for portrait
-          height: { ideal: 1280, min: 854, max: 1920 }, // Larger dimension for portrait
-          aspectRatio: { ideal: 16/9 }, // 16:9 but height/width (portrait)
-          frameRate: { ideal: 30, max: 30 }
-        };
+        // Device detection for specific handling
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        console.log('📱 Device detection:', { isIOS, isAndroid, userAgent: navigator.userAgent });
+        
+        let videoConstraints: MediaTrackConstraints;
+        
+        if (isIOS) {
+          // For iOS devices, use specific constraints that work better for portrait
+          videoConstraints = {
+            width: { exact: 720 },   // Force exact width for iOS
+            height: { exact: 1280 }, // Force exact height for iOS
+            frameRate: { ideal: 30, max: 30 }
+          };
+          console.log('📱 Using iOS-specific portrait constraints');
+        } else if (isAndroid) {
+          // For Android devices
+          videoConstraints = {
+            width: { ideal: 720, max: 720 },
+            height: { ideal: 1280, min: 1280 },
+            aspectRatio: { exact: 9/16 }, // Try exact aspect ratio for Android
+            frameRate: { ideal: 30, max: 30 }
+          };
+          console.log('📱 Using Android-specific portrait constraints');
+        } else {
+          // For desktop/other devices
+          videoConstraints = {
+            width: { ideal: 720, min: 480, max: 1080 },
+            height: { ideal: 1280, min: 854, max: 1920 },
+            aspectRatio: { ideal: 9/16 },
+            frameRate: { ideal: 30, max: 30 }
+          };
+          console.log('📱 Using desktop portrait constraints');
+        }
 
         console.log('📱 Requesting portrait camera capture:', videoConstraints);
 
@@ -61,30 +88,29 @@ const CameraView: React.FC = () => {
             frameRate: settings.frameRate,
             aspectRatio: actualAspectRatio,
             isPortrait: isPortrait,
-            orientation: isPortrait ? 'PORTRAIT ✅' : 'LANDSCAPE ❌'
+            orientation: isPortrait ? 'PORTRAIT ✅' : 'LANDSCAPE ❌',
+            deviceType: isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop'
           });
           
           // Warn if we got landscape instead of portrait
           if (!isPortrait) {
             console.warn('⚠️ Camera is recording in LANDSCAPE mode - video will appear sideways!');
+            console.warn('⚠️ This may be a device limitation. Consider rotating device or using different constraints.');
           }
         }
 
       } catch (err) {
         console.error('Error accessing camera with portrait constraints:', err);
-        // Fallback to basic constraints but still try for portrait
+        // Fallback to most basic constraints
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: {
-              width: { ideal: 720 },
-              height: { ideal: 1280 }
-            }
+            video: true
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using fallback camera with portrait preference');
+          console.log('📱 Using most basic camera fallback');
         } catch (fallbackErr) {
           console.error('Fallback camera access also failed:', fallbackErr);
         }
