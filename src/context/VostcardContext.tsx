@@ -1013,3 +1013,81 @@ export const useVostcard = () => {
   }
   return context;
 };
+
+      console.log('✅ Vostcard posted successfully to Firebase!');
+      // Removing this alert since we show it in CreateVostcardStep3
+      // alert('🎉 Vōstcard posted successfully! It will appear on the map with media.');
+
+      clearVostcard();
+
+    } catch (error) {
+      console.error('❌ Failed to post Vostcard:', error);
+
+      if (error instanceof Error && error.message.includes('CORS')) {
+        alert('❌ Upload failed due to CORS policy. Please check your Firebase Storage rules.');
+      } else {
+        alert('❌ Failed to post Vostcard. Please try again.');
+      }
+
+      throw error;
+    }
+  }, [currentVostcard, clearVostcard]);
+
+  return (
+    <VostcardContext.Provider
+      value={{
+        currentVostcard,
+        setCurrentVostcard,
+        setVideo,
+        setGeo,
+        updateVostcard,
+        addPhoto,
+        saveLocalVostcard,
+        loadLocalVostcard,
+        clearVostcard,
+        clearLocalStorage,
+        postVostcard,
+        savedVostcards,
+        loadAllLocalVostcards,
+        deletePrivateVostcard,
+        deleteVostcardsWithWrongUsername,
+        scripts,
+        loadScripts,
+        saveScript,
+        deleteScript,
+        updateScriptTitle,
+        updateScript,
+        // Like system
+        likedVostcards,
+        toggleLike,
+        isLiked,
+        getLikeCount,
+        loadLikedVostcards,
+        setupLikeListeners,
+        // Rating system
+        submitRating: RatingService.submitRating,
+        getCurrentUserRating: RatingService.getCurrentUserRating,
+        getRatingStats: RatingService.getRatingStats,
+        setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => {
+          const unsubscribeStats = RatingService.listenToRatingStats(vostcardID, onStatsChange);
+          const unsubscribeUserRating = RatingService.listenToUserRating(vostcardID, onUserRatingChange);
+          
+          return () => {
+            unsubscribeStats();
+            unsubscribeUserRating();
+          };
+        },
+      }}
+    >
+      {children}
+    </VostcardContext.Provider>
+  );
+};
+
+export const useVostcard = () => {
+  const context = useContext(VostcardContext);
+  if (!context) {
+    throw new Error('useVostcard must be used within a VostcardProvider');
+  }
+  return context;
+};
