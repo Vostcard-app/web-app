@@ -72,32 +72,37 @@ const FollowingView: React.FC = () => {
       <div style={{
         backgroundColor: '#07345c',
         color: 'white',
-        padding: '20px',
+        height: '30px',
+        padding: '15px 0 24px 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        position: 'relative'
       }}>
-        <h1 style={{ 
-          fontSize: '2.2rem',
+        <h1 style={{
+          fontSize: '30px',
           fontWeight: 700,
-          margin: 0 
+          margin: 0
         }}>Following</h1>
         <button
           onClick={() => navigate('/home')}
           style={{
-            background: 'rgba(255,255,255,0.15)',
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
             border: 'none',
             borderRadius: '50%',
-            width: 55,
-            height: 55,
+            width: 48,
+            height: 48,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer'
           }}
         >
-          <FaHome size={28} color="white" />
+          <FaHome size={48} color="white" />
         </button>
       </div>
 

@@ -47,16 +47,30 @@ const SuggestionBoxView: React.FC = () => {
       {/* Header */}
       <div style={{
         backgroundColor: '#07345c',
-        color: 'white',
-        padding: '15px 20px',
+        height: '30px',
+        padding: '15px 0 24px 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', margin: 0 }}>Vōstcard</span>
         <FaHome
-          size={50}
-          style={{ cursor: 'pointer', color: 'white' }}
+          size={48}
+          color="white"
+          style={{
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
           onClick={() => navigate('/home')}
         />
       </div>

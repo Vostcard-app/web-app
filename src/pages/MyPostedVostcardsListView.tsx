@@ -140,18 +140,32 @@ const MyPostedVostcardsListView = () => {
     <div style={{ height: '100vh', width: '100vw', backgroundColor: 'white' }}>
       {/* 🔵 Header with Home Icon */}
       <div style={{
-        backgroundColor: '#002B4D',
-        height: '70px',
+        backgroundColor: '#07345c',
+        height: '30px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
-        color: 'white'
+        padding: '15px 0 24px 20px',
+        color: 'white',
+        position: 'relative'
       }}>
-        <h1 style={{ fontSize: '24px', margin: 0 }}>My Posted Vōstcards</h1>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>My Posted Vōstcards</h1>
         <FaHome
-          size={28}
-          style={{ cursor: 'pointer' }}
+          size={48}
+          style={{
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
           onClick={() => navigate('/home')}
         />
       </div>

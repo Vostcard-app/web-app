@@ -58,24 +58,39 @@ const MyVostcardListView = () => {
     <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
       {/* 🔵 Header with Home Icon */}
       <div style={{
-        backgroundColor: '#002B4D',
-        height: '70px',
+        backgroundColor: '#07345c',
+        height: '30px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
-        color: 'white'
+        paddingLeft: '16px',
+        color: 'white',
+        position: 'relative',
+        padding: '15px 0 24px 20px'
       }}>
-        <h1 style={{ fontSize: '24px', margin: 0 }}>My Vōstcards</h1>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>My Vōstcards</h1>
         <FaHome
-          size={45} // Changed from 28 to 45
-          style={{ cursor: 'pointer' }}
+          size={48}
+          style={{
+            cursor: 'pointer',
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
           onClick={() => navigate('/home')}
         />
       </div>
 
       {/* 📋 List of Vostcards */}
-      <div style={{ padding: '20px', height: 'calc(100vh - 70px)', overflowY: 'auto' }}>
+      <div style={{ padding: '20px', height: 'calc(100vh - 55px)', overflowY: 'auto' }}>
         {savedVostcards.length === 0 ? (
           <div style={{
             textAlign: 'center',

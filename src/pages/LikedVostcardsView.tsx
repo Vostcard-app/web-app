@@ -1,4 +1,3 @@
-// ✅ src/pages/LikedVostcardsView.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -112,33 +111,37 @@ const LikedVostcardsView: React.FC = () => {
       {/* Header */}
       <div style={{
         backgroundColor: '#07345c', // Match the standard header color
-        color: 'white',
-        padding: '20px',
+        height: '30px',
+        padding: '15px 0 24px 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       }}>
         <h1 style={{ 
-          fontSize: '2.2rem',
+          fontSize: '30px',
           fontWeight: 700,
-          margin: 0 
+          margin: 0,
+          color: 'white'
         }}>Liked Vōstcards</h1>
         <button
           onClick={handleGoHome}
           style={{
-            background: 'rgba(255,255,255,0.15)',
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
             border: 'none',
             borderRadius: '50%',
-            width: 55,
-            height: 55,
+            width: 48,
+            height: 48,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             cursor: 'pointer'
           }}
         >
-          <FaHome size={28} color="white" />
+          <FaHome size={48} color="white" />
         </button>
       </div>
 
