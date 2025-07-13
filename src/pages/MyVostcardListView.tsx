@@ -5,20 +5,20 @@ import { useVostcard } from '../context/VostcardContext';
 
 const MyVostcardListView = () => {
   const navigate = useNavigate();
-  const { privateVostcards, loadPrivateVostcards, loadVostcard, deleteVostcard } = useVostcard();
+  const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard } = useVostcard();
 
   // Load all Vostcards when component mounts
   useEffect(() => {
-    loadPrivateVostcards();
-  }, [loadPrivateVostcards]);
+    loadAllLocalVostcards();
+  }, [loadAllLocalVostcards]);
 
   const handleEdit = (vostcardId: string) => {
-    loadVostcard(vostcardId);
+    loadLocalVostcard(vostcardId);
     navigate(`/edit-vostcard/${vostcardId}`);
   };
 
   const handleView = (vostcardId: string) => {
-    loadVostcard(vostcardId);
+    loadLocalVostcard(vostcardId);
     navigate(`/vostcard/${vostcardId}`);
   };
 
@@ -28,7 +28,7 @@ const MyVostcardListView = () => {
     
     if (window.confirm('Are you sure you want to delete this Vōstcard? This action cannot be undone.')) {
       try {
-        await deleteVostcard(vostcardId);
+        await deletePrivateVostcard(vostcardId);
         alert('Vōstcard deleted successfully!');
       } catch (error) {
         console.error('Failed to delete Vostcard:', error);
@@ -91,7 +91,7 @@ const MyVostcardListView = () => {
 
       {/* 📋 List of Vostcards */}
       <div style={{ padding: '20px', height: 'calc(100vh - 55px)', overflowY: 'auto' }}>
-        {privateVostcards.length === 0 ? (
+        {savedVostcards.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '40px 20px',
@@ -125,14 +125,14 @@ const MyVostcardListView = () => {
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
               <h3 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>
-                {privateVostcards.length} Vōstcard{privateVostcards.length !== 1 ? 's' : ''} Available
+                {savedVostcards.length} Vōstcard{savedVostcards.length !== 1 ? 's' : ''} Available
               </h3>
               <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>
                 Edit your Vōstcards or post them to the map when ready.
               </p>
             </div>
 
-            {[...privateVostcards]
+            {[...savedVostcards]
               .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
               .map((vostcard) => {
               const status = getVostcardStatus(vostcard);
