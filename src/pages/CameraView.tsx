@@ -17,58 +17,43 @@ const CameraView: React.FC = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
 
-  // Device detection
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isIPhone = /iPhone/.test(navigator.userAgent);
-
   const setPhoto = location.state?.setPhoto;
 
   useEffect(() => {
     const startCamera = async () => {
       try {
-        console.log('📱 Starting camera with portrait constraints...');
+        console.log('📱 Starting camera with simple portrait constraints...');
         
-        // Simplified, focused portrait constraints
-        const portraitConstraints = {
+        // Simple, reliable portrait constraints
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            width: { ideal: 720, min: 480, max: 1080 },
-            height: { ideal: 1280, min: 854, max: 1920 },
-            aspectRatio: { exact: 9/16 },
-            frameRate: { ideal: 30, max: 30 },
-            facingMode: 'environment' // Use back camera for better quality
+            width: { ideal: 720 },
+            height: { ideal: 1280 },
+            facingMode: 'environment'
           },
           audio: false
-        };
-
-        const stream = await navigator.mediaDevices.getUserMedia(portraitConstraints);
+        });
+        
         streamRef.current = stream;
         
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
 
-        // Verify portrait orientation
+        // Check what we actually got
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          const isPortrait = settings.width && settings.height ? settings.height > settings.width : false;
-          
-          console.log('📱 Camera initialized:', {
+          console.log('📱 Camera result:', {
             width: settings.width,
             height: settings.height,
-            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown',
-            isPortrait: isPortrait,
-            orientation: isPortrait ? 'PORTRAIT ✅' : 'LANDSCAPE ❌'
+            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown'
           });
-          
-          if (!isPortrait) {
-            console.warn('⚠️ Camera returned landscape video. This may cause orientation issues.');
-          }
         }
 
       } catch (err) {
-        console.error('❌ Camera access failed:', err);
-        alert('Camera access failed. Please check permissions and try again.');
+        console.error('❌ Camera failed:', err);
+        alert('Camera access failed. Please check permissions.');
       }
     };
 
@@ -85,7 +70,6 @@ const CameraView: React.FC = () => {
         },
         (error) => {
           console.error('❌ Error getting location:', error);
-          // Continue without location - user can add it later
         },
         { 
           enableHighAccuracy: true, 
@@ -110,61 +94,28 @@ const CameraView: React.FC = () => {
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+    
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const imageUrl = canvas.toDataURL('image/png');
-      if (setPhoto) {
-        setPhoto(imageUrl);
+    ctx?.drawImage(video, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      if (blob && setPhoto) {
+        setPhoto(blob);
+        navigate(-1);
       }
-    }
-    navigate(-1);
+    });
   };
 
   const handleStartRecording = () => {
     if (streamRef.current) {
-      // Enhanced MIME type detection with better fallbacks
-      const getSupportedMimeType = () => {
-        const types = [
-          'video/mp4;codecs=avc1.42E01E,mp4a.40.2', // H.264 + AAC (best compatibility)
-          'video/mp4;codecs=avc1.42E01E', // H.264 video only
-          'video/webm;codecs=vp9,opus', // VP9 + Opus
-          'video/webm;codecs=vp9', // VP9 video only
-          'video/webm;codecs=vp8,opus', // VP8 + Opus
-          'video/webm;codecs=vp8', // VP8 video only
-          'video/webm;codecs=h264,opus', // H.264 in WebM + Opus
-          'video/webm;codecs=h264', // H.264 in WebM
-          'video/webm', // WebM fallback
-          'video/mp4', // MP4 fallback
-          '' // Let browser decide
-        ];
-        
-        for (const type of types) {
-          if (type === '' || MediaRecorder.isTypeSupported(type)) {
-            console.log('📹 Selected MIME type:', type || 'browser default');
-            return type || undefined;
-          }
-        }
-        console.warn('⚠️ No supported MIME types found, using browser default');
-        return undefined;
-      };
-
-      const mimeType = getSupportedMimeType();
+      // Simple MIME type selection
+      const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
       
-      // Create MediaRecorder with improved options
-      const options: MediaRecorderOptions = {};
-      if (mimeType) {
-        options.mimeType = mimeType;
-      }
+      const mediaRecorder = new MediaRecorder(streamRef.current, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 2500000 // 2.5 Mbps
+      });
       
-      // Add bitrate for better quality/size balance
-      try {
-        options.videoBitsPerSecond = 2500000; // 2.5 Mbps
-      } catch (err) {
-        console.log('📹 Bitrate setting not supported, using default');
-      }
-
-      const mediaRecorder = new MediaRecorder(streamRef.current, options);
       mediaRecorderRef.current = mediaRecorder;
       recordedChunks.current = [];
 
@@ -175,23 +126,18 @@ const CameraView: React.FC = () => {
       };
 
       mediaRecorder.onstop = () => {
-        const finalMimeType = mimeType || 'video/webm';
-        const blob = new Blob(recordedChunks.current, { type: finalMimeType });
+        const blob = new Blob(recordedChunks.current, { type: mimeType });
         
         console.log('📹 Video recording completed:', {
           size: blob.size,
-          type: blob.type,
-          isIPhone,
-          chunks: recordedChunks.current.length
+          type: blob.type
         });
 
         // Pass location to setVideo if available
         if (userLocation) {
           setVideo(blob, userLocation);
-          console.log('📍 Video saved with location:', userLocation);
         } else {
           setVideo(blob);
-          console.log('📍 Video saved without location');
         }
         navigate(-1);
       };
@@ -223,7 +169,7 @@ const CameraView: React.FC = () => {
         position: 'relative',
       }}
     >
-      {/* 🔘 Close Button */}
+      {/* Close Button */}
       <div
         style={{
           position: 'absolute',
@@ -240,61 +186,20 @@ const CameraView: React.FC = () => {
         />
       </div>
 
-      {/* Device info for debugging */}
-      <div style={{
-        position: 'absolute',
-        top: '80px',
-        left: '20px',
-        background: 'rgba(0, 0, 0, 0.7)',
-        color: 'white',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        zIndex: 10
-      }}>
-        📱 Portrait 16:9 Mode
-      </div>
-
-      {/* 🎥 Video Preview - Enforced Portrait 9:16 */}
+      {/* Video Preview */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
         muted
         style={{
-          flex: 1,
           width: '100%',
           height: '100%',
-          objectFit: 'cover',
-          aspectRatio: '9/16',
-          maxWidth: '100%',
-          maxHeight: '100%'
-        }}
-        onLoadedMetadata={(e) => {
-          const video = e.currentTarget;
-          const { videoWidth, videoHeight } = video;
-          
-          console.log('📱 Video preview loaded:', {
-            videoWidth,
-            videoHeight,
-            isPortrait: videoHeight > videoWidth,
-            aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
-          });
-          
-          // Ensure portrait display - no rotation needed if camera constraints work
-          if (videoWidth > videoHeight) {
-            console.log('🔄 Video is landscape, applying portrait display');
-            video.style.transform = 'rotate(90deg)';
-            video.style.width = '100vh';
-            video.style.height = '100vw';
-          } else {
-            console.log('✅ Video is portrait, no rotation needed');
-            video.style.transform = 'none';
-          }
+          objectFit: 'cover'
         }}
       />
 
-      {/* 🔴 Record Button */}
+      {/* Record Button */}
       <div
         style={{
           position: 'absolute',
@@ -321,7 +226,16 @@ const CameraView: React.FC = () => {
               justifyContent: 'center',
               cursor: 'pointer',
             }}
-          />
+          >
+            <div
+              style={{
+                backgroundColor: 'red',
+                borderRadius: '50%',
+                width: 24,
+                height: 24,
+              }}
+            />
+          </div>
         ) : (
           <div
             onClick={isRecording ? handleStopRecording : handleStartRecording}
@@ -329,21 +243,22 @@ const CameraView: React.FC = () => {
               backgroundColor: isRecording ? 'white' : 'red',
               width: 70,
               height: 70,
-              borderRadius: '50%',
+              borderRadius: isRecording ? '10%' : '50%',
               border: '6px solid white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
+              transition: 'all 0.3s ease',
             }}
           >
-            {isRecording && (
+            {!isRecording && (
               <div
                 style={{
-                  backgroundColor: 'red',
+                  backgroundColor: 'white',
+                  borderRadius: '50%',
                   width: 24,
                   height: 24,
-                  borderRadius: 4,
                 }}
               />
             )}
