@@ -93,6 +93,7 @@ function App() {
               <Route path="/offer/:id" element={<OfferView />} />
 
               {/*  Flag Vostcard */}
+              <Route path="/flag-form" element={<FlagFormView />} />
               <Route path="/flag/:vostcardID/:title/:username" element={<FlagFormView />} />
 
               {/* 👤 User Profile */}
