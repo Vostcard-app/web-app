@@ -54,6 +54,8 @@ interface VostcardContextProps {
   loadAllLocalVostcards: () => void;
   deletePrivateVostcard: (id: string) => Promise<void>;
   deleteVostcardsWithWrongUsername: () => Promise<void>;
+  // Sync status
+  syncStatus: 'idle' | 'syncing' | 'error';
   scripts: Script[];
   loadScripts: () => Promise<void>;
   saveScript: (script: Script) => Promise<void>;
@@ -72,8 +74,6 @@ interface VostcardContextProps {
   getCurrentUserRating: (vostcardID: string) => Promise<number>;
   getRatingStats: (vostcardID: string) => Promise<RatingStats>;
   setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => () => void;
-  // Sync status
-  syncStatus: 'idle' | 'syncing' | 'error';
 }
 
 // IndexedDB configuration
@@ -1231,6 +1231,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadAllLocalVostcards,
         deletePrivateVostcard,
         deleteVostcardsWithWrongUsername,
+        // Sync status
+        syncStatus,
         scripts,
         loadScripts,
         saveScript,
@@ -1257,8 +1259,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             unsubscribeUserRating();
           };
         },
-        // Sync status
-        syncStatus,
       }}
     >
       {children}
