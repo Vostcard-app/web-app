@@ -366,14 +366,6 @@ const VostcardDetailView: React.FC = () => {
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Banner */}
-          <div style={{ background: '#07345c', padding: '15px 0 24px 0', position: 'relative', textAlign: 'left', paddingLeft: '16px' }}>
-            <button style={{ position: 'absolute', right: 16, top: 26, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
-              <FaHome color="#fff" size={36} />
-            </button>
-            <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
-          </div>
-
           {/* User Info */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '5px 24px 0 24px' }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -619,6 +611,28 @@ const VostcardDetailView: React.FC = () => {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden', background: '#fff' }}>
+      {/* Fixed Banner/Header */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        zIndex: 10,
+        background: '#07345c',
+        padding: '15px 0 24px 0',
+        textAlign: 'left',
+        paddingLeft: '16px',
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
+        height: 70,
+        display: 'flex',
+        alignItems: 'center',
+      }}>
+        <button style={{ position: 'absolute', right: 16, top: 26, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
+          <FaHome color="#fff" size={36} />
+        </button>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem', marginLeft: 0 }}>Vōstcard</span>
+      </div>
       {/* Previous card (underneath, for swipe down) */}
       {prevId && (
         <motion.div
@@ -666,6 +680,7 @@ const VostcardDetailView: React.FC = () => {
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch',
           overflow: 'auto',
+          marginTop: 70, // Add margin to avoid going under the banner
         }}
         drag="y"
         dragConstraints={{ top: prevId ? -window.innerHeight : 0, bottom: nextId ? window.innerHeight : 0 }}
