@@ -268,7 +268,7 @@ const VostcardDetailView: React.FC = () => {
   };
 
   const handleFlagClick = () => {
-    navigate('/flag-form', { state: { vostcardId: id, vostcardTitle: vostcard?.title } });
+    navigate('/flag-form', { state: { vostcardId: id, vostcardTitle: vostcard?.title, username: vostcard?.username } });
   };
 
   const handleShareClick = () => {
