@@ -511,18 +511,59 @@ const VostcardDetailView: React.FC = () => {
 
   // Helper to render the card content (so we can use it for prev/next too)
   const renderCardContent = (vostcardId: string | null) => {
-    if (!vostcard) return null;
+    // Check if this is the current card first
     if (vostcardId !== id) {
       // Only render a placeholder for prev/next
       return <div style={{ height: '100vh', background: '#f0f0f0' }} />;
     }
-    // If loading or error, show loading/error state
+    
+    // Show loading state while loading
     if (loading) {
-      return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>Loading...</div>;
+      return (
+        <div style={{ 
+          height: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          fontSize: 24 
+        }}>
+          Loading...
+        </div>
+      );
     }
-    if (error || !vostcard) {
-      return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'red', fontSize: 24 }}>{error || 'Vostcard not found'}</div>;
+    
+    // Show error state if there's an error
+    if (error) {
+      return (
+        <div style={{ 
+          height: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          color: 'red', 
+          fontSize: 24 
+        }}>
+          {error}
+        </div>
+      );
     }
+    
+    // Show not found if no vostcard after loading is complete
+    if (!vostcard) {
+      return (
+        <div style={{ 
+          height: '100vh', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          color: 'red', 
+          fontSize: 24 
+        }}>
+          Vostcard not found
+        </div>
+      );
+    }
+
     // All variables must be defined here for the current card
     const { title, description, username, createdAt: rawCreatedAt } = vostcard;
     const avatarUrl = userProfile?.avatarURL;

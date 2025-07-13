@@ -293,7 +293,7 @@ const offerPopupStyle = {
 const HomeView = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { deleteVostcardsWithWrongUsername, clearVostcard } = useVostcard();
+  const { clearVostcard } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
@@ -437,7 +437,7 @@ const HomeView = () => {
         console.log('🔄 Force refreshing vostcards after posting');
       }
       
-      const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
+      const q = query(collection(db, 'vostcards'), where('visibility', '==', 'public'));
       const querySnapshot = await getDocs(q);
       const postedVostcardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
