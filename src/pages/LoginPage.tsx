@@ -27,9 +27,38 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       // Auth redirect will handle navigation
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login error:", err);
-      setError("Failed to log in. Please check your credentials.");
+      
+      // Provide more specific error messages
+      let errorMessage = "Failed to log in. Please check your credentials.";
+      
+      if (err.code) {
+        switch (err.code) {
+          case 'auth/user-not-found':
+            errorMessage = "No account found with this email address.";
+            break;
+          case 'auth/wrong-password':
+            errorMessage = "Incorrect password. Please try again.";
+            break;
+          case 'auth/invalid-email':
+            errorMessage = "Invalid email address format.";
+            break;
+          case 'auth/user-disabled':
+            errorMessage = "This account has been disabled.";
+            break;
+          case 'auth/too-many-requests':
+            errorMessage = "Too many failed login attempts. Please try again later.";
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = "Network error. Please check your internet connection.";
+            break;
+          default:
+            errorMessage = `Login error: ${err.message || err.code}`;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
