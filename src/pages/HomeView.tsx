@@ -96,6 +96,11 @@ const listViewButton = {
   boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
   pointerEvents: 'auto',
   transition: 'transform 0.1s ease',
+  height: '48px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  textAlign: 'center', // Ensure text is centered horizontally
   ':active': {
     transform: 'scale(0.98)'
   }
@@ -832,183 +837,175 @@ const HomeView = () => {
         ) : (
           // Rest of the content (map, buttons, etc.)
           <>
-            {/* List View and Offers Buttons - Always visible */}
-            <div style={listViewButtonContainerLeft}>
-              <button 
-                type="button"
-                style={listViewButton} 
-                onClick={handleListViewClick}
-              >
-                List View
-              </button>
-            </div>
-            <div style={listViewButtonContainerRight}>
-              <button 
-                type="button"
-                style={listViewButton} 
-                onClick={handleOffersClick}
-              >
-                Offers
-              </button>
-            </div>
-
-            {/* Area Preference Selector */}
-            <div 
+            {/* Combined List View, Offers, and Area Selector Buttons */}
+            <div
               style={{
                 position: 'fixed',
                 top: '96px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                zIndex: 1002
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'space-around',
+                alignItems: 'center',
+                zIndex: 1002,
+                padding: '0 16px'
               }}
-              data-area-selector
             >
+              <button 
+                type="button"
+                style={{ ...listViewButton, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }} 
+                onClick={handleListViewClick}
+              >
+                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                List View
+              </button>
+              <button 
+                type="button"
+                style={{ ...listViewButton, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }} 
+                onClick={handleOffersClick}
+              >
+                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                Offers
+              </button>
               <button
                 type="button"
                 onClick={() => setShowAreaSelector(!showAreaSelector)}
                 style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  ...listViewButton,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  justifyContent: 'center',
+                  gap: '8px',
+                  height: '48px',
+                  fontSize: '16px',
+                  textAlign: 'center',
                 }}
               >
-                <span>
-                  {mapAreaPreference === 'nearby' && '🚶 Nearby'}
-                  {mapAreaPreference === '1-mile' && '🏃 1 Mile'}
-                  {mapAreaPreference === '5-miles' && '🏃 5 Miles'}
-                  {mapAreaPreference === 'custom' && `🔍 ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
-                </span>
-                <span style={{ fontSize: '12px' }}>▼</span>
+                {mapAreaPreference === 'nearby' && '🚶 Nearby'}
+                {mapAreaPreference === '1-mile' && '🏃 1 Mile'}
+                {mapAreaPreference === '5-miles' && '🏃 5 Miles'}
+                {mapAreaPreference === 'custom' && `🔍 ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
               </button>
-
-              {/* Custom Distance Slider */}
-              {showDistanceSlider && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
+            </div>
+            {/* Area Selector Dropdown and Custom Distance Slider */}
+            {(showAreaSelector || showDistanceSlider) && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: '150px',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  backgroundColor: 'white',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                  padding: '16px',
-                  marginTop: '4px',
-                  minWidth: '200px',
                   zIndex: 1003
-                }}>
-                  <div style={{ marginBottom: '12px', textAlign: 'center' }}>
-                    <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
-                      Custom Distance
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {customDistance} mile{customDistance !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="10"
-                    step="0.5"
-                    value={customDistance}
-                    onChange={(e) => handleCustomDistanceChange(parseFloat(e.target.value))}
-                    style={{
-                      width: '100%',
-                      height: '6px',
-                      borderRadius: '3px',
-                      background: '#e0e0e0',
-                      outline: 'none',
-                      WebkitAppearance: 'none',
-                      appearance: 'none'
-                    }}
-                  />
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    fontSize: '10px', 
-                    color: '#666',
-                    marginTop: '4px'
+                }}
+                data-area-selector
+              >
+                {/* Custom Distance Slider */}
+                {showDistanceSlider && (
+                  <div style={{
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    padding: '16px',
+                    minWidth: '200px',
                   }}>
-                    <span>0.5 mi</span>
-                    <span>10 mi</span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowDistanceSlider(false);
-                      setMapAreaPreference('custom');
-                    }}
-                    style={{
-                      width: '100%',
-                      backgroundColor: '#002B4D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px',
-                      marginTop: '12px',
-                      cursor: 'pointer',
-                      fontSize: '14px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    Apply
-                  </button>
-                </div>
-              )}
-
-              {/* Area Options Dropdown */}
-              {showAreaSelector && !showDistanceSlider && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  backgroundColor: 'white',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                  padding: '8px 0',
-                  marginTop: '4px',
-                  minWidth: '140px',
-                  zIndex: 1003
-                }}>
-                  {[
-                    { key: 'nearby', label: '🚶 Nearby', description: 'Within 5km' },
-                    { key: '1-mile', label: '🏃 1 Mile', description: 'Within 1 mile' },
-                    { key: '5-miles', label: '🏃 5 Miles', description: 'Within 5 miles' },
-                    { key: 'custom', label: '🔍 Custom', description: 'Custom distance' }
-                  ].map((option) => (
-                    <button
-                      key={option.key}
-                      onClick={() => handleAreaPreferenceChange(option.key as any)}
+                    <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+                      <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
+                        Custom Distance
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {customDistance} mile{customDistance !== 1 ? 's' : ''}
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="10"
+                      step="0.5"
+                      value={customDistance}
+                      onChange={(e) => handleCustomDistanceChange(parseFloat(e.target.value))}
                       style={{
                         width: '100%',
-                        padding: '12px 16px',
+                        height: '6px',
+                        borderRadius: '3px',
+                        background: '#e0e0e0',
+                        outline: 'none',
+                        WebkitAppearance: 'none',
+                        appearance: 'none'
+                      }}
+                    />
+                    <div style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      fontSize: '10px', 
+                      color: '#666',
+                      marginTop: '4px'
+                    }}>
+                      <span>0.5 mi</span>
+                      <span>10 mi</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowDistanceSlider(false);
+                        setMapAreaPreference('custom');
+                      }}
+                      style={{
+                        width: '100%',
+                        backgroundColor: '#002B4D',
+                        color: 'white',
                         border: 'none',
-                        background: 'none',
-                        textAlign: 'left',
+                        borderRadius: '6px',
+                        padding: '8px',
+                        marginTop: '12px',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        color: mapAreaPreference === option.key ? '#002B4D' : '#333',
-                        fontWeight: mapAreaPreference === option.key ? '600' : '400',
-                        borderBottom: '1px solid #f0f0f0'
+                        fontWeight: '500'
                       }}
                     >
-                      <div style={{ fontWeight: '600' }}>{option.label}</div>
-                      <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                        {option.description}
-                      </div>
+                      Apply
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+                {/* Area Options Dropdown */}
+                {showAreaSelector && !showDistanceSlider && (
+                  <div style={{
+                    backgroundColor: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    padding: '8px 0',
+                    minWidth: '140px',
+                  }}>
+                    {[
+                      { key: 'nearby', label: '🚶 Nearby', description: 'Within 5km' },
+                      { key: '1-mile', label: '🏃 1 Mile', description: 'Within 1 mile' },
+                      { key: '5-miles', label: '🏃 5 Miles', description: 'Within 5 miles' },
+                      { key: 'custom', label: '🔍 Custom', description: 'Custom distance' }
+                    ].map((option) => (
+                      <button
+                        key={option.key}
+                        onClick={() => handleAreaPreferenceChange(option.key as any)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: 'none',
+                          background: 'none',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          color: mapAreaPreference === option.key ? '#002B4D' : '#333',
+                          fontWeight: mapAreaPreference === option.key ? '600' : '400',
+                          borderBottom: '1px solid #f0f0f0'
+                        }}
+                      >
+                        <div style={{ fontWeight: '600' }}>{option.label}</div>
+                        <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                          {option.description}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Map Container */}
             <div style={{
@@ -1104,8 +1101,7 @@ const HomeView = () => {
             <div style={{
               position: 'fixed',
               bottom: '40px',
-              left: '50%',
-              transform: 'translateX(-50%)',
+              right: '16px', // Right justify
               zIndex: 1002
             }}>
               <button
@@ -1195,8 +1191,8 @@ const HomeView = () => {
         className="filter-fab"
         style={{
           position: 'fixed',
-          bottom: '120px',
-          left: '16px',
+          bottom: '40px', // Match the Create button level
+          left: '16px',   // Left justify
           zIndex: 1002,
           background: '#002B4D',
           color: 'white',
