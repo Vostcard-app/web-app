@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import { VostcardProvider } from "./context/VostcardContext";
 import { ScriptProvider } from "./context/ScriptContext";
 import { FollowingProvider } from "./context/FollowingContext";
@@ -46,89 +47,91 @@ import PublicVostcardView from './pages/PublicVostcardView';
 
 function App() {
   return (
-    <VostcardProvider>
-      <ScriptProvider>
-        <FollowingProvider>
-          <Router>
-            <AuthRedirect />
-            <Routes>
-              {/* 🔑 Authentication */}
-              <Route path="/" element={<RootView />} />
-              <Route path="/landing" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegistrationPage />} />
-              <Route path="/user-guide" element={<UserGuideView />} />
+    <AuthProvider>
+      <VostcardProvider>
+        <ScriptProvider>
+          <FollowingProvider>
+            <Router>
+              <AuthRedirect />
+              <Routes>
+                {/* 🔑 Authentication */}
+                <Route path="/" element={<RootView />} />
+                <Route path="/landing" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegistrationPage />} />
+                <Route path="/user-guide" element={<UserGuideView />} />
 
-              {/*  Public Access */}
-              <Route path="/share/:id" element={<PublicVostcardView />} />
+                {/*  Public Access */}
+                <Route path="/share/:id" element={<PublicVostcardView />} />
 
-              {/* 🏠 Main */}
-              <Route path="/home" element={<HomeView />} />
-              <Route path="/browse-area" element={<BrowseAreaView />} />
-              <Route path="/list" element={<ListView />} />
-              <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
-              <Route path="/offers-list" element={<OffersListView />} />
+                {/* 🏠 Main */}
+                <Route path="/home" element={<HomeView />} />
+                <Route path="/browse-area" element={<BrowseAreaView />} />
+                <Route path="/list" element={<ListView />} />
+                <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
+                <Route path="/offers-list" element={<OffersListView />} />
     
-              <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
-              <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
-              <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
-              <Route path="/following" element={<FollowingView />} />
+                <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
+                <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
+                <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
+                <Route path="/following" element={<FollowingView />} />
 
-              {/* 📜 Script Management */}
-              <Route path="/scripts" element={<ScriptLibraryView />} />
-              <Route path="/script-library" element={<ScriptLibraryView />} />
-              <Route path="/script-editor" element={<ScriptEditorView />} />
-              <Route path="/script-editor/:scriptId" element={<ScriptEditorView />} />
+                {/* 📜 Script Management */}
+                <Route path="/scripts" element={<ScriptLibraryView />} />
+                <Route path="/script-library" element={<ScriptLibraryView />} />
+                <Route path="/script-editor" element={<ScriptEditorView />} />
+                <Route path="/script-editor/:scriptId" element={<ScriptEditorView />} />
 
-              {/* 🎥 Vostcard Creation */}
-              <Route path="/create-step1" element={<CreateVostcardStep1 />} />
-              <Route path="/create-step2" element={<CreateVostcardStep2 />} />
-              <Route path="/create-step3" element={<CreateVostcardStep3 />} />
+                {/* 🎥 Vostcard Creation */}
+                <Route path="/create-step1" element={<CreateVostcardStep1 />} />
+                <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+                <Route path="/create-step3" element={<CreateVostcardStep3 />} />
 
-              {/* 📷 Camera */}
-              <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
-              <Route path="/camera" element={<CameraView />} />
+                {/* 📷 Camera */}
+                <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
+                <Route path="/camera" element={<CameraView />} />
 
-              {/* 📦 Saved */}
-              <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
+                {/* 📦 Saved */}
+                <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
 
-              {/* 📄 Vostcard Detail */}
-              <Route path="/vostcard/:id" element={<VostcardDetailView />} />
-              <Route path="/offer/:id" element={<OfferView />} />
+                {/* 📄 Vostcard Detail */}
+                <Route path="/vostcard/:id" element={<VostcardDetailView />} />
+                <Route path="/offer/:id" element={<OfferView />} />
 
-              {/*  Flag Vostcard */}
-              <Route path="/flag-form" element={<FlagFormView />} />
-              <Route path="/flag/:vostcardID/:title/:username" element={<FlagFormView />} />
+                {/*  Flag Vostcard */}
+                <Route path="/flag-form" element={<FlagFormView />} />
+                <Route path="/flag/:vostcardID/:title/:username" element={<FlagFormView />} />
 
-              {/* 👤 User Profile */}
-              <Route path="/profile/:userId" element={<UserProfileView />} />
+                {/* 👤 User Profile */}
+                <Route path="/profile/:userId" element={<UserProfileView />} />
 
-              {/* ⚙️ Settings */}
-              <Route path="/settings" element={<SettingsView />} />
-              <Route path="/user-settings" element={<UserSettingsView />} />
-              <Route path="/account-settings" element={<AccountSettingsView />} />
-              <Route path="/suggestion-box" element={<SuggestionBoxView />} />
-              <Route path="/report-bug" element={<ReportBugView />} />
+                {/* ⚙️ Settings */}
+                <Route path="/settings" element={<SettingsView />} />
+                <Route path="/user-settings" element={<UserSettingsView />} />
+                <Route path="/account-settings" element={<AccountSettingsView />} />
+                <Route path="/suggestion-box" element={<SuggestionBoxView />} />
+                <Route path="/report-bug" element={<ReportBugView />} />
 
-              {/* 📣 Advertiser Portal */}
-              <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
+                {/* 📣 Advertiser Portal */}
+                <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
 
-              {/* 📄 Create Offer */}
-              <Route path="/create-offer" element={<CreateOfferView />} />
+                {/* 📄 Create Offer */}
+                <Route path="/create-offer" element={<CreateOfferView />} />
 
-              {/* 🏪 Store Profile */}
-              <Route path="/store-profile-page" element={<EditStoreProfileView />} />
+                {/* 🏪 Store Profile */}
+                <Route path="/store-profile-page" element={<EditStoreProfileView />} />
 
-              {/* 📄 Script Tool */}
-              <Route path="/script-tool" element={<ScriptToolView />} />
+                {/* 📄 Script Tool */}
+                <Route path="/script-tool" element={<ScriptToolView />} />
 
-              {/* 📍 Pin Placer */}
-              <Route path="/pin-placer" element={<PinPlacerTool />} />
-            </Routes>
-          </Router>
-        </FollowingProvider>
-      </ScriptProvider>
-    </VostcardProvider>
+                {/* 📍 Pin Placer */}
+                <Route path="/pin-placer" element={<PinPlacerTool />} />
+              </Routes>
+            </Router>
+          </FollowingProvider>
+        </ScriptProvider>
+      </VostcardProvider>
+    </AuthProvider>
   );
 }
 
