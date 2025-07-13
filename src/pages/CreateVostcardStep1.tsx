@@ -201,7 +201,29 @@ const CreateVostcardStep1: React.FC = () => {
               onLoadStart={handleVideoLoadStart}
               onLoadedData={handleVideoLoadedData}
               onCanPlay={handleVideoCanPlay}
-              onLoadedMetadata={handleVideoLoadedMetadata}
+              onLoadedMetadata={(e) => {
+                handleVideoLoadedMetadata();
+                const video = e.currentTarget;
+                const { videoWidth, videoHeight } = video;
+                
+                console.log('📱 Video preview metadata:', {
+                  videoWidth,
+                  videoHeight,
+                  isPortrait: videoHeight > videoWidth,
+                  aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
+                });
+                
+                // If video is landscape, rotate it to portrait for preview
+                if (videoWidth > videoHeight) {
+                  console.log('🔄 Video is landscape, rotating to portrait for preview');
+                  video.style.transform = 'rotate(90deg)';
+                  video.style.width = '100vh';
+                  video.style.height = '100vw';
+                } else {
+                  console.log('✅ Video is already portrait for preview');
+                  video.style.transform = 'none';
+                }
+              }}
               onTimeUpdate={handleVideoTimeUpdate}
               playsInline
               preload="metadata"

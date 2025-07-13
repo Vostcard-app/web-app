@@ -428,10 +428,34 @@ const ScrollingCameraView: React.FC = () => {
           top: 0,
           left: 0,
           backgroundColor: 'black',
-          // Ensure video is always displayed in portrait 16:9 format
+          // Force portrait display - rotate if video is landscape
           aspectRatio: '9/16',
           maxWidth: '100vw',
           maxHeight: '100vh'
+        }}
+        onLoadedMetadata={(e) => {
+          const video = e.currentTarget;
+          const { videoWidth, videoHeight } = video;
+          
+          console.log('📱 Video loaded metadata:', {
+            videoWidth,
+            videoHeight,
+            isPortrait: videoHeight > videoWidth,
+            aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
+          });
+          
+          // If video is landscape, rotate it to portrait
+          if (videoWidth > videoHeight) {
+            console.log('🔄 Video is landscape, rotating to portrait');
+            video.style.transform = facingMode === 'user' 
+              ? 'scaleX(-1) rotate(90deg)' 
+              : 'rotate(90deg)';
+            video.style.width = '100vh';
+            video.style.height = '100vw';
+          } else {
+            console.log('✅ Video is already portrait');
+            video.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none';
+          }
         }}
       />
 

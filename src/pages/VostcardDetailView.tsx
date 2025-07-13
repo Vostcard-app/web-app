@@ -432,7 +432,29 @@ const VostcardDetailView: React.FC = () => {
                       top: 0,
                       left: 0
                     }}
-                    onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
+                    onLoadedMetadata={(e) => {
+                      handleVideoLoadedMetadata(e.currentTarget);
+                      const video = e.currentTarget;
+                      const { videoWidth, videoHeight } = video;
+                      
+                      console.log('📱 Video playback metadata:', {
+                        videoWidth,
+                        videoHeight,
+                        isPortrait: videoHeight > videoWidth,
+                        aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
+                      });
+                      
+                      // If video is landscape, rotate it to portrait for playback
+                      if (videoWidth > videoHeight) {
+                        console.log('🔄 Video is landscape, rotating to portrait for playback');
+                        video.style.transform = 'rotate(90deg)';
+                        video.style.width = '100vh';
+                        video.style.height = '100vw';
+                      } else {
+                        console.log('✅ Video is already portrait for playback');
+                        video.style.transform = 'none';
+                      }
+                    }}
                   />
                   {/* Play overlay */}
                   <div style={{

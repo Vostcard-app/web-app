@@ -364,10 +364,32 @@ const CameraView: React.FC = () => {
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          // Ensure video is always displayed in portrait 16:9 format
+          // Force portrait display - rotate if video is landscape
           aspectRatio: '9/16',
           maxWidth: '100%',
           maxHeight: '100%'
+        }}
+        onLoadedMetadata={(e) => {
+          const video = e.currentTarget;
+          const { videoWidth, videoHeight } = video;
+          
+          console.log('📱 Video loaded metadata:', {
+            videoWidth,
+            videoHeight,
+            isPortrait: videoHeight > videoWidth,
+            aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(3) : 'unknown'
+          });
+          
+          // If video is landscape, rotate it to portrait
+          if (videoWidth > videoHeight) {
+            console.log('🔄 Video is landscape, rotating to portrait');
+            video.style.transform = 'rotate(90deg)';
+            video.style.width = '100vh';
+            video.style.height = '100vw';
+          } else {
+            console.log('✅ Video is already portrait');
+            video.style.transform = 'none';
+          }
         }}
       />
 
