@@ -426,8 +426,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return restored;
           });
 
-          // Filter out Vostcards with state === 'posted'
-          const filteredVostcards = restoredVostcards.filter(v => v.state !== 'posted');
+          // Filter out Vostcards with visibility === 'public'
+          const filteredVostcards = restoredVostcards.filter(v => v.visibility !== 'public');
           setSavedVostcards(filteredVostcards);
           console.log('📂 Loaded all saved Vōstcards:', filteredVostcards);
           resolve();
