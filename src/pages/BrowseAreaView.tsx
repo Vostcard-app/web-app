@@ -289,7 +289,7 @@ const BrowseAreaView: React.FC = () => {
           <div className="browse-section">
             <div className="selected-location">
               <FaMapPin className="selected-icon" />
-              <span>Browse Vōstcards in {selectedLocation.name}</span>
+              <span>View map of {selectedLocation.name}</span>
             </div>
             <button onClick={handleBrowseArea} className="browse-button">
               Browse Area

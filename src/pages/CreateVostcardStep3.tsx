@@ -36,6 +36,7 @@ const CreateVostcardStep3: React.FC = () => {
     'None',
     'Landmark',
     'Fun Fact',
+    'Macabre',
     'Architecture',
     'Historical',
     'Museum',
