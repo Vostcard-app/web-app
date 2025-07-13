@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useAnimation } from 'framer-motion';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin, FaLock } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaMapPin, FaLock, FaMap } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -320,6 +320,27 @@ const VostcardDetailView: React.FC = () => {
       console.error('Error sharing private Vostcard:', error);
       alert('Failed to share Vostcard. Please try again.');
     }
+  };
+
+  const handleViewOnMap = () => {
+    if (!vostcard?.latitude || !vostcard?.longitude) {
+      alert('This Vostcard does not have location data.');
+      return;
+    }
+
+    // Navigate to home view with the Vostcard's location
+    const navigationState = {
+      browseLocation: {
+        coordinates: [vostcard.latitude, vostcard.longitude],
+        name: vostcard.title || 'Vostcard Location',
+        id: vostcard.id,
+        type: 'vostcard',
+        place: vostcard.title || 'Vostcard Location',
+      },
+    };
+
+    console.log('️ Navigating to map with Vostcard location:', navigationState);
+    navigate('/home', { state: navigationState });
   };
 
   const [isDragging, setIsDragging] = useState(false);
@@ -722,12 +743,37 @@ const VostcardDetailView: React.FC = () => {
         height: 30,
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between', // Changed to space-between
       }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
+        
+        {/* View on Map Button */}
+        {vostcard?.latitude && vostcard?.longitude && (
+          <button
+            style={{
+              background: 'rgba(0,0,0,0.10)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              marginRight: 60, // Space for home button
+            }}
+            onClick={handleViewOnMap}
+            title="View on Map"
+          >
+            <FaMap color="#fff" size={24} />
+          </button>
+        )}
+        
         <button
           style={{
             position: 'absolute',
-            right: 44, // Move more to the left
-            top: 15,   // Move higher
+            right: 44,
+            top: 15,
             background: 'rgba(0,0,0,0.10)',
             border: 'none',
             borderRadius: '50%',
@@ -742,7 +788,6 @@ const VostcardDetailView: React.FC = () => {
         >
           <FaHome color="#fff" size={36} />
         </button>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
       </div>
       {/* Previous card (underneath, for swipe down) */}
       {prevId && (

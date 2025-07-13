@@ -19,7 +19,7 @@ const MyVostcardListView = () => {
 
   const handleView = (vostcardId: string) => {
     loadLocalVostcard(vostcardId);
-    navigate(`/view-vostcard/${vostcardId}`);
+    navigate(`/vostcard/${vostcardId}`);
   };
 
   const handleDelete = async (e: React.MouseEvent, vostcardId: string) => {
