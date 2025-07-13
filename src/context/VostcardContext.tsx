@@ -910,8 +910,163 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // ✅ Save to IndexedDB with Firebase sync
   const saveLocalVostcard = useCallback(async () => {
+    if (!currentVostcard) {
+      console.log('💾 saveLocalVostcard: No currentVostcard to save');
+      throw new Error('No currentVostcard to save');
     }
-  }, [currentVostcard, loadAllLocalVostcards]);
+    
+    console.log('💾 saveLocalVostcard: Starting save process for Vostcard:', {
+      id: currentVostcard.id,
+      hasVideo: !!currentVostcard.video,
+      videoSize: currentVostcard.video?.size,
+      photosCount: currentVostcard.photos?.length || 0,
+      photoSizes: currentVostcard.photos?.map(p => p.size) || []
+    });
+    
+    try {
+      // 1. SAVE TO INDEXEDDB FIRST (fast, always works)
+      const serializableVostcard = {
+        ...currentVostcard,
+        visibility: 'private', // Mark as private
+        needsSync: true, // Mark for Firebase sync
+        video: currentVostcard.video ? null : null,
+        photos: [],
+        _videoBase64: null as string | null,
+        _photosBase64: [] as string[]
+      };
+
+      // Convert video Blob to base64 if it exists
+      if (currentVostcard.video) {
+        console.log('💾 Converting video to base64...');
+        const videoBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(currentVostcard.video!);
+        });
+        serializableVostcard._videoBase64 = videoBase64;
+        console.log('💾 Video converted to base64, length:', videoBase64.length);
+      }
+
+      // Convert photos Blobs to base64
+      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+        console.log('💾 Converting photos to base64...');
+        const photoPromises = currentVostcard.photos.map((photo, index) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              console.log(`💾 Photo ${index + 1} converted to base64, length:`, (reader.result as string).length);
+              resolve(reader.result as string);
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(photo);
+          });
+        });
+
+        const photoBase64s = await Promise.all(photoPromises);
+        serializableVostcard._photosBase64 = photoBase64s;
+        console.log('💾 All photos converted to base64');
+      }
+
+      // Save to IndexedDB
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      const request = store.put(serializableVostcard);
+      
+      await new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to save Vostcard to IndexedDB:', request.error);
+          reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+          console.log('💾 Saved Vostcard to IndexedDB successfully');
+          resolve();
+        };
+      });
+
+      // 2. SYNC TO FIREBASE IN BACKGROUND (for device sync)
+      try {
+        console.log('🔄 Starting Firebase sync for private Vostcard...');
+        
+        if (!userID) {
+          console.warn('⚠️ No userID available for Firebase sync');
+          loadAllLocalVostcards();
+          return;
+        }
+
+        // Upload video to Firebase Storage if it exists
+        let videoURL = '';
+        if (currentVostcard.video) {
+          console.log('📤 Uploading video to Firebase Storage...');
+          videoURL = await uploadVideo(userID, currentVostcard.id, currentVostcard.video);
+          console.log('📤 Video uploaded successfully:', videoURL);
+        }
+
+        // Upload photos to Firebase Storage
+        const photoURLs: string[] = [];
+        if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+          console.log('📤 Uploading photos to Firebase Storage...');
+          const photoUploadPromises = currentVostcard.photos.map((photo, index) => 
+            uploadPhoto(userID, currentVostcard.id, index, photo)
+          );
+          const uploadedPhotoURLs = await Promise.all(photoUploadPromises);
+          photoURLs.push(...uploadedPhotoURLs);
+          console.log('📤 Photos uploaded successfully:', photoURLs);
+        }
+
+        // Save to Firebase with URLs
+        const firebaseVostcard = {
+          id: currentVostcard.id,
+          visibility: 'private',
+          video: videoURL,
+          title: currentVostcard.title,
+          description: currentVostcard.description,
+          photos: photoURLs,
+          categories: currentVostcard.categories,
+          geo: currentVostcard.geo,
+          username: currentVostcard.username,
+          userID: currentVostcard.userID,
+          recipientUserID: currentVostcard.recipientUserID,
+          createdAt: currentVostcard.createdAt,
+          updatedAt: new Date().toISOString(),
+          isOffer: currentVostcard.isOffer,
+          offerDetails: currentVostcard.offerDetails,
+          script: currentVostcard.script,
+          scriptId: currentVostcard.scriptId,
+          lastSyncedAt: new Date().toISOString()
+        };
+
+        await setDoc(doc(db, 'vostcards', currentVostcard.id), firebaseVostcard);
+        console.log('🔄 Private Vostcard synced to Firebase successfully');
+
+        // Update local record to mark as synced
+        const updatedVostcard = {
+          ...serializableVostcard,
+          lastSyncedAt: new Date().toISOString(),
+          needsSync: false
+        };
+        
+        const syncTransaction = db.transaction([STORE_NAME], 'readwrite');
+        const syncStore = syncTransaction.objectStore(STORE_NAME);
+        syncStore.put(updatedVostcard);
+
+      } catch (syncError) {
+        console.warn('⚠️ Firebase sync failed, but local save succeeded:', syncError);
+        // Don't throw error - local save succeeded, sync can be retried later
+      }
+
+      // Refresh the savedVostcards list
+      loadAllLocalVostcards();
+      
+    } catch (error) {
+      console.error('❌ Error in saveLocalVostcard:', error);
+      alert('Failed to save Vostcard locally. Please try again.');
+      throw error;
+    }
+  }, [currentVostcard, userID, loadAllLocalVostcards]);
 
   // ✅ Load from IndexedDB
   const loadLocalVostcard = useCallback(async (id: string) => {
