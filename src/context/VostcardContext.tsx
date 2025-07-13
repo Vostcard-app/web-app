@@ -1089,7 +1089,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             resolve(restoredVostcard);
           } else {
             console.log('📂 Vostcard not found in IndexedDB with ID:', id);
-            console.log('�� Vostcard not found in IndexedDB with ID:', id);
+            console.log('📂 Vostcard not found in IndexedDB with ID:', id);
             resolve(null);
           }
         };
@@ -1105,7 +1105,27 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const db = await openDB();
       const transaction = db.transaction([STORE_NAME], 'readwrite');
-  }, [currentVostcard, clearVostcard]);
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.delete(id);
+
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to delete Vostcard from IndexedDB:', request.error);
+          reject(request.error);
+        };
+
+        request.onsuccess = () => {
+          console.log('✅ Vostcard deleted from IndexedDB:', id);
+          // Remove from savedVostcards if it exists
+          setSavedVostcards(prev => prev.filter(v => v.id !== id));
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ Error in deletePrivateVostcard:', error);
+      throw error;
+    }
+  }, []);
 
   return (
     <VostcardContext.Provider
