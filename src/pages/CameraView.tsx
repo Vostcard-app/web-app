@@ -26,19 +26,15 @@ const CameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Enhanced video constraints for better iPhone compatibility
+        // Always enforce portrait 16:9 aspect ratio for consistent video recording
         const videoConstraints: MediaTrackConstraints = {
-          width: { ideal: 1920, max: 1920 },
-          height: { ideal: 1080, max: 1080 },
+          width: { ideal: 1080, max: 1080 },
+          height: { ideal: 1920, max: 1920 },
+          aspectRatio: { ideal: 0.5625, exact: 0.5625 }, // 9:16 portrait ratio - exact enforcement
           frameRate: { ideal: 30, max: 30 }
         };
 
-        // For iPhone, prioritize portrait orientation
-        if (isIPhone) {
-          videoConstraints.width = { ideal: 1080, max: 1080 };
-          videoConstraints.height = { ideal: 1920, max: 1920 };
-          console.log('📱 iPhone detected - using portrait video constraints');
-        }
+        console.log('📱 Requesting portrait 16:9 camera view:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -54,24 +50,29 @@ const CameraView: React.FC = () => {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log('📱 Video track settings:', {
+          console.log('📱 Video track settings (Portrait 16:9):', {
             width: settings.width,
             height: settings.height,
             facingMode: settings.facingMode,
-            frameRate: settings.frameRate
+            frameRate: settings.frameRate,
+            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown'
           });
         }
 
       } catch (err) {
-        console.error('Error accessing camera:', err);
-        // Fallback to basic constraints if enhanced ones fail
+        console.error('Error accessing camera with portrait 16:9 constraints:', err);
+        // Fallback to basic constraints but still try for portrait
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: {
+              aspectRatio: { ideal: 0.5625 } // Still try for 9:16
+            }
+          });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using fallback camera constraints');
+          console.log('📱 Using fallback camera with portrait preference');
         } catch (fallbackErr) {
           console.error('Fallback camera access also failed:', fallbackErr);
         }
@@ -247,23 +248,21 @@ const CameraView: React.FC = () => {
       </div>
 
       {/* Device info for debugging */}
-      {isIPhone && (
-        <div style={{
-          position: 'absolute',
-          top: '80px',
-          left: '20px',
-          background: 'rgba(0, 0, 0, 0.7)',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          zIndex: 10
-        }}>
-          📱 iPhone Mode
-        </div>
-      )}
+      <div style={{
+        position: 'absolute',
+        top: '80px',
+        left: '20px',
+        background: 'rgba(0, 0, 0, 0.7)',
+        color: 'white',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        zIndex: 10
+      }}>
+        📱 Portrait 16:9 Mode
+      </div>
 
-      {/* 🎥 Video Preview */}
+      {/* 🎥 Video Preview - Always Portrait 16:9 */}
       <video
         ref={videoRef}
         autoPlay
@@ -272,7 +271,12 @@ const CameraView: React.FC = () => {
         style={{
           flex: 1,
           width: '100%',
+          height: '100%',
           objectFit: 'cover',
+          // Ensure video is always displayed in portrait 16:9 format
+          aspectRatio: '9/16',
+          maxWidth: '100%',
+          maxHeight: '100%'
         }}
       />
 

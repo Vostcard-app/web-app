@@ -67,15 +67,15 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        // Force portrait orientation for consistent video recording
+        // Always enforce portrait 16:9 aspect ratio for consistent video recording
         const videoConstraints: MediaTrackConstraints = {
           facingMode,
           width: { ideal: 1080, max: 1080 },
           height: { ideal: 1920, max: 1920 },
-          aspectRatio: { ideal: 0.5625 } // 9:16 portrait ratio
+          aspectRatio: { ideal: 0.5625, exact: 0.5625 } // 9:16 portrait ratio - exact enforcement
         };
         
-        console.log('📱 Requesting portrait camera view:', videoConstraints);
+        console.log('📱 Requesting portrait 16:9 camera view:', videoConstraints);
 
         const stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints,
@@ -91,27 +91,30 @@ const ScrollingCameraView: React.FC = () => {
         const videoTrack = stream.getVideoTracks()[0];
         if (videoTrack) {
           const settings = videoTrack.getSettings();
-          console.log('📱 Camera portrait view:', {
+          console.log('📱 Camera portrait 16:9 view:', {
             width: settings.width,
             height: settings.height,
-            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(2) : 'unknown',
+            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown',
             resolution: `${settings.width}x${settings.height}`,
-            orientation: 'Portrait mode'
+            orientation: 'Portrait 16:9 enforced'
           });
         }
 
       } catch (err) {
-        console.error('Failed to get natural camera view:', err);
-        // Fallback to basic constraints
+        console.error('Failed to get portrait 16:9 camera view:', err);
+        // Fallback to basic constraints but still try for portrait
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: true
+            video: {
+              facingMode,
+              aspectRatio: { ideal: 0.5625 } // Still try for 9:16
+            }
           });
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          console.log('📱 Using basic camera fallback');
+          console.log('📱 Using fallback camera with portrait preference');
         } catch (fallbackErr) {
           console.error('All camera access failed:', fallbackErr);
         }
@@ -322,7 +325,7 @@ const ScrollingCameraView: React.FC = () => {
         </div>
       )}
 
-      {/* Camera Preview - Portrait only */}
+      {/* Camera Preview - Always Portrait 16:9 */}
       <video
         ref={videoRef}
         autoPlay
@@ -337,7 +340,11 @@ const ScrollingCameraView: React.FC = () => {
           position: 'absolute',
           top: 0,
           left: 0,
-          backgroundColor: 'black'
+          backgroundColor: 'black',
+          // Ensure video is always displayed in portrait 16:9 format
+          aspectRatio: '9/16',
+          maxWidth: '100vw',
+          maxHeight: '100vh'
         }}
       />
 
