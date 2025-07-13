@@ -1,18 +1,3 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { Script } from '../types/ScriptModel';
-import { auth, db, storage } from '../firebase/firebaseConfig';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
-import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { v4 as uuidv4 } from 'uuid';
-import { useAuth } from './AuthContext';
-import { ScriptService } from '../services/scriptService';
-import { LikeService, type Like } from '../services/likeService';
-import { RatingService, type Rating, type RatingStats } from '../services/ratingService';
-
-export interface Vostcard {
-  id: string;
-  state: 'private' | 'posted';
-  video: Blob | null;
   title: string;
   description: string;
   photos: Blob[];
@@ -33,6 +18,9 @@ export interface Vostcard {
   scriptId?: string; // Add script ID field to track associated script
   _videoBase64?: string | null; // For IndexedDB serialization
   _photosBase64?: string[]; // For IndexedDB serialization
+  // Firebase sync metadata
+  lastSyncedAt?: string;
+  needsSync?: boolean;
 }
 
 interface VostcardContextProps {
@@ -317,6 +305,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const isLiked = await LikeService.toggleLike(vostcardID);
       console.log('✅ Toggle like result:', isLiked);
+      throw error;
       // Note: Real-time listeners will update the like status automatically
       return isLiked;
     } catch (error) {
@@ -502,7 +491,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const username = getCorrectUsername(authContext);
       const newVostcard = {
         id: uuidv4(),
-        state: 'private' as const,
+        visibility: 'private' as const,
         video,
         title: '',
         description: '',
@@ -569,89 +558,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard]);
 
-  // ✅ Save to IndexedDB
+  // ✅ Save to IndexedDB with Firebase sync
   const saveLocalVostcard = useCallback(async () => {
-    if (!currentVostcard) {
-      console.log('💾 saveLocalVostcard: No currentVostcard to save');
-      throw new Error('No currentVostcard to save');
-    }
-    
-    console.log('💾 saveLocalVostcard: Starting save process for Vostcard:', {
-      id: currentVostcard.id,
-      hasVideo: !!currentVostcard.video,
-      videoSize: currentVostcard.video?.size,
-      photosCount: currentVostcard.photos?.length || 0,
-      photoSizes: currentVostcard.photos?.map(p => p.size) || []
-    });
-    
-    try {
-      // Convert Blob objects to base64 strings for IndexedDB serialization
-      const serializableVostcard = {
-        ...currentVostcard,
-        video: currentVostcard.video ? null : null,
-        photos: [],
-        _videoBase64: null as string | null,
-        _photosBase64: [] as string[]
-      };
-
-      // Convert video Blob to base64 if it exists
-      if (currentVostcard.video) {
-        console.log('💾 Converting video to base64...');
-        const videoBase64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(reader.error);
-          reader.readAsDataURL(currentVostcard.video!);
-        });
-        serializableVostcard._videoBase64 = videoBase64;
-        console.log('💾 Video converted to base64, length:', videoBase64.length);
-      }
-
-      // Convert photos Blobs to base64
-      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
-        console.log('💾 Converting photos to base64...');
-        const photoPromises = currentVostcard.photos.map((photo, index) => {
-          return new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              console.log(`💾 Photo ${index + 1} converted to base64, length:`, (reader.result as string).length);
-              resolve(reader.result as string);
-            };
-            reader.onerror = () => reject(reader.error);
-            reader.readAsDataURL(photo);
-          });
-        });
-
-        const photoBase64s = await Promise.all(photoPromises);
-        serializableVostcard._photosBase64 = photoBase64s;
-        console.log('💾 All photos converted to base64');
-      }
-
-      // Save to IndexedDB
-      const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      const request = store.put(serializableVostcard);
-      
-      return new Promise<void>((resolve, reject) => {
-        request.onerror = () => {
-          console.error('❌ Failed to save Vostcard to IndexedDB:', request.error);
-          alert('Failed to save Vostcard locally. Please try again.');
-          reject(request.error);
-        };
-        
-        request.onsuccess = () => {
-          console.log('💾 Saved Vostcard to IndexedDB successfully');
-          // Refresh the savedVostcards list from IndexedDB
-          loadAllLocalVostcards();
-          resolve();
-        };
-      });
-    } catch (error) {
-      console.error('❌ Error in saveLocalVostcard:', error);
-      alert('Failed to save Vostcard locally. Please try again.');
-      throw error;
     }
   }, [currentVostcard, loadAllLocalVostcards]);
 
