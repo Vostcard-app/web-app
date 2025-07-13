@@ -156,16 +156,18 @@ const VostcardDetailView: React.FC = () => {
           console.log('✅ Found in Firebase');
           const data = docSnap.data();
           setVostcard({ id: docSnap.id, ...data });
-          setIsPrivate(false); // Firebase Vostcards are public
+          setIsPrivate(data.visibility === 'private'); // Check visibility field
           setLoading(false);
           return;
         }
 
         // Try to load from IndexedDB (private Vostcards)
         console.log('🔍 Trying IndexedDB...');
+        
+        // Load the Vostcard into context
         await loadLocalVostcard(id);
         
-        // Give it a moment for the context to update
+        // Wait a bit longer for context to update
         setTimeout(() => {
           if (currentVostcard && currentVostcard.id === id) {
             console.log('✅ Found in IndexedDB');
@@ -173,14 +175,14 @@ const VostcardDetailView: React.FC = () => {
             setIsPrivate(true); // Local Vostcards are private
             setLoading(false);
           } else {
-            console.log('❌ Vostcard not found');
+            console.log('❌ Vostcard not found in context after IndexedDB load');
             setError('Vostcard not found');
             setLoading(false);
           }
-        }, 100);
-        
-      } catch (err) {
-        console.error('❌ Error loading Vostcard:', err);
+        }, 200); // Increased timeout
+
+      } catch (error) {
+        console.error('❌ Error loading Vostcard:', error);
         setError('Failed to load Vostcard');
         setLoading(false);
       }
