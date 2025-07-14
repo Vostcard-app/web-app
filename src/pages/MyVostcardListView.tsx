@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'; // 🔧 ONLY ADDED useState import
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaTrash, FaEye, FaEnvelope, FaTimes } from 'react-icons/fa';
+import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaEnvelope, FaTimes } from 'react-icons/fa'; // 🔧 Added FaMapPin
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc, Timestamp } from 'firebase/firestore';
@@ -456,6 +456,47 @@ const MyVostcardListView = () => {
                           title={(isDeleting || isPosting) ? 'Loading...' : 'Edit Vostcard'}
                         >
                           <FaEdit size={20} color="#002B4D" />
+                        </div>
+                        
+                        {/* Pin Icon */}
+                        <div
+                          style={{
+                            cursor: 'pointer',
+                            transition: 'transform 0.1s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '10px',
+                            borderRadius: '8px',
+                            backgroundColor: '#f8f9fa',
+                            border: '1px solid #dee2e6'
+                          }}
+                          onClick={() => {
+                            if (vostcard.latitude && vostcard.longitude) {
+                              // Navigate to PinPlacerTool with vostcard data
+                              navigate('/pin-placer', {
+                                state: {
+                                  pinData: {
+                                    id: vostcard.id,
+                                    title: vostcard.title || 'Untitled Vostcard',
+                                    description: vostcard.description || '',
+                                    latitude: vostcard.latitude,
+                                    longitude: vostcard.longitude,
+                                    isOffer: vostcard.isOffer || false,
+                                    userID: vostcard.userID || vostcard.userId
+                                  }
+                                }
+                              });
+                            } else {
+                              alert('No location available for this Vostcard');
+                            }
+                          }}
+                          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                          title="Edit Pin Location"
+                        >
+                          <FaMapPin size={20} color="#e74c3c" />
                         </div>
                         
                         {/* View Icon */}
