@@ -205,14 +205,14 @@ const EmailVostcardView: React.FC = () => {
       <div style={{
         width: isDesktop ? '390px' : '100%', // Fixed width on desktop, full width on mobile
         maxWidth: '390px',
-        minHeight: isDesktop ? '844px' : '100vh', // 9:16 aspect ratio (390 * 2.167 ≈ 844) - iPhone 14 Pro dimensions
+        height: isDesktop ? '844px' : '100vh', // Fixed height for proper scrolling
         backgroundColor: 'white',
         boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none', // Shadow only on desktop
         borderRadius: isDesktop ? '16px' : '0', // Rounded corners only on desktop
-        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         overflowY: 'auto', // Make the container scrollable
+        overflowX: 'hidden', // Prevent horizontal scrolling
         transition: 'all 0.3s ease' // Smooth transition when resizing
       }}>
       {/* User Header */}
