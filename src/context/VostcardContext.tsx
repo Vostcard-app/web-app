@@ -2014,7 +2014,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               hasVideo: !!vostcard.video,
               hasPhotos: vostcard.photos?.length || 0,
               hasFirebaseVideoURL: !!vostcard._firebaseVideoURL,
-              hasFirebasePhotoURLs: (vostcard._firebasePhotoURLs?.length || 0) > 0
+              hasFirebasePhotoURLs: (vostcard._firebasePhotoURLs?.length || 0) > 0,
+              // 🔧 ADD: Debug geo data
+              geo: vostcard.geo,
+              geoType: typeof vostcard.geo,
+              hasGeoLatitude: vostcard.geo?.latitude,
+              hasGeoLongitude: vostcard.geo?.longitude,
+              // Check for alternative location fields
+              latitude: (vostcard as any).latitude,
+              longitude: (vostcard as any).longitude,
             });
           });
           

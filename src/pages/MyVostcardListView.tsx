@@ -458,7 +458,7 @@ const MyVostcardListView = () => {
                           <FaEdit size={20} color="#002B4D" />
                         </div>
                         
-                        {/* Pin Icon */}
+                        {/* 🔧 Pin Icon with better debugging */}
                         <div
                           style={{
                             cursor: 'pointer',
@@ -472,7 +472,33 @@ const MyVostcardListView = () => {
                             border: '1px solid #dee2e6'
                           }}
                           onClick={() => {
-                            if (vostcard.latitude && vostcard.longitude) {
+                            // 🔧 DEBUG: Log all location-related data
+                            console.log('🔍 DEBUG: Pin clicked for vostcard:', {
+                              id: vostcard.id,
+                              title: vostcard.title,
+                              geo: vostcard.geo,
+                              geoType: typeof vostcard.geo,
+                              hasGeoLatitude: vostcard.geo?.latitude,
+                              hasGeoLongitude: vostcard.geo?.longitude,
+                              // Check for alternative location fields
+                              latitude: (vostcard as any).latitude,
+                              longitude: (vostcard as any).longitude,
+                              // Full vostcard structure (be careful with large objects)
+                              vostcardKeys: Object.keys(vostcard)
+                            });
+                            
+                            // Try multiple location sources
+                            let latitude = vostcard.geo?.latitude;
+                            let longitude = vostcard.geo?.longitude;
+                            
+                            // Fallback to direct fields if geo object is missing
+                            if (!latitude || !longitude) {
+                              latitude = (vostcard as any).latitude;
+                              longitude = (vostcard as any).longitude;
+                            }
+                            
+                            if (latitude && longitude) {
+                              console.log('✅ Using location:', { latitude, longitude });
                               // Navigate to PinPlacerTool with vostcard data
                               navigate('/pin-placer', {
                                 state: {
@@ -480,15 +506,16 @@ const MyVostcardListView = () => {
                                     id: vostcard.id,
                                     title: vostcard.title || 'Untitled Vostcard',
                                     description: vostcard.description || '',
-                                    latitude: vostcard.latitude,
-                                    longitude: vostcard.longitude,
+                                    latitude: latitude,
+                                    longitude: longitude,
                                     isOffer: vostcard.isOffer || false,
-                                    userID: vostcard.userID || vostcard.userId
+                                    userID: vostcard.userID
                                   }
                                 }
                               });
                             } else {
-                              alert('No location available for this Vostcard');
+                              console.error('❌ No location found in vostcard:', vostcard);
+                              alert('No location available for this Vostcard. Location should have been captured during video recording.');
                             }
                           }}
                           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
