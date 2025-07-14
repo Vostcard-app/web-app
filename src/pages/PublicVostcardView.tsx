@@ -993,6 +993,47 @@ ${getUserFirstName()}`;
       <button onClick={() => fixBrokenSharedVostcard('7a90077c-a140-420c-888a-d3ebfd5607dd')}>
         Fix This Vostcard
       </button>
+
+      {/* Temporary Debug Buttons - Add before closing </div> */}
+      <div style={{ 
+        position: 'fixed', 
+        bottom: '20px', 
+        right: '20px', 
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px'
+      }}>
+        <button 
+          onClick={() => debugSpecificVostcard(id!)}
+          style={{
+            padding: '10px 15px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+        >
+          🔍 Debug Photos
+        </button>
+        
+        <button 
+          onClick={() => fixBrokenSharedVostcard(id!)}
+          style={{
+            padding: '10px 15px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+        >
+          🔧 Re-upload Photos
+        </button>
+      </div>
     </div>
   );
 };
