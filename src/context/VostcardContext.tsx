@@ -48,7 +48,7 @@ interface VostcardContextProps {
   loadLocalVostcard: (id: string) => Promise<void>;
   clearVostcard: () => void;
   clearLocalStorage: () => void; // For testing
-  postVostcard: () => Promise<void>;
+  postVostcard: (vostcard?: Vostcard) => Promise<void>;
   savedVostcards: Vostcard[];
   loadAllLocalVostcards: () => void;
   deletePrivateVostcard: (id: string) => Promise<void>;
@@ -1260,8 +1260,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   // ✅ Post Vostcard to Firebase (public map) - Updated version
-  const postVostcard = useCallback(async () => {
-    if (!currentVostcard) {
+  const postVostcard = useCallback(async (vostcardToPost?: Vostcard) => {
+    // Use passed vostcard or current vostcard
+    const vostcard = vostcardToPost || currentVostcard;
+    
+    if (!vostcard) {
       console.error('No current Vostcard to post');
       alert('No Vostcard to post. Please start with a video.');
       return;
@@ -1274,33 +1277,33 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     // Check if Vostcard has required data for posting
-    if (!currentVostcard.title || !currentVostcard.description || (currentVostcard.categories?.length || 0) === 0) {
+    if (!vostcard.title || !vostcard.description || (vostcard.categories?.length || 0) === 0) {
       alert('Please fill in title, description, and select at least one category before posting.');
       return;
     }
 
-    if (!currentVostcard.geo) {
+    if (!vostcard.geo) {
       alert('Location is required to post a Vostcard to the map. Please try again.');
       return;
     }
 
     try {
       console.log('📥 Starting post to Firebase (public map)...');
-      const vostcardId = currentVostcard.id;
+      const vostcardId = vostcard.id;
       const userID = user.uid;
-      const username = getCorrectUsername(authContext, currentVostcard.username);
+      const username = getCorrectUsername(authContext, vostcard.username);
 
       // --- Upload video to Firebase Storage ---
       let videoURL = '';
-      if (currentVostcard.video && currentVostcard.video instanceof Blob) {
-        videoURL = await uploadVideo(userID, vostcardId, currentVostcard.video);
+      if (vostcard.video && vostcard.video instanceof Blob) {
+        videoURL = await uploadVideo(userID, vostcardId, vostcard.video);
       }
 
       // --- Upload photos to Firebase Storage ---
       let photoURLs: string[] = [];
-      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+      if (vostcard.photos && vostcard.photos.length > 0) {
         photoURLs = await Promise.all(
-          currentVostcard.photos.map((photo, idx) =>
+          vostcard.photos.map((photo, idx) =>
             photo instanceof Blob ? uploadPhoto(userID, vostcardId, idx, photo) : Promise.resolve('')
           )
         );
@@ -1318,24 +1321,24 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const docRef = doc(db, 'vostcards', vostcardId);
       await setDoc(docRef, {
         id: vostcardId,
-        title: currentVostcard.title || '',
-        description: currentVostcard.description || '',
-        categories: currentVostcard.categories || [],
+        title: vostcard.title || '',
+        description: vostcard.description || '',
+        categories: vostcard.categories || [],
         username: username,
         userID: userID,
         videoURL: videoURL,
         photoURLs: photoURLs,
-        latitude: currentVostcard.geo.latitude,
-        longitude: currentVostcard.geo.longitude,
+        latitude: vostcard.geo.latitude,
+        longitude: vostcard.geo.longitude,
         avatarURL: user.photoURL || '',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         state: 'posted',
-        hasVideo: !!currentVostcard.video,
-        hasPhotos: (currentVostcard.photos?.length || 0) > 0,
+        hasVideo: !!vostcard.video,
+        hasPhotos: (vostcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'complete',
-        isOffer: currentVostcard.isOffer || false,
-        offerDetails: currentVostcard.offerDetails || null,
+        isOffer: vostcard.isOffer || false,
+        offerDetails: vostcard.offerDetails || null,
         visibility: 'public'
       });
 
@@ -1383,7 +1386,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       loadAllLocalVostcards(); // Remove from private list
       loadPostedVostcards();   // Add to posted list
 
-      clearVostcard();
+      // Only clear vostcard if we used currentVostcard (not passed vostcard)
+      if (!vostcardToPost) {
+        clearVostcard();
+      }
 
     } catch (error) {
       console.error('❌ Failed to post Vostcard:', error);
