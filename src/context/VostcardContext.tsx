@@ -82,6 +82,7 @@ interface VostcardContextProps {
   fixBrokenSharedVostcard: (vostcardId: string) => Promise<boolean>;
   loadAllLocalVostcardsImmediate: () => Promise<void>;
   syncInBackground: () => Promise<void>;
+  clearAllPrivateVostcardsFromFirebase: () => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -1662,6 +1663,51 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Function to clear all private vostcards from Firebase
+  const clearAllPrivateVostcardsFromFirebase = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('🔍 No user logged in');
+      return;
+    }
+
+    try {
+      console.log('🗑️ Clearing all private vostcards from Firebase...');
+      
+      // Query for all private vostcards by this user
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        where('visibility', '==', 'private')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`🗑️ Found ${querySnapshot.docs.length} private vostcards to delete from Firebase`);
+      
+      if (querySnapshot.docs.length === 0) {
+        console.log('✅ No private vostcards found in Firebase');
+        return;
+      }
+
+      // Delete each private vostcard
+      const deletePromises = querySnapshot.docs.map(async (docSnapshot) => {
+        const vostcardRef = doc(db, 'vostcards', docSnapshot.id);
+        await deleteDoc(vostcardRef);
+        console.log(`🗑️ Deleted private vostcard ${docSnapshot.id} from Firebase`);
+      });
+
+      await Promise.all(deletePromises);
+      console.log('✅ All private vostcards deleted from Firebase!');
+      
+      // Update sync timestamp
+      setLastSyncTimestamp(new Date());
+      
+    } catch (error) {
+      console.error('❌ Error clearing private vostcards from Firebase:', error);
+      throw error;
+    }
+  }, [setLastSyncTimestamp]);
+
   // Load posted vostcards from Firebase
   const loadPostedVostcards = useCallback(async () => {
     const user = auth.currentUser;
@@ -2110,6 +2156,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         fixBrokenSharedVostcard,
         loadAllLocalVostcardsImmediate,
         syncInBackground,
+        clearAllPrivateVostcardsFromFirebase,
       }}
     >
       {children}
