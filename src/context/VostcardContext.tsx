@@ -1186,7 +1186,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       alert('Failed to delete Vostcard. Please try again.');
       throw error;
     }
-  }, []);
+  }, [setLastSyncTimestamp]);
 
   // ✅ Clear current Vostcard
   const clearVostcard = useCallback(() => {
