@@ -1338,6 +1338,39 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Removing this alert since we show it in CreateVostcardStep3
       // alert('🎉 Vōstcard posted successfully! It will appear on the map with media.');
 
+      // Update the IndexedDB entry to mark it as posted so it gets filtered out of My Vostcards
+      try {
+        const localDB = await openDB();
+        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        // Get the current vostcard from IndexedDB
+        const getRequest = store.get(vostcardId);
+        
+        getRequest.onsuccess = () => {
+          const existingVostcard = getRequest.result;
+          if (existingVostcard) {
+            // Update the state to 'posted'
+            existingVostcard.state = 'posted';
+            
+            // Save back to IndexedDB
+            const putRequest = store.put(existingVostcard);
+            putRequest.onsuccess = () => {
+              console.log('✅ Updated IndexedDB vostcard state to posted');
+            };
+            putRequest.onerror = () => {
+              console.error('❌ Failed to update IndexedDB vostcard state:', putRequest.error);
+            };
+          }
+        };
+        
+        getRequest.onerror = () => {
+          console.error('❌ Failed to get vostcard from IndexedDB:', getRequest.error);
+        };
+      } catch (error) {
+        console.error('❌ Failed to update IndexedDB after posting:', error);
+      }
+
       // Update last sync timestamp since we just posted to Firebase
       setLastSyncTimestamp(new Date());
 
