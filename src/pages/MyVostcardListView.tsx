@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaTrash, FaEye, FaSync } from 'react-icons/fa';
+import { FaHome, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -42,16 +42,7 @@ const MyVostcardListView = () => {
     }
   };
 
-  const handleSync = async () => {
-    console.log('🔄 Manual sync requested');
-    try {
-      await loadAllLocalVostcards();
-      console.log('✅ Manual sync completed');
-    } catch (error) {
-      console.error('❌ Manual sync failed:', error);
-      alert('Failed to sync vostcards. Please try again.');
-    }
-  };
+
 
   const getVostcardStatus = (vostcard: any) => {
     if (!vostcard.video) return 'No Video';
@@ -85,28 +76,6 @@ const MyVostcardListView = () => {
         padding: '15px 0 24px 20px'
       }}>
         <h1 style={{ fontSize: '30px', margin: 0 }}>My Vōstcards</h1>
-        
-        {/* Sync Button */}
-        <FaSync
-          size={36}
-          style={{
-            cursor: 'pointer',
-            position: 'absolute',
-            right: 104,
-            top: 19,
-            background: 'rgba(0,0,0,0.10)',
-            border: 'none',
-            borderRadius: '50%',
-            width: 40,
-            height: 40,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px'
-          }}
-          onClick={handleSync}
-          title="Sync vostcards from other devices"
-        />
         
         {/* Home Button */}
         <FaHome
@@ -155,7 +124,7 @@ const MyVostcardListView = () => {
             )}
             {user && (
               <p style={{ color: '#007bff', fontSize: '14px', marginTop: '10px' }}>
-                💡 Try tapping the sync button ↗ to get vostcards from your other devices.
+                💡 Vostcards from your other devices will sync automatically when you visit this page.
               </p>
             )}
             <button

@@ -53,6 +53,7 @@ interface VostcardContextProps {
   loadAllLocalVostcards: () => void;
   deletePrivateVostcard: (id: string) => Promise<void>;
   deleteVostcardsWithWrongUsername: () => Promise<void>;
+  manualSync: () => Promise<void>;
   scripts: Script[];
   loadScripts: () => Promise<void>;
   saveScript: (script: Script) => Promise<void>;
@@ -371,7 +372,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, []);
 
-  // Sync private vostcards from Firebase to IndexedDB
+  // Get last sync timestamp from localStorage
+  const getLastSyncTimestamp = useCallback((): Date | null => {
+    const lastSync = localStorage.getItem('vostcard_last_sync');
+    return lastSync ? new Date(lastSync) : null;
+  }, []);
+
+  // Set last sync timestamp to localStorage
+  const setLastSyncTimestamp = useCallback((timestamp: Date) => {
+    localStorage.setItem('vostcard_last_sync', timestamp.toISOString());
+  }, []);
+
+  // Incremental sync private vostcards from Firebase to IndexedDB
   const syncPrivateVostcardsFromFirebase = useCallback(async () => {
     const user = auth.currentUser;
     if (!user) {
@@ -380,19 +392,38 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     try {
-      console.log('☁️ Syncing private vostcards from Firebase...');
+      const lastSync = getLastSyncTimestamp();
+      const isFullSync = !lastSync;
       
-      // Query for user's private vostcards
-      const q = query(
-        collection(db, 'vostcards'),
-        where('userID', '==', user.uid),
-        where('visibility', '==', 'private')
-      );
+      console.log('☁️ Starting incremental sync from Firebase...', {
+        lastSync: lastSync?.toISOString() || 'never',
+        isFullSync
+      });
+      
+      // Query for user's private vostcards updated since last sync
+      let q;
+      if (isFullSync) {
+        // Full sync - get all private vostcards
+        q = query(
+          collection(db, 'vostcards'),
+          where('userID', '==', user.uid),
+          where('visibility', '==', 'private')
+        );
+      } else {
+        // Incremental sync - only get items updated since last sync
+        q = query(
+          collection(db, 'vostcards'),
+          where('userID', '==', user.uid),
+          where('visibility', '==', 'private'),
+          where('updatedAt', '>', Timestamp.fromDate(lastSync))
+        );
+      }
       
       const querySnapshot = await getDocs(q);
-      console.log(`☁️ Found ${querySnapshot.docs.length} private vostcards in Firebase`);
+      console.log(`☁️ Found ${querySnapshot.docs.length} ${isFullSync ? 'total' : 'updated'} private vostcards in Firebase`);
       
       if (querySnapshot.docs.length === 0) {
+        console.log('☁️ No changes to sync');
         return;
       }
 
@@ -400,6 +431,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const localDB = await openDB();
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
+      
+      let syncedCount = 0;
+      const syncStartTime = new Date();
       
       for (const docSnapshot of querySnapshot.docs) {
         const firebaseVostcard = docSnapshot.data();
@@ -432,13 +466,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
         
         store.put(localVostcard);
+        syncedCount++;
       }
       
-      console.log('✅ Private vostcards synced from Firebase to IndexedDB');
+      // Update last sync timestamp
+      setLastSyncTimestamp(syncStartTime);
+      
+      console.log(`✅ Incremental sync completed: ${syncedCount} vostcards synced to IndexedDB`);
     } catch (error) {
-      console.error('❌ Error syncing private vostcards from Firebase:', error);
+      console.error('❌ Error in incremental sync from Firebase:', error);
     }
-  }, []);
+  }, [getLastSyncTimestamp, setLastSyncTimestamp]);
 
   // Load all Vostcards from IndexedDB and restore their blobs (with Firebase sync)
   const loadAllLocalVostcards = useCallback(async () => {
@@ -781,6 +819,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       console.log('✅ Private Vostcard synced to Firebase successfully');
       
+      // Update last sync timestamp since we just saved to Firebase
+      setLastSyncTimestamp(new Date());
+      
       // Refresh the savedVostcards list from IndexedDB
       loadAllLocalVostcards();
       
@@ -920,6 +961,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const vostcardRef = doc(db, 'vostcards', id);
           await deleteDoc(vostcardRef);
           console.log('✅ Deleted Vostcard from Firebase:', id);
+          
+          // Update last sync timestamp since we just deleted from Firebase
+          setLastSyncTimestamp(new Date());
         } catch (error) {
           console.error('❌ Failed to delete from Firebase (continuing anyway):', error);
           // Continue even if Firebase delete fails - local delete is more important
@@ -1094,6 +1138,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Removing this alert since we show it in CreateVostcardStep3
       // alert('🎉 Vōstcard posted successfully! It will appear on the map with media.');
 
+      // Update last sync timestamp since we just posted to Firebase
+      setLastSyncTimestamp(new Date());
+
       clearVostcard();
 
     } catch (error) {
@@ -1108,6 +1155,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       throw error;
     }
   }, [currentVostcard, clearVostcard]);
+
+  // Manual sync function for UI
+  const manualSync = useCallback(async () => {
+    console.log('🔄 Manual sync requested');
+    try {
+      await syncPrivateVostcardsFromFirebase();
+      await loadAllLocalVostcards();
+      console.log('✅ Manual sync completed successfully');
+    } catch (error) {
+      console.error('❌ Manual sync failed:', error);
+      throw error;
+    }
+  }, [syncPrivateVostcardsFromFirebase, loadAllLocalVostcards]);
 
   return (
     <VostcardContext.Provider
@@ -1127,6 +1187,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadAllLocalVostcards,
         deletePrivateVostcard,
         deleteVostcardsWithWrongUsername,
+        manualSync,
         scripts,
         loadScripts,
         saveScript,
