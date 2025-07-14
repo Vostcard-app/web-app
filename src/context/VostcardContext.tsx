@@ -443,7 +443,60 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       for (const docSnapshot of querySnapshot.docs) {
         const firebaseVostcard = docSnapshot.data();
         
-        // Convert Firebase vostcard to local format with Blob placeholders
+        // Convert Firebase vostcard to local format and download media
+        console.log(`☁️ Processing Firebase vostcard: ${firebaseVostcard.title}`);
+        
+        let videoBase64 = null;
+        let photosBase64: string[] = [];
+        
+        // Download video if it exists
+        if (firebaseVostcard.videoURL) {
+          try {
+            console.log(`☁️ Downloading video from Firebase Storage...`);
+            const videoResponse = await fetch(firebaseVostcard.videoURL);
+            if (videoResponse.ok) {
+              const videoBlob = await videoResponse.blob();
+              videoBase64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.readAsDataURL(videoBlob);
+              });
+              console.log(`✅ Video downloaded and converted to base64`);
+            } else {
+              console.error(`❌ Failed to download video: ${videoResponse.status}`);
+            }
+          } catch (error) {
+            console.error(`❌ Error downloading video:`, error);
+          }
+        }
+        
+        // Download photos if they exist
+        if (firebaseVostcard.photoURLs && firebaseVostcard.photoURLs.length > 0) {
+          console.log(`☁️ Downloading ${firebaseVostcard.photoURLs.length} photos from Firebase Storage...`);
+          for (let i = 0; i < firebaseVostcard.photoURLs.length; i++) {
+            const photoURL = firebaseVostcard.photoURLs[i];
+            if (photoURL) {
+              try {
+                const photoResponse = await fetch(photoURL);
+                if (photoResponse.ok) {
+                  const photoBlob = await photoResponse.blob();
+                  const photoBase64 = await new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(photoBlob);
+                  });
+                  photosBase64.push(photoBase64);
+                  console.log(`✅ Photo ${i + 1} downloaded and converted to base64`);
+                } else {
+                  console.error(`❌ Failed to download photo ${i + 1}: ${photoResponse.status}`);
+                }
+              } catch (error) {
+                console.error(`❌ Error downloading photo ${i + 1}:`, error);
+              }
+            }
+          }
+        }
+
         const localVostcard = {
           id: firebaseVostcard.id,
           state: 'private' as const,
@@ -461,14 +514,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           offerDetails: firebaseVostcard.offerDetails || null,
           script: firebaseVostcard.script || null,
           scriptId: firebaseVostcard.scriptId || null,
-          video: null, // Will be loaded on-demand
-          photos: [], // Will be loaded on-demand
-          _videoBase64: null,
-          _photosBase64: [],
-          // Store Firebase URLs for later retrieval
+          video: null, // Will be restored from base64 when loading
+          photos: [], // Will be restored from base64 when loading
+          _videoBase64: videoBase64,
+          _photosBase64: photosBase64,
+          // Keep Firebase URLs as backup
           _firebaseVideoURL: firebaseVostcard.videoURL || null,
           _firebasePhotoURLs: firebaseVostcard.photoURLs || []
         };
+        
+        console.log(`☁️ Storing vostcard with media:`, {
+          title: localVostcard.title,
+          hasVideoBase64: !!localVostcard._videoBase64,
+          photosBase64Count: localVostcard._photosBase64.length
+        });
         
         store.put(localVostcard);
         syncedCount++;
