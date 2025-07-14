@@ -458,7 +458,8 @@ const HomeView = () => {
         console.log('🔄 Force refreshing vostcards after posting');
       }
       
-      const q = query(collection(db, 'vostcards'), where('visibility', '==', 'public'));
+      // 🔧 FIX: Query for both public vostcards AND offers
+      const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
       const querySnapshot = await getDocs(q);
       const postedVostcardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       

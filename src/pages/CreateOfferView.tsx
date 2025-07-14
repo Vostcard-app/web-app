@@ -300,6 +300,7 @@ const CreateOfferView: React.FC = () => {
           longitude
         },
         state: 'posted',
+        visibility: 'public', // 🔧 FIX: Add visibility field for offers
         isOffer: true,   // 🎯 This ensures offer_pin is used on the map
         userID: user.uid,
         userId: user.uid,
