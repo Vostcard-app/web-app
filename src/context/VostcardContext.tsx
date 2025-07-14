@@ -979,7 +979,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         // Verify the document was saved by reading it back
         try {
-          const { getDoc } = await import('firebase/firestore');
           const verifyDoc = await getDoc(docRef);
           if (verifyDoc.exists()) {
             const savedData = verifyDoc.data();

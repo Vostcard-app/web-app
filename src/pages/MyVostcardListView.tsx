@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { FaHome, FaEdit, FaTrash, FaEye, FaEnvelope } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
+import { collection, query, where, getDocs, doc, setDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 
 const MyVostcardListView = () => {
   const navigate = useNavigate();
@@ -228,10 +230,6 @@ ${getUserFirstName()}`;
                   
                   console.log('🔍 === CHECKING ALL FIREBASE VOSTCARDS ===');
                   try {
-                    const { collection, query, where, getDocs } = await import('firebase/firestore');
-                    const { db } = await import('../firebase/firebaseConfig');
-                    
-                    // Check ALL vostcards for this user (private and public)
                     const allQuery = query(
                       collection(db, 'vostcards'),
                       where('userID', '==', user.uid)
@@ -279,10 +277,6 @@ ${getUserFirstName()}`;
                   
                   console.log('🧪 === TESTING FIREBASE WRITE PERMISSIONS ===');
                   try {
-                    const { doc, setDoc, deleteDoc, Timestamp } = await import('firebase/firestore');
-                    const { db } = await import('../firebase/firebaseConfig');
-                    
-                    // Try to write a test document
                     const testDocId = `test-${Date.now()}`;
                     const testDocRef = doc(db, 'vostcards', testDocId);
                     
