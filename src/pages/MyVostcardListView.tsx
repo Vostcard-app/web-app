@@ -472,19 +472,6 @@ const MyVostcardListView = () => {
                             border: '1px solid #dee2e6'
                           }}
                           onClick={() => {
-                            // 🔧 SIMPLE DEBUG: Basic alert to show data
-                            alert(`DEBUG: Vostcard ID: ${vostcard.id}
-Title: ${vostcard.title}
-Geo: ${JSON.stringify(vostcard.geo)}
-Geo Type: ${typeof vostcard.geo}
-Has Geo Lat: ${vostcard.geo?.latitude}
-Has Geo Lng: ${vostcard.geo?.longitude}
-Direct Lat: ${(vostcard as any).latitude}
-Direct Lng: ${(vostcard as any).longitude}`);
-                            
-                            // Also log to console (in case console is working)
-                            console.log('🔍 DEBUG: Vostcard data:', vostcard);
-                            
                             // Try multiple location sources
                             let latitude = vostcard.geo?.latitude;
                             let longitude = vostcard.geo?.longitude;
@@ -496,7 +483,6 @@ Direct Lng: ${(vostcard as any).longitude}`);
                             }
                             
                             if (latitude && longitude) {
-                              alert(`✅ Found location: ${latitude}, ${longitude}`);
                               // Navigate to PinPlacerTool with vostcard data
                               navigate('/pin-placer', {
                                 state: {
@@ -512,7 +498,7 @@ Direct Lng: ${(vostcard as any).longitude}`);
                                 }
                               });
                             } else {
-                              alert('❌ No location found in vostcard');
+                              alert('No location available for this Vostcard');
                             }
                           }}
                           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
