@@ -18,4 +18,15 @@
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    cache-control = "max-age=31536000" 
+    cache-control = "max-age=31536000"
+
+# 🔧 FIX: Add client-side routing support
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200 
