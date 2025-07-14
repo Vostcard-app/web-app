@@ -205,6 +205,63 @@ const MyVostcardListView = () => {
               >
                 🔍 Check Firebase
               </button>
+              
+              <button
+                onClick={async () => {
+                  if (!user?.uid) {
+                    console.log('❌ No user logged in');
+                    return;
+                  }
+                  
+                  console.log('🧪 === TESTING FIREBASE WRITE PERMISSIONS ===');
+                  try {
+                    const { doc, setDoc, deleteDoc, Timestamp } = await import('firebase/firestore');
+                    const { db } = await import('../firebase/firebaseConfig');
+                    
+                    // Try to write a test document
+                    const testDocId = `test-${Date.now()}`;
+                    const testDocRef = doc(db, 'vostcards', testDocId);
+                    
+                    console.log('🧪 Attempting to write test document...');
+                    await setDoc(testDocRef, {
+                      id: testDocId,
+                      title: 'Test Document',
+                      userID: user.uid,
+                      visibility: 'private',
+                      state: 'private',
+                      createdAt: Timestamp.now(),
+                      test: true
+                    });
+                    
+                    console.log('✅ Test write successful');
+                    
+                    // Clean up test document
+                    await deleteDoc(testDocRef);
+                    console.log('✅ Test document cleaned up');
+                    
+                    alert('✅ Firebase write test PASSED - Your device can save to Firebase');
+                  } catch (error: any) {
+                    console.error('❌ Firebase write test FAILED:', error);
+                    console.error('❌ Error details:', {
+                      code: error.code,
+                      message: error.message,
+                      userID: user.uid
+                    });
+                    alert(`❌ Firebase write test FAILED: ${error.message}`);
+                  }
+                }}
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                🧪 Test Firebase Write
+              </button>
             </div>
                           <button
                 onClick={() => navigate('/create-step1')}

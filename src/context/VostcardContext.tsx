@@ -794,7 +794,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       // 2. SYNC TO FIREBASE (for device synchronization)
-      console.log('☁️ Step 2: Syncing to Firebase...');
+      console.log('☁️ Step 2: Syncing to Firebase...', {
+        userID: user.uid,
+        vostcardId: currentVostcard.id,
+        hasVideo: !!currentVostcard.video,
+        photosCount: currentVostcard.photos?.length || 0
+      });
       
       const vostcardId = currentVostcard.id;
       const userID = user.uid;
@@ -804,18 +809,36 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       let videoURL = '';
       let photoURLs: string[] = [];
 
-      if (currentVostcard.video && currentVostcard.video instanceof Blob) {
-        console.log('☁️ Uploading video to Firebase Storage...');
-        videoURL = await uploadVideo(userID, vostcardId, currentVostcard.video);
-      }
+      try {
+        if (currentVostcard.video && currentVostcard.video instanceof Blob) {
+          console.log('☁️ Uploading video to Firebase Storage...', {
+            videoSize: currentVostcard.video.size,
+            videoType: currentVostcard.video.type
+          });
+          videoURL = await uploadVideo(userID, vostcardId, currentVostcard.video);
+          console.log('✅ Video uploaded successfully:', videoURL);
+        }
 
-      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
-        console.log('☁️ Uploading photos to Firebase Storage...');
-        photoURLs = await Promise.all(
-          currentVostcard.photos.map((photo, idx) =>
-            photo instanceof Blob ? uploadPhoto(userID, vostcardId, idx, photo) : Promise.resolve('')
-          )
-        );
+        if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+          console.log('☁️ Uploading photos to Firebase Storage...', {
+            photoCount: currentVostcard.photos.length,
+            photoSizes: currentVostcard.photos.map(p => p.size)
+          });
+          photoURLs = await Promise.all(
+            currentVostcard.photos.map(async (photo, idx) => {
+              if (photo instanceof Blob) {
+                const url = await uploadPhoto(userID, vostcardId, idx, photo);
+                console.log(`✅ Photo ${idx + 1} uploaded successfully:`, url);
+                return url;
+              }
+              return '';
+            })
+          );
+          console.log('✅ All photos uploaded successfully');
+        }
+      } catch (uploadError: any) {
+        console.error('❌ Media upload failed:', uploadError);
+        throw new Error(`Media upload failed: ${uploadError?.message || uploadError}`);
       }
 
       // Save to Firebase Firestore
@@ -856,9 +879,42 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: firebaseData.hasPhotos
       });
       
-      await setDoc(docRef, firebaseData);
-
-      console.log('✅ Private Vostcard synced to Firebase successfully');
+      try {
+        await setDoc(docRef, firebaseData);
+        console.log('✅ Private Vostcard synced to Firebase successfully');
+        console.log('✅ Firebase document saved at path:', `vostcards/${vostcardId}`);
+        
+        // Verify the document was saved by reading it back
+        try {
+          const { getDoc } = await import('firebase/firestore');
+          const verifyDoc = await getDoc(docRef);
+          if (verifyDoc.exists()) {
+            const savedData = verifyDoc.data();
+            console.log('✅ Verification: Document exists in Firebase:', {
+              id: savedData.id,
+              visibility: savedData.visibility,
+              state: savedData.state,
+              userID: savedData.userID,
+              title: savedData.title
+            });
+          } else {
+            console.error('❌ Verification failed: Document does not exist after save');
+          }
+        } catch (verifyError) {
+          console.error('❌ Verification check failed:', verifyError);
+          // Don't throw here, the save might have worked
+        }
+      } catch (firestoreError: any) {
+        console.error('❌ Firestore save failed:', firestoreError);
+        console.error('❌ Firestore error details:', {
+          code: firestoreError.code,
+          message: firestoreError.message,
+          docPath: `vostcards/${vostcardId}`,
+          userAuthenticated: !!user,
+          userUID: user.uid
+        });
+        throw new Error(`Failed to save to Firestore: ${firestoreError?.message || firestoreError}`);
+      }
       
       // Update last sync timestamp since we just saved to Firebase
       setLastSyncTimestamp(new Date());
@@ -866,9 +922,27 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Refresh the savedVostcards list from IndexedDB
       loadAllLocalVostcards();
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error in saveLocalVostcard (hybrid storage):', error);
-      alert('Failed to save Vostcard. Please try again.');
+      console.error('❌ Save error details:', {
+        step: error.message?.includes('Media upload') ? 'Media Upload' : 
+              error.message?.includes('Firestore') ? 'Firestore Save' : 
+              'IndexedDB Save',
+        userID: user?.uid,
+        vostcardId: currentVostcard?.id,
+        authenticated: !!user,
+        error: error.message || error
+      });
+      
+      // Show user-friendly error message
+      if (error.message?.includes('Media upload')) {
+        alert('Failed to upload media files. Please check your internet connection and try again.');
+      } else if (error.message?.includes('Firestore')) {
+        alert('Failed to sync to cloud. Your vostcard is saved locally but may not appear on other devices.');
+      } else {
+        alert('Failed to save Vostcard. Please try again.');
+      }
+      
       throw error;
     }
   }, [currentVostcard, loadAllLocalVostcards, authContext]);
