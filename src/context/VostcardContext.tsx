@@ -54,7 +54,6 @@ interface VostcardContextProps {
   deletePrivateVostcard: (id: string) => Promise<void>;
   deleteVostcardsWithWrongUsername: () => Promise<void>;
   manualSync: () => Promise<void>;
-  resetSyncTimestamp: () => void; // For testing
   scripts: Script[];
   loadScripts: () => Promise<void>;
   saveScript: (script: Script) => Promise<void>;
@@ -384,13 +383,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('vostcard_last_sync', timestamp.toISOString());
   }, []);
 
-  // Reset sync timestamp (for testing)
-  const resetSyncTimestamp = useCallback(() => {
-    localStorage.removeItem('vostcard_last_sync');
-    console.log('🔄 Sync timestamp reset - next sync will be full sync');
-  }, []);
-
-  // Incremental sync private vostcards from Firebase to IndexedDB
+  // Sync private vostcards from Firebase to IndexedDB (Full sync for now due to missing Firestore index)
   const syncPrivateVostcardsFromFirebase = useCallback(async () => {
     const user = auth.currentUser;
     if (!user) {
@@ -399,61 +392,22 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     try {
-      const lastSync = getLastSyncTimestamp();
-      const isFullSync = !lastSync;
-      
-      console.log('☁️ Starting incremental sync from Firebase...', {
+      // Force full sync for now until Firestore index is created
+      // TODO: Enable incremental sync after creating index for: userID + visibility + updatedAt
+      console.log('☁️ Starting full sync from Firebase...', {
         userID: user.uid,
-        lastSync: lastSync?.toISOString() || 'never',
-        isFullSync
+        note: 'Using full sync (incremental sync requires Firestore index)'
       });
       
-      // Query for user's private vostcards updated since last sync
-      let q;
-      let attemptIncrementalSync = !isFullSync;
+      // Always do full sync for now
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        where('visibility', '==', 'private')
+      );
       
-      if (isFullSync) {
-        // Full sync - get all private vostcards
-        console.log('☁️ Doing FULL sync - getting all private vostcards');
-        q = query(
-          collection(db, 'vostcards'),
-          where('userID', '==', user.uid),
-          where('visibility', '==', 'private')
-        );
-      } else {
-        // Incremental sync - only get items updated since last sync
-        console.log('☁️ Doing INCREMENTAL sync - getting vostcards updated since:', lastSync?.toISOString());
-        q = query(
-          collection(db, 'vostcards'),
-          where('userID', '==', user.uid),
-          where('visibility', '==', 'private'),
-          where('updatedAt', '>', Timestamp.fromDate(lastSync))
-        );
-      }
-      
-      let querySnapshot;
-      try {
-        querySnapshot = await getDocs(q);
-      } catch (error: any) {
-        if (error.code === 'failed-precondition' || error.message?.includes('requires an index')) {
-          console.log('☁️ Incremental sync failed (missing Firestore index), falling back to full sync');
-          console.log('ℹ️ To enable incremental sync, create a Firestore index for: userID + visibility + updatedAt');
-          // Fallback to full sync when incremental sync fails due to missing index
-          q = query(
-            collection(db, 'vostcards'),
-            where('userID', '==', user.uid),
-            where('visibility', '==', 'private')
-          );
-          querySnapshot = await getDocs(q);
-          console.log('☁️ Fallback to FULL sync completed successfully');
-          attemptIncrementalSync = false; // Mark that we fell back to full sync
-        } else {
-          throw error;
-        }
-      }
-      
-      const syncType = isFullSync || !attemptIncrementalSync ? 'total' : 'updated';
-      console.log(`☁️ Found ${querySnapshot.docs.length} ${syncType} private vostcards in Firebase`);
+      const querySnapshot = await getDocs(q);
+      console.log(`☁️ Found ${querySnapshot.docs.length} total private vostcards in Firebase`);
       
       // Log the first few docs for debugging
       querySnapshot.docs.slice(0, 3).forEach((doc, index) => {
@@ -517,10 +471,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Update last sync timestamp
       setLastSyncTimestamp(syncStartTime);
       
-      const finalSyncType = isFullSync || !attemptIncrementalSync ? 'Full' : 'Incremental';
-      console.log(`✅ ${finalSyncType} sync completed: ${syncedCount} vostcards synced to IndexedDB`);
-    } catch (error) {
-      console.error('❌ Error in incremental sync from Firebase:', error);
+      console.log(`✅ Full sync completed: ${syncedCount} vostcards synced to IndexedDB`);
+    } catch (error: any) {
+      console.error('❌ Error in sync from Firebase:', error);
     }
   }, [getLastSyncTimestamp, setLastSyncTimestamp]);
 
@@ -1237,7 +1190,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         deletePrivateVostcard,
         deleteVostcardsWithWrongUsername,
         manualSync,
-        resetSyncTimestamp,
         scripts,
         loadScripts,
         saveScript,

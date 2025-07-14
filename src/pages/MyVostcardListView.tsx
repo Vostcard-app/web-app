@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard, resetSyncTimestamp } = useVostcard();
+  const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard } = useVostcard();
 
   // Load all Vostcards when component mounts AND authentication is complete
   useEffect(() => {
@@ -127,44 +127,6 @@ const MyVostcardListView = () => {
                 💡 Vostcards from your other devices will sync automatically when you visit this page.
               </p>
             )}
-            {/* Debug buttons */}
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button
-                onClick={() => {
-                  resetSyncTimestamp();
-                  loadAllLocalVostcards();
-                }}
-                style={{
-                  backgroundColor: '#ff6b35',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
-              >
-                🔄 Force Full Sync
-              </button>
-              <button
-                onClick={() => {
-                  console.log('🔍 Current sync timestamp:', localStorage.getItem('vostcard_last_sync'));
-                  console.log('🔍 Current user:', user?.uid);
-                  console.log('🔍 Current savedVostcards count:', savedVostcards.length);
-                }}
-                style={{
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
-              >
-                🔍 Debug Info
-              </button>
-            </div>
                           <button
                 onClick={() => navigate('/create-step1')}
                 style={{
