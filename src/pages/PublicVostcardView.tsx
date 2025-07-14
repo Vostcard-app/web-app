@@ -347,7 +347,8 @@ ${getUserFirstName()}`;
       // Update the Vostcard to mark it as shared but keep it private
       const vostcardRef = doc(db, 'vostcards', id!);
       await updateDoc(vostcardRef, {
-        isShared: true
+        isPrivatelyShared: true,  // Fix: Change from isShared to isPrivatelyShared
+        sharedAt: new Date()      // Add timestamp for consistency with VostcardDetailView
       });
       
       // Generate private share URL
@@ -367,7 +368,7 @@ ${getUserFirstName()}`;
 
       // Create custom share message template with clear subject line
       const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
-      const shareText = `Hi,
+      const emailBody = `Hi,
 
 I made this with an app called Vōstcard
 
@@ -379,20 +380,12 @@ Cheers,
 
 ${getUserFirstName()}`;
       
-      if (navigator.share) {
-        navigator.share({
-          title: subjectLine,
-          text: shareText,
-          url: privateUrl
-        }).catch(console.error);
-      } else {
-        // Fallback: copy to clipboard with full message
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard! Copy the subject line from the message.');
-        }).catch(() => {
-          alert('Share this private message: ' + shareText);
-        });
-      }
+      // Create mailto URL with subject and body
+      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
+      
+      // Open email client with pre-filled subject and body
+      window.open(mailtoUrl, '_blank');
+      
     } catch (error) {
       console.error('Error sharing private Vostcard:', error);
       alert('Failed to share Vostcard. Please try again.');
