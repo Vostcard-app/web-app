@@ -27,6 +27,40 @@ const PublicVostcardView: React.FC = () => {
   const { user, username } = useAuth();
   const { debugSpecificVostcard, fixBrokenSharedVostcard } = useVostcard();
 
+  // Add debug handlers
+  const handleDebugVostcard = async () => {
+    if (!id) return;
+    
+    console.log('🔍 Starting debug for vostcard:', id);
+    try {
+      await debugSpecificVostcard(id);
+      console.log('✅ Debug completed - check console for details');
+    } catch (error) {
+      console.error('❌ Debug failed:', error);
+    }
+  };
+
+  const handleFixVostcard = async () => {
+    if (!id) return;
+    
+    console.log('🔧 Starting fix for vostcard:', id);
+    try {
+      const fixed = await fixBrokenSharedVostcard(id);
+      if (fixed) {
+        console.log('✅ Vostcard fixed successfully');
+        alert('Vostcard fixed! Try refreshing the page.');
+        // Optionally refresh the page
+        window.location.reload();
+      } else {
+        console.log('❌ Could not fix vostcard');
+        alert('Could not fix vostcard. Check console for details.');
+      }
+    } catch (error) {
+      console.error('❌ Fix failed:', error);
+      alert('Fix failed. Check console for details.');
+    }
+  };
+
   // Anonymous like management using localStorage
   const getAnonymousLikeKey = (vostcardId: string) => `anonymous_like_${vostcardId}`;
   const getAnonymousLikeCountKey = (vostcardId: string) => `anonymous_like_count_${vostcardId}`;
@@ -308,15 +342,15 @@ ${shareText}`);
   // Add the email sharing function
   const handleEmailShare = async () => {
     try {
-      if (!vostcard?.id) {
-        throw new Error('No vostcard to share');
+      if (!id) {
+        throw new Error('No vostcard ID');
       }
 
-      // First, ensure the vostcard exists in Firebase
-      await fixBrokenSharedVostcard(vostcard.id);
+      // First, ensure the vostcard exists in Firebase with proper sharing flags
+      await fixBrokenSharedVostcard(id);
 
       // Generate private share URL
-      const privateUrl = `${window.location.origin}/share/${vostcard.id}`;
+      const privateUrl = `${window.location.origin}/share/${id}`;
       
       // Get user's first name
       const getUserFirstName = () => {
@@ -330,7 +364,7 @@ ${shareText}`);
         return 'Anonymous';
       };
 
-      // Create email content with exact spacing and 14dp font
+      // Create custom share message template
       const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
       const emailBody = `Hi,
 
@@ -343,29 +377,29 @@ ${vostcard.description || ''}
 Cheers,
 
 ${getUserFirstName()}`;
-
-      // Create mailto URL with subject and body
+      
+      // Create mailto URL
       const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
       
-      // Open email client with pre-filled subject and body
+      // Open email client
       window.open(mailtoUrl, '_blank');
       
     } catch (error) {
-      console.error('Error sharing vostcard:', error);
-      alert('Failed to share vostcard. Please try again.');
+      console.error('Error sharing Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
     }
   };
 
   // Add the private email sharing function
   const handlePrivateEmailShare = async () => {
     try {
-      // Update the Vostcard to mark it as shared but keep it private
-      const vostcardRef = doc(db, 'vostcards', id!);
-      await updateDoc(vostcardRef, {
-        isPrivatelyShared: true,  // Fix: Change from isShared to isPrivatelyShared
-        sharedAt: new Date()      // Add timestamp for consistency with VostcardDetailView
-      });
-      
+      if (!id) {
+        throw new Error('No vostcard ID');
+      }
+
+      // First, ensure the vostcard exists in Firebase with proper sharing flags
+      await fixBrokenSharedVostcard(id);
+
       // Generate private share URL
       const privateUrl = `${window.location.origin}/share/${id}`;
       
@@ -427,13 +461,53 @@ ${getUserFirstName()}`;
       <div style={{ 
         height: '100vh', 
         display: 'flex', 
+        flexDirection: 'column',
         alignItems: 'center', 
         justifyContent: 'center', 
         color: 'red', 
         fontSize: 24,
-        background: '#fff'
+        background: '#fff',
+        padding: '20px'
       }}>
-        {error || 'Vostcard not found'}
+        <div style={{ marginBottom: '20px' }}>
+          {error || 'Vostcard not found'}
+        </div>
+        
+        {/* Debug buttons for troubleshooting */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <button 
+            onClick={handleDebugVostcard}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            🔍 Debug This Vostcard
+          </button>
+          
+          <button 
+            onClick={handleFixVostcard}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            🔧 Fix This Vostcard
+          </button>
+        </div>
+        
+        <div style={{ fontSize: '14px', color: '#666', textAlign: 'center' }}>
+          ID: {id}<br/>
+          Use the debug button to see detailed information in the console.
+        </div>
       </div>
     );
   }
