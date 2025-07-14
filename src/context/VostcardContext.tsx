@@ -56,6 +56,9 @@ interface VostcardContextProps {
   manualSync: () => Promise<void>;
   debugFirebaseVostcards: () => Promise<void>;
   debugLocalVostcards: () => Promise<void>;
+  // Posted vostcards management
+  postedVostcards: any[];
+  loadPostedVostcards: () => Promise<void>;
   scripts: Script[];
   loadScripts: () => Promise<void>;
   saveScript: (script: Script) => Promise<void>;
@@ -187,6 +190,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
   const [scripts, setScripts] = useState<Script[]>([]);
   const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
+  const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
   // Scripts Firestore CRUD
   const loadScripts = useCallback(async () => {
     console.log('📜 Starting loadScripts...');
@@ -667,6 +671,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Load all Vostcards on component mount
   useEffect(() => {
     loadAllLocalVostcards();
+    loadPostedVostcards();
   }, []);
 
   // Debug currentVostcard changes
@@ -1374,6 +1379,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Update last sync timestamp since we just posted to Firebase
       setLastSyncTimestamp(new Date());
 
+      // Refresh both lists to reflect the state change
+      loadAllLocalVostcards(); // Remove from private list
+      loadPostedVostcards();   // Add to posted list
+
       clearVostcard();
 
     } catch (error) {
@@ -1515,6 +1524,45 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Load posted vostcards from Firebase
+  const loadPostedVostcards = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('📋 No user logged in, clearing posted vostcards');
+      setPostedVostcards([]);
+      return;
+    }
+
+    try {
+      console.log('📋 Loading posted Vostcards from Firebase...');
+      
+      // Query for posted Vostcards by this user
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        where('state', '==', 'posted')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`📊 Found ${querySnapshot.docs.length} posted Vostcards in Firebase`);
+      
+      const vostcards = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data
+        };
+      });
+      
+      setPostedVostcards(vostcards);
+      console.log('✅ Posted Vostcards synced successfully:', vostcards.length);
+      
+    } catch (error) {
+      console.error('❌ Error loading posted Vostcards:', error);
+      setPostedVostcards([]);
+    }
+  }, []);
+
   return (
     <VostcardContext.Provider
       value={{
@@ -1536,6 +1584,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         manualSync,
         debugFirebaseVostcards,
         debugLocalVostcards,
+        // Posted vostcards management
+        postedVostcards,
+        loadPostedVostcards,
         scripts,
         loadScripts,
         saveScript,

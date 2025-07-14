@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
-import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { useVostcard } from '../context/VostcardContext';
 
 const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
+  const { postedVostcards, loadPostedVostcards } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
@@ -25,61 +26,32 @@ const MyPostedVostcardsListView = () => {
     console.log('🔄 Auth state changed:', { authLoading, user: !!user });
     // Wait for auth to finish loading before attempting to load Vostcards
     if (!authLoading) {
-      loadPostedVostcards();
-    }
-  }, [authLoading, user]);
+      const loadData = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          
+          if (!user) {
+            console.log('❌ No user authenticated');
+            setError('Please log in to view your posted Vostcards.');
+            navigate('/login');
+            return;
+          }
 
-  const loadPostedVostcards = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+          await loadPostedVostcards();
+          console.log('✅ Posted Vostcards loaded successfully');
+          
+        } catch (error) {
+          console.error('❌ Error loading posted Vostcards:', error);
+          setError(`Failed to load posted Vostcards: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+          setLoading(false);
+        }
+      };
       
-      console.log('📋 Loading posted Vostcards...');
-      console.log('🔐 Auth state:', { user: !!user, uid: user?.uid, email: user?.email });
-      
-      if (!user) {
-        console.log('❌ No user authenticated');
-        setError('Please log in to view your posted Vostcards.');
-        navigate('/login');
-        return;
-      }
-
-      console.log('🔍 Querying Firestore for posted Vostcards...');
-      // Query for posted Vostcards by this user
-      const q = query(
-        collection(db, 'vostcards'),
-        where('userID', '==', user.uid),
-        where('state', '==', 'posted')
-      );
-      
-      const querySnapshot = await getDocs(q);
-      console.log(`📊 Found ${querySnapshot.docs.length} posted Vostcards`);
-      
-      const vostcards = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        console.log('📄 Vostcard data:', {
-          id: doc.id,
-          title: data.title,
-          state: data.state,
-          userID: data.userID,
-          createdAt: data.createdAt
-        });
-        return {
-          id: doc.id,
-          ...data
-        };
-      });
-      
-      setPostedVostcards(vostcards);
-      console.log('✅ Posted Vostcards loaded successfully:', vostcards.length);
-      
-    } catch (error) {
-      console.error('❌ Error loading posted Vostcards:', error);
-      setError(`Failed to load posted Vostcards: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setLoading(false);
+      loadData();
     }
-  };
+  }, [authLoading, user, loadPostedVostcards]);
 
   const handleUnpost = async (vostcardId: string) => {
     if (!window.confirm('Are you sure you want to unpost this Vōstcard? It will be removed from the public map but saved privately.')) {
@@ -100,8 +72,8 @@ const MyPostedVostcardsListView = () => {
       
       console.log('✅ Vostcard unposted successfully');
       
-      // Remove from local state
-      setPostedVostcards(prev => prev.filter(v => v.id !== vostcardId));
+      // Refresh the posted vostcards list
+      await loadPostedVostcards();
       
     } catch (error) {
       console.error('❌ Error unposting Vostcard:', error);

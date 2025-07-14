@@ -52,8 +52,7 @@ const MyVostcardListView = () => {
         setCurrentVostcard(vostcard);
         await postVostcard();
         alert('🎉 Vōstcard posted successfully to the map!');
-        // Refresh the list to reflect changes
-        loadAllLocalVostcards();
+        // postVostcard now handles refreshing both lists automatically
       } catch (error) {
         console.error('Failed to post Vostcard:', error);
         alert('Failed to post Vōstcard. Please try again.');
