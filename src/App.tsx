@@ -44,6 +44,7 @@ import ReportBugView from './pages/ReportBugView';
 import PinPlacerTool from './pages/PinPlacerTool';
 import { AuthRedirect } from './components/AuthRedirect';
 import PublicVostcardView from './pages/PublicVostcardView';
+import EmailVostcardView from './pages/EmailVostcardView';
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
 
                 {/*  Public Access */}
                 <Route path="/share/:id" element={<PublicVostcardView />} />
+                <Route path="/email/:id" element={<EmailVostcardView />} />
 
                 {/* 🏠 Main */}
                 <Route path="/home" element={<HomeView />} />

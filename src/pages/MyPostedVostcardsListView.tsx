@@ -192,7 +192,7 @@ const MyPostedVostcardsListView = () => {
     e.stopPropagation();
     
     const subject = encodeURIComponent(`Check out this Vōstcard: ${vostcard.title}`);
-    const body = encodeURIComponent(`I thought you might be interested in this Vōstcard: ${vostcard.title}\n\nView it here: ${window.location.origin}/vostcard/${vostcard.id}`);
+    const body = encodeURIComponent(`I thought you might be interested in this Vōstcard: ${vostcard.title}\n\nView it here: ${window.location.origin}/email/${vostcard.id}`);
     
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };

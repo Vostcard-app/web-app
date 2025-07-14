@@ -549,8 +549,8 @@ ${shareText}`);
       // First, ensure the vostcard exists in Firebase
       await fixBrokenSharedVostcard(vostcard.id);
 
-      // Generate private share URL
-      const privateUrl = `${window.location.origin}/share/${vostcard.id}`;
+      // Generate email-specific share URL
+      const emailUrl = `${window.location.origin}/email/${vostcard.id}`;
       
       // Get user's first name
       const getUserFirstName = () => {
@@ -570,7 +570,7 @@ ${shareText}`);
 
 I made this with an app called Vōstcard
 
-${privateUrl}
+${emailUrl}
 
 ${vostcard?.description || ''}
 
