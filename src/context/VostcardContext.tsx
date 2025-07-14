@@ -1702,23 +1702,67 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 console.log('✅ Video uploaded');
               }
               
-              // Upload photos
+              // Upload photos with improved error handling
               if (localVostcard._photosBase64 && localVostcard._photosBase64.length > 0) {
-                photoURLs = await Promise.all(
-                  localVostcard._photosBase64.map(async (photoBase64: string, idx: number) => {
-                    const photoBlob = await new Promise<Blob>((resolve) => {
-                      const photoData = atob(photoBase64.split(',')[1]);
-                      const photoArray = new Uint8Array(photoData.length);
-                      for (let i = 0; i < photoData.length; i++) {
-                        photoArray[i] = photoData.charCodeAt(i);
+                console.log(`📸 Starting photo upload for ${localVostcard._photosBase64.length} photos...`);
+                
+                const photoUploadPromises = localVostcard._photosBase64.map(async (photoBase64: string, idx: number) => {
+                  try {
+                    console.log(`📸 Processing photo ${idx + 1}/${localVostcard._photosBase64.length}...`);
+                    
+                    // Validate base64 data
+                    if (!photoBase64 || typeof photoBase64 !== 'string' || !photoBase64.includes(',')) {
+                      console.error(`❌ Invalid base64 data for photo ${idx + 1}:`, photoBase64?.substring(0, 100));
+                      return null;
+                    }
+                    
+                    // Convert base64 to blob with error handling
+                    const photoBlob = await new Promise<Blob>((resolve, reject) => {
+                      try {
+                        const [header, data] = photoBase64.split(',');
+                        if (!data) {
+                          throw new Error('No data part in base64 string');
+                        }
+                        
+                        const photoData = atob(data);
+                        const photoArray = new Uint8Array(photoData.length);
+                        for (let i = 0; i < photoData.length; i++) {
+                          photoArray[i] = photoData.charCodeAt(i);
+                        }
+                        
+                        const blob = new Blob([photoArray], { type: 'image/jpeg' });
+                        console.log(`📸 Photo ${idx + 1} converted to blob: ${blob.size} bytes`);
+                        resolve(blob);
+                      } catch (error) {
+                        console.error(`❌ Error converting photo ${idx + 1} to blob:`, error);
+                        reject(error);
                       }
-                      resolve(new Blob([photoArray], { type: 'image/jpeg' }));
                     });
                     
-                    return await uploadPhoto(user.uid, vostcardId, idx, photoBlob);
-                  })
-                );
-                console.log(`✅ ${photoURLs.length} photos uploaded`);
+                    // Upload to Firebase Storage
+                    const uploadedURL = await uploadPhoto(user.uid, vostcardId, idx, photoBlob);
+                    console.log(`✅ Photo ${idx + 1} uploaded successfully:`, uploadedURL);
+                    return uploadedURL;
+                    
+                  } catch (error) {
+                    console.error(`❌ Error uploading photo ${idx + 1}:`, error);
+                    return null; // Return null for failed uploads
+                  }
+                });
+                
+                // Wait for all photo uploads to complete
+                const uploadResults = await Promise.all(photoUploadPromises);
+                
+                // Filter out failed uploads (null values)
+                photoURLs = uploadResults.filter(url => url !== null) as string[];
+                
+                console.log(`📸 Photo upload completed: ${photoURLs.length}/${localVostcard._photosBase64.length} photos uploaded successfully`);
+                
+                if (photoURLs.length === 0) {
+                  console.warn('⚠️ No photos were successfully uploaded - vostcard will be saved without photos');
+                }
+              } else {
+                console.log('📸 No photos to upload');
               }
               
               // Save to Firebase with sharing enabled
