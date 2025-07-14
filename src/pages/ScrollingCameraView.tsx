@@ -443,3 +443,65 @@ const ScrollingCameraView: React.FC = () => {
 };
 
 export default ScrollingCameraView;
+          <div 
+            className={`script-text ${isScriptScrolling ? 'scrolling' : ''}`}
+            style={{
+              animationDuration: isScriptScrolling ? `${getAnimationDuration()}s` : undefined
+            }}
+            onAnimationEnd={() => setIsScriptScrolling(false)}
+          >
+            {script}
+          </div>
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="bottom-controls" style={{ marginBottom: 20 }}>
+        <button
+          className="bottom-control-button"
+          onClick={() => navigate(-1)}
+          style={{ marginRight: 15 }}
+        >
+          <AiOutlineClose size={24} color="white" />
+        </button>
+
+        <button
+          className="record-button"
+          onClick={isRecording ? handleStopRecording : handleStartRecording}
+          disabled={!cameraReady}
+          style={{
+            backgroundColor: cameraReady ? 'red' : '#666',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 64,
+            height: 64,
+            borderRadius: '50%',
+          }}
+        >
+          {isRecording && (
+            <div
+              style={{
+                backgroundColor: 'white',
+                width: '16px',
+                height: '16px',
+                borderRadius: '2px',
+              }}
+            />
+          )}
+        </button>
+
+        <button
+          className="bottom-control-button"
+          onClick={handleSwitchCamera}
+          style={{ marginLeft: 15 }}
+        >
+          <MdCameraswitch size={24} color="white" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default ScrollingCameraView;
