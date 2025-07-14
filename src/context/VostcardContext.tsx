@@ -80,6 +80,8 @@ interface VostcardContextProps {
   // Debug functions
   debugSpecificVostcard: (vostcardId: string) => Promise<void>;
   fixBrokenSharedVostcard: (vostcardId: string) => Promise<boolean>;
+  loadAllLocalVostcardsImmediate: () => Promise<void>;
+  syncInBackground: () => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -1936,6 +1938,109 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [authContext]);
 
+  // 🚀 FAST: Load from IndexedDB immediately without sync
+  const loadAllLocalVostcardsImmediate = useCallback(async () => {
+    console.log('⚡ loadAllLocalVostcardsImmediate called');
+    try {
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
+
+      return new Promise<void>((resolve, reject) => {
+        request.onerror = () => {
+          console.error('❌ Failed to load Vostcards from IndexedDB:', request.error);
+          reject(request.error);
+        };
+
+        request.onsuccess = () => {
+          const existing: any[] = request.result || [];
+          console.log('⚡ Found', existing.length, 'Vostcards in IndexedDB (immediate load)');
+
+          const restoredVostcards = existing.map((v) => {
+            const restored: Vostcard = {
+              ...v,
+              video: null,
+              photos: [],
+            };
+
+            if (v._videoBase64) {
+              try {
+                const videoData = atob(v._videoBase64.split(',')[1]);
+                const videoArray = new Uint8Array(videoData.length);
+                for (let i = 0; i < videoData.length; i++) {
+                  videoArray[i] = videoData.charCodeAt(i);
+                }
+                restored.video = new Blob([videoArray], { type: 'video/webm' });
+              } catch (error) {
+                console.error('❌ Failed to restore video from base64:', error);
+              }
+            }
+
+            if (v._photosBase64) {
+              restored.photos = v._photosBase64.map((base64: string) => {
+                try {
+                  const photoData = atob(base64.split(',')[1]);
+                  const photoArray = new Uint8Array(photoData.length);
+                  for (let i = 0; i < photoData.length; i++) {
+                    photoArray[i] = photoData.charCodeAt(i);
+                  }
+                  return new Blob([photoArray], { type: 'image/jpeg' });
+                } catch (error) {
+                  console.error('❌ Failed to restore photo from base64:', error);
+                  return new Blob([], { type: 'image/jpeg' });
+                }
+              });
+            }
+
+            return restored;
+          });
+
+          // Filter out Vostcards with state === 'posted'
+          const filteredVostcards = restoredVostcards.filter(v => v.state !== 'posted');
+          
+          // Log details of loaded vostcards for debugging sync issues
+          console.log('📂 Loaded vostcards from IndexedDB:', filteredVostcards.length);
+          filteredVostcards.forEach((vostcard, index) => {
+            console.log(`📂 IndexedDB Vostcard ${index + 1}:`, {
+              id: vostcard.id,
+              title: vostcard.title,
+              description: vostcard.description?.substring(0, 50) + '...',
+              createdAt: vostcard.createdAt,
+              updatedAt: vostcard.updatedAt,
+              state: vostcard.state,
+              userID: vostcard.userID,
+              username: vostcard.username,
+              hasVideo: !!vostcard.video,
+              hasPhotos: vostcard.photos?.length || 0,
+              hasFirebaseVideoURL: !!vostcard._firebaseVideoURL,
+              hasFirebasePhotoURLs: (vostcard._firebasePhotoURLs?.length || 0) > 0
+            });
+          });
+          
+          setSavedVostcards(filteredVostcards);
+          console.log('📂 Finished loading saved Vōstcards');
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ Failed to open IndexedDB:', error);
+      alert('Failed to load saved Vostcards. Please refresh the page and try again.');
+    }
+  }, []);
+
+  const syncInBackground = useCallback(async () => {
+    console.log('🔄 Sync in background requested');
+    try {
+      await syncPrivateVostcardsFromFirebase();
+      await loadAllLocalVostcardsImmediate();
+      console.log('✅ Sync in background completed successfully');
+    } catch (error) {
+      console.error('❌ Sync in background failed:', error);
+      throw error;
+    }
+  }, [syncPrivateVostcardsFromFirebase, loadAllLocalVostcardsImmediate]);
+
   return (
     <VostcardContext.Provider
       value={{
@@ -1989,6 +2094,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Debug functions
         debugSpecificVostcard,
         fixBrokenSharedVostcard,
+        loadAllLocalVostcardsImmediate,
+        syncInBackground,
       }}
     >
       {children}

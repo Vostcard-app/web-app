@@ -744,17 +744,17 @@ const HomeView = () => {
     } else if (route) {
       console.log(`🔄 Navigating to: ${route}`);
       
-      // Trigger sync when navigating to My Private Vōstcards
-      if (label === 'My Private Vōstcards') {
-        console.log('🔄 Syncing private vostcards before navigation...');
-        try {
-          await manualSync();
-          console.log('✅ Sync completed successfully');
-        } catch (error) {
-          console.error('❌ Sync failed:', error);
-          // Continue navigation even if sync fails
-        }
-      }
+      // ❌ REMOVED: The slow sync that was causing the delay
+      // This was the problematic code:
+      // if (label === 'My Private Vōstcards') {
+      //   console.log('🔄 Syncing private vostcards before navigation...');
+      //   try {
+      //     await manualSync();
+      //     console.log('✅ Sync completed successfully');
+      //   } catch (error) {
+      //     console.error('❌ Sync failed:', error);
+      //   }
+      // }
       
       navigate(route);
     }
