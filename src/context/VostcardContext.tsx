@@ -427,18 +427,16 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         });
       });
       
+      // First, download all media for all vostcards
+      const processedVostcards = [];
+      const syncStartTime = new Date();
+      
       if (querySnapshot.docs.length === 0) {
         console.log('☁️ No changes to sync');
         return;
       }
-
-      // Save each Firebase vostcard to IndexedDB
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
       
-      let syncedCount = 0;
-      const syncStartTime = new Date();
+      console.log(`☁️ Processing ${querySnapshot.docs.length} vostcards...`);
       
       for (const docSnapshot of querySnapshot.docs) {
         const firebaseVostcard = docSnapshot.data();
@@ -523,20 +521,46 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           _firebasePhotoURLs: firebaseVostcard.photoURLs || []
         };
         
-        console.log(`☁️ Storing vostcard with media:`, {
+        console.log(`☁️ Processed vostcard with media:`, {
           title: localVostcard.title,
           hasVideoBase64: !!localVostcard._videoBase64,
           photosBase64Count: localVostcard._photosBase64.length
         });
         
-        store.put(localVostcard);
-        syncedCount++;
+        processedVostcards.push(localVostcard);
+      }
+      
+      // Now save all processed vostcards to IndexedDB with a fresh transaction
+      if (processedVostcards.length > 0) {
+        console.log(`☁️ Saving ${processedVostcards.length} processed vostcards to IndexedDB...`);
+        
+        const localDB = await openDB();
+        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        // Put all vostcards quickly while transaction is active
+        for (const localVostcard of processedVostcards) {
+          console.log(`☁️ Storing vostcard: ${localVostcard.title}`);
+          store.put(localVostcard);
+        }
+        
+        // Wait for transaction to complete
+        await new Promise<void>((resolve, reject) => {
+          transaction.oncomplete = () => {
+            console.log(`✅ All ${processedVostcards.length} vostcards saved to IndexedDB`);
+            resolve();
+          };
+          transaction.onerror = () => {
+            console.error('❌ Transaction failed:', transaction.error);
+            reject(transaction.error);
+          };
+        });
       }
       
       // Update last sync timestamp
       setLastSyncTimestamp(syncStartTime);
       
-      console.log(`✅ Full sync completed: ${syncedCount} vostcards synced to IndexedDB`);
+      console.log(`✅ Full sync completed: ${processedVostcards.length} vostcards synced to IndexedDB`);
     } catch (error: any) {
       console.error('❌ Error in sync from Firebase:', error);
     }
