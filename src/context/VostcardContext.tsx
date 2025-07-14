@@ -54,6 +54,8 @@ interface VostcardContextProps {
   deletePrivateVostcard: (id: string) => Promise<void>;
   deleteVostcardsWithWrongUsername: () => Promise<void>;
   manualSync: () => Promise<void>;
+  debugFirebaseVostcards: () => Promise<void>;
+  debugLocalVostcards: () => Promise<void>;
   scripts: Script[];
   loadScripts: () => Promise<void>;
   saveScript: (script: Script) => Promise<void>;
@@ -1367,6 +1369,119 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [syncPrivateVostcardsFromFirebase, loadAllLocalVostcards]);
 
+  // Debug function to check what's in Firebase for this user
+  const debugFirebaseVostcards = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('🔍 No user logged in for debug');
+      return;
+    }
+
+    try {
+      console.log('🔍 DEBUG: Checking ALL vostcards in Firebase for user:', user.uid);
+      
+      // Query ALL vostcards for this user (not just private ones)
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`🔍 DEBUG: Found ${querySnapshot.docs.length} total vostcards in Firebase for this user`);
+      
+      if (querySnapshot.docs.length === 0) {
+        console.log('🔍 DEBUG: No vostcards found in Firebase - iPhone might not be uploading');
+        alert('No vostcards found in Firebase for your account. iPhone might not be uploading properly.');
+        return;
+      }
+      
+      // Log details of each vostcard
+      querySnapshot.docs.forEach((doc, index) => {
+        const data = doc.data();
+        console.log(`🔍 DEBUG Firebase Vostcard ${index + 1}:`, {
+          id: data.id,
+          title: data.title,
+          description: data.description?.substring(0, 50) + '...',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || 'no createdAt',
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || 'no updatedAt',
+          visibility: data.visibility,
+          state: data.state,
+          userID: data.userID,
+          username: data.username,
+          hasVideo: data.hasVideo,
+          hasPhotos: data.hasPhotos,
+          videoURL: data.videoURL ? 'HAS_VIDEO_URL' : 'NO_VIDEO_URL',
+          photoURLs: data.photoURLs ? `HAS_${data.photoURLs.length}_PHOTO_URLS` : 'NO_PHOTO_URLS'
+        });
+      });
+      
+      // Count by visibility
+      const visibilityCount = querySnapshot.docs.reduce((acc, doc) => {
+        const visibility = doc.data().visibility || 'undefined';
+        acc[visibility] = (acc[visibility] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      console.log('🔍 DEBUG: Vostcards by visibility:', visibilityCount);
+      
+      // Count by state
+      const stateCount = querySnapshot.docs.reduce((acc, doc) => {
+        const state = doc.data().state || 'undefined';
+        acc[state] = (acc[state] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      console.log('🔍 DEBUG: Vostcards by state:', stateCount);
+      
+      alert(`Found ${querySnapshot.docs.length} vostcards in Firebase. Check console for details.`);
+      
+    } catch (error) {
+      console.error('❌ DEBUG: Error checking Firebase:', error);
+      alert('Error checking Firebase. Check console for details.');
+    }
+  }, []);
+
+  // Debug function to check local IndexedDB
+  const debugLocalVostcards = useCallback(async () => {
+    try {
+      console.log('🔍 DEBUG: Checking IndexedDB...');
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.getAll();
+
+      return new Promise<void>((resolve) => {
+        request.onsuccess = () => {
+          const localVostcards = request.result || [];
+          console.log(`🔍 DEBUG: Found ${localVostcards.length} vostcards in IndexedDB`);
+          
+          localVostcards.forEach((vostcard, index) => {
+            console.log(`🔍 DEBUG IndexedDB Vostcard ${index + 1}:`, {
+              id: vostcard.id,
+              title: vostcard.title,
+              description: vostcard.description?.substring(0, 50) + '...',
+              createdAt: vostcard.createdAt,
+              updatedAt: vostcard.updatedAt,
+              state: vostcard.state,
+              userID: vostcard.userID,
+              username: vostcard.username,
+              hasVideoBase64: !!vostcard._videoBase64,
+              hasPhotosBase64: vostcard._photosBase64?.length || 0,
+              hasFirebaseVideoURL: !!vostcard._firebaseVideoURL,
+              hasFirebasePhotoURLs: vostcard._firebasePhotoURLs?.length || 0
+            });
+          });
+          
+          alert(`Found ${localVostcards.length} vostcards in IndexedDB. Check console for details.`);
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error('❌ DEBUG: Error checking IndexedDB:', error);
+      alert('Error checking IndexedDB. Check console for details.');
+    }
+  }, []);
+
   return (
     <VostcardContext.Provider
       value={{
@@ -1386,6 +1501,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         deletePrivateVostcard,
         deleteVostcardsWithWrongUsername,
         manualSync,
+        debugFirebaseVostcards,
+        debugLocalVostcards,
         scripts,
         loadScripts,
         saveScript,

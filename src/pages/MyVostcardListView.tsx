@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard } = useVostcard();
+  const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard, debugFirebaseVostcards, debugLocalVostcards } = useVostcard();
 
   // Load all Vostcards when component mounts AND authentication is complete
   useEffect(() => {
@@ -262,6 +262,36 @@ const MyVostcardListView = () => {
               >
                 🧪 Test Firebase Write
               </button>
+              
+              <button
+                onClick={debugFirebaseVostcards}
+                style={{
+                  backgroundColor: '#6f42c1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔍 Debug Firebase
+              </button>
+              
+              <button
+                onClick={debugLocalVostcards}
+                style={{
+                  backgroundColor: '#fd7e14',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔍 Debug IndexedDB
+              </button>
             </div>
                           <button
                 onClick={() => navigate('/create-step1')}
@@ -352,34 +382,93 @@ const MyVostcardListView = () => {
                     </p>
                   )}
 
-                  {/* Details Grid */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                    gap: '8px',
-                    marginBottom: '16px',
-                    fontSize: '12px',
-                    color: '#666'
-                  }}>
-                    <div>
-                      <strong>Video:</strong> {vostcard.video ? '✅' : '❌'}
-                    </div>
-                    <div>
-                      <strong>Photos:</strong> {(vostcard.photos?.length || 0)}/2
-                    </div>
-                    <div>
-                      <strong>Title:</strong> {vostcard.title ? '✅' : '❌'}
-                    </div>
-                    <div>
-                      <strong>Description:</strong> {vostcard.description ? '✅' : '❌'}
-                    </div>
-                    <div>
-                      <strong>Categories:</strong> {(vostcard.categories?.length || 0)}
-                    </div>
-                    <div>
-                      <strong>Location:</strong> {vostcard.geo ? '✅' : '❌'}
-                    </div>
-                  </div>
+                  {/* Missing Items Only */}
+                  {(() => {
+                    const missingItems = [];
+                    
+                    if (!vostcard.video) {
+                      missingItems.push('Video');
+                    }
+                    
+                    if ((vostcard.photos?.length || 0) < 2) {
+                      missingItems.push(`Photos (${vostcard.photos?.length || 0}/2)`);
+                    }
+                    
+                    if (!vostcard.title) {
+                      missingItems.push('Title');
+                    }
+                    
+                    if (!vostcard.description) {
+                      missingItems.push('Description');
+                    }
+                    
+                    if ((vostcard.categories?.length || 0) === 0) {
+                      missingItems.push('Categories');
+                    }
+                    
+                    if (!vostcard.geo) {
+                      missingItems.push('Location');
+                    }
+                    
+                    return missingItems.length > 0 ? (
+                      <div style={{
+                        marginBottom: '16px',
+                        backgroundColor: '#fdf2f2',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: '1px solid #fed7d7'
+                      }}>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                          color: '#c53030',
+                          marginBottom: '8px'
+                        }}>
+                          Missing Items:
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '8px'
+                        }}>
+                          {missingItems.map((item, index) => (
+                            <div key={index} style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              backgroundColor: '#feb2b2',
+                              color: '#c53030',
+                              padding: '4px 8px',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}>
+                              ❌ {item}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{
+                        marginBottom: '16px',
+                        backgroundColor: '#f0fff4',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: '1px solid #9ae6b4'
+                      }}>
+                        <div style={{
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                          color: '#22543d',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          ✅ Ready to post!
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Categories */}
                   {(vostcard.categories?.length || 0) > 0 && (

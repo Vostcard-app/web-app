@@ -400,36 +400,7 @@ const VostcardDetailView: React.FC = () => {
     }
   };
 
-  const handlePrivateShare = async () => {
-    try {
-      // Update the Vostcard to mark it as shared but keep it private
-      const vostcardRef = doc(db, 'vostcards', id!);
-      await updateDoc(vostcardRef, {
-        isShared: true
-      });
-      
-      // Generate private share URL
-      const privateUrl = `${window.location.origin}/share/${id}`;
-      
-      if (navigator.share) {
-        navigator.share({
-          title: vostcard.title || 'Check out this private Vostcard!',
-          text: vostcard.description || 'I found an interesting private Vostcard',
-          url: privateUrl
-        }).catch(console.error);
-      } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(privateUrl).then(() => {
-          alert('Private share link copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
-        }).catch(() => {
-          alert('Share this private link: ' + privateUrl);
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing private Vostcard:', error);
-      alert('Failed to share Vostcard. Please try again.');
-    }
-  };
+
 
   const handleViewOnMap = () => {
     if (!vostcard?.latitude || !vostcard?.longitude) {
@@ -711,35 +682,7 @@ const VostcardDetailView: React.FC = () => {
         >
           <FaMap size={24} color="#222" style={{ marginBottom: 4 }} />
         </div>
-        {vostcard?.state === 'private' && (
-          <div 
-            style={{ 
-              textAlign: 'center', 
-              cursor: 'pointer',
-              transition: 'transform 0.1s',
-              marginTop: 8
-            }}
-            onClick={handlePrivateShare}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <div style={{ 
-              background: '#007aff', 
-              color: 'white', 
-              padding: '8px 16px', 
-              borderRadius: 20, 
-              fontSize: 14, 
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6
-            }}>
-              <FaLock size={12} />
-              Share Privately
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* Worth Seeing? Rating System */}
