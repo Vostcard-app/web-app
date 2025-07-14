@@ -1,16 +1,21 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { FaHome, FaEdit, FaTrash, FaEye, FaSync } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { useAuth } from '../context/AuthContext';
 
 const MyVostcardListView = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard } = useVostcard();
 
-  // Load all Vostcards when component mounts
+  // Load all Vostcards when component mounts AND authentication is complete
   useEffect(() => {
-    loadAllLocalVostcards();
-  }, [loadAllLocalVostcards]);
+    if (!loading) {
+      console.log('🔄 MyVostcardListView: Auth loading complete, loading vostcards...', { hasUser: !!user });
+      loadAllLocalVostcards();
+    }
+  }, [loadAllLocalVostcards, loading, user]);
 
   const handleEdit = (vostcardId: string) => {
     loadLocalVostcard(vostcardId);
@@ -34,6 +39,17 @@ const MyVostcardListView = () => {
         console.error('Failed to delete Vostcard:', error);
         alert('Failed to delete Vōstcard. Please try again.');
       }
+    }
+  };
+
+  const handleSync = async () => {
+    console.log('🔄 Manual sync requested');
+    try {
+      await loadAllLocalVostcards();
+      console.log('✅ Manual sync completed');
+    } catch (error) {
+      console.error('❌ Manual sync failed:', error);
+      alert('Failed to sync vostcards. Please try again.');
     }
   };
 
@@ -69,6 +85,30 @@ const MyVostcardListView = () => {
         padding: '15px 0 24px 20px'
       }}>
         <h1 style={{ fontSize: '30px', margin: 0 }}>My Vōstcards</h1>
+        
+        {/* Sync Button */}
+        <FaSync
+          size={36}
+          style={{
+            cursor: 'pointer',
+            position: 'absolute',
+            right: 104,
+            top: 19,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px'
+          }}
+          onClick={handleSync}
+          title="Sync vostcards from other devices"
+        />
+        
+        {/* Home Button */}
         <FaHome
           size={48}
           style={{
@@ -91,7 +131,16 @@ const MyVostcardListView = () => {
 
       {/* 📋 List of Vostcards */}
       <div style={{ padding: '20px', height: 'calc(100vh - 55px)', overflowY: 'auto' }}>
-        {savedVostcards.length === 0 ? (
+        {loading ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            color: '#666'
+          }}>
+            <h2>Loading...</h2>
+            <p>Checking authentication and syncing vostcards...</p>
+          </div>
+        ) : savedVostcards.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '40px 20px',
@@ -99,6 +148,16 @@ const MyVostcardListView = () => {
           }}>
             <h2>No Vōstcards Found</h2>
             <p>You haven't created any Vōstcards yet.</p>
+            {!user && (
+              <p style={{ color: '#ff6b35', fontSize: '14px', marginTop: '10px' }}>
+                💡 To sync vostcards from other devices, please log in to your account.
+              </p>
+            )}
+            {user && (
+              <p style={{ color: '#007bff', fontSize: '14px', marginTop: '10px' }}>
+                💡 Try tapping the sync button ↗ to get vostcards from your other devices.
+              </p>
+            )}
             <button
               onClick={() => navigate('/create-step1')}
               style={{

@@ -33,6 +33,8 @@ export interface Vostcard {
   scriptId?: string; // Add script ID field to track associated script
   _videoBase64?: string | null; // For IndexedDB serialization
   _photosBase64?: string[]; // For IndexedDB serialization
+  _firebaseVideoURL?: string | null; // Firebase video URL for synced vostcards
+  _firebasePhotoURLs?: string[]; // Firebase photo URLs for synced vostcards
 }
 
 interface VostcardContextProps {
@@ -369,11 +371,83 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, []);
 
-  // Load all Vostcards from IndexedDB and restore their blobs
+  // Sync private vostcards from Firebase to IndexedDB
+  const syncPrivateVostcardsFromFirebase = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('☁️ No user logged in, skipping Firebase sync');
+      return;
+    }
+
+    try {
+      console.log('☁️ Syncing private vostcards from Firebase...');
+      
+      // Query for user's private vostcards
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        where('visibility', '==', 'private')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`☁️ Found ${querySnapshot.docs.length} private vostcards in Firebase`);
+      
+      if (querySnapshot.docs.length === 0) {
+        return;
+      }
+
+      // Save each Firebase vostcard to IndexedDB
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      for (const docSnapshot of querySnapshot.docs) {
+        const firebaseVostcard = docSnapshot.data();
+        
+        // Convert Firebase vostcard to local format with Blob placeholders
+        const localVostcard = {
+          id: firebaseVostcard.id,
+          state: 'private' as const,
+          title: firebaseVostcard.title || '',
+          description: firebaseVostcard.description || '',
+          categories: firebaseVostcard.categories || [],
+          geo: firebaseVostcard.latitude && firebaseVostcard.longitude 
+            ? { latitude: firebaseVostcard.latitude, longitude: firebaseVostcard.longitude }
+            : null,
+          username: firebaseVostcard.username || '',
+          userID: firebaseVostcard.userID || '',
+          createdAt: firebaseVostcard.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: firebaseVostcard.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          isOffer: firebaseVostcard.isOffer || false,
+          offerDetails: firebaseVostcard.offerDetails || null,
+          script: firebaseVostcard.script || null,
+          scriptId: firebaseVostcard.scriptId || null,
+          video: null, // Will be loaded on-demand
+          photos: [], // Will be loaded on-demand
+          _videoBase64: null,
+          _photosBase64: [],
+          // Store Firebase URLs for later retrieval
+          _firebaseVideoURL: firebaseVostcard.videoURL || null,
+          _firebasePhotoURLs: firebaseVostcard.photoURLs || []
+        };
+        
+        store.put(localVostcard);
+      }
+      
+      console.log('✅ Private vostcards synced from Firebase to IndexedDB');
+    } catch (error) {
+      console.error('❌ Error syncing private vostcards from Firebase:', error);
+    }
+  }, []);
+
+  // Load all Vostcards from IndexedDB and restore their blobs (with Firebase sync)
   const loadAllLocalVostcards = useCallback(async () => {
     try {
-      const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readonly');
+      // First sync from Firebase if user is logged in
+      await syncPrivateVostcardsFromFirebase();
+      
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAll();
 
@@ -385,7 +459,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         request.onsuccess = () => {
           const existing: any[] = request.result || [];
-          console.log('📂 Found', existing.length, 'Vostcards in IndexedDB');
+          console.log('📂 Found', existing.length, 'Vostcards in IndexedDB (after Firebase sync)');
 
           const restoredVostcards = existing.map((v) => {
             const restored: Vostcard = {
@@ -437,7 +511,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Failed to open IndexedDB:', error);
       alert('Failed to load saved Vostcards. Please refresh the page and try again.');
     }
-  }, []);
+  }, [syncPrivateVostcardsFromFirebase]);
 
   // Load all Vostcards on component mount
   useEffect(() => {
@@ -569,22 +643,31 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard]);
 
-  // ✅ Save to IndexedDB
+  // ✅ Save to both IndexedDB (local) and Firebase (sync) - Hybrid Storage
   const saveLocalVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.log('💾 saveLocalVostcard: No currentVostcard to save');
       throw new Error('No currentVostcard to save');
     }
     
-    console.log('💾 saveLocalVostcard: Starting save process for Vostcard:', {
+    console.log('💾 saveLocalVostcard: Starting hybrid save process for Vostcard:', {
       id: currentVostcard.id,
       hasVideo: !!currentVostcard.video,
       videoSize: currentVostcard.video?.size,
       photosCount: currentVostcard.photos?.length || 0,
       photoSizes: currentVostcard.photos?.map(p => p.size) || []
     });
+
+    const user = auth.currentUser;
+    if (!user) {
+      console.error('❌ No user authenticated, cannot sync to Firebase');
+      throw new Error('User not authenticated');
+    }
     
     try {
+      // 1. SAVE TO INDEXEDDB (for fast local access)
+      console.log('💾 Step 1: Saving to IndexedDB...');
+      
       // Convert Blob objects to base64 strings for IndexedDB serialization
       const serializableVostcard = {
         ...currentVostcard,
@@ -628,32 +711,85 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Save to IndexedDB
-      const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       
-      const request = store.put(serializableVostcard);
-      
-      return new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(serializableVostcard);
         request.onerror = () => {
           console.error('❌ Failed to save Vostcard to IndexedDB:', request.error);
-          alert('Failed to save Vostcard locally. Please try again.');
           reject(request.error);
         };
-        
         request.onsuccess = () => {
-          console.log('💾 Saved Vostcard to IndexedDB successfully');
-          // Refresh the savedVostcards list from IndexedDB
-          loadAllLocalVostcards();
+          console.log('✅ Saved Vostcard to IndexedDB successfully');
           resolve();
         };
       });
+
+      // 2. SYNC TO FIREBASE (for device synchronization)
+      console.log('☁️ Step 2: Syncing to Firebase...');
+      
+      const vostcardId = currentVostcard.id;
+      const userID = user.uid;
+      const username = getCorrectUsername(authContext, currentVostcard.username);
+
+      // Upload media to Firebase Storage if exists
+      let videoURL = '';
+      let photoURLs: string[] = [];
+
+      if (currentVostcard.video && currentVostcard.video instanceof Blob) {
+        console.log('☁️ Uploading video to Firebase Storage...');
+        videoURL = await uploadVideo(userID, vostcardId, currentVostcard.video);
+      }
+
+      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+        console.log('☁️ Uploading photos to Firebase Storage...');
+        photoURLs = await Promise.all(
+          currentVostcard.photos.map((photo, idx) =>
+            photo instanceof Blob ? uploadPhoto(userID, vostcardId, idx, photo) : Promise.resolve('')
+          )
+        );
+      }
+
+      // Save to Firebase Firestore
+      const docRef = doc(db, 'vostcards', vostcardId);
+      await setDoc(docRef, {
+        id: vostcardId,
+        title: currentVostcard.title || '',
+        description: currentVostcard.description || '',
+        categories: currentVostcard.categories || [],
+        username: username,
+        userID: userID,
+        videoURL: videoURL,
+        photoURLs: photoURLs,
+        latitude: currentVostcard.geo?.latitude || null,
+        longitude: currentVostcard.geo?.longitude || null,
+        avatarURL: user.photoURL || '',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        state: 'private', // Private state
+        visibility: 'private', // Private visibility
+        hasVideo: !!currentVostcard.video,
+        hasPhotos: (currentVostcard.photos?.length || 0) > 0,
+        mediaUploadStatus: 'complete',
+        isOffer: currentVostcard.isOffer || false,
+        offerDetails: currentVostcard.offerDetails || null,
+        script: currentVostcard.script || null,
+        scriptId: currentVostcard.scriptId || null
+      });
+
+      console.log('✅ Private Vostcard synced to Firebase successfully');
+      
+      // Refresh the savedVostcards list from IndexedDB
+      loadAllLocalVostcards();
+      
     } catch (error) {
-      console.error('❌ Error in saveLocalVostcard:', error);
-      alert('Failed to save Vostcard locally. Please try again.');
+      console.error('❌ Error in saveLocalVostcard (hybrid storage):', error);
+      alert('Failed to save Vostcard. Please try again.');
       throw error;
     }
-  }, [currentVostcard, loadAllLocalVostcards]);
+  }, [currentVostcard, loadAllLocalVostcards, authContext]);
 
   // ✅ Load from IndexedDB
   const loadLocalVostcard = useCallback(async (id: string) => {
@@ -755,28 +891,45 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // ✅ Delete private Vostcard from IndexedDB
+  // ✅ Delete private Vostcard from both IndexedDB and Firebase (hybrid delete)
   const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
     try {
-      const db = await openDB();
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      console.log('🗑️ Starting hybrid delete for Vostcard:', id);
+      
+      // 1. Delete from IndexedDB
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-      const request = store.delete(id);
-
-      return new Promise<void>((resolve, reject) => {
+      
+      await new Promise<void>((resolve, reject) => {
+        const request = store.delete(id);
         request.onerror = () => {
           console.error('❌ Failed to delete Vostcard from IndexedDB:', request.error);
-          alert('Failed to delete Vostcard. Please try again.');
           reject(request.error);
         };
-
         request.onsuccess = () => {
-          console.log('🗑️ Deleted Vostcard from IndexedDB:', id);
-          // Update the savedVostcards list by filtering out the deleted item
-          setSavedVostcards(prev => prev.filter(vostcard => vostcard.id !== id));
+          console.log('✅ Deleted Vostcard from IndexedDB:', id);
           resolve();
         };
       });
+
+      // 2. Delete from Firebase (if user is authenticated)
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const vostcardRef = doc(db, 'vostcards', id);
+          await deleteDoc(vostcardRef);
+          console.log('✅ Deleted Vostcard from Firebase:', id);
+        } catch (error) {
+          console.error('❌ Failed to delete from Firebase (continuing anyway):', error);
+          // Continue even if Firebase delete fails - local delete is more important
+        }
+      }
+
+      // Update the savedVostcards list by filtering out the deleted item
+      setSavedVostcards(prev => prev.filter(vostcard => vostcard.id !== id));
+      console.log('✅ Hybrid delete completed for Vostcard:', id);
+      
     } catch (error) {
       console.error('❌ Error in deletePrivateVostcard:', error);
       alert('Failed to delete Vostcard. Please try again.');
