@@ -211,10 +211,19 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handleSaveChanges = async () => {
-    // This saves as private (updates the existing private Vostcard)
-    await saveLocalVostcard();
-    alert('Vōstcard saved! You can find it in My Private Vōstcards.');
-    navigate('/home');
+    try {
+      // This saves as private (updates the existing private Vostcard)
+      await saveLocalVostcard();
+      
+      // Show success message that must be dismissed
+      alert('You have successfully saved a vostcard and it will appear in your Saved Vostcards list shortly');
+      
+      // Navigate to home view after user dismisses the message
+      navigate('/home');
+    } catch (error) {
+      console.error('❌ Error saving vostcard:', error);
+      alert('Failed to save vostcard. Please try again.');
+    }
   };
 
   const handlePost = async () => {
