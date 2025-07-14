@@ -77,6 +77,9 @@ interface VostcardContextProps {
   getCurrentUserRating: (vostcardID: string) => Promise<number>;
   getRatingStats: (vostcardID: string) => Promise<RatingStats>;
   setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => () => void;
+  // Debug functions
+  debugSpecificVostcard: (vostcardId: string) => Promise<void>;
+  fixBrokenSharedVostcard: (vostcardId: string) => Promise<boolean>;
 }
 
 // IndexedDB configuration
@@ -1569,7 +1572,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Add this debug function to help troubleshoot sharing issues
+  // Debug function to help troubleshoot sharing issues
   const debugSpecificVostcard = useCallback(async (vostcardId: string) => {
     try {
       console.log(`🔍 DEBUG: Checking vostcard ${vostcardId}...`);
@@ -1633,10 +1636,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Add to the context value export
-  debugSpecificVostcard,
-
-  // Add this function to fix broken shared vostcards
+  // Function to fix broken shared vostcards
   const fixBrokenSharedVostcard = useCallback(async (vostcardId: string) => {
     try {
       console.log(`🔧 Attempting to fix shared vostcard: ${vostcardId}`);
@@ -1771,9 +1771,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [authContext]);
 
-  // Add to the context value export
-  fixBrokenSharedVostcard,
-
   return (
     <VostcardContext.Provider
       value={{
@@ -1824,6 +1821,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             unsubscribeUserRating();
           };
         },
+        // Debug functions
+        debugSpecificVostcard,
+        fixBrokenSharedVostcard,
       }}
     >
       {children}
