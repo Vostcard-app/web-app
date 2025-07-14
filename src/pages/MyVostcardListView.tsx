@@ -99,7 +99,13 @@ const MyVostcardListView = () => {
       </div>
 
       {/* 📋 List of Vostcards */}
-      <div style={{ padding: '20px', height: 'calc(100vh - 55px)', overflowY: 'auto' }}>
+      <div style={{ 
+        padding: '20px', 
+        height: 'calc(100vh - 55px)', 
+        overflowY: 'auto',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto'
+      }}>
         {loading ? (
           <div style={{
             textAlign: 'center',
