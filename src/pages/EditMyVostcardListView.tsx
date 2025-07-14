@@ -14,12 +14,12 @@ const EditMyVostcardListView = () => {
 
   const handleEdit = (vostcardId: string) => {
     loadLocalVostcard(vostcardId);
-    navigate(`/edit-vostcard/${vostcardId}`);
+    navigate('/create-step1');
   };
 
   const handleView = (vostcardId: string) => {
     loadLocalVostcard(vostcardId);
-    navigate(`/view-vostcard/${vostcardId}`);
+    navigate(`/vostcard/${vostcardId}`);
   };
 
   const handleDelete = async (vostcardId: string) => {

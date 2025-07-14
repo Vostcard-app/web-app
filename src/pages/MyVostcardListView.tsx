@@ -19,7 +19,7 @@ const MyVostcardListView = () => {
 
   const handleEdit = (vostcardId: string) => {
     loadLocalVostcard(vostcardId);
-    navigate(`/edit-vostcard/${vostcardId}`);
+    navigate('/create-step1');
   };
 
   const handleView = (vostcardId: string) => {
