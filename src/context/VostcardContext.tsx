@@ -43,7 +43,7 @@ interface VostcardContextProps {
   updateVostcard: (updates: Partial<Vostcard>) => void;
   addPhoto: (photo: Blob) => void;
   saveLocalVostcard: () => void;
-  loadLocalVostcard: (id: string) => void;
+  loadLocalVostcard: (id: string) => Promise<void>;
   clearVostcard: () => void;
   clearLocalStorage: () => void; // For testing
   postVostcard: () => Promise<void>;
