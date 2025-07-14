@@ -1569,6 +1569,211 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Add this debug function to help troubleshoot sharing issues
+  const debugSpecificVostcard = useCallback(async (vostcardId: string) => {
+    try {
+      console.log(`🔍 DEBUG: Checking vostcard ${vostcardId}...`);
+      
+      // Check Firebase
+      const docRef = doc(db, 'vostcards', vostcardId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log('📄 Found in Firebase:', {
+          id: data.id,
+          title: data.title,
+          state: data.state,
+          visibility: data.visibility,
+          isPrivatelyShared: data.isPrivatelyShared,
+          userID: data.userID,
+          hasVideo: data.hasVideo,
+          hasPhotos: data.hasPhotos,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt
+        });
+        
+        // Check if it meets sharing criteria
+        const canView = data.state === 'posted' || data.isPrivatelyShared;
+        console.log(`✅ Can be viewed via share URL: ${canView}`);
+        
+        if (!canView) {
+          console.log('❌ Missing sharing flags. Needs either:');
+          console.log('   - state: "posted" OR');
+          console.log('   - isPrivatelyShared: true');
+        }
+      } else {
+        console.log('❌ NOT FOUND in Firebase');
+        
+        // Check IndexedDB
+        const localDB = await openDB();
+        const transaction = localDB.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(vostcardId);
+        
+        request.onsuccess = () => {
+          const localVostcard = request.result;
+          if (localVostcard) {
+            console.log('📱 Found in IndexedDB (local only):', {
+              id: localVostcard.id,
+              title: localVostcard.title,
+              state: localVostcard.state,
+              userID: localVostcard.userID,
+              hasVideo: !!localVostcard._videoBase64,
+              hasPhotos: localVostcard._photosBase64?.length || 0
+            });
+            console.log('💡 This vostcard needs to be uploaded to Firebase for sharing');
+          } else {
+            console.log('❌ NOT FOUND in IndexedDB either');
+          }
+        };
+      }
+      
+    } catch (error) {
+      console.error('❌ Debug error:', error);
+    }
+  }, []);
+
+  // Add to the context value export
+  debugSpecificVostcard,
+
+  // Add this function to fix broken shared vostcards
+  const fixBrokenSharedVostcard = useCallback(async (vostcardId: string) => {
+    try {
+      console.log(`🔧 Attempting to fix shared vostcard: ${vostcardId}`);
+      
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+      
+      // First check if it exists in Firebase
+      const docRef = doc(db, 'vostcards', vostcardId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        // Vostcard exists in Firebase, just fix the sharing flag
+        const data = docSnap.data();
+        if (!data.isPrivatelyShared && data.state !== 'posted') {
+          await updateDoc(docRef, {
+            isPrivatelyShared: true,
+            sharedAt: new Date()
+          });
+          console.log('✅ Fixed: Added isPrivatelyShared flag');
+          return true;
+        } else {
+          console.log('✅ Vostcard is already properly configured for sharing');
+          return true;
+        }
+      } else {
+        // Vostcard doesn't exist in Firebase, try to find it locally and upload
+        const localDB = await openDB();
+        const transaction = localDB.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(vostcardId);
+        
+        return new Promise<boolean>((resolve, reject) => {
+          request.onsuccess = async () => {
+            const localVostcard = request.result;
+            if (!localVostcard) {
+              console.log('❌ Vostcard not found locally either');
+              resolve(false);
+              return;
+            }
+            
+            try {
+              console.log('📤 Uploading local vostcard to Firebase for sharing...');
+              
+              // Upload media if it exists
+              let videoURL = '';
+              let photoURLs: string[] = [];
+              
+              // Upload video
+              if (localVostcard._videoBase64) {
+                const videoBlob = await new Promise<Blob>((resolve) => {
+                  const videoData = atob(localVostcard._videoBase64.split(',')[1]);
+                  const videoArray = new Uint8Array(videoData.length);
+                  for (let i = 0; i < videoData.length; i++) {
+                    videoArray[i] = videoData.charCodeAt(i);
+                  }
+                  resolve(new Blob([videoArray], { type: 'video/webm' }));
+                });
+                
+                videoURL = await uploadVideo(user.uid, vostcardId, videoBlob);
+                console.log('✅ Video uploaded');
+              }
+              
+              // Upload photos
+              if (localVostcard._photosBase64 && localVostcard._photosBase64.length > 0) {
+                photoURLs = await Promise.all(
+                  localVostcard._photosBase64.map(async (photoBase64: string, idx: number) => {
+                    const photoBlob = await new Promise<Blob>((resolve) => {
+                      const photoData = atob(photoBase64.split(',')[1]);
+                      const photoArray = new Uint8Array(photoData.length);
+                      for (let i = 0; i < photoData.length; i++) {
+                        photoArray[i] = photoData.charCodeAt(i);
+                      }
+                      resolve(new Blob([photoArray], { type: 'image/jpeg' }));
+                    });
+                    
+                    return await uploadPhoto(user.uid, vostcardId, idx, photoBlob);
+                  })
+                );
+                console.log(`✅ ${photoURLs.length} photos uploaded`);
+              }
+              
+              // Save to Firebase with sharing enabled
+              await setDoc(docRef, {
+                id: vostcardId,
+                title: localVostcard.title || '',
+                description: localVostcard.description || '',
+                categories: localVostcard.categories || [],
+                username: getCorrectUsername(authContext, localVostcard.username),
+                userID: user.uid,
+                videoURL: videoURL,
+                photoURLs: photoURLs,
+                latitude: localVostcard.geo?.latitude || null,
+                longitude: localVostcard.geo?.longitude || null,
+                avatarURL: user.photoURL || '',
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+                state: 'private',
+                visibility: 'private',
+                isPrivatelyShared: true,
+                sharedAt: new Date(),
+                hasVideo: !!localVostcard._videoBase64,
+                hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
+                mediaUploadStatus: 'complete',
+                isOffer: localVostcard.isOffer || false,
+                offerDetails: localVostcard.offerDetails || null,
+                script: localVostcard.script || null,
+                scriptId: localVostcard.scriptId || null
+              });
+              
+              console.log('✅ Local vostcard uploaded to Firebase with sharing enabled');
+              resolve(true);
+              
+            } catch (error) {
+              console.error('❌ Failed to upload local vostcard:', error);
+              reject(error);
+            }
+          };
+          
+          request.onerror = () => {
+            console.error('❌ IndexedDB error:', request.error);
+            reject(request.error);
+          };
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Error fixing shared vostcard:', error);
+      throw error;
+    }
+  }, [authContext]);
+
+  // Add to the context value export
+  fixBrokenSharedVostcard,
+
   return (
     <VostcardContext.Provider
       value={{
