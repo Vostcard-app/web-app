@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard, debugFirebaseVostcards, debugLocalVostcards } = useVostcard();
+  const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard, debugFirebaseVostcards, debugLocalVostcards, postVostcard, setCurrentVostcard } = useVostcard();
 
   // Load all Vostcards when component mounts AND authentication is complete
   useEffect(() => {
@@ -38,6 +38,25 @@ const MyVostcardListView = () => {
       } catch (error) {
         console.error('Failed to delete Vostcard:', error);
         alert('Failed to delete Vōstcard. Please try again.');
+      }
+    }
+  };
+
+  const handlePost = async (e: React.MouseEvent, vostcard: any) => {
+    // Stop event propagation to prevent parent container click
+    e.stopPropagation();
+    
+    if (window.confirm('Are you sure you want to post this Vōstcard to the map? Once posted, it will be visible to everyone.')) {
+      try {
+        // Set the vostcard as current and post it
+        setCurrentVostcard(vostcard);
+        await postVostcard();
+        alert('🎉 Vōstcard posted successfully to the map!');
+        // Refresh the list to reflect changes
+        loadAllLocalVostcards();
+      } catch (error) {
+        console.error('Failed to post Vostcard:', error);
+        alert('Failed to post Vōstcard. Please try again.');
       }
     }
   };
@@ -362,17 +381,19 @@ const MyVostcardListView = () => {
                       }}>
                         {vostcard.title || 'Untitled Vōstcard'}
                       </h3>
-                      <div style={{
-                        display: 'inline-block',
-                        backgroundColor: statusColor,
-                        color: 'white',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: 'bold'
-                      }}>
-                        {status}
-                      </div>
+                      {status !== 'Ready to Post' && (
+                        <div style={{
+                          display: 'inline-block',
+                          backgroundColor: statusColor,
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {status}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -457,21 +478,30 @@ const MyVostcardListView = () => {
                     ) : (
                       <div style={{
                         marginBottom: '16px',
-                        backgroundColor: '#f0fff4',
-                        padding: '12px',
-                        borderRadius: '8px',
-                        border: '1px solid #9ae6b4'
+                        display: 'flex',
+                        justifyContent: 'center'
                       }}>
-                        <div style={{
-                          fontSize: '13px',
-                          fontWeight: 'bold',
-                          color: '#22543d',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          ✅ Ready to post!
-                        </div>
+                        <button
+                          onClick={(e) => handlePost(e, vostcard)}
+                          style={{
+                            backgroundColor: '#28a745',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '12px 24px',
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            transition: 'background-color 0.2s'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+                        >
+                          🚀 Post
+                        </button>
                       </div>
                     );
                   })()}
