@@ -63,21 +63,42 @@ const ScrollingCameraView: React.FC = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        console.log('📱 Starting camera...');
+        console.log('📱 Starting camera with audio...');
         
-        // Get camera stream - don't worry about orientation, we'll fix it
+        // Get camera stream with explicit audio constraints
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode,
             width: { ideal: 1280 },
             height: { ideal: 720 }
           },
-          audio: true  // Enable audio capture
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
         });
         
         streamRef.current = stream;
+        
+        // Debug: Check what tracks we got
+        console.log('📱 Stream tracks:', {
+          video: stream.getVideoTracks().length,
+          audio: stream.getAudioTracks().length
+        });
+        
+        stream.getAudioTracks().forEach(track => {
+          console.log('🎵 Audio track:', {
+            enabled: track.enabled,
+            readyState: track.readyState,
+            kind: track.kind,
+            label: track.label
+          });
+        });
+        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          videoRef.current.muted = true; // Keep muted to prevent feedback
           videoRef.current.onloadedmetadata = () => {
             console.log('📱 Video metadata loaded');
             setCameraReady(true);
@@ -85,8 +106,14 @@ const ScrollingCameraView: React.FC = () => {
         }
 
       } catch (err) {
-        console.error('❌ Camera failed:', err);
-        alert('Camera access failed. Please check permissions.');
+        console.error('❌ Camera/Audio failed:', err);
+        if (err.name === 'NotAllowedError') {
+          alert('Camera and microphone access denied. Please allow permissions and try again.');
+        } else if (err.name === 'NotFoundError') {
+          alert('No camera or microphone found. Please check your device.');
+        } else {
+          alert('Camera/Audio access failed. Please check permissions and try again.');
+        }
       }
     };
 
@@ -198,7 +225,18 @@ const ScrollingCameraView: React.FC = () => {
     
     // Record from canvas - guaranteed portrait 9:16
     const canvasStream = canvasRef.current.captureStream(30);
-    const mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
+    
+    // Better MIME type selection with audio support
+    let mimeType = 'video/webm';
+    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+      mimeType = 'video/webm;codecs=vp9,opus';
+    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+      mimeType = 'video/webm;codecs=vp8,opus';
+    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+      mimeType = 'video/mp4';
+    }
+    
+    console.log('📹 Using MIME type:', mimeType);
     
     // Create a mixed stream with video from canvas and audio from original camera
     const mixedStream = new MediaStream();
@@ -206,18 +244,41 @@ const ScrollingCameraView: React.FC = () => {
     // Add video tracks from canvas
     canvasStream.getVideoTracks().forEach(track => {
       mixedStream.addTrack(track);
+      console.log('📹 Added video track from canvas');
     });
     
     // Add audio tracks from original camera stream
     if (streamRef.current) {
-      streamRef.current.getAudioTracks().forEach(track => {
-        mixedStream.addTrack(track);
+      const audioTracks = streamRef.current.getAudioTracks();
+      console.log('🎵 Available audio tracks:', audioTracks.length);
+      
+      audioTracks.forEach(track => {
+        if (track.enabled && track.readyState === 'live') {
+          mixedStream.addTrack(track);
+          console.log('🎵 Added audio track:', track.label);
+        } else {
+          console.warn('⚠️ Audio track not ready:', {
+            enabled: track.enabled,
+            readyState: track.readyState
+          });
+        }
       });
+    }
+    
+    // Verify final stream has both audio and video
+    console.log('📹 Final mixed stream:', {
+      video: mixedStream.getVideoTracks().length,
+      audio: mixedStream.getAudioTracks().length
+    });
+    
+    if (mixedStream.getAudioTracks().length === 0) {
+      console.warn('⚠️ No audio tracks in final stream - recording will be silent');
     }
     
     const mediaRecorder = new MediaRecorder(mixedStream, {
       mimeType,
-      videoBitsPerSecond: 2500000
+      videoBitsPerSecond: 2500000,
+      audioBitsPerSecond: 128000 // Add audio bitrate
     });
     
     mediaRecorderRef.current = mediaRecorder;
@@ -232,10 +293,11 @@ const ScrollingCameraView: React.FC = () => {
     mediaRecorder.onstop = () => {
       const blob = new Blob(recordedChunks.current, { type: mimeType });
       
-      console.log('📹 ✅ PORTRAIT recording completed:', {
+      console.log('📹 ✅ PORTRAIT recording completed with audio:', {
         size: blob.size,
         type: blob.type,
-        dimensions: `${PORTRAIT_WIDTH}x${PORTRAIT_HEIGHT} (9:16 portrait)`
+        dimensions: `${PORTRAIT_WIDTH}x${PORTRAIT_HEIGHT} (9:16 portrait)`,
+        audioTracks: mixedStream.getAudioTracks().length
       });
 
       // Save the portrait video
@@ -381,68 +443,6 @@ const ScrollingCameraView: React.FC = () => {
       {/* Script overlay */}
       {script && (
         <div className="script-overlay">
-          <div 
-            className={`script-text ${isScriptScrolling ? 'scrolling' : ''}`}
-            style={{
-              animationDuration: isScriptScrolling ? `${getAnimationDuration()}s` : undefined
-            }}
-            onAnimationEnd={() => setIsScriptScrolling(false)}
-          >
-            {script}
-          </div>
-        </div>
-      )}
-
-      {/* Controls */}
-      <div className="bottom-controls" style={{ marginBottom: 20 }}>
-        <button
-          className="bottom-control-button"
-          onClick={() => navigate(-1)}
-          style={{ marginRight: 15 }}
-        >
-          <AiOutlineClose size={24} color="white" />
-        </button>
-
-        <button
-          className="record-button"
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
-          disabled={!cameraReady}
-          style={{
-            backgroundColor: cameraReady ? 'red' : '#666',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-          }}
-        >
-          {isRecording && (
-            <div
-              style={{
-                backgroundColor: 'white',
-                width: '16px',
-                height: '16px',
-                borderRadius: '2px',
-              }}
-            />
-          )}
-        </button>
-
-        <button
-          className="bottom-control-button"
-          onClick={handleSwitchCamera}
-          style={{ marginLeft: 15 }}
-        >
-          <MdCameraswitch size={24} color="white" />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default ScrollingCameraView;
           <div 
             className={`script-text ${isScriptScrolling ? 'scrolling' : ''}`}
             style={{
