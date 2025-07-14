@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaLock, FaMap } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaLock, FaMap, FaEnvelope } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -15,7 +15,7 @@ const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { user } = useAuth();
+  const { user: authUser, username: authUsername } = useAuth();
   const { 
     toggleLike, 
     getLikeCount, 
@@ -201,7 +201,7 @@ const VostcardDetailView: React.FC = () => {
 
   // Setup like listeners for public Vostcards
   useEffect(() => {
-    if (vostcard && !isPrivate && user) {
+    if (vostcard && !isPrivate && authUser) {
       const cleanup = setupLikeListeners(vostcard.id, (count) => {
         setLikeCount(count);
       }, (isLiked) => {
@@ -209,7 +209,7 @@ const VostcardDetailView: React.FC = () => {
       });
       return cleanup;
     }
-  }, [vostcard, isPrivate, user, setupLikeListeners]);
+  }, [vostcard, isPrivate, authUser, setupLikeListeners]);
 
   // Fetch user profile when vostcard is loaded
   useEffect(() => {
@@ -380,18 +380,49 @@ const VostcardDetailView: React.FC = () => {
       // Generate private share URL
       const privateUrl = `${window.location.origin}/share/${id}`;
       
+      // Get user's first name (extract from username or use display name)
+      const getUserFirstName = () => {
+        if (authUsername) {
+          // If username contains spaces, take the first part
+          return authUsername.split(' ')[0];
+        } else if (authUser?.displayName) {
+          return authUser.displayName.split(' ')[0];
+        } else if (authUser?.email) {
+          return authUser.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      // Create custom share message template with proper spacing
+      const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
+      const shareText = `Hi,
+
+I made this with an app called Vōstcard
+
+${privateUrl}
+
+${vostcard?.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+      
       if (navigator.share) {
         navigator.share({
-          title: vostcard?.title || 'Check out this Vostcard!',
-          text: vostcard?.description || 'I found an interesting Vostcard',
+          title: subjectLine,
+          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(privateUrl).then(() => {
-          alert('Private share link copied to clipboard! Anyone with this link can view the Vostcard.');
+        // Fallback: copy to clipboard with full message
+        navigator.clipboard.writeText(`${subjectLine}
+
+${shareText}`).then(() => {
+          alert('Private share message copied to clipboard! Copy the subject line from the message.');
         }).catch(() => {
-          alert('Share this private link: ' + privateUrl);
+          alert(`Share this private message: ${subjectLine}
+
+${shareText}`);
         });
       }
     } catch (error) {
@@ -400,6 +431,119 @@ const VostcardDetailView: React.FC = () => {
     }
   };
 
+  const handlePrivateShare = async () => {
+    try {
+      // Update the Vostcard to mark it as shared but keep it private
+      const vostcardRef = doc(db, 'vostcards', id!);
+      await updateDoc(vostcardRef, {
+        isShared: true
+      });
+      
+      // Generate private share URL
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      // Get user's first name (extract from username or use display name)
+      const getUserFirstName = () => {
+        if (authUsername) {
+          // If username contains spaces, take the first part
+          return authUsername.split(' ')[0];
+        } else if (authUser?.displayName) {
+          return authUser.displayName.split(' ')[0];
+        } else if (authUser?.email) {
+          return authUser.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      // Create custom share message template with proper spacing
+      const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
+      const shareText = `Hi,
+
+I made this with an app called Vōstcard
+
+${privateUrl}
+
+${vostcard?.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: subjectLine,
+          text: shareText,
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        // Fallback: copy to clipboard with full message
+        navigator.clipboard.writeText(`${subjectLine}
+
+${shareText}`).then(() => {
+          alert('Private share message copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
+        }).catch(() => {
+          alert(`Share this private message: ${subjectLine}
+
+${shareText}`);
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing private Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
+    }
+  };
+
+  // Add the email sharing function
+  const handleEmailShare = async () => {
+    try {
+      // Update the Vostcard to mark it as privately shared
+      if (vostcard?.id) {
+        const vostcardRef = doc(db, 'vostcards', vostcard.id);
+        await updateDoc(vostcardRef, {
+          isPrivatelyShared: true,
+          sharedAt: new Date()
+        });
+      }
+      
+      // Generate private share URL
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      // Get user's first name
+      const getUserFirstName = () => {
+        if (authUsername) {
+          return authUsername.split(' ')[0];
+        } else if (authUser?.displayName) {
+          return authUser.displayName.split(' ')[0];
+        } else if (authUser?.email) {
+          return authUser.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      // Create email content with proper spacing
+      const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
+      const emailBody = `Hi,
+
+I made this with an app called Vōstcard
+
+${privateUrl}
+
+${vostcard?.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+
+      // Create mailto URL with subject and body
+      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
+      
+      // Open email client with pre-filled subject and body
+      window.open(mailtoUrl, '_blank');
+    } catch (error) {
+      console.error('Error sharing Vostcard via email:', error);
+      alert('Failed to share Vostcard via email. Please try again.');
+    }
+  };
 
 
   const handleViewOnMap = () => {
@@ -615,7 +759,7 @@ const VostcardDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* Action Icons */}
+      {/* Action Icons - Add the email icon */}
       <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', margin: '16px 0 0 0' }}>
         <div 
           style={{ 
@@ -669,6 +813,20 @@ const VostcardDetailView: React.FC = () => {
         >
           <FaShare size={24} color="#222" style={{ marginBottom: 4 }} />
         </div>
+        {/* Add Email Share Icon */}
+        <div 
+          style={{ 
+            textAlign: 'center', 
+            cursor: 'pointer',
+            transition: 'transform 0.1s'
+          }}
+          onClick={handleEmailShare}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <FaEnvelope size={24} color="#222" style={{ marginBottom: 4 }} />
+        </div>
         <div 
           style={{ 
             textAlign: 'center', 
@@ -682,7 +840,6 @@ const VostcardDetailView: React.FC = () => {
         >
           <FaMap size={24} color="#222" style={{ marginBottom: 4 }} />
         </div>
-
       </div>
 
       {/* Worth Seeing? Rating System */}

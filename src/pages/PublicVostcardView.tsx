@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMapPin, FaTimes, FaLock } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMapPin, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 const PublicVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,13 +15,90 @@ const PublicVostcardView: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
-  const [showRegistrationInvite, setShowRegistrationInvite] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [ratingStats, setRatingStats] = useState({
     averageRating: 0,
     ratingCount: 0
   });
   const [isPrivateShared, setIsPrivateShared] = useState(false);
+  const [isLiked, setIsLiked] = useState(false); // Track if current user liked
+  const [showLikeMessage, setShowLikeMessage] = useState(false); // Show registration encouragement
+  const { user, username } = useAuth();
+
+  // Anonymous like management using localStorage
+  const getAnonymousLikeKey = (vostcardId: string) => `anonymous_like_${vostcardId}`;
+  const getAnonymousLikeCountKey = (vostcardId: string) => `anonymous_like_count_${vostcardId}`;
+
+  // Check if anonymous user has liked this vostcard
+  const checkAnonymousLike = (vostcardId: string) => {
+    return localStorage.getItem(getAnonymousLikeKey(vostcardId)) === 'true';
+  };
+
+  // Get stored anonymous like count for this vostcard
+  const getStoredAnonymousLikeCount = (vostcardId: string) => {
+    const stored = localStorage.getItem(getAnonymousLikeCountKey(vostcardId));
+    return stored ? parseInt(stored, 10) : 0;
+  };
+
+  // Store anonymous like count for this vostcard
+  const setStoredAnonymousLikeCount = (vostcardId: string, count: number) => {
+    localStorage.setItem(getAnonymousLikeCountKey(vostcardId), count.toString());
+  };
+
+  // Initialize like state when vostcard loads
+  useEffect(() => {
+    if (vostcard && id) {
+      if (user) {
+        // For registered users, you could implement actual like checking here
+        setIsLiked(false); // Placeholder - implement actual like checking
+      } else {
+        // For anonymous users, check localStorage
+        const anonymousLiked = checkAnonymousLike(id);
+        setIsLiked(anonymousLiked);
+        
+        // Add stored anonymous likes to the displayed count
+        const storedAnonymousCount = getStoredAnonymousLikeCount(id);
+        setLikeCount(prev => prev + storedAnonymousCount);
+      }
+    }
+  }, [vostcard, id, user]);
+
+  // Handle like toggle for both registered and anonymous users
+  const handleLikeToggle = () => {
+    if (!id) return;
+
+    if (user) {
+      // For registered users - implement actual Firebase like toggle
+      console.log('Registered user like toggle - implement Firebase logic');
+      // TODO: Implement actual like service call here
+      setIsLiked(!isLiked);
+      setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+    } else {
+      // For anonymous users - use localStorage
+      const currentlyLiked = checkAnonymousLike(id);
+      const newLikedState = !currentlyLiked;
+      
+      // Store the like state
+      localStorage.setItem(getAnonymousLikeKey(id), newLikedState.toString());
+      
+      // Update local state
+      setIsLiked(newLikedState);
+      
+      // Update like count
+      const currentStoredCount = getStoredAnonymousLikeCount(id);
+      const newStoredCount = newLikedState ? currentStoredCount + 1 : Math.max(0, currentStoredCount - 1);
+      setStoredAnonymousLikeCount(id, newStoredCount);
+      
+      // Update displayed count
+      setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
+      
+      // Show registration encouragement message
+      if (newLikedState) {
+        setShowLikeMessage(true);
+        setTimeout(() => setShowLikeMessage(false), 3000);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -78,16 +156,6 @@ const PublicVostcardView: React.FC = () => {
     }
   }, [vostcard?.userID]);
 
-  // Show registration invite after 3 seconds
-  useEffect(() => {
-    if (vostcard && !loading) {
-      const timer = setTimeout(() => {
-        setShowRegistrationInvite(true);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [vostcard, loading]);
-
   const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
     const { videoWidth, videoHeight } = videoElement;
     
@@ -105,18 +173,49 @@ const PublicVostcardView: React.FC = () => {
     // Generate public share URL
     const publicUrl = `${window.location.origin}/share/${id}`;
     
+    // Get user's first name (extract from username or use display name)
+    const getUserFirstName = () => {
+      if (username) {
+        // If username contains spaces, take the first part
+        return username.split(' ')[0];
+      } else if (user?.displayName) {
+        return user.displayName.split(' ')[0];
+      } else if (user?.email) {
+        return user.email.split('@')[0];
+      }
+      return 'Anonymous';
+    };
+
+    // Create custom share message template with proper spacing
+    const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
+    const shareText = `Hi,
+
+I made this with an app called Vōstcard
+
+${publicUrl}
+
+${vostcard.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+    
     if (navigator.share) {
       navigator.share({
-        title: vostcard.title || 'Check out this Vostcard!',
-        text: vostcard.description || 'I found an interesting Vostcard',
+        title: subjectLine,
+        text: shareText,
         url: publicUrl
       }).catch(console.error);
     } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(publicUrl).then(() => {
-        alert('Share link copied to clipboard!');
+      // Fallback: copy to clipboard with full message
+      navigator.clipboard.writeText(`${subjectLine}
+
+${shareText}`).then(() => {
+        alert('Share message copied to clipboard!');
       }).catch(() => {
-        alert('Share this link: ' + publicUrl);
+        alert(`Share this message: ${subjectLine}
+
+${shareText}`);
       });
     }
   };
@@ -132,18 +231,49 @@ const PublicVostcardView: React.FC = () => {
       // Generate private share URL
       const privateUrl = `${window.location.origin}/share/${id}`;
       
+      // Get user's first name (extract from username or use display name)
+      const getUserFirstName = () => {
+        if (username) {
+          // If username contains spaces, take the first part
+          return username.split(' ')[0];
+        } else if (user?.displayName) {
+          return user.displayName.split(' ')[0];
+        } else if (user?.email) {
+          return user.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      // Create custom share message template with proper spacing
+      const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
+      const shareText = `Hi,
+
+I made this with an app called Vōstcard
+
+${privateUrl}
+
+${vostcard.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+      
       if (navigator.share) {
         navigator.share({
-          title: vostcard.title || 'Check out this private Vostcard!',
-          text: vostcard.description || 'I found an interesting private Vostcard',
+          title: subjectLine,
+          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(privateUrl).then(() => {
-          alert('Private share link copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
+        // Fallback: copy to clipboard with full message
+        navigator.clipboard.writeText(`${subjectLine}
+
+${shareText}`).then(() => {
+          alert('Private share message copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
         }).catch(() => {
-          alert('Share this private link: ' + privateUrl);
+          alert(`Share this private message: ${subjectLine}
+
+${shareText}`);
         });
       }
     } catch (error) {
@@ -170,6 +300,103 @@ const PublicVostcardView: React.FC = () => {
         vostcardTitle: vostcard?.title 
       } 
     });
+  };
+
+  // Add FaEnvelope to the imports
+  // Add the email sharing function
+  const handleEmailShare = () => {
+    // Generate public share URL
+    const publicUrl = `${window.location.origin}/share/${id}`;
+    
+    // Get user's first name
+    const getUserFirstName = () => {
+      if (username) {
+        return username.split(' ')[0];
+      } else if (user?.displayName) {
+        return user.displayName.split(' ')[0];
+      } else if (user?.email) {
+        return user.email.split('@')[0];
+      }
+      return 'Anonymous';
+    };
+
+    // Create email content with exact spacing and 14dp font
+    const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
+    const emailBody = `Hi,
+
+I made this with an app called Vōstcard
+
+${publicUrl}
+
+${vostcard.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+
+    // Create mailto URL with subject and body
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
+    
+    // Open email client with pre-filled subject and body
+    window.open(mailtoUrl, '_blank');
+  };
+
+  // Add the private email sharing function
+  const handlePrivateEmailShare = async () => {
+    try {
+      // Update the Vostcard to mark it as shared but keep it private
+      const vostcardRef = doc(db, 'vostcards', id!);
+      await updateDoc(vostcardRef, {
+        isShared: true
+      });
+      
+      // Generate private share URL
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      // Get user's first name
+      const getUserFirstName = () => {
+        if (username) {
+          return username.split(' ')[0];
+        } else if (user?.displayName) {
+          return user.displayName.split(' ')[0];
+        } else if (user?.email) {
+          return user.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      // Create custom share message template with clear subject line
+      const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
+      const shareText = `Hi,
+
+I made this with an app called Vōstcard
+
+${privateUrl}
+
+${vostcard.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: subjectLine,
+          text: shareText,
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        // Fallback: copy to clipboard with full message
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Private share message copied to clipboard! Copy the subject line from the message.');
+        }).catch(() => {
+          alert('Share this private message: ' + shareText);
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing private Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
+    }
   };
 
   if (loading) {
@@ -203,7 +430,7 @@ const PublicVostcardView: React.FC = () => {
     );
   }
 
-  const { title, description, photoURLs = [], videoURL, username, createdAt: rawCreatedAt } = vostcard;
+  const { title, description, photoURLs = [], videoURL, username: vostcardUsername, createdAt: rawCreatedAt } = vostcard;
   const avatarUrl = userProfile?.avatarURL;
 
   // Format creation date
@@ -245,8 +472,146 @@ const PublicVostcardView: React.FC = () => {
         <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
       </div>
 
-      {/* Main Content */}
-      <div style={{ paddingTop: 70 }}>
+      {/* Navigation Icons - Under the banner */}
+      <div style={{
+        position: 'fixed',
+        top: 70,
+        left: 0,
+        width: '100%',
+        zIndex: 9,
+        background: '#fff',
+        padding: '12px 16px',
+        borderBottom: '1px solid #eee',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        gap: 20
+      }}>
+        {/* Join Button - Updated styling to match HomeView */}
+        <div 
+          style={{ 
+            cursor: 'pointer',
+            transition: 'transform 0.1s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#002B4D', // Dark blue like HomeView
+            color: 'white',
+            padding: '12px 20px', // Square proportions like HomeView
+            borderRadius: '8px', // More square like HomeView
+            fontSize: 16,
+            fontWeight: 500, // Medium weight like HomeView
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)', // Subtle shadow like HomeView
+            pointerEvents: 'auto'
+          }}
+          onClick={() => navigate('/register')}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          Join
+        </div>
+
+        {/* Map Icon */}
+        <div 
+          style={{ 
+            cursor: 'pointer',
+            transition: 'transform 0.1s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => navigate('/home')}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <FaMapPin size={24} color="#222" />
+        </div>
+
+        {/* Heart Icon - Moved from stats section */}
+        <div 
+          style={{ 
+            cursor: 'pointer',
+            transition: 'transform 0.1s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4
+          }}
+          onClick={handleLikeToggle}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <FaHeart 
+            size={24} 
+            color={isLiked ? "#ff4444" : "#222"} 
+            style={{ 
+              transition: 'color 0.2s ease',
+              filter: isLiked ? 'drop-shadow(0 0 4px rgba(255,68,68,0.5))' : 'none'
+            }} 
+          />
+          <span style={{ fontSize: 18, color: '#222' }}>{likeCount}</span>
+        </div>
+      </div>
+
+      {/* Like Message for Anonymous Users */}
+      {showLikeMessage && (
+        <div style={{
+          position: 'fixed',
+          top: '140px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#002B4D',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          zIndex: 1000,
+          fontSize: 14,
+          fontWeight: 500,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          animation: 'slideDown 0.3s ease-out'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ marginBottom: 4 }}>❤️ Like saved!</div>
+            <div style={{ fontSize: 12, opacity: 0.9 }}>
+              <button
+                onClick={() => navigate('/register')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#87CEEB',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  padding: 0
+                }}
+              >
+                Join Vōstcard
+              </button>
+              {' '}to sync across devices
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add CSS animation for the message */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+      `}</style>
+
+      {/* Main Content - adjust padding to account for navigation */}
+      <div style={{ paddingTop: 120 }}>
         {/* User Info */}
         <div style={{ 
           display: 'flex', 
@@ -363,15 +728,15 @@ const PublicVostcardView: React.FC = () => {
             )}
           </div>
 
-          {/* Photos Grid */}
+          {/* Photos Grid - Changed to show only 2 photos */}
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(2, 1fr)', 
+            display: 'flex', 
+            flexDirection: 'column',
             gap: 8,
             width: 180,
             height: 240
           }}>
-            {photoURLs.slice(0, 4).map((url: string, index: number) => (
+            {photoURLs.slice(0, 2).map((url: string, index: number) => (
               <div 
                 key={index}
                 style={{ 
@@ -380,7 +745,8 @@ const PublicVostcardView: React.FC = () => {
                   overflow: 'hidden',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  height: '116px' // Half the height minus gap
                 }}
               >
                 <img 
@@ -394,7 +760,7 @@ const PublicVostcardView: React.FC = () => {
                 />
               </div>
             ))}
-            {photoURLs.length < 4 && Array.from({ length: 4 - photoURLs.length }).map((_, index) => (
+            {photoURLs.length < 2 && Array.from({ length: 2 - photoURLs.length }).map((_, index) => (
               <div 
                 key={`empty-${index}`}
                 style={{ 
@@ -403,7 +769,8 @@ const PublicVostcardView: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#ccc'
+                  color: '#ccc',
+                  height: '116px'
                 }}
               >
                 <FaMapPin size={20} />
@@ -412,22 +779,8 @@ const PublicVostcardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', margin: '16px 0 0 0' }}>
-          <div style={{ textAlign: 'center' }}>
-            <FaHeart size={24} color="#222" style={{ marginBottom: 4 }} />
-            <div style={{ fontSize: 18 }}>{likeCount}</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <FaStar size={24} color="#ffc107" style={{ marginBottom: 4 }} />
-            <div style={{ fontSize: 18 }}>{ratingStats.averageRating.toFixed(1)}</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <FaRegComment size={24} color="#222" style={{ marginBottom: 4 }} />
-            <div style={{ fontSize: 18 }}>0</div>
-          </div>
-        </div>
-
+        {/* Remove the Stats section completely */}
+        
         {/* Description */}
         <div style={{ 
           padding: '16px 16px 8px 16px',
@@ -438,163 +791,45 @@ const PublicVostcardView: React.FC = () => {
           {description || 'No description available.'}
         </div>
 
-        {/* Share Button */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          margin: '16px 0 0 0',
-          padding: '0 16px'
-        }}>
-          <div 
-            style={{ 
-              textAlign: 'center', 
-              cursor: 'pointer',
-              transition: 'transform 0.1s'
-            }}
-            onClick={handleShareClick}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <FaShare size={24} color="#222" style={{ marginBottom: 4 }} />
-          </div>
-
-          {/* Add a private share button for private Vostcards */}
-          {vostcard.state === 'private' && (
-            <div 
-              style={{ 
-                textAlign: 'center', 
-                cursor: 'pointer',
-                transition: 'transform 0.1s',
-                marginTop: 8
-              }}
-              onClick={handlePrivateShare}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              <div style={{ 
-                background: '#007aff', 
-                color: 'white', 
-                padding: '8px 16px', 
-                borderRadius: 20, 
-                fontSize: 14, 
-                fontWeight: 600,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6
-              }}>
-                <FaLock size={12} />
-                Share Privately
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Remove the Share Button section completely */}
 
         <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8, padding: '0 16px' }}>
           Posted: {createdAt}
         </div>
-      </div>
 
-      {/* Registration Invitation Overlay */}
-      <AnimatePresence>
-        {showRegistrationInvite && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+        {/* New message and link at bottom */}
+        <div style={{ 
+          padding: '24px 16px', 
+          textAlign: 'center', 
+          borderTop: '1px solid #eee',
+          marginTop: '24px'
+        }}>
+          <div style={{ 
+            color: '#666', 
+            fontSize: 14, 
+            lineHeight: 1.4, 
+            marginBottom: '12px' 
+          }}>
+            This was made with Vōstcard, a free app that lets you create, share privately or post to the map and see Vōstcards anywhere they are posted
+          </div>
+          <button
+            onClick={() => navigate('/user-guide')}
             style={{
-              position: 'fixed',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: 'linear-gradient(135deg, #002B4D 0%, #07345c 100%)',
-              color: 'white',
-              padding: '24px 20px 40px 20px',
-              zIndex: 1000,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              boxShadow: '0 -4px 20px rgba(0,0,0,0.3)'
+              background: 'none',
+              border: 'none',
+              color: '#007aff',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontSize: 14,
+              padding: 0
             }}
           >
-            <button
-              onClick={() => setShowRegistrationInvite(false)}
-              style={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                background: 'none',
-                border: 'none',
-                color: 'white',
-                cursor: 'pointer',
-                padding: 8
-              }}
-            >
-              <FaTimes size={20} />
-            </button>
+            Learn more about Vōstcard
+          </button>
+        </div>
+      </div>
 
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <h2 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 8px 0' }}>
-                Join Vōstcard!
-              </h2>
-              <p style={{ fontSize: 16, opacity: 0.9, margin: 0, lineHeight: 1.4 }}>
-                It's free, you can make and share your own Vōstcards, and see Vōstcards from around the world.
-              </p>
-              <button
-                onClick={() => navigate('/user-guide')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#87CEEB',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: 16,
-                  marginTop: 8,
-                  padding: 0
-                }}
-              >
-                To find out more click here
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: 12 }}>
-              <button
-                onClick={handleJoinNow}
-                style={{
-                  flex: 1,
-                  background: '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '16px',
-                  fontSize: 16,
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Join Now
-              </button>
-              <button
-                onClick={handleLogin}
-                style={{
-                  flex: 1,
-                  background: 'rgba(255,255,255,0.2)',
-                  color: 'white',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: 12,
-                  padding: '16px',
-                  fontSize: 16,
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Sign In
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Remove the Registration Invitation Overlay completely */}
 
       {/* Video Modal */}
       <AnimatePresence>
