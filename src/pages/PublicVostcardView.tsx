@@ -452,7 +452,11 @@ ${getUserFirstName()}`;
       background: '#fff', 
       minHeight: '100vh', 
       fontFamily: 'system-ui, sans-serif',
-      position: 'relative'
+      position: 'relative',
+      // Enhanced scrolling properties
+      overflowY: 'auto', // Ensure vertical scrolling
+      WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+      height: '100vh' // Set explicit height to enable scrolling
     }}>
       {/* Fixed Header */}
       <div style={{
@@ -512,7 +516,7 @@ ${getUserFirstName()}`;
           Join
         </div>
 
-        {/* Map Icon */}
+        {/* Map Icon - Modified to show only this vostcard */}
         <div 
           style={{ 
             cursor: 'pointer',
@@ -521,7 +525,29 @@ ${getUserFirstName()}`;
             alignItems: 'center',
             justifyContent: 'center'
           }}
-          onClick={() => navigate('/home')}
+          onClick={() => {
+            // Navigate to map showing only this vostcard
+            navigate('/home', {
+              state: {
+                singleVostcard: {
+                  id: vostcard.id,
+                  title: vostcard.title,
+                  description: vostcard.description,
+                  latitude: vostcard.latitude,
+                  longitude: vostcard.longitude,
+                  videoURL: vostcard.videoURL,
+                  photoURLs: vostcard.photoURLs,
+                  username: vostcard.username,
+                  isOffer: vostcard.isOffer,
+                  offerDetails: vostcard.offerDetails,
+                  categories: vostcard.categories,
+                  createdAt: vostcard.createdAt,
+                  visibility: 'public',
+                  state: 'posted'
+                }
+              }
+            });
+          }}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -610,8 +636,15 @@ ${getUserFirstName()}`;
         }
       `}</style>
 
-      {/* Main Content - adjust padding to account for navigation */}
-      <div style={{ paddingTop: 120 }}>
+      {/* Main Content - Enhanced scrolling container */}
+      <div style={{ 
+        paddingTop: 120,
+        paddingBottom: 40, // Add bottom padding for better scroll experience
+        // Enhanced scrolling properties
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        scrollBehavior: 'smooth' // Smooth scrolling for anchor links
+      }}>
         {/* User Info */}
         <div style={{ 
           display: 'flex', 
@@ -779,8 +812,6 @@ ${getUserFirstName()}`;
           </div>
         </div>
 
-        {/* Remove the Stats section completely */}
-        
         {/* Description */}
         <div style={{ 
           padding: '16px 16px 8px 16px',
@@ -791,15 +822,13 @@ ${getUserFirstName()}`;
           {description || 'No description available.'}
         </div>
 
-        {/* Remove the Share Button section completely */}
-
         <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8, padding: '0 16px' }}>
           Posted: {createdAt}
         </div>
 
-        {/* New message and link at bottom */}
+        {/* Bottom message and link */}
         <div style={{ 
-          padding: '24px 16px', 
+          padding: '24px 16px 40px 16px', // Extra bottom padding for scroll clearance
           textAlign: 'center', 
           borderTop: '1px solid #eee',
           marginTop: '24px'

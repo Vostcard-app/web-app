@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import { db, auth } from '../firebase/firebaseConfig';
@@ -294,6 +294,7 @@ const HomeView = () => {
   const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
+  const [singleVostcard, setSingleVostcard] = useState<any | null>(null); // Add state for single vostcard view
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loadingVostcards, setLoadingVostcards] = useState(true);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -354,6 +355,24 @@ const HomeView = () => {
       window.history.replaceState({}, '', location.pathname);
     }
   }, [location.state, location.pathname]);
+
+  // Check for single vostcard state from navigation
+  const singleVostcardState = location.state?.singleVostcard;
+
+  // Handle single vostcard view from navigation
+  useEffect(() => {
+    if (singleVostcardState) {
+      setSingleVostcard(singleVostcardState);
+      // Set user location to the vostcard's location
+      if (singleVostcardState.latitude && singleVostcardState.longitude) {
+        setUserLocation([singleVostcardState.latitude, singleVostcardState.longitude]);
+      }
+      // Set vostcards to only show this single vostcard
+      setVostcards([singleVostcardState]);
+      // Clear the state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [singleVostcardState, navigate, location.pathname]);
 
   // Debug authentication state and manage auth loading overlay
   useEffect(() => {
@@ -426,6 +445,11 @@ const HomeView = () => {
   };
 
   const loadVostcards = async (forceRefresh: boolean = false) => {
+    // Skip loading if we're in single vostcard mode
+    if (singleVostcard) {
+      return;
+    }
+    
     try {
       setLoadingVostcards(true);
       setMapError(null);
@@ -458,9 +482,9 @@ const HomeView = () => {
  
   // Get user location with error handling
   useEffect(() => {
-    // Don't get user location if we have a browse location from navigation
-    if (browseLocationState) {
-      console.log('🗺️ Skipping user location acquisition - browse location detected');
+    // Don't get user location if we have a browse location from navigation or single vostcard
+    if (browseLocationState || singleVostcard) {
+      console.log('🗺️ Skipping user location acquisition - browse location or single vostcard detected');
       return;
     }
 
@@ -490,12 +514,15 @@ const HomeView = () => {
     };
 
     getUserLocation();
-  }, [browseLocationState]); // Add browseLocationState as dependency
+  }, [browseLocationState, singleVostcard]); // Add browseLocationState and singleVostcard as dependency
 
   // Load vostcards on mount and when fresh load is requested
   useEffect(() => {
-    loadVostcards(true); // Always force refresh on mount
-  }, []);
+    // Don't load vostcards if we're in single vostcard mode
+    if (!singleVostcard) {
+      loadVostcards(true); // Always force refresh on mount
+    }
+  }, [singleVostcard]);
 
   // Auto-refresh vostcards periodically (every 30 seconds)
   useEffect(() => {
@@ -742,7 +769,8 @@ const HomeView = () => {
     navigate('/offers-list');
   };
 
-  const filteredVostcards: any[] = filterVostcardsByCategory(vostcards);
+  // Update the filteredVostcards definition
+  const filteredVostcards = singleVostcard ? [singleVostcard] : filterVostcardsByCategory(filterVostcardsByArea(vostcards));
 
   return (
     <div style={{ 
@@ -770,8 +798,12 @@ const HomeView = () => {
         right: 0,
         zIndex: 1000
       }}>
-        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+          {singleVostcard ? 'Vōstcard Location' : 'Vōstcard'}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Removed the "Show All" button - users need to register to see all vostcards */}
+          
           <div
             onClick={() => {
               if (user?.uid) {
@@ -785,15 +817,15 @@ const HomeView = () => {
                 src={userAvatar}
                 alt="User Avatar"
                 style={{
-                  width: 55,  // Changed from 40 to 55
-                  height: 55, // Changed from 40 to 55
+                  width: 55,
+                  height: 55,
                   borderRadius: '50%',
                   objectFit: 'cover'
                 }}
                 onError={() => setUserAvatar(null)}
               />
             ) : (
-              <FaUserCircle size={55} color="white" /> // Changed from 40 to 55
+              <FaUserCircle size={55} color="white" />
             )}
           </div>
           <FaBars
@@ -809,7 +841,7 @@ const HomeView = () => {
       <div style={{ 
         flex: 1, 
         position: 'relative',
-        marginTop: '80px' // Add margin to account for fixed header
+        marginTop: '80px'
       }}>
         {/* Show loading state if not authenticated */}
         {(!user && loading) ? (
@@ -837,61 +869,63 @@ const HomeView = () => {
               Loading...
             </div>
           </div>
-        ) : (
-          // Rest of the content (map, buttons, etc.)
+        ) :
           <>
-            {/* Combined List View, Offers, and Area Selector Buttons */}
-            <div
-              style={{
-                position: 'fixed',
-                top: '96px',
-                left: 0,
-                right: 0,
-                display: 'flex',
-                justifyContent: 'space-around',
-                alignItems: 'center',
-                zIndex: 1002,
-                padding: '0 16px'
-              }}
-            >
-              <button 
-                type="button"
-                style={{ ...listViewButton, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }} 
-                onClick={handleListViewClick}
-              >
-                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
-                List View
-              </button>
-              <button 
-                type="button"
-                style={{ ...listViewButton, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }} 
-                onClick={handleOffersClick}
-              >
-                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
-                Offers
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowAreaSelector(!showAreaSelector)}
+            {/* Hide the list view/offers/area buttons when in single vostcard mode */}
+            {!singleVostcard && (
+              <div
                 style={{
-                  ...listViewButton,
+                  position: 'fixed',
+                  top: '96px',
+                  left: 0,
+                  right: 0,
                   display: 'flex',
+                  justifyContent: 'space-around',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  height: '48px',
-                  fontSize: '16px',
-                  textAlign: 'center',
+                  zIndex: 1002,
+                  padding: '0 16px'
                 }}
               >
-                {mapAreaPreference === 'nearby' && '🚶 Nearby'}
-                {mapAreaPreference === '1-mile' && '🏃 1 Mile'}
-                {mapAreaPreference === '5-miles' && '🏃 5 Miles'}
-                {mapAreaPreference === 'custom' && `🔍 ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
-              </button>
-            </div>
-            {/* Area Selector Dropdown and Custom Distance Slider */}
-            {(showAreaSelector || showDistanceSlider) && (
+                <button 
+                  type="button"
+                  style={{ ...listViewButton, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }} 
+                  onClick={handleListViewClick}
+                >
+                  <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                  List View
+                </button>
+                <button 
+                  type="button"
+                  style={{ ...listViewButton, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }} 
+                  onClick={handleOffersClick}
+                >
+                  <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                  Offers
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAreaSelector(!showAreaSelector)}
+                  style={{
+                    ...listViewButton,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    height: '48px',
+                    fontSize: '16px',
+                    textAlign: 'center',
+                  }}
+                >
+                  {mapAreaPreference === 'nearby' && '🚶 Nearby'}
+                  {mapAreaPreference === '1-mile' && '🏃 1 Mile'}
+                  {mapAreaPreference === '5-miles' && '🏃 5 Miles'}
+                  {mapAreaPreference === 'custom' && `🔍 ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
+                </button>
+              </div>
+            )}
+
+            {/* Area Selector Dropdown and Custom Distance Slider - Only show when not in single vostcard mode */}
+            {!singleVostcard && (showAreaSelector || showDistanceSlider) && (
               <div
                 style={{
                   position: 'fixed',
@@ -1168,7 +1202,7 @@ const HomeView = () => {
               </>
             )}
           </>
-        )}
+        }
       </div>
 
       {/* Loading Overlay for Vostcards */}

@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaTrash, FaEye } from 'react-icons/fa';
+import { FaHome, FaEdit, FaTrash, FaEye, FaEnvelope } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 
 const MyVostcardListView = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, username } = useAuth(); // Add username from useAuth
   const { savedVostcards, loadAllLocalVostcards, loadLocalVostcard, deletePrivateVostcard, debugFirebaseVostcards, debugLocalVostcards, postVostcard, setCurrentVostcard } = useVostcard();
 
   // Load all Vostcards when component mounts AND authentication is complete
@@ -60,6 +60,46 @@ const MyVostcardListView = () => {
     }
   };
 
+  // Add email sharing handler
+  const handleEmail = (e: React.MouseEvent, vostcard: any) => {
+    // Stop event propagation to prevent parent container click
+    e.stopPropagation();
+    
+    // Generate public share URL
+    const publicUrl = `${window.location.origin}/share/${vostcard.id}`;
+    
+    // Get user's first name
+    const getUserFirstName = () => {
+      if (username) {
+        return username.split(' ')[0];
+      } else if (user?.displayName) {
+        return user.displayName.split(' ')[0];
+      } else if (user?.email) {
+        return user.email.split('@')[0];
+      }
+      return 'Anonymous';
+    };
+
+    // Create email content with the established template
+    const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
+    const emailBody = `Hi,
+
+I made this with an app called Vōstcard
+
+${publicUrl}
+
+${vostcard.description || ''}
+
+Cheers,
+
+${getUserFirstName()}`;
+
+    // Create mailto URL with subject and body
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
+    
+    // Open email client with pre-filled subject and body
+    window.open(mailtoUrl, '_blank');
+  };
 
 
   const getVostcardStatus = (vostcard: any) => {
@@ -396,15 +436,19 @@ const MyVostcardListView = () => {
                     </div>
                   </div>
 
-                  {/* Description */}
+                  {/* Description - Show only first line */}
                   {vostcard.description && (
                     <p style={{
                       margin: '0 0 12px 0',
                       color: '#666',
                       fontSize: '14px',
-                      lineHeight: '1.4'
+                      lineHeight: '1.4',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      display: 'block'
                     }}>
-                      {vostcard.description}
+                      {vostcard.description.split('\n')[0]}
                     </p>
                   )}
 
@@ -474,120 +518,136 @@ const MyVostcardListView = () => {
                           ))}
                         </div>
                       </div>
-                    ) : (
-                      <div style={{
-                        marginBottom: '16px',
-                        display: 'flex',
-                        justifyContent: 'center'
-                      }}>
-                        <button
-                          onClick={(e) => handlePost(e, vostcard)}
-                          style={{
-                            backgroundColor: '#28a745',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '12px 24px',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'background-color 0.2s'
-                          }}
-                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
-                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
-                        >
-                          🚀 Post
-                        </button>
-                      </div>
-                    );
+                    ) : null; // Remove the post button from here - just return null
                   })()}
 
-                  {/* Categories */}
-                  {(vostcard.categories?.length || 0) > 0 && (
-                    <div style={{ marginBottom: '16px' }}>
-                      <strong style={{ fontSize: '12px', color: '#666' }}>Categories:</strong>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                        {vostcard.categories.map((category, index) => (
-                          <span key={index} style={{
-                            backgroundColor: '#e3f2fd',
-                            color: '#1976d2',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '11px'
-                          }}>
-                            {category}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
+                  {/* Action Icons */}
                   <div style={{
                     display: 'flex',
-                    gap: '8px',
-                    flexWrap: 'wrap'
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    width: '100%',
+                    marginTop: '8px'
                   }}>
-                    <button
+                    {/* Edit Icon */}
+                    <div
                       style={{
-                        backgroundColor: '#002B4D',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
                         cursor: 'pointer',
+                        transition: 'transform 0.1s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '14px'
+                        justifyContent: 'center',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f8f9fa',
+                        border: '1px solid #dee2e6'
                       }}
                       onClick={() => handleEdit(vostcard.id)}
+                      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      title="Edit Vostcard"
                     >
-                      <FaEdit size={12} />
-                      Edit
-                    </button>
+                      <FaEdit size={20} color="#002B4D" />
+                    </div>
                     
-                    <button
+                    {/* View Icon */}
+                    <div
                       style={{
-                        backgroundColor: '#6c757d',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
                         cursor: 'pointer',
+                        transition: 'transform 0.1s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '14px'
+                        justifyContent: 'center',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f8f9fa',
+                        border: '1px solid #dee2e6'
                       }}
                       onClick={() => handleView(vostcard.id)}
+                      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      title="View Vostcard"
                     >
-                      <FaEye size={12} />
-                      View
-                    </button>
+                      <FaEye size={20} color="#6c757d" />
+                    </div>
 
-                    <button
+                    {/* Email Icon */}
+                    <div
                       style={{
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 16px',
                         cursor: 'pointer',
+                        transition: 'transform 0.1s',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px',
-                        fontSize: '14px'
+                        justifyContent: 'center',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f8f9fa',
+                        border: '1px solid #dee2e6'
+                      }}
+                      onClick={(e) => handleEmail(e, vostcard)}
+                      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      title="Email Vostcard"
+                    >
+                      <FaEnvelope size={20} color="#007bff" />
+                    </div>
+
+                    {/* Delete Icon */}
+                    <div
+                      style={{
+                        cursor: 'pointer',
+                        transition: 'transform 0.1s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        backgroundColor: '#f8f9fa',
+                        border: '1px solid #dee2e6'
                       }}
                       onClick={(e) => handleDelete(e, vostcard.id)}
+                      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      title="Delete Vostcard"
                     >
-                      <FaTrash size={12} />
-                      Delete
-                    </button>
+                      <FaTrash size={20} color="#dc3545" />
+                    </div>
                   </div>
+
+                  {/* Post Button - Now below the icons */}
+                  {getVostcardStatus(vostcard) === 'Ready to Post' && (
+                    <div style={{
+                      marginTop: '12px',
+                      display: 'flex',
+                      justifyContent: 'center'
+                    }}>
+                      <button
+                        onClick={(e) => handlePost(e, vostcard)}
+                        style={{
+                          backgroundColor: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '12px 24px',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          transition: 'background-color 0.2s'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+                      >
+                        🚀 Post
+                      </button>
+                    </div>
+                  )}
 
                   {/* Last Updated */}
                   <div style={{
