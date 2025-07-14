@@ -203,33 +203,19 @@ const MyPostedVostcardsListView = () => {
       return 'Anonymous';
     };
     
-    const subject = encodeURIComponent(`${getUserFirstName()} shared a Vōstcard: "${vostcard.title}"`);
+    const subject = encodeURIComponent(`Check out my Vōstcard: "${vostcard.title}"`);
     
-    // Build location context if available
-    const locationText = vostcard?.latitude && vostcard?.longitude 
-      ? `📍 Location: ${vostcard.latitude.toFixed(4)}, ${vostcard.longitude.toFixed(4)}`
-      : '';
-    
-    const body = encodeURIComponent(`Hi there!
+    const body = encodeURIComponent(`Hi,
 
-I wanted to share something cool with you - I created this Vōstcard using an app that lets you share videos and photos with location context.
+I made this with an app called Vōstcard
 
-🎬 "${vostcard.title}"
+View it here: ${window.location.origin}/email/${vostcard.id}
 
-${vostcard.description || ''}
+${vostcard.description || 'Description'}
 
-${locationText}
+Cheers!
 
-Check it out here: ${window.location.origin}/email/${vostcard.id}
-
-Vōstcard is a location-based social media app where you can discover and share experiences through videos and photos tied to specific places. Pretty neat, right?
-
-Hope you enjoy it!
-
-${getUserFirstName()}
-
----
-Sent via Vōstcard App`);
+${getUserFirstName()}`);
     
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
