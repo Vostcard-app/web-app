@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMapPin, FaTimes, FaLock } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 const PublicVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,18 +31,20 @@ const PublicVostcardView: React.FC = () => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // Only show posted Vostcards publicly
-          if (data.state !== 'posted') {
+          // Allow viewing of posted vostcards or privately shared vostcards
+          if (data.state === 'posted' || data.isPrivatelyShared) {
+            setVostcard(data);
+            setLikeCount(data.likeCount || 0);
+            setRatingStats({
+              averageRating: data.averageRating || 0,
+              ratingCount: data.ratingCount || 0
+            });
+            setIsPrivateShared(data.isPrivatelyShared || false);
+          } else {
             setError('This Vostcard is not available for public viewing.');
             setLoading(false);
             return;
           }
-          setVostcard(data);
-          setLikeCount(data.likeCount || 0);
-          setRatingStats({
-            averageRating: data.averageRating || 0,
-            ratingCount: data.ratingCount || 0
-          });
         } else {
           setError('Vostcard not found.');
         }
@@ -268,7 +270,7 @@ const PublicVostcardView: React.FC = () => {
                 src={avatarUrl} 
                 alt={username || 'User'} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={() => setUserProfile(prev => ({ ...prev, avatarURL: null }))}
+                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
               />
             ) : (
               <FaUserCircle size={48} color="#ccc" />
@@ -534,11 +536,26 @@ const PublicVostcardView: React.FC = () => {
 
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
               <h2 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 8px 0' }}>
-                Create Your Own Vostcard!
+                Join Vōstcard!
               </h2>
               <p style={{ fontSize: 16, opacity: 0.9, margin: 0, lineHeight: 1.4 }}>
-                Join the community and share your own stories, landmarks, and experiences with the world.
+                It's free, you can make and share your own Vōstcards, and see Vōstcards from around the world.
               </p>
+              <button
+                onClick={() => navigate('/user-guide')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#87CEEB',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: 16,
+                  marginTop: 8,
+                  padding: 0
+                }}
+              >
+                To find out more click here
+              </button>
             </div>
 
             <div style={{ display: 'flex', gap: 12 }}>

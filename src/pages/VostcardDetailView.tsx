@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaLock } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaLock, FaMap } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -366,23 +366,37 @@ const VostcardDetailView: React.FC = () => {
     navigate('/flag-form', { state: { vostcardId: id, vostcardTitle: vostcard?.title, username: vostcard?.username } });
   };
 
-  const handleShareClick = () => {
-    // Generate public share URL
-    const publicUrl = `${window.location.origin}/share/${id}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: vostcard.title || 'Check out this Vostcard!',
-        text: vostcard.description || 'I found an interesting Vostcard',
-        url: publicUrl
-      }).catch(console.error);
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(publicUrl).then(() => {
-        alert('Share link copied to clipboard!');
-      }).catch(() => {
-        alert('Share this link: ' + publicUrl);
-      });
+  const handleShareClick = async () => {
+    try {
+      // Update the Vostcard to mark it as privately shared
+      if (vostcard?.id) {
+        const vostcardRef = doc(db, 'vostcards', vostcard.id);
+        await updateDoc(vostcardRef, {
+          isPrivatelyShared: true,
+          sharedAt: new Date()
+        });
+      }
+      
+      // Generate private share URL
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: vostcard?.title || 'Check out this Vostcard!',
+          text: vostcard?.description || 'I found an interesting Vostcard',
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(privateUrl).then(() => {
+          alert('Private share link copied to clipboard! Anyone with this link can view the Vostcard.');
+        }).catch(() => {
+          alert('Share this private link: ' + privateUrl);
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
     }
   };
 
@@ -684,6 +698,19 @@ const VostcardDetailView: React.FC = () => {
         >
           <FaShare size={24} color="#222" style={{ marginBottom: 4 }} />
         </div>
+        <div 
+          style={{ 
+            textAlign: 'center', 
+            cursor: 'pointer',
+            transition: 'transform 0.1s'
+          }}
+          onClick={handleViewOnMap}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <FaMap size={24} color="#222" style={{ marginBottom: 4 }} />
+        </div>
         {vostcard?.state === 'private' && (
           <div 
             style={{ 
@@ -747,7 +774,7 @@ const VostcardDetailView: React.FC = () => {
             cursor: 'pointer', 
             padding: '5px',
             position: 'absolute',
-            left: '25px'
+            left: '20px'
           }}
           onClick={handleFlagClick}
         />
@@ -774,7 +801,7 @@ const VostcardDetailView: React.FC = () => {
           style={{ 
             padding: '5px',
             position: 'absolute',
-            right: '25px'
+            right: '20px'
           }}
         />
       </div>
