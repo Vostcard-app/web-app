@@ -169,38 +169,36 @@ const VostcardDetailView: React.FC = () => {
 
   // Create photo URLs when vostcard is loaded
   useEffect(() => {
-    if (vostcard?.photos && vostcard.photos.length > 0) {
+    let urls: string[] = [];
+    
+    // Check for Firebase vostcards (photoURLs field)
+    if (vostcard?.photoURLs && vostcard.photoURLs.length > 0) {
+      urls = vostcard.photoURLs;
+      console.log('📸 Using Firebase photoURLs, count:', urls.length);
+    }
+    // Check for local vostcards (photos field with Blobs)
+    else if (vostcard?.photos && vostcard.photos.length > 0) {
       try {
-        let urls: string[] = [];
-        
         if (vostcard.photos[0] instanceof Blob) {
           // Local Vostcard with Blob photos
           urls = vostcard.photos.map((photo: Blob) => URL.createObjectURL(photo));
           console.log('📸 Created Blob URLs for local photos, count:', urls.length);
-        } else if (typeof vostcard.photos[0] === 'string') {
-          // Firebase Vostcard with string URLs
-          urls = vostcard.photos;
-          console.log('📸 Using Firebase URLs for photos, count:', urls.length);
-        } else if (vostcard.photoURLs) {
-          // Fallback to photoURLs property
-          urls = vostcard.photoURLs;
-          console.log('📸 Using photoURLs property, count:', urls.length);
-        }
-        
-        setPhotoURLs(urls);
-        
-        // Cleanup function for Blob URLs
-        return () => {
-          if (vostcard.photos[0] instanceof Blob) {
+          
+          // Cleanup function for Blob URLs
+          return () => {
             urls.forEach(url => URL.revokeObjectURL(url));
-          }
-        };
+          };
+        } else if (typeof vostcard.photos[0] === 'string') {
+          // Firebase Vostcard with string URLs in photos field (fallback)
+          urls = vostcard.photos;
+          console.log('📸 Using Firebase URLs from photos field, count:', urls.length);
+        }
       } catch (err) {
         console.error('❌ Error creating photo URLs:', err);
       }
-    } else {
-      setPhotoURLs([]);
     }
+    
+    setPhotoURLs(urls);
   }, [vostcard]);
 
   // Setup like listeners for public Vostcards
