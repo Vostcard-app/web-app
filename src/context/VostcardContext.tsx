@@ -428,7 +428,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
       
       const firebaseSnapshot = await getDocs(firebaseQuery);
-      const firebaseVostcards = firebaseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const firebaseVostcards = firebaseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       console.log(`☁️ Found ${firebaseVostcards.length} Firebase private vostcards`);
       
       // 3. Create maps for easier comparison

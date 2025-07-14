@@ -8,7 +8,7 @@ import { db } from '../firebase/firebaseConfig';
 
 const MyVostcardListView = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, username } = useAuth();
   const { savedVostcards, loadAllLocalVostcardsImmediate, syncInBackground, deletePrivateVostcard, setCurrentVostcard, postVostcard } = useVostcard(); // 🔧 ONLY PERFORMANCE CHANGE + postVostcard
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +96,45 @@ const MyVostcardListView = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    const subject = encodeURIComponent(`Check out this Vōstcard: ${vostcard.title}`);
-    const body = encodeURIComponent(`I thought you might be interested in this Vōstcard: ${vostcard.title}\n\nView it here: ${window.location.origin}/email/${vostcard.id}`);
+    // Get user's first name
+    const getUserFirstName = () => {
+      if (username) {
+        return username.split(' ')[0];
+      } else if (user?.displayName) {
+        return user.displayName.split(' ')[0];
+      } else if (user?.email) {
+        return user.email.split('@')[0];
+      }
+      return 'Anonymous';
+    };
+    
+    const subject = encodeURIComponent(`${getUserFirstName()} shared a Vōstcard: "${vostcard.title}"`);
+    
+    // Build location context if available
+    const locationText = vostcard?.geo?.latitude && vostcard?.geo?.longitude 
+      ? `📍 Location: ${vostcard.geo.latitude.toFixed(4)}, ${vostcard.geo.longitude.toFixed(4)}`
+      : '';
+    
+    const body = encodeURIComponent(`Hi there!
+
+I wanted to share something cool with you - I created this Vōstcard using an app that lets you share videos and photos with location context.
+
+🎬 "${vostcard.title}"
+
+${vostcard.description || ''}
+
+${locationText}
+
+Check it out here: ${window.location.origin}/email/${vostcard.id}
+
+Vōstcard is a location-based social media app where you can discover and share experiences through videos and photos tied to specific places. Pretty neat, right?
+
+Hope you enjoy it!
+
+${getUserFirstName()}
+
+---
+Sent via Vōstcard App`);
     
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };

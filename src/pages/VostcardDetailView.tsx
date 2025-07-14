@@ -564,19 +564,34 @@ ${shareText}`);
         return 'Anonymous';
       };
 
-      // Create email content with proper spacing
-      const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
-      const emailBody = `Hi,
+      // Create enhanced email content with better formatting
+      const subjectLine = `${getUserFirstName()} shared a Vōstcard: "${vostcard?.title || 'Untitled Vostcard'}"`;
+      
+      // Build location context if available
+      const locationText = vostcard?.latitude && vostcard?.longitude 
+        ? `📍 Location: ${vostcard.latitude.toFixed(4)}, ${vostcard.longitude.toFixed(4)}`
+        : '';
+      
+      const emailBody = `Hi there!
 
-I made this with an app called Vōstcard
+I wanted to share something cool with you - I created this Vōstcard using an app that lets you share videos and photos with location context.
 
-${emailUrl}
+🎬 "${vostcard?.title || 'Untitled Vostcard'}"
 
 ${vostcard?.description || ''}
 
-Cheers,
+${locationText}
 
-${getUserFirstName()}`;
+Check it out here: ${emailUrl}
+
+Vōstcard is a location-based social media app where you can discover and share experiences through videos and photos tied to specific places. Pretty neat, right?
+
+Hope you enjoy it!
+
+${getUserFirstName()}
+
+---
+Sent via Vōstcard App`;
 
       // Create mailto URL with subject and body
       const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
