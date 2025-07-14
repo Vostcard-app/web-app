@@ -6,15 +6,18 @@ import { useNavigate } from 'react-router-dom';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
 import { FaHome, FaArrowLeft } from 'react-icons/fa';
+import { useVostcard } from '../context/VostcardContext';
 
 const AccountSettingsView: React.FC = () => {
   const navigate = useNavigate();
+  const { manualSync } = useVostcard();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const handleUpdatePassword = async () => {
     if (newPassword !== confirmPassword) {
@@ -48,6 +51,21 @@ const AccountSettingsView: React.FC = () => {
       setErrorMessage(error.message || 'Failed to update password');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualSync = async () => {
+    setSyncing(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      await manualSync();
+      setSuccessMessage('✅ Sync completed successfully! Your vostcards are now up to date.');
+    } catch (error) {
+      console.error('Manual sync failed:', error);
+      setErrorMessage('❌ Sync failed. Please try again.');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -248,24 +266,54 @@ const AccountSettingsView: React.FC = () => {
             margin: '0 0 20px 0',
             fontSize: 16
           }}>
-            Manage your data backup and sync settings here.
+            Sync your vostcards between devices. This will check for any differences and update your data.
           </p>
 
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: '#d4edda',
+              color: '#155724',
+              borderRadius: 6,
+              fontSize: 14,
+              marginBottom: 16,
+              border: '1px solid #c3e6cb'
+            }}>
+              {successMessage}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div style={{
+              padding: '12px 16px',
+              backgroundColor: '#f8d7da',
+              color: '#721c24',
+              borderRadius: 6,
+              fontSize: 14,
+              marginBottom: 16,
+              border: '1px solid #f5c6cb'
+            }}>
+              {errorMessage}
+            </div>
+          )}
+
           <button
-            onClick={() => navigate('/sync-backup')}
+            onClick={handleManualSync}
+            disabled={syncing}
             style={{
-              backgroundColor: '#002B4D',
+              backgroundColor: syncing ? '#ccc' : '#002B4D',
               color: 'white',
               border: 'none',
               padding: '12px 20px',
               borderRadius: 8,
-              cursor: 'pointer',
+              cursor: syncing ? 'not-allowed' : 'pointer',
               fontSize: 16,
               fontWeight: 600,
               width: '100%'
             }}
           >
-            Sync & Backup Settings
+            {syncing ? '🔄 Syncing...' : '🔄 Force Sync'}
           </button>
         </div>
       </div>
