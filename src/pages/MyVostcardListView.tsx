@@ -134,15 +134,26 @@ ${getUserFirstName()}`);
     }
 
     console.log('🗑️ Delete clicked for private vostcard:', vostcardId);
+    console.log('🗑️ Current savedVostcards count before deletion:', savedVostcards.length);
+    console.log('🗑️ Vostcard to delete exists in list:', savedVostcards.some(v => v.id === vostcardId));
     
     try {
       // Show loading state
       setDeletingIds(prev => new Set([...prev, vostcardId]));
       
       // Delete from both IndexedDB and Firebase
+      console.log('🗑️ Calling deletePrivateVostcard...');
       await deletePrivateVostcard(vostcardId);
       
       console.log('✅ Private vostcard deleted successfully:', vostcardId);
+      console.log('✅ Current savedVostcards count after deletion:', savedVostcards.length);
+      
+      // Force refresh the local vostcards list to ensure UI updates
+      console.log('🔄 Refreshing vostcard list...');
+      await loadAllLocalVostcardsImmediate();
+      
+      console.log('✅ Vostcard list refreshed after deletion');
+      console.log('✅ Final savedVostcards count:', savedVostcards.length);
       
       // Clear loading state
       setDeletingIds(prev => {
@@ -153,6 +164,11 @@ ${getUserFirstName()}`);
       
     } catch (error) {
       console.error('❌ Failed to delete private vostcard:', error);
+      console.error('❌ Delete error details:', {
+        vostcardId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       
       // Clear loading state
       setDeletingIds(prev => {

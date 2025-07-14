@@ -1267,6 +1267,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
     try {
       console.log('🗑️ Starting hybrid delete for Vostcard:', id);
+      console.log('🗑️ Current savedVostcards count in context before delete:', savedVostcards.length);
       
       // 1. Delete from IndexedDB
       const localDB = await openDB();
@@ -1302,7 +1303,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Update the savedVostcards list by filtering out the deleted item
-      setSavedVostcards(prev => prev.filter(vostcard => vostcard.id !== id));
+      console.log('🗑️ Updating savedVostcards state, filtering out:', id);
+      setSavedVostcards(prev => {
+        const filtered = prev.filter(vostcard => vostcard.id !== id);
+        console.log('🗑️ Previous count:', prev.length, 'New count:', filtered.length);
+        return filtered;
+      });
       console.log('✅ Hybrid delete completed for Vostcard:', id);
       
     } catch (error) {
@@ -1310,7 +1316,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       alert('Failed to delete Vostcard. Please try again.');
       throw error;
     }
-  }, [setLastSyncTimestamp]);
+  }, [setLastSyncTimestamp, savedVostcards]);
 
   // ✅ Clear current Vostcard
   const clearVostcard = useCallback(() => {
