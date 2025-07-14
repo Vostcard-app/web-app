@@ -127,6 +127,85 @@ const MyVostcardListView = () => {
                 💡 Vostcards from your other devices will sync automatically when you visit this page.
               </p>
             )}
+            
+            {/* Sync Debug Buttons */}
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  console.log('🔍 === SYNC DEBUG INFO ===');
+                  console.log('🔍 Current user:', {
+                    uid: user?.uid,
+                    email: user?.email,
+                    displayName: user?.displayName
+                  });
+                  console.log('🔍 Saved vostcards count:', savedVostcards.length);
+                  console.log('🔍 Triggering manual sync...');
+                  loadAllLocalVostcards();
+                }}
+                style={{
+                  backgroundColor: '#ff6b35',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔍 Debug Sync
+              </button>
+              
+              <button
+                onClick={async () => {
+                  if (!user?.uid) {
+                    console.log('❌ No user logged in');
+                    return;
+                  }
+                  
+                  console.log('🔍 === CHECKING ALL FIREBASE VOSTCARDS ===');
+                  try {
+                    const { collection, query, where, getDocs } = await import('firebase/firestore');
+                    const { db } = await import('../firebase/firebaseConfig');
+                    
+                    // Check ALL vostcards for this user (private and public)
+                    const allQuery = query(
+                      collection(db, 'vostcards'),
+                      where('userID', '==', user.uid)
+                    );
+                    
+                    const allSnapshot = await getDocs(allQuery);
+                    console.log(`🔍 Found ${allSnapshot.docs.length} TOTAL vostcards in Firebase for user ${user.uid}`);
+                    
+                    allSnapshot.docs.forEach((doc, index) => {
+                      const data = doc.data();
+                      console.log(`🔍 Firebase Vostcard ${index + 1}:`, {
+                        id: data.id,
+                        title: data.title,
+                        visibility: data.visibility,
+                        state: data.state,
+                        userID: data.userID,
+                        username: data.username,
+                        createdAt: data.createdAt?.toDate?.()?.toISOString(),
+                        updatedAt: data.updatedAt?.toDate?.()?.toISOString()
+                      });
+                    });
+                  } catch (error) {
+                    console.error('❌ Error checking Firebase:', error);
+                  }
+                }}
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                🔍 Check Firebase
+              </button>
+            </div>
                           <button
                 onClick={() => navigate('/create-step1')}
                 style={{

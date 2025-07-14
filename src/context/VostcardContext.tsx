@@ -409,15 +409,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const querySnapshot = await getDocs(q);
       console.log(`☁️ Found ${querySnapshot.docs.length} total private vostcards in Firebase`);
       
-      // Log the first few docs for debugging
-      querySnapshot.docs.slice(0, 3).forEach((doc, index) => {
+      // Log ALL docs for debugging sync issues
+      querySnapshot.docs.forEach((doc, index) => {
         const data = doc.data();
-        console.log(`☁️ Vostcard ${index + 1}:`, {
+        console.log(`☁️ Firebase Vostcard ${index + 1}:`, {
           id: data.id,
           title: data.title,
+          description: data.description?.substring(0, 50) + '...',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || 'no createdAt',
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || 'no updatedAt',
           visibility: data.visibility,
-          userID: data.userID
+          state: data.state,
+          userID: data.userID,
+          username: data.username,
+          hasVideo: data.hasVideo,
+          hasPhotos: data.hasPhotos
         });
       });
       
@@ -542,8 +548,28 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
           // Filter out Vostcards with state === 'posted'
           const filteredVostcards = restoredVostcards.filter(v => v.state !== 'posted');
+          
+          // Log details of loaded vostcards for debugging sync issues
+          console.log('📂 Loaded vostcards from IndexedDB:', filteredVostcards.length);
+          filteredVostcards.forEach((vostcard, index) => {
+            console.log(`📂 IndexedDB Vostcard ${index + 1}:`, {
+              id: vostcard.id,
+              title: vostcard.title,
+              description: vostcard.description?.substring(0, 50) + '...',
+              createdAt: vostcard.createdAt,
+              updatedAt: vostcard.updatedAt,
+              state: vostcard.state,
+              userID: vostcard.userID,
+              username: vostcard.username,
+              hasVideo: !!vostcard.video,
+              hasPhotos: vostcard.photos?.length || 0,
+              hasFirebaseVideoURL: !!vostcard._firebaseVideoURL,
+              hasFirebasePhotoURLs: (vostcard._firebasePhotoURLs?.length || 0) > 0
+            });
+          });
+          
           setSavedVostcards(filteredVostcards);
-          console.log('📂 Loaded all saved Vōstcards:', filteredVostcards);
+          console.log('📂 Finished loading saved Vōstcards');
           resolve();
         };
       });
@@ -794,7 +820,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Save to Firebase Firestore
       const docRef = doc(db, 'vostcards', vostcardId);
-      await setDoc(docRef, {
+      const firebaseData = {
         id: vostcardId,
         title: currentVostcard.title || '',
         description: currentVostcard.description || '',
@@ -817,7 +843,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         offerDetails: currentVostcard.offerDetails || null,
         script: currentVostcard.script || null,
         scriptId: currentVostcard.scriptId || null
+      };
+      
+      console.log('☁️ Saving private vostcard to Firebase:', {
+        id: firebaseData.id,
+        title: firebaseData.title,
+        userID: firebaseData.userID,
+        username: firebaseData.username,
+        visibility: firebaseData.visibility,
+        state: firebaseData.state,
+        hasVideo: firebaseData.hasVideo,
+        hasPhotos: firebaseData.hasPhotos
       });
+      
+      await setDoc(docRef, firebaseData);
 
       console.log('✅ Private Vostcard synced to Firebase successfully');
       
