@@ -5,6 +5,7 @@ import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMapPin,
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { useVostcard } from '../context/VostcardContext';
 
 const PublicVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,7 @@ const PublicVostcardView: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false); // Track if current user liked
   const [showLikeMessage, setShowLikeMessage] = useState(false); // Show registration encouragement
   const { user, username } = useAuth();
+  const { debugSpecificVostcard, fixBrokenSharedVostcard } = useVostcard();
 
   // Anonymous like management using localStorage
   const getAnonymousLikeKey = (vostcardId: string) => `anonymous_like_${vostcardId}`;
@@ -304,29 +306,37 @@ ${shareText}`);
 
   // Add FaEnvelope to the imports
   // Add the email sharing function
-  const handleEmailShare = () => {
-    // Generate public share URL
-    const publicUrl = `${window.location.origin}/share/${id}`;
-    
-    // Get user's first name
-    const getUserFirstName = () => {
-      if (username) {
-        return username.split(' ')[0];
-      } else if (user?.displayName) {
-        return user.displayName.split(' ')[0];
-      } else if (user?.email) {
-        return user.email.split('@')[0];
+  const handleEmailShare = async () => {
+    try {
+      if (!vostcard?.id) {
+        throw new Error('No vostcard to share');
       }
-      return 'Anonymous';
-    };
 
-    // Create email content with exact spacing and 14dp font
-    const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
-    const emailBody = `Hi,
+      // First, ensure the vostcard exists in Firebase
+      await fixBrokenSharedVostcard(vostcard.id);
+
+      // Generate private share URL
+      const privateUrl = `${window.location.origin}/share/${vostcard.id}`;
+      
+      // Get user's first name
+      const getUserFirstName = () => {
+        if (username) {
+          return username.split(' ')[0];
+        } else if (user?.displayName) {
+          return user.displayName.split(' ')[0];
+        } else if (user?.email) {
+          return user.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      // Create email content with exact spacing and 14dp font
+      const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
+      const emailBody = `Hi,
 
 I made this with an app called Vōstcard
 
-${publicUrl}
+${privateUrl}
 
 ${vostcard.description || ''}
 
@@ -334,11 +344,16 @@ Cheers,
 
 ${getUserFirstName()}`;
 
-    // Create mailto URL with subject and body
-    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
-    
-    // Open email client with pre-filled subject and body
-    window.open(mailtoUrl, '_blank');
+      // Create mailto URL with subject and body
+      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
+      
+      // Open email client with pre-filled subject and body
+      window.open(mailtoUrl, '_blank');
+      
+    } catch (error) {
+      console.error('Error sharing vostcard:', error);
+      alert('Failed to share vostcard. Please try again.');
+    }
   };
 
   // Add the private email sharing function
@@ -895,6 +910,15 @@ ${getUserFirstName()}`;
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Debug Buttons */}
+      <button onClick={() => debugSpecificVostcard('7a90077c-a140-420c-888a-d3ebfd5607dd')}>
+        Debug This Vostcard
+      </button>
+      
+      <button onClick={() => fixBrokenSharedVostcard('7a90077c-a140-420c-888a-d3ebfd5607dd')}>
+        Fix This Vostcard
+      </button>
     </div>
   );
 };

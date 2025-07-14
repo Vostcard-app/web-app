@@ -24,7 +24,9 @@ const VostcardDetailView: React.FC = () => {
     isLiked, 
     setupLikeListeners, 
     loadLocalVostcard, 
-    currentVostcard 
+    currentVostcard,
+    debugSpecificVostcard,
+    fixBrokenSharedVostcard
   } = useVostcard();
 
   const [vostcard, setVostcard] = useState<any>(null);
@@ -502,93 +504,11 @@ ${shareText}`);
         throw new Error('No vostcard to share');
       }
 
-      // Check if this is a private vostcard (only exists locally)
-      if (isPrivate) {
-        console.log('📤 Saving private vostcard to Firebase for sharing...');
-        
-        // First, save the private vostcard to Firebase with proper sharing fields
-        const vostcardRef = doc(db, 'vostcards', vostcard.id);
-        
-        // Upload media if needed (similar to saveLocalVostcard)
-        let videoURL = '';
-        let photoURLs: string[] = [];
-        
-        const user = authUser;
-        if (!user) {
-          throw new Error('User not authenticated');
-        }
+      // First, ensure the vostcard exists in Firebase
+      await fixBrokenSharedVostcard(vostcard.id);
 
-        // Upload video if it exists
-        if (vostcard.video && vostcard.video instanceof Blob) {
-          const storageRef = ref(storage, `vostcards/${user.uid}/${vostcard.id}/video.webm`);
-          const uploadTask = uploadBytesResumable(storageRef, vostcard.video);
-          videoURL = await new Promise((resolve, reject) => {
-            uploadTask.on('state_changed', null, reject, async () => {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadURL);
-            });
-          });
-        }
-
-        // Upload photos if they exist
-        if (vostcard.photos && vostcard.photos.length > 0) {
-          photoURLs = await Promise.all(
-            vostcard.photos.map(async (photo, idx) => {
-              if (photo instanceof Blob) {
-                const storageRef = ref(storage, `vostcards/${user.uid}/${vostcard.id}/photo${idx + 1}.jpg`);
-                const uploadTask = uploadBytesResumable(storageRef, photo);
-                return new Promise((resolve, reject) => {
-                  uploadTask.on('state_changed', null, reject, async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    resolve(downloadURL);
-                  });
-                });
-              }
-              return '';
-            })
-          );
-        }
-
-        // Save to Firebase with sharing flags
-        await setDoc(vostcardRef, {
-          id: vostcard.id,
-          title: vostcard.title || '',
-          description: vostcard.description || '',
-          categories: vostcard.categories || [],
-          username: authUsername || user.email?.split('@')[0] || 'Anonymous',
-          userID: user.uid,
-          videoURL: videoURL,
-          photoURLs: photoURLs,
-          latitude: vostcard.geo?.latitude || null,
-          longitude: vostcard.geo?.longitude || null,
-          avatarURL: user.photoURL || '',
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now(),
-          state: 'private',
-          visibility: 'private',
-          isPrivatelyShared: true,
-          sharedAt: new Date(),
-          hasVideo: !!vostcard.video,
-          hasPhotos: (vostcard.photos?.length || 0) > 0,
-          mediaUploadStatus: 'complete',
-          isOffer: vostcard.isOffer || false,
-          offerDetails: vostcard.offerDetails || null,
-          script: vostcard.script || null,
-          scriptId: vostcard.scriptId || null
-        });
-        
-        console.log('✅ Private vostcard saved to Firebase for sharing');
-      } else {
-        // For already-public vostcards, just update the sharing flag
-        const vostcardRef = doc(db, 'vostcards', vostcard.id);
-        await updateDoc(vostcardRef, {
-          isPrivatelyShared: true,
-          sharedAt: new Date()
-        });
-      }
-      
       // Generate private share URL
-      const privateUrl = `${window.location.origin}/share/${id}`;
+      const privateUrl = `${window.location.origin}/share/${vostcard.id}`;
       
       // Get user's first name
       const getUserFirstName = () => {
