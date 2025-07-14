@@ -392,188 +392,287 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('vostcard_last_sync', timestamp.toISOString());
   }, []);
 
-  // Sync private vostcards from Firebase to IndexedDB (Full sync for now due to missing Firestore index)
+  // 🔄 TRUE BIDIRECTIONAL SYNC - Compare local IndexedDB with Firebase and sync differences
   const syncPrivateVostcardsFromFirebase = useCallback(async () => {
     const user = auth.currentUser;
     if (!user) {
-      console.log('☁️ No user logged in, skipping Firebase sync');
+      console.log('☁️ No user logged in, skipping bidirectional sync');
       return;
     }
 
     try {
-      // Force full sync for now until Firestore index is created
-      // TODO: Enable incremental sync after creating index for: userID + visibility + updatedAt
-      console.log('☁️ Starting full sync from Firebase...', {
-        userID: user.uid,
-        note: 'Using full sync (incremental sync requires Firestore index)'
+      console.log('🔄 Starting bidirectional sync between IndexedDB and Firebase...');
+      const syncStartTime = new Date();
+      
+      // 1. Get all local vostcards from IndexedDB
+      const localDB = await openDB();
+      const localTransaction = localDB.transaction([STORE_NAME], 'readonly');
+      const localStore = localTransaction.objectStore(STORE_NAME);
+      const localVostcards = await new Promise<any[]>((resolve, reject) => {
+        const request = localStore.getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
       });
       
-      // Always do full sync for now
-      const q = query(
+      // Filter out posted vostcards (we only sync private ones)
+      const localPrivateVostcards = localVostcards.filter(v => v.state === 'private');
+      console.log(`📱 Found ${localPrivateVostcards.length} local private vostcards`);
+      
+      // 2. Get all Firebase vostcards
+      const firebaseQuery = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
         where('visibility', '==', 'private')
       );
       
-      const querySnapshot = await getDocs(q);
-      console.log(`☁️ Found ${querySnapshot.docs.length} total private vostcards in Firebase`);
+      const firebaseSnapshot = await getDocs(firebaseQuery);
+      const firebaseVostcards = firebaseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log(`☁️ Found ${firebaseVostcards.length} Firebase private vostcards`);
       
-      // Log ALL docs for debugging sync issues
-      querySnapshot.docs.forEach((doc, index) => {
-        const data = doc.data();
-        console.log(`☁️ Firebase Vostcard ${index + 1}:`, {
-          id: data.id,
-          title: data.title,
-          description: data.description?.substring(0, 50) + '...',
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || 'no createdAt',
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || 'no updatedAt',
-          visibility: data.visibility,
-          state: data.state,
-          userID: data.userID,
-          username: data.username,
-          hasVideo: data.hasVideo,
-          hasPhotos: data.hasPhotos
-        });
+      // 3. Create maps for easier comparison
+      const localMap = new Map(localPrivateVostcards.map(v => [v.id, v]));
+      const firebaseMap = new Map(firebaseVostcards.map(v => [v.id, v]));
+      
+      // Get all unique IDs from both sources
+      const allIds = new Set([...localMap.keys(), ...firebaseMap.keys()]);
+      console.log(`🔍 Comparing ${allIds.size} unique vostcards...`);
+      
+      // 4. Process each vostcard
+      const toUploadToFirebase = [];
+      const toDownloadToLocal = [];
+      const toUpdateLocal = [];
+      const toUpdateFirebase = [];
+      
+      for (const id of allIds) {
+        const localVostcard = localMap.get(id);
+        const firebaseVostcard = firebaseMap.get(id);
+        
+        if (localVostcard && !firebaseVostcard) {
+          // EXISTS LOCALLY ONLY → Upload to Firebase
+          console.log(`⬆️ Local only: ${localVostcard.title} → uploading to Firebase`);
+          toUploadToFirebase.push(localVostcard);
+          
+        } else if (!localVostcard && firebaseVostcard) {
+          // EXISTS IN FIREBASE ONLY → Download to local
+          console.log(`⬇️ Firebase only: ${firebaseVostcard.title} → downloading to local`);
+          toDownloadToLocal.push(firebaseVostcard);
+          
+        } else if (localVostcard && firebaseVostcard) {
+          // EXISTS IN BOTH → Compare timestamps
+          const localUpdated = new Date(localVostcard.updatedAt);
+          const firebaseUpdated = firebaseVostcard.updatedAt?.toDate?.() || new Date(firebaseVostcard.updatedAt);
+          
+          if (localUpdated > firebaseUpdated) {
+            console.log(`⬆️ Local newer: ${localVostcard.title} → updating Firebase`);
+            toUpdateFirebase.push(localVostcard);
+          } else if (firebaseUpdated > localUpdated) {
+            console.log(`⬇️ Firebase newer: ${firebaseVostcard.title} → updating local`);
+            toUpdateLocal.push(firebaseVostcard);
+          } else {
+            console.log(`✅ In sync: ${localVostcard.title}`);
+          }
+        }
+      }
+      
+      // 5. Execute sync operations
+      console.log(`🔄 Sync summary:`, {
+        toUploadToFirebase: toUploadToFirebase.length,
+        toDownloadToLocal: toDownloadToLocal.length,
+        toUpdateLocal: toUpdateLocal.length,
+        toUpdateFirebase: toUpdateFirebase.length
       });
       
-      // First, download all media for all vostcards
-      const processedVostcards = [];
-      const syncStartTime = new Date();
-      
-      if (querySnapshot.docs.length === 0) {
-        console.log('☁️ No changes to sync');
-        return;
+      // Upload local-only vostcards to Firebase
+      for (const localVostcard of toUploadToFirebase) {
+        try {
+          await uploadVostcardToFirebase(localVostcard);
+          console.log(`✅ Uploaded: ${localVostcard.title}`);
+        } catch (error) {
+          console.error(`❌ Failed to upload ${localVostcard.title}:`, error);
+        }
       }
       
-      console.log(`☁️ Processing ${querySnapshot.docs.length} vostcards...`);
+      // Update Firebase vostcards with newer local versions
+      for (const localVostcard of toUpdateFirebase) {
+        try {
+          await uploadVostcardToFirebase(localVostcard);
+          console.log(`✅ Updated Firebase: ${localVostcard.title}`);
+        } catch (error) {
+          console.error(`❌ Failed to update Firebase ${localVostcard.title}:`, error);
+        }
+      }
       
-      for (const docSnapshot of querySnapshot.docs) {
-        const firebaseVostcard = docSnapshot.data();
+      // Download and save Firebase-only and updated vostcards to local
+      const toSaveLocal = [...toDownloadToLocal, ...toUpdateLocal];
+      if (toSaveLocal.length > 0) {
+        const writeTransaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const writeStore = writeTransaction.objectStore(STORE_NAME);
         
-        // Convert Firebase vostcard to local format and download media
-        console.log(`☁️ Processing Firebase vostcard: ${firebaseVostcard.title}`);
-        
-        let videoBase64 = null;
-        let photosBase64: string[] = [];
-        
-        // Download video if it exists
-        if (firebaseVostcard.videoURL) {
+        for (const firebaseVostcard of toSaveLocal) {
           try {
-            console.log(`☁️ Downloading video from Firebase Storage...`);
-            const videoResponse = await fetch(firebaseVostcard.videoURL);
-            if (videoResponse.ok) {
-              const videoBlob = await videoResponse.blob();
-              videoBase64 = await new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.readAsDataURL(videoBlob);
-              });
-              console.log(`✅ Video downloaded and converted to base64`);
-            } else {
-              console.error(`❌ Failed to download video: ${videoResponse.status}`);
-            }
+            const localVostcard = await downloadFirebaseVostcardToLocal(firebaseVostcard);
+            writeStore.put(localVostcard);
+            console.log(`✅ Downloaded/Updated local: ${firebaseVostcard.title}`);
           } catch (error) {
-            console.error(`❌ Error downloading video:`, error);
+            console.error(`❌ Failed to download ${firebaseVostcard.title}:`, error);
           }
-        }
-        
-        // Download photos if they exist
-        if (firebaseVostcard.photoURLs && firebaseVostcard.photoURLs.length > 0) {
-          console.log(`☁️ Downloading ${firebaseVostcard.photoURLs.length} photos from Firebase Storage...`);
-          for (let i = 0; i < firebaseVostcard.photoURLs.length; i++) {
-            const photoURL = firebaseVostcard.photoURLs[i];
-            if (photoURL) {
-              try {
-                const photoResponse = await fetch(photoURL);
-                if (photoResponse.ok) {
-                  const photoBlob = await photoResponse.blob();
-                  const photoBase64 = await new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.readAsDataURL(photoBlob);
-                  });
-                  photosBase64.push(photoBase64);
-                  console.log(`✅ Photo ${i + 1} downloaded and converted to base64`);
-                } else {
-                  console.error(`❌ Failed to download photo ${i + 1}: ${photoResponse.status}`);
-                }
-              } catch (error) {
-                console.error(`❌ Error downloading photo ${i + 1}:`, error);
-              }
-            }
-          }
-        }
-
-        const localVostcard = {
-          id: firebaseVostcard.id,
-          state: 'private' as const,
-          title: firebaseVostcard.title || '',
-          description: firebaseVostcard.description || '',
-          categories: firebaseVostcard.categories || [],
-          geo: firebaseVostcard.latitude && firebaseVostcard.longitude 
-            ? { latitude: firebaseVostcard.latitude, longitude: firebaseVostcard.longitude }
-            : null,
-          username: firebaseVostcard.username || '',
-          userID: firebaseVostcard.userID || '',
-          createdAt: firebaseVostcard.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          updatedAt: firebaseVostcard.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          isOffer: firebaseVostcard.isOffer || false,
-          offerDetails: firebaseVostcard.offerDetails || null,
-          script: firebaseVostcard.script || null,
-          scriptId: firebaseVostcard.scriptId || null,
-          video: null, // Will be restored from base64 when loading
-          photos: [], // Will be restored from base64 when loading
-          _videoBase64: videoBase64,
-          _photosBase64: photosBase64,
-          // Keep Firebase URLs as backup
-          _firebaseVideoURL: firebaseVostcard.videoURL || null,
-          _firebasePhotoURLs: firebaseVostcard.photoURLs || []
-        };
-        
-        console.log(`☁️ Processed vostcard with media:`, {
-          title: localVostcard.title,
-          hasVideoBase64: !!localVostcard._videoBase64,
-          photosBase64Count: localVostcard._photosBase64.length
-        });
-        
-        processedVostcards.push(localVostcard);
-      }
-      
-      // Now save all processed vostcards to IndexedDB with a fresh transaction
-      if (processedVostcards.length > 0) {
-        console.log(`☁️ Saving ${processedVostcards.length} processed vostcards to IndexedDB...`);
-        
-        const localDB = await openDB();
-        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        
-        // Put all vostcards quickly while transaction is active
-        for (const localVostcard of processedVostcards) {
-          console.log(`☁️ Storing vostcard: ${localVostcard.title}`);
-          store.put(localVostcard);
         }
         
         // Wait for transaction to complete
         await new Promise<void>((resolve, reject) => {
-          transaction.oncomplete = () => {
-            console.log(`✅ All ${processedVostcards.length} vostcards saved to IndexedDB`);
-            resolve();
-          };
-          transaction.onerror = () => {
-            console.error('❌ Transaction failed:', transaction.error);
-            reject(transaction.error);
-          };
+          writeTransaction.oncomplete = () => resolve();
+          writeTransaction.onerror = () => reject(writeTransaction.error);
         });
       }
       
-      // Update last sync timestamp
+      // Update sync timestamp
       setLastSyncTimestamp(syncStartTime);
       
-      console.log(`✅ Full sync completed: ${processedVostcards.length} vostcards synced to IndexedDB`);
+      const totalChanges = toUploadToFirebase.length + toDownloadToLocal.length + toUpdateLocal.length + toUpdateFirebase.length;
+      console.log(`✅ Bidirectional sync completed: ${totalChanges} changes synced`);
+      
     } catch (error: any) {
-      console.error('❌ Error in sync from Firebase:', error);
+      console.error('❌ Error in bidirectional sync:', error);
+      throw error;
     }
-  }, [getLastSyncTimestamp, setLastSyncTimestamp]);
+  }, [setLastSyncTimestamp]);
+
+  // Helper function to upload local vostcard to Firebase
+  const uploadVostcardToFirebase = async (localVostcard: any) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('No user logged in');
+
+    // Upload media to Firebase Storage
+    let videoURL = '';
+    let photoURLs: string[] = [];
+
+    // Upload video if exists
+    if (localVostcard._videoBase64) {
+      const videoBlob = await base64ToBlob(localVostcard._videoBase64, 'video/webm');
+      videoURL = await uploadVideo(user.uid, localVostcard.id, videoBlob);
+    }
+
+    // Upload photos if exist
+    if (localVostcard._photosBase64 && localVostcard._photosBase64.length > 0) {
+      photoURLs = await Promise.all(
+        localVostcard._photosBase64.map(async (photoBase64: string, idx: number) => {
+          const photoBlob = await base64ToBlob(photoBase64, 'image/jpeg');
+          return await uploadPhoto(user.uid, localVostcard.id, idx, photoBlob);
+        })
+      );
+    }
+
+    // Save to Firebase Firestore
+    const docRef = doc(db, 'vostcards', localVostcard.id);
+    await setDoc(docRef, {
+      id: localVostcard.id,
+      title: localVostcard.title || '',
+      description: localVostcard.description || '',
+      categories: localVostcard.categories || [],
+      username: localVostcard.username,
+      userID: user.uid,
+      videoURL: videoURL,
+      photoURLs: photoURLs,
+      latitude: localVostcard.geo?.latitude || null,
+      longitude: localVostcard.geo?.longitude || null,
+      avatarURL: user.photoURL || '',
+      createdAt: Timestamp.fromDate(new Date(localVostcard.createdAt)),
+      updatedAt: Timestamp.fromDate(new Date(localVostcard.updatedAt)),
+      state: 'private',
+      visibility: 'private',
+      hasVideo: !!localVostcard._videoBase64,
+      hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
+      mediaUploadStatus: 'complete',
+      isOffer: localVostcard.isOffer || false,
+      offerDetails: localVostcard.offerDetails || null,
+      script: localVostcard.script || null,
+      scriptId: localVostcard.scriptId || null
+    });
+  };
+
+  // Helper function to download Firebase vostcard to local format
+  const downloadFirebaseVostcardToLocal = async (firebaseVostcard: any) => {
+    let videoBase64 = null;
+    let photosBase64: string[] = [];
+
+    // Download video
+    if (firebaseVostcard.videoURL) {
+      try {
+        const videoResponse = await fetch(firebaseVostcard.videoURL);
+        if (videoResponse.ok) {
+          const videoBlob = await videoResponse.blob();
+          videoBase64 = await blobToBase64(videoBlob);
+        }
+      } catch (error) {
+        console.error('Failed to download video:', error);
+      }
+    }
+
+    // Download photos
+    if (firebaseVostcard.photoURLs && firebaseVostcard.photoURLs.length > 0) {
+      photosBase64 = await Promise.all(
+        firebaseVostcard.photoURLs.map(async (photoURL: string) => {
+          try {
+            const photoResponse = await fetch(photoURL);
+            if (photoResponse.ok) {
+              const photoBlob = await photoResponse.blob();
+              return await blobToBase64(photoBlob);
+            }
+          } catch (error) {
+            console.error('Failed to download photo:', error);
+          }
+          return '';
+        })
+      );
+      photosBase64 = photosBase64.filter(base64 => base64 !== '');
+    }
+
+    return {
+      id: firebaseVostcard.id,
+      state: 'private' as const,
+      title: firebaseVostcard.title || '',
+      description: firebaseVostcard.description || '',
+      categories: firebaseVostcard.categories || [],
+      geo: firebaseVostcard.latitude && firebaseVostcard.longitude 
+        ? { latitude: firebaseVostcard.latitude, longitude: firebaseVostcard.longitude }
+        : null,
+      username: firebaseVostcard.username || '',
+      userID: firebaseVostcard.userID || '',
+      createdAt: firebaseVostcard.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: firebaseVostcard.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      isOffer: firebaseVostcard.isOffer || false,
+      offerDetails: firebaseVostcard.offerDetails || null,
+      script: firebaseVostcard.script || null,
+      scriptId: firebaseVostcard.scriptId || null,
+      video: null,
+      photos: [],
+      _videoBase64: videoBase64,
+      _photosBase64: photosBase64,
+      _firebaseVideoURL: firebaseVostcard.videoURL || null,
+      _firebasePhotoURLs: firebaseVostcard.photoURLs || []
+    };
+  };
+
+  // Helper functions for base64 conversion
+  const blobToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const base64ToBlob = (base64: string, mimeType: string): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const byteCharacters = atob(base64.split(',')[1]);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      resolve(new Blob([byteArray], { type: mimeType }));
+    });
+  };
 
   // Load all Vostcards from IndexedDB and restore their blobs (with Firebase sync)
   const loadAllLocalVostcards = useCallback(async () => {
