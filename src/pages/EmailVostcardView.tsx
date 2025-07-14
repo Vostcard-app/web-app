@@ -78,6 +78,10 @@ const EmailVostcardView: React.FC = () => {
     });
   };
 
+  const handleFreeAccount = () => {
+    navigate('/user-guide');
+  };
+
   const handleShareVostcard = () => {
     const shareUrl = `${window.location.origin}/email/${id}`;
     
@@ -174,13 +178,14 @@ const EmailVostcardView: React.FC = () => {
     );
   }
 
-  const { title, description, photoURLs = [], videoURL, username: vostcardUsername } = vostcard;
+  const { title, description, photoURLs = [], videoURL, username: vostcardUsername, avatarURL } = vostcard;
 
   return (
     <div style={{ 
       minHeight: '100vh', 
       backgroundColor: 'white',
-      color: '#333'
+      color: '#333',
+      overflowY: 'auto' // Make screen scrollable
     }}>
       {/* User Header */}
       <motion.div
@@ -205,7 +210,15 @@ const EmailVostcardView: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          <FaUserCircle size={50} color="#ccc" />
+          {avatarURL ? (
+            <img 
+              src={avatarURL} 
+              alt="User Avatar" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          ) : (
+            <FaUserCircle size={50} color="#ccc" />
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>
@@ -215,6 +228,50 @@ const EmailVostcardView: React.FC = () => {
             📧 Shared via Email
           </div>
         </div>
+      </motion.div>
+
+      {/* Icons and Free Account Button */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        style={{
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: '1px solid #eee',
+          backgroundColor: 'white'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <FaHeart size={20} color="#e74c3c" />
+          <FaMapPin size={20} color="#28a745" />
+        </div>
+        <button
+          onClick={handleFreeAccount}
+          style={{
+            padding: '8px 16px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#0056b3';
+            e.currentTarget.style.transform = 'scale(1.05)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#007bff';
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          Free Account
+        </button>
       </motion.div>
 
       {/* Main Content */}
@@ -443,6 +500,32 @@ const EmailVostcardView: React.FC = () => {
           >
             Join Vōstcard
           </button>
+        </motion.div>
+
+        {/* About Vōstcard */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          style={{
+            textAlign: 'center',
+            padding: '24px',
+            marginTop: '20px',
+            backgroundColor: 'white',
+            borderTop: '1px solid #eee'
+          }}
+        >
+          <div style={{ 
+            fontSize: '14px', 
+            color: '#666', 
+            lineHeight: 1.6,
+            maxWidth: '450px',
+            margin: '0 auto'
+          }}>
+            This was made with Vōstcard. It allows you to make, share private Vōstcards or post them on the map. 
+            You can also see Vōstcards that have been posted no matter where in the world they are. 
+            It's free and always will be.
+          </div>
         </motion.div>
       </div>
     </div>
