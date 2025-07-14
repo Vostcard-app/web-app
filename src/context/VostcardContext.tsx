@@ -410,6 +410,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // Query for user's private vostcards updated since last sync
       let q;
+      let attemptIncrementalSync = !isFullSync;
+      
       if (isFullSync) {
         // Full sync - get all private vostcards
         console.log('☁️ Doing FULL sync - getting all private vostcards');
@@ -429,8 +431,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         );
       }
       
-      const querySnapshot = await getDocs(q);
-      console.log(`☁️ Found ${querySnapshot.docs.length} ${isFullSync ? 'total' : 'updated'} private vostcards in Firebase`);
+      let querySnapshot;
+      try {
+        querySnapshot = await getDocs(q);
+      } catch (error: any) {
+        if (error.code === 'failed-precondition' || error.message?.includes('requires an index')) {
+          console.log('☁️ Incremental sync failed (missing Firestore index), falling back to full sync');
+          console.log('ℹ️ To enable incremental sync, create a Firestore index for: userID + visibility + updatedAt');
+          // Fallback to full sync when incremental sync fails due to missing index
+          q = query(
+            collection(db, 'vostcards'),
+            where('userID', '==', user.uid),
+            where('visibility', '==', 'private')
+          );
+          querySnapshot = await getDocs(q);
+          console.log('☁️ Fallback to FULL sync completed successfully');
+          attemptIncrementalSync = false; // Mark that we fell back to full sync
+        } else {
+          throw error;
+        }
+      }
+      
+      const syncType = isFullSync || !attemptIncrementalSync ? 'total' : 'updated';
+      console.log(`☁️ Found ${querySnapshot.docs.length} ${syncType} private vostcards in Firebase`);
       
       // Log the first few docs for debugging
       querySnapshot.docs.slice(0, 3).forEach((doc, index) => {
@@ -494,7 +517,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Update last sync timestamp
       setLastSyncTimestamp(syncStartTime);
       
-      console.log(`✅ Incremental sync completed: ${syncedCount} vostcards synced to IndexedDB`);
+      const finalSyncType = isFullSync || !attemptIncrementalSync ? 'Full' : 'Incremental';
+      console.log(`✅ ${finalSyncType} sync completed: ${syncedCount} vostcards synced to IndexedDB`);
     } catch (error) {
       console.error('❌ Error in incremental sync from Firebase:', error);
     }
