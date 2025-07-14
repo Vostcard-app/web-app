@@ -72,7 +72,7 @@ const ScrollingCameraView: React.FC = () => {
             width: { ideal: 1280 },
             height: { ideal: 720 }
           },
-          audio: false
+          audio: true  // Enable audio capture
         });
         
         streamRef.current = stream;
@@ -194,13 +194,28 @@ const ScrollingCameraView: React.FC = () => {
       return;
     }
 
-    console.log('📹 Starting PORTRAIT recording from canvas (720x1280)...');
+    console.log('📹 Starting PORTRAIT recording from canvas (720x1280) with audio...');
     
     // Record from canvas - guaranteed portrait 9:16
     const canvasStream = canvasRef.current.captureStream(30);
     const mimeType = MediaRecorder.isTypeSupported('video/webm') ? 'video/webm' : 'video/mp4';
     
-    const mediaRecorder = new MediaRecorder(canvasStream, {
+    // Create a mixed stream with video from canvas and audio from original camera
+    const mixedStream = new MediaStream();
+    
+    // Add video tracks from canvas
+    canvasStream.getVideoTracks().forEach(track => {
+      mixedStream.addTrack(track);
+    });
+    
+    // Add audio tracks from original camera stream
+    if (streamRef.current) {
+      streamRef.current.getAudioTracks().forEach(track => {
+        mixedStream.addTrack(track);
+      });
+    }
+    
+    const mediaRecorder = new MediaRecorder(mixedStream, {
       mimeType,
       videoBitsPerSecond: 2500000
     });

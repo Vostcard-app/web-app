@@ -32,7 +32,7 @@ const CameraView: React.FC = () => {
             aspectRatio: 9 / 16,
             facingMode: 'environment'
           },
-          audio: false
+          audio: true  // Enable audio capture
         });
         
         streamRef.current = stream;
