@@ -472,20 +472,18 @@ const MyVostcardListView = () => {
                             border: '1px solid #dee2e6'
                           }}
                           onClick={() => {
-                            // 🔧 DEBUG: Log all location-related data
-                            console.log('🔍 DEBUG: Pin clicked for vostcard:', {
-                              id: vostcard.id,
-                              title: vostcard.title,
-                              geo: vostcard.geo,
-                              geoType: typeof vostcard.geo,
-                              hasGeoLatitude: vostcard.geo?.latitude,
-                              hasGeoLongitude: vostcard.geo?.longitude,
-                              // Check for alternative location fields
-                              latitude: (vostcard as any).latitude,
-                              longitude: (vostcard as any).longitude,
-                              // Full vostcard structure (be careful with large objects)
-                              vostcardKeys: Object.keys(vostcard)
-                            });
+                            // 🔧 SIMPLE DEBUG: Basic alert to show data
+                            alert(`DEBUG: Vostcard ID: ${vostcard.id}
+Title: ${vostcard.title}
+Geo: ${JSON.stringify(vostcard.geo)}
+Geo Type: ${typeof vostcard.geo}
+Has Geo Lat: ${vostcard.geo?.latitude}
+Has Geo Lng: ${vostcard.geo?.longitude}
+Direct Lat: ${(vostcard as any).latitude}
+Direct Lng: ${(vostcard as any).longitude}`);
+                            
+                            // Also log to console (in case console is working)
+                            console.log('🔍 DEBUG: Vostcard data:', vostcard);
                             
                             // Try multiple location sources
                             let latitude = vostcard.geo?.latitude;
@@ -498,7 +496,7 @@ const MyVostcardListView = () => {
                             }
                             
                             if (latitude && longitude) {
-                              console.log('✅ Using location:', { latitude, longitude });
+                              alert(`✅ Found location: ${latitude}, ${longitude}`);
                               // Navigate to PinPlacerTool with vostcard data
                               navigate('/pin-placer', {
                                 state: {
@@ -514,8 +512,7 @@ const MyVostcardListView = () => {
                                 }
                               });
                             } else {
-                              console.error('❌ No location found in vostcard:', vostcard);
-                              alert('No location available for this Vostcard. Location should have been captured during video recording.');
+                              alert('❌ No location found in vostcard');
                             }
                           }}
                           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
