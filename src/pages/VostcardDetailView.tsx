@@ -171,18 +171,36 @@ const VostcardDetailView: React.FC = () => {
   useEffect(() => {
     let urls: string[] = [];
     
+    console.log('📸 Photo URL creation - vostcard data:', {
+      hasVostcard: !!vostcard,
+      vostcardKeys: vostcard ? Object.keys(vostcard) : [],
+      photoURLs: vostcard?.photoURLs,
+      photoURLsLength: vostcard?.photoURLs?.length || 0,
+      photos: vostcard?.photos,
+      photosLength: vostcard?.photos?.length || 0,
+      hasPhotos: vostcard?.hasPhotos,
+      isPrivate: isPrivate
+    });
+    
     // Check for Firebase vostcards (photoURLs field)
-    if (vostcard?.photoURLs && vostcard.photoURLs.length > 0) {
-      urls = vostcard.photoURLs;
-      console.log('📸 Using Firebase photoURLs, count:', urls.length);
+    if (vostcard?.photoURLs && Array.isArray(vostcard.photoURLs) && vostcard.photoURLs.length > 0) {
+      urls = vostcard.photoURLs.filter(url => url && typeof url === 'string');
+      console.log('📸 Using Firebase photoURLs:', {
+        originalCount: vostcard.photoURLs.length,
+        filteredCount: urls.length,
+        urls: urls
+      });
     }
     // Check for local vostcards (photos field with Blobs)
-    else if (vostcard?.photos && vostcard.photos.length > 0) {
+    else if (vostcard?.photos && Array.isArray(vostcard.photos) && vostcard.photos.length > 0) {
       try {
         if (vostcard.photos[0] instanceof Blob) {
           // Local Vostcard with Blob photos
           urls = vostcard.photos.map((photo: Blob) => URL.createObjectURL(photo));
-          console.log('📸 Created Blob URLs for local photos, count:', urls.length);
+          console.log('📸 Created Blob URLs for local photos:', {
+            count: urls.length,
+            photoSizes: vostcard.photos.map((p: Blob) => p.size)
+          });
           
           // Cleanup function for Blob URLs
           return () => {
@@ -190,13 +208,39 @@ const VostcardDetailView: React.FC = () => {
           };
         } else if (typeof vostcard.photos[0] === 'string') {
           // Firebase Vostcard with string URLs in photos field (fallback)
-          urls = vostcard.photos;
-          console.log('📸 Using Firebase URLs from photos field, count:', urls.length);
+          urls = vostcard.photos.filter(url => url && typeof url === 'string');
+          console.log('📸 Using Firebase URLs from photos field:', {
+            count: urls.length,
+            urls: urls
+          });
         }
       } catch (err) {
         console.error('❌ Error creating photo URLs:', err);
       }
     }
+    // Additional fallback - check if there are any photo-related fields
+    else {
+      console.log('📸 No photos found in expected fields, checking all fields:', {
+        allFields: vostcard ? Object.keys(vostcard).filter(key => key.toLowerCase().includes('photo')) : [],
+        hasPhotos: vostcard?.hasPhotos,
+        firebasePhotoURLs: vostcard?._firebasePhotoURLs,
+        photosBase64: vostcard?._photosBase64?.length || 0
+      });
+      
+      // Try Firebase photo URLs backup field
+      if (vostcard?._firebasePhotoURLs && Array.isArray(vostcard._firebasePhotoURLs) && vostcard._firebasePhotoURLs.length > 0) {
+        urls = vostcard._firebasePhotoURLs.filter(url => url && typeof url === 'string');
+        console.log('📸 Using backup Firebase photoURLs:', {
+          count: urls.length,
+          urls: urls
+        });
+      }
+    }
+    
+    console.log('📸 Final photo URLs set:', {
+      count: urls.length,
+      urls: urls.slice(0, 2) // Only log first 2 for brevity
+    });
     
     setPhotoURLs(urls);
   }, [vostcard]);

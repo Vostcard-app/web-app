@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaEdit, FaEye, FaEnvelope, FaTrash } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
 
 const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { postedVostcards, loadPostedVostcards } = useVostcard();
+  const { postedVostcards, loadPostedVostcards, setCurrentVostcard } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
@@ -53,10 +53,134 @@ const MyPostedVostcardsListView = () => {
     }
   }, [authLoading, user, loadPostedVostcards]);
 
-  // Navigate to edit view - posted vostcards would need to be converted back to private for editing
-  const handleEdit = (vostcardId: string) => {
-    console.log('Edit clicked for vostcard:', vostcardId);
-    // TODO: Implement edit functionality
+  // Load posted vostcard from Firebase for editing
+  const loadPostedVostcardForEdit = async (vostcardId: string) => {
+    try {
+      console.log('📝 Loading posted vostcard for editing:', vostcardId);
+      
+      // Get the vostcard document from Firebase
+      const docRef = doc(db, 'vostcards', vostcardId);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        throw new Error('Vostcard not found');
+      }
+      
+      const firebaseData = docSnap.data();
+      console.log('📝 Firebase vostcard data:', firebaseData);
+      
+      // Download media files and convert to Blobs
+      let videoBlob: Blob | null = null;
+      let photoBlobs: Blob[] = [];
+      
+      // Download video if it exists
+      if (firebaseData.videoURL) {
+        try {
+          console.log('📝 Downloading video for editing...');
+          const videoResponse = await fetch(firebaseData.videoURL);
+          if (videoResponse.ok) {
+            videoBlob = await videoResponse.blob();
+            console.log('✅ Video downloaded for editing');
+          } else {
+            console.error('❌ Failed to download video for editing');
+          }
+        } catch (error) {
+          console.error('❌ Error downloading video for editing:', error);
+        }
+      }
+      
+      // Download photos if they exist
+      if (firebaseData.photoURLs && firebaseData.photoURLs.length > 0) {
+        console.log('📝 Downloading photos for editing...');
+        const photoPromises = firebaseData.photoURLs.map(async (photoURL: string) => {
+          try {
+            const photoResponse = await fetch(photoURL);
+            if (photoResponse.ok) {
+              return await photoResponse.blob();
+            } else {
+              console.error('❌ Failed to download photo for editing');
+              return null;
+            }
+          } catch (error) {
+            console.error('❌ Error downloading photo for editing:', error);
+            return null;
+          }
+        });
+        
+        const downloadedPhotos = await Promise.all(photoPromises);
+        photoBlobs = downloadedPhotos.filter((photo): photo is Blob => photo !== null);
+        console.log(`✅ Downloaded ${photoBlobs.length} photos for editing`);
+      }
+      
+      // Convert Firebase data to local Vostcard format
+      const editableVostcard = {
+        id: firebaseData.id,
+        state: 'posted' as const,
+        video: videoBlob,
+        title: firebaseData.title || '',
+        description: firebaseData.description || '',
+        photos: photoBlobs,
+        categories: firebaseData.categories || [],
+        geo: firebaseData.latitude && firebaseData.longitude 
+          ? { latitude: firebaseData.latitude, longitude: firebaseData.longitude }
+          : null,
+        username: firebaseData.username || '',
+        userID: firebaseData.userID || '',
+        createdAt: firebaseData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        updatedAt: firebaseData.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        isOffer: firebaseData.isOffer || false,
+        offerDetails: firebaseData.offerDetails || null,
+        script: firebaseData.script || null,
+        scriptId: firebaseData.scriptId || null,
+        // Store Firebase URLs as backup
+        _firebaseVideoURL: firebaseData.videoURL || null,
+        _firebasePhotoURLs: firebaseData.photoURLs || []
+      };
+      
+      console.log('📝 Converted vostcard for editing:', {
+        id: editableVostcard.id,
+        title: editableVostcard.title,
+        hasVideo: !!editableVostcard.video,
+        photosCount: editableVostcard.photos.length,
+        categoriesCount: editableVostcard.categories.length
+      });
+      
+      // Set as current vostcard in context
+      setCurrentVostcard(editableVostcard);
+      
+      return editableVostcard;
+      
+    } catch (error) {
+      console.error('❌ Error loading posted vostcard for editing:', error);
+      throw error;
+    }
+  };
+
+  // Navigate to edit view - go directly to step 2 since video can't be edited
+  const handleEdit = async (vostcardId: string) => {
+    try {
+      console.log('📝 Edit clicked for posted vostcard:', vostcardId);
+      
+      // Show loading state
+      setUnpostingIds(prev => new Set([...prev, vostcardId]));
+      
+      // Load the vostcard for editing
+      await loadPostedVostcardForEdit(vostcardId);
+      
+      // Navigate directly to step 2 (skip video step)
+      navigate('/create-step2');
+      
+    } catch (error) {
+      console.error('❌ Failed to load vostcard for editing:', error);
+      alert('Failed to load vostcard for editing. Please try again.');
+    } finally {
+      // Remove loading state
+      setUnpostingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(vostcardId);
+        return newSet;
+      });
+    }
   };
 
   const handleView = (vostcardId: string) => {
@@ -113,16 +237,48 @@ const MyPostedVostcardsListView = () => {
     }
   };
 
-  const handleDelete = (e: React.MouseEvent, vostcardId: string) => {
+  const handleDelete = async (e: React.MouseEvent, vostcardId: string) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!window.confirm('Are you sure you want to delete this Vōstcard permanently?')) {
+    if (!window.confirm('Are you sure you want to delete this Vōstcard permanently? This action cannot be undone.')) {
       return;
     }
 
-    console.log('Delete clicked for vostcard:', vostcardId);
-    // TODO: Implement delete functionality
+    console.log('🗑️ Delete clicked for posted vostcard:', vostcardId);
+    
+    try {
+      // Show loading state
+      setUnpostingIds(prev => new Set([...prev, vostcardId]));
+      
+      // Delete from Firebase
+      const vostcardRef = doc(db, 'vostcards', vostcardId);
+      await deleteDoc(vostcardRef);
+      
+      console.log('✅ Posted vostcard deleted successfully:', vostcardId);
+      
+      // Refresh the posted vostcards list
+      await loadPostedVostcards();
+      
+      // Clear loading state
+      setUnpostingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(vostcardId);
+        return newSet;
+      });
+      
+    } catch (error) {
+      console.error('❌ Failed to delete posted vostcard:', error);
+      
+      // Clear loading state
+      setUnpostingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(vostcardId);
+        return newSet;
+      });
+      
+      alert('Failed to delete Vōstcard. Please try again.');
+    }
   };
 
   const handleRetry = () => {
@@ -145,88 +301,78 @@ const MyPostedVostcardsListView = () => {
   });
 
   return (
-    <div style={{ 
-      padding: '20px', 
-      backgroundColor: '#f5f5f5',
-      minHeight: '100vh'
-    }}>
-      {/* Header */}
+    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+      {/* 🔵 Header with Home Icon */}
       <div style={{
+        backgroundColor: '#07345c',
+        height: '30px',
         display: 'flex',
         alignItems: 'center',
-        marginBottom: '20px',
-        backgroundColor: '#2c3e50',
+        justifyContent: 'space-between',
+        paddingLeft: '16px',
         color: 'white',
-        padding: '10px',
-        borderRadius: '5px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
+        position: 'relative',
+        padding: '15px 0 24px 20px'
       }}>
-        <button
-          onClick={() => navigate('/home')}
-          style={{
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            marginRight: '10px'
-          }}
-        >
-          <FaHome size={20} />
-        </button>
         <h1 style={{ fontSize: '30px', margin: 0 }}>Posted Vōstcards</h1>
+        
+        {/* Home Button */}
+        <FaHome
+          size={48}
+          style={{
+            cursor: 'pointer',
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => navigate('/home')}
+        />
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div style={{
-          backgroundColor: '#ffebee',
-          color: '#c62828',
-          padding: '16px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          border: '1px solid #ffcdd2'
-        }}>
-          <p style={{ margin: 0 }}>{error}</p>
-          <button
-            onClick={handleRetry}
-            style={{
-              backgroundColor: '#c62828',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginTop: '8px'
-            }}
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && !error && (
-        <div style={{
-          backgroundColor: '#e3f2fd',
-          color: '#1976d2',
-          padding: '16px',
-          borderRadius: '8px',
-          textAlign: 'center',
-          marginBottom: '20px'
-        }}>
-          <p>Loading your posted Vostcards...</p>
-        </div>
-      )}
-
-      {/* 📋 List of Posted Vostcards */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        overflow: 'hidden'
+      {/* 📋 List of Vostcards */}
+      <div style={{ 
+        padding: '20px', 
+        height: 'calc(100vh - 120px)', 
+        overflowY: 'auto',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto'
       }}>
+        {/* Error State */}
+        {error && (
+          <div style={{
+            backgroundColor: '#ffebee',
+            color: '#c62828',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            border: '1px solid #ffcdd2'
+          }}>
+            <p style={{ margin: 0 }}>{error}</p>
+            <button
+              onClick={handleRetry}
+              style={{
+                backgroundColor: '#c62828',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                marginTop: '8px'
+              }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Loading State */}
         {loading && !error ? (
           <div style={{
@@ -356,7 +502,7 @@ const MyPostedVostcardsListView = () => {
                     {/* Edit Icon */}
                     <div
                       style={{
-                        cursor: 'pointer',
+                        cursor: unpostingIds.has(vostcard.id) ? 'not-allowed' : 'pointer',
                         transition: 'transform 0.1s',
                         display: 'flex',
                         alignItems: 'center',
@@ -364,13 +510,14 @@ const MyPostedVostcardsListView = () => {
                         padding: '10px',
                         borderRadius: '8px',
                         backgroundColor: '#f8f9fa',
-                        border: '1px solid #dee2e6'
+                        border: '1px solid #dee2e6',
+                        opacity: unpostingIds.has(vostcard.id) ? 0.5 : 1
                       }}
-                      onClick={() => handleEdit(vostcard.id)}
-                      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      title="Edit Vostcard"
+                      onClick={() => !unpostingIds.has(vostcard.id) && handleEdit(vostcard.id)}
+                      onMouseDown={(e) => !unpostingIds.has(vostcard.id) && (e.currentTarget.style.transform = 'scale(0.95)')}
+                      onMouseUp={(e) => !unpostingIds.has(vostcard.id) && (e.currentTarget.style.transform = 'scale(1)')}
+                      onMouseLeave={(e) => !unpostingIds.has(vostcard.id) && (e.currentTarget.style.transform = 'scale(1)')}
+                      title={unpostingIds.has(vostcard.id) ? 'Loading...' : 'Edit Vostcard'}
                     >
                       <FaEdit size={20} color="#002B4D" />
                     </div>
