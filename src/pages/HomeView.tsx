@@ -290,7 +290,7 @@ const offerPopupStyle = {
 const HomeView = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearVostcard } = useVostcard();
+  const { clearVostcard, manualSync } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
@@ -736,13 +736,26 @@ const HomeView = () => {
     { label: 'Logout', route: null },
   ];
 
-  const handleMenuItemClick = (label: string, route: string | null) => {
+  const handleMenuItemClick = async (label: string, route: string | null) => {
     setIsMenuOpen(false);
     
     if (label === 'Logout') {
       handleLogout();
     } else if (route) {
       console.log(`🔄 Navigating to: ${route}`);
+      
+      // Trigger sync when navigating to My Private Vōstcards
+      if (label === 'My Private Vōstcards') {
+        console.log('🔄 Syncing private vostcards before navigation...');
+        try {
+          await manualSync();
+          console.log('✅ Sync completed successfully');
+        } catch (error) {
+          console.error('❌ Sync failed:', error);
+          // Continue navigation even if sync fails
+        }
+      }
+      
       navigate(route);
     }
   };
