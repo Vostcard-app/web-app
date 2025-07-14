@@ -933,7 +933,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
-        offerDetails: currentVostcard.offerDetails || null
+        offerDetails: currentVostcard.offerDetails || null,
+        visibility: 'public'
       });
 
       console.log('✅ Vostcard posted successfully to Firebase!');
