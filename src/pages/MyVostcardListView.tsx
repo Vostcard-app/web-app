@@ -216,7 +216,7 @@ const MyVostcardListView = () => {
         position: 'relative',
         padding: '15px 0 24px 20px'
       }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>My Private Vōstcards</h1>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>Private Vōstcards</h1>
         
         {/* Home Button */}
         <FaHome
