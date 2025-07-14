@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaFlag, FaSyncAlt, FaUserCircle, FaLock, FaMap, FaEnvelope } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, collection, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, updateDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
@@ -10,6 +10,8 @@ import RatingStars from '../components/RatingStars';
 import CommentsModal from '../components/CommentsModal';
 import { RatingService, type RatingStats } from '../services/ratingService';
 import type { Vostcard } from '../context/VostcardContext';
+import { storage } from '../firebase/firebaseConfig';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -496,8 +498,88 @@ ${shareText}`);
   // Add the email sharing function
   const handleEmailShare = async () => {
     try {
-      // Update the Vostcard to mark it as privately shared
-      if (vostcard?.id) {
+      if (!vostcard?.id) {
+        throw new Error('No vostcard to share');
+      }
+
+      // Check if this is a private vostcard (only exists locally)
+      if (isPrivate) {
+        console.log('📤 Saving private vostcard to Firebase for sharing...');
+        
+        // First, save the private vostcard to Firebase with proper sharing fields
+        const vostcardRef = doc(db, 'vostcards', vostcard.id);
+        
+        // Upload media if needed (similar to saveLocalVostcard)
+        let videoURL = '';
+        let photoURLs: string[] = [];
+        
+        const user = authUser;
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
+
+        // Upload video if it exists
+        if (vostcard.video && vostcard.video instanceof Blob) {
+          const storageRef = ref(storage, `vostcards/${user.uid}/${vostcard.id}/video.webm`);
+          const uploadTask = uploadBytesResumable(storageRef, vostcard.video);
+          videoURL = await new Promise((resolve, reject) => {
+            uploadTask.on('state_changed', null, reject, async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(downloadURL);
+            });
+          });
+        }
+
+        // Upload photos if they exist
+        if (vostcard.photos && vostcard.photos.length > 0) {
+          photoURLs = await Promise.all(
+            vostcard.photos.map(async (photo, idx) => {
+              if (photo instanceof Blob) {
+                const storageRef = ref(storage, `vostcards/${user.uid}/${vostcard.id}/photo${idx + 1}.jpg`);
+                const uploadTask = uploadBytesResumable(storageRef, photo);
+                return new Promise((resolve, reject) => {
+                  uploadTask.on('state_changed', null, reject, async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    resolve(downloadURL);
+                  });
+                });
+              }
+              return '';
+            })
+          );
+        }
+
+        // Save to Firebase with sharing flags
+        await setDoc(vostcardRef, {
+          id: vostcard.id,
+          title: vostcard.title || '',
+          description: vostcard.description || '',
+          categories: vostcard.categories || [],
+          username: authUsername || user.email?.split('@')[0] || 'Anonymous',
+          userID: user.uid,
+          videoURL: videoURL,
+          photoURLs: photoURLs,
+          latitude: vostcard.geo?.latitude || null,
+          longitude: vostcard.geo?.longitude || null,
+          avatarURL: user.photoURL || '',
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          state: 'private',
+          visibility: 'private',
+          isPrivatelyShared: true,
+          sharedAt: new Date(),
+          hasVideo: !!vostcard.video,
+          hasPhotos: (vostcard.photos?.length || 0) > 0,
+          mediaUploadStatus: 'complete',
+          isOffer: vostcard.isOffer || false,
+          offerDetails: vostcard.offerDetails || null,
+          script: vostcard.script || null,
+          scriptId: vostcard.scriptId || null
+        });
+        
+        console.log('✅ Private vostcard saved to Firebase for sharing');
+      } else {
+        // For already-public vostcards, just update the sharing flag
         const vostcardRef = doc(db, 'vostcards', vostcard.id);
         await updateDoc(vostcardRef, {
           isPrivatelyShared: true,
@@ -539,6 +621,9 @@ ${getUserFirstName()}`;
       
       // Open email client with pre-filled subject and body
       window.open(mailtoUrl, '_blank');
+      
+      alert('✅ Vostcard shared! The recipient will be able to view it via the email link.');
+      
     } catch (error) {
       console.error('Error sharing Vostcard via email:', error);
       alert('Failed to share Vostcard via email. Please try again.');
