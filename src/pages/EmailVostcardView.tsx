@@ -15,8 +15,19 @@ const EmailVostcardView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
   const { user } = useAuth();
   const { fixBrokenSharedVostcard } = useVostcard();
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -183,10 +194,27 @@ const EmailVostcardView: React.FC = () => {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      backgroundColor: 'white',
+      backgroundColor: isDesktop ? '#f0f0f0' : 'white', // Light gray background for desktop
       color: '#333',
-      overflowY: 'auto' // Make screen scrollable
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0' // Padding only on desktop
     }}>
+      {/* Mobile-style container with 9:16 aspect ratio for consistent experience */}
+      <div style={{
+        width: isDesktop ? '390px' : '100%', // Fixed width on desktop, full width on mobile
+        maxWidth: '390px',
+        minHeight: isDesktop ? '844px' : '100vh', // 9:16 aspect ratio (390 * 2.167 ≈ 844) - iPhone 14 Pro dimensions
+        backgroundColor: 'white',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none', // Shadow only on desktop
+        borderRadius: isDesktop ? '16px' : '0', // Rounded corners only on desktop
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto', // Make the container scrollable
+        transition: 'all 0.3s ease' // Smooth transition when resizing
+      }}>
       {/* User Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -275,7 +303,12 @@ const EmailVostcardView: React.FC = () => {
       </motion.div>
 
       {/* Main Content */}
-      <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
+      <div style={{ 
+        padding: '20px', 
+        flex: 1, // Take up remaining space
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
         {/* Title */}
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
@@ -307,13 +340,13 @@ const EmailVostcardView: React.FC = () => {
             <video
               src={videoURL}
               controls
-                             style={{
-                 width: '100%',
-                 maxWidth: videoOrientation === 'portrait' ? '300px' : '400px',
-                 height: 'auto',
-                 borderRadius: '16px',
-                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-               }}
+              style={{
+                width: '100%',
+                maxWidth: videoOrientation === 'portrait' ? '280px' : '320px', // Optimized for 9:16 container
+                height: 'auto',
+                borderRadius: '16px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+              }}
               onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
               poster={photoURLs[0] || undefined}
             />
@@ -529,6 +562,7 @@ const EmailVostcardView: React.FC = () => {
         </motion.div>
       </div>
     </div>
+  </div>
   );
 };
 
