@@ -94,16 +94,13 @@ const listViewButton = {
   fontWeight: 500,
   cursor: 'pointer',
   boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-  pointerEvents: 'auto',
+  pointerEvents: 'auto' as const,
   transition: 'transform 0.1s ease',
   height: '48px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  textAlign: 'center', // Ensure text is centered horizontally
-  ':active': {
-    transform: 'scale(0.98)'
-  }
+  textAlign: 'center' as const, // Ensure text is centered horizontally
 };
 
 const mapContainerStyle = {
@@ -1209,11 +1206,8 @@ const HomeView = () => {
           fontWeight: 500,
           cursor: 'pointer',
           boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-          pointerEvents: 'auto',
-          transition: 'transform 0.1s ease',
-          ':active': {
-            transform: 'scale(0.98)'
-          }
+          pointerEvents: 'auto' as const,
+          transition: 'transform 0.1s ease'
         }}
         onClick={() => setShowFilterModal(true)}
       >
