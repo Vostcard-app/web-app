@@ -503,26 +503,49 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       // Download and save Firebase-only and updated vostcards to local
+      // FIX: Download all vostcards first, then save them in separate transactions
       const toSaveLocal = [...toDownloadToLocal, ...toUpdateLocal];
       if (toSaveLocal.length > 0) {
-        const writeTransaction = localDB.transaction([STORE_NAME], 'readwrite');
-        const writeStore = writeTransaction.objectStore(STORE_NAME);
+        console.log(`📥 Downloading ${toSaveLocal.length} vostcards from Firebase...`);
         
+        // Download all vostcards first (outside of any transaction)
+        const downloadedVostcards = [];
         for (const firebaseVostcard of toSaveLocal) {
           try {
+            console.log(`📥 Downloading: ${firebaseVostcard.title}`);
             const localVostcard = await downloadFirebaseVostcardToLocal(firebaseVostcard);
-            writeStore.put(localVostcard);
-            console.log(`✅ Downloaded/Updated local: ${firebaseVostcard.title}`);
+            downloadedVostcards.push(localVostcard);
+            console.log(`✅ Downloaded: ${firebaseVostcard.title}`);
           } catch (error) {
             console.error(`❌ Failed to download ${firebaseVostcard.title}:`, error);
           }
         }
         
-        // Wait for transaction to complete
-        await new Promise<void>((resolve, reject) => {
-          writeTransaction.oncomplete = () => resolve();
-          writeTransaction.onerror = () => reject(writeTransaction.error);
-        });
+        // Now save all downloaded vostcards to IndexedDB in a fresh transaction
+        if (downloadedVostcards.length > 0) {
+          console.log(`💾 Saving ${downloadedVostcards.length} vostcards to IndexedDB...`);
+          
+          const writeDB = await openDB(); // Fresh database connection
+          const writeTransaction = writeDB.transaction([STORE_NAME], 'readwrite');
+          const writeStore = writeTransaction.objectStore(STORE_NAME);
+          
+          // Save all vostcards quickly while transaction is active
+          for (const localVostcard of downloadedVostcards) {
+            writeStore.put(localVostcard);
+          }
+          
+          // Wait for transaction to complete
+          await new Promise<void>((resolve, reject) => {
+            writeTransaction.oncomplete = () => {
+              console.log(`✅ Saved ${downloadedVostcards.length} vostcards to IndexedDB`);
+              resolve();
+            };
+            writeTransaction.onerror = () => {
+              console.error('❌ Transaction failed:', writeTransaction.error);
+              reject(writeTransaction.error);
+            };
+          });
+        }
       }
       
       // Update sync timestamp
