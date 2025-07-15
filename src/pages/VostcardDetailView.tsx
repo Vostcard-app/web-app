@@ -54,6 +54,8 @@ const VostcardDetailView: React.FC = () => {
   const [photoURLs, setPhotoURLs] = useState<string[]>([]);
   const [liked, setLiked] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [photoLoadErrors, setPhotoLoadErrors] = useState<Set<number>>(new Set());
+  const [photoDebugInfo, setPhotoDebugInfo] = useState<string>('');
 
   // Load Vostcard (Firebase or Local)
   useEffect(() => {
@@ -167,11 +169,11 @@ const VostcardDetailView: React.FC = () => {
     }
   }, [vostcard]);
 
-  // Create photo URLs when vostcard is loaded
+  // Improved photo URL creation with better debugging
   useEffect(() => {
     let urls: string[] = [];
     
-    console.log('📸 Photo URL creation - vostcard data:', {
+    const debugInfo = {
       hasVostcard: !!vostcard,
       vostcardKeys: vostcard ? Object.keys(vostcard) : [],
       photoURLs: vostcard?.photoURLs,
@@ -179,8 +181,13 @@ const VostcardDetailView: React.FC = () => {
       photos: vostcard?.photos,
       photosLength: vostcard?.photos?.length || 0,
       hasPhotos: vostcard?.hasPhotos,
-      isPrivate: isPrivate
-    });
+      isPrivate: isPrivate,
+      userAgent: navigator.userAgent.includes('iPhone') ? 'iPhone' : 'Desktop',
+      vostcardTitle: vostcard?.title
+    };
+    
+    console.log('📸 Photo URL creation - vostcard data:', debugInfo);
+    setPhotoDebugInfo(JSON.stringify(debugInfo, null, 2));
     
     // Check for Firebase vostcards (photoURLs field)
     if (vostcard?.photoURLs && Array.isArray(vostcard.photoURLs) && vostcard.photoURLs.length > 0) {
@@ -243,6 +250,7 @@ const VostcardDetailView: React.FC = () => {
     });
     
     setPhotoURLs(urls);
+    setPhotoLoadErrors(new Set()); // Reset errors when URLs change
   }, [vostcard]);
 
   // Setup like listeners for public Vostcards
@@ -789,23 +797,101 @@ ${getUserFirstName()}`;
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {photoURLs.length > 0 ? (
             photoURLs.slice(0, 2).map((url: string, idx: number) => (
-              <img
-                key={idx}
-                src={url}
-                alt={`photo${idx+1}`}
-                style={{ width: 120, height: 110, borderRadius: 16, objectFit: 'cover', cursor: 'pointer' }}
-                onClick={() => setSelectedPhoto(url)}
-                onContextMenu={e => e.preventDefault()}
-              />
+              <div key={idx} style={{ position: 'relative' }}>
+                <img
+                  src={url}
+                  alt={`photo${idx+1}`}
+                  style={{ 
+                    width: 120, 
+                    height: 110, 
+                    borderRadius: 16, 
+                    objectFit: 'cover', 
+                    cursor: 'pointer',
+                    border: photoLoadErrors.has(idx) ? '2px solid red' : 'none'
+                  }}
+                  onClick={() => setSelectedPhoto(url)}
+                  onContextMenu={e => e.preventDefault()}
+                  onError={(e) => {
+                    console.error(`❌ Failed to load photo ${idx + 1}:`, {
+                      url,
+                      error: e,
+                      vostcardTitle: vostcard?.title
+                    });
+                    setPhotoLoadErrors(prev => new Set([...prev, idx]));
+                  }}
+                  onLoad={() => {
+                    console.log(`✅ Successfully loaded photo ${idx + 1} for vostcard:`, vostcard?.title);
+                    setPhotoLoadErrors(prev => {
+                      const newSet = new Set(prev);
+                      newSet.delete(idx);
+                      return newSet;
+                    });
+                  }}
+                />
+                {photoLoadErrors.has(idx) && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(255, 0, 0, 0.1)',
+                    borderRadius: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'red',
+                    fontSize: 12,
+                    textAlign: 'center',
+                    padding: 4
+                  }}>
+                    Error Loading Photo
+                  </div>
+                )}
+              </div>
             ))
           ) : (
             <>
-              <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>No Photo</div>
-              <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa' }}>No Photo</div>
+              <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 12, textAlign: 'center' }}>
+                No Photo
+                {vostcard?.title && (
+                  <div style={{ position: 'absolute', top: -20, fontSize: 10, color: '#666' }}>
+                    Debug: Check console
+                  </div>
+                )}
+              </div>
+              <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 12 }}>No Photo</div>
             </>
           )}
         </div>
       </div>
+
+      {/* Add a debug section (only visible in development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: 10, 
+          right: 10, 
+          background: 'rgba(0,0,0,0.8)', 
+          color: 'white', 
+          padding: 10, 
+          borderRadius: 8, 
+          fontSize: 10, 
+          maxWidth: 300, 
+          maxHeight: 200, 
+          overflow: 'auto' 
+        }}>
+          <div>Photo Debug Info:</div>
+          <div>URLs: {photoURLs.length}</div>
+          <div>Errors: {photoLoadErrors.size}</div>
+          <div>Title: {vostcard?.title}</div>
+          <div>Private: {isPrivate ? 'Yes' : 'No'}</div>
+          <details>
+            <summary>Full Debug</summary>
+            <pre style={{ fontSize: 8 }}>{photoDebugInfo}</pre>
+          </details>
+        </div>
+      )}
 
       {/* Action Icons - Add the email icon */}
       <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', margin: '16px 0 0 0' }}>
