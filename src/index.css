@@ -59,22 +59,7 @@ button {
   font-size: inherit !important;
 }
 
-/* ✅ Global Button Border Radius - Make corners more round */
-button {
-  border-radius: 8px !important; /* Increased from 4px to 8px */
-}
 
-/* ✅ Exception for circular buttons (like camera record button) */
-button[style*="border-radius: 50%"],
-button[style*="borderRadius: 50%"] {
-  border-radius: 50% !important; /* Keep circular buttons circular */
-}
-
-/* ✅ Special exception for RootView buttons with 50px border radius */
-button[style*="border-radius: 50px"],
-button[style*="borderRadius: 50px"] {
-  border-radius: 50px !important; /* Allow very round buttons */
-}
 
 /* ✅ Safe Area Insets for Mobile Devices */
 body {
