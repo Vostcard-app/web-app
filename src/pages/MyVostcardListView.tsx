@@ -123,7 +123,7 @@ const MyVostcardListView = () => {
       };
 
       // Create custom share message template with proper spacing
-      const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
+      const subjectLine = `Look what I made with Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
       const shareText = `Hi,
 
 I made this with an app called Vōstcard
