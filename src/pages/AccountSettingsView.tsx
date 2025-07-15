@@ -71,10 +71,11 @@ const AccountSettingsView: React.FC = () => {
 
   return (
     <div style={{ 
-      minHeight: '100vh',
+      height: '100vh',
       backgroundColor: 'white',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
       {/* Header */}
       <div style={{
@@ -84,7 +85,8 @@ const AccountSettingsView: React.FC = () => {
         padding: '15px 0 24px 20px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        flexShrink: 0
       }}>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', margin: 0 }}>Vōstcard</span>
         <FaHome
@@ -115,7 +117,9 @@ const AccountSettingsView: React.FC = () => {
         padding: '20px',
         flex: 1,
         width: '100%',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        overflowY: 'auto',
+        overflowX: 'hidden'
       }}>
         {/* Back Button and Title */}
         <div style={{
