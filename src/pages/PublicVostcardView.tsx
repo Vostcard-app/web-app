@@ -772,42 +772,6 @@ ${getUserFirstName()}`;
         minHeight: 'calc(100vh - 120px)', // Ensure content fills remaining space
         boxSizing: 'border-box'
       }}>
-        {/* User Info */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginBottom: '16px',
-          borderBottom: '1px solid #eee',
-          paddingBottom: '8px'
-        }}>
-          <div style={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: '50%', 
-            overflow: 'hidden', 
-            marginRight: 12,
-            background: '#f0f0f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            {avatarUrl ? (
-              <img 
-                src={avatarUrl} 
-                alt={username || 'User'} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-              />
-            ) : (
-              <FaUserCircle size={48} color="#ccc" />
-            )}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>{username || 'Unknown User'}</div>
-            <div style={{ color: '#888', fontSize: 14 }}>Shared Vostcard</div>
-          </div>
-        </div>
-
         {/* Map and Heart Icons - Above Title */}
         <div style={{ 
           display: 'flex', 
