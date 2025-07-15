@@ -7,9 +7,21 @@ export const AuthRedirect = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Add this debug logging
+  console.log('🔍 AuthRedirect Debug:', {
+    loading,
+    user: !!user,
+    userRole,
+    currentPath: location.pathname,
+    isPublicRoute: ['/', '/login', '/register', '/landing', '/user-guide'].includes(location.pathname)
+  });
+
   useEffect(() => {
     // Skip redirection if still loading
-    if (loading) return;
+    if (loading) {
+      console.log('⏳ AuthRedirect: Still loading, skipping redirect logic');
+      return;
+    }
 
     // Public routes that don't require auth
     const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide'];
