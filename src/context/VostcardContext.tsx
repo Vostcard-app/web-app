@@ -1244,7 +1244,24 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('🗑️ Starting hybrid delete for Vostcard:', id);
       console.log('🗑️ Current savedVostcards count in context before delete:', savedVostcards.length);
       
-      // 1. Delete from IndexedDB
+      // 1. Delete from Firebase FIRST (if user is authenticated)
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const vostcardRef = doc(db, 'vostcards', id);
+          await deleteDoc(vostcardRef);
+          console.log('✅ Deleted Vostcard from Firebase:', id);
+          
+          // Update last sync timestamp since we just deleted from Firebase
+          setLastSyncTimestamp(new Date());
+        } catch (error) {
+          console.error('❌ Failed to delete from Firebase:', error);
+          alert('Failed to delete from cloud storage. Please check your internet connection and try again.');
+          throw error; // Don't proceed with local deletion if Firebase fails
+        }
+      }
+
+      // 2. Delete from IndexedDB (only if Firebase deletion succeeded)
       const localDB = await openDB();
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
@@ -1260,22 +1277,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           resolve();
         };
       });
-
-      // 2. Delete from Firebase (if user is authenticated)
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          const vostcardRef = doc(db, 'vostcards', id);
-          await deleteDoc(vostcardRef);
-          console.log('✅ Deleted Vostcard from Firebase:', id);
-          
-          // Update last sync timestamp since we just deleted from Firebase
-          setLastSyncTimestamp(new Date());
-        } catch (error) {
-          console.error('❌ Failed to delete from Firebase (continuing anyway):', error);
-          // Continue even if Firebase delete fails - local delete is more important
-        }
-      }
 
       // Update the savedVostcards list by filtering out the deleted item
       console.log('🗑️ Updating savedVostcards state, filtering out:', id);
