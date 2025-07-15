@@ -1,3 +1,70 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
+import { db } from '../firebase/firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
+import { useVostcard } from '../context/VostcardContext';
+
+const PublicVostcardView: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user, username } = useAuth();
+  const { fixBrokenSharedVostcard } = useVostcard();
+  
+  const [vostcard, setVostcard] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [ratingStats, setRatingStats] = useState({
+    averageRating: 0,
+    ratingCount: 0
+  });
+  const [isPrivateShared, setIsPrivateShared] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [showLikeMessage, setShowLikeMessage] = useState(false);
+
+  // Load vostcard data
+  useEffect(() => {
+    const fetchVostcard = async () => {
+      if (!id) {
+        setError('No vostcard ID provided');
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      
+      // Add timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        setError('Loading timed out. Please try again.');
+        setLoading(false);
+      }, 15000); // 15 second timeout
+
+      try {
+        console.log('📱 Loading vostcard for sharing:', id);
+        const docRef = doc(db, 'vostcards', id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log('📱 Vostcard found:', {
+            id: data.id,
+            state: data.state,
+            isPrivatelyShared: data.isPrivatelyShared,
+            title: data.title
+          });
+          
+          if (data.state === 'posted' || data.isPrivatelyShared) {
+            clearTimeout(timeoutId);
+            setVostcard(data);
+            setLikeCount(data.likeCount || 0);
             setRatingStats({
               averageRating: data.averageRating || 0,
               ratingCount: data.ratingCount || 0
@@ -155,6 +222,23 @@
 
     // All videos are portrait
     setVideoOrientation('portrait');
+  };
+
+  const handleLikeToggle = async () => {
+    if (!user) {
+      // For anonymous users, show a message
+      setShowLikeMessage(true);
+      setTimeout(() => setShowLikeMessage(false), 3000);
+      return;
+    }
+
+    try {
+      // Toggle like logic here
+      setIsLiked(!isLiked);
+      setLikeCount(isLiked ? likeCount - 1 : likeCount + 1);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
   };
 
   const handleShareClick = () => {
