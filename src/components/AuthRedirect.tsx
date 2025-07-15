@@ -21,7 +21,9 @@ export const AuthRedirect = () => {
       '/offer/',
       '/profile/',
       '/script-editor/',
-      '/flag/'
+      '/flag/',
+      '/share/',
+      '/email/'
     ].some(prefix => location.pathname.startsWith(prefix));
 
     // If not authenticated and trying to access protected route
