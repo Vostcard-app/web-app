@@ -31,10 +31,13 @@ export interface Vostcard {
   };
   script?: string; // Add script field
   scriptId?: string; // Add script ID field to track associated script
+  hasVideo?: boolean; // Indicates if vostcard has video content
+  hasPhotos?: boolean; // Indicates if vostcard has photo content
   _videoBase64?: string | null; // For IndexedDB serialization
   _photosBase64?: string[]; // For IndexedDB serialization
   _firebaseVideoURL?: string | null; // Firebase video URL for synced vostcards
   _firebasePhotoURLs?: string[]; // Firebase photo URLs for synced vostcards
+  _isMetadataOnly?: boolean; // Flag to indicate this is metadata only
 }
 
 interface VostcardContextProps {
@@ -83,12 +86,17 @@ interface VostcardContextProps {
   loadAllLocalVostcardsImmediate: () => Promise<void>;
   syncInBackground: () => Promise<void>;
   clearAllPrivateVostcardsFromFirebase: () => Promise<void>;
+  // Lightweight sync functions
+  syncVostcardMetadata: () => Promise<void>;
+  downloadVostcardContent: (vostcardId: string) => Promise<void>;
+  getVostcardMetadata: () => Vostcard[];
 }
 
 // IndexedDB configuration
 const DB_NAME = 'VostcardDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORE_NAME = 'privateVostcards';
+const METADATA_STORE_NAME = 'vostcardMetadata';
 
 // IndexedDB utility functions
 const openDB = (): Promise<IDBDatabase> => {
@@ -102,6 +110,9 @@ const openDB = (): Promise<IDBDatabase> => {
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+      if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
+        db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
       }
     };
   });
@@ -700,101 +711,64 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
-  // Load all Vostcards from IndexedDB and restore their blobs (with Firebase sync)
+  // Load all Vostcards using lightweight metadata sync
   const loadAllLocalVostcards = useCallback(async () => {
-    console.log('📂 loadAllLocalVostcards called');
+    console.log('📂 loadAllLocalVostcards called (using lightweight sync)');
     try {
-      // First sync from Firebase if user is logged in
-      console.log('📂 Starting Firebase sync...');
-      await syncPrivateVostcardsFromFirebase();
-      console.log('📂 Firebase sync completed, loading from IndexedDB...');
+      // Use lightweight metadata sync for fast initial load
+      console.log('📂 Starting lightweight metadata sync...');
       
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.getAll();
-
-      return new Promise<void>((resolve, reject) => {
-        request.onerror = () => {
-          console.error('❌ Failed to load Vostcards from IndexedDB:', request.error);
-          reject(request.error);
-        };
-
-        request.onsuccess = () => {
-          const existing: any[] = request.result || [];
-          console.log('📂 Found', existing.length, 'Vostcards in IndexedDB (after Firebase sync)');
-
-          const restoredVostcards = existing.map((v) => {
-            const restored: Vostcard = {
-              ...v,
-              video: null,
-              photos: [],
-            };
-
-            if (v._videoBase64) {
-              try {
-                const videoData = atob(v._videoBase64.split(',')[1]);
-                const videoArray = new Uint8Array(videoData.length);
-                for (let i = 0; i < videoData.length; i++) {
-                  videoArray[i] = videoData.charCodeAt(i);
-                }
-                restored.video = new Blob([videoArray], { type: 'video/webm' });
-              } catch (error) {
-                console.error('❌ Failed to restore video from base64:', error);
-              }
-            }
-
-            if (v._photosBase64) {
-              restored.photos = v._photosBase64.map((base64: string) => {
-                try {
-                  const photoData = atob(base64.split(',')[1]);
-                  const photoArray = new Uint8Array(photoData.length);
-                  for (let i = 0; i < photoData.length; i++) {
-                    photoArray[i] = photoData.charCodeAt(i);
-                  }
-                  return new Blob([photoArray], { type: 'image/jpeg' });
-                } catch (error) {
-                  console.error('❌ Failed to restore photo from base64:', error);
-                  return new Blob([], { type: 'image/jpeg' });
-                }
-              });
-            }
-
-            return restored;
-          });
-
-          // Filter out Vostcards with state === 'posted'
-          const filteredVostcards = restoredVostcards.filter(v => v.state !== 'posted');
-          
-          // Log details of loaded vostcards for debugging sync issues
-          console.log('📂 Loaded vostcards from IndexedDB:', filteredVostcards.length);
-          filteredVostcards.forEach((vostcard, index) => {
-            console.log(`📂 IndexedDB Vostcard ${index + 1}:`, {
-              id: vostcard.id,
-              title: vostcard.title,
-              description: vostcard.description?.substring(0, 50) + '...',
-              createdAt: vostcard.createdAt,
-              updatedAt: vostcard.updatedAt,
-              state: vostcard.state,
-              userID: vostcard.userID,
-              username: vostcard.username,
-              hasVideo: !!vostcard.video,
-              hasPhotos: vostcard.photos?.length || 0,
-              hasFirebaseVideoURL: !!vostcard._firebaseVideoURL,
-              hasFirebasePhotoURLs: (vostcard._firebasePhotoURLs?.length || 0) > 0
-            });
-          });
-          
-          setSavedVostcards(filteredVostcards);
-          console.log('📂 Finished loading saved Vōstcards');
-          resolve();
-        };
-      });
+      const user = auth.currentUser;
+      if (user) {
+        // Get Firebase vostcards metadata only
+        const firebaseQuery = query(
+          collection(db, 'vostcards'),
+          where('userID', '==', user.uid),
+          where('visibility', '==', 'private')
+        );
+        
+        const firebaseSnapshot = await getDocs(firebaseQuery);
+        const firebaseMetadata = firebaseSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: data.id,
+            title: data.title || '',
+            description: data.description || '',
+            categories: data.categories || [],
+            username: data.username || '',
+            userID: data.userID || '',
+            createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            state: 'private' as const,
+            hasVideo: data.hasVideo || false,
+            hasPhotos: data.hasPhotos || false,
+            isOffer: data.isOffer || false,
+            offerDetails: data.offerDetails || null,
+            script: data.script || null,
+            scriptId: data.scriptId || null,
+            geo: data.latitude && data.longitude 
+              ? { latitude: data.latitude, longitude: data.longitude }
+              : null,
+            // No actual media content, just metadata
+            video: null,
+            photos: [],
+            _firebaseVideoURL: data.videoURL || null,
+            _firebasePhotoURLs: data.photoURLs || [],
+            _isMetadataOnly: true // Flag to indicate this is metadata only
+          };
+        });
+        
+        console.log(`⚡ Found ${firebaseMetadata.length} vostcards metadata from Firebase`);
+        setSavedVostcards(firebaseMetadata);
+      }
+      
+      console.log('📂 Lightweight sync completed');
+      
     } catch (error) {
-      console.error('❌ Failed to open IndexedDB:', error);
+      console.error('❌ Failed lightweight sync:', error);
       alert('Failed to load saved Vostcards. Please refresh the page and try again.');
     }
-  }, [syncPrivateVostcardsFromFirebase]);
+  }, []);
 
   // Load all Vostcards on component mount
   useEffect(() => {
@@ -2101,6 +2075,144 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [syncPrivateVostcardsFromFirebase, loadAllLocalVostcardsImmediate]);
 
+  // 🆕 LIGHTWEIGHT SYNC FUNCTIONS
+  
+  // Sync only metadata (no media content) for fast list display
+  const syncVostcardMetadata = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('☁️ No user logged in, skipping metadata sync');
+      return;
+    }
+
+    try {
+      console.log('⚡ Starting lightweight metadata sync...');
+      
+      // Get Firebase vostcards metadata only
+      const firebaseQuery = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        where('visibility', '==', 'private')
+      );
+      
+      const firebaseSnapshot = await getDocs(firebaseQuery);
+      const firebaseMetadata = firebaseSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: data.id,
+          title: data.title || '',
+          description: data.description || '',
+          categories: data.categories || [],
+          username: data.username || '',
+          userID: data.userID || '',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          state: 'private' as const,
+          hasVideo: data.hasVideo || false,
+          hasPhotos: data.hasPhotos || false,
+          isOffer: data.isOffer || false,
+          offerDetails: data.offerDetails || null,
+          script: data.script || null,
+          scriptId: data.scriptId || null,
+          geo: data.latitude && data.longitude 
+            ? { latitude: data.latitude, longitude: data.longitude }
+            : null,
+          // No actual media content, just metadata
+          video: null,
+          photos: [],
+          _firebaseVideoURL: data.videoURL || null,
+          _firebasePhotoURLs: data.photoURLs || [],
+          _isMetadataOnly: true // Flag to indicate this is metadata only
+        };
+      });
+
+      console.log(`⚡ Found ${firebaseMetadata.length} vostcards metadata from Firebase`);
+
+      // Save metadata to IndexedDB
+      const localDB = await openDB();
+      const transaction = localDB.transaction([METADATA_STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(METADATA_STORE_NAME);
+      
+      // Clear existing metadata
+      await new Promise<void>((resolve, reject) => {
+        const clearRequest = store.clear();
+        clearRequest.onsuccess = () => resolve();
+        clearRequest.onerror = () => reject(clearRequest.error);
+      });
+
+      // Add new metadata
+      for (const metadata of firebaseMetadata) {
+        await new Promise<void>((resolve, reject) => {
+          const request = store.add(metadata);
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      console.log(`✅ Metadata sync completed: ${firebaseMetadata.length} items`);
+      
+      // Update savedVostcards with metadata-only items
+      setSavedVostcards(firebaseMetadata);
+      
+    } catch (error) {
+      console.error('❌ Metadata sync failed:', error);
+      throw error;
+    }
+  }, []);
+
+  // Download full content for a specific vostcard when user taps on it
+  const downloadVostcardContent = useCallback(async (vostcardId: string) => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('☁️ No user logged in, skipping content download');
+      return;
+    }
+
+    try {
+      console.log(`📥 Downloading content for vostcard: ${vostcardId}`);
+      
+      // Get the full vostcard from Firebase
+      const docRef = doc(db, 'vostcards', vostcardId);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        throw new Error('Vostcard not found in Firebase');
+      }
+
+      const firebaseVostcard = docSnap.data();
+      
+      // Download the full content including media
+      const fullVostcard = await downloadFirebaseVostcardToLocal(firebaseVostcard);
+      
+      // Save to full IndexedDB store
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(fullVostcard);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+
+      console.log(`✅ Content downloaded for vostcard: ${vostcardId}`);
+      
+      // Update savedVostcards to replace metadata with full content
+      setSavedVostcards(prev => prev.map(v => 
+        v.id === vostcardId ? fullVostcard : v
+      ));
+      
+    } catch (error) {
+      console.error(`❌ Failed to download content for ${vostcardId}:`, error);
+      throw error;
+    }
+  }, []);
+
+  // Get current metadata-only vostcards
+  const getVostcardMetadata = useCallback(() => {
+    return savedVostcards.filter(v => v._isMetadataOnly);
+  }, [savedVostcards]);
+
   return (
     <VostcardContext.Provider
       value={{
@@ -2157,6 +2269,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         loadAllLocalVostcardsImmediate,
         syncInBackground,
         clearAllPrivateVostcardsFromFirebase,
+        // Lightweight sync functions
+        syncVostcardMetadata,
+        downloadVostcardContent,
+        getVostcardMetadata,
       }}
     >
       {children}
