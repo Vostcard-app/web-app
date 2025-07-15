@@ -1456,3 +1456,10 @@ const menuItemStyle = {
 };
 
 export default HomeView;
+  },
+  ':active': {
+    backgroundColor: '#e8e8e8'
+  }
+};
+
+export default HomeView;
