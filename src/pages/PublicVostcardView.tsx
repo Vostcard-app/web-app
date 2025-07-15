@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMapPin, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -587,20 +586,58 @@ ${getUserFirstName()}`;
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        {/* Left side - Icons */}
+        {/* Left side - Avatar, Username, and Icons */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 20
+          gap: 16
         }}>
-          {/* Map Icon */}
-          <div 
-            style={{ 
-              cursor: 'pointer',
-              transition: 'transform 0.1s',
+          {/* Avatar and Username */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}>
+            <div style={{ 
+              width: 32, 
+              height: 32, 
+              borderRadius: '50%', 
+              overflow: 'hidden',
+              background: '#f0f0f0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
+            }}>
+              {avatarUrl ? (
+                <img 
+                  src={avatarUrl} 
+                  alt={vostcardUsername || 'User'} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+                />
+              ) : (
+                <FaUserCircle size={32} color="#ccc" />
+              )}
+            </div>
+            <div style={{ 
+              fontWeight: 600, 
+              fontSize: 14,
+              color: '#222'
+            }}>
+              {vostcardUsername || 'Unknown User'}
+            </div>
+          </div>
+
+          {/* Map Icon - around line 665 */}
+          <div 
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              background: '#f5f5f5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             onClick={() => {
               navigate('/home', {
@@ -628,7 +665,7 @@ ${getUserFirstName()}`;
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            <FaMapPin size={24} color="#222" />
+            <FaMap size={24} color="#222" />
           </div>
 
           {/* Heart Icon */}
@@ -902,7 +939,7 @@ ${getUserFirstName()}`;
                   height: '116px'
                 }}
               >
-                <FaMapPin size={20} />
+                <FaMap size={20} />
               </div>
             ))}
           </div>
