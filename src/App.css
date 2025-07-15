@@ -7,10 +7,11 @@ body {
 }
 
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: calc(2rem + env(safe-area-inset-top)) calc(2rem + env(safe-area-inset-right)) calc(2rem + env(safe-area-inset-bottom)) calc(2rem + env(safe-area-inset-left));
-  text-align: center;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  text-align: left;
 }
 
 .logo {

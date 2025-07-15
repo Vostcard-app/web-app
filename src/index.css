@@ -43,10 +43,20 @@ body {
   overflow: hidden; /* Optional: prevent scroll */
 }
 
-/* ✅ Optional: Buttons Reset */
+/* ✅ Button Visibility Fix */
 button {
   border: none;
   outline: none;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* ✅ Force button text visibility */
+button, button * {
+  color: inherit !important;
+  font-size: inherit !important;
 }
 
 /* ✅ Global Button Border Radius - Make corners more round */
