@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEnvelope, FaSmile, FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
+import VostcardPin from '../assets/Vostcard_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
 
 const UserGuideView: React.FC = () => {
   const navigate = useNavigate();
@@ -59,24 +61,28 @@ const UserGuideView: React.FC = () => {
           width: '100%',
           maxWidth: '600px'
         }}>
-          {/* Red Pin */}
+          {/* Vostcard Pin Image */}
           <div style={{
-            width: '80px',
-            height: '80px',
-            backgroundColor: '#E62A2E',
-            borderRadius: '50% 50% 50% 0',
-            transform: 'rotate(-45deg)',
+            marginRight: '30px',
+            flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: '30px',
-            flexShrink: 0,
-            boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)'
+            width: '80px',
+            height: '80px'
           }}>
-            <FaEnvelope 
-              size={24} 
-              color="white" 
-              style={{ transform: 'rotate(45deg)' }}
+            <img 
+              src={VostcardPin}
+              alt="Vostcard Pin"
+              style={{
+                width: '80px',
+                height: '80px',
+                filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
+              }}
+              onError={(e) => {
+                console.error('VostcardPin failed to load');
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
 
@@ -105,24 +111,28 @@ const UserGuideView: React.FC = () => {
           width: '100%',
           maxWidth: '600px'
         }}>
-          {/* Green Pin */}
+          {/* Offer Pin Image */}
           <div style={{
-            width: '80px',
-            height: '80px',
-            backgroundColor: '#4CAF50',
-            borderRadius: '50% 50% 50% 0',
-            transform: 'rotate(-45deg)',
+            marginRight: '30px',
+            flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: '30px',
-            flexShrink: 0,
-            boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+            width: '80px',
+            height: '80px'
           }}>
-            <FaSmile 
-              size={24} 
-              color="white" 
-              style={{ transform: 'rotate(45deg)' }}
+            <img 
+              src={OfferPin}
+              alt="Offer Pin"
+              style={{
+                width: '80px',
+                height: '80px',
+                filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
+              }}
+              onError={(e) => {
+                console.error('OfferPin failed to load');
+                e.currentTarget.style.display = 'none';
+              }}
             />
           </div>
 
