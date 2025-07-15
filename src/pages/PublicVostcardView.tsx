@@ -630,6 +630,7 @@ ${getUserFirstName()}`;
       fontFamily: 'system-ui, sans-serif',
       position: 'relative',
       overflow: 'auto', // Ensure scrolling works properly
+      height: '100vh', // Set explicit height for better scrolling
     }}>
       {/* Fixed Header */}
       <div style={{
@@ -658,10 +659,10 @@ ${getUserFirstName()}`;
         zIndex: 9,
         background: '#fff',
         padding: '12px 16px',
-        borderBottom: '1px solid #eee',
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'space-between',
+          alignItems: 'center',
+        borderBottom: '1px solid #e0e0e0',
       }}>
         {/* Left side - Avatar and Username */}
         <div style={{
@@ -714,7 +715,8 @@ ${getUserFirstName()}`;
             fontSize: 16,
             fontWeight: 500,
             boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            marginLeft: '-20px' // Move button 20px to the left
           }}
           onClick={() => navigate('/user-guide')}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
@@ -771,7 +773,8 @@ ${getUserFirstName()}`;
         padding: '16px 16px 40px 16px',
         minHeight: 'calc(100vh - 120px)',
         boxSizing: 'border-box',
-        overflowY: 'auto' // Ensure vertical scrolling
+        overflowY: 'auto', // Ensure vertical scrolling
+        height: 'calc(100vh - 120px)' // Explicit height for better scrolling
       }}>
         {/* Map and Heart Icons - Above Title */}
         <div style={{ 
