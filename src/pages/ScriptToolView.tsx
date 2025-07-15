@@ -132,7 +132,7 @@ export default function ScriptToolView() {
         flex: 1,
         overflow: "auto",
         WebkitOverflowScrolling: "touch",
-        paddingBottom: 20
+        paddingBottom: 180
       }}>
         <div style={{
           width: "100%",
@@ -249,9 +249,9 @@ export default function ScriptToolView() {
               flex: 1,
               background: loading ? "#ccc" : "orange",
               color: "white",
-              padding: 14,
-              borderRadius: 8,
-              fontSize: 16,
+              padding: 10,
+              borderRadius: 6,
+              fontSize: 14,
               border: "none",
               fontWeight: 600,
               cursor: loading ? "not-allowed" : "pointer"
@@ -266,9 +266,9 @@ export default function ScriptToolView() {
               flex: 1,
               background: loading ? "#ccc" : "purple",
               color: "white",
-              padding: 14,
-              borderRadius: 8,
-              fontSize: 16,
+              padding: 10,
+              borderRadius: 6,
+              fontSize: 14,
               border: "none",
               fontWeight: 600,
               cursor: loading ? "not-allowed" : "pointer"
@@ -278,44 +278,48 @@ export default function ScriptToolView() {
           </button>
         </div>
 
-        {/* Save and Continue Button (shown after recording) */}
-        {showSaveButton && (
-          <button
-            onClick={handleSaveAndContinue}
-            disabled={loading || !script.trim()}
-            style={{
-              width: "100%",
-              background: loading ? "#ccc" : "#28a745",
-              color: "white",
-              padding: 16,
-              borderRadius: 8,
-              fontSize: 20,
-              border: "none",
-              fontWeight: 600,
-              marginBottom: 16,
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
-          >
-            {loading ? "Saving..." : "Save & Continue"}
-          </button>
-        )}
-
- 
         </div>
       </div>
       
       {/* Fixed button area at bottom */}
       <div style={{
-        padding: "16px 16px 66px 16px", // Increased bottom padding by 50px
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: "16px 16px 66px 16px",
         background: "#fff",
         borderTop: "1px solid #eee",
-        boxSizing: "border-box"
+        boxSizing: "border-box",
+        zIndex: 1000
       }}>
         <div style={{
           width: "100%",
           maxWidth: 500,
           margin: "0 auto"
         }}>
+          {/* Save and Continue Button (shown after recording) */}
+          {showSaveButton && (
+            <button
+              onClick={handleSaveAndContinue}
+              disabled={loading || !script.trim()}
+              style={{
+                width: "100%",
+                background: loading ? "#ccc" : "#28a745",
+                color: "white",
+                padding: 16,
+                borderRadius: 8,
+                fontSize: 20,
+                border: "none",
+                fontWeight: 600,
+                marginBottom: 16,
+                cursor: loading ? "not-allowed" : "pointer"
+              }}
+            >
+              {loading ? "Saving..." : "Save & Continue"}
+            </button>
+          )}
+          
           {/* Roll Camera Button - always visible at bottom */}
           <button
             disabled={!script.trim()}

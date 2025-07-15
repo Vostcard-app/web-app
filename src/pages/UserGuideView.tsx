@@ -27,7 +27,10 @@ const UserGuideView: React.FC = () => {
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         zIndex: 1000,
         position: 'relative',
-      }}>
+      }}>git add .
+git commit -m "Ready for Netlify deploy"
+git push origin main
+
         <FaArrowLeft 
           size={24} 
           color="white" 
