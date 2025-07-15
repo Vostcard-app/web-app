@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage";
 import RegistrationPage from "./pages/RegistrationPage";
 import UserGuideView from "./pages/UserGuideView";
 import HomeView from "./pages/HomeView";
+import PublicHomeView from "./pages/PublicHomeView";
 import BrowseAreaView from "./pages/BrowseAreaView";
 import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
 import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
@@ -67,6 +68,7 @@ function App() {
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
+                  <Route path="/public-home/:id" element={<PublicHomeView />} />
 
                   {/* 🏠 Main */}
                   <Route path="/home" element={<HomeView />} />
