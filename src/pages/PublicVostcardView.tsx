@@ -192,10 +192,22 @@ const PublicVostcardView: React.FC = () => {
     }
   }, [vostcard?.userID]);
 
+  // Add keyboard support for video modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showVideoModal) {
+        setShowVideoModal(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showVideoModal]);
+
   const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
     const { videoWidth, videoHeight } = videoElement;
     
-    console.log('�� Video dimensions (ALWAYS PORTRAIT):', {
+    console.log('🎬 Video dimensions (ALWAYS PORTRAIT):', {
       videoWidth,
       videoHeight,
       aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(2) : 'unknown'
@@ -832,7 +844,7 @@ ${getUserFirstName()}`;
                   }} />
                 </div>
               </>
-            ) : (
+            ) :
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -944,7 +956,7 @@ ${getUserFirstName()}`;
 
       {/* Remove the Registration Invitation Overlay completely */}
 
-      {/* Video Modal */}
+      {/* Video Modal - Improved with better mobile support */}
       <AnimatePresence>
         {showVideoModal && (
           <motion.div
@@ -961,27 +973,86 @@ ${getUserFirstName()}`;
               zIndex: 2000,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              padding: '20px' // Add padding for better mobile experience
             }}
             onClick={() => setShowVideoModal(false)}
           >
+            {/* Close button - prominent and easy to tap */}
+            <button
+              onClick={() => setShowVideoModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 2001,
+                fontSize: '18px',
+                color: 'white',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            {/* Video container */}
             <div style={{ 
               position: 'relative',
               maxWidth: '90vw',
-              maxHeight: '90vh'
+              maxHeight: '90vh',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
               <video 
                 src={videoURL} 
                 controls
                 autoPlay
+                playsInline
+                webkit-playsinline="true"
+                controlsList="nodownload nofullscreen noremoteplayback"
                 style={{ 
                   maxWidth: '100%',
                   maxHeight: '100%',
-                  borderRadius: 8
+                  borderRadius: 8,
+                  backgroundColor: '#000'
                 }}
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
                 onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => {
+                  e.preventDefault(); // Prevent double-click fullscreen
+                  e.stopPropagation();
+                }}
+                onFullscreenChange={(e) => {
+                  console.log('📹 Video fullscreen change in modal:', e);
+                }}
+                onWebkitFullscreenChange={(e) => {
+                  console.log('📹 Video webkit fullscreen change in modal:', e);
+                }}
               />
+            </div>
+
+            {/* Tap instructions for mobile */}
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '14px',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              Tap outside video or ✕ to close
             </div>
           </motion.div>
         )}
