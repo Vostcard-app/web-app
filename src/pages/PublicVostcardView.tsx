@@ -15,6 +15,7 @@ const PublicVostcardView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null); // Add photo modal state
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
   const [likeCount, setLikeCount] = useState(0);
   const [ratingStats, setRatingStats] = useState({
@@ -203,6 +204,20 @@ const PublicVostcardView: React.FC = () => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showVideoModal]);
+
+  // Add keyboard support for photo modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSelectedPhoto(null);
+      }
+    };
+
+    if (selectedPhoto) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [selectedPhoto]);
 
   const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
     const { videoWidth, videoHeight } = videoElement;
@@ -875,8 +890,10 @@ ${getUserFirstName()}`;
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  height: '116px' // Half the height minus gap
+                  height: '116px', // Half the height minus gap
+                  cursor: 'pointer' // Add cursor pointer
                 }}
+                onClick={() => setSelectedPhoto(url)} // Add click handler
               >
                 <img 
                   src={url} 
@@ -1057,6 +1074,41 @@ ${getUserFirstName()}`;
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Photo Modal */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            cursor: 'zoom-out',
+          }}
+          onClick={() => setSelectedPhoto(null)}
+          onContextMenu={e => e.preventDefault()}
+        >
+          <img
+            src={selectedPhoto}
+            alt="Full size"
+            style={{
+              width: '100vw',
+              height: '100vh',
+              objectFit: 'contain',
+              borderRadius: 0,
+              boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+              background: '#000',
+              userSelect: 'none',
+              pointerEvents: 'auto',
+            }}
+            draggable={false}
+            onContextMenu={e => e.preventDefault()}
+          />
+        </div>
+      )}
 
       {/* Debug Buttons */}
       <button onClick={() => debugSpecificVostcard('7a90077c-a140-420c-888a-d3ebfd5607dd')}>
