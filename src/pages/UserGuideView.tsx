@@ -57,7 +57,7 @@ const UserGuideView: React.FC = () => {
         <div style={{
           display: 'flex',
           alignItems: 'flex-start',
-          marginBottom: '80px',
+          marginBottom: '25px',
           width: '100%',
           maxWidth: '600px'
         }}>
@@ -176,7 +176,7 @@ const UserGuideView: React.FC = () => {
               letterSpacing: '0.01em',
             }}
           >
-            Login
+            Register/Login
           </button>
         </div>
       </div>
