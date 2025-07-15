@@ -113,13 +113,14 @@ const AccountSettingsView: React.FC = () => {
       {/* Content Container */}
       <div style={{ 
         maxWidth: 800, 
-        margin: '20px auto', 
+        margin: '0 auto', 
         padding: '20px',
         flex: 1,
         width: '100%',
         boxSizing: 'border-box',
         overflowY: 'auto',
-        overflowX: 'hidden'
+        overflowX: 'hidden',
+        height: 'calc(100vh - 69px)' // Subtract header height (30px + 15px top + 24px bottom)
       }}>
         {/* Back Button and Title */}
         <div style={{
