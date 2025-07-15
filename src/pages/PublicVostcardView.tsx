@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
@@ -548,11 +549,11 @@ ${getUserFirstName()}`;
 
   return (
     <div style={{ 
-      background: '#fff', 
-      height: '100vh', // Changed from minHeight to height
+      background: '#ffffff', // Make sure it's white, not black
+      minHeight: '100vh', // Change back to minHeight for better compatibility
       fontFamily: 'system-ui, sans-serif',
       position: 'relative',
-      overflow: 'hidden' // Prevent body scroll
+      // Remove overflow: 'hidden' as it can cause content to be hidden
     }}>
       {/* Fixed Header */}
       <div style={{
@@ -763,16 +764,10 @@ ${getUserFirstName()}`;
 
       {/* Scrollable Main Content */}
       <div style={{ 
-        position: 'absolute', // Position relative to container
-        top: 120, // Start below fixed headers
-        left: 0,
-        right: 0,
-        bottom: 0, // Extend to bottom of container
-        overflowY: 'auto', // Enable vertical scrolling
-        overflowX: 'hidden', // Prevent horizontal scrolling
-        WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
-        padding: '16px 16px 40px 16px', // Padding with extra bottom space
-        boxSizing: 'border-box' // Include padding in dimensions
+        marginTop: 120, // Use margin instead of absolute positioning
+        padding: '16px 16px 40px 16px',
+        minHeight: 'calc(100vh - 120px)', // Ensure content fills remaining space
+        boxSizing: 'border-box'
       }}>
         {/* User Info */}
         <div style={{ 
