@@ -16,6 +16,7 @@ const EmailVostcardView: React.FC = () => {
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
+  const [imageLoadStates, setImageLoadStates] = useState<{ [key: number]: 'loading' | 'loaded' | 'error' }>({});
   const { user } = useAuth();
   const { fixBrokenSharedVostcard } = useVostcard();
 
@@ -47,6 +48,7 @@ const EmailVostcardView: React.FC = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           console.log('📧 Found vostcard:', data);
+          console.log('📧 Photo URLs:', data.photoURLs);
           setVostcard({ id: docSnap.id, ...data });
         } else {
           console.log('📧 Vostcard not found, trying to fix...');
@@ -58,6 +60,7 @@ const EmailVostcardView: React.FC = () => {
           if (retryDocSnap.exists()) {
             const data = retryDocSnap.data();
             console.log('📧 Fixed and loaded vostcard:', data);
+            console.log('📧 Photo URLs:', data.photoURLs);
             setVostcard({ id: retryDocSnap.id, ...data });
           } else {
             throw new Error('Vostcard not found');
@@ -91,6 +94,15 @@ const EmailVostcardView: React.FC = () => {
 
   const handleFreeAccount = () => {
     navigate('/user-guide');
+  };
+
+  const handleImageLoad = (index: number) => {
+    setImageLoadStates(prev => ({ ...prev, [index]: 'loaded' }));
+  };
+
+  const handleImageError = (index: number, url: string) => {
+    console.error(`❌ Failed to load image ${index + 1}:`, url);
+    setImageLoadStates(prev => ({ ...prev, [index]: 'error' }));
   };
 
   if (loading) {
@@ -160,6 +172,11 @@ const EmailVostcardView: React.FC = () => {
   }
 
   const { title, description, photoURLs = [], videoURL, username: vostcardUsername, avatarURL } = vostcard;
+
+  // Debug log the photoURLs
+  console.log('📧 EmailVostcardView photoURLs:', photoURLs);
+  console.log('📧 EmailVostcardView photoURLs length:', photoURLs?.length);
+  console.log('📧 EmailVostcardView photoURLs type:', typeof photoURLs);
 
   return (
     <div style={{ 
@@ -323,8 +340,8 @@ const EmailVostcardView: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Photos */}
-        {photoURLs.length > 0 && (
+        {/* Photos with improved error handling */}
+        {photoURLs && photoURLs.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -338,20 +355,82 @@ const EmailVostcardView: React.FC = () => {
             }}
           >
             {photoURLs.slice(0, 3).map((url: string, idx: number) => (
-              <img
+              <div
                 key={idx}
-                src={url}
-                alt={`Photo ${idx + 1}`}
                 style={{
                   width: '100px',
                   height: '100px',
                   borderRadius: '12px',
-                  objectFit: 'cover',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  overflow: 'hidden',
+                  backgroundColor: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  position: 'relative'
                 }}
-              />
+              >
+                {imageLoadStates[idx] === 'error' ? (
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: '#666', 
+                    textAlign: 'center',
+                    padding: '8px'
+                  }}>
+                    📷<br/>Failed to load
+                  </div>
+                ) : (
+                  <img
+                    src={url}
+                    alt={`Photo ${idx + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      opacity: imageLoadStates[idx] === 'loaded' ? 1 : 0.5
+                    }}
+                    onLoad={() => handleImageLoad(idx)}
+                    onError={() => handleImageError(idx, url)}
+                  />
+                )}
+                {imageLoadStates[idx] !== 'loaded' && imageLoadStates[idx] !== 'error' && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: '12px',
+                    color: '#666'
+                  }}>
+                    Loading...
+                  </div>
+                )}
+              </div>
             ))}
           </motion.div>
+        )}
+
+        {/* Debug info for photos */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ 
+            fontSize: '12px', 
+            color: '#666', 
+            marginBottom: '20px',
+            padding: '8px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '4px'
+          }}>
+            Debug: {photoURLs?.length || 0} photos found
+            {photoURLs?.length > 0 && (
+              <div style={{ marginTop: '4px' }}>
+                {photoURLs.slice(0, 3).map((url: string, idx: number) => (
+                  <div key={idx} style={{ fontSize: '10px', wordBreak: 'break-all' }}>
+                    {idx + 1}: {url?.substring(0, 60)}...
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Description */}
