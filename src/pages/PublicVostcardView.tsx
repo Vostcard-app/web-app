@@ -782,7 +782,8 @@ ${getUserFirstName()}`;
           justifyContent: 'center', 
           alignItems: 'center',
           gap: 24,
-          marginBottom: '16px'
+          marginBottom: '16px',
+          marginTop: '15px' // Add 15px padding above the icons
         }}>
           {/* Map Icon */}
           <div 
