@@ -184,12 +184,21 @@ const RootView: React.FC = () => {
         zIndex: 2000,
         padding: '0 20px',
         boxSizing: 'border-box',
-        marginTop: '80px'
+        marginTop: '80px',
+        pointerEvents: 'auto' // Ensure pointer events work
       }}>
         <button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('User Guide button clicked!');
+            navigate('/user-guide');
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('User Guide button touched!');
             navigate('/user-guide');
           }}
           style={{
@@ -205,7 +214,10 @@ const RootView: React.FC = () => {
             boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)',
             cursor: 'pointer',
             letterSpacing: '0.01em',
-            zIndex: 2000
+            position: 'relative',
+            zIndex: 2001, // Slightly higher than container
+            pointerEvents: 'auto', // Ensure it can receive clicks
+            touchAction: 'manipulation' // Better touch handling
           }}
         >
           User Guide
