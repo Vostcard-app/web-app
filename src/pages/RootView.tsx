@@ -42,10 +42,10 @@ const RootView: React.FC = () => {
         {`
           @keyframes bobbing {
             0%, 100% {
-              transform: translate(-50%, -100%) translateY(0px);
+              transform: translate(-50%, -50%) translateY(0px);
             }
             50% {
-              transform: translate(-50%, -100%) translateY(-15px);
+              transform: translate(-50%, -50%) translateY(-15px);
             }
           }
           
@@ -154,8 +154,7 @@ const RootView: React.FC = () => {
         position: 'absolute',
         top: '50%',
         left: '50%',
-        zIndex: 2000,
-        transform: 'translate(-50%, -50%)'
+        zIndex: 2000
       }}>
         <img 
           src={VostcardPin}
@@ -205,7 +204,7 @@ const RootView: React.FC = () => {
             background: '#E62A2E',
             color: 'white',
             border: 'none',
-            borderRadius: '50px',
+            borderRadius: '8px',
             fontSize: '24px',
             fontWeight: 600,
             padding: '16px 0',
@@ -246,7 +245,7 @@ const RootView: React.FC = () => {
             background: '#07345c',
             color: 'white',
             border: 'none',
-            borderRadius: '50px',
+            borderRadius: '8px',
             fontSize: '24px',
             fontWeight: 600,
             padding: '16px 0',
