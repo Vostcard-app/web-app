@@ -451,7 +451,9 @@ const VostcardDetailView: React.FC = () => {
       const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
       const shareText = `Hi,
 
-I made this with an app called Vōstcard
+I've sent you a Vōstcard.
+
+Check it out.
 
 ${privateUrl}
 
@@ -513,7 +515,9 @@ ${shareText}`);
       const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
       const shareText = `Hi,
 
-I made this with an app called Vōstcard
+I've sent you a Vōstcard.
+
+Check it out.
 
 ${privateUrl}
 

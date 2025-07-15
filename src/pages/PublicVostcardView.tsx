@@ -287,7 +287,9 @@ const PublicVostcardView: React.FC = () => {
     const subjectLine = `Look what I made with Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
     const shareText = `Hi,
 
-I made this with an app called Vōstcard
+I've sent you a Vōstcard.
+
+Check it out.
 
 ${publicUrl}
 
