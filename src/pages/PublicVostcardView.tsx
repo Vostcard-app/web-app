@@ -625,11 +625,11 @@ ${getUserFirstName()}`;
 
   return (
     <div style={{ 
-      background: '#ffffff', // Make sure it's white, not black
-      minHeight: '100vh', // Change back to minHeight for better compatibility
+      background: '#ffffff',
+      minHeight: '100vh',
       fontFamily: 'system-ui, sans-serif',
       position: 'relative',
-      // Remove overflow: 'hidden' as it can cause content to be hidden
+      overflow: 'auto', // Ensure scrolling works properly
     }}>
       {/* Fixed Header */}
       <div style={{
@@ -716,7 +716,7 @@ ${getUserFirstName()}`;
             boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
             pointerEvents: 'auto'
           }}
-          onClick={() => navigate('/register')}
+          onClick={() => navigate('/user-guide')}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -746,7 +746,7 @@ ${getUserFirstName()}`;
             <div style={{ marginBottom: 4 }}>❤️ Like saved!</div>
             <div style={{ fontSize: 12, opacity: 0.9 }}>
               <button
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/user-guide')}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -767,10 +767,11 @@ ${getUserFirstName()}`;
 
       {/* Scrollable Main Content */}
       <div style={{ 
-        marginTop: 120, // Use margin instead of absolute positioning
+        marginTop: 120,
         padding: '16px 16px 40px 16px',
-        minHeight: 'calc(100vh - 120px)', // Ensure content fills remaining space
-        boxSizing: 'border-box'
+        minHeight: 'calc(100vh - 120px)',
+        boxSizing: 'border-box',
+        overflowY: 'auto' // Ensure vertical scrolling
       }}>
         {/* Map and Heart Icons - Above Title */}
         <div style={{ 
