@@ -486,7 +486,7 @@ const HomeView = () => {
   // Get user location with error handling
   useEffect(() => {
     // Don't get user location if we have a browse location from navigation or single vostcard
-    if (browseLocationState || singleVostcard) {
+    if (browseLocationState || singleVostcard || browseLocation) {
       console.log('🗺️ Skipping user location acquisition - browse location or single vostcard detected');
       return;
     }
@@ -517,7 +517,7 @@ const HomeView = () => {
     };
 
     getUserLocation();
-  }, [browseLocationState, singleVostcard]); // Add browseLocationState and singleVostcard as dependency
+  }, [browseLocationState, singleVostcard, browseLocation]); // Add browseLocationState and singleVostcard as dependency
 
   // Load vostcards on mount and when fresh load is requested
   useEffect(() => {
