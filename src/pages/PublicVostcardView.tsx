@@ -492,7 +492,6 @@ ${shareText}`);
         alignItems: 'center',
         borderBottom: '1px solid #e0e0e0',
       }}>
-        {/* Left side - Avatar and Username */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -527,9 +526,6 @@ ${shareText}`);
             {vostcardUsername || 'Unknown User'}
           </div>
         </div>
-
-        {/* Right side - Free Account Button */}
-import React, { useEffect, useState, useRef } from 'react';
         <button
           type="button"
           style={{
