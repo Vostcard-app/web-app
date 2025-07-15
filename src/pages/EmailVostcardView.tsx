@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaHeart, FaStar, FaShare, FaUserCircle, FaMapPin, FaEnvelope, FaDownload } from 'react-icons/fa';
+import { FaHeart, FaStar, FaUserCircle, FaMapPin, FaEnvelope, FaDownload } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -91,36 +91,6 @@ const EmailVostcardView: React.FC = () => {
 
   const handleFreeAccount = () => {
     navigate('/user-guide');
-  };
-
-  const handleShareVostcard = () => {
-    const shareUrl = `${window.location.origin}/email/${id}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: vostcard?.title || 'Check out this Vōstcard',
-        text: `${vostcard?.description || ''}`,
-        url: shareUrl
-      }).catch(console.error);
-    } else {
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('Link copied to clipboard!');
-      });
-    }
-  };
-
-  const handleViewOnMap = () => {
-    if (vostcard?.latitude && vostcard?.longitude) {
-      navigate('/home', {
-        state: {
-          singleVostcard: vostcard,
-          centerLocation: {
-            lat: vostcard.latitude,
-            lng: vostcard.longitude
-          }
-        }
-      });
-    }
   };
 
   if (loading) {
@@ -372,13 +342,13 @@ const EmailVostcardView: React.FC = () => {
                 key={idx}
                 src={url}
                 alt={`Photo ${idx + 1}`}
-                                 style={{
-                   width: '100px',
-                   height: '100px',
-                   borderRadius: '12px',
-                   objectFit: 'cover',
-                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                 }}
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '12px',
+                  objectFit: 'cover',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}
               />
             ))}
           </motion.div>
@@ -421,80 +391,11 @@ const EmailVostcardView: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          style={{
-            display: 'flex',
-            gap: '12px',
-            justifyContent: 'center',
-            marginBottom: '24px'
-          }}
-        >
-          <button
-            onClick={handleShareVostcard}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 20px',
-              backgroundColor: '#007bff',
-              border: 'none',
-              borderRadius: '8px',
-              color: 'white',
-              fontSize: '14px',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#0056b3';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#007bff';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <FaShare /> Share
-          </button>
-
-          {vostcard?.latitude && vostcard?.longitude && (
-            <button
-              onClick={handleViewOnMap}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '12px 20px',
-                backgroundColor: '#28a745',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '14px',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#1e7e34';
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#28a745';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              <FaMapPin /> View on Map
-            </button>
-          )}
-        </motion.div>
-
         {/* Call to Action */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.5 }}
           style={{
             textAlign: 'center',
             padding: '24px',
@@ -539,7 +440,7 @@ const EmailVostcardView: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.6 }}
           style={{
             textAlign: 'center',
             padding: '24px',
