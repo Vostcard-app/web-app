@@ -58,7 +58,6 @@
                 console.log('📱 Retry successful, found vostcard:', {
                   id: retryData.id,
                   state: retryData.state,
-import React, { useEffect, useState } from 'react';
                   isPrivatelyShared: retryData.isPrivatelyShared,
                   title: retryData.title
                 });
@@ -79,517 +78,6 @@ import React, { useEffect, useState } from 'react';
             }
           } catch (fixError) {
             console.error('📱 Failed to fix missing vostcard:', fixError);
-import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
-import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
-import { useVostcard } from '../context/VostcardContext';
-
-const PublicVostcardView: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [vostcard, setVostcard] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
-  const [likeCount, setLikeCount] = useState(0);
-  const [ratingStats, setRatingStats] = useState({
-    averageRating: 0,
-    ratingCount: 0
-  });
-  const [isPrivateShared, setIsPrivateShared] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
-  const [showLikeMessage, setShowLikeMessage] = useState(false);
-  const { user, username } = useAuth();
-  const { debugSpecificVostcard, fixBrokenSharedVostcard } = useVostcard();
-
-  // Add debug handlers
-  const handleDebugVostcard = async () => {
-    if (!id) return;
-    
-    console.log('🔍 Starting debug for vostcard:', id);
-    try {
-      await debugSpecificVostcard(id);
-      console.log('✅ Debug completed - check console for details');
-    } catch (error) {
-      console.error('❌ Debug failed:', error);
-    }
-  };
-
-  const handleFixVostcard = async () => {
-    if (!id) return;
-    
-    console.log('🔧 Starting fix for vostcard:', id);
-    try {
-      const fixed = await fixBrokenSharedVostcard(id);
-      if (fixed) {
-        console.log('✅ Vostcard fixed successfully');
-        alert('Vostcard fixed! Try refreshing the page.');
-        // Optionally refresh the page
-        window.location.reload();
-      } else {
-        console.log('❌ Could not fix vostcard');
-        alert('Could not fix vostcard. Check console for details.');
-      }
-    } catch (error) {
-      console.error('❌ Fix failed:', error);
-      alert('Fix failed. Check console for details.');
-    }
-  };
-
-  // Anonymous like management using localStorage
-  const getAnonymousLikeKey = (vostcardId: string) => `anonymous_like_${vostcardId}`;
-  const getAnonymousLikeCountKey = (vostcardId: string) => `anonymous_like_count_${vostcardId}`;
-
-  // Check if anonymous user has liked this vostcard
-  const checkAnonymousLike = (vostcardId: string) => {
-    return localStorage.getItem(getAnonymousLikeKey(vostcardId)) === 'true';
-  };
-
-  // Get stored anonymous like count for this vostcard
-  const getStoredAnonymousLikeCount = (vostcardId: string) => {
-    const stored = localStorage.getItem(getAnonymousLikeCountKey(vostcardId));
-    return stored ? parseInt(stored, 10) : 0;
-  };
-
-  // Store anonymous like count for this vostcard
-  const setStoredAnonymousLikeCount = (vostcardId: string, count: number) => {
-    localStorage.setItem(getAnonymousLikeCountKey(vostcardId), count.toString());
-  };
-
-  // Initialize like state when vostcard loads
-  useEffect(() => {
-    if (vostcard && id) {
-      if (user) {
-        // For registered users, you could implement actual like checking here
-        setIsLiked(false); // Placeholder - implement actual like checking
-      } else {
-        // For anonymous users, check localStorage
-        const anonymousLiked = checkAnonymousLike(id);
-        setIsLiked(anonymousLiked);
-        
-        // Add stored anonymous likes to the displayed count
-        const storedAnonymousCount = getStoredAnonymousLikeCount(id);
-        setLikeCount(prev => prev + storedAnonymousCount);
-      }
-    }
-  }, [vostcard, id, user]);
-
-  // Handle like toggle for both registered and anonymous users
-  const handleLikeToggle = () => {
-    if (!id) return;
-
-    if (user) {
-      // For registered users - implement actual Firebase like toggle
-      console.log('Registered user like toggle - implement Firebase logic');
-      // TODO: Implement actual like service call here
-      setIsLiked(!isLiked);
-      setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-    } else {
-      // For anonymous users - use localStorage
-      const currentlyLiked = checkAnonymousLike(id);
-      const newLikedState = !currentlyLiked;
-      
-      // Store the like state
-      localStorage.setItem(getAnonymousLikeKey(id), newLikedState.toString());
-      
-      // Update local state
-      setIsLiked(newLikedState);
-      
-      // Update like count
-      const currentStoredCount = getStoredAnonymousLikeCount(id);
-      const newStoredCount = newLikedState ? currentStoredCount + 1 : Math.max(0, currentStoredCount - 1);
-      setStoredAnonymousLikeCount(id, newStoredCount);
-      
-      // Update displayed count
-      setLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
-      
-      // Show registration encouragement message
-      if (newLikedState) {
-        setShowLikeMessage(true);
-        setTimeout(() => setShowLikeMessage(false), 3000);
-      }
-    }
-  };
-
-  useEffect(() => {
-    const fetchVostcard = async () => {
-      if (!id) {
-        setError('No vostcard ID provided');
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-      
-      // Add timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        setError('Loading timed out. Please try again.');
-        setLoading(false);
-      }, 15000); // 15 second timeout
-
-      try {
-        console.log('📱 Loading vostcard for sharing:', id);
-        
-        // First attempt - try to load normally
-        const docRef = doc(db, 'vostcards', id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          console.log('📱 Found vostcard:', {
-            id: data.id,
-            state: data.state,
-            isPrivatelyShared: data.isPrivatelyShared,
-            title: data.title
-          });
-          
-          // Check if vostcard is viewable
-          if (data.state === 'posted' || data.isPrivatelyShared) {
-            clearTimeout(timeoutId);
-            setVostcard(data);
-            setLikeCount(data.likeCount || 0);
-            setRatingStats({
-              averageRating: data.averageRating || 0,
-              ratingCount: data.ratingCount || 0
-            });
-            setIsPrivateShared(data.isPrivatelyShared || false);
-          } else {
-            setError('This Vostcard is not available for public viewing.');
-            setLoading(false);
-            return;
-          }
-        } else {
-          setError('Vostcard not found.');
-        }
-      } catch (err) {
-        setError('Failed to load Vostcard.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (id) fetchVostcard();
-  }, [id]);
-
-  // Fetch user profile when vostcard is loaded
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!vostcard?.userID) return;
-      
-      try {
-        const userRef = doc(db, 'users', vostcard.userID);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setUserProfile(userSnap.data());
-        }
-      } catch (err) {
-        console.error('Failed to load user profile:', err);
-      }
-    };
-    
-    if (vostcard?.userID) {
-      fetchUserProfile();
-    }
-  }, [vostcard?.userID]);
-
-  // Add keyboard support for video modal
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showVideoModal) {
-        setShowVideoModal(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showVideoModal]);
-
-  // Add keyboard support for photo modal
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setSelectedPhoto(null);
-      }
-    };
-
-    if (selectedPhoto) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [selectedPhoto]);
-
-  const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
-    const { videoWidth, videoHeight } = videoElement;
-    
-    console.log('🎬 Video dimensions (ALWAYS PORTRAIT):', {
-      videoWidth,
-      videoHeight,
-      aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(2) : 'unknown'
-    });
-
-    // All videos are portrait
-    setVideoOrientation('portrait');
-  };
-
-  const handleShareClick = () => {
-    // Generate public share URL
-    const publicUrl = `${window.location.origin}/share/${id}`;
-    
-    // Get user's first name (extract from username or use display name)
-    const getUserFirstName = () => {
-      if (username) {
-        // If username contains spaces, take the first part
-        return username.split(' ')[0];
-      } else if (user?.displayName) {
-        return user.displayName.split(' ')[0];
-      } else if (user?.email) {
-        return user.email.split('@')[0];
-      }
-      return 'Anonymous';
-    };
-
-    // Create custom share message template with proper spacing
-    const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
-    const shareText = `Hi,
-
-I made this with an app called Vōstcard
-
-${publicUrl}
-
-${vostcard.description || ''}
-
-Cheers,
-
-${getUserFirstName()}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: subjectLine,
-        text: shareText,
-        url: publicUrl
-      }).catch(console.error);
-    } else {
-      // Fallback: copy to clipboard with full message
-      navigator.clipboard.writeText(`${subjectLine}
-
-${shareText}`).then(() => {
-        alert('Share message copied to clipboard!');
-      }).catch(() => {
-        alert(`Share this message: ${subjectLine}
-
-${shareText}`);
-      });
-    }
-  };
-
-  const handlePrivateShare = async () => {
-    try {
-      // Update the Vostcard to mark it as shared but keep it private
-      const vostcardRef = doc(db, 'vostcards', id!);
-      await updateDoc(vostcardRef, {
-        isShared: true
-      });
-      
-      // Generate private share URL
-      const privateUrl = `${window.location.origin}/share/${id}`;
-      
-      // Get user's first name (extract from username or use display name)
-      const getUserFirstName = () => {
-        if (username) {
-          // If username contains spaces, take the first part
-          return username.split(' ')[0];
-        } else if (user?.displayName) {
-          return user.displayName.split(' ')[0];
-        } else if (user?.email) {
-          return user.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
-
-      // Create custom share message template with proper spacing
-      const subjectLine = `Check out my Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
-      const shareText = `Hi,
-
-I made this with an app called Vōstcard
-
-${privateUrl}
-
-${vostcard.description || ''}
-
-Cheers,
-
-${getUserFirstName()}`;
-      
-      if (navigator.share) {
-        navigator.share({
-          title: subjectLine,
-          text: shareText,
-          url: privateUrl
-        }).catch(console.error);
-      } else {
-        // Fallback: copy to clipboard with full message
-        navigator.clipboard.writeText(`${subjectLine}
-
-${shareText}`).then(() => {
-          alert('Private share message copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
-        }).catch(() => {
-          alert(`Share this private message: ${subjectLine}
-
-${shareText}`);
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing private Vostcard:', error);
-      alert('Failed to share Vostcard. Please try again.');
-    }
-  };
-
-  const handleJoinNow = () => {
-    navigate('/register', { 
-      state: { 
-        fromSharedVostcard: true,
-        vostcardId: id,
-        vostcardTitle: vostcard?.title 
-      } 
-    });
-  };
-
-  const handleLogin = () => {
-    navigate('/login', { 
-      state: { 
-        fromSharedVostcard: true,
-        vostcardId: id,
-        vostcardTitle: vostcard?.title 
-      } 
-    });
-  };
-
-  // Add FaEnvelope to the imports
-  // Add the email sharing function
-  const handleEmailShare = async () => {
-    try {
-      if (!id) {
-        throw new Error('No vostcard ID');
-      }
-
-      // First, ensure the vostcard exists in Firebase with proper sharing flags
-      await fixBrokenSharedVostcard(id);
-
-      // Generate email-specific share URL
-      const emailUrl = `${window.location.origin}/email/${id}`;
-      
-      // Get user's first name
-      const getUserFirstName = () => {
-        if (username) {
-          return username.split(' ')[0];
-        } else if (user?.displayName) {
-          return user.displayName.split(' ')[0];
-        } else if (user?.email) {
-          return user.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
-
-      // Create email content using the exact template specified
-      const subjectLine = `Check out my Vōstcard: "${vostcard.title || 'Title'}"`;
-      
-      const emailBody = `Hi,
-
-I made this with an app called Vōstcard
-
-View it here: ${emailUrl}
-
-${vostcard.description || 'Description'}
-
-Cheers!
-
-${getUserFirstName()}`;
-      
-      // Create mailto URL
-      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
-      
-      // Open email client
-      window.open(mailtoUrl, '_blank');
-      
-    } catch (error) {
-      console.error('Error sharing Vostcard:', error);
-      alert('Failed to share Vostcard. Please try again.');
-    }
-  };
-
-  // Add the private email sharing function
-  const handlePrivateEmailShare = async () => {
-    try {
-      if (!id) {
-        throw new Error('No vostcard ID');
-      }
-
-      // First, ensure the vostcard exists in Firebase with proper sharing flags
-      await fixBrokenSharedVostcard(id);
-
-      // Generate email-specific share URL
-      const emailUrl = `${window.location.origin}/email/${id}`;
-      
-      // Get user's first name
-      const getUserFirstName = () => {
-        if (username) {
-          return username.split(' ')[0];
-        } else if (user?.displayName) {
-          return user.displayName.split(' ')[0];
-        } else if (user?.email) {
-          return user.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
-
-      // Create email content using the exact template specified
-      const subjectLine = `Check out my Vōstcard: "${vostcard.title || 'Title'}"`;
-      
-      const emailBody = `Hi,
-
-I made this with an app called Vōstcard
-
-View it here: ${emailUrl}
-
-${vostcard.description || 'Description'}
-
-Cheers!
-
-${getUserFirstName()}`;
-      
-      // Create mailto URL with subject and body
-      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
-      
-      // Open email client with pre-filled subject and body
-      window.open(mailtoUrl, '_blank');
-      
-    } catch (error) {
-      console.error('Error sharing private Vostcard:', error);
-      alert('Failed to share Vostcard. Please try again.');
-    }
-  };
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      // setIsDesktop(window.innerWidth > 768); // Removed as per new_code
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  if (loading) {
-    return (
-      <div style={{ 
-        height: '100vh', 
-        display: 'flex', 
           }
           
           // If we get here, the vostcard truly doesn't exist
@@ -607,15 +95,6 @@ ${getUserFirstName()}`;
     };
 
     fetchVostcard();
-        flexDirection: 'column',
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        fontSize: 18,
-        background: '#fff',
-        padding: '20px'
-      }}>
-        Loading...
-      </div>
   }, [id, fixBrokenSharedVostcard]);
 
   // Fetch user profile when vostcard is loaded
@@ -931,12 +410,40 @@ ${getUserFirstName()}`;
       <div style={{ 
         height: '100vh', 
         display: 'flex', 
+        flexDirection: 'column',
         alignItems: 'center', 
         justifyContent: 'center', 
-        fontSize: 24,
-        background: '#fff'
+        fontSize: 18,
+        background: '#fff',
+        padding: '20px',
+        textAlign: 'center'
       }}>
-        Loading...
+        <div style={{ 
+          width: 40, 
+          height: 40, 
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #07345c',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '20px'
+        }} />
+        <div style={{ marginBottom: '10px' }}>Loading Vostcard...</div>
+        <div style={{ 
+          fontSize: 14, 
+          color: '#666',
+          maxWidth: '300px',
+          lineHeight: 1.4
+        }}>
+          This may take a moment if the vostcard needs to be synced from the creator's device.
+        </div>
+        
+        {/* Add CSS for spinner animation */}
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -949,314 +456,162 @@ ${getUserFirstName()}`;
         flexDirection: 'column',
         alignItems: 'center', 
         justifyContent: 'center', 
-        color: 'red', 
-        fontSize: 24,
         background: '#fff',
         padding: '20px',
         textAlign: 'center'
       }}>
-        <div style={{ marginBottom: '20px' }}>
-          {error || 'Vostcard not found'}
-        </div>
-        <button
-          onClick={() => navigate('/register')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
-        >
-          Join Vōstcard
-        </button>
-      </div>
-    );
-  }
-
-  const { title, description, photoURLs = [], videoURL, username: vostcardUsername, createdAt: rawCreatedAt } = vostcard;
-  const avatarUrl = userProfile?.avatarURL;
-
-  // Format creation date
-  let createdAt = '';
-  if (rawCreatedAt) {
-    if (typeof rawCreatedAt.toDate === 'function') {
-      createdAt = rawCreatedAt.toDate().toLocaleString();
-    } else if (rawCreatedAt instanceof Date) {
-      createdAt = rawCreatedAt.toLocaleString();
-    } else if (typeof rawCreatedAt === 'string' || typeof rawCreatedAt === 'number') {
-      createdAt = new Date(rawCreatedAt).toLocaleString();
-    } else {
-      createdAt = String(rawCreatedAt);
-    }
-  }
-
-  return (
-    <div style={{ 
-      background: '#ffffff', // Make sure it's white, not black
-      minHeight: '100vh', // Change back to minHeight for better compatibility
-      fontFamily: 'system-ui, sans-serif',
-      position: 'relative',
-      // Remove overflow: 'hidden' as it can cause content to be hidden
-    }}>
-      {/* Fixed Header */}
-      <div style={{
-        position: 'fixed',
-    );
-  }
-
-  if (error || !vostcard) {
-    return (
-      <div style={{ 
-        height: '100vh', 
-        display: 'flex', 
-        flexDirection: 'column',
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        color: 'red', 
-        fontSize: 24,
-        background: '#fff',
-        padding: '20px',
-        textAlign: 'center'
-      }}>
-        <div style={{ marginBottom: '20px' }}>
-          {error || 'Vostcard not found'}
-        </div>
-        <button
-          onClick={() => navigate('/register')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px'
-          }}
-        >
-          Join Vōstcard
-        </button>
-      </div>
-    );
-  }
-
-  const { title, description, photoURLs = [], videoURL, username: vostcardUsername, createdAt: rawCreatedAt } = vostcard;
-  const avatarUrl = userProfile?.avatarURL;
-
-  // Format creation date
-  let createdAt = '';
-  if (rawCreatedAt) {
-    if (typeof rawCreatedAt.toDate === 'function') {
-      createdAt = rawCreatedAt.toDate().toLocaleString();
-    } else if (rawCreatedAt instanceof Date) {
-      createdAt = rawCreatedAt.toLocaleString();
-    } else if (typeof rawCreatedAt === 'string' || typeof rawCreatedAt === 'number') {
-      createdAt = new Date(rawCreatedAt).toLocaleString();
-    } else {
-      createdAt = String(rawCreatedAt);
-    }
-  }
-
-  return (
-    <div style={{ 
-      background: '#ffffff', // Make sure it's white, not black
-      minHeight: '100vh', // Change back to minHeight for better compatibility
-      fontFamily: 'system-ui, sans-serif',
-      position: 'relative',
-      // Remove overflow: 'hidden' as it can cause content to be hidden
-    }}>
-      {/* Fixed Header */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        zIndex: 10,
-        background: '#07345c',
-        padding: '15px 0 24px 0',
-        textAlign: 'left',
-        paddingLeft: '16px',
-        height: 30,
-        display: 'flex',
-        alignItems: 'center',
-      }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
-      </div>
-
-      {/* Navigation Icons - Under the banner */}
-      <div style={{
-        position: 'fixed',
-        top: 70,
-        left: 0,
-        width: '100%',
-        zIndex: 9,
-        background: '#fff',
-        padding: '12px 16px',
-        borderBottom: '1px solid #eee',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        {/* Left side - Avatar, Username, and Icons */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16
+        <div style={{ fontSize: '48px', marginBottom: '20px' }}>📱</div>
+        <div style={{ 
+          fontSize: '24px', 
+          fontWeight: 'bold',
+          color: '#333',
+          marginBottom: '16px' 
         }}>
-          {/* Avatar and Username */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
-          }}>
-            <div style={{ 
-              width: 32, 
-              height: 32, 
-              borderRadius: '50%', 
-              overflow: 'hidden',
-              background: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {avatarUrl ? (
-        top: 0,
-        left: 0,
-        width: '100%',
-        zIndex: 10,
-        background: '#07345c',
-        padding: '15px 0 24px 0',
-        textAlign: 'left',
-        paddingLeft: '16px',
-        height: 30,
-        display: 'flex',
-        alignItems: 'center',
-      }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
-      </div>
-
-      {/* Navigation Icons - Under the banner */}
-      <div style={{
-        position: 'fixed',
-        top: 70,
-        left: 0,
-        width: '100%',
-        zIndex: 9,
-        background: '#fff',
-        padding: '12px 16px',
-        borderBottom: '1px solid #eee',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        {/* Left side - Avatar, Username, and Icons */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16
+          {error?.includes('not found') ? 'Vostcard Not Found' : 'Unable to Load Vostcard'}
+        </div>
+        <div style={{ 
+          fontSize: '16px', 
+          color: '#666', 
+          marginBottom: '24px',
+          maxWidth: '400px',
+          lineHeight: 1.5
         }}>
-          {/* Avatar and Username */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
-          }}>
-            <div style={{ 
-              width: 32, 
-              height: 32, 
-              borderRadius: '50%', 
-              overflow: 'hidden',
-              background: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {avatarUrl ? (
-                <img 
-                  src={avatarUrl} 
-                  alt={vostcardUsername || 'User'} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-                />
-              ) : (
-                <FaUserCircle size={32} color="#ccc" />
-              )}
-            </div>
-            <div style={{ 
-              fontWeight: 600, 
-              fontSize: 14,
-              color: '#222'
-            }}>
-              {vostcardUsername || 'Unknown User'}
-            </div>
-          </div>
-
-          {/* Map Icon - around line 665 */}
-          <div 
+          {error?.includes('not found') 
+            ? 'This vostcard may have been deleted or the link is invalid. Please check the link and try again.'
+            : error?.includes('not available') 
+            ? 'This vostcard is private and not available for public viewing.'
+            : error?.includes('timed out')
+            ? 'The vostcard is taking too long to load. This may happen if it needs to be synced from the creator\'s device.'
+            : error || 'There was an error loading the vostcard.'
+          }
+        </div>
+        
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button
+            onClick={() => window.location.reload()}
             style={{
-              cursor: 'pointer',
-              padding: '8px',
+              padding: '12px 24px',
+              backgroundColor: '#07345c',
+              color: 'white',
+              border: 'none',
               borderRadius: '8px',
-              background: '#f5f5f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onClick={() => {
-              navigate('/home', {
-                state: {
-                  singleVostcard: {
-                    id: vostcard.id,
-                    title: vostcard.title,
-                    description: vostcard.description,
-                    latitude: vostcard.latitude,
-                    longitude: vostcard.longitude,
-                    videoURL: vostcard.videoURL,
-                    photoURLs: vostcard.photoURLs,
-                    username: vostcard.username,
-                    isOffer: vostcard.isOffer,
-                    offerDetails: vostcard.offerDetails,
-                    categories: vostcard.categories,
-                    createdAt: vostcard.createdAt,
-                    visibility: 'public',
-                    state: 'posted'
-                  }
-                }
-              });
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <FaMap size={24} color="#222" />
-          </div>
-
-          {/* Heart Icon */}
-          <div 
-            style={{ 
               cursor: 'pointer',
-              transition: 'transform 0.1s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 4
+              fontSize: '16px',
+              fontWeight: '500'
             }}
-            onClick={handleLikeToggle}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            <FaHeart 
-              size={24} 
-              color={isLiked ? "#ff4444" : "#222"} 
-              style={{ 
-                transition: 'color 0.2s ease',
-                filter: isLiked ? 'drop-shadow(0 0 4px rgba(255,68,68,0.5))' : 'none'
-              }} 
-            />
-            <span style={{ fontSize: 18, color: '#222' }}>{likeCount}</span>
+            Try Again
+          </button>
+          <button
+            onClick={() => navigate('/register')}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: '500'
+            }}
+          >
+            Join Vōstcard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const { title, description, photoURLs = [], videoURL, username: vostcardUsername, createdAt: rawCreatedAt } = vostcard;
+  const avatarUrl = userProfile?.avatarURL;
+
+  // Format creation date
+  let createdAt = '';
+  if (rawCreatedAt) {
+    if (typeof rawCreatedAt.toDate === 'function') {
+      createdAt = rawCreatedAt.toDate().toLocaleString();
+    } else if (rawCreatedAt instanceof Date) {
+      createdAt = rawCreatedAt.toLocaleString();
+    } else if (typeof rawCreatedAt === 'string' || typeof rawCreatedAt === 'number') {
+      createdAt = new Date(rawCreatedAt).toLocaleString();
+    } else {
+      createdAt = String(rawCreatedAt);
+    }
+  }
+
+  return (
+    <div style={{ 
+      background: '#ffffff', // Make sure it's white, not black
+      minHeight: '100vh', // Change back to minHeight for better compatibility
+      fontFamily: 'system-ui, sans-serif',
+      position: 'relative',
+      // Remove overflow: 'hidden' as it can cause content to be hidden
+    }}>
+      {/* Fixed Header */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        zIndex: 10,
+        background: '#07345c',
+        padding: '15px 0 24px 0',
+        textAlign: 'left',
+        paddingLeft: '16px',
+        height: 30,
+        display: 'flex',
+        alignItems: 'center',
+      }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
+      </div>
+
+      {/* Navigation Icons - Under the banner */}
+      <div style={{
+        position: 'fixed',
+        top: 70,
+        left: 0,
+        width: '100%',
+        zIndex: 9,
+        background: '#fff',
+        padding: '12px 16px',
+        borderBottom: '1px solid #eee',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        {/* Left side - Avatar and Username */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}>
+          <div style={{ 
+            width: 32, 
+            height: 32, 
+            borderRadius: '50%', 
+            overflow: 'hidden',
+            background: '#f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt={vostcardUsername || 'User'} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+              />
+            ) : (
+              <FaUserCircle size={32} color="#ccc" />
+            )}
+          </div>
+          <div style={{ 
+            fontWeight: 600, 
+            fontSize: 14,
+            color: '#333'
+          }}>
+            {vostcardUsername || 'Unknown User'}
           </div>
         </div>
 
@@ -1366,6 +721,96 @@ ${getUserFirstName()}`;
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 16 }}>{username || 'Unknown User'}</div>
             <div style={{ color: '#888', fontSize: 14 }}>Shared Vostcard</div>
+          </div>
+        </div>
+
+        {/* Map and Heart Icons - Above Title */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          gap: 24,
+          marginBottom: '16px'
+        }}>
+          {/* Map Icon */}
+          <div 
+            style={{
+              cursor: 'pointer',
+              padding: '12px',
+              borderRadius: '12px',
+              background: '#f5f5f5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid #e0e0e0'
+            }}
+            onClick={() => {
+              navigate('/home', {
+                state: {
+                  singleVostcard: {
+                    id: vostcard.id,
+                    title: vostcard.title,
+                    description: vostcard.description,
+                    latitude: vostcard.latitude,
+                    longitude: vostcard.longitude,
+                    videoURL: vostcard.videoURL,
+                    photoURLs: vostcard.photoURLs,
+                    username: vostcard.username,
+                    isOffer: vostcard.isOffer,
+                    offerDetails: vostcard.offerDetails,
+                    categories: vostcard.categories,
+                    createdAt: vostcard.createdAt,
+                    visibility: 'public',
+                    state: 'posted'
+                  }
+                }
+              });
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <FaMap size={28} color="#333" />
+          </div>
+
+          {/* Heart Icon */}
+          <div 
+            style={{ 
+              cursor: 'pointer',
+              padding: '12px',
+              borderRadius: '12px',
+              background: isLiked ? '#ffe6e6' : '#f5f5f5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: isLiked ? '1px solid #ffb3b3' : '1px solid #e0e0e0',
+              minWidth: '80px'
+            }}
+            onClick={handleLikeToggle}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <FaHeart 
+              size={28} 
+              color={isLiked ? "#ff4444" : "#333"} 
+              style={{ 
+                transition: 'color 0.2s ease',
+                filter: isLiked ? 'drop-shadow(0 0 4px rgba(255,68,68,0.5))' : 'none'
+              }} 
+            />
+            <span style={{ 
+              fontSize: 18, 
+              fontWeight: 600,
+              color: isLiked ? "#ff4444" : "#333"
+            }}>
+              {likeCount}
+            </span>
           </div>
         </div>
 
