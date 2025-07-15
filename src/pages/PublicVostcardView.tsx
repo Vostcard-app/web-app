@@ -670,8 +670,8 @@ ${getUserFirstName()}`;
           gap: 8
         }}>
           <div style={{ 
-            width: 32, 
-            height: 32, 
+            width: 50, 
+            height: 50, 
             borderRadius: '50%', 
             overflow: 'hidden',
             background: '#f0f0f0',
@@ -687,7 +687,7 @@ ${getUserFirstName()}`;
                 onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
               />
             ) : (
-              <FaUserCircle size={32} color="#ccc" />
+              <FaUserCircle size={50} color="#ccc" />
             )}
           </div>
           <div style={{ 
