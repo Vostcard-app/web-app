@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'; // 🔧 ONLY ADDED useState import
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaEnvelope, FaTimes } from 'react-icons/fa'; // 🔧 Added FaMapPin
+import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaShare, FaTimes } from 'react-icons/fa'; // 🔧 Replaced FaEnvelope with FaShare
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, getDocs, doc, setDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc, deleteDoc, Timestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 
 const MyVostcardListView = () => {
@@ -92,37 +92,72 @@ const MyVostcardListView = () => {
     navigate(`/vostcard/${vostcardId}`);
   };
 
-  const handleEmail = (e: React.MouseEvent, vostcard: any) => {
+  const handleShare = async (e: React.MouseEvent, vostcard: any) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Get user's first name
-    const getUserFirstName = () => {
-      if (username) {
-        return username.split(' ')[0];
-      } else if (user?.displayName) {
-        return user.displayName.split(' ')[0];
-      } else if (user?.email) {
-        return user.email.split('@')[0];
+    try {
+      // Update the Vostcard to mark it as privately shared
+      if (vostcard?.id) {
+        const vostcardRef = doc(db, 'vostcards', vostcard.id);
+        await updateDoc(vostcardRef, {
+          isPrivatelyShared: true,
+          sharedAt: new Date()
+        });
       }
-      return 'Anonymous';
-    };
-    
-    const subject = encodeURIComponent(`Check out my Vōstcard: "${vostcard.title}"`);
-    
-    const body = encodeURIComponent(`Hi,
+      
+      // Generate private share URL
+      const privateUrl = `${window.location.origin}/share/${vostcard.id}`;
+      
+      // Get user's first name (extract from username or use display name)
+      const getUserFirstName = () => {
+        if (username) {
+          // If username contains spaces, take the first part
+          return username.split(' ')[0];
+        } else if (user?.displayName) {
+          return user.displayName.split(' ')[0];
+        } else if (user?.email) {
+          return user.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      // Create custom share message template with proper spacing
+      const subjectLine = `Check out my Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
+      const shareText = `Hi,
 
 I made this with an app called Vōstcard
 
-View it here: ${window.location.origin}/email/${vostcard.id}
+${privateUrl}
 
-${vostcard.description || 'Description'}
+${vostcard?.description || ''}
 
-Cheers!
+Cheers,
 
-${getUserFirstName()}`);
-    
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+${getUserFirstName()}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: subjectLine,
+          text: shareText,
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        // Fallback: copy to clipboard with full message
+        navigator.clipboard.writeText(`${subjectLine}
+
+${shareText}`).then(() => {
+          alert('Private share message copied to clipboard! Copy the subject line from the message.');
+        }).catch(() => {
+          alert(`Share this private message: ${subjectLine}
+
+${shareText}`);
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
+    }
   };
 
   const handleDelete = async (e: React.MouseEvent, vostcardId: string) => {
@@ -570,7 +605,7 @@ ${getUserFirstName()}`);
                           <FaEye size={20} color="#6c757d" />
                         </div>
 
-                        {/* Email Icon */}
+                        {/* Share Icon */}
                         <div
                           style={{
                             cursor: 'pointer',
@@ -583,13 +618,13 @@ ${getUserFirstName()}`);
                             backgroundColor: '#f8f9fa',
                             border: '1px solid #dee2e6'
                           }}
-                          onClick={(e) => handleEmail(e, vostcard)}
+                          onClick={(e) => handleShare(e, vostcard)}
                           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          title="Email Vostcard"
+                          title="Share Vostcard"
                         >
-                          <FaEnvelope size={20} color="#007bff" />
+                          <FaShare size={20} color="#007bff" />
                         </div>
 
                         {/* Delete Icon */}
