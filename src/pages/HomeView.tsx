@@ -1449,16 +1449,6 @@ const menuItemStyle = {
   textAlign: 'left',
   ':hover': {
     backgroundColor: '#f5f5f5'
-  },
-  ':active': {
-    backgroundColor: '#e8e8e8'
-  }
-};
-
-export default HomeView;
-  },
-  ':active': {
-    backgroundColor: '#e8e8e8'
   }
 };
 
