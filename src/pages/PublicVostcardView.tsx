@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
@@ -28,6 +27,34 @@ const PublicVostcardView: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showLikeMessage, setShowLikeMessage] = useState(false);
+  
+  // Add ref for video element
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Add function to handle video play and hide controls
+  const handleVideoPlay = () => {
+    if (videoRef.current) {
+      // Hide controls after 1 second
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.controls = false;
+        }
+      }, 1000);
+    }
+  };
+  
+  // Add function to show controls on user interaction
+  const handleVideoInteraction = () => {
+    if (videoRef.current) {
+      videoRef.current.controls = true;
+      // Hide controls again after 3 seconds of no interaction
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.controls = false;
+        }
+      }, 3000);
+    }
+  };
 
   // Load vostcard data
   useEffect(() => {
@@ -1104,6 +1131,7 @@ ${getUserFirstName()}`;
               justifyContent: 'center'
             }}>
               <video 
+                ref={videoRef}
                 src={videoURL} 
                 controls
                 autoPlay
@@ -1117,7 +1145,14 @@ ${getUserFirstName()}`;
                   backgroundColor: '#000'
                 }}
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
-                onClick={(e) => e.stopPropagation()}
+import React, { useEffect, useState, useRef } from 'react';
+                onPlay={handleVideoPlay}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVideoInteraction();
+                }}
+                onMouseMove={handleVideoInteraction}
+                onTouchStart={handleVideoInteraction}
                 onDoubleClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
