@@ -54,9 +54,8 @@ button {
   pointer-events: auto !important;
 }
 
-/* ✅ Force button text visibility - but don't affect non-button elements */
+/* ✅ Force button text visibility - only for buttons that need it */
 button {
-  color: inherit !important;
   font-size: inherit !important;
 }
 
