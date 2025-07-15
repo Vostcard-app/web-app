@@ -556,6 +556,7 @@ const EmailVostcardView: React.FC = () => {
         </motion.div>
       </div>
     </div>
+  </div>
   );
 };
 
