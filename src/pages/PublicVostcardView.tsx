@@ -550,9 +550,10 @@ ${getUserFirstName()}`;
   return (
     <div style={{ 
       background: '#fff', 
-      minHeight: '100vh', 
+      height: '100vh', // Changed from minHeight to height
       fontFamily: 'system-ui, sans-serif',
-      position: 'relative'
+      position: 'relative',
+      overflow: 'hidden' // Prevent body scroll
     }}>
       {/* Fixed Header */}
       <div style={{
@@ -584,7 +585,7 @@ ${getUserFirstName()}`;
         borderBottom: '1px solid #eee',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between', // Changed from 'flex-start' to 'space-between'
+        justifyContent: 'space-between',
       }}>
         {/* Left side - Icons */}
         <div style={{
@@ -723,18 +724,26 @@ ${getUserFirstName()}`;
         </div>
       )}
 
-      {/* Main Content */}
+      {/* Scrollable Main Content */}
       <div style={{ 
-        paddingTop: 120, // Space for fixed header
-        paddingBottom: 40, // Extra space at bottom
-        minHeight: '100vh' // Ensure full height
+        position: 'absolute', // Position relative to container
+        top: 120, // Start below fixed headers
+        left: 0,
+        right: 0,
+        bottom: 0, // Extend to bottom of container
+        overflowY: 'auto', // Enable vertical scrolling
+        overflowX: 'hidden', // Prevent horizontal scrolling
+        WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+        padding: '16px 16px 40px 16px', // Padding with extra bottom space
+        boxSizing: 'border-box' // Include padding in dimensions
       }}>
         {/* User Info */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'center', 
-          padding: '16px 16px 8px 16px',
-          borderBottom: '1px solid #eee'
+          marginBottom: '16px',
+          borderBottom: '1px solid #eee',
+          paddingBottom: '8px'
         }}>
           <div style={{ 
             width: 48, 
@@ -766,16 +775,17 @@ ${getUserFirstName()}`;
 
         {/* Title */}
         <div style={{ 
-          padding: '16px 16px 8px 16px',
           fontSize: 24,
           fontWeight: 700,
-          lineHeight: 1.2
+          lineHeight: 1.2,
+          marginBottom: '16px',
+          textAlign: 'center'
         }}>
           {title || 'Untitled'}
         </div>
 
         {/* Video/Photo Display */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: '16px' }}>
           <div 
             style={{ 
               width: 180, 
@@ -900,23 +910,23 @@ ${getUserFirstName()}`;
 
         {/* Description */}
         <div style={{ 
-          padding: '16px 16px 8px 16px',
           color: '#333',
           lineHeight: 1.5,
-          fontSize: 16
+          fontSize: 16,
+          marginBottom: '16px'
         }}>
           {description || 'No description available.'}
         </div>
 
-        <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8, padding: '0 16px' }}>
+        <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginBottom: '24px' }}>
           Posted: {createdAt}
         </div>
 
         {/* Bottom message and link */}
         <div style={{ 
-          padding: '24px 16px 40px 16px',
           textAlign: 'center', 
           borderTop: '1px solid #eee',
+          paddingTop: '24px',
           marginTop: '24px'
         }}>
           <div style={{ 
