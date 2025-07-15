@@ -155,7 +155,7 @@ const UserGuideView: React.FC = () => {
 
         {/* Login Button */}
         <div style={{
-          marginTop: 'auto',
+          marginTop: '25px',
           width: '100%',
           maxWidth: '600px',
           paddingBottom: '40px'
