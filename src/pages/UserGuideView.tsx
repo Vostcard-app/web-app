@@ -51,18 +51,6 @@ const UserGuideView: React.FC = () => {
         boxSizing: 'border-box',
         overflowY: 'auto'
       }}>
-        {/* Header */}
-        <h1 style={{
-          fontSize: '48px',
-          fontWeight: 'bold',
-          color: '#333',
-          marginBottom: '60px',
-          textAlign: 'center',
-          margin: '0 0 60px 0'
-        }}>
-          User Guide
-        </h1>
-
         {/* Vostcard Pin Section */}
         <div style={{
           display: 'flex',
