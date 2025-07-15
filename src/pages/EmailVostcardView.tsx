@@ -324,19 +324,33 @@ const EmailVostcardView: React.FC = () => {
               justifyContent: 'center'
             }}
           >
-            <video
-              src={videoURL}
-              controls
-              style={{
-                width: '100%',
-                maxWidth: videoOrientation === 'portrait' ? '280px' : '320px', // Optimized for 9:16 container
-                height: 'auto',
-                borderRadius: '16px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }}
-              onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
-              poster={photoURLs[0] || undefined}
-            />
+            <div style={{
+              width: '100%',
+              maxWidth: videoOrientation === 'portrait' ? '280px' : '320px',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              backgroundColor: '#000'
+            }}>
+              <video
+                src={videoURL}
+                controls
+                playsInline
+                webkit-playsinline="true"
+                controlsList="nodownload nofullscreen noremoteplayback"
+                preload="metadata"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  display: 'block'
+                }}
+                onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
+                poster={photoURLs[0] || undefined}
+                onDoubleClick={(e) => {
+                  e.preventDefault(); // Prevent double-click fullscreen
+                }}
+              />
+            </div>
           </motion.div>
         )}
 
