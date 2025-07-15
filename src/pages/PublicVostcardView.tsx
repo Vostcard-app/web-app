@@ -844,7 +844,7 @@ ${getUserFirstName()}`;
                   }} />
                 </div>
               </>
-            ) :
+            ) : 
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -854,7 +854,7 @@ ${getUserFirstName()}`;
               }}>
                 No Video
               </div>
-            )}
+            }
           </div>
 
           {/* Photos Grid - Changed to show only 2 photos */}
