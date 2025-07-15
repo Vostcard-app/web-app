@@ -17,6 +17,7 @@ const PublicVostcardView: React.FC = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null); // Add photo modal state
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('landscape');
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768); // Add desktop detection
   const [likeCount, setLikeCount] = useState(0);
   const [ratingStats, setRatingStats] = useState({
     averageRating: 0,
@@ -470,6 +471,16 @@ ${getUserFirstName()}`;
     }
   };
 
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (loading) {
     return (
       <div style={{ 
@@ -560,418 +571,438 @@ ${getUserFirstName()}`;
 
   return (
     <div style={{ 
-      background: '#fff', 
       minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#fff', // Light gray background for desktop
       fontFamily: 'system-ui, sans-serif',
-      position: 'relative',
-      // Enhanced scrolling properties
-      overflowY: 'auto', // Ensure vertical scrolling
-      WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
-      height: '100vh' // Set explicit height to enable scrolling
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0' // Padding only on desktop
     }}>
-      {/* Fixed Header */}
+      {/* Mobile-style container with 9:16 aspect ratio for consistent experience */}
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        zIndex: 10,
-        background: '#07345c',
-        padding: '15px 0 24px 0',
-        textAlign: 'left',
-        paddingLeft: '16px',
-        height: 30,
-        display: 'flex',
-        alignItems: 'center',
+        width: isDesktop ? '390px' : '100%', // Fixed width on desktop, full width on mobile
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh', // Fixed height for proper scrolling
+        backgroundColor: '#fff',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none', // Shadow only on desktop
+        borderRadius: isDesktop ? '16px' : '0', // Rounded corners only on desktop
+        position: 'relative',
+        overflowY: 'auto', // Make the container scrollable
+        overflowX: 'hidden', // Prevent horizontal scrolling
+        transition: 'all 0.3s ease' // Smooth transition when resizing
       }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
-      </div>
-
-      {/* Navigation Icons - Under the banner */}
-      <div style={{
-        position: 'fixed',
-        top: 70,
-        left: 0,
-        width: '100%',
-        zIndex: 9,
-        background: '#fff',
-        padding: '12px 16px',
-        borderBottom: '1px solid #eee',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: 20
-      }}>
-        {/* Join Button - Updated styling to match HomeView */}
-        <div 
-          style={{ 
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#002B4D', // Dark blue like HomeView
-            color: 'white',
-            padding: '12px 20px', // Square proportions like HomeView
-            borderRadius: '8px', // More square like HomeView
-            fontSize: 16,
-            fontWeight: 500, // Medium weight like HomeView
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)', // Subtle shadow like HomeView
-            pointerEvents: 'auto'
-          }}
-          onClick={() => navigate('/register')}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          Join
-        </div>
-
-        {/* Map Icon - Modified to show only this vostcard */}
-        <div 
-          style={{ 
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => {
-            // Navigate to map showing only this vostcard
-            navigate('/home', {
-              state: {
-                singleVostcard: {
-                  id: vostcard.id,
-                  title: vostcard.title,
-                  description: vostcard.description,
-                  latitude: vostcard.latitude,
-                  longitude: vostcard.longitude,
-                  videoURL: vostcard.videoURL,
-                  photoURLs: vostcard.photoURLs,
-                  username: vostcard.username,
-                  isOffer: vostcard.isOffer,
-                  offerDetails: vostcard.offerDetails,
-                  categories: vostcard.categories,
-                  createdAt: vostcard.createdAt,
-                  visibility: 'public',
-                  state: 'posted'
-                }
-              }
-            });
-          }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaMapPin size={24} color="#222" />
-        </div>
-
-        {/* Heart Icon - Moved from stats section */}
-        <div 
-          style={{ 
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4
-          }}
-          onClick={handleLikeToggle}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaHeart 
-            size={24} 
-            color={isLiked ? "#ff4444" : "#222"} 
-            style={{ 
-              transition: 'color 0.2s ease',
-              filter: isLiked ? 'drop-shadow(0 0 4px rgba(255,68,68,0.5))' : 'none'
-            }} 
-          />
-          <span style={{ fontSize: 18, color: '#222' }}>{likeCount}</span>
-        </div>
-      </div>
-
-      {/* Like Message for Anonymous Users */}
-      {showLikeMessage && (
+        {/* Fixed Header */}
         <div style={{
-          position: 'fixed',
-          top: '140px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: '#002B4D',
-          color: 'white',
-          padding: '12px 20px',
-          borderRadius: '8px',
-          zIndex: 1000,
-          fontSize: 14,
-          fontWeight: 500,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          animation: 'slideDown 0.3s ease-out'
+          position: 'sticky', // Changed from fixed to sticky
+          top: 0,
+          left: 0,
+          width: '100%',
+          zIndex: 10,
+          background: '#07345c',
+          padding: '15px 0 24px 0',
+          textAlign: 'left',
+          paddingLeft: '16px',
+          height: 30,
+          display: 'flex',
+          alignItems: 'center',
         }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ marginBottom: 4 }}>❤️ Like saved!</div>
-            <div style={{ fontSize: 12, opacity: 0.9 }}>
-              <button
-                onClick={() => navigate('/register')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#87CEEB',
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  padding: 0
-                }}
-              >
-                Join Vōstcard
-              </button>
-              {' '}to sync across devices
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add CSS animation for the message */}
-      <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
-      `}</style>
-
-      {/* Main Content - Enhanced scrolling container */}
-      <div style={{ 
-        paddingTop: 120,
-        paddingBottom: 40, // Add bottom padding for better scroll experience
-        // Enhanced scrolling properties
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        scrollBehavior: 'smooth' // Smooth scrolling for anchor links
-      }}>
-        {/* User Info */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          padding: '16px 16px 8px 16px',
-          borderBottom: '1px solid #eee'
-        }}>
-          <div style={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: '50%', 
-            overflow: 'hidden', 
-            marginRight: 12,
-            background: '#f0f0f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            {avatarUrl ? (
-              <img 
-                src={avatarUrl} 
-                alt={username || 'User'} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-              />
-            ) : (
-              <FaUserCircle size={48} color="#ccc" />
-            )}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: 16 }}>{username || 'Unknown User'}</div>
-            <div style={{ color: '#888', fontSize: 14 }}>Shared Vostcard</div>
-          </div>
+          <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
         </div>
 
-        {/* Title */}
-        <div style={{ 
-          padding: '16px 16px 8px 16px',
-          fontSize: 24,
-          fontWeight: 700,
-          lineHeight: 1.2
+        {/* Navigation Icons - Under the banner */}
+        <div style={{
+          position: 'sticky', // Changed from fixed to sticky
+          top: 70,
+          left: 0,
+          width: '100%',
+          zIndex: 9,
+          background: '#fff',
+          padding: '12px 16px',
+          borderBottom: '1px solid #eee',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          gap: 20
         }}>
-          {title || 'Untitled'}
-        </div>
-
-        {/* Video/Photo Display */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
+          {/* Join Button */}
           <div 
             style={{ 
-              width: 180, 
-              height: 240, 
-              background: '#111', 
-              borderRadius: 16, 
-              overflow: 'hidden', 
-              cursor: videoURL ? 'pointer' : 'default',
-              position: 'relative'
+              cursor: 'pointer',
+              transition: 'transform 0.1s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#002B4D',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              fontSize: 16,
+              fontWeight: 500,
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+              pointerEvents: 'auto'
             }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (videoURL) setShowVideoModal(true);
-            }}
+            onClick={() => navigate('/register')}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            {videoURL ? (
-              <>
-                <video 
-                  src={videoURL} 
-                  style={{ 
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    pointerEvents: 'none',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
-                  }}
-                  onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
-                  muted
-                  loop
-                  playsInline
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  background: 'rgba(0,0,0,0.7)',
-                  borderRadius: '50%',
-                  width: 48,
-                  height: 48,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <div style={{
-                    width: 0,
-                    height: 0,
-                    borderLeft: '12px solid white',
-                    borderTop: '8px solid transparent',
-                    borderBottom: '8px solid transparent',
-                    marginLeft: 4
-                  }} />
-                </div>
-              </>
-            ) : (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                height: '100%',
-                color: '#666'
-              }}>
-                No Video
-              </div>
-            )}
+            Join
           </div>
 
-          {/* Photos Grid - Changed to show only 2 photos */}
+          {/* Map Icon */}
+          <div 
+            style={{ 
+              cursor: 'pointer',
+              transition: 'transform 0.1s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={() => {
+              navigate('/home', {
+                state: {
+                  singleVostcard: {
+                    id: vostcard.id,
+                    title: vostcard.title,
+                    description: vostcard.description,
+                    latitude: vostcard.latitude,
+                    longitude: vostcard.longitude,
+                    videoURL: vostcard.videoURL,
+                    photoURLs: vostcard.photoURLs,
+                    username: vostcard.username,
+                    isOffer: vostcard.isOffer,
+                    offerDetails: vostcard.offerDetails,
+                    categories: vostcard.categories,
+                    createdAt: vostcard.createdAt,
+                    visibility: 'public',
+                    state: 'posted'
+                  }
+                }
+              });
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <FaMapPin size={24} color="#222" />
+          </div>
+
+          {/* Heart Icon */}
+          <div 
+            style={{ 
+              cursor: 'pointer',
+              transition: 'transform 0.1s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4
+            }}
+            onClick={handleLikeToggle}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <FaHeart 
+              size={24} 
+              color={isLiked ? "#ff4444" : "#222"} 
+              style={{ 
+                transition: 'color 0.2s ease',
+                filter: isLiked ? 'drop-shadow(0 0 4px rgba(255,68,68,0.5))' : 'none'
+              }} 
+            />
+            <span style={{ fontSize: 18, color: '#222' }}>{likeCount}</span>
+          </div>
+        </div>
+
+        {/* Like Message for Anonymous Users */}
+        {showLikeMessage && (
+          <div style={{
+            position: 'absolute',
+            top: '140px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: '#002B4D',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            zIndex: 1000,
+            fontSize: 14,
+            fontWeight: 500,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            animation: 'slideDown 0.3s ease-out'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ marginBottom: 4 }}>❤️ Like saved!</div>
+              <div style={{ fontSize: 12, opacity: 0.9 }}>
+                <button
+                  onClick={() => navigate('/register')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#87CEEB',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    padding: 0
+                  }}
+                >
+                  Join Vōstcard
+                </button>
+                {' '}to sync across devices
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add CSS animation for the message */}
+        <style>{`
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
+        `}</style>
+
+        {/* Main Content - No more fixed positioning, normal flow */}
+        <div style={{ 
+          padding: '16px 16px 40px 16px' // Reduced top padding since headers are now sticky
+        }}>
+          {/* User Info */}
           <div style={{ 
             display: 'flex', 
-            flexDirection: 'column',
-            gap: 8,
-            width: 180,
-            height: 240
+            alignItems: 'center', 
+            marginBottom: '16px',
+            borderBottom: '1px solid #eee',
+            paddingBottom: '8px'
           }}>
-            {photoURLs.slice(0, 2).map((url: string, index: number) => (
-              <div 
-                key={index}
-                style={{ 
-                  background: '#f0f0f0', 
-                  borderRadius: 8, 
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '116px', // Half the height minus gap
-                  cursor: 'pointer' // Add cursor pointer
-                }}
-                onClick={() => setSelectedPhoto(url)} // Add click handler
-              >
+            <div style={{ 
+              width: 48, 
+              height: 48, 
+              borderRadius: '50%', 
+              overflow: 'hidden', 
+              marginRight: 12,
+              background: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {userProfile?.avatarURL ? (
                 <img 
-                  src={url} 
-                  alt={`Photo ${index + 1}`} 
-                  style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'cover' 
-                  }}
+                  src={userProfile.avatarURL} 
+                  alt={username || 'User'} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
                 />
-              </div>
-            ))}
-            {photoURLs.length < 2 && Array.from({ length: 2 - photoURLs.length }).map((_, index) => (
-              <div 
-                key={`empty-${index}`}
-                style={{ 
-                  background: '#f0f0f0', 
-                  borderRadius: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ccc',
-                  height: '116px'
-                }}
-              >
-                <FaMapPin size={20} />
-              </div>
-            ))}
+              ) : (
+                <FaUserCircle size={48} color="#ccc" />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, fontSize: 16 }}>{username || 'Unknown User'}</div>
+              <div style={{ color: '#888', fontSize: 14 }}>Shared Vostcard</div>
+            </div>
           </div>
-        </div>
 
-        {/* Description */}
-        <div style={{ 
-          padding: '16px 16px 8px 16px',
-          color: '#333',
-          lineHeight: 1.5,
-          fontSize: 16
-        }}>
-          {description || 'No description available.'}
-        </div>
-
-        <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8, padding: '0 16px' }}>
-          Posted: {createdAt}
-        </div>
-
-        {/* Bottom message and link */}
-        <div style={{ 
-          padding: '24px 16px 40px 16px', // Extra bottom padding for scroll clearance
-          textAlign: 'center', 
-          borderTop: '1px solid #eee',
-          marginTop: '24px'
-        }}>
+          {/* Title */}
           <div style={{ 
-            color: '#666', 
-            fontSize: 14, 
-            lineHeight: 1.4, 
-            marginBottom: '12px' 
+            fontSize: 24,
+            fontWeight: 700,
+            lineHeight: 1.2,
+            marginBottom: '16px',
+            textAlign: 'center'
           }}>
-            This was made with Vōstcard, a free app that lets you create, share privately or post to the map and see Vōstcards anywhere they are posted
+            {title || 'Untitled'}
           </div>
-          <button
-            onClick={() => navigate('/user-guide')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#007aff',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontSize: 14,
-              padding: 0
-            }}
-          >
-            Learn more about Vōstcard
-          </button>
-        </div>
-      </div>
 
-      {/* Remove the Registration Invitation Overlay completely */}
+          {/* Video/Photo Display */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: '16px' }}>
+            <div 
+              style={{ 
+                width: 180, 
+                height: 240, 
+                background: '#111', 
+                borderRadius: 16, 
+                overflow: 'hidden', 
+                cursor: videoURL ? 'pointer' : 'default',
+                position: 'relative'
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (videoURL) setShowVideoModal(true);
+              }}
+            >
+              {videoURL ? (
+                <>
+                  <video 
+                    src={videoURL} 
+                    style={{ 
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      pointerEvents: 'none',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0
+                    }}
+                    onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
+                    muted
+                    loop
+                    playsInline
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'rgba(0,0,0,0.7)',
+                    borderRadius: '50%',
+                    width: 48,
+                    height: 48,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <div style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: '12px solid white',
+                      borderTop: '8px solid transparent',
+                      borderBottom: '8px solid transparent',
+                      marginLeft: 4
+                    }} />
+                  </div>
+                </>
+              ) : (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  height: '100%',
+                  color: '#666'
+                }}>
+                  No Video
+                </div>
+              )}
+            </div>
+
+            {/* Photos Grid */}
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column',
+              gap: 8,
+              width: 180,
+              height: 240
+            }}>
+              {photoURLs.slice(0, 2).map((url: string, index: number) => (
+                <div 
+                  key={index}
+                  style={{ 
+                    background: '#f0f0f0', 
+                    borderRadius: 8, 
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '116px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setSelectedPhoto(url)}
+                >
+                  <img 
+                    src={url} 
+                    alt={`Photo ${index + 1}`} 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover' 
+                    }}
+                  />
+                </div>
+              ))}
+              {photoURLs.length < 2 && Array.from({ length: 2 - photoURLs.length }).map((_, index) => (
+                <div 
+                  key={`empty-${index}`}
+                  style={{ 
+                    background: '#f0f0f0', 
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ccc',
+                    height: '116px'
+                  }}
+                >
+                  <FaMapPin size={20} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div style={{ 
+            color: '#333',
+            lineHeight: 1.5,
+            fontSize: 16,
+            marginBottom: '16px'
+          }}>
+            {description || 'No description available.'}
+          </div>
+
+          <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginBottom: '24px' }}>
+            Posted: {createdAt}
+          </div>
+
+          {/* Bottom message and link */}
+          <div style={{ 
+            textAlign: 'center', 
+            borderTop: '1px solid #eee',
+            paddingTop: '24px'
+          }}>
+            <div style={{ 
+              color: '#666', 
+              fontSize: 14, 
+              lineHeight: 1.4, 
+              marginBottom: '12px' 
+            }}>
+              This was made with Vōstcard, a free app that lets you create, share privately or post to the map and see Vōstcards anywhere they are posted
+            </div>
+            <button
+              onClick={() => navigate('/user-guide')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#007aff',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontSize: 14,
+                padding: 0
+              }}
+            >
+              Learn more about Vōstcard
+            </button>
+          </div>
+        </div>
+
+        {/* Add CSS animation for the message */}
+        <style>{`
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translateX(-50%) translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(-50%) translateY(0);
+            }
+          }
+        `}</style>
+      </div>
 
       {/* Video Modal - Improved with better mobile support */}
       <AnimatePresence>
