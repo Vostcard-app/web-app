@@ -710,18 +710,18 @@ ${getUserFirstName()}`;
             justifyContent: 'center',
             background: '#002B4D',
             color: 'white',
-            padding: '12px 20px',
-            borderRadius: '8px',
-            fontSize: 16,
+            padding: '8px 12px',
+            borderRadius: '6px',
+            fontSize: 14,
             fontWeight: 500,
             boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
             pointerEvents: 'auto',
-            marginLeft: '-20px' // Move button 20px to the left
+            transform: 'translateX(-20px)' // Use transform instead of marginLeft
           }}
           onClick={() => navigate('/user-guide')}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(1)'}
         >
           Free Account
         </div>
