@@ -93,6 +93,7 @@ const EmailVostcardView: React.FC = () => {
   };
 
   const handleFreeAccount = () => {
+    console.log('Free Account button clicked in EmailVostcardView!');
     navigate('/user-guide');
   };
 
@@ -264,7 +265,9 @@ const EmailVostcardView: React.FC = () => {
           <FaMapPin size={20} color="#28a745" />
         </div>
         <button
+          type="button"
           onClick={handleFreeAccount}
+          onTouchStart={handleFreeAccount}
           style={{
             padding: '8px 16px',
             fontSize: '14px',
@@ -274,7 +277,9 @@ const EmailVostcardView: React.FC = () => {
             border: 'none',
             borderRadius: '6px',
             cursor: 'pointer',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            zIndex: 9999,
+            position: 'relative'
           }}
           onMouseOver={(e) => {
             e.currentTarget.style.backgroundColor = '#0056b3';
