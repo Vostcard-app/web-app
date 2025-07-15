@@ -529,8 +529,10 @@ ${shareText}`);
         </div>
 
         {/* Right side - Free Account Button */}
-        <div 
-          style={{ 
+import React, { useEffect, useState, useRef } from 'react';
+        <button
+          type="button"
+          style={{
             cursor: 'pointer',
             transition: 'transform 0.1s',
             display: 'flex',
@@ -543,16 +545,29 @@ ${shareText}`);
             fontSize: 14,
             fontWeight: 500,
             boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            pointerEvents: 'auto',
-            transform: 'translateX(-20px)'
+            border: 'none',
+            transform: 'translateX(-20px)',
+            zIndex: 9999,
+            position: 'relative'
           }}
-          onClick={() => navigate('/user-guide')}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Free Account button clicked!');
+            navigate('/user-guide');
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Free Account button touched!');
+            navigate('/user-guide');
+          }}
           onMouseDown={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(0.95)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(1)'}
         >
           Free Account
-        </div>
+        </button>
       </div>
 
       {/* Like Message for Anonymous Users */}
