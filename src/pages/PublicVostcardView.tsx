@@ -623,7 +623,7 @@ ${shareText}`);
           alignItems: 'center',
           gap: 24,
           marginBottom: '16px',
-          marginTop: '15px'
+          marginTop: '25px'
         }}>
           {/* Map Icon */}
           <div 
