@@ -584,10 +584,80 @@ ${getUserFirstName()}`;
         borderBottom: '1px solid #eee',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        gap: 20
+        justifyContent: 'space-between', // Changed from 'flex-start' to 'space-between'
       }}>
-        {/* Join Button */}
+        {/* Left side - Icons */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 20
+        }}>
+          {/* Map Icon */}
+          <div 
+            style={{ 
+              cursor: 'pointer',
+              transition: 'transform 0.1s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={() => {
+              navigate('/home', {
+                state: {
+                  singleVostcard: {
+                    id: vostcard.id,
+                    title: vostcard.title,
+                    description: vostcard.description,
+                    latitude: vostcard.latitude,
+                    longitude: vostcard.longitude,
+                    videoURL: vostcard.videoURL,
+                    photoURLs: vostcard.photoURLs,
+                    username: vostcard.username,
+                    isOffer: vostcard.isOffer,
+                    offerDetails: vostcard.offerDetails,
+                    categories: vostcard.categories,
+                    createdAt: vostcard.createdAt,
+                    visibility: 'public',
+                    state: 'posted'
+                  }
+                }
+              });
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <FaMapPin size={24} color="#222" />
+          </div>
+
+          {/* Heart Icon */}
+          <div 
+            style={{ 
+              cursor: 'pointer',
+              transition: 'transform 0.1s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4
+            }}
+            onClick={handleLikeToggle}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            <FaHeart 
+              size={24} 
+              color={isLiked ? "#ff4444" : "#222"} 
+              style={{ 
+                transition: 'color 0.2s ease',
+                filter: isLiked ? 'drop-shadow(0 0 4px rgba(255,68,68,0.5))' : 'none'
+              }} 
+            />
+            <span style={{ fontSize: 18, color: '#222' }}>{likeCount}</span>
+          </div>
+        </div>
+
+        {/* Right side - Free Account Button */}
         <div 
           style={{ 
             cursor: 'pointer',
@@ -609,71 +679,7 @@ ${getUserFirstName()}`;
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          Join
-        </div>
-
-        {/* Map Icon */}
-        <div 
-          style={{ 
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => {
-            navigate('/home', {
-              state: {
-                singleVostcard: {
-                  id: vostcard.id,
-                  title: vostcard.title,
-                  description: vostcard.description,
-                  latitude: vostcard.latitude,
-                  longitude: vostcard.longitude,
-                  videoURL: vostcard.videoURL,
-                  photoURLs: vostcard.photoURLs,
-                  username: vostcard.username,
-                  isOffer: vostcard.isOffer,
-                  offerDetails: vostcard.offerDetails,
-                  categories: vostcard.categories,
-                  createdAt: vostcard.createdAt,
-                  visibility: 'public',
-                  state: 'posted'
-                }
-              }
-            });
-          }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaMapPin size={24} color="#222" />
-        </div>
-
-        {/* Heart Icon */}
-        <div 
-          style={{ 
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4
-          }}
-          onClick={handleLikeToggle}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaHeart 
-            size={24} 
-            color={isLiked ? "#ff4444" : "#222"} 
-            style={{ 
-              transition: 'color 0.2s ease',
-              filter: isLiked ? 'drop-shadow(0 0 4px rgba(255,68,68,0.5))' : 'none'
-            }} 
-          />
-          <span style={{ fontSize: 18, color: '#222' }}>{likeCount}</span>
+          Free Account
         </div>
       </div>
 
