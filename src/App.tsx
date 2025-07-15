@@ -68,7 +68,7 @@ function App() {
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
-                  <Route path="/public-home/:id" element={<PublicHomeView />} />
+                  <Route path="/public-map" element={<PublicHomeView />} />
 
                   {/* 🏠 Main */}
                   <Route path="/home" element={<HomeView />} />
