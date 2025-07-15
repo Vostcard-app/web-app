@@ -294,7 +294,9 @@ const HomeView = () => {
   const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
-  const [singleVostcard, setSingleVostcard] = useState<any | null>(null); // Add state for single vostcard view
+  const [singleVostcard, setSingleVostcard] = useState<any | null>(null);
+  const [returnToPublicView, setReturnToPublicView] = useState(false); // Add this state
+  const [publicVostcardId, setPublicVostcardId] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [loadingVostcards, setLoadingVostcards] = useState(true);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);

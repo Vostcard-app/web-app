@@ -1193,3 +1193,5 @@ ${getUserFirstName()}`;
 };
 
 export default PublicVostcardView; 
+
+export default PublicVostcardView; 
