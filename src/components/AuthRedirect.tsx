@@ -44,8 +44,8 @@ export const AuthRedirect = () => {
       return;
     }
 
-    // If authenticated but on a public route (except root)
-    if (user && isPublicRoute && location.pathname !== '/') {
+    // If authenticated but on a public route (except root and user-guide)
+    if (user && isPublicRoute && location.pathname !== '/' && location.pathname !== '/user-guide') {
       if (userRole === 'advertiser') {
         navigate('/advertiser-portal');
       } else {
