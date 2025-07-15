@@ -457,7 +457,7 @@ ${shareText}`);
       minHeight: '100vh',
       fontFamily: 'system-ui, sans-serif',
       position: 'relative',
-      overflow: 'auto',
+      overflow: 'hidden',
       height: '100vh'
     }}>
       {/* Fixed Header */}
@@ -614,8 +614,11 @@ ${shareText}`);
         minHeight: 'calc(100vh - 120px)',
         boxSizing: 'border-box',
         overflowY: 'auto',
-        height: 'calc(100vh - 120px)'
-      }}>
+        height: 'calc(100vh - 120px)',
+        overscrollBehavior: 'contain',
+        WebkitOverflowScrolling: 'touch',
+        touchAction: 'pan-y'
+      } as React.CSSProperties}>
         {/* Map and Heart Icons - Above Title */}
         <div style={{ 
           display: 'flex', 
@@ -1034,6 +1037,18 @@ ${shareText}`);
             opacity: 1;
             transform: translateX(-50%) translateY(0);
           }
+        }
+        
+        /* Prevent bounce scrolling on body when this page is active */
+        body {
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+          touch-action: pan-y;
+        }
+        
+        /* Ensure smooth scrolling on iOS */
+        * {
+          -webkit-overflow-scrolling: touch;
         }
       `}</style>
     </div>
