@@ -60,7 +60,7 @@ const BrowseAreaView: React.FC = () => {
               displayAddress: `${searchQuery}, Mock Location`
             }];
           } else {
-            const geo = await GeocodingService.geocodeAddressWithFallback('', searchQuery, '', searchQuery, '');
+            const geo = await GeocodingService.geocodeAddressWithFallback('', searchQuery, '', '', '');
             locationResults = [{
               name: geo.displayAddress || searchQuery,
               coordinates: [geo.latitude, geo.longitude],
