@@ -73,7 +73,7 @@ export default function RegistrationPage() {
           name,
           username,
           email,
-          role: "user",
+          userRole: "user",
           createdAt: new Date(),
         });
       } else {
@@ -81,7 +81,7 @@ export default function RegistrationPage() {
           name,
           businessName,
           email,
-          role: "advertiser",
+          userRole: "advertiser",
           createdAt: new Date(),
         });
       }

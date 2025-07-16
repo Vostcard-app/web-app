@@ -163,11 +163,11 @@ const AdminPanel: React.FC = () => {
                     Username: {user.username || 'Not set'}
                   </div>
                   <div style={{ fontSize: '14px', color: '#666' }}>
-                    Role: {user.role || 'user'}
+                    Role: {user.userRole || 'user'}
                   </div>
                 </div>
                 
-                {user.role !== 'guide' && (
+                {user.userRole !== 'guide' && (
                   <button
                     onClick={() => handleConvertToGuide(user.id, user.email)}
                     style={{
@@ -184,9 +184,9 @@ const AdminPanel: React.FC = () => {
                   </button>
                 )}
                 
-                {user.role === 'guide' && (
+                {user.userRole === 'guide' && (
                   <span style={{ color: '#28a745', fontWeight: 'bold' }}>
-                    ✓ Guide Account
+                    ✅ Guide Account
                   </span>
                 )}
               </div>

@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update user document to have guide role
       const userDocRef = doc(db, 'users', userIdToConvert);
       await updateDoc(userDocRef, {
-        role: 'guide',
+        userRole: 'guide',
         convertedToGuideAt: new Date(),
         convertedByAdmin: user?.uid
       });
@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.log('📄 Firestore user document found:', data);
               console.log('✅ Setting userRole to: user');
               setUsername(data.username || null);
-              setUserRole(data.role || 'user'); // Set as regular user
+              setUserRole(data.userRole || 'user'); // Changed from data.role
             } else {
               console.warn("❌ No user or advertiser document found for:", currentUser.uid);
               setUsername(null);
