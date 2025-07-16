@@ -1387,19 +1387,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // 1. Add deletion marker to Firebase first (for cross-device sync)
       await addDeletionMarker(id);
 
-      // 2. Delete from Firebase
-      try {
-        const vostcardRef = doc(db, 'vostcards', id);
-        await deleteDoc(vostcardRef);
-        console.log('✅ Deleted Vostcard from Firebase:', id);
-        
-        // Update last sync timestamp
-        setLastSyncTimestamp(new Date());
-      } catch (error) {
-        console.error('❌ Failed to delete from Firebase:', error);
-        // Continue with local deletion even if Firebase fails
-        // The deletion marker will prevent it from being re-synced
-      }
+      // 2. Delete from Firebase - FAIL HARD if this doesn't work
+      console.log('🗑️ Attempting to delete from Firebase...');
+      const vostcardRef = doc(db, 'vostcards', id);
+      await deleteDoc(vostcardRef);
+      console.log('✅ Deleted Vostcard from Firebase:', id);
+      
+      // Update last sync timestamp
+      setLastSyncTimestamp(new Date());
 
       // 3. Delete from IndexedDB
       const localDB = await openDB();
@@ -1424,7 +1419,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
     } catch (error) {
       console.error('❌ Error in deletePrivateVostcard:', error);
-      alert('Failed to delete Vostcard. Please try again.');
+      
+      // Show specific error message based on what failed
+      if (error.code === 'permission-denied') {
+        alert('Permission denied. Check your Firebase rules or try logging in again.');
+      } else if (error.code === 'unavailable') {
+        alert('Network error. Please check your internet connection and try again.');
+      } else if (error.code === 'unauthenticated') {
+        alert('Authentication error. Please log in again.');
+      } else {
+        alert(`Failed to delete Vostcard: ${error.message}`);
+      }
+      
       throw error;
     }
   }, [addDeletionMarker, setLastSyncTimestamp]);
