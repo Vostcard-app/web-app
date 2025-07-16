@@ -887,6 +887,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Load all Vostcards on component mount
   useEffect(() => {
     loadAllLocalVostcards();
+  }, []);
+  
+  // Load posted vostcards on component mount
+  useEffect(() => {
     loadPostedVostcards();
   }, []);
 
