@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '../firebase/firebaseConfig';
-import { FaHome, FaArrowLeft } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const AccountSettingsView: React.FC = () => {
@@ -18,6 +18,9 @@ const AccountSettingsView: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleUpdatePassword = async () => {
     if (newPassword !== confirmPassword) {
@@ -161,51 +164,110 @@ const AccountSettingsView: React.FC = () => {
             Change Password
           </h3>
           
-          <input
-            type="password"
-            placeholder="Current Password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #e0e0e0',
-              borderRadius: 8,
-              marginBottom: 12,
-              fontSize: 16,
-              boxSizing: 'border-box'
-            }}
-          />
-          <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #e0e0e0',
-              borderRadius: 8,
-              marginBottom: 12,
-              fontSize: 16,
-              boxSizing: 'border-box'
-            }}
-          />
-          <input
-            type="password"
-            placeholder="Confirm New Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #e0e0e0',
-              borderRadius: 8,
-              marginBottom: 12,
-              fontSize: 16,
-              boxSizing: 'border-box'
-            }}
-          />
+          {/* Current Password with show/hide */}
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <input
+              type={showCurrentPassword ? "text" : "password"}
+              placeholder="Current Password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 45px 12px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                boxSizing: 'border-box'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#666',
+                fontSize: 16
+              }}
+            >
+              {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          {/* New Password with show/hide */}
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <input
+              type={showNewPassword ? "text" : "password"}
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 45px 12px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                boxSizing: 'border-box'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#666',
+                fontSize: 16
+              }}
+            >
+              {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          {/* Confirm New Password with show/hide */}
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm New Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 45px 12px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: 8,
+                fontSize: 16,
+                boxSizing: 'border-box'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#666',
+                fontSize: 16
+              }}
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
 
           {/* Messages */}
           {errorMessage && (
