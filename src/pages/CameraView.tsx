@@ -245,7 +245,7 @@ const CameraView: React.FC = () => {
               backgroundColor: isRecording ? 'white' : 'red',
               width: 70,
               height: 70,
-              borderRadius: isRecording ? '10%' : '50%',
+              borderRadius: isRecording ? '8px' : '50%',
               border: '6px solid white',
               display: 'flex',
               alignItems: 'center',
@@ -254,7 +254,18 @@ const CameraView: React.FC = () => {
               transition: 'all 0.3s ease',
             }}
           >
-            {!isRecording && (
+            {isRecording ? (
+              // RED SQUARE when recording
+              <div
+                style={{
+                  backgroundColor: 'red',
+                  width: 28,
+                  height: 28,
+                  borderRadius: '2px',
+                }}
+              />
+            ) : (
+              // WHITE CIRCLE when not recording
               <div
                 style={{
                   backgroundColor: 'white',
