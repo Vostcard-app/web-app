@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import type { User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 
 // Define the shape of the AuthContext
@@ -12,6 +12,8 @@ interface AuthContextType {
   userRole: string | null;
   loading: boolean;
   logout: () => Promise<void>;
+  convertUserToGuide: (userIdToConvert: string) => Promise<void>;
+  isAdmin: boolean;
 }
 
 // Create context
@@ -24,6 +26,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userID, setUserID] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Check if current user is admin
+  const isAdmin = userRole === 'admin';
+
+  // Admin function to convert user to Guide
+  const convertUserToGuide = async (userIdToConvert: string) => {
+    if (!isAdmin) {
+      throw new Error('Only administrators can convert users to Guide accounts');
+    }
+
+    try {
+      // Update user document to have guide role
+      const userDocRef = doc(db, 'users', userIdToConvert);
+      await updateDoc(userDocRef, {
+        role: 'guide',
+        convertedToGuideAt: new Date(),
+        convertedByAdmin: user?.uid
+      });
+      
+      console.log(`✅ User ${userIdToConvert} converted to Guide account`);
+    } catch (error) {
+      console.error('❌ Error converting user to Guide:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     console.log('🔐 AuthProvider: Setting up Firebase Auth listener...');
@@ -201,6 +228,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     userRole,
     loading,
     logout,
+    convertUserToGuide,
+    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

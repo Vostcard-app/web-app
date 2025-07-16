@@ -20,6 +20,7 @@ export interface Vostcard {
   geo: { latitude: number; longitude: number } | null;
   username: string;
   userID: string;
+  userRole?: string; // Add userRole field to track user type
   recipientUserID?: string; // For private sharing - who receives this private Vostcard
   createdAt: string;
   updatedAt: string;

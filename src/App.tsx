@@ -47,6 +47,7 @@ import PinPlacerTool from './pages/PinPlacerTool';
 import { AuthRedirect } from './components/AuthRedirect';
 import PublicVostcardView from './pages/PublicVostcardView';
 import EmailVostcardView from './pages/EmailVostcardView';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
   return (
@@ -132,6 +133,9 @@ function App() {
 
                   {/* 📍 Pin Placer */}
                   <Route path="/pin-placer" element={<PinPlacerTool />} />
+
+                  {/* 🔐 Admin Panel */}
+                  <Route path="/admin" element={<AdminPanel />} />
                 </Routes>
               </ResponsiveContainer>
             </Router>

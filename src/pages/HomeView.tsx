@@ -10,6 +10,7 @@ import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
+import GuidePin from '../assets/Guide_pin.svg';
 import { signOut } from 'firebase/auth';
 import './HomeView.css';
 
@@ -22,6 +23,13 @@ const vostcardIcon = new L.Icon({
 
 const offerIcon = new L.Icon({
   iconUrl: OfferPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],  // Center-bottom of the 75px icon
+  popupAnchor: [0, -75],   // Popup 75px above the anchor
+});
+
+const guideIcon = new L.Icon({
+  iconUrl: GuidePin,
   iconSize: [75, 75],
   iconAnchor: [37.5, 75],  // Center-bottom of the 75px icon
   popupAnchor: [0, -75],   // Popup 75px above the anchor
@@ -416,8 +424,14 @@ const HomeView = () => {
     }
   };
 
-  const getVostcardIcon = (isOffer: boolean) => {
-    return isOffer ? offerIcon : vostcardIcon;
+  const getVostcardIcon = (isOffer: boolean, userRole?: string) => {
+    if (isOffer) {
+      return offerIcon;
+    }
+    if (userRole === 'guide') {
+      return guideIcon;
+    }
+    return vostcardIcon;
   };
 
   const menuStyle = {
@@ -737,6 +751,7 @@ const HomeView = () => {
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
     { label: 'Script tool', route: '/script-library' },
+    ...(userRole === 'admin' ? [{ label: 'Admin Panel', route: '/admin' }] : []), // Add admin panel for admins
     { label: 'Suggestion Box', route: '/suggestion-box' },
     { label: 'Report a Bug', route: '/report-bug' },
     { label: 'Account Settings', route: '/account-settings' },
@@ -1091,7 +1106,7 @@ const HomeView = () => {
                       <Marker
                         key={v.id}
                         position={[lat, lng]}
-                        icon={getVostcardIcon(v.isOffer)}
+                        icon={getVostcardIcon(v.isOffer, v.userRole)}
                         eventHandlers={{
                           click: () => {
                             if (v.isOffer) {
