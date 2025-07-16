@@ -13,6 +13,8 @@ import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.svg';
 import { signOut } from 'firebase/auth';
 import './HomeView.css';
+import { LocationService, LocationResult, LocationError } from '../utils/locationService';
+import LocationDebugger from '../components/LocationDebugger';
 
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
@@ -499,40 +501,43 @@ const HomeView = () => {
  
   // Get user location with error handling - Always get GPS location for recentering
   useEffect(() => {
-    const getUserLocation = () => {
-      if (!navigator.geolocation) {
-        console.error('Geolocation is not supported by this browser');
-        setMapError('Geolocation not supported');
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const location: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-          console.log('📍 User GPS location acquired:', location);
-          
-          // Always set the actual user location for recentering
-          setActualUserLocation(location);
-          
-          // Only set userLocation (map center) if we're not browsing a specific location
-          if (!browseLocationState && !singleVostcard && !browseLocation) {
-            setUserLocation(location);
-          }
-        },
-        (err) => {
-          console.error('Error getting location', err);
-          setMapError('Could not get your location. Please enable location services.');
-        },
-        { 
-          enableHighAccuracy: false, // Faster, still accurate enough for our needs
-          timeout: 5000,  // Shorter timeout
-          maximumAge: 600000  // Cache location for 10 minutes
+    const getUserLocation = async () => {
+      try {
+        console.log('📍 Getting user location...');
+        const location = await LocationService.getCurrentLocation();
+        
+        const locationCoords: [number, number] = [location.latitude, location.longitude];
+        console.log('📍 User location acquired:', locationCoords, `(${location.source})`);
+        
+        setActualUserLocation(locationCoords);
+        
+        if (!browseLocationState && !singleVostcard && !browseLocation) {
+          setUserLocation(locationCoords);
         }
-      );
+        
+        setMapError(null);
+        
+      } catch (error) {
+        console.error('❌ Location error:', error);
+        const locationError = error as LocationError;
+        
+        // Show user-friendly error with suggestions
+        const errorMessage = `${locationError.userFriendlyMessage}\n\nSuggestions:\n${locationError.suggestions.join('\n')}`;
+        
+        setMapError(errorMessage);
+        
+        // Use fallback location for New York
+        const fallback = LocationService.getFallbackLocation();
+        const fallbackCoords: [number, number] = [fallback.latitude, fallback.longitude];
+        
+        if (!browseLocationState && !singleVostcard && !browseLocation) {
+          setUserLocation(fallbackCoords);
+        }
+      }
     };
 
     getUserLocation();
-  }, []); // Remove dependencies to always get GPS location
+  }, [browseLocationState, singleVostcard, browseLocation]);
 
   // Load vostcards on mount and when fresh load is requested
   useEffect(() => {

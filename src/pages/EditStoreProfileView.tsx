@@ -16,6 +16,9 @@ interface BusinessAddress {
   country: string;
 }
 
+// Import the new location service
+import { LocationService, LocationResult, LocationError } from '../utils/locationService';
+
 const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");
   
@@ -59,36 +62,42 @@ const EditStoreProfileView: React.FC = () => {
 
   // Handle "Use my location" for capturing coordinates
   const handleUseMyLocation = async () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+    const isAvailable = await LocationService.checkLocationAvailability();
+    
+    if (!isAvailable) {
+      setError('Location services are not available. Please enable location access in your browser settings.');
       return;
     }
 
     setLocationLoading(true);
     setError("");
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude: lat, longitude: lng } = position.coords;
-        console.log('📍 Location captured:', { latitude: lat, longitude: lng });
-        
-        setLatitude(lat);
-        setLongitude(lng);
-        setLocationLoading(false);
-        
-        alert(`📍 Location captured!\nLatitude: ${lat.toFixed(6)}\nLongitude: ${lng.toFixed(6)}`);
-      },
-      (error) => {
-        console.error('❌ Geolocation error:', error);
-        setError('Failed to get current location. Please ensure location services are enabled.');
-        setLocationLoading(false);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000
-      }
-    );
+    try {
+      console.log('📍 Getting store location...');
+      const location = await LocationService.getCurrentLocation();
+      
+      console.log('📍 Store location captured:', location);
+      
+      setLatitude(location.latitude);
+      setLongitude(location.longitude);
+      setLocationLoading(false);
+      
+      const accuracyText = location.accuracy < 50 ? 'High' : location.accuracy < 100 ? 'Medium' : 'Low';
+      
+      alert(`📍 Location captured successfully!\n\nLatitude: ${location.latitude.toFixed(6)}\nLongitude: ${location.longitude.toFixed(6)}\nAccuracy: ${accuracyText} (${location.accuracy}m)\nSource: ${location.source.toUpperCase()}`);
+      
+    } catch (error) {
+      console.error('❌ Location error:', error);
+      const locationError = error as LocationError;
+      
+      setError(locationError.userFriendlyMessage);
+      setLocationLoading(false);
+      
+      // Show detailed suggestions in an alert
+      setTimeout(() => {
+        alert(`Location Help:\n\n${locationError.suggestions.join('\n\n')}`);
+      }, 100);
+    }
   };
 
   // Upload store photo to Firebase Storage
