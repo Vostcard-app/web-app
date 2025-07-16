@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
-import { FaStop } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 // Custom Stop Recording Icon Component
