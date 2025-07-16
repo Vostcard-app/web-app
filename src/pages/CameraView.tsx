@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
-import stopRecordingIcon from '../assets/stop recording.png';
+import stopRecordingIcon from '../assets/stop_recording.png';
 
 const CameraView: React.FC = () => {
   const navigate = useNavigate();
