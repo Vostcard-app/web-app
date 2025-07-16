@@ -736,6 +736,7 @@ const HomeView = () => {
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
+    { label: 'Script tool', route: '/script-library' },
     { label: 'Suggestion Box', route: '/suggestion-box' },
     { label: 'Report a Bug', route: '/report-bug' },
     { label: 'Account Settings', route: '/account-settings' },
