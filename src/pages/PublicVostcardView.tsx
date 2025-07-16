@@ -502,11 +502,11 @@ ${privateUrl}`);
         <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
       </div>
 
-      {/* 16:9 Aspect Ratio Container with User Info */}
+      {/* 20% Container with User Info */}
       <div style={{
         position: 'relative',
         width: '100%',
-        paddingTop: '56.25%', // 16:9 aspect ratio
+        paddingTop: '20%', // 20% height
         background: '#f8f9fa',
         borderBottom: '1px solid #e0e0e0'
       }}>
@@ -602,6 +602,36 @@ ${privateUrl}`);
         </div>
       </div>
 
+      {/* 36.25% Bottom Container */}
+      <div style={{
+        position: 'relative',
+        width: '100%',
+        paddingTop: '36.25%', // 36.25% height
+        background: '#ffffff',
+        borderBottom: '1px solid #e0e0e0'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          {/* This space is available for additional content */}
+          <div style={{
+            color: '#666',
+            fontSize: 16,
+            textAlign: 'center'
+          }}>
+            {/* Additional content can go here */}
+          </div>
+        </div>
+      </div>
+
       {/* Like Message for Anonymous Users */}
       {showLikeMessage && (
         <div style={{
@@ -646,7 +676,7 @@ ${privateUrl}`);
       {/* Scrollable Main Content */}
       <div style={{ 
         padding: '16px 16px 40px 16px',
-        minHeight: 'calc(100vh - 200px)',
+        minHeight: 'calc(100vh - 300px)',
         boxSizing: 'border-box'
       }}>
         {/* Map and Heart Icons - Above Title */}
