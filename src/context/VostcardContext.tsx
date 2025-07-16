@@ -886,7 +886,25 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load all Vostcards on component mount
   useEffect(() => {
-    loadAllLocalVostcards();
+    const initializeVostcards = async () => {
+      try {
+        // First: Load lightweight metadata for fast display
+        await loadAllLocalVostcards();
+        
+        // Then: Trigger full sync to download iPhone vostcards
+        console.log('🔄 Triggering full sync after lightweight load...');
+        await syncPrivateVostcardsFromFirebase();
+        
+        // Finally: Reload to show downloaded vostcards
+        await loadAllLocalVostcards();
+        
+        console.log('✅ Full initialization completed');
+      } catch (error) {
+        console.error('❌ Failed to initialize vostcards:', error);
+      }
+    };
+    
+    initializeVostcards();
   }, []);
   
   // Load posted vostcards on component mount
