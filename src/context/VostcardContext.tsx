@@ -94,6 +94,7 @@ interface VostcardContextProps {
   // Deletion marker management
   cleanupDeletionMarkers: () => void;
   clearDeletionMarkers: () => void;
+  manualCleanupFirebase: () => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -889,8 +890,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load all Vostcards on component mount
   useEffect(() => {
-    // eslint-disable-next-line
-    loadPrivateVostcards();
+    loadAllLocalVostcards();
   }, []);
   
   // Load posted vostcards on component mount
@@ -2446,6 +2446,76 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     console.log('🧹 Cleared all deletion markers');
   }, []);
 
+  // Function to manually clean up Firebase - keep only "I did it"
+  const manualCleanupFirebase = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('🔍 No user logged in');
+      return;
+    }
+
+    try {
+      console.log('🗑️ Manual cleanup: Keeping only "I did it"...');
+      
+      // Query for all vostcards by this user
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`🔍 Found ${querySnapshot.docs.length} total vostcards in Firebase`);
+      
+      // Filter to keep only "I did it"
+      const toDelete = querySnapshot.docs.filter(doc => {
+        const data = doc.data();
+        return data.title !== 'I did it';
+      });
+      
+      console.log(`🗑️ Will delete ${toDelete.length} vostcards, keeping 1`);
+      
+      if (toDelete.length === 0) {
+        console.log('✅ No vostcards to delete');
+        return;
+      }
+
+      // Delete each unwanted vostcard
+      for (const docSnapshot of toDelete) {
+        const data = docSnapshot.data();
+        console.log(`🗑️ Deleting: "${data.title}"`);
+        await deleteDoc(docSnapshot.ref);
+      }
+
+      console.log('✅ Manual cleanup completed!');
+      
+      // Clear local IndexedDB to force fresh sync
+      const localDB = await openDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      await new Promise<void>((resolve, reject) => {
+        const request = store.clear();
+        request.onsuccess = () => {
+          console.log('🗑️ Cleared IndexedDB for fresh sync');
+          resolve();
+        };
+        request.onerror = () => reject(request.error);
+      });
+      
+      // Refresh the UI
+      setSavedVostcards([]);
+      setPostedVostcards([]);
+      
+      // Trigger fresh sync
+      await loadAllLocalVostcards();
+      
+      alert('✅ Cleanup completed! Only "I did it" remains.');
+      
+    } catch (error) {
+      console.error('❌ Error in manual cleanup:', error);
+      alert('❌ Cleanup failed. Check console for details.');
+    }
+  }, [setLastSyncTimestamp, loadAllLocalVostcards]);
+
   return (
     <VostcardContext.Provider
       value={{
@@ -2510,6 +2580,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Deletion marker management
         cleanupDeletionMarkers,
         clearDeletionMarkers,
+        manualCleanupFirebase,
       }}
     >
       {children}
