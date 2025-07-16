@@ -109,6 +109,8 @@ const VostcardDetailView: React.FC = () => {
 
 Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
 
+${privateUrl}
+
 "${vostcard?.description || ''}"
 
 Cheers,
@@ -117,18 +119,15 @@ ${getUserFirstName()}`;
       
       if (navigator.share) {
         navigator.share({
+          title: `Look what I made with Vōstcard`,
           text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(`${shareText}
-
-${privateUrl}`).then(() => {
+        navigator.clipboard.writeText(`${shareText}`).then(() => {
           alert('Private share message copied to clipboard!');
         }).catch(() => {
-          alert(`Share this private message: ${shareText}
-
-${privateUrl}`);
+          alert(`Share this private message: ${shareText}`);
         });
       }
     } catch (error) {
