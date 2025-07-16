@@ -472,9 +472,7 @@ const ScrollingCameraView: React.FC = () => {
           style={{
             backgroundColor: cameraReady ? 'red' : '#666',
             border: '3px solid white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            position: 'relative',
             width: 64,
             height: 64,
             borderRadius: '50%',
@@ -484,9 +482,13 @@ const ScrollingCameraView: React.FC = () => {
             <div
               style={{
                 backgroundColor: 'white',
-                width: '20px',
-                height: '20px',
+                width: '18px',
+                height: '18px',
                 borderRadius: '2px',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
               }}
             />
           )}
