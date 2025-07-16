@@ -94,40 +94,15 @@ const VostcardDetailView: React.FC = () => {
       
       const privateUrl = `${window.location.origin}/share/${id}`;
       
-      const getUserFirstName = () => {
-        if (authUsername) {
-          return authUsername.split(' ')[0];
-        } else if (authUser?.displayName) {
-          return authUser.displayName.split(' ')[0];
-        } else if (authUser?.email) {
-          return authUser.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
-
-      const shareText = `Look what I made with Vōstcard
-
-Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
-
-${privateUrl}
-
-"${vostcard?.description || ''}"
-
-Cheers,
-
-${getUserFirstName()}`;
-      
       if (navigator.share) {
         navigator.share({
-          title: `Look what I made with Vōstcard`,
-          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
+        navigator.clipboard.writeText(privateUrl).then(() => {
+          alert('Private share link copied to clipboard!');
         }).catch(() => {
-          alert(`Share this private message: ${shareText}`);
+          alert(`Share this link: ${privateUrl}`);
         });
       }
     } catch (error) {
@@ -145,41 +120,15 @@ ${getUserFirstName()}`;
       
       const privateUrl = `${window.location.origin}/share/${id}`;
       
-      const getUserFirstName = () => {
-        if (authUsername) {
-          return authUsername.split(' ')[0];
-        } else if (authUser?.displayName) {
-          return authUser.displayName.split(' ')[0];
-        } else if (authUser?.email) {
-          return authUser.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
-
-      const shareText = `Look what I made with Vōstcard
-
-Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
-
-"${vostcard?.description || ''}"
-
-Cheers,
-
-${getUserFirstName()}`;
-      
       if (navigator.share) {
         navigator.share({
-          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(`${shareText}
-
-${privateUrl}`).then(() => {
-          alert('Private share message copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
+        navigator.clipboard.writeText(privateUrl).then(() => {
+          alert('Private share link copied to clipboard!');
         }).catch(() => {
-          alert(`Share this private message: ${shareText}
-
-${privateUrl}`);
+          alert(`Share this link: ${privateUrl}`);
         });
       }
     } catch (error) {

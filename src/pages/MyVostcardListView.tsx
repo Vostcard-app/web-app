@@ -138,15 +138,13 @@ ${getUserFirstName()}`;
       // Only use clipboard - no navigator.share()
       if (navigator.share) {
         navigator.share({
-          title: `Look what I made with Vōstcard`,
-          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
+        navigator.clipboard.writeText(privateUrl).then(() => {
+          alert('Private share link copied to clipboard!');
         }).catch(() => {
-          alert(`Share this private message: ${shareText}`);
+          alert(`Share this link: ${privateUrl}`);
         });
       }
     } catch (error) {

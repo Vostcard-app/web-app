@@ -278,44 +278,45 @@ const PublicVostcardView: React.FC = () => {
       
       const privateUrl = `${window.location.origin}/share/${id}`;
       
-      const getUserFirstName = () => {
-        if (username) {
-          return username.split(' ')[0];
-        } else if (user?.displayName) {
-          return user.displayName.split(' ')[0];
-        } else if (user?.email) {
-          return user.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
-
-      const shareText = `Look what I made with Vōstcard
-
-Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
-
-${privateUrl}
-
-"${vostcard?.description || ''}"
-
-Cheers,
-
-${getUserFirstName()}`;
-      
       if (navigator.share) {
         navigator.share({
-          title: `Look what I made with Vōstcard`,
-          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
+        navigator.clipboard.writeText(privateUrl).then(() => {
+          alert('Private share link copied to clipboard!');
         }).catch(() => {
-          alert(`Share this private message: ${shareText}`);
+          alert(`Share this link: ${privateUrl}`);
         });
       }
     } catch (error) {
       console.error('Error sharing Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
+    }
+  };
+
+  const handlePrivateShare = async () => {
+    try {
+      const vostcardRef = doc(db, 'vostcards', id!);
+      await updateDoc(vostcardRef, {
+        isShared: true
+      });
+      
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(privateUrl).then(() => {
+          alert('Private share link copied to clipboard!');
+        }).catch(() => {
+          alert(`Share this link: ${privateUrl}`);
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing private Vostcard:', error);
       alert('Failed to share Vostcard. Please try again.');
     }
   };
