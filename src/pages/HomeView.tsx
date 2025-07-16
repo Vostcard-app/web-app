@@ -650,7 +650,7 @@ const HomeView = () => {
 
     switch (mapAreaPreference) {
       case 'nearby':
-        // Show vostcards within 5km of user location
+        // Show vostcards within 800m of user location
         return vostcards.filter(v => {
           const lat = v.latitude || v.geo?.latitude;
           const lng = v.longitude || v.geo?.longitude;
@@ -660,11 +660,11 @@ const HomeView = () => {
             referenceLocation[0], referenceLocation[1],
             lat, lng
           );
-          return distance <= 5; // 5km radius
+          return distance <= 0.8; // 800m = 0.8km radius
         });
       
       case '1-mile':
-        // Show vostcards within 1 mile of user location
+        // Show vostcards within 1 mile (1.6km) of user location
         return vostcards.filter(v => {
           const lat = v.latitude || v.geo?.latitude;
           const lng = v.longitude || v.geo?.longitude;
@@ -674,11 +674,11 @@ const HomeView = () => {
             referenceLocation[0], referenceLocation[1],
             lat, lng
           );
-          return distance <= 1; // 1 mile radius
+          return distance <= 1.6; // 1 mile = 1.6km radius
         });
       
       case '5-miles':
-        // Show vostcards within 5 miles of user location
+        // Show vostcards within 5 miles (8km) of user location
         return vostcards.filter(v => {
           const lat = v.latitude || v.geo?.latitude;
           const lng = v.longitude || v.geo?.longitude;
@@ -688,7 +688,7 @@ const HomeView = () => {
             referenceLocation[0], referenceLocation[1],
             lat, lng
           );
-          return distance <= 5; // 5 miles radius
+          return distance <= 8; // 5 miles = 8km radius
         });
       
       case 'custom':
@@ -937,10 +937,10 @@ const HomeView = () => {
                     textAlign: 'center',
                   }}
                 >
-                  {mapAreaPreference === 'nearby' && '🚶 Nearby'}
-                  {mapAreaPreference === '1-mile' && '🏃 1 Mile'}
-                  {mapAreaPreference === '5-miles' && '🏃 5 Miles'}
-                  {mapAreaPreference === 'custom' && `🔍 ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
+                  {mapAreaPreference === 'nearby' && 'Nearby 800m / 1/2mile'}
+                  {mapAreaPreference === '1-mile' && '1 mile / 1.6k'}
+                  {mapAreaPreference === '5-miles' && '5 miles / 8k'}
+                  {mapAreaPreference === 'custom' && `Custom ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
                 </button>
               </div>
             )}
@@ -1024,10 +1024,10 @@ const HomeView = () => {
                     minWidth: '140px',
                   }}>
                     {[
-                      { key: 'nearby', label: '🚶 Nearby', description: 'Within 5km' },
-                      { key: '1-mile', label: '🏃 1 Mile', description: 'Within 1 mile' },
-                      { key: '5-miles', label: '🏃 5 Miles', description: 'Within 5 miles' },
-                      { key: 'custom', label: '🔍 Custom', description: 'Custom distance' }
+                      { key: 'nearby', label: 'Nearby 800m / 1/2mile', description: 'Within 800 meters' },
+                      { key: '1-mile', label: '1 mile / 1.6k', description: 'Within 1 mile' },
+                      { key: '5-miles', label: '5 miles / 8k', description: 'Within 5 miles' },
+                      { key: 'custom', label: 'Custom', description: 'Custom distance' }
                     ].map((option) => (
                       <button
                         key={option.key}
