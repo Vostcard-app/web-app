@@ -22,10 +22,7 @@ const BrowseAreaView: React.FC = () => {
 
   // Immediate suggestions for better UX
   useEffect(() => {
-    console.log('🔍 Immediate search effect triggered with query:', searchQuery);
-    
     if (!searchQuery.trim()) {
-      console.log('🔍 Empty search query, clearing results');
       setSearchResults([]);
       setShowDropdown(false);
       setHighlightedIndex(-1);
@@ -58,17 +55,13 @@ const BrowseAreaView: React.FC = () => {
       location.displayAddress.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    console.log('🔍 Filtered suggestions:', filteredSuggestions.length, filteredSuggestions);
-
     // If we have matching suggestions, show them immediately
     if (filteredSuggestions.length > 0) {
-      console.log('🔍 Setting search results with filtered suggestions');
       setSearchResults(filteredSuggestions.slice(0, 5)); // Show max 5 suggestions
       setShowDropdown(true);
       setHighlightedIndex(-1);
     } else {
       // If no matching suggestions, create a result for the search query
-      console.log('🔍 No matching suggestions, creating fallback result');
       const hash = searchQuery.split('').reduce((a, b) => {
         a = ((a << 5) - a) + b.charCodeAt(0);
         return a & a;
@@ -84,135 +77,25 @@ const BrowseAreaView: React.FC = () => {
         displayAddress: `${searchQuery} (Search Location)`
       };
       
-      console.log('🔍 Setting fallback result:', fallbackResult);
       setSearchResults([fallbackResult]);
       setShowDropdown(true);
       setHighlightedIndex(-1);
     }
   }, [searchQuery]);
 
-  // Debounced search effect for more detailed results
+  // Debounced search effect for more detailed results - DISABLED
   useEffect(() => {
     if (!searchQuery.trim()) {
       return;
     }
-    setIsSearching(true);
-    setSearchError(null);
-    const handler = setTimeout(async () => {
-      try {
-        // Focus on location search only
-        let locationResults: any[] = [];
-        try {
-          // Check if we're in development mode
-          const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-          
-          if (isDevelopment) {
-            // In development, create mock geocoding results for any search
-            console.log(`🗺️ Creating mock location for: "${searchQuery}"`);
-            
-            // Create mock coordinates based on search query with better coverage
-            const lowerQuery = searchQuery.toLowerCase();
-            let mockCoordinates;
-            
-            if (lowerQuery.includes('commack')) {
-              mockCoordinates = [40.8429, -73.2973]; // Commack, NY coordinates
-            } else if (lowerQuery.includes('dublin')) {
-              mockCoordinates = [53.3498, -6.2603]; // Dublin, Ireland
-            } else if (lowerQuery.includes('new york') || lowerQuery.includes('nyc')) {
-              mockCoordinates = [40.7128, -74.0060]; // New York City
-            } else if (lowerQuery.includes('london')) {
-              mockCoordinates = [51.5074, -0.1278]; // London
-            } else if (lowerQuery.includes('los angeles') || lowerQuery.includes('la')) {
-              mockCoordinates = [34.0522, -118.2437]; // Los Angeles
-            } else if (lowerQuery.includes('chicago')) {
-              mockCoordinates = [41.8781, -87.6298]; // Chicago
-            } else if (lowerQuery.includes('miami')) {
-              mockCoordinates = [25.7617, -80.1918]; // Miami
-            } else if (lowerQuery.includes('seattle')) {
-              mockCoordinates = [47.6062, -122.3321]; // Seattle
-            } else if (lowerQuery.includes('boston')) {
-              mockCoordinates = [42.3601, -71.0589]; // Boston
-            } else if (lowerQuery.includes('san francisco') || lowerQuery.includes('sf')) {
-              mockCoordinates = [37.7749, -122.4194]; // San Francisco
-            } else if (lowerQuery.includes('paris')) {
-              mockCoordinates = [48.8566, 2.3522]; // Paris
-            } else if (lowerQuery.includes('tokyo')) {
-              mockCoordinates = [35.6762, 139.6503]; // Tokyo
-            } else if (lowerQuery.includes('sydney')) {
-              mockCoordinates = [33.8688, 151.2093]; // Sydney
-            } else if (lowerQuery.includes('berlin')) {
-              mockCoordinates = [52.5200, 13.4050]; // Berlin
-            } else if (lowerQuery.includes('madrid')) {
-              mockCoordinates = [40.4168, -3.7038]; // Madrid
-            } else if (lowerQuery.includes('rome')) {
-              mockCoordinates = [41.9028, 12.4964]; // Rome
-            } else {
-              // Generate pseudo-random coordinates based on search query
-              const hash = searchQuery.split('').reduce((a, b) => {
-                a = ((a << 5) - a) + b.charCodeAt(0);
-                return a & a;
-              }, 0);
-              
-              // Convert hash to latitude/longitude ranges
-              const lat = 40 + (hash % 40) - 20; // Range: 20 to 60 degrees
-              const lng = -100 + (hash % 160) - 80; // Range: -180 to 80 degrees
-              
-              mockCoordinates = [lat, lng];
-            }
-            
-            locationResults = [{
-              name: `${searchQuery}`,
-              coordinates: mockCoordinates,
-              type: 'location',
-              displayAddress: `${searchQuery}, Mock Location`
-            }];
-          } else {
-            const geo = await GeocodingService.geocodeAddressWithFallback('', searchQuery, '', '', '');
-            locationResults = [{
-              name: geo.displayAddress || searchQuery,
-              coordinates: [geo.latitude, geo.longitude],
-              type: 'location',
-              displayAddress: geo.displayAddress
-            }];
-          }
-          
-          console.log(`🗺️ Found location results:`, locationResults);
-        } catch (e) {
-          console.log('❌ Location search failed, creating fallback result for search query');
-          
-          // Create a fallback result based on the search query
-          const hash = searchQuery.split('').reduce((a, b) => {
-            a = ((a << 5) - a) + b.charCodeAt(0);
-            return a & a;
-          }, 0);
-          
-          // Convert hash to latitude/longitude ranges
-          const lat = 40 + (hash % 40) - 20; // Range: 20 to 60 degrees
-          const lng = -100 + (hash % 160) - 80; // Range: -180 to 80 degrees
-          
-          locationResults = [{
-            name: searchQuery,
-            coordinates: [lat, lng],
-            type: 'location',
-            displayAddress: `${searchQuery} (Approximate Location)`
-          }];
-        }
-        
-        console.log(`📋 Location search results: ${locationResults.length}`, locationResults);
-        
-        setSearchResults(locationResults);
-        setShowDropdown(true);
-        setHighlightedIndex(-1);
-      } catch (error: any) {
-        console.error('❌ Search error:', error);
-        setSearchError(error.message || 'No results found.');
-        setSearchResults([]);
-        setShowDropdown(false);
-      } finally {
-        setIsSearching(false);
-      }
-    }, DEBOUNCE_MS);
-    return () => clearTimeout(handler);
+    
+    // Skip the debounced search since immediate suggestions are working
+    // The real geocoding service requires structured addresses, not general searches
+    setIsSearching(false);
+    
+    // No need to do timeout or geocoding calls
+    // The immediate suggestions handle everything we need
+    
   }, [searchQuery]);
 
   // Keyboard navigation for dropdown
@@ -336,7 +219,6 @@ const BrowseAreaView: React.FC = () => {
             placeholder="Enter city, zip code, or location to browse..."
             value={searchQuery}
             onChange={(e) => {
-              console.log('🔍 Search query changed:', e.target.value);
               setSearchQuery(e.target.value);
               setShowDropdown(true);
             }}
@@ -388,13 +270,6 @@ const BrowseAreaView: React.FC = () => {
           </div>
           );
         })()}
-
-        {/* Debug Info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div style={{ fontSize: '12px', color: '#666', padding: '8px', border: '1px solid #ccc', margin: '8px 0' }}>
-            Debug: searchQuery="{searchQuery}", showDropdown={showDropdown.toString()}, searchResults.length={searchResults.length}, isSearching={isSearching.toString()}
-          </div>
-        )}
 
         {/* Error Message */}
         {searchError && (
