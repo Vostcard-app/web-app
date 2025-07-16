@@ -283,7 +283,7 @@ const PublicVostcardView: React.FC = () => {
       return 'Anonymous';
     };
 
-    // Create custom share message template with proper spacing
+    // NEW TEMPLATE - Updated format
     const subjectLine = `Check it out, I made with Vōstcard`;
     const shareText = `Check it out, I made with Vōstcard
 
@@ -303,14 +303,10 @@ ${getUserFirstName()}`;
       }).catch(console.error);
     } else {
       // Fallback: copy to clipboard with full message
-      navigator.clipboard.writeText(`${subjectLine}
-
-${shareText}`).then(() => {
+      navigator.clipboard.writeText(shareText).then(() => {
         alert('Share message copied to clipboard!');
       }).catch(() => {
-        alert(`Share this message: ${subjectLine}
-
-${shareText}`);
+        alert(`Share this message: ${shareText}`);
       });
     }
   };
