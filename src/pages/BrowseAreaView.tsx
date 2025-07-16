@@ -20,12 +20,70 @@ const BrowseAreaView: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // Debounced search effect
+  // Immediate suggestions for better UX
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setShowDropdown(false);
       setHighlightedIndex(-1);
+      return;
+    }
+
+    // Show immediate suggestions while waiting for debounced search
+    const commonLocations = [
+      { name: 'New York, NY', coordinates: [40.7128, -74.0060], type: 'location', displayAddress: 'New York, NY, USA' },
+      { name: 'Los Angeles, CA', coordinates: [34.0522, -118.2437], type: 'location', displayAddress: 'Los Angeles, CA, USA' },
+      { name: 'Chicago, IL', coordinates: [41.8781, -87.6298], type: 'location', displayAddress: 'Chicago, IL, USA' },
+      { name: 'Miami, FL', coordinates: [25.7617, -80.1918], type: 'location', displayAddress: 'Miami, FL, USA' },
+      { name: 'Seattle, WA', coordinates: [47.6062, -122.3321], type: 'location', displayAddress: 'Seattle, WA, USA' },
+      { name: 'Boston, MA', coordinates: [42.3601, -71.0589], type: 'location', displayAddress: 'Boston, MA, USA' },
+      { name: 'San Francisco, CA', coordinates: [37.7749, -122.4194], type: 'location', displayAddress: 'San Francisco, CA, USA' },
+      { name: 'London, UK', coordinates: [51.5074, -0.1278], type: 'location', displayAddress: 'London, UK' },
+      { name: 'Paris, France', coordinates: [48.8566, 2.3522], type: 'location', displayAddress: 'Paris, France' },
+      { name: 'Tokyo, Japan', coordinates: [35.6762, 139.6503], type: 'location', displayAddress: 'Tokyo, Japan' },
+      { name: 'Sydney, Australia', coordinates: [33.8688, 151.2093], type: 'location', displayAddress: 'Sydney, Australia' },
+      { name: 'Berlin, Germany', coordinates: [52.5200, 13.4050], type: 'location', displayAddress: 'Berlin, Germany' },
+      { name: 'Madrid, Spain', coordinates: [40.4168, -3.7038], type: 'location', displayAddress: 'Madrid, Spain' },
+      { name: 'Rome, Italy', coordinates: [41.9028, 12.4964], type: 'location', displayAddress: 'Rome, Italy' },
+      { name: 'Dublin, Ireland', coordinates: [53.3498, -6.2603], type: 'location', displayAddress: 'Dublin, Ireland' },
+      { name: 'Commack, NY', coordinates: [40.8429, -73.2973], type: 'location', displayAddress: 'Commack, NY, USA' },
+    ];
+
+    // Filter suggestions based on search query
+    const filteredSuggestions = commonLocations.filter(location =>
+      location.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      location.displayAddress.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    // If we have matching suggestions, show them immediately
+    if (filteredSuggestions.length > 0) {
+      setSearchResults(filteredSuggestions.slice(0, 5)); // Show max 5 suggestions
+      setShowDropdown(true);
+      setHighlightedIndex(-1);
+    } else {
+      // If no matching suggestions, create a result for the search query
+      const hash = searchQuery.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0);
+        return a & a;
+      }, 0);
+      
+      const lat = 40 + (hash % 40) - 20; // Range: 20 to 60 degrees
+      const lng = -100 + (hash % 160) - 80; // Range: -180 to 80 degrees
+      
+      setSearchResults([{
+        name: searchQuery,
+        coordinates: [lat, lng],
+        type: 'location',
+        displayAddress: `${searchQuery} (Search Location)`
+      }]);
+      setShowDropdown(true);
+      setHighlightedIndex(-1);
+    }
+  }, [searchQuery]);
+
+  // Debounced search effect for more detailed results
+  useEffect(() => {
+    if (!searchQuery.trim()) {
       return;
     }
     setIsSearching(true);
