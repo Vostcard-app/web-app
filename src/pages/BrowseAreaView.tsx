@@ -42,16 +42,55 @@ const BrowseAreaView: React.FC = () => {
             // In development, create mock geocoding results for any search
             console.log(`🗺️ Creating mock location for: "${searchQuery}"`);
             
-            // Create mock coordinates based on search query
-            const mockCoordinates = searchQuery.toLowerCase().includes('commack') 
-              ? [40.8429, -73.2973] // Commack, NY coordinates
-              : searchQuery.toLowerCase().includes('dublin')
-              ? [53.3498, -6.2603] // Dublin, Ireland
-              : searchQuery.toLowerCase().includes('new york') || searchQuery.toLowerCase().includes('nyc')
-              ? [40.7128, -74.0060] // New York City
-              : searchQuery.toLowerCase().includes('london')
-              ? [51.5074, -0.1278] // London
-              : [40.7589 + (Math.random() - 0.5) * 0.1, -73.9851 + (Math.random() - 0.5) * 0.1]; // Default to NYC area with randomness
+            // Create mock coordinates based on search query with better coverage
+            const lowerQuery = searchQuery.toLowerCase();
+            let mockCoordinates;
+            
+            if (lowerQuery.includes('commack')) {
+              mockCoordinates = [40.8429, -73.2973]; // Commack, NY coordinates
+            } else if (lowerQuery.includes('dublin')) {
+              mockCoordinates = [53.3498, -6.2603]; // Dublin, Ireland
+            } else if (lowerQuery.includes('new york') || lowerQuery.includes('nyc')) {
+              mockCoordinates = [40.7128, -74.0060]; // New York City
+            } else if (lowerQuery.includes('london')) {
+              mockCoordinates = [51.5074, -0.1278]; // London
+            } else if (lowerQuery.includes('los angeles') || lowerQuery.includes('la')) {
+              mockCoordinates = [34.0522, -118.2437]; // Los Angeles
+            } else if (lowerQuery.includes('chicago')) {
+              mockCoordinates = [41.8781, -87.6298]; // Chicago
+            } else if (lowerQuery.includes('miami')) {
+              mockCoordinates = [25.7617, -80.1918]; // Miami
+            } else if (lowerQuery.includes('seattle')) {
+              mockCoordinates = [47.6062, -122.3321]; // Seattle
+            } else if (lowerQuery.includes('boston')) {
+              mockCoordinates = [42.3601, -71.0589]; // Boston
+            } else if (lowerQuery.includes('san francisco') || lowerQuery.includes('sf')) {
+              mockCoordinates = [37.7749, -122.4194]; // San Francisco
+            } else if (lowerQuery.includes('paris')) {
+              mockCoordinates = [48.8566, 2.3522]; // Paris
+            } else if (lowerQuery.includes('tokyo')) {
+              mockCoordinates = [35.6762, 139.6503]; // Tokyo
+            } else if (lowerQuery.includes('sydney')) {
+              mockCoordinates = [33.8688, 151.2093]; // Sydney
+            } else if (lowerQuery.includes('berlin')) {
+              mockCoordinates = [52.5200, 13.4050]; // Berlin
+            } else if (lowerQuery.includes('madrid')) {
+              mockCoordinates = [40.4168, -3.7038]; // Madrid
+            } else if (lowerQuery.includes('rome')) {
+              mockCoordinates = [41.9028, 12.4964]; // Rome
+            } else {
+              // Generate pseudo-random coordinates based on search query
+              const hash = searchQuery.split('').reduce((a, b) => {
+                a = ((a << 5) - a) + b.charCodeAt(0);
+                return a & a;
+              }, 0);
+              
+              // Convert hash to latitude/longitude ranges
+              const lat = 40 + (hash % 40) - 20; // Range: 20 to 60 degrees
+              const lng = -100 + (hash % 160) - 80; // Range: -180 to 80 degrees
+              
+              mockCoordinates = [lat, lng];
+            }
             
             locationResults = [{
               name: `${searchQuery}`,
@@ -71,28 +110,24 @@ const BrowseAreaView: React.FC = () => {
           
           console.log(`🗺️ Found location results:`, locationResults);
         } catch (e) {
-          console.log('❌ Location search failed, adding fallback suggestions');
-          // Add fallback suggestions if location search fails
-          const fallbackSuggestions = [
-            { name: 'Commack, NY', coordinates: [40.8429, -73.2973], type: 'location', displayAddress: 'Commack, NY, USA' },
-            { name: 'New York, NY', coordinates: [40.7128, -74.0060], type: 'location', displayAddress: 'New York, NY, USA' },
-            { name: 'Dublin, Ireland', coordinates: [53.3498, -6.2603], type: 'location', displayAddress: 'Dublin, Ireland' },
-            { name: 'London, UK', coordinates: [51.5074, -0.1278], type: 'location', displayAddress: 'London, UK' },
-            { name: 'Los Angeles, CA', coordinates: [34.0522, -118.2437], type: 'location', displayAddress: 'Los Angeles, CA, USA' }
-          ];
+          console.log('❌ Location search failed, creating fallback result for search query');
           
-          // Find suggestions that match the search query
-          const matchingSuggestions = fallbackSuggestions.filter(s => 
-            s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            s.displayAddress.toLowerCase().includes(searchQuery.toLowerCase())
-          );
+          // Create a fallback result based on the search query
+          const hash = searchQuery.split('').reduce((a, b) => {
+            a = ((a << 5) - a) + b.charCodeAt(0);
+            return a & a;
+          }, 0);
           
-          if (matchingSuggestions.length > 0) {
-            locationResults = matchingSuggestions;
-          } else {
-            // If no matching suggestions, show the first few popular ones
-            locationResults = fallbackSuggestions.slice(0, 3);
-          }
+          // Convert hash to latitude/longitude ranges
+          const lat = 40 + (hash % 40) - 20; // Range: 20 to 60 degrees
+          const lng = -100 + (hash % 160) - 80; // Range: -180 to 80 degrees
+          
+          locationResults = [{
+            name: searchQuery,
+            coordinates: [lat, lng],
+            type: 'location',
+            displayAddress: `${searchQuery} (Approximate Location)`
+          }];
         }
         
         console.log(`📋 Location search results: ${locationResults.length}`, locationResults);
