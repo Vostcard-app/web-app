@@ -7,12 +7,14 @@ import { useVostcard } from '../context/VostcardContext';
 
 // Custom Stop Recording Icon Component
 const StopRecordingIcon: React.FC = () => (
-  <svg width="70" height="70" viewBox="0 0 70 70">
-    {/* Red circle background */}
-    <circle cx="35" cy="35" r="29" fill="red" stroke="white" strokeWidth="6" />
-    {/* White square in center */}
-    <rect x="25" y="25" width="20" height="20" fill="white" rx="2" />
-  </svg>
+  <div style={{ position: 'relative', width: 70, height: 70 }}>
+    <svg width="70" height="70" viewBox="0 0 70 70" style={{ position: 'absolute', top: 0, left: 0 }}>
+      {/* Red circle background */}
+      <circle cx="35" cy="35" r="29" fill="red" stroke="white" strokeWidth="6" />
+      {/* White square in center */}
+      <rect x="25" y="25" width="20" height="20" fill="white" rx="2" />
+    </svg>
+  </div>
 );
 
 const CameraView: React.FC = () => {
