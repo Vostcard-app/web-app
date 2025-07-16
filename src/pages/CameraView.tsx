@@ -58,144 +58,178 @@ const CameraView: React.FC = () => {
           console.log('📱 Camera result:', {
             width: settings.width,
             height: settings.height,
-            aspectRatio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : 'unknown'
+            aspectRatio: settings.aspectRatio,
+            facingMode: settings.facingMode
           });
         }
-
+        
+        console.log('✅ Camera started successfully');
       } catch (err) {
-        console.error('❌ Camera failed:', err);
-        alert('Camera access failed. Please check permissions.');
+        console.error('❌ Error accessing camera:', err);
       }
-    };
-
-    // Get user location
-    const getCurrentLocation = () => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          };
-          setUserLocation(location);
-          console.log('📍 Location captured for video:', location);
-        },
-        (error) => {
-          console.error('❌ Error getting location:', error);
-        },
-        { 
-          enableHighAccuracy: true, 
-          timeout: 10000, 
-          maximumAge: 300000 
-        }
-      );
     };
 
     startCamera();
-    getCurrentLocation();
 
+    // Cleanup function
     return () => {
-      streamRef.current?.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
     };
   }, []);
 
-  const handleCapturePhoto = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 720;
-    canvas.height = 1280;
-    
-    const ctx = canvas.getContext('2d');
-    ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    canvas.toBlob((blob) => {
-      if (blob && setPhoto) {
-        setPhoto(blob);
-        navigate(-1);
-      }
-    });
-  };
-
   const handleStartRecording = () => {
     if (streamRef.current) {
-      // Simple MIME type selection
-      const mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
-      
-      const mediaRecorder = new MediaRecorder(streamRef.current, {
-        mimeType: mimeType,
-        videoBitsPerSecond: 2500000 // 2.5 Mbps
-      });
-      
-      mediaRecorderRef.current = mediaRecorder;
-      recordedChunks.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunks.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks.current, { type: mimeType });
+      try {
+        console.log('🎥 Starting recording...');
         
-        console.log('📹 Video recording completed:', {
-          size: blob.size,
-          type: blob.type
+        const mediaRecorder = new MediaRecorder(streamRef.current, {
+          mimeType: 'video/webm;codecs=vp8,opus'
         });
-
-        // Pass location to setVideo if available
-        if (userLocation) {
-          setVideo(blob, userLocation);
-        } else {
-          setVideo(blob);
-        }
-        navigate(-1);
-      };
-
-      mediaRecorder.onerror = (event) => {
-        console.error('📹 MediaRecorder error:', event);
-        alert('❌ Recording error occurred. Please try again.');
-        setIsRecording(false);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
+        
+        mediaRecorderRef.current = mediaRecorder;
+        recordedChunks.current = [];
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.current.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = async () => {
+          const blob = new Blob(recordedChunks.current, { type: 'video/webm' });
+          console.log('📹 Recording stopped, blob size:', blob.size);
+          
+          // Add user location if available
+          if (userLocation) {
+            console.log('📍 Recording location:', userLocation);
+          }
+          
+          // Save video to context
+          if (setVideo) {
+            setVideo(blob);
+          }
+          
+          // Navigate back with video
+          navigate('/create-vostcard-step-2', { 
+            state: { 
+              videoBlob: blob,
+              userLocation: userLocation
+            }
+          });
+        };
+        
+        mediaRecorder.start();
+        setIsRecording(true);
+        
+        console.log('✅ Recording started successfully');
+      } catch (err) {
+        console.error('❌ Error starting recording:', err);
+      }
     }
   };
 
   const handleStopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setIsRecording(false);
+    if (mediaRecorderRef.current && isRecording) {
+      console.log('🛑 Stopping recording...');
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
   };
 
+  const handleCapturePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement('canvas');
+      canvas.width = videoRef.current.videoWidth;
+      canvas.height = videoRef.current.videoHeight;
+      const ctx = canvas.getContext('2d');
+      
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob && setPhoto) {
+            setPhoto(blob);
+            navigate('/create-vostcard-step-2', { state: { photoBlob: blob } });
+          }
+        }, 'image/jpeg', 0.8);
+      }
+    }
+  };
+
+  const handleClose = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    navigate(-1);
+  };
+
+  // Get user location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log('Location access denied:', error);
+        }
+      );
+    }
+  }, []);
+
   return (
-    <div
-      style={{
-        backgroundColor: 'black',
-        height: '100vh',
-        width: '100vw',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}
-    >
+    <div style={{ 
+      position: 'relative', 
+      width: '100vw', 
+      height: '100vh',
+      backgroundColor: '#000',
+      overflow: 'hidden'
+    }}>
       {/* Close Button */}
-      <div
+      <button
+        onClick={handleClose}
         style={{
           position: 'absolute',
           top: 20,
           right: 20,
-          zIndex: 10,
+          background: 'rgba(0, 0, 0, 0.5)',
+          border: 'none',
+          borderRadius: '50%',
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 1000,
+          color: 'white',
+          fontSize: '18px'
         }}
       >
-        <AiOutlineClose
-          size={28}
-          color="white"
-          style={{ cursor: 'pointer' }}
-          onClick={() => navigate(-1)}
-        />
-      </div>
+        <AiOutlineClose />
+      </button>
+
+      {/* Timer Display */}
+      {isRecording && (
+        <div style={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          backgroundColor: 'rgba(255, 0, 0, 0.8)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '20px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          zIndex: 1000
+        }}>
+          ● REC
+        </div>
+      )}
 
       {/* Video Preview */}
       <video
