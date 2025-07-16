@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
+import { FaStop } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
 const CameraView: React.FC = () => {
@@ -159,6 +160,16 @@ const CameraView: React.FC = () => {
     setIsRecording(false);
   };
 
+  // Custom Stop Recording Icon Component
+  const StopRecordingIcon: React.FC = () => (
+    <svg width="70" height="70" viewBox="0 0 70 70">
+      {/* Red circle background */}
+      <circle cx="35" cy="35" r="29" fill="red" stroke="white" strokeWidth="6" />
+      {/* White square in center */}
+      <rect x="25" y="25" width="20" height="20" fill="white" rx="2" />
+    </svg>
+  );
+
   return (
     <div
       style={{
@@ -242,25 +253,21 @@ const CameraView: React.FC = () => {
           <div
             onClick={isRecording ? handleStopRecording : handleStartRecording}
             style={{
-              backgroundColor: isRecording ? 'red' : 'red',
-              width: 70,
-              height: 70,
-              borderRadius: '50%',
-              border: '6px solid white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
             }}
           >
-            {isRecording && (
+            {isRecording ? (
+              <StopRecordingIcon />
+            ) : (
               <div
                 style={{
-                  backgroundColor: 'white',
-                  width: 20,
-                  height: 20,
-                  borderRadius: '2px',
+                  backgroundColor: 'red',
+                  width: 70,
+                  height: 70,
+                  borderRadius: '50%',
+                  border: '6px solid white',
+                  cursor: 'pointer',
                 }}
               />
             )}
