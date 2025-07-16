@@ -114,7 +114,7 @@ const CameraView: React.FC = () => {
         mediaRecorder.start();
         setIsRecording(true);
         
-        console.log('✅ Recording started successfully');
+        console.log('✅ Recording started successfully, isRecording should be true');
       } catch (err) {
         console.error('❌ Error starting recording:', err);
       }
@@ -281,28 +281,31 @@ const CameraView: React.FC = () => {
               transition: 'all 0.3s ease',
             }}
           >
-            {isRecording ? (
-              <img 
-                src="/stop_recording.png?v=1" 
-                alt="Stop Recording" 
-                style={{
-                  width: 70,
-                  height: 70,
-                  cursor: 'pointer',
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  backgroundColor: 'red',
-                  width: 70,
-                  height: 70,
-                  borderRadius: '50%',
-                  border: '6px solid white',
-                  cursor: 'pointer',
-                }}
-              />
-            )}
+            {(() => {
+              console.log('🔍 BUTTON DEBUG: isRecording =', isRecording);
+              return isRecording ? (
+                <img 
+                  src="/stop_recording.png?v=1" 
+                  alt="Stop Recording" 
+                  style={{
+                    width: 70,
+                    height: 70,
+                    cursor: 'pointer',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    backgroundColor: 'red',
+                    width: 70,
+                    height: 70,
+                    borderRadius: '50%',
+                    border: '6px solid white',
+                    cursor: 'pointer',
+                  }}
+                />
+              );
+            })()}
           </div>
         )}
       </div>
