@@ -284,24 +284,20 @@ const PublicVostcardView: React.FC = () => {
 "${vostcard.title || 'Untitled Vostcard'}"
 
 
-"${vostcard.description || 'No description'}"`;
+"${vostcard.description || 'No description'}"
+
+
+${privateUrl}`;
       
       if (navigator.share) {
         navigator.share({
-          text: shareText,
-          url: privateUrl
+          text: shareText
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(`${shareText}
-
-
-${privateUrl}`).then(() => {
+        navigator.clipboard.writeText(shareText).then(() => {
           alert('Private share message copied to clipboard!');
         }).catch(() => {
-          alert(`Share this message: ${shareText}
-
-
-${privateUrl}`);
+          alert(`Share this message: ${shareText}`);
         });
       }
     } catch (error) {
