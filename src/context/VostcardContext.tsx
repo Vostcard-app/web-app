@@ -62,6 +62,7 @@ interface VostcardContextProps {
   // Posted vostcards management
   postedVostcards: any[];
   loadPostedVostcards: () => Promise<void>;
+  loadPrivateVostcards: () => Promise<void>;
   scripts: Script[];
   loadScripts: () => Promise<void>;
   saveScript: (script: Script) => Promise<void>;
@@ -886,25 +887,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Load all Vostcards on component mount
   useEffect(() => {
-    const initializeVostcards = async () => {
-      try {
-        // First: Load lightweight metadata for fast display
-        await loadAllLocalVostcards();
-        
-        // Then: Trigger full sync to download iPhone vostcards
-        console.log('🔄 Triggering full sync after lightweight load...');
-        await syncPrivateVostcardsFromFirebase();
-        
-        // Finally: Reload to show downloaded vostcards
-        await loadAllLocalVostcards();
-        
-        console.log('✅ Full initialization completed');
-      } catch (error) {
-        console.error('❌ Failed to initialize vostcards:', error);
-      }
-    };
-    
-    initializeVostcards();
+    // eslint-disable-next-line
+    loadPrivateVostcards();
   }, []);
   
   // Load posted vostcards on component mount
@@ -1885,6 +1869,45 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Load private vostcards from Firebase (similar to posted vostcards)
+  const loadPrivateVostcards = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('📋 No user logged in, clearing private vostcards');
+      setSavedVostcards([]);
+      return;
+    }
+
+    try {
+      console.log('📋 Loading private Vostcards from Firebase...');
+      
+      // Query for private Vostcards by this user
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        where('state', '==', 'private')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log(`📊 Found ${querySnapshot.docs.length} private Vostcards in Firebase`);
+      
+      const vostcards = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data
+        } as Vostcard;
+      });
+      
+      setSavedVostcards(vostcards);
+      console.log('✅ Private Vostcards synced successfully:', vostcards.length);
+      
+    } catch (error) {
+      console.error('❌ Error loading private Vostcards:', error);
+      setSavedVostcards([]);
+    }
+  }, []);
+
   // Debug function to help troubleshoot sharing issues
   const debugSpecificVostcard = useCallback(async (vostcardId: string) => {
     try {
@@ -2445,6 +2468,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Posted vostcards management
         postedVostcards,
         loadPostedVostcards,
+        loadPrivateVostcards,
         scripts,
         loadScripts,
         saveScript,
