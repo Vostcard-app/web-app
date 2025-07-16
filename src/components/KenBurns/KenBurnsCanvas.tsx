@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { KenBurnsProcessor } from './KenBurnsProcessor';
-import type { KenBurnsConfig } from './KenBurnsProcessor';
+import React, { useEffect, useRef } from 'react';
+import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
 
 interface KenBurnsCanvasProps {
   videoUrl: string;
@@ -8,244 +7,244 @@ interface KenBurnsCanvasProps {
   isProcessing: boolean;
   onProgress: (progress: number) => void;
   onComplete: (blob: Blob) => void;
-  onError: (error: string) => void;
+  onError: (message: string) => void;
 }
 
-const KenBurnsCanvas: React.FC<KenBurnsCanvasProps> = ({
-  videoUrl,
-  photoUrls,
-  isProcessing,
-  onProgress,
-  onComplete,
-  onError
+const KenBurnsCanvas: React.FC<KenBurnsCanvasProps> = ({ 
+  videoUrl, 
+  photoUrls, 
+  isProcessing, 
+  onProgress, 
+  onComplete, 
+  onError 
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const recordedChunksRef = useRef<Blob[]>([]);
-  const [isReady, setIsReady] = useState(false);
-  const [loadedImages, setLoadedImages] = useState<HTMLImageElement[]>([]);
-  const [loadedVideo, setLoadedVideo] = useState<HTMLVideoElement | null>(null);
 
-  // Load images and video when component mounts
   useEffect(() => {
-    const loadMedia = async () => {
+    if (!isProcessing) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) {
+      onError('Canvas not supported');
+      return;
+    }
+
+    let mediaRecorder: MediaRecorder | null = null;
+    let chunks: Blob[] = [];
+    const fps = 30;
+    const duration = 30; // 30 seconds total
+    const totalFrames = fps * duration;
+
+    const video = document.createElement('video');
+    video.src = videoUrl;
+    video.crossOrigin = 'anonymous';
+    video.muted = true;
+    video.playsInline = true;
+
+    const images: HTMLImageElement[] = [];
+    let frame = 0;
+
+    const loadResources = async () => {
       try {
-        // Load images
-        const imagePromises = photoUrls.slice(0, 2).map((url) => {
-          return new Promise<HTMLImageElement>((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
-            img.src = url;
-          });
-        });
-
-        const images = await Promise.all(imagePromises);
-        setLoadedImages(images);
-
-        // Load video
-        const video = document.createElement('video');
-        video.crossOrigin = 'anonymous';
-        video.muted = false; // Keep audio
-        video.volume = 1.0;
+        console.log('🎬 Loading video and images for Ken Burns effect...');
         
+        // Load video
         await new Promise<void>((resolve, reject) => {
-          video.onloadedmetadata = () => resolve();
-          video.onerror = () => reject(new Error('Failed to load video'));
-          video.src = videoUrl;
+          video.onloadedmetadata = () => {
+            video.currentTime = 0;
+            resolve();
+          };
+          video.onerror = reject;
+          video.load();
         });
 
-        setLoadedVideo(video);
-        setIsReady(true);
-        console.log('✅ Media loaded successfully');
-      } catch (error) {
-        console.error('❌ Error loading media:', error);
-        onError(error instanceof Error ? error.message : 'Failed to load media');
+        // Load images
+        for (const url of photoUrls.slice(0, 2)) {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.src = url;
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = reject;
+          });
+          images.push(img);
+        }
+
+        console.log('✅ Video and images loaded successfully');
+        startRecording();
+      } catch (err) {
+        console.error('❌ Failed to load video or images:', err);
+        onError('Failed to load video or images');
       }
     };
 
-    loadMedia();
-  }, [videoUrl, photoUrls, onError]);
-
-  // Process Ken Burns effect when processing starts
-  useEffect(() => {
-    if (isProcessing && isReady && canvasRef.current && loadedVideo && loadedImages.length > 0) {
-      processKenBurnsEffect();
-    }
-  }, [isProcessing, isReady, loadedVideo, loadedImages]);
-
-  const processKenBurnsEffect = async () => {
-    if (!canvasRef.current || !loadedVideo || loadedImages.length === 0) {
-      onError('Canvas, video, or images not ready');
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      onError('Unable to get canvas context');
-      return;
-    }
-
-    // Set canvas size
-    canvas.width = 1080;
-    canvas.height = 1920; // Portrait orientation
-
-    try {
-      console.log('🎬 Starting Ken Burns effect processing...');
-      
-      // Setup MediaRecorder for capturing canvas stream
-      const stream = canvas.captureStream(30); // 30 FPS
-      recordedChunksRef.current = [];
-      
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp8,opus'
-      });
-
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          recordedChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
-        console.log('✅ Ken Burns processing complete:', {
-          blob,
-          size: blob.size,
-          type: blob.type
-        });
-        onComplete(blob);
-      };
-
-      mediaRecorderRef.current.onerror = (error) => {
-        console.error('❌ MediaRecorder error:', error);
-        onError('Recording failed');
-      };
-
-      // Start recording
-      mediaRecorderRef.current.start();
-
-      // Animate for 30 seconds (Ken Burns effect)
-      const duration = 30; // seconds
-      const fps = 30;
-      const totalFrames = duration * fps;
-      
-      let currentFrame = 0;
-      const animate = () => {
-        if (currentFrame >= totalFrames) {
-          // Stop recording
-          if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-            mediaRecorderRef.current.stop();
-          }
-          return;
-        }
-
-        const progress = currentFrame / totalFrames;
-        const time = currentFrame / fps;
+    const startRecording = () => {
+      try {
+        console.log('🎥 Starting canvas recording...');
         
-        // Clear canvas
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const stream = canvas.captureStream(fps);
+        mediaRecorder = new MediaRecorder(stream, { 
+          mimeType: 'video/webm;codecs=vp9,opus' 
+        });
 
-        // Draw video frame
-        if (loadedVideo && time < loadedVideo.duration) {
-          loadedVideo.currentTime = time;
-          ctx.drawImage(loadedVideo, 0, 0, canvas.width, canvas.height);
-        }
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
 
-        // Draw photos with Ken Burns effect
-        drawKenBurnsPhotos(ctx, time, canvas.width, canvas.height);
+        mediaRecorder.onstop = async () => {
+          console.log('📹 Recording stopped, creating WebM blob...');
+          const webmBlob = new Blob(chunks, { type: 'video/webm' });
+          
+          try {
+            console.log('🔄 Converting WebM to MP4...');
+            const mp4Blob = await convertWebMtoMP4(webmBlob);
+            console.log('✅ MP4 conversion complete');
+            onComplete(mp4Blob);
+          } catch (err) {
+            console.error('❌ Failed to convert WebM to MP4:', err);
+            onError('Failed to convert WebM to MP4');
+          }
+        };
 
-        // Update progress
-        onProgress((progress * 100));
-
-        currentFrame++;
-        requestAnimationFrame(animate);
-      };
-
-      animate();
-
-    } catch (error) {
-      console.error('❌ Ken Burns processing error:', error);
-      onError(error instanceof Error ? error.message : 'Processing failed');
-    }
-  };
-
-  const drawKenBurnsPhotos = (ctx: CanvasRenderingContext2D, time: number, canvasWidth: number, canvasHeight: number) => {
-    // Configuration for Ken Burns effect
-    const photo1Start = 5; // seconds
-    const photo2Start = 20; // seconds
-    const photoDisplayDuration = 5; // seconds
-    const fadeInDuration = 0.5; // seconds
-    const fadeOutDuration = 0.5; // seconds
-
-    loadedImages.forEach((img, index) => {
-      const photoStart = index === 0 ? photo1Start : photo2Start;
-      const photoEnd = photoStart + photoDisplayDuration;
-
-      if (time >= photoStart && time <= photoEnd) {
-        const progress = (time - photoStart) / photoDisplayDuration;
-        const opacity = calculateOpacity(time, photoStart, photoEnd, fadeInDuration, fadeOutDuration);
-
-        if (opacity > 0) {
-          ctx.save();
-          ctx.globalAlpha = opacity;
-
-          // Ken Burns effect: zoom and pan
-          const scale = 1.0 + (0.5 * progress); // Zoom from 1.0 to 1.5
-          const panX = (Math.random() - 0.5) * 100 * (1 - progress); // Pan movement
-          const panY = (Math.random() - 0.5) * 100 * (1 - progress);
-
-          // Center the transformation
-          const centerX = canvasWidth / 2;
-          const centerY = canvasHeight / 2;
-
-          ctx.translate(centerX + panX, centerY + panY);
-          ctx.scale(scale, scale);
-
-          // Draw image centered
-          ctx.drawImage(
-            img,
-            -canvasWidth / 2,
-            -canvasHeight / 2,
-            canvasWidth,
-            canvasHeight
-          );
-
-          ctx.restore();
-        }
+        mediaRecorder.start();
+        requestAnimationFrame(draw);
+      } catch (err) {
+        console.error('❌ Failed to start recording:', err);
+        onError('Failed to start recording');
       }
-    });
-  };
+    };
 
-  const calculateOpacity = (time: number, start: number, end: number, fadeInDuration: number, fadeOutDuration: number): number => {
-    const fadeInEnd = start + fadeInDuration;
-    const fadeOutStart = end - fadeOutDuration;
+    const draw = () => {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Calculate current time
+      const currentTime = frame / fps;
+      
+      // Set video time and draw video frame
+      video.currentTime = Math.min(currentTime, video.duration - 0.1);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    if (time < fadeInEnd) {
-      return (time - start) / fadeInDuration;
-    } else if (time > fadeOutStart) {
-      return (end - time) / fadeOutDuration;
-    }
+      // Draw photo overlays with Ken Burns effect
+      if (currentTime >= 5 && currentTime < 10 && images[0]) {
+        drawPhoto(ctx, images[0], currentTime - 5, 5);
+      }
+      if (currentTime >= 20 && currentTime < 25 && images[1]) {
+        drawPhoto(ctx, images[1], currentTime - 20, 5);
+      }
 
-    return 1.0;
-  };
+      // Update progress
+      const progress = Math.min(100, (frame / totalFrames) * 100);
+      onProgress(progress);
+      
+      frame++;
 
-  // Cleanup on unmount
-  useEffect(() => {
+      if (frame < totalFrames) {
+        requestAnimationFrame(draw);
+      } else {
+        console.log('🎬 Animation complete, stopping recorder...');
+        mediaRecorder?.stop();
+      }
+    };
+
+    const drawPhoto = (ctx: CanvasRenderingContext2D, img: HTMLImageElement, elapsed: number, duration: number) => {
+      const progress = elapsed / duration;
+      
+      // Ken Burns effect: scale from 1.0 to 1.2
+      const scale = 1.0 + progress * 0.2;
+      
+      // Fade in/out effect
+      let opacity: number;
+      if (progress < 0.1) {
+        opacity = progress * 10; // Fade in
+      } else if (progress > 0.9) {
+        opacity = (1 - progress) * 10; // Fade out
+      } else {
+        opacity = 1.0; // Full opacity
+      }
+      
+      // Subtle panning effect
+      const panX = Math.sin(progress * Math.PI) * 20; // Horizontal pan
+      const panY = Math.cos(progress * Math.PI) * 15; // Vertical pan
+
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      
+      // Apply transformations
+      ctx.translate(canvas.width / 2 + panX, canvas.height / 2 + panY);
+      ctx.scale(scale, scale);
+      
+      // Draw image centered
+      ctx.drawImage(
+        img, 
+        -canvas.width / 2, 
+        -canvas.height / 2, 
+        canvas.width, 
+        canvas.height
+      );
+      
+      ctx.restore();
+    };
+
+    const convertWebMtoMP4 = async (webmBlob: Blob): Promise<Blob> => {
+      try {
+        console.log('🔧 Initializing ffmpeg.wasm...');
+        const ffmpeg = createFFmpeg({ 
+          log: true,
+          corePath: 'https://unpkg.com/@ffmpeg/core@0.12.4/dist/ffmpeg-core.js'
+        });
+        
+        await ffmpeg.load();
+        console.log('✅ ffmpeg.wasm loaded successfully');
+        
+        // Write input file
+        console.log('📁 Writing WebM input file...');
+        ffmpeg.FS('writeFile', 'input.webm', await fetchFile(webmBlob));
+        
+        // Convert WebM to MP4 with H.264 codec
+        console.log('🔄 Converting to MP4...');
+        await ffmpeg.run(
+          '-i', 'input.webm',
+          '-c:v', 'libx264',
+          '-crf', '23',
+          '-preset', 'fast',
+          '-c:a', 'aac',
+          '-movflags', '+faststart',
+          'output.mp4'
+        );
+        
+        // Read output file
+        console.log('📤 Reading MP4 output file...');
+        const data = ffmpeg.FS('readFile', 'output.mp4');
+        
+        // Clean up
+        ffmpeg.FS('unlink', 'input.webm');
+        ffmpeg.FS('unlink', 'output.mp4');
+        
+        return new Blob([data.buffer], { type: 'video/mp4' });
+      } catch (error) {
+        console.error('❌ ffmpeg conversion error:', error);
+        throw new Error(`MP4 conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    };
+
+    loadResources();
+
+    // Cleanup function
     return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
       }
       
       // Revoke object URLs
-      if (loadedVideo) {
-        URL.revokeObjectURL(loadedVideo.src);
+      if (video.src) {
+        URL.revokeObjectURL(video.src);
       }
     };
-  }, [loadedVideo]);
+  }, [isProcessing, videoUrl, photoUrls, onProgress, onComplete, onError]);
 
   return (
     <div style={{ 
@@ -256,15 +255,18 @@ const KenBurnsCanvas: React.FC<KenBurnsCanvasProps> = ({
       justifyContent: 'center',
       alignItems: 'center'
     }}>
-      <canvas
-        ref={canvasRef}
-        style={{
+      <canvas 
+        ref={canvasRef} 
+        width={1080} 
+        height={1920} 
+        style={{ 
+          background: 'black',
           maxWidth: '100%',
           maxHeight: '100%',
           border: '1px solid #ccc',
           borderRadius: '8px',
           display: isProcessing ? 'block' : 'none'
-        }}
+        }} 
       />
       {!isProcessing && (
         <div style={{
@@ -272,7 +274,7 @@ const KenBurnsCanvas: React.FC<KenBurnsCanvasProps> = ({
           color: '#666',
           fontSize: '16px'
         }}>
-          {isReady ? 'Ready to process Ken Burns effect' : 'Loading media...'}
+          Ready to process Ken Burns effect
         </div>
       )}
     </div>

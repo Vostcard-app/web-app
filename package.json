@@ -12,6 +12,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.4",
+    "@ffmpeg/core": "^0.12.4",
     "emailjs-com": "^3.2.0",
     "file-saver": "^2.0.5",
     "firebase": "^11.9.1",
