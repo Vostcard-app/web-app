@@ -284,14 +284,12 @@ const PublicVostcardView: React.FC = () => {
     };
 
     // Create custom share message template with proper spacing
-    const subjectLine = `Look what I made with Vōstcard "${vostcard.title || 'Untitled Vostcard'}"`;
-    const shareText = `Hi, I've sent you a Vostcard
-
-Check it out.
+    const subjectLine = `Check it out, I made with Vōstcard`;
+    const shareText = `Check it out, I made with Vōstcard
 
 ${publicUrl}
 
-${vostcard.description || ''}
+"${vostcard.description || 'No description'}"
 
 Cheers,
 
