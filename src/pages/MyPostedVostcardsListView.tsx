@@ -285,23 +285,26 @@ ${getUserFirstName()}`);
       return;
     }
 
-    console.log('🗑️ Delete clicked for posted vostcard:', vostcardId);
-    
+    console.log('🗑️ Delete clicked for posted Vōstcard:', vostcardId);
+
     try {
       // Show loading state
       setUnpostingIds(prev => new Set([...prev, vostcardId]));
-      
+
       // Delete from Firebase
       const vostcardRef = doc(db, 'vostcards', vostcardId);
       await deleteDoc(vostcardRef);
-      
-      console.log('✅ Posted vostcard deleted successfully from Firebase:', vostcardId);
-      
-      // Remove local copy (if applicable) by calling loadPostedVostcards
+      console.log('✅ Deleted Vōstcard from Firebase:', vostcardId);
+
+      // Delete from local storage
+      await deleteLocalVostcard(vostcardId);
+      console.log('✅ Deleted Vōstcard from local storage:', vostcardId);
+
+      // Refresh the posted Vōstcards list
       await loadPostedVostcards();
-      
+
     } catch (error) {
-      console.error('❌ Failed to delete posted vostcard from Firebase:', error);
+      console.error('❌ Failed to delete Vōstcard:', error);
       alert('Failed to delete Vōstcard. Please try again.');
     } finally {
       // Clear loading state
