@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
-import stopRecordingIcon from '../assets/stop_recording.png';
+// Using public folder path for the icon
 
 const CameraView: React.FC = () => {
   const navigate = useNavigate();
@@ -283,7 +283,7 @@ const CameraView: React.FC = () => {
           >
             {isRecording ? (
               <img 
-                src={stopRecordingIcon} 
+                src="/stop_recording.png" 
                 alt="Stop Recording" 
                 style={{
                   width: 70,
