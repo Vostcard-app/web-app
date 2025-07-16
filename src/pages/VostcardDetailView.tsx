@@ -1,6 +1,238 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
+import { db } from '../firebase/firebaseConfig';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
+import { useVostcard } from '../context/VostcardContext';
+import { CommentsModal } from '../components/CommentsModal';
+
+const VostcardDetailView: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user: authUser, username: authUsername } = useAuth();
+  const { fixBrokenSharedVostcard } = useVostcard();
+  
+  const [vostcard, setVostcard] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const fetchVostcard = async () => {
+      if (!id) {
+        setError('No vostcard ID provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        console.log('📱 Loading vostcard:', id);
+        
+        const docRef = doc(db, 'vostcards', id);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log('📱 Vostcard found:', data);
+          setVostcard(data);
+          setLoading(false);
+        } else {
+          console.log('📱 Vostcard not found, trying to fix...');
+          
+          try {
+            const fixed = await fixBrokenSharedVostcard(id);
+            if (fixed) {
+              console.log('📱 Vostcard fixed, retrying load...');
+              
+              const retryDocSnap = await getDoc(docRef);
+              if (retryDocSnap.exists()) {
+                const retryData = retryDocSnap.data();
+                setVostcard(retryData);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (fixError) {
+            console.error('📱 Failed to fix vostcard:', fixError);
+          }
+          
+          setError('Vostcard not found. It may have been deleted or the link is invalid.');
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('📱 Error loading vostcard:', err);
+        setError('Failed to load Vostcard. Please check your internet connection and try again.');
+        setLoading(false);
+      }
+    };
+
+    fetchVostcard();
+  }, [id, fixBrokenSharedVostcard]);
+
+  const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
+    const { videoWidth, videoHeight } = videoElement;
+    setVideoOrientation(videoWidth > videoHeight ? 'landscape' : 'portrait');
+  };
+
+  const handleShareClick = async () => {
+    try {
+      if (vostcard?.id) {
+        const vostcardRef = doc(db, 'vostcards', vostcard.id);
+        await updateDoc(vostcardRef, {
+          isPrivatelyShared: true,
+          sharedAt: new Date()
+        });
+      }
+      
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      const getUserFirstName = () => {
+        if (authUsername) {
+          return authUsername.split(' ')[0];
+        } else if (authUser?.displayName) {
+          return authUser.displayName.split(' ')[0];
+        } else if (authUser?.email) {
+          return authUser.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      const shareText = `Look what I made with Vōstcard
+
+Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
+
+${privateUrl}
+
+"${vostcard?.description || ''}"
+
+Cheers,
+
+${getUserFirstName()}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: `Look what I made with Vōstcard`,
+          text: shareText,
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Private share message copied to clipboard!');
+        }).catch(() => {
+          alert(`Share this private message: ${shareText}`);
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
     }
   };
 
+  const handlePrivateShare = async () => {
+    try {
+      const vostcardRef = doc(db, 'vostcards', id!);
+      await updateDoc(vostcardRef, {
+        isShared: true
+      });
+      
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      const getUserFirstName = () => {
+        if (authUsername) {
+          return authUsername.split(' ')[0];
+        } else if (authUser?.displayName) {
+          return authUser.displayName.split(' ')[0];
+        } else if (authUser?.email) {
+          return authUser.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      const shareText = `Look what I made with Vōstcard
+
+Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
+
+${privateUrl}
+
+"${vostcard?.description || ''}"
+
+Cheers,
+
+${getUserFirstName()}`;
+      
+      if (navigator.share) {
+        navigator.share({
+          title: `Look what I made with Vōstcard`,
+          text: shareText,
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Private share message copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
+        }).catch(() => {
+          alert(`Share this private message: ${shareText}`);
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing private Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
+    }
+  };
+
+  const handleEmailShare = async () => {
+    try {
+      if (!vostcard?.id) {
+        throw new Error('No vostcard to share');
+      }
+
+      await fixBrokenSharedVostcard(vostcard.id);
+
+      const emailUrl = `${window.location.origin}/email/${vostcard.id}`;
+      
+      const getUserFirstName = () => {
+        if (authUsername) {
+          return authUsername.split(' ')[0];
+        } else if (authUser?.displayName) {
+          return authUser.displayName.split(' ')[0];
+        } else if (authUser?.email) {
+          return authUser.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
+
+      const subjectLine = `Check out my Vōstcard: "${vostcard?.title || 'Title'}"`;
+      
+      const emailBody = `Hi,
+
+I made this with an app called Vōstcard
+
+View it here: ${emailUrl}
+
+${vostcard?.description || 'Description'}
+
+Cheers!
+
+${getUserFirstName()}`;
+
+      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
+      
+      window.open(mailtoUrl, '_blank');
+      
+      alert('✅ Vostcard shared! The recipient will be able to view it via the email link.');
+      
+    } catch (error) {
+      console.error('Error sharing Vostcard via email:', error);
+      alert('Failed to share Vostcard via email. Please try again.');
+    }
+  };
 
   const handleViewOnMap = () => {
     if (!vostcard?.latitude || !vostcard?.longitude) {
@@ -104,341 +336,176 @@
       </div>
 
       {/* User Info */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '5px 24px 0 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '50%', marginRight: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0' }}>
-            {userProfile?.avatarURL && !imageLoadError ? (
-              <img 
-                src={userProfile.avatarURL} 
-                alt="avatar" 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={() => {
-                  setImageLoadError(true);
-                }}
-              />
-            ) : (
-              <FaUserCircle 
-                size={64} 
-                color="#ccc" 
-              />
-            )}
-          </div>
-          <span style={{ fontWeight: 500, fontSize: 24 }}>{vostcard?.username}</span>
+      <div style={{ padding: '20px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee' }}>
+        <div style={{ 
+          width: 50, 
+          height: 50, 
+          borderRadius: '50%', 
+          overflow: 'hidden', 
+          marginRight: 16,
+          background: '#f0f0f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {vostcard.avatarURL ? (
+            <img 
+              src={vostcard.avatarURL} 
+              alt="User Avatar" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          ) : (
+            <FaUserCircle size={50} color="#ccc" />
+          )}
         </div>
-        {vostcard?.userID && (
-          <FollowButton 
-            targetUserId={vostcard.userID} 
-            targetUsername={vostcard?.username}
-            size="small"
-            variant="secondary"
-          />
-        )}
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>
+            {vostcard.username || 'Anonymous'}
+          </div>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            🔒 Private Share
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div style={{ padding: '20px', display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
+        <button
+          onClick={handleShareClick}
+          style={{
+            flex: 1,
+            backgroundColor: '#007aff',
+            color: 'white',
+            border: 'none',
+            padding: '12px 0',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}
+        >
+          <FaShare size={16} />
+          Share
+        </button>
+        <button
+          onClick={handleEmailShare}
+          style={{
+            flex: 1,
+            backgroundColor: '#34c759',
+            color: 'white',
+            border: 'none',
+            padding: '12px 0',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}
+        >
+          <FaEnvelope size={16} />
+          Email
+        </button>
+        <button
+          onClick={handleViewOnMap}
+          style={{
+            flex: 1,
+            backgroundColor: '#ff9500',
+            color: 'white',
+            border: 'none',
+            padding: '12px 0',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}
+        >
+          <FaMap size={16} />
+          Map
+        </button>
       </div>
 
       {/* Title */}
-      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 24, margin: '2px 0 8px 0' }}>{vostcard?.title}</div>
-
-      {/* Media Thumbnails */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 16, margin: '8px 0 8px 0' }}>
-        <div 
-          style={{ 
-            width: 180, 
-            height: 240, 
-            background: '#111', 
-            borderRadius: 16, 
-            overflow: 'hidden', 
-            cursor: videoURL ? 'pointer' : 'default',
-            position: 'relative'
-          }}
-          onClick={() => videoURL && setShowVideoModal(true)}
-        >
-          {videoURL ? (
-            <>
-              <video 
-                src={videoURL} 
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  objectFit: 'cover',
-                  pointerEvents: 'none'
-                }}
-                muted
-                onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
-              />
-              {/* Play overlay */}
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                borderRadius: '50%',
-                width: '60px',
-                height: '60px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                pointerEvents: 'none'
-              }}>
-                <div style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '20px solid white',
-                  borderTop: '12px solid transparent',
-                  borderBottom: '12px solid transparent',
-                  marginLeft: '4px'
-                }} />
-              </div>
-            </>
-          ) : (
-            <div style={{ width: '100%', height: '100%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>No Video</div>
-          )}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {photoURLs.length > 0 ? (
-            photoURLs.slice(0, 2).map((url: string, idx: number) => (
-              <div key={idx} style={{ position: 'relative' }}>
-                <img
-                  src={url}
-                  alt={`photo${idx+1}`}
-                  style={{ 
-                    width: 120, 
-                    height: 110, 
-                    borderRadius: 16, 
-                    objectFit: 'cover', 
-                    cursor: 'pointer',
-                    border: photoLoadErrors.has(idx) ? '2px solid red' : 'none'
-                  }}
-                  onClick={() => setSelectedPhoto(url)}
-                  onContextMenu={e => e.preventDefault()}
-                  onError={(e) => {
-                    console.error(`❌ Failed to load photo ${idx + 1}:`, {
-                      url,
-                      error: e,
-                      vostcardTitle: vostcard?.title
-                    });
-                    setPhotoLoadErrors(prev => new Set([...prev, idx]));
-                  }}
-                  onLoad={() => {
-                    console.log(`✅ Successfully loaded photo ${idx + 1} for vostcard:`, vostcard?.title);
-                    setPhotoLoadErrors(prev => {
-                      const newSet = new Set(prev);
-                      newSet.delete(idx);
-                      return newSet;
-                    });
-                  }}
-                />
-                {photoLoadErrors.has(idx) && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(255, 0, 0, 0.1)',
-                    borderRadius: 16,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'red',
-                    fontSize: 12,
-                    textAlign: 'center',
-                    padding: 4
-                  }}>
-                    Error Loading Photo
-                  </div>
-                )}
-              </div>
-            ))
-          ) : (
-            <>
-              <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 12, textAlign: 'center' }}>
-                No Photo
-                {vostcard?.title && (
-                  <div style={{ position: 'absolute', top: -20, fontSize: 10, color: '#666' }}>
-                    Debug: Check console
-                  </div>
-                )}
-              </div>
-              <div style={{ width: 120, height: 110, borderRadius: 16, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', fontSize: 12 }}>No Photo</div>
-            </>
-          )}
-        </div>
+      <div style={{ padding: '0 20px 20px 20px' }}>
+        <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
+          {vostcard.title || 'Untitled Vostcard'}
+        </h2>
       </div>
 
-      {/* Add a debug section (only visible in development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{ 
-          position: 'fixed', 
-          bottom: 10, 
-          right: 10, 
-          background: 'rgba(0,0,0,0.8)', 
-          color: 'white', 
-          padding: 10, 
-          borderRadius: 8, 
-          fontSize: 10, 
-          maxWidth: 300, 
-          maxHeight: 200, 
-          overflow: 'auto' 
-        }}>
-          <div>Photo Debug Info:</div>
-          <div>URLs: {photoURLs.length}</div>
-          <div>Errors: {photoLoadErrors.size}</div>
-          <div>Title: {vostcard?.title}</div>
-          <div>Private: {isPrivate ? 'Yes' : 'No'}</div>
-          <details>
-            <summary>Full Debug</summary>
-            <pre style={{ fontSize: 8 }}>{photoDebugInfo}</pre>
-          </details>
+      {/* Video */}
+      {vostcard.videoURL && (
+        <div style={{ padding: '0 20px 20px 20px' }}>
+          <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
+            <video
+              ref={videoRef}
+              src={vostcard.videoURL}
+              style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+                borderRadius: '12px',
+                cursor: 'pointer'
+              }}
+              controls
+              playsInline
+              onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
+              onClick={() => setShowVideoModal(true)}
+            />
+          </div>
         </div>
       )}
 
-      {/* Action Icons - Add the email icon */}
-      <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', margin: '16px 0 0 0' }}>
-        <div 
-          style={{ 
-            textAlign: 'center', 
-            cursor: 'pointer',
-            transition: 'transform 0.1s'
-          }}
-          onClick={handleLikeToggle}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaHeart 
-            size={24} 
-            color={isLikedStatus ? "#ff4444" : "#222"} 
-            style={{ 
-              marginBottom: 4,
-              transition: 'color 0.2s'
-            }} 
-          />
-          <div style={{ fontSize: 18 }}>{likeCount}</div>
+      {/* Photos */}
+      {vostcard.photoURLs && vostcard.photoURLs.length > 0 && (
+        <div style={{ padding: '0 20px 20px 20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
+            {vostcard.photoURLs.map((photoURL: string, index: number) => (
+              <div key={index} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
+                <img
+                  src={photoURL}
+                  alt={`Photo ${index + 1}`}
+                  style={{
+                    width: '100%',
+                    height: '150px',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setSelectedPhoto(photoURL)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
-          <FaStar size={24} color="#ffc107" style={{ marginBottom: 4 }} />
-          <div style={{ fontSize: 18 }}>{ratingStats.averageRating.toFixed(1)}</div>
-        </div>
-        <div 
-          style={{ 
-            textAlign: 'center', 
-            cursor: 'pointer',
-            transition: 'transform 0.1s'
-          }}
-          onClick={() => setShowCommentsModal(true)}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaRegComment size={24} color="#222" style={{ marginBottom: 4 }} />
-          <div style={{ fontSize: 18 }}>{commentCount}</div>
-        </div>
-        <div 
-          style={{ 
-            textAlign: 'center', 
-            cursor: 'pointer',
-            transition: 'transform 0.1s'
-          }}
-          onClick={handleShareClick}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaShare size={24} color="#222" style={{ marginBottom: 4 }} />
-        </div>
-        {/* Add Email Share Icon */}
-        <div 
-          style={{ 
-            textAlign: 'center', 
-            cursor: 'pointer',
-            transition: 'transform 0.1s'
-          }}
-          onClick={handleEmailShare}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaEnvelope size={24} color="#222" style={{ marginBottom: 4 }} />
-        </div>
-        <div 
-          style={{ 
-            textAlign: 'center', 
-            cursor: 'pointer',
-            transition: 'transform 0.1s'
-          }}
-          onClick={handleViewOnMap}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <FaMap size={24} color="#222" style={{ marginBottom: 4 }} />
-        </div>
-      </div>
+      )}
 
-      {/* Worth Seeing? Rating System */}
-      <div style={{ textAlign: 'center', margin: '5px 0 0 0', fontSize: 18 }}>Worth Seeing?</div>
-      <div style={{ margin: '8px 0 0 0' }}>
-        <RatingStars
-          currentRating={currentUserRating}
-          averageRating={ratingStats.averageRating}
-          ratingCount={ratingStats.ratingCount}
-          onRate={handleRatingSubmit}
-        />
-      </div>
+      {/* Description */}
+      {vostcard.description && (
+        <div style={{ padding: '0 20px 20px 20px' }}>
+          <div style={{ 
+            backgroundColor: '#f8f9fa',
+            padding: '16px',
+            borderRadius: '12px',
+            border: '1px solid #e9ecef'
+          }}>
+            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
+              {vostcard.description}
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Description Link with FaFlag and FaSyncAlt icons */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          margin: '16px 0 0 0',
-          width: '100%',
-          maxWidth: 420,
-          marginLeft: 'auto',
-          marginRight: 'auto',
-          position: 'relative',
-        }}
-      >
-        <FaFlag
-          size={24}
-          color="#e53935"
-          style={{ 
-            cursor: 'pointer', 
-            padding: '5px',
-            position: 'absolute',
-            left: '20px'
-          }}
-          onClick={handleFlagClick}
-        />
-        <button
-          onClick={() => setShowDescriptionModal(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#007aff',
-            fontWeight: 700,
-            fontSize: 24,
-            textDecoration: 'underline',
-            cursor: 'pointer',
-            padding: 0,
-            flex: '1 1 auto',
-            textAlign: 'center',
-          }}
-        >
-          Description
-        </button>
-        <FaSyncAlt
-          size={24}
-          color="#007aff"
-          style={{ 
-            padding: '5px',
-            position: 'absolute',
-            right: '20px'
-          }}
-        />
-      </div>
+      {/* Posted Date */}
       <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>
         Posted: {vostcard?.createdAt ? (
           typeof vostcard.createdAt.toDate === 'function' ? vostcard.createdAt.toDate().toLocaleString() :
@@ -502,67 +569,44 @@
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            padding: '20px',
           }}
           onClick={() => setShowDescriptionModal(false)}
         >
           <div
             style={{
               background: 'white',
-              borderRadius: 16,
               padding: '24px',
-              maxWidth: '90%',
-              maxHeight: '80%',
+              borderRadius: '12px',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
               overflow: 'auto',
-              position: 'relative',
-              boxShadow: '0 4px 32px rgba(0,0,0,0.3)',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
-            {/* Close button */}
-            <button
-              onClick={() => setShowDescriptionModal(false)}
-              style={{
-                position: 'absolute',
-                top: 16,
-                right: 16,
-                background: 'none',
-                border: 'none',
-                fontSize: 24,
-                cursor: 'pointer',
-                color: '#666',
-                padding: 0,
-                width: 32,
-                height: 32,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              ×
-            </button>
-            
-            {/* Header */}
-            <h2 style={{ margin: '0 0 16px 0', fontSize: 24, fontWeight: 700, color: '#002B4D' }}>
-              Description
-            </h2>
-            
-            {/* Description content */}
-            <div style={{ 
-              color: '#444', 
-              fontSize: 16, 
-              lineHeight: 1.5,
-              whiteSpace: 'pre-wrap',
-              wordWrap: 'break-word'
-            }}>
-              {vostcard?.description || 'No description available.'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
+              <button
+                onClick={() => setShowDescriptionModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
+              {vostcard.description}
             </div>
           </div>
         </div>
       )}
 
-      {/* Full-screen Video Modal */}
-      {showVideoModal && videoURL && (
+      {/* Video Modal */}
+      {showVideoModal && vostcard.videoURL && (
         <div
           style={{
             position: 'fixed',
@@ -571,49 +615,25 @@
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1001,
-            cursor: 'pointer',
+            zIndex: 1000,
+            cursor: 'zoom-out',
           }}
           onClick={() => setShowVideoModal(false)}
+          onContextMenu={e => e.preventDefault()}
         >
-          <div style={{
-            position: 'relative',
-            width: '100vw',
-            height: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            {/* Close button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowVideoModal(false);
-              }}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'rgba(0,0,0,0.6)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '50px',
-                height: '50px',
-                color: 'white',
-                fontSize: '24px',
-                cursor: 'pointer',
-                zIndex: 1002,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              ×
-            </button>
-            
-            {/* Video */}
+          <div
+            style={{
+              position: 'relative',
+              width: '100vw',
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
             <video
-              src={videoURL}
+              src={vostcard.videoURL}
               style={{
                 maxWidth: videoOrientation === 'portrait' ? '100vh' : '100%',
                 maxHeight: videoOrientation === 'portrait' ? '100vw' : '100%',
