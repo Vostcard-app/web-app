@@ -809,6 +809,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       const user = auth.currentUser;
       if (user) {
+        // Get deletion markers from Firebase FIRST
+        const deletedVostcards = await getDeletionMarkers();
+        console.log(`🗑️ Found ${deletedVostcards.length} deletion markers from Firebase`);
+        
         // Get Firebase vostcards metadata only
         const firebaseQuery = query(
           collection(db, 'vostcards'),
@@ -817,7 +821,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         );
         
         const firebaseSnapshot = await getDocs(firebaseQuery);
-        const firebaseMetadata = firebaseSnapshot.docs.map(doc => {
+        const allFirebaseMetadata = firebaseSnapshot.docs.map(doc => {
           const data = doc.data();
           return {
             id: data.id,
@@ -847,12 +851,27 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           };
         });
         
-        console.log(`⚡ Found ${firebaseMetadata.length} vostcards metadata from Firebase`);
+        console.log(`⚡ Found ${allFirebaseMetadata.length} vostcards metadata from Firebase`);
         
-        // Filter out deleted vostcards
-        const deletedVostcards = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
-        const filteredMetadata = firebaseMetadata.filter(v => !deletedVostcards.includes(v.id));
-        console.log(`⚡ Filtered out ${firebaseMetadata.length - filteredMetadata.length} deleted vostcards`);
+        // Filter out deleted vostcards using Firebase deletion markers
+        const filteredMetadata = allFirebaseMetadata.filter(v => !deletedVostcards.includes(v.id));
+        console.log(`⚡ Filtered out ${allFirebaseMetadata.length - filteredMetadata.length} deleted vostcards`);
+        
+        // Clean up any vostcards that exist in Firebase but are marked as deleted
+        const firebaseVostcardsToDelete = allFirebaseMetadata.filter(v => deletedVostcards.includes(v.id));
+        if (firebaseVostcardsToDelete.length > 0) {
+          console.log(`🗑️ Cleaning up ${firebaseVostcardsToDelete.length} deleted vostcards from Firebase...`);
+          
+          for (const vostcard of firebaseVostcardsToDelete) {
+            try {
+              const vostcardRef = doc(db, 'vostcards', vostcard.id);
+              await deleteDoc(vostcardRef);
+              console.log(`✅ Cleaned up deleted vostcard from Firebase: ${vostcard.id}`);
+            } catch (error) {
+              console.error(`❌ Failed to clean up vostcard ${vostcard.id}:`, error);
+            }
+          }
+        }
         
         setSavedVostcards(filteredMetadata);
       }
@@ -863,7 +882,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Failed lightweight sync:', error);
       alert('Failed to load saved Vostcards. Please refresh the page and try again.');
     }
-  }, []);
+  }, [getDeletionMarkers]);
 
   // Load all Vostcards on component mount
   useEffect(() => {
