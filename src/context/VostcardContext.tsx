@@ -465,9 +465,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       return deletedIds;
     } catch (error) {
-      console.error('❌ Failed to get deletion markers:', error);
-      // Fall back to localStorage
-      return JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
+      console.warn('⚠️ Failed to get deletion markers from Firebase (using localStorage fallback):', error);
+      // Fall back to localStorage - this is normal if permissions aren't set up
+      const localDeleted = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
+      console.log(`📱 Using ${localDeleted.length} deletion markers from localStorage`);
+      return localDeleted;
     }
   }, []);
 

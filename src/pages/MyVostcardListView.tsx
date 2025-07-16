@@ -39,16 +39,14 @@ const MyVostcardListView = () => {
             return;
           }
 
-          // 🚀 SIMPLE SYNC: Load directly from Firebase (no complex sync needed)
-          // await loadAllLocalVostcardsImmediate();
-          console.log('🔄 Using simple Firebase sync instead of complex local sync');
+          // 🚀 PERFORMANCE IMPROVEMENT: Load immediately from local storage
+          await loadAllLocalVostcardsImmediate();
           
-          // 🔄 Sync in background without blocking UI - DISABLED DUE TO DELETION MARKER PERMISSIONS
-          // syncInBackground().catch(error => {
-          //   console.error('❌ Background sync failed:', error);
-          //   // Don't show error to user since local data is already loaded
-          // });
-          console.log('🔄 Background sync disabled due to deletion marker permissions issue');
+          // 🔄 Sync in background without blocking UI (deletion markers will use localStorage fallback)
+          syncInBackground().catch(error => {
+            console.error('❌ Background sync failed:', error);
+            // Don't show error to user since local data is already loaded
+          });
           
           console.log('✅ Private Vostcards loaded successfully');
           
