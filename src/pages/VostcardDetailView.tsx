@@ -109,20 +109,28 @@ const VostcardDetailView: React.FC = () => {
 
 Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
 
-${privateUrl}
-
 "${vostcard?.description || ''}"
 
 Cheers,
 
 ${getUserFirstName()}`;
       
-      // Only use clipboard - no navigator.share()
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert('Private share message copied to clipboard!');
-      }).catch(() => {
-        alert(`Share this private message: ${shareText}`);
-      });
+      if (navigator.share) {
+        navigator.share({
+          text: shareText,
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(`${shareText}
+
+${privateUrl}`).then(() => {
+          alert('Private share message copied to clipboard!');
+        }).catch(() => {
+          alert(`Share this private message: ${shareText}
+
+${privateUrl}`);
+        });
+      }
     } catch (error) {
       console.error('Error sharing Vostcard:', error);
       alert('Failed to share Vostcard. Please try again.');
@@ -153,20 +161,28 @@ ${getUserFirstName()}`;
 
 Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
 
-${privateUrl}
-
 "${vostcard?.description || ''}"
 
 Cheers,
 
 ${getUserFirstName()}`;
       
-      // Only use clipboard - no navigator.share()
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert('Private share message copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
-      }).catch(() => {
-        alert(`Share this private message: ${shareText}`);
-      });
+      if (navigator.share) {
+        navigator.share({
+          text: shareText,
+          url: privateUrl
+        }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(`${shareText}
+
+${privateUrl}`).then(() => {
+          alert('Private share message copied to clipboard! This Vostcard remains private and won\'t appear on the map.');
+        }).catch(() => {
+          alert(`Share this private message: ${shareText}
+
+${privateUrl}`);
+        });
+      }
     } catch (error) {
       console.error('Error sharing private Vostcard:', error);
       alert('Failed to share Vostcard. Please try again.');
