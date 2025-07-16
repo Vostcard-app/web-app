@@ -252,26 +252,38 @@ const CameraView: React.FC = () => {
               justifyContent: 'center',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
+              // Force perfect centering
+              position: 'relative',
             }}
           >
             {isRecording ? (
-              // RED SQUARE when recording
+              // WHITE SQUARE when recording - perfectly centered
               <div
                 style={{
-                  backgroundColor: 'red',
-                  width: 28,
-                  height: 28,
-                  borderRadius: '2px',
+                  backgroundColor: 'white',
+                  width: 24,
+                  height: 24,
+                  borderRadius: '3px',
+                  // Ensure absolute centering
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
                 }}
               />
             ) : (
-              // WHITE CIRCLE when not recording
+              // WHITE CIRCLE when not recording - perfectly centered
               <div
                 style={{
                   backgroundColor: 'white',
                   borderRadius: '50%',
                   width: 24,
                   height: 24,
+                  // Ensure absolute centering
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
                 }}
               />
             )}
