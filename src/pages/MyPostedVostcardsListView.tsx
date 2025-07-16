@@ -30,7 +30,7 @@ const MyPostedVostcardsListView = () => {
         try {
           setLoading(true);
           setError(null);
-          
+
           if (!user) {
             console.log('❌ No user authenticated');
             setError('Please log in to view your posted Vostcards.');
@@ -38,9 +38,10 @@ const MyPostedVostcardsListView = () => {
             return;
           }
 
+          // Load and sync posted vostcards with Firebase
           await loadPostedVostcards();
           console.log('✅ Posted Vostcards loaded successfully');
-          
+
         } catch (error) {
           console.error('❌ Error loading posted Vostcards:', error);
           setError(`Failed to load posted Vostcards: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -278,29 +279,21 @@ ${getUserFirstName()}`);
       const vostcardRef = doc(db, 'vostcards', vostcardId);
       await deleteDoc(vostcardRef);
       
-      console.log('✅ Posted vostcard deleted successfully:', vostcardId);
+      console.log('✅ Posted vostcard deleted successfully from Firebase:', vostcardId);
       
-      // Refresh the posted vostcards list
+      // Remove local copy (if applicable) by calling loadPostedVostcards
       await loadPostedVostcards();
       
-      // Clear loading state
-      setUnpostingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(vostcardId);
-        return newSet;
-      });
-      
     } catch (error) {
-      console.error('❌ Failed to delete posted vostcard:', error);
-      
+      console.error('❌ Failed to delete posted vostcard from Firebase:', error);
+      alert('Failed to delete Vōstcard. Please try again.');
+    } finally {
       // Clear loading state
       setUnpostingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(vostcardId);
         return newSet;
       });
-      
-      alert('Failed to delete Vōstcard. Please try again.');
     }
   };
 
