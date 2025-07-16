@@ -45,10 +45,13 @@ const ZoomControls = () => {
   );
 };
 
-const RecenterControl = ({ userLocation }: { userLocation: [number, number] | null }) => {
+const RecenterControl = ({ actualUserLocation }: { actualUserLocation: [number, number] | null }) => {
   const map = useMap();
   const recenter = () => {
-    if (userLocation) map.setView(userLocation, 16);
+    if (actualUserLocation) {
+      console.log('🎯 Recentering to actual user GPS location:', actualUserLocation);
+      map.setView(actualUserLocation, 16);
+    }
   };
   return (
     <div style={recenterControlStyle}>
@@ -64,10 +67,6 @@ const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) 
   }, [userLocation, map]);
   return null;
 };
-
-function getVostcardIcon(isOffer: boolean = false) {
-  return isOffer ? offerIcon : vostcardIcon;
-}
 
 // Define style objects at the top
 const listViewButtonContainerLeft = {
@@ -293,6 +292,7 @@ const HomeView = () => {
   const { clearVostcard, manualSync } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [actualUserLocation, setActualUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [singleVostcard, setSingleVostcard] = useState<any | null>(null);
   const [returnToPublicView, setReturnToPublicView] = useState(false); // Add this state
@@ -305,7 +305,7 @@ const HomeView = () => {
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
   const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom' | 'search'>('nearby');
-  const [customDistance, setCustomDistance] = useState(2); // Default 2 miles
+  const [customDistance, setCustomDistance] = useState(2);
   const [showAreaSelector, setShowAreaSelector] = useState(false);
   const [showDistanceSlider, setShowDistanceSlider] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -336,6 +336,7 @@ const HomeView = () => {
     if (browseLocationState) {
       setBrowseLocation(browseLocationState);
       setUserLocation(browseLocationState.coordinates);
+      // Don't overwrite actualUserLocation - keep it for recentering
       // Clear the state to prevent re-triggering
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -415,35 +416,34 @@ const HomeView = () => {
     }
   };
 
-  const clearAuthState = async () => {
-    try {
-      console.log('🧹 Clearing Firebase auth state...');
-      await signOut(auth);
-      
-      // Clear any stored auth data
-      if (typeof window !== 'undefined') {
-        // Clear localStorage items that might be related to Firebase auth
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.includes('firebase') || key.includes('auth'))) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach(key => {
-          console.log('🗑️ Removing localStorage key:', key);
-          localStorage.removeItem(key);
-        });
-        
-        // Clear sessionStorage
-        sessionStorage.clear();
-        
-        console.log('✅ Auth state cleared');
-        alert('Authentication state cleared. Please refresh the page and log in again.');
-      }
-    } catch (error) {
-      console.error('❌ Error clearing auth state:', error);
-    }
+  const getVostcardIcon = (isOffer: boolean) => {
+    return isOffer ? offerIcon : vostcardIcon;
+  };
+
+  const menuStyle = {
+    position: 'fixed' as const,
+    top: '65px',
+    right: '16px',
+    backgroundColor: 'white',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+    zIndex: 2000,
+    minWidth: '180px',
+    maxWidth: '200px',
+    overflow: 'hidden'
+  };
+
+  const menuItemStyle = {
+    padding: '12px 16px',
+    cursor: 'pointer',
+    borderBottom: '1px solid #f0f0f0',
+    backgroundColor: 'transparent',
+    border: 'none',
+    fontSize: '14px',
+    textAlign: 'left' as const,
+    color: '#333',
+    transition: 'background-color 0.2s ease'
   };
 
   const loadVostcards = async (forceRefresh: boolean = false) => {
@@ -483,14 +483,8 @@ const HomeView = () => {
     }
   };
  
-  // Get user location with error handling
+  // Get user location with error handling - Always get GPS location for recentering
   useEffect(() => {
-    // Don't get user location if we have a browse location from navigation or single vostcard
-    if (browseLocationState || singleVostcard || browseLocation) {
-      console.log('🗺️ Skipping user location acquisition - browse location or single vostcard detected');
-      return;
-    }
-
     const getUserLocation = () => {
       if (!navigator.geolocation) {
         console.error('Geolocation is not supported by this browser');
@@ -501,8 +495,15 @@ const HomeView = () => {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const location: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-          console.log('📍 User location acquired:', location);
-          setUserLocation(location);
+          console.log('📍 User GPS location acquired:', location);
+          
+          // Always set the actual user location for recentering
+          setActualUserLocation(location);
+          
+          // Only set userLocation (map center) if we're not browsing a specific location
+          if (!browseLocationState && !singleVostcard && !browseLocation) {
+            setUserLocation(location);
+          }
         },
         (err) => {
           console.error('Error getting location', err);
@@ -517,7 +518,7 @@ const HomeView = () => {
     };
 
     getUserLocation();
-  }, [browseLocationState, singleVostcard, browseLocation]); // Add browseLocationState and singleVostcard as dependency
+  }, []); // Remove dependencies to always get GPS location
 
   // Load vostcards on mount and when fresh load is requested
   useEffect(() => {
@@ -624,7 +625,9 @@ const HomeView = () => {
 
   // Filter vostcards based on area preference
   const filterVostcardsByArea = (vostcards: any[]) => {
-    if (!userLocation) return vostcards;
+    // Use actualUserLocation for filtering if available, otherwise use userLocation
+    const referenceLocation = actualUserLocation || userLocation;
+    if (!referenceLocation) return vostcards;
 
     switch (mapAreaPreference) {
       case 'nearby':
@@ -635,7 +638,7 @@ const HomeView = () => {
           if (!lat || !lng) return false;
           
           const distance = calculateDistance(
-            userLocation[0], userLocation[1],
+            referenceLocation[0], referenceLocation[1],
             lat, lng
           );
           return distance <= 5; // 5km radius
@@ -649,7 +652,7 @@ const HomeView = () => {
           if (!lat || !lng) return false;
           
           const distance = calculateDistance(
-            userLocation[0], userLocation[1],
+            referenceLocation[0], referenceLocation[1],
             lat, lng
           );
           return distance <= 1; // 1 mile radius
@@ -663,7 +666,7 @@ const HomeView = () => {
           if (!lat || !lng) return false;
           
           const distance = calculateDistance(
-            userLocation[0], userLocation[1],
+            referenceLocation[0], referenceLocation[1],
             lat, lng
           );
           return distance <= 5; // 5 miles radius
@@ -677,7 +680,7 @@ const HomeView = () => {
           if (!lat || !lng) return false;
           
           const distance = calculateDistance(
-            userLocation[0], userLocation[1],
+            referenceLocation[0], referenceLocation[1],
             lat, lng
           );
           return distance <= customDistance;
@@ -856,36 +859,17 @@ const HomeView = () => {
       {/* Main content area */}
       <div style={{ 
         flex: 1, 
+        paddingTop: 80, 
         position: 'relative',
-        marginTop: '80px'
+        overflow: 'hidden'
       }}>
-        {/* Show loading state if not authenticated */}
-        {(!user && loading) ? (
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'white',
-            zIndex: 999
-          }}>
-            <div style={{
-              background: 'rgba(0,43,77,0.9)',
-              color: 'white',
-              padding: '20px 30px',
-              borderRadius: '12px',
-              fontSize: '18px',
-              fontWeight: 600,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
-            }}>
-              Loading...
+        {loading && showAuthLoading ? (
+          <div style={authLoadingOverlayStyle}>
+            <div style={loadingContentStyle}>
+              Authenticating...
             </div>
           </div>
-        ) :
+        ) : (
           <>
             {/* Hide the list view/offers/area buttons when in single vostcard mode */}
             {!singleVostcard && (
@@ -986,39 +970,30 @@ const HomeView = () => {
                         appearance: 'none'
                       }}
                     />
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      fontSize: '10px', 
-                      color: '#666',
-                      marginTop: '4px'
-                    }}>
-                      <span>0.5 mi</span>
-                      <span>10 mi</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                      <span>0.5</span>
+                      <span>10</span>
                     </div>
                     <button
-                      onClick={() => {
-                        setShowDistanceSlider(false);
-                        setMapAreaPreference('custom');
-                      }}
+                      onClick={() => setShowDistanceSlider(false)}
                       style={{
-                        width: '100%',
                         backgroundColor: '#002B4D',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px',
+                        borderRadius: '4px',
+                        padding: '8px 16px',
                         marginTop: '12px',
                         cursor: 'pointer',
                         fontSize: '14px',
-                        fontWeight: '500'
+                        width: '100%'
                       }}
                     >
-                      Apply
+                      Done
                     </button>
                   </div>
                 )}
-                {/* Area Options Dropdown */}
+
+                {/* Area Selector */}
                 {showAreaSelector && !showDistanceSlider && (
                   <div style={{
                     backgroundColor: 'white',
@@ -1086,7 +1061,7 @@ const HomeView = () => {
                     Getting your location...
                   </div>
                 </div>
-              ) : (
+              ) :
                 <MapContainer 
                   center={userLocation} 
                   zoom={16} 
@@ -1100,9 +1075,12 @@ const HomeView = () => {
                     maxZoom={22}
                   />
 
-                  <Marker position={userLocation} icon={userIcon}>
-                    <Popup>Your Location</Popup>
-                  </Marker>
+                  {/* Use actualUserLocation for the user location marker */}
+                  {actualUserLocation && (
+                    <Marker position={actualUserLocation} icon={userIcon}>
+                      <Popup>Your Location</Popup>
+                    </Marker>
+                  )}
 
                   {filteredVostcards.map((v: any) => {
                     const lat = v.latitude || v.geo?.latitude;
@@ -1144,40 +1122,24 @@ const HomeView = () => {
                   })}
 
                   <ZoomControls />
-                  <RecenterControl userLocation={userLocation} />
+                  <RecenterControl actualUserLocation={actualUserLocation} />
                   <MapCenter userLocation={userLocation} />
                 </MapContainer>
               )}
             </div>
 
-            {/* Create Vostcard Button - Always visible */}
-            <div style={{
-              position: 'fixed',
-              bottom: '40px',
-              right: '16px', // Right justify
-              zIndex: 1002
-            }}>
-              <button
-                type="button"
+            {/* Create Vostcard Button */}
+            <div style={createButtonContainer}>
+              <button 
+                type="button" 
+                style={createButton} 
                 onClick={handleCreateVostcard}
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '15px 25px',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                  whiteSpace: 'nowrap',
-                  pointerEvents: 'auto'
-                }}
               >
-                Create a Vōstcard
+                Create Vōstcard
               </button>
             </div>
 
-            {/* Menu overlay */}
+            {/* Hamburger Menu */}
             {isMenuOpen && (
               <>
                 <div
@@ -1218,7 +1180,7 @@ const HomeView = () => {
               </>
             )}
           </>
-        }
+        )}
       </div>
 
       {/* Loading Overlay for Vostcards */}
@@ -1240,216 +1202,122 @@ const HomeView = () => {
       )}
 
       {/* Filter Button - Lower Left */}
-      <button
-        className="filter-fab"
-        style={{
-          position: 'fixed',
-          bottom: '40px', // Match the Create button level
-          left: '16px',   // Left justify
-          zIndex: 1002,
-          background: '#002B4D',
-          color: 'white',
-          border: 'none',
-          borderRadius: '8px',
-          padding: '12px 20px',
-          fontSize: '16px',
-          fontWeight: 500,
-          cursor: 'pointer',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-          pointerEvents: 'auto' as const,
-          transition: 'transform 0.1s ease'
-        }}
-        onClick={() => setShowFilterModal(true)}
-      >
-        <FaFilter style={{ fontSize: '22px', marginRight: '8px' }} /> Filter
-      </button>
+      <div style={{
+        position: 'fixed',
+        bottom: '120px',
+        left: '16px',
+        zIndex: 1002
+      }}>
+        <button
+          onClick={() => setShowFilterModal(!showFilterModal)}
+          style={{
+            ...zoomButton,
+            backgroundColor: selectedCategories.length > 0 && !selectedCategories.includes('None') ? '#002B4D' : '#fff',
+            color: selectedCategories.length > 0 && !selectedCategories.includes('None') ? 'white' : '#002B4D'
+          }}
+        >
+          <FaFilter />
+        </button>
+      </div>
 
-      {/* Filter Modal (to be implemented next) */}
+      {/* Filter Modal */}
       {showFilterModal && (
-        <div className="filter-modal-overlay" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.4)',
-          zIndex: 2000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <div className="filter-modal" style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '32px 24px',
-            minWidth: '280px',
-            maxWidth: '90vw',
-            boxShadow: '0 4px 32px rgba(0,0,0,0.2)',
-            color: '#002B4D',
-            position: 'relative',
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 2000
+            }}
+            onClick={() => setShowFilterModal(false)}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '300px',
+            width: '90%',
+            maxHeight: '60vh',
+            overflowY: 'auto',
+            zIndex: 2001,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
           }}>
-            <h2 style={{ marginTop: 0, marginBottom: '18px', fontSize: '22px', fontWeight: 700 }}>Filter by Category</h2>
-            {/* Category checkboxes will go here */}
-            <div style={{ marginBottom: '24px' }}>
-              {availableCategories.map((cat) => (
-                <label key={cat} style={{ display: 'block', marginBottom: '10px', fontSize: '18px', fontWeight: 500 }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedCategories.includes(cat)}
-                    onChange={() => {
-                      if (selectedCategories.includes(cat)) {
-                        setSelectedCategories(selectedCategories.filter(c => c !== cat));
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Filter by Category</h3>
+            
+            {availableCategories.map((category) => (
+              <label key={category} style={{ 
+                display: 'block', 
+                marginBottom: '12px', 
+                fontSize: '14px',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '4px',
+                backgroundColor: selectedCategories.includes(category) ? '#f0f8ff' : 'transparent'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(category)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      if (category === 'None') {
+                        setSelectedCategories(['None']);
                       } else {
-                        setSelectedCategories([...selectedCategories, cat]);
+                        setSelectedCategories(prev => prev.filter(c => c !== 'None').concat(category));
                       }
-                    }}
-                    style={{ marginRight: '10px', transform: 'scale(1.3)' }}
-                  />
-                  {cat}
-                </label>
-              ))}
+                    } else {
+                      setSelectedCategories(prev => prev.filter(c => c !== category));
+                    }
+                  }}
+                  style={{ marginRight: '8px' }}
+                />
+                {category}
+              </label>
+            ))}
+            
+            <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setSelectedCategories([])}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  background: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  background: '#002B4D',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Done
+              </button>
             </div>
-            <button
-              style={{
-                width: '100%',
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                marginTop: '8px',
-              }}
-              onClick={() => setShowFilterModal(false)}
-            >
-              Apply Filter
-            </button>
-            <button
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 16,
-                background: 'none',
-                border: 'none',
-                fontSize: '28px',
-                color: '#888',
-                cursor: 'pointer',
-              }}
-              onClick={() => setShowFilterModal(false)}
-            >
-              ×
-            </button>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
-};
-
-// Enhanced Styles with proper z-index hierarchy and better organization
-
-const containerStyle = {
-  height: '100vh',
-  width: '100vw',
-  position: 'relative' as const,
-  overflow: 'hidden',
-  backgroundColor: '#f5f5f5' // Add a light background to fill the space
-};
-
-const headerStyle = {
-  position: 'absolute' as const,
-  top: 0, // Moved back to top from 95
-  left: 0,
-  right: 0,
-  height: '70px',
-  backgroundColor: '#002B4D',
-  color: 'white',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '0 20px',
-  zIndex: 100,
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-};
-
-const logoContainerStyle = {
-  display: 'flex',
-  flexDirection: 'column' as const,
-};
-
-const logoStyle = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  margin: 0,
-  lineHeight: 1,
-};
-
-const updateIndicatorStyle = {
-  fontSize: '12px',
-  opacity: 0.8,
-  marginTop: '2px',
-  color: 'rgba(255,255,255,0.9)'
-};
-
-const headerRight = {
-  display: 'flex',
-  alignItems: 'center',
-};
-
-const avatarContainerStyle = {
-  marginRight: 20,
-  cursor: 'pointer',
-  width: 60,
-  height: 60,
-  borderRadius: '50%',
-  overflow: 'hidden',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: 'rgba(255,255,255,0.2)'
-};
-
-const avatarImageStyle = {
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover' as const,
-  borderRadius: '50%',
-};
-
-const menuStyle = {
-  position: 'fixed' as const,
-  top: 80, // Align with bottom of header
-  right: 16, // Match header padding
-  background: 'white',
-  boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-  borderRadius: 12,
-  zIndex: 2000, // Higher than other UI elements
-  minWidth: 220,
-  maxHeight: 'calc(100vh - 100px)', // Prevent extending beyond screen
-  overflowY: 'auto' as const,
-  padding: '10px 0',
-};
-
-const menuItemStyle = {
-  padding: '16px 24px', // Increased padding to accommodate larger font
-  cursor: 'pointer',
-  fontSize: 22, // Increased from 16 to 22
-  color: '#002B4D',
-  borderBottom: '1px solid #f0f0f0',
-  transition: 'background-color 0.2s ease',
-  userSelect: 'none' as const,
-  WebkitTapHighlightColor: 'transparent',
-  background: 'none',
-  border: 'none',
-  outline: 'none',
-  fontWeight: 500, // Added to make text more visible
-  width: '100%',
-  textAlign: 'left',
-  ':hover': {
-    backgroundColor: '#f5f5f5'
-  }
 };
 
 export default HomeView;
