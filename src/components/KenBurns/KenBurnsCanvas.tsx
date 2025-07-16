@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
 
 interface KenBurnsCanvasProps {
   videoUrl: string;
@@ -139,14 +140,20 @@ const KenBurnsCanvas: React.FC<KenBurnsCanvasProps> = ({
     };
 
     const convertWebMtoMP4 = async (webmBlob: Blob): Promise<Blob> => {
-      const ffmpeg = createFFmpeg({ log: true });
+      const ffmpeg = new FFmpeg();
       try {
         console.log('🔧 Loading ffmpeg.wasm...');
         await ffmpeg.load();
-        ffmpeg.FS('writeFile', 'input.webm', await fetchFile(webmBlob));
-        await ffmpeg.run('-i', 'input.webm', '-c:v', 'libx264', '-crf', '23', '-preset', 'fast', 'output.mp4');
-        const data = ffmpeg.FS('readFile', 'output.mp4');
-        return new Blob([data.buffer], { type: 'video/mp4' });
+        
+        // Write input file
+        await ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
+        
+        // Execute conversion
+        await ffmpeg.exec(['-i', 'input.webm', '-c:v', 'libx264', '-crf', '23', '-preset', 'fast', 'output.mp4']);
+        
+        // Read output file
+        const data = await ffmpeg.readFile('output.mp4');
+        return new Blob([data], { type: 'video/mp4' });
       } catch (err) {
         console.error('❌ ffmpeg conversion error:', err);
         throw new Error('MP4 conversion failed');
