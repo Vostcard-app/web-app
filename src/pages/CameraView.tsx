@@ -4,18 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
-
-// Custom Stop Recording Icon Component
-const StopRecordingIcon: React.FC = () => (
-  <div style={{ position: 'relative', width: 70, height: 70 }}>
-    <svg width="70" height="70" viewBox="0 0 70 70" style={{ position: 'absolute', top: 0, left: 0 }}>
-      {/* Red circle background */}
-      <circle cx="35" cy="35" r="29" fill="red" stroke="white" strokeWidth="6" />
-      {/* White square in center */}
-      <rect x="25" y="25" width="20" height="20" fill="white" rx="2" />
-    </svg>
-  </div>
-);
+import stopRecordingIcon from '../assets/stop recording.png';
 
 const CameraView: React.FC = () => {
   const navigate = useNavigate();
@@ -293,7 +282,15 @@ const CameraView: React.FC = () => {
             }}
           >
             {isRecording ? (
-              <StopRecordingIcon />
+              <img 
+                src={stopRecordingIcon} 
+                alt="Stop Recording" 
+                style={{
+                  width: 70,
+                  height: 70,
+                  cursor: 'pointer',
+                }}
+              />
             ) : (
               <div
                 style={{
