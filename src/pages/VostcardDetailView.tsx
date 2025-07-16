@@ -94,15 +94,30 @@ const VostcardDetailView: React.FC = () => {
       
       const privateUrl = `${window.location.origin}/share/${id}`;
       
+      const shareText = `Check it out I made this with Vōstcard
+
+
+"${vostcard?.title || 'Untitled Vostcard'}"
+
+
+"${vostcard?.description || 'No description'}"`;
+      
       if (navigator.share) {
         navigator.share({
+          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(privateUrl).then(() => {
-          alert('Private share link copied to clipboard!');
+        navigator.clipboard.writeText(`${shareText}
+
+
+${privateUrl}`).then(() => {
+          alert('Private share message copied to clipboard!');
         }).catch(() => {
-          alert(`Share this link: ${privateUrl}`);
+          alert(`Share this message: ${shareText}
+
+
+${privateUrl}`);
         });
       }
     } catch (error) {
@@ -120,15 +135,30 @@ const VostcardDetailView: React.FC = () => {
       
       const privateUrl = `${window.location.origin}/share/${id}`;
       
+      const shareText = `Check it out I made this with Vōstcard
+
+
+"${vostcard?.title || 'Untitled Vostcard'}"
+
+
+"${vostcard?.description || 'No description'}"`;
+      
       if (navigator.share) {
         navigator.share({
+          text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(privateUrl).then(() => {
-          alert('Private share link copied to clipboard!');
+        navigator.clipboard.writeText(`${shareText}
+
+
+${privateUrl}`).then(() => {
+          alert('Private share message copied to clipboard!');
         }).catch(() => {
-          alert(`Share this link: ${privateUrl}`);
+          alert(`Share this message: ${shareText}
+
+
+${privateUrl}`);
         });
       }
     } catch (error) {
