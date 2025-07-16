@@ -204,6 +204,13 @@ async function uploadPhoto(userId: string, vostcardId: string, idx: number, file
   });
 }
 
+// Add interface for deletion markers
+interface DeletionMarker {
+  vostcardId: string;
+  deletedAt: string;
+  userID: string;
+}
+
 export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const authContext = useAuth();
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
@@ -409,6 +416,60 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('vostcard_last_sync', timestamp.toISOString());
   }, []);
 
+  // Store deletion markers in Firebase instead of localStorage
+  const addDeletionMarker = useCallback(async (vostcardId: string) => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const deletionMarker: DeletionMarker = {
+        vostcardId,
+        deletedAt: new Date().toISOString(),
+        userID: user.uid
+      };
+
+      // Store in Firebase for cross-device sync
+      const markerRef = doc(db, 'deletionMarkers', `${user.uid}_${vostcardId}`);
+      await setDoc(markerRef, deletionMarker);
+      
+      // Also store locally for immediate filtering
+      const localMarkers = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
+      if (!localMarkers.includes(vostcardId)) {
+        localMarkers.push(vostcardId);
+        localStorage.setItem('deleted_vostcards', JSON.stringify(localMarkers));
+      }
+      
+      console.log('✅ Added deletion marker to Firebase and localStorage:', vostcardId);
+    } catch (error) {
+      console.error('❌ Failed to add deletion marker:', error);
+    }
+  }, []);
+
+  // Get deletion markers from Firebase
+  const getDeletionMarkers = useCallback(async (): Promise<string[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+
+    try {
+      const markersQuery = query(
+        collection(db, 'deletionMarkers'),
+        where('userID', '==', user.uid)
+      );
+      
+      const snapshot = await getDocs(markersQuery);
+      const deletedIds = snapshot.docs.map(doc => doc.data().vostcardId);
+      
+      // Update localStorage with Firebase markers
+      localStorage.setItem('deleted_vostcards', JSON.stringify(deletedIds));
+      
+      return deletedIds;
+    } catch (error) {
+      console.error('❌ Failed to get deletion markers:', error);
+      // Fall back to localStorage
+      return JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
+    }
+  }, []);
+
   // 🔄 TRUE BIDIRECTIONAL SYNC - Compare local IndexedDB with Firebase and sync differences
   const syncPrivateVostcardsFromFirebase = useCallback(async () => {
     const user = auth.currentUser;
@@ -421,6 +482,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('🔄 Starting bidirectional sync between IndexedDB and Firebase...');
       const syncStartTime = new Date();
       
+      // Get deletion markers from Firebase first
+      const deletedVostcards = await getDeletionMarkers();
+      console.log(`🗑️ Found ${deletedVostcards.length} deletion markers from Firebase`);
+      
       // 1. Get all local vostcards from IndexedDB
       const localDB = await openDB();
       const localTransaction = localDB.transaction([STORE_NAME], 'readonly');
@@ -431,8 +496,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         request.onerror = () => reject(request.error);
       });
       
-      // Filter out posted vostcards (we only sync private ones) and deleted vostcards
-      const deletedVostcards = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
+      // Filter out posted vostcards and deleted vostcards
       const localPrivateVostcards = localVostcards.filter(v => 
         v.state === 'private' && !deletedVostcards.includes(v.id)
       );
@@ -446,10 +510,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
       
       const firebaseSnapshot = await getDocs(firebaseQuery);
-      const firebaseVostcards = firebaseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-      console.log(`☁️ Found ${firebaseVostcards.length} Firebase private vostcards`);
+      const allFirebaseVostcards = firebaseSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       
-      // 3. Create maps for easier comparison
+      // Filter out deleted vostcards from Firebase results
+      const firebaseVostcards = allFirebaseVostcards.filter(v => !deletedVostcards.includes(v.id));
+      console.log(`☁️ Found ${firebaseVostcards.length} Firebase private vostcards (excluding ${allFirebaseVostcards.length - firebaseVostcards.length} deleted)`);
+      
+      // 3. Delete any vostcards that exist in Firebase but are marked as deleted
+      const firebaseVostcardsToDelete = allFirebaseVostcards.filter(v => deletedVostcards.includes(v.id));
+      if (firebaseVostcardsToDelete.length > 0) {
+        console.log(`🗑️ Cleaning up ${firebaseVostcardsToDelete.length} deleted vostcards from Firebase...`);
+        
+        for (const vostcard of firebaseVostcardsToDelete) {
+          try {
+            const vostcardRef = doc(db, 'vostcards', vostcard.id);
+            await deleteDoc(vostcardRef);
+            console.log(`✅ Cleaned up deleted vostcard from Firebase: ${vostcard.id}`);
+          } catch (error) {
+            console.error(`❌ Failed to clean up vostcard ${vostcard.id}:`, error);
+          }
+        }
+      }
+      
+      // 4. Create maps for easier comparison
       const localMap = new Map(localPrivateVostcards.map(v => [v.id, v]));
       const firebaseMap = new Map(firebaseVostcards.map(v => [v.id, v]));
       
@@ -457,7 +540,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const allIds = new Set([...localMap.keys(), ...firebaseMap.keys()]);
       console.log(`🔍 Comparing ${allIds.size} unique vostcards...`);
       
-      // 4. Process each vostcard
+      // 5. Process each vostcard
       const toUploadToFirebase = [];
       const toDownloadToLocal = [];
       const toUpdateLocal = [];
@@ -494,7 +577,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
       
-      // 5. Execute sync operations
+      // 6. Execute sync operations
       console.log(`🔄 Sync summary:`, {
         toUploadToFirebase: toUploadToFirebase.length,
         toDownloadToLocal: toDownloadToLocal.length,
@@ -578,7 +661,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in bidirectional sync:', error);
       throw error;
     }
-  }, [setLastSyncTimestamp]);
+  }, [setLastSyncTimestamp, getDeletionMarkers]);
 
   // Helper function to upload local vostcard to Firebase
   const uploadVostcardToFirebase = async (localVostcard: any) => {
@@ -1274,7 +1357,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const deletePrivateVostcard = useCallback(async (id: string): Promise<void> => {
     try {
       console.log('🗑️ Starting hybrid delete for Vostcard:', id);
-      console.log('🗑️ Current savedVostcards count in context before delete:', savedVostcards.length);
       
       const user = auth.currentUser;
       if (!user) {
@@ -1283,33 +1365,24 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // 1. Add deletion marker to localStorage to prevent re-upload during sync
-      const deletedVostcards = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
-      const deletionTimestamps = JSON.parse(localStorage.getItem('deletion_timestamps') || '{}');
-      
-      if (!deletedVostcards.includes(id)) {
-        deletedVostcards.push(id);
-        deletionTimestamps[id] = new Date().toISOString();
-        localStorage.setItem('deleted_vostcards', JSON.stringify(deletedVostcards));
-        localStorage.setItem('deletion_timestamps', JSON.stringify(deletionTimestamps));
-        console.log('📝 Added deletion marker for:', id);
-      }
+      // 1. Add deletion marker to Firebase first (for cross-device sync)
+      await addDeletionMarker(id);
 
-      // 2. Delete from Firebase FIRST (if user is authenticated)
+      // 2. Delete from Firebase
       try {
         const vostcardRef = doc(db, 'vostcards', id);
         await deleteDoc(vostcardRef);
         console.log('✅ Deleted Vostcard from Firebase:', id);
         
-        // Update last sync timestamp since we just deleted from Firebase
+        // Update last sync timestamp
         setLastSyncTimestamp(new Date());
       } catch (error) {
         console.error('❌ Failed to delete from Firebase:', error);
-        alert('Failed to delete from cloud storage. Please check your internet connection and try again.');
-        throw error; // Don't proceed with local deletion if Firebase fails
+        // Continue with local deletion even if Firebase fails
+        // The deletion marker will prevent it from being re-synced
       }
 
-      // 3. Delete from IndexedDB (only if Firebase deletion succeeded)
+      // 3. Delete from IndexedDB
       const localDB = await openDB();
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
@@ -1326,13 +1399,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
       });
 
-      // Update the savedVostcards list by filtering out the deleted item
-      console.log('🗑️ Updating savedVostcards state, filtering out:', id);
-      setSavedVostcards(prev => {
-        const filtered = prev.filter(vostcard => vostcard.id !== id);
-        console.log('🗑️ Previous count:', prev.length, 'New count:', filtered.length);
-        return filtered;
-      });
+      // 4. Update UI
+      setSavedVostcards(prev => prev.filter(vostcard => vostcard.id !== id));
       console.log('✅ Hybrid delete completed for Vostcard:', id);
       
     } catch (error) {
@@ -1340,7 +1408,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       alert('Failed to delete Vostcard. Please try again.');
       throw error;
     }
-  }, [setLastSyncTimestamp, savedVostcards]);
+  }, [addDeletionMarker, setLastSyncTimestamp]);
 
   // ✅ Clear current Vostcard
   const clearVostcard = useCallback(() => {
@@ -2265,22 +2333,38 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return savedVostcards.filter(v => v._isMetadataOnly);
   }, [savedVostcards]);
 
-  // Clean up old deletion markers (older than 30 days)
-  const cleanupDeletionMarkers = useCallback(() => {
-    const deletedVostcards = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
-    const deletionTimestamps = JSON.parse(localStorage.getItem('deletion_timestamps') || '{}');
-    
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const cleanedVostcards = deletedVostcards.filter((id: string) => {
-      const timestamp = deletionTimestamps[id];
-      if (!timestamp) return true; // Keep if no timestamp (backward compatibility)
-      return new Date(timestamp) > thirtyDaysAgo;
-    });
-    
-    localStorage.setItem('deleted_vostcards', JSON.stringify(cleanedVostcards));
-    console.log(`🧹 Cleaned up ${deletedVostcards.length - cleanedVostcards.length} old deletion markers`);
+  // Clean up old deletion markers from Firebase (older than 30 days)
+  const cleanupDeletionMarkers = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const markersQuery = query(
+        collection(db, 'deletionMarkers'),
+        where('userID', '==', user.uid)
+      );
+      
+      const snapshot = await getDocs(markersQuery);
+      const toDelete = snapshot.docs.filter(doc => {
+        const data = doc.data();
+        return new Date(data.deletedAt) < thirtyDaysAgo;
+      });
+      
+      if (toDelete.length > 0) {
+        console.log(`🧹 Cleaning up ${toDelete.length} old deletion markers from Firebase...`);
+        
+        for (const doc of toDelete) {
+          await deleteDoc(doc.ref);
+        }
+        
+        console.log('✅ Cleaned up old deletion markers from Firebase');
+      }
+    } catch (error) {
+      console.error('❌ Failed to cleanup deletion markers:', error);
+    }
   }, []);
 
   // Clear all deletion markers (for debugging)
