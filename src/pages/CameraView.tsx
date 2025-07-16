@@ -242,51 +242,29 @@ const CameraView: React.FC = () => {
           <div
             onClick={isRecording ? handleStopRecording : handleStartRecording}
             style={{
-              backgroundColor: isRecording ? 'white' : 'red',
+              backgroundColor: isRecording ? 'red' : 'red',
               width: 70,
               height: 70,
-              borderRadius: isRecording ? '8px' : '50%',
+              borderRadius: isRecording ? '50%' : '50%',
               border: '6px solid white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              // Force perfect centering
-              position: 'relative',
             }}
           >
             {isRecording ? (
-              // WHITE SQUARE when recording - perfectly centered
+              // WHITE SQUARE when recording - perfectly centered using flexbox only
               <div
                 style={{
                   backgroundColor: 'white',
-                  width: 24,
-                  height: 24,
-                  borderRadius: '3px',
-                  // Ensure absolute centering
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
+                  width: 20,
+                  height: 20,
+                  borderRadius: '2px',
                 }}
               />
-            ) : (
-              // WHITE CIRCLE when not recording - perfectly centered
-              <div
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: '50%',
-                  width: 24,
-                  height: 24,
-                  // Ensure absolute centering
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-            )}
+            ) : null}
           </div>
         )}
       </div>
