@@ -123,14 +123,13 @@ const MyVostcardListView = () => {
       };
 
       // Create custom share message template with proper spacing
-      const subjectLine = `Look what I made with Vōstcard "${vostcard?.title || 'Untitled Vostcard'}"`;
-      const shareText = `Hi, I've sent you a Vostcard
+      const shareText = `Look what I made with Vōstcard
 
-Check it out.
+Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
 
 ${privateUrl}
 
-${vostcard?.description || ''}
+"${vostcard?.description || ''}"
 
 Cheers,
 
@@ -138,20 +137,16 @@ ${getUserFirstName()}`;
       
       if (navigator.share) {
         navigator.share({
-          title: subjectLine,
+          title: `Look what I made with Vōstcard`,
           text: shareText,
           url: privateUrl
         }).catch(console.error);
       } else {
         // Fallback: copy to clipboard with full message
-        navigator.clipboard.writeText(`${subjectLine}
-
-${shareText}`).then(() => {
-          alert('Private share message copied to clipboard! Copy the subject line from the message.');
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Private share message copied to clipboard!');
         }).catch(() => {
-          alert(`Share this private message: ${subjectLine}
-
-${shareText}`);
+          alert(`Share this private message: ${shareText}`);
         });
       }
     } catch (error) {

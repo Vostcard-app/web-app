@@ -284,8 +284,9 @@ const PublicVostcardView: React.FC = () => {
     };
 
     // NEW TEMPLATE - Updated format
-    const subjectLine = `Check it out, I made with Vōstcard`;
-    const shareText = `Check it out, I made with Vōstcard
+    const shareText = `Look what I made with Vōstcard
+
+Check it out, "${vostcard.title || 'Untitled Vostcard'}"
 
 ${publicUrl}
 
@@ -297,7 +298,7 @@ ${getUserFirstName()}`;
     
     if (navigator.share) {
       navigator.share({
-        title: subjectLine,
+        title: `Look what I made with Vōstcard`,
         text: shareText,
         url: publicUrl
       }).catch(console.error);
