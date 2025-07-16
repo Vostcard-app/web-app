@@ -34,7 +34,55 @@ exports.handler = async (event, context) => {
 
   try {
     const requestBody = JSON.parse(event.body);
-    const { type, streetAddress, city, stateProvince, postalCode, country, latitude, longitude } = requestBody;
+    const { type, streetAddress, city, stateProvince, postalCode, country, latitude, longitude, searchQuery } = requestBody;
+
+    // Handle location search (free-form query)
+    if (type === 'search') {
+      if (!searchQuery || !searchQuery.trim()) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Search query is required' }) };
+      }
+
+      const params = new URLSearchParams({
+        q: searchQuery.trim(),
+        format: 'json',
+        limit: '5',
+        addressdetails: '1'
+      });
+
+      const response = await fetchWithRetry(
+        `https://nominatim.openstreetmap.org/search?${params}`,
+        {
+          headers: {
+            'User-Agent': 'VostcardWebApp/1.0 (https://vostcard.com)',
+            'Accept-Language': 'en'
+          }
+        }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { statusCode: response.status, headers, body: JSON.stringify({ error: `Search API error: ${response.status}` }) };
+      }
+
+      if (!data || data.length === 0) {
+        return { statusCode: 404, headers, body: JSON.stringify({ error: 'No results found for this search' }) };
+      }
+
+      // Return multiple results for autocomplete
+      const results = data.map(result => ({
+        latitude: parseFloat(result.lat),
+        longitude: parseFloat(result.lon),
+        displayAddress: result.display_name || searchQuery,
+        name: result.name || result.display_name.split(',')[0] || searchQuery,
+        type: result.type || 'location'
+      }));
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ results })
+      };
+    }
 
     // Handle forward geocoding (address to coordinates)
     if (type === 'forward' || !type) {
@@ -136,7 +184,7 @@ exports.handler = async (event, context) => {
     }
 
     // Invalid type
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid geocoding type. Use "forward" or "reverse"' }) };
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid geocoding type. Use "search", "forward", or "reverse"' }) };
 
   } catch (error) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Geocoding failed', details: error.message }) };
