@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { MdCameraswitch } from 'react-icons/md';
-import stopRecordingIcon from '../assets/stop_recording.png';
 import { useVostcard } from '../context/VostcardContext';
 import './ScrollingCameraView.css';
 
@@ -471,8 +470,8 @@ const ScrollingCameraView: React.FC = () => {
           onClick={isRecording ? handleStopRecording : handleStartRecording}
           disabled={!cameraReady}
           style={{
-            backgroundColor: 'transparent',
-            border: 'none',
+            backgroundColor: cameraReady ? 'red' : '#666',
+            border: '3px solid white',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -481,23 +480,13 @@ const ScrollingCameraView: React.FC = () => {
             borderRadius: '50%',
           }}
         >
-          {isRecording ? (
-            <img 
-              src={stopRecordingIcon} 
-              alt="Stop Recording" 
-              style={{
-                width: 64,
-                height: 64,
-                cursor: 'pointer',
-              }}
-            />
-          ) : (
+          {isRecording && (
             <div
               style={{
-                backgroundColor: cameraReady ? 'red' : '#666',
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
+                backgroundColor: 'white',
+                width: '20px',
+                height: '20px',
+                borderRadius: '2px',
               }}
             />
           )}
