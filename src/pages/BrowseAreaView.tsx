@@ -241,21 +241,7 @@ const BrowseAreaView: React.FC = () => {
 
         {/* Autocomplete Dropdown */}
         {showDropdown && searchResults.length > 0 && (
-          <div 
-            className="autocomplete-dropdown" 
-            ref={resultsRef}
-            style={{
-              background: 'white',
-              border: '2px solid red',
-              position: 'absolute',
-              top: '100%',
-              left: '0',
-              right: '0',
-              zIndex: 9999,
-              maxHeight: '300px',
-              overflow: 'auto'
-            }}
-          >
+          <div className="autocomplete-dropdown" ref={resultsRef}>
               {searchResults.map((result, index) => (
               <div
                 key={index}
