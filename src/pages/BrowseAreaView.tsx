@@ -22,7 +22,10 @@ const BrowseAreaView: React.FC = () => {
 
   // Immediate suggestions for better UX
   useEffect(() => {
+    console.log('🔍 Immediate search effect triggered with query:', searchQuery);
+    
     if (!searchQuery.trim()) {
+      console.log('🔍 Empty search query, clearing results');
       setSearchResults([]);
       setShowDropdown(false);
       setHighlightedIndex(-1);
@@ -55,13 +58,17 @@ const BrowseAreaView: React.FC = () => {
       location.displayAddress.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    console.log('🔍 Filtered suggestions:', filteredSuggestions.length, filteredSuggestions);
+
     // If we have matching suggestions, show them immediately
     if (filteredSuggestions.length > 0) {
+      console.log('🔍 Setting search results with filtered suggestions');
       setSearchResults(filteredSuggestions.slice(0, 5)); // Show max 5 suggestions
       setShowDropdown(true);
       setHighlightedIndex(-1);
     } else {
       // If no matching suggestions, create a result for the search query
+      console.log('🔍 No matching suggestions, creating fallback result');
       const hash = searchQuery.split('').reduce((a, b) => {
         a = ((a << 5) - a) + b.charCodeAt(0);
         return a & a;
@@ -70,12 +77,15 @@ const BrowseAreaView: React.FC = () => {
       const lat = 40 + (hash % 40) - 20; // Range: 20 to 60 degrees
       const lng = -100 + (hash % 160) - 80; // Range: -180 to 80 degrees
       
-      setSearchResults([{
+      const fallbackResult = {
         name: searchQuery,
         coordinates: [lat, lng],
         type: 'location',
         displayAddress: `${searchQuery} (Search Location)`
-      }]);
+      };
+      
+      console.log('🔍 Setting fallback result:', fallbackResult);
+      setSearchResults([fallbackResult]);
       setShowDropdown(true);
       setHighlightedIndex(-1);
     }
@@ -326,6 +336,7 @@ const BrowseAreaView: React.FC = () => {
             placeholder="Enter city, zip code, or location to browse..."
             value={searchQuery}
             onChange={(e) => {
+              console.log('🔍 Search query changed:', e.target.value);
               setSearchQuery(e.target.value);
               setShowDropdown(true);
             }}
@@ -347,9 +358,11 @@ const BrowseAreaView: React.FC = () => {
         </div>
 
         {/* Autocomplete Dropdown */}
-        {showDropdown && searchResults.length > 0 && (
-          <div className="autocomplete-dropdown" ref={resultsRef}>
-            {searchResults.map((result, index) => (
+        {showDropdown && searchResults.length > 0 && (() => {
+          console.log('🔍 Rendering dropdown with results:', searchResults.length, searchResults);
+          return (
+            <div className="autocomplete-dropdown" ref={resultsRef}>
+              {searchResults.map((result, index) => (
               <div
                 key={index}
                 className={`autocomplete-item${highlightedIndex === index ? ' highlighted' : ''}`}
@@ -372,6 +385,14 @@ const BrowseAreaView: React.FC = () => {
                 </span>
               </div>
             ))}
+          </div>
+          );
+        })()}
+
+        {/* Debug Info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{ fontSize: '12px', color: '#666', padding: '8px', border: '1px solid #ccc', margin: '8px 0' }}>
+            Debug: searchQuery="{searchQuery}", showDropdown={showDropdown.toString()}, searchResults.length={searchResults.length}, isSearching={isSearching.toString()}
           </div>
         )}
 
