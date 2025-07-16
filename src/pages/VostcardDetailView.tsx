@@ -6,7 +6,7 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import { CommentsModal } from '../components/CommentsModal';
+import CommentsModal from '../components/CommentsModal';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
