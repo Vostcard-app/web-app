@@ -201,7 +201,13 @@ const CreateVostcardStep3: React.FC = () => {
     setKenBurnsResult(blob);
     setKenBurnsProcessing(false);
     setKenBurnsProgress(100);
-    console.log('✅ Ken Burns effect completed:', blob);
+    console.log('🎥 Ken Burns complete blob:', {
+      blob: blob,
+      size: blob.size,
+      type: blob.type,
+      isValid: blob.size > 0,
+      timestamp: new Date().toISOString()
+    });
   };
 
   const handleKenBurnsError = (error: string) => {
@@ -253,12 +259,24 @@ const CreateVostcardStep3: React.FC = () => {
     
     try {
       console.log('📥 Starting vostcard post process...');
+      console.log('🎬 Ken Burns status:', {
+        kenBurnsEnabled,
+        kenBurnsResult: !!kenBurnsResult,
+        kenBurnsResultSize: kenBurnsResult?.size,
+        kenBurnsResultType: kenBurnsResult?.type
+      });
       
       // If Ken Burns effect was applied, use that result
       if (kenBurnsEnabled && kenBurnsResult) {
-        console.log('🎬 Using Ken Burns processed video for posting');
+        console.log('🎬 Using Ken Burns processed video for posting', {
+          originalVideoSize: currentVostcard?.video?.size,
+          kenBurnsVideoSize: kenBurnsResult.size,
+          kenBurnsVideoType: kenBurnsResult.type
+        });
         // Update the current vostcard with the Ken Burns result
         updateVostcard({ video: kenBurnsResult });
+      } else if (kenBurnsEnabled && !kenBurnsResult) {
+        console.warn('⚠️ Ken Burns was enabled but no result blob available, using original video');
       }
       
       await postVostcard();

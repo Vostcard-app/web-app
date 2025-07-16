@@ -20,79 +20,54 @@ const KenBurnsCanvas: React.FC<KenBurnsCanvasProps> = ({
   onError
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const processorRef = useRef<KenBurnsProcessor | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<HTMLImageElement[]>([]);
+  const [loadedVideo, setLoadedVideo] = useState<HTMLVideoElement | null>(null);
 
-  // Default Ken Burns configuration
-  const defaultConfig: KenBurnsConfig = {
-    videoDuration: 30,
-    photo1Start: 5,
-    photo2Start: 20,
-    photoDisplayDuration: 5,
-    fadeInDuration: 500,
-    fadeOutDuration: 500,
-    scaleRange: { min: 1.0, max: 1.5 },
-    frameRate: 30
-  };
-
+  // Load images and video when component mounts
   useEffect(() => {
-    if (canvasRef.current && !processorRef.current) {
-      processorRef.current = new KenBurnsProcessor(canvasRef.current, defaultConfig);
-      setIsReady(true);
-    }
-  }, []);
+    const loadMedia = async () => {
+      try {
+        // Load images
+        const imagePromises = photoUrls.slice(0, 2).map((url) => {
+          return new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+            img.src = url;
+          });
+        });
 
+        const images = await Promise.all(imagePromises);
+        setLoadedImages(images);
+
+        // Load video
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous';
+        video.muted = false; // Keep audio
+        video.volume = 1.0;
+        
+        await new Promise<void>((resolve, reject) => {
+          video.onloadedmetadata = () => resolve();
+          video.onerror = () => reject(new Error('Failed to load video'));
+          video.src = videoUrl;
+        });
+
+        setLoadedVideo(video);
+        setIsReady(true);
+        console.log('✅ Media loaded successfully');
+      } catch (error) {
+        console.error('❌ Error loading media:', error);
+        onError(error instanceof Error ? error.message : 'Failed to load media');
+      }
+    };
+
+    loadMedia();
+  }, [videoUrl, photoUrls, onError]);
+
+  // Process Ken Burns effect when processing starts
   useEffect(() => {
-    if (isProcessing && isReady && processorRef.current) {
-      processKenBurns();
-    }
-  }, [isProcessing, isReady]);
-
-  const processKenBurns = async () => {
-    if (!processorRef.current) return;
-
-    try {
-      const result = await processorRef.current.processKenBurns(
-        videoUrl,
-        photoUrls,
-        onProgress
-      );
-      onComplete(result);
-    } catch (error) {
-      onError(error instanceof Error ? error.message : 'Unknown error occurred');
-    }
-  };
-
-  return (
-    <div style={{ 
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center'
-    }}>
-      <canvas
-        ref={canvasRef}
-        style={{
-          maxWidth: '100%',
-          maxHeight: '100%',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
-          display: isProcessing ? 'block' : 'none'
-        }}
-      />
-      {!isProcessing && (
-        <div style={{
-          textAlign: 'center',
-          color: '#666',
-          fontSize: '16px'
-        }}>
-          Ready to process Ken Burns effect
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default KenBurnsCanvas; 
+    if (isProcessing && isReady && can
