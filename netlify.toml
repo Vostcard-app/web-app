@@ -7,14 +7,6 @@
   NODE_VERSION = "18.18.0"
   NPM_VERSION = "8.19.0"
 
-# Configure lighthouse plugin to not fail builds
-[[plugins]]
-  package = "@netlify/plugin-lighthouse"
-  
-  [plugins.inputs]
-    fail_build_on_error = false
-    skip_lhci = true
-
 [[headers]]
   for = "/*"
   [headers.values]
