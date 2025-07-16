@@ -7,6 +7,7 @@
     "dev": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "start": "npm run preview",
     "clean": "rm -rf node_modules package-lock.json && npm install"
   },
   "dependencies": {
