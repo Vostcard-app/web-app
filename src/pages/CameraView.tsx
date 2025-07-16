@@ -283,7 +283,7 @@ const CameraView: React.FC = () => {
           >
             {isRecording ? (
               <img 
-                src="/stop_recording.png" 
+                src="/stop_recording.png?v=1" 
                 alt="Stop Recording" 
                 style={{
                   width: 70,
