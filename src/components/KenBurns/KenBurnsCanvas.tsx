@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 interface KenBurnsCanvasProps {
   videoUrl: string;
@@ -192,10 +193,7 @@ const KenBurnsCanvas: React.FC<KenBurnsCanvasProps> = ({
     const convertWebMtoMP4 = async (webmBlob: Blob): Promise<Blob> => {
       try {
         console.log('🔧 Initializing ffmpeg.wasm...');
-        const ffmpeg = createFFmpeg({ 
-          log: true,
-          corePath: 'https://unpkg.com/@ffmpeg/core@0.12.4/dist/ffmpeg-core.js'
-        });
+        const ffmpeg = new FFmpeg();
         
         await ffmpeg.load();
         console.log('✅ ffmpeg.wasm loaded successfully');
