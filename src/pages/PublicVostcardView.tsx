@@ -266,49 +266,50 @@ const PublicVostcardView: React.FC = () => {
     }
   };
 
-  const handleShareClick = () => {
-    // Generate public share URL
-    const publicUrl = `${window.location.origin}/share/${id}`;
-    
-    // Get user's first name (extract from username or use display name)
-    const getUserFirstName = () => {
-      if (username) {
-        // If username contains spaces, take the first part
-        return username.split(' ')[0];
-      } else if (user?.displayName) {
-        return user.displayName.split(' ')[0];
-      } else if (user?.email) {
-        return user.email.split('@')[0];
+  const handleShareClick = async () => {
+    try {
+      if (vostcard?.id) {
+        const vostcardRef = doc(db, 'vostcards', vostcard.id);
+        await updateDoc(vostcardRef, {
+          isPrivatelyShared: true,
+          sharedAt: new Date()
+        });
       }
-      return 'Anonymous';
-    };
+      
+      const privateUrl = `${window.location.origin}/share/${id}`;
+      
+      const getUserFirstName = () => {
+        if (username) {
+          return username.split(' ')[0];
+        } else if (user?.displayName) {
+          return user.displayName.split(' ')[0];
+        } else if (user?.email) {
+          return user.email.split('@')[0];
+        }
+        return 'Anonymous';
+      };
 
-    // NEW TEMPLATE - Updated format
-    const shareText = `Look what I made with Vōstcard
+      const shareText = `Look what I made with Vōstcard
 
-Check it out, "${vostcard.title || 'Untitled Vostcard'}"
+Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
 
-${publicUrl}
+${privateUrl}
 
-"${vostcard.description || 'No description'}"
+"${vostcard?.description || ''}"
 
 Cheers,
 
 ${getUserFirstName()}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: `Look what I made with Vōstcard`,
-        text: shareText,
-        url: publicUrl
-      }).catch(console.error);
-    } else {
-      // Fallback: copy to clipboard with full message
+      
+      // Only use clipboard - no navigator.share()
       navigator.clipboard.writeText(shareText).then(() => {
-        alert('Share message copied to clipboard!');
+        alert('Private share message copied to clipboard!');
       }).catch(() => {
-        alert(`Share this message: ${shareText}`);
+        alert(`Share this private message: ${shareText}`);
       });
+    } catch (error) {
+      console.error('Error sharing Vostcard:', error);
+      alert('Failed to share Vostcard. Please try again.');
     }
   };
 

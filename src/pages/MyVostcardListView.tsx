@@ -135,19 +135,12 @@ Cheers,
 
 ${getUserFirstName()}`;
       
-      if (navigator.share) {
-        navigator.share({
-          text: shareText,
-          url: privateUrl
-        }).catch(console.error);
-      } else {
-        // Fallback: copy to clipboard with full message
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
-        }).catch(() => {
-          alert(`Share this private message: ${shareText}`);
-        });
-      }
+      // Only use clipboard - no navigator.share()
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert('Private share message copied to clipboard!');
+      }).catch(() => {
+        alert(`Share this private message: ${shareText}`);
+      });
     } catch (error) {
       console.error('Error sharing Vostcard:', error);
       alert('Failed to share Vostcard. Please try again.');
