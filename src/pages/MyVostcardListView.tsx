@@ -109,42 +109,26 @@ const MyVostcardListView = () => {
       // Generate private share URL
       const privateUrl = `${window.location.origin}/share/${vostcard.id}`;
       
-      // Get user's first name (extract from username or use display name)
-      const getUserFirstName = () => {
-        if (username) {
-          // If username contains spaces, take the first part
-          return username.split(' ')[0];
-        } else if (user?.displayName) {
-          return user.displayName.split(' ')[0];
-        } else if (user?.email) {
-          return user.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
+      const shareText = `Check it out I made this with Vōstcard
 
-      // Create custom share message template with proper spacing
-      const shareText = `Look what I made with Vōstcard
 
-Check it out, "${vostcard?.title || 'Untitled Vostcard'}"
+"${vostcard?.title || 'Untitled Vostcard'}"
 
-${privateUrl}
 
-"${vostcard?.description || ''}"
+"${vostcard?.description || 'No description'}"
 
-Cheers,
 
-${getUserFirstName()}`;
+${privateUrl}`;
       
-      // Only use clipboard - no navigator.share()
       if (navigator.share) {
         navigator.share({
-          url: privateUrl
+          text: shareText
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(privateUrl).then(() => {
-          alert('Private share link copied to clipboard!');
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Private share message copied to clipboard!');
         }).catch(() => {
-          alert(`Share this link: ${privateUrl}`);
+          alert(`Share this message: ${shareText}`);
         });
       }
     } catch (error) {
