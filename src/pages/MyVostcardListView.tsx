@@ -137,7 +137,6 @@ ${getUserFirstName()}`;
       
       if (navigator.share) {
         navigator.share({
-          title: `Look what I made with Vōstcard`,
           text: shareText,
           url: privateUrl
         }).catch(console.error);
