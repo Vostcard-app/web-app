@@ -5,7 +5,6 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { db, auth, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { KenBurnsControls, KenBurnsCanvas } from '../components/KenBurns';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
@@ -24,14 +23,6 @@ const CreateVostcardStep3: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
   
-  // Ken Burns effect state
-  const [kenBurnsEnabled, setKenBurnsEnabled] = useState(false);
-  const [kenBurnsProcessing, setKenBurnsProcessing] = useState(false);
-  const [kenBurnsProgress, setKenBurnsProgress] = useState(0);
-  const [kenBurnsResult, setKenBurnsResult] = useState<Blob | null>(null);
-  const [kenBurnsError, setKenBurnsError] = useState<string | null>(null);
-  const [kenBurnsUrls, setKenBurnsUrls] = useState<{ videoUrl: string; photoUrls: string[] } | null>(null);
-
   const availableCategories = [
     'None',
     'Landmark',
@@ -86,16 +77,6 @@ const CreateVostcardStep3: React.FC = () => {
     const unsubscribe = auth.onAuthStateChanged(checkAuth);
     return () => unsubscribe();
   }, []);
-
-  // Cleanup Ken Burns URLs on unmount
-  useEffect(() => {
-    return () => {
-      if (kenBurnsUrls) {
-        URL.revokeObjectURL(kenBurnsUrls.videoUrl);
-        kenBurnsUrls.photoUrls.forEach(url => URL.revokeObjectURL(url));
-      }
-    };
-  }, [kenBurnsUrls]);
 
   // Test Firebase Storage upload
   const testStorageUpload = async () => {
@@ -153,69 +134,6 @@ const CreateVostcardStep3: React.FC = () => {
     }
   };
 
-  // Ken Burns effect handlers
-  const handleKenBurnsToggle = (enabled: boolean) => {
-    setKenBurnsEnabled(enabled);
-    if (!enabled) {
-      setKenBurnsProcessing(false);
-      setKenBurnsProgress(0);
-      setKenBurnsResult(null);
-      setKenBurnsError(null);
-      
-      // Clean up URLs
-      if (kenBurnsUrls) {
-        URL.revokeObjectURL(kenBurnsUrls.videoUrl);
-        kenBurnsUrls.photoUrls.forEach(url => URL.revokeObjectURL(url));
-        setKenBurnsUrls(null);
-      }
-    } else {
-      // Create URLs when enabling
-      if (currentVostcard?.video && currentVostcard?.photos) {
-        const videoUrl = URL.createObjectURL(currentVostcard.video);
-        const photoUrls = currentVostcard.photos.map(photo => URL.createObjectURL(photo));
-        setKenBurnsUrls({ videoUrl, photoUrls });
-      }
-    }
-  };
-
-  const handleKenBurnsStart = () => {
-    if (!currentVostcard?.video || !currentVostcard?.photos || currentVostcard.photos.length < 2) {
-      setKenBurnsError('Video and at least 2 photos are required for Ken Burns effect');
-      return;
-    }
-    
-    setKenBurnsProcessing(true);
-    setKenBurnsProgress(0);
-    setKenBurnsError(null);
-  };
-
-  const handleKenBurnsStop = () => {
-    setKenBurnsProcessing(false);
-  };
-
-  const handleKenBurnsProgress = (progress: number) => {
-    setKenBurnsProgress(progress);
-  };
-
-  const handleKenBurnsComplete = (blob: Blob) => {
-    setKenBurnsResult(blob);
-    setKenBurnsProcessing(false);
-    setKenBurnsProgress(100);
-    console.log('🎥 Ken Burns complete blob:', {
-      blob: blob,
-      size: blob.size,
-      type: blob.type,
-      isValid: blob.size > 0,
-      timestamp: new Date().toISOString()
-    });
-  };
-
-  const handleKenBurnsError = (error: string) => {
-    setKenBurnsError(error);
-    setKenBurnsProcessing(false);
-    console.error('❌ Ken Burns effect failed:', error);
-  };
-
   const handleSaveChanges = async () => {
     // Show success message immediately
     alert('Your Vōstcard has been saved and in a few minutes available in your Private Vōstcard list.');
@@ -259,25 +177,6 @@ const CreateVostcardStep3: React.FC = () => {
     
     try {
       console.log('📥 Starting vostcard post process...');
-      console.log('🎬 Ken Burns status:', {
-        kenBurnsEnabled,
-        kenBurnsResult: !!kenBurnsResult,
-        kenBurnsResultSize: kenBurnsResult?.size,
-        kenBurnsResultType: kenBurnsResult?.type
-      });
-      
-      // If Ken Burns effect was applied, use that result
-      if (kenBurnsEnabled && kenBurnsResult) {
-        console.log('🎬 Using Ken Burns processed video for posting', {
-          originalVideoSize: currentVostcard?.video?.size,
-          kenBurnsVideoSize: kenBurnsResult.size,
-          kenBurnsVideoType: kenBurnsResult.type
-        });
-        // Update the current vostcard with the Ken Burns result
-        updateVostcard({ video: kenBurnsResult });
-      } else if (kenBurnsEnabled && !kenBurnsResult) {
-        console.warn('⚠️ Ken Burns was enabled but no result blob available, using original video');
-      }
       
       await postVostcard();
       
@@ -417,59 +316,6 @@ const CreateVostcardStep3: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Ken Burns Effect Section */}
-        {currentVostcard?.video && currentVostcard?.photos && currentVostcard.photos.length >= 2 && (
-          <div>
-            <KenBurnsControls
-              isEnabled={kenBurnsEnabled}
-              isProcessing={kenBurnsProcessing}
-              progress={kenBurnsProgress}
-              onToggleEnabled={handleKenBurnsToggle}
-              onStartProcessing={handleKenBurnsStart}
-              onStopProcessing={handleKenBurnsStop}
-            />
-            
-            {kenBurnsEnabled && kenBurnsUrls && (
-              <div style={{ marginTop: '16px' }}>
-                <KenBurnsCanvas
-                  videoUrl={kenBurnsUrls.videoUrl}
-                  photoUrls={kenBurnsUrls.photoUrls}
-                  isProcessing={kenBurnsProcessing}
-                  onProgress={handleKenBurnsProgress}
-                  onComplete={handleKenBurnsComplete}
-                  onError={handleKenBurnsError}
-                />
-              </div>
-            )}
-            
-            {kenBurnsError && (
-              <div style={{
-                background: '#f8d7da',
-                color: '#721c24',
-                padding: '12px',
-                borderRadius: '8px',
-                marginTop: '12px',
-                fontSize: '14px'
-              }}>
-                {kenBurnsError}
-              </div>
-            )}
-            
-            {kenBurnsResult && (
-              <div style={{
-                background: '#d4edda',
-                color: '#155724',
-                padding: '12px',
-                borderRadius: '8px',
-                marginTop: '12px',
-                fontSize: '14px'
-              }}>
-                ✅ Ken Burns effect completed successfully!
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* 🔘 Fixed Bottom Buttons */}
