@@ -482,21 +482,15 @@ ${privateUrl}`);
   }
 
   return (
-    <div style={{ 
-      background: '#ffffff',
+    <div style={{
       minHeight: '100vh',
-      fontFamily: 'system-ui, sans-serif',
-      position: 'relative',
-      overflow: 'hidden',
-      height: '100vh'
+      backgroundColor: '#ffffff',
+      overflow: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      touchAction: 'pan-y'
     }}>
-      {/* Fixed Header */}
+      {/* Banner */}
       <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        zIndex: 10,
         background: '#07345c',
         padding: '15px 0 24px 0',
         textAlign: 'left',
@@ -508,101 +502,113 @@ ${privateUrl}`);
         <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
       </div>
 
-      {/* Navigation Icons - Under the banner */}
+      {/* 16:9 Aspect Ratio Container with User Info */}
       <div style={{
-        position: 'fixed',
-        top: 70,
-        left: 0,
+        position: 'relative',
         width: '100%',
-        zIndex: 9,
-        background: '#fff',
-        padding: '12px 16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid #e0e0e0',
+        paddingTop: '56.25%', // 16:9 aspect ratio
+        background: '#f8f9fa',
+        borderBottom: '1px solid #e0e0e0'
       }}>
         <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
           display: 'flex',
-          alignItems: 'center',
-          gap: 8
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: '20px'
         }}>
-          <div style={{ 
-            width: 50, 
-            height: 50, 
-            borderRadius: '50%', 
-            overflow: 'hidden',
-            background: '#f0f0f0',
+          {/* Top Section - Avatar and Username */}
+          <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            gap: 12
           }}>
-            {avatarUrl ? (
-              <img 
-                src={avatarUrl} 
-                alt={vostcardUsername || 'User'} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-              />
-            ) : (
-              <FaUserCircle size={50} color="#ccc" />
-            )}
+            <div style={{ 
+              width: 60, 
+              height: 60, 
+              borderRadius: '50%', 
+              overflow: 'hidden',
+              background: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {avatarUrl ? (
+                <img 
+                  src={avatarUrl} 
+                  alt={vostcardUsername || 'User'} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+                />
+              ) : (
+                <FaUserCircle size={60} color="#ccc" />
+              )}
+            </div>
+            <div style={{ 
+              fontWeight: 600, 
+              fontSize: 18,
+              color: '#333'
+            }}>
+              {vostcardUsername || 'Unknown User'}
+            </div>
           </div>
-          <div style={{ 
-            fontWeight: 600, 
-            fontSize: 14,
-            color: '#333'
+
+          {/* Bottom Section - Free Account Button */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
           }}>
-            {vostcardUsername || 'Unknown User'}
+            <button
+              type="button"
+              style={{
+                cursor: 'pointer',
+                transition: 'transform 0.1s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#002B4D',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: 16,
+                fontWeight: 600,
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                border: 'none'
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Free Account button clicked!');
+                navigate('/user-guide');
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Free Account button touched!');
+                navigate('/user-guide');
+              }}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              Free Account
+            </button>
           </div>
         </div>
-        <button
-          type="button"
-          style={{
-            cursor: 'pointer',
-            transition: 'transform 0.1s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#002B4D',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: 14,
-            fontWeight: 500,
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            border: 'none',
-            transform: 'translateX(-20px)',
-            zIndex: 9999,
-            position: 'relative'
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Free Account button clicked!');
-            navigate('/user-guide');
-          }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Free Account button touched!');
-            navigate('/user-guide');
-          }}
-          onMouseDown={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(0.95)'}
-          onMouseUp={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(1)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateX(-20px) scale(1)'}
-        >
-          Free Account
-        </button>
       </div>
 
       {/* Like Message for Anonymous Users */}
       {showLikeMessage && (
         <div style={{
           position: 'fixed',
-          top: '140px',
+          top: '50%',
           left: '50%',
-          transform: 'translateX(-50%)',
+          transform: 'translate(-50%, -50%)',
           background: '#002B4D',
           color: 'white',
           padding: '12px 20px',
@@ -639,16 +645,10 @@ ${privateUrl}`);
 
       {/* Scrollable Main Content */}
       <div style={{ 
-        marginTop: 120,
         padding: '16px 16px 40px 16px',
-        minHeight: 'calc(100vh - 120px)',
-        boxSizing: 'border-box',
-        overflowY: 'auto',
-        height: 'calc(100vh - 120px)',
-        overscrollBehavior: 'contain',
-        WebkitOverflowScrolling: 'touch',
-        touchAction: 'pan-y'
-      } as React.CSSProperties}>
+        minHeight: 'calc(100vh - 200px)',
+        boxSizing: 'border-box'
+      }}>
         {/* Map and Heart Icons - Above Title */}
         <div style={{ 
           display: 'flex', 
