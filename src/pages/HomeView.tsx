@@ -1061,7 +1061,7 @@ const HomeView = () => {
                     Getting your location...
                   </div>
                 </div>
-              ) :
+              ) : (
                 <MapContainer 
                   center={userLocation} 
                   zoom={16} 
