@@ -5,6 +5,8 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
+// Import local storage utilities for Vostcards
+import { loadLocalVostcards, deleteLocalVostcard } from '../utils/localVostcardStorage';
 
 const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
@@ -41,6 +43,20 @@ const MyPostedVostcardsListView = () => {
           // Load and sync posted vostcards with Firebase
           await loadPostedVostcards();
           console.log('✅ Posted Vostcards loaded successfully');
+
+          // Filter out local vostcards not present in Firebase
+          const syncLocalWithFirebase = async () => {
+            const localVostcards = await loadLocalVostcards(); // implement this to get local Vostcards
+            for (const vostcard of localVostcards) {
+              const vostcardRef = doc(db, 'vostcards', vostcard.id);
+              const docSnap = await getDoc(vostcardRef);
+              if (!docSnap.exists()) {
+                console.log(`🗑️ Local vostcard ${vostcard.id} not found in Firebase, deleting from device`);
+                await deleteLocalVostcard(vostcard.id); // implement this to delete from local storage
+              }
+            }
+          };
+          await syncLocalWithFirebase();
 
         } catch (error) {
           console.error('❌ Error loading posted Vostcards:', error);
