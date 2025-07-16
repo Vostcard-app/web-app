@@ -124,7 +124,7 @@ ${getUserFirstName()}`;
           url: privateUrl
         }).catch(console.error);
       } else {
-        navigator.clipboard.writeText(`${shareText}`).then(() => {
+        navigator.clipboard.writeText(shareText).then(() => {
           alert('Private share message copied to clipboard!');
         }).catch(() => {
           alert(`Share this private message: ${shareText}`);
