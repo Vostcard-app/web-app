@@ -13,7 +13,7 @@ export const AuthRedirect = () => {
     user: !!user,
     userRole,
     currentPath: location.pathname,
-    isPublicRoute: ['/', '/login', '/register', '/landing', '/user-guide'].includes(location.pathname)
+    isPublicRoute: ['/', '/login', '/register', '/landing', '/user-guide', '/public-map'].includes(location.pathname)
   });
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export const AuthRedirect = () => {
     }
 
     // Public routes that don't require auth
-    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide'];
+    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/public-map'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
     // Dynamic routes that should be allowed (with any ID)
@@ -54,11 +54,16 @@ export const AuthRedirect = () => {
       return;
     }
 
-    // Special case for advertisers
-    if (user && userRole === 'advertiser' && location.pathname === '/home') {
-      navigate('/advertiser-portal');
+    // If authenticated and on root, redirect to home
+    if (user && location.pathname === '/') {
+      if (userRole === 'advertiser') {
+        navigate('/advertiser-portal');
+      } else {
+        navigate('/home');
+      }
       return;
     }
+
   }, [user, userRole, loading, navigate, location.pathname]);
 
   return null;
