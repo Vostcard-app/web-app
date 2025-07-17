@@ -253,8 +253,7 @@ ${privateUrl}`;
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            cursor: 'pointer',
-            marginRight: '15px'
+            cursor: 'pointer' 
           }} 
           onClick={() => navigate(-1)}
         >
@@ -268,48 +267,27 @@ ${privateUrl}`;
         display: 'flex', 
         alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div 
-            style={{ 
-              width: 50, 
-              height: 50, 
-              borderRadius: '50%', 
-              overflow: 'hidden', 
-              marginRight: 2,
-              background: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => navigate(`/profile/${vostcard.userID}`)}
-          >
-            {userProfile?.avatarURL ? (
-              <img 
-                src={userProfile.avatarURL} 
-                alt="User Avatar" 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-              />
-            ) : (
-              <FaUserCircle size={50} color="#ccc" />
-            )}
-          </div>
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#007aff',
-              fontSize: '14px',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              marginRight: 2,
-              marginTop: '5px'
-            }}
-            onClick={() => navigate(`/profile/${vostcard.userID}`)}
-          >
-            View Profile
-          </button>
+        <div style={{ 
+          width: 50, 
+          height: 50, 
+          borderRadius: '50%', 
+          overflow: 'hidden', 
+          marginRight: 16,
+          background: '#f0f0f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {userProfile?.avatarURL ? (
+            <img 
+              src={userProfile.avatarURL} 
+              alt="User Avatar" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+            />
+          ) : (
+            <FaUserCircle size={50} color="#ccc" />
+          )}
         </div>
         <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
           {vostcard.username || 'Anonymous'}
@@ -488,7 +466,7 @@ ${privateUrl}`;
 
       {/* Worth Seeing Rating */}
       <div style={{
-        padding: '5px 20px 20px 20px',
+        padding: '20px',
         textAlign: 'center'
       }}>
         <div style={{ 
@@ -517,60 +495,63 @@ ${privateUrl}`;
         </div>
       </div>
 
-      {/* Description Link, Flag Icon, and Refresh Icon - All on Same Line */}
+      {/* Description Link and Flag Icon */}
       <div style={{ 
-        padding: '5px 20px 20px 20px',
-        display: 'grid',
-        gridTemplateColumns: '1fr auto 1fr',
-        alignItems: 'center',
-        gap: '10px'
+        padding: '20px',
+        position: 'relative',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
       }}>
-        {/* Flag Icon - 15px from left */}
-        <div style={{ justifySelf: 'start', paddingLeft: '15px' }}>
-          <button
-            onClick={handleFlag}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#ff3b30'
-            }}
-          >
-            <FaFlag size={24} />
-          </button>
-        </div>
+        {/* Flag Icon - px from left */}
+        <button
+          onClick={handleFlag}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#ff3b30',
+            position: 'absolute',
+            left: '15px'
+          }}
+        >
+          <FaFlag size={24} />
+        </button>
         
         {/* Description Link - Centered */}
-        <div style={{ justifySelf: 'center' }}>
-          <button
-            onClick={() => setShowDescriptionModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#007aff',
-              fontSize: '18px',
-              textDecoration: 'underline',
-              cursor: 'pointer'
-            }}
-          >
-            Description
-          </button>
-        </div>
+        <button
+          onClick={() => setShowDescriptionModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#007aff',
+            fontSize: '18px',
+            textDecoration: 'underline',
+            cursor: 'pointer'
+          }}
+        >
+          Description
+        </button>
+      </div>
 
-        {/* Refresh Icon - 20px from right */}
-        <div style={{ justifySelf: 'end', paddingRight: '20px' }}>
-          <button
-            onClick={handleRefresh}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#007aff'
-            }}
-          >
-            <FaSync size={24} />
-          </button>
-        </div>
+      {/* Refresh Icon */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px 40px'
+      }}>
+        <button
+          onClick={handleRefresh}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#007aff'
+          }}
+        >
+          <FaSync size={24} />
+        </button>
       </div>
 
       {/* Modals */}
