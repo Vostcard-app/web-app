@@ -253,9 +253,10 @@ ${privateUrl}`;
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            cursor: 'pointer' 
+            cursor: 'pointer',
+            marginRight: '15px'
           }} 
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/home')}
         >
           <FaHome color="#fff" size={48} />
         </button>

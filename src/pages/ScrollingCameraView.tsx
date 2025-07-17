@@ -107,9 +107,10 @@ const ScrollingCameraView: React.FC = () => {
 
       } catch (err) {
         console.error('❌ Camera/Audio failed:', err);
-        if (err.name === 'NotAllowedError') {
+        const error = err as Error;
+        if (error.name === 'NotAllowedError') {
           alert('Camera and microphone access denied. Please allow permissions and try again.');
-        } else if (err.name === 'NotFoundError') {
+        } else if (error.name === 'NotFoundError') {
           alert('No camera or microphone found. Please check your device.');
         } else {
           alert('Camera/Audio access failed. Please check permissions and try again.');
@@ -411,12 +412,7 @@ const ScrollingCameraView: React.FC = () => {
 
 
 
-      {/* Close */}
-      <div className="top-controls">
-        <button className="control-button" onClick={() => navigate(-1)}>
-          <AiOutlineClose size={20} />
-        </button>
-      </div>
+
 
       {/* Speed Control */}
       {script && (
