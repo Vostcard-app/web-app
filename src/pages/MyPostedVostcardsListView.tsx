@@ -320,7 +320,6 @@ ${getUserFirstName()}`);
     console.log('🔄 Retrying to load posted Vostcards...');
     loadPostedVostcards();
   };
-
   if (authLoading) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>

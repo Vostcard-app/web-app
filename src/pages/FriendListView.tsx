@@ -85,7 +85,7 @@ const FriendListView: React.FC = () => {
   };
 
   const handleUserSearch = async (query: string) => {
-    if (!user?.uid || !query.trim() || query.trim().length < 2) {
+    if (!user?.uid || !query.trim()) {
       setSearchResults([]);
       return;
     }
@@ -391,7 +391,7 @@ const FriendListView: React.FC = () => {
           </div>
         )}
 
-        {searchQuery.trim().length >= 2 && !searchingUsers && searchResults.length > 0 && (
+        {searchQuery.trim().length >= 1 && !searchingUsers && searchResults.length > 0 && (
           <div style={{ marginBottom: '20px' }}>
             <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>Search Results:</h4>
             {searchResults.map((result) => (
@@ -487,11 +487,21 @@ const FriendListView: React.FC = () => {
           </div>
         )}
 
-        {searchQuery.trim().length >= 2 && !searchingUsers && searchResults.length === 0 && (
+        {searchQuery.trim().length >= 1 && !searchingUsers && searchResults.length === 0 && (
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <div style={{ fontSize: '16px', color: '#666' }}>No users found</div>
             <div style={{ fontSize: '14px', color: '#999', marginTop: '4px' }}>
               Try searching by exact username or email
+            </div>
+          </div>
+        )}
+
+        {searchQuery.trim().length < 1 && (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <FaSearch size={48} color="#ccc" style={{ marginBottom: '16px' }} />
+            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Find & Invite Friends</div>
+            <div style={{ color: '#666', marginBottom: '16px' }}>
+              Search for existing users or invite friends to join Vōstcard
             </div>
           </div>
         )}
@@ -537,17 +547,6 @@ const FriendListView: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {searchQuery.trim().length < 2 && (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <FaSearch size={48} color="#ccc" style={{ marginBottom: '16px' }} />
-            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Find & Invite Friends</div>
-            <div style={{ color: '#666', marginBottom: '16px' }}>
-              Search for existing users or invite friends to join Vōstcard
-            </div>
           </div>
         )}
       </div>
