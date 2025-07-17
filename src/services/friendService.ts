@@ -113,6 +113,8 @@ export class FriendService {
       // Update both users' pending request arrays
       const batch = writeBatch(db);
       
+      console.log('📝 Updating user documents with request ID:', requestDoc.id);
+      
       batch.update(doc(db, 'users', senderUID), {
         sentFriendRequests: arrayUnion(requestDoc.id)
       });
@@ -382,29 +384,20 @@ export class FriendService {
       const requestsQuery = query(
         collection(db, 'friendRequests'),
         where('receiverUID', '==', userUID),
-        where('status', '==', FriendRequestStatus.PENDING)
-        // Temporarily remove orderBy to test
-        // orderBy('createdAt', 'desc')
+        where('status', '==', FriendRequestStatus.PENDING),
+        orderBy('createdAt', 'desc')  // Keep this line
       );
       
-      console.log('📋 Executing query...');
       const requestDocs = await getDocs(requestsQuery);
       
       console.log('📊 Found requests:', requestDocs.size);
       
-      const requests = requestDocs.docs.map(doc => {
-        const data = doc.data();
-        console.log('📄 Request document:', { id: doc.id, ...data });
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          respondedAt: data.respondedAt?.toDate()
-        };
-      }) as FriendRequest[];
-      
-      console.log('✅ Returning requests:', requests);
-      return requests;
+      return requestDocs.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        respondedAt: doc.data().respondedAt?.toDate()
+      })) as FriendRequest[];
     } catch (error) {
       console.error('❌ Error getting pending requests:', error);
       return [];
@@ -639,6 +632,35 @@ export class FriendService {
     } catch (error) {
       console.error('Error updating friend settings:', error);
       return { success: false, error: 'Failed to update settings' };
+    }
+  }
+
+  /**
+   * Get user's pending friend request count
+   */
+  static async getPendingRequestCount(userUID: string): Promise<number> {
+    try {
+      console.log('🔍 Getting pending request count for user:', userUID);
+      
+      const userDoc = await getDoc(doc(db, 'users', userUID));
+      
+      if (!userDoc.exists()) {
+        console.log('❌ User document does not exist');
+        return 0;
+      }
+      
+      const userData = userDoc.data();
+      const pendingRequests = userData.pendingFriendRequests || [];
+      
+      console.log('📊 User document data:', {
+        pendingFriendRequests: pendingRequests,
+        count: pendingRequests.length
+      });
+      
+      return pendingRequests.length;
+    } catch (error) {
+      console.error('Error getting pending request count:', error);
+      return 0;
     }
   }
 } 

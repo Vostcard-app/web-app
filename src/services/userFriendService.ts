@@ -177,13 +177,24 @@ export class UserFriendService {
    */
   static async getPendingRequestCount(userUID: string): Promise<number> {
     try {
+      console.log('🔍 Getting pending request count for user:', userUID);
+      
       const userDoc = await getDoc(doc(db, 'users', userUID));
       
       if (!userDoc.exists()) {
+        console.log('❌ User document does not exist');
         return 0;
       }
       
-      return userDoc.data().pendingFriendRequests?.length || 0;
+      const userData = userDoc.data();
+      const pendingRequests = userData.pendingFriendRequests || [];
+      
+      console.log('📊 User document data:', {
+        pendingFriendRequests: pendingRequests,
+        count: pendingRequests.length
+      });
+      
+      return pendingRequests.length;
     } catch (error) {
       console.error('Error getting pending request count:', error);
       return 0;
