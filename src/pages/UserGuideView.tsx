@@ -101,7 +101,7 @@ git push origin main
               margin: 0,
               fontWeight: '400'
             }}>
-              Tap these pins to see a Vōstcard. Vōstcards are 30 second videos about points of interest. You can watch them, send them, or make your own.
+              Tap these pins to see a Vōstcard. Vōstcards are 60 second videos about points of interest. You can watch them, send them, or make your own.
             </p>
           </div>
         </div>

@@ -319,7 +319,7 @@ const CreateVostcardStep1: React.FC = () => {
               padding: 10,
             }}
           >
-            Record a 30 Second Video
+            Record a 60 Second Video
           </div>
         )}
       </div>

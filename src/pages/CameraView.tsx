@@ -158,13 +158,13 @@ const CameraView: React.FC = () => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
 
-      // Auto-stop after 30 seconds
+      // Auto-stop after 60 seconds
       setTimeout(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
           stopRecording();
         }
         clearInterval(timer);
-      }, 30000);
+      }, 60000);
 
     } catch (err) {
       console.error('❌ Recording failed:', err);

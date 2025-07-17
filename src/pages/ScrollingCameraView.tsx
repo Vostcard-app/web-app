@@ -16,7 +16,7 @@ const ScrollingCameraView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isScriptScrolling, setIsScriptScrolling] = useState(false);
   const [script, setScript] = useState('');
-  const [recordingTime, setRecordingTime] = useState(30);
+  const [recordingTime, setRecordingTime] = useState(60);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [scrollSpeed, setScrollSpeed] = useState(1);
@@ -327,9 +327,9 @@ const ScrollingCameraView: React.FC = () => {
     mediaRecorder.start();
     setIsRecording(true);
     setIsScriptScrolling(true);
-    setRecordingTime(30);
+    setRecordingTime(60);
     
-    // 30 second timer
+    // 60 second timer
     timerRef.current = setInterval(() => {
       setRecordingTime(prev => {
         if (prev <= 1) {
@@ -375,8 +375,8 @@ const ScrollingCameraView: React.FC = () => {
     const averageReadingSpeed = 2.5; // Words per second for comfortable reading
     const idealDuration = Math.max(20, estimatedWords / averageReadingSpeed); // At least 20 seconds for very short scripts
     
-    // Set maximum duration to 27 seconds (finishing 3 seconds before recording ends)
-    const maxDuration = 27;
+    // Set maximum duration to 57 seconds (finishing 3 seconds before recording ends)
+    const maxDuration = 57;
     const calculatedDuration = Math.min(idealDuration, maxDuration);
     
     // Apply user's speed adjustment
@@ -390,7 +390,7 @@ const ScrollingCameraView: React.FC = () => {
         calculatedDuration: calculatedDuration.toFixed(1) + 's',
         scrollSpeed: scrollSpeed + 'x',
         finalDuration: finalDuration.toFixed(1) + 's',
-        finishTime: 'Completes at 27 seconds (3s buffer before recording ends)'
+        finishTime: 'Completes at 57 seconds (3s buffer before recording ends)'
       });
     
     return finalDuration;
