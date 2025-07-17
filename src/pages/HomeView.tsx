@@ -792,10 +792,10 @@ const HomeView = () => {
                   left: 0,
                   right: 0,
                   display: 'flex',
-                  justifyContent: 'space-around',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   zIndex: 1002,
-                  padding: '0 16px'
+                  padding: '0 20px'
                 }}
               >
                 <button 
