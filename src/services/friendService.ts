@@ -39,19 +39,30 @@ export class FriendService {
     message?: string
   ): Promise<{ success: boolean; error?: string; requestId?: string }> {
     try {
+      console.log('🚀 Starting friend request process:', { senderUID, receiverUID, message });
+      
       // Check if users are already friends
       const senderDoc = await getDoc(doc(db, 'users', senderUID));
       const receiverDoc = await getDoc(doc(db, 'users', receiverUID));
       
       if (!senderDoc.exists() || !receiverDoc.exists()) {
+        console.log('❌ User not found:', { senderExists: senderDoc.exists(), receiverExists: receiverDoc.exists() });
         return { success: false, error: 'User not found' };
       }
       
       const senderData = senderDoc.data();
       const receiverData = receiverDoc.data();
       
+      console.log('📋 User data:', { 
+        senderUsername: senderData.username, 
+        receiverUsername: receiverData.username,
+        senderFriends: senderData.friends?.length || 0,
+        receiverFriends: receiverData.friends?.length || 0
+      });
+      
       // Check if already friends
       if (senderData.friends?.includes(receiverUID)) {
+        console.log('❌ Already friends');
         return { success: false, error: 'Users are already friends' };
       }
       
@@ -65,11 +76,13 @@ export class FriendService {
       
       const existingRequests = await getDocs(existingRequestQuery);
       if (!existingRequests.empty) {
+        console.log('❌ Request already exists');
         return { success: false, error: 'Friend request already sent' };
       }
       
       // Check if receiver has friend requests enabled
       if (receiverData.friendRequestsEnabled === false) {
+        console.log('❌ Friend requests disabled for receiver');
         return { success: false, error: 'User is not accepting friend requests' };
       }
       
@@ -91,7 +104,11 @@ export class FriendService {
         friendRequest.message = message.trim();
       }
       
+      console.log('📝 Creating friend request:', friendRequest);
+      
       const requestDoc = await addDoc(collection(db, 'friendRequests'), friendRequest);
+      
+      console.log('✅ Friend request created with ID:', requestDoc.id);
       
       // Update both users' pending request arrays
       const batch = writeBatch(db);
@@ -104,12 +121,17 @@ export class FriendService {
         pendingFriendRequests: arrayUnion(requestDoc.id)
       });
       
+      console.log('🔄 Updating user documents...');
       await batch.commit();
       
+      console.log('🎉 Friend request sent successfully!');
       return { success: true, requestId: requestDoc.id };
     } catch (error) {
-      console.error('Error sending friend request:', error);
-      return { success: false, error: 'Failed to send friend request' };
+      console.error('❌ Detailed error sending friend request:', error);
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Error code:', error.code);
+      return { success: false, error: `Failed to send friend request: ${error.message}` };
     }
   }
   
@@ -355,23 +377,36 @@ export class FriendService {
    */
   static async getPendingRequests(userUID: string): Promise<FriendRequest[]> {
     try {
+      console.log('🔍 Getting pending requests for user:', userUID);
+      
       const requestsQuery = query(
         collection(db, 'friendRequests'),
         where('receiverUID', '==', userUID),
-        where('status', '==', FriendRequestStatus.PENDING),
-        orderBy('createdAt', 'desc')
+        where('status', '==', FriendRequestStatus.PENDING)
+        // Temporarily remove orderBy to test
+        // orderBy('createdAt', 'desc')
       );
       
+      console.log('📋 Executing query...');
       const requestDocs = await getDocs(requestsQuery);
       
-      return requestDocs.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        respondedAt: doc.data().respondedAt?.toDate()
-      })) as FriendRequest[];
+      console.log('📊 Found requests:', requestDocs.size);
+      
+      const requests = requestDocs.docs.map(doc => {
+        const data = doc.data();
+        console.log('📄 Request document:', { id: doc.id, ...data });
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          respondedAt: data.respondedAt?.toDate()
+        };
+      }) as FriendRequest[];
+      
+      console.log('✅ Returning requests:', requests);
+      return requests;
     } catch (error) {
-      console.error('Error getting pending requests:', error);
+      console.error('❌ Error getting pending requests:', error);
       return [];
     }
   }
