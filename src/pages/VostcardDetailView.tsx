@@ -18,7 +18,7 @@ const VostcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
+
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -98,18 +98,7 @@ const VostcardDetailView: React.FC = () => {
     }
   }, [vostcard?.userID]);
 
-  const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
-    const { videoWidth, videoHeight } = videoElement;
-    
-    console.log('🎬 Video dimensions (ALWAYS PORTRAIT):', {
-      videoWidth,
-      videoHeight,
-      aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(2) : 'unknown'
-    });
 
-    // All videos are portrait
-    setVideoOrientation('portrait');
-  };
 
   const handleShareClick = async () => {
     try {
@@ -343,7 +332,6 @@ ${privateUrl}`;
               }}
               controls
               playsInline
-              onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
               onClick={() => setShowVideoModal(true)}
             />
           ) : null}
@@ -523,7 +511,8 @@ ${privateUrl}`;
             position: 'absolute',
             left: '15px'
           }}
-        >
+        >cd ~/vostcard-web-app
+
           <FaFlag size={24} />
         </button>
         
@@ -648,40 +637,40 @@ ${privateUrl}`;
           style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.95)',
+            background: 'rgba(0,0,0,0.9)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 1000,
-            cursor: 'zoom-out',
+            padding: '20px'
           }}
           onClick={() => setShowVideoModal(false)}
         >
           <div
             style={{
               position: 'relative',
-              width: '100vw',
-              height: '100vh',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '100%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: 'center'
             }}
             onClick={e => e.stopPropagation()}
           >
             <video
               src={vostcard.videoURL}
               style={{
-                maxWidth: videoOrientation === 'portrait' ? '100vh' : '100%',
-                maxHeight: videoOrientation === 'portrait' ? '100vw' : '100%',
+                maxWidth: '100%',
+                maxHeight: '100%',
                 objectFit: 'contain',
-                transform: videoOrientation === 'portrait' ? 'rotate(90deg)' : 'none',
-                transformOrigin: 'center center',
+                borderRadius: 8,
+                backgroundColor: '#000'
               }}
               controls
               autoPlay
               playsInline
               onClick={(e) => e.stopPropagation()}
-              onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
             />
           </div>
         </div>
