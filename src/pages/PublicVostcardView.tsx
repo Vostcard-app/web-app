@@ -519,13 +519,12 @@ ${privateUrl}`);
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          padding: '20px'
+          padding: '5px 20px 20px 20px'
         }}>
-          {/* Avatar and Username - Centered */}
+          {/* Avatar and Username - Left Justified */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
             gap: 12
           }}>
             <div style={{ 
