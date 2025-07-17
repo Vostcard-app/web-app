@@ -909,7 +909,10 @@ ${privateUrl}`);
               textDecoration: 'underline',
               cursor: 'pointer',
               fontSize: 14,
-              padding: 0
+              padding: 0,
+              display: 'block',
+              margin: '0 auto',
+              textAlign: 'center'
             }}
           >
             Learn more about Vōstcard

@@ -13,7 +13,7 @@ import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.svg';
 import { signOut } from 'firebase/auth';
 import './HomeView.css';
-import { LocationService, LocationResult, LocationError } from '../utils/locationService';
+import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
 import LocationDebugger from '../components/LocationDebugger';
 
 const vostcardIcon = new L.Icon({
@@ -937,10 +937,10 @@ const HomeView = () => {
                     textAlign: 'center',
                   }}
                 >
-                  {mapAreaPreference === 'nearby' && 'Nearby 800m / 1/2mile'}
-                  {mapAreaPreference === '1-mile' && '1 mile / 1.6k'}
-                  {mapAreaPreference === '5-miles' && '5 miles / 8k'}
-                  {mapAreaPreference === 'custom' && `Custom ${customDistance} Mile${customDistance !== 1 ? 's' : ''}`}
+                  {mapAreaPreference === 'nearby' && <><span style={{ marginRight: '8px' }}>🚶</span>Nearby 800m / 1/2mile</>}
+                  {mapAreaPreference === '1-mile' && <><span style={{ marginRight: '8px' }}>🏃</span>1 mile / 1.6k</>}
+                  {mapAreaPreference === '5-miles' && <><span style={{ marginRight: '8px' }}>🏃</span>5 miles / 8k</>}
+                  {mapAreaPreference === 'custom' && <><span style={{ marginRight: '8px' }}>📍</span>Custom {customDistance} Mile{customDistance !== 1 ? 's' : ''}</>}
                 </button>
               </div>
             )}
@@ -1024,10 +1024,10 @@ const HomeView = () => {
                     minWidth: '140px',
                   }}>
                     {[
-                      { key: 'nearby', label: 'Nearby 800m / 1/2mile', description: 'Within 800 meters' },
-                      { key: '1-mile', label: '1 mile / 1.6k', description: 'Within 1 mile' },
-                      { key: '5-miles', label: '5 miles / 8k', description: 'Within 5 miles' },
-                      { key: 'custom', label: 'Custom', description: 'Custom distance' }
+                      { key: 'nearby', label: '🚶 Nearby 800m / 1/2mile', description: 'Within 800 meters' },
+                      { key: '1-mile', label: '🏃 1 mile / 1.6k', description: 'Within 1 mile' },
+                      { key: '5-miles', label: '🏃 5 miles / 8k', description: 'Within 5 miles' },
+                      { key: 'custom', label: '📍 Custom', description: 'Custom distance' }
                     ].map((option) => (
                       <button
                         key={option.key}
