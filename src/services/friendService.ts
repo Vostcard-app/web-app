@@ -412,11 +412,19 @@ export class FriendService {
       
       const normalizedQuery = searchQuery.toLowerCase().trim();
       
-      // Search by name (case-insensitive partial match)
-      const nameQuery = query(
+      // Search by firstName (case-insensitive partial match)
+      const firstNameQuery = query(
         collection(db, 'users'),
-        where('name', '>=', normalizedQuery),
-        where('name', '<=', normalizedQuery + '\uf8ff'),
+        where('firstName', '>=', normalizedQuery),
+        where('firstName', '<=', normalizedQuery + '\uf8ff'),
+        limit(15)
+      );
+      
+      // Search by lastName (case-insensitive partial match)
+      const lastNameQuery = query(
+        collection(db, 'users'),
+        where('lastName', '>=', normalizedQuery),
+        where('lastName', '<=', normalizedQuery + '\uf8ff'),
         limit(15)
       );
       
@@ -425,12 +433,22 @@ export class FriendService {
         collection(db, 'users'),
         where('email', '>=', normalizedQuery),
         where('email', '<=', normalizedQuery + '\uf8ff'),
-        limit(10)
+        limit(15)
       );
       
-      const [nameResults, emailResults] = await Promise.all([
-        getDocs(nameQuery),
-        getDocs(emailQuery)
+      // Search by username (partial match from beginning)
+      const usernameQuery = query(
+        collection(db, 'users'),
+        where('username', '>=', normalizedQuery),
+        where('username', '<=', normalizedQuery + '\uf8ff'),
+        limit(15)
+      );
+      
+      const [firstNameResults, lastNameResults, emailResults, usernameResults] = await Promise.all([
+        getDocs(firstNameQuery),
+        getDocs(lastNameQuery),
+        getDocs(emailQuery),
+        getDocs(usernameQuery)
       ]);
       
       // Get current user's friend data
@@ -445,15 +463,23 @@ export class FriendService {
       const processUser = (doc: any) => {
         const data = doc.data();
         if (data.uid !== currentUserUID && !userMap.has(data.uid)) {
-          // Check if name or email contains the search query (case-insensitive)
-          const nameMatch = data.name && data.name.toLowerCase().includes(normalizedQuery);
-          const emailMatch = data.email && data.email.toLowerCase().includes(normalizedQuery);
+          // Create display name - prefer firstName/lastName, fallback to name for backward compatibility
+          const displayName = data.firstName && data.lastName 
+            ? `${data.firstName} ${data.lastName}`
+            : data.name || data.username || 'Unknown';
           
-          if (nameMatch || emailMatch) {
+          // Check if any of the target fields contains the search query (case-insensitive)
+          const firstNameMatch = data.firstName && data.firstName.toLowerCase().includes(normalizedQuery);
+          const lastNameMatch = data.lastName && data.lastName.toLowerCase().includes(normalizedQuery);
+          const emailMatch = data.email && data.email.toLowerCase().includes(normalizedQuery);
+          const usernameMatch = data.username && data.username.toLowerCase().includes(normalizedQuery);
+          const fullNameMatch = displayName.toLowerCase().includes(normalizedQuery);
+          
+          if (firstNameMatch || lastNameMatch || emailMatch || usernameMatch || fullNameMatch) {
             userMap.set(data.uid, {
               uid: data.uid,
               username: data.username || 'Unknown',
-              name: data.name || data.username || 'Unknown',
+              name: displayName,
               email: data.email || '',
               avatarURL: data.avatarURL,
               isFriend: friendUIDs.includes(data.uid),
@@ -465,18 +491,30 @@ export class FriendService {
         }
       };
       
-      nameResults.forEach(processUser);
+      firstNameResults.forEach(processUser);
+      lastNameResults.forEach(processUser);
       emailResults.forEach(processUser);
+      usernameResults.forEach(processUser);
       
       const results = Array.from(userMap.values());
       
-      // Sort results by relevance (exact name match first, then partial matches)
+      // Sort results by relevance
       results.sort((a, b) => {
-        const aNameExact = a.name.toLowerCase() === normalizedQuery;
-        const bNameExact = b.name.toLowerCase() === normalizedQuery;
+        // Prioritize exact matches
+        const aFirstNameExact = a.name.toLowerCase().split(' ')[0] === normalizedQuery;
+        const bFirstNameExact = b.name.toLowerCase().split(' ')[0] === normalizedQuery;
+        const aLastNameExact = a.name.toLowerCase().split(' ').slice(-1)[0] === normalizedQuery;
+        const bLastNameExact = b.name.toLowerCase().split(' ').slice(-1)[0] === normalizedQuery;
+        const aEmailExact = a.email.toLowerCase() === normalizedQuery;
+        const bEmailExact = b.email.toLowerCase() === normalizedQuery;
+        const aUsernameExact = a.username.toLowerCase() === normalizedQuery;
+        const bUsernameExact = b.username.toLowerCase() === normalizedQuery;
         
-        if (aNameExact && !bNameExact) return -1;
-        if (!aNameExact && bNameExact) return 1;
+        const aHasExactMatch = aFirstNameExact || aLastNameExact || aEmailExact || aUsernameExact;
+        const bHasExactMatch = bFirstNameExact || bLastNameExact || bEmailExact || bUsernameExact;
+        
+        if (aHasExactMatch && !bHasExactMatch) return -1;
+        if (!aHasExactMatch && bHasExactMatch) return 1;
         
         // Then sort by name alphabetically
         return a.name.localeCompare(b.name);
@@ -485,22 +523,32 @@ export class FriendService {
       // Check for pending requests
       if (results.length > 0) {
         const userUIDs = results.map(r => r.uid);
-        const pendingRequestsQuery = query(
-          collection(db, 'friendRequests'),
-          where('senderUID', '==', currentUserUID),
-          where('receiverUID', 'in', userUIDs),
-          where('status', '==', FriendRequestStatus.PENDING)
-        );
         
-        const pendingRequests = await getDocs(pendingRequestsQuery);
-        const pendingUIDs = new Set(pendingRequests.docs.map(doc => doc.data().receiverUID));
+        // Handle large result sets by batching the query
+        const pendingUIDs = new Set<string>();
+        const batchSize = 10; // Firestore 'in' query limit
+        
+        for (let i = 0; i < userUIDs.length; i += batchSize) {
+          const batch = userUIDs.slice(i, i + batchSize);
+          const pendingRequestsQuery = query(
+            collection(db, 'friendRequests'),
+            where('senderUID', '==', currentUserUID),
+            where('receiverUID', 'in', batch),
+            where('status', '==', FriendRequestStatus.PENDING)
+          );
+          
+          const pendingRequests = await getDocs(pendingRequestsQuery);
+          pendingRequests.docs.forEach(doc => {
+            pendingUIDs.add(doc.data().receiverUID);
+          });
+        }
         
         results.forEach(result => {
           result.hasPendingRequest = pendingUIDs.has(result.uid);
         });
       }
       
-      return results;
+      return results.filter(result => !result.isBlocked); // Don't show blocked users
     } catch (error) {
       console.error('Error searching users:', error);
       return [];
