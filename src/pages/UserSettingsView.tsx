@@ -32,6 +32,9 @@ const UserSettingsView: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [showNameSeparationModal, setShowNameSeparationModal] = useState(false);
+  const [tempFirstName, setTempFirstName] = useState('');
+  const [tempLastName, setTempLastName] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -50,6 +53,15 @@ const UserSettingsView: React.FC = () => {
             message: data.message || '',
             avatarURL: data.avatarURL || ''
           });
+          
+          // Check if user needs to separate their name
+          if (data.name && !data.firstName && !data.lastName) {
+            setShowNameSeparationModal(true);
+            // Auto-parse the name as a suggestion
+            const parts = data.name.split(' ');
+            setTempFirstName(parts[0] || '');
+            setTempLastName(parts.slice(1).join(' ') || '');
+          }
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -207,6 +219,32 @@ const UserSettingsView: React.FC = () => {
     }
     // Reset the input
     event.target.value = '';
+  };
+
+  const handleNameSeparation = async () => {
+    if (!user || !tempFirstName) return;
+    
+    try {
+      const docRef = doc(db, 'users', user.uid);
+      await updateDoc(docRef, {
+        firstName: tempFirstName,
+        lastName: tempLastName,
+        // Keep original name for backward compatibility
+        name: `${tempFirstName} ${tempLastName}`,
+        nameSeparatedAt: new Date()
+      });
+      
+      setProfile(prev => ({
+        ...prev,
+        name: `${tempFirstName} ${tempLastName}`
+      }));
+      
+      setShowNameSeparationModal(false);
+      alert('Name updated successfully!');
+    } catch (error) {
+      console.error('Error updating name:', error);
+      alert('Failed to update name. Please try again.');
+    }
   };
 
   if (loading) {
@@ -695,6 +733,67 @@ const UserSettingsView: React.FC = () => {
               <FaImage />
               Choose from Gallery
             </button>
+          </div>
+        </div>
+      )}
+
+      {showNameSeparationModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: 12,
+            padding: 20,
+            margin: 20,
+            maxWidth: 300,
+            width: '100%',
+            position: 'relative',
+          }}>
+            {/* Close Button */}
+            <button
+              onClick={() => setShowNameSeparationModal(false)}
+              style={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                background: 'transparent',
+                border: 'none',
+                fontSize: 20,
+                cursor: 'pointer',
+                color: '#666',
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            <h3 style={{ margin: '0 0 20px 0', textAlign: 'center' }}>
+              Please separate your name
+            </h3>
+            <p>We've updated our system to use separate first and last names.</p>
+            <input
+              type="text"
+              placeholder="First Name"
+              value={tempFirstName}
+              onChange={(e) => setTempFirstName(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Last Name"
+              value={tempLastName}
+              onChange={(e) => setTempLastName(e.target.value)}
+            />
+            <button onClick={handleNameSeparation}>Update Name</button>
+            <button onClick={() => setShowNameSeparationModal(false)}>Skip for now</button>
           </div>
         </div>
       )}

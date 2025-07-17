@@ -410,23 +410,26 @@ export class FriendService {
         return [];
       }
       
-      // Search by username (case-insensitive)
-      const usernameQuery = query(
+      const normalizedQuery = searchQuery.toLowerCase().trim();
+      
+      // Search by name (case-insensitive partial match)
+      const nameQuery = query(
         collection(db, 'users'),
-        where('username', '>=', searchQuery.toLowerCase()),
-        where('username', '<=', searchQuery.toLowerCase() + '\uf8ff'),
-        limit(20)
+        where('name', '>=', normalizedQuery),
+        where('name', '<=', normalizedQuery + '\uf8ff'),
+        limit(15)
       );
       
-      // Search by email (exact match)
+      // Search by email (partial match from beginning)
       const emailQuery = query(
         collection(db, 'users'),
-        where('email', '==', searchQuery.toLowerCase()),
-        limit(5)
+        where('email', '>=', normalizedQuery),
+        where('email', '<=', normalizedQuery + '\uf8ff'),
+        limit(10)
       );
       
-      const [usernameResults, emailResults] = await Promise.all([
-        getDocs(usernameQuery),
+      const [nameResults, emailResults] = await Promise.all([
+        getDocs(nameQuery),
         getDocs(emailQuery)
       ]);
       
@@ -442,23 +445,42 @@ export class FriendService {
       const processUser = (doc: any) => {
         const data = doc.data();
         if (data.uid !== currentUserUID && !userMap.has(data.uid)) {
-          userMap.set(data.uid, {
-            uid: data.uid,
-            username: data.username || 'Unknown',
-            email: data.email || '',
-            avatarURL: data.avatarURL,
-            isFriend: friendUIDs.includes(data.uid),
-            hasPendingRequest: false, // Will be filled in below
-            isBlocked: blockedUsers.includes(data.uid),
-            mutualFriends: 0 // TODO: Calculate mutual friends
-          });
+          // Check if name or email contains the search query (case-insensitive)
+          const nameMatch = data.name && data.name.toLowerCase().includes(normalizedQuery);
+          const emailMatch = data.email && data.email.toLowerCase().includes(normalizedQuery);
+          
+          if (nameMatch || emailMatch) {
+            userMap.set(data.uid, {
+              uid: data.uid,
+              username: data.username || 'Unknown',
+              name: data.name || data.username || 'Unknown',
+              email: data.email || '',
+              avatarURL: data.avatarURL,
+              isFriend: friendUIDs.includes(data.uid),
+              hasPendingRequest: false, // Will be filled in below
+              isBlocked: blockedUsers.includes(data.uid),
+              mutualFriends: 0 // TODO: Calculate mutual friends
+            });
+          }
         }
       };
       
-      usernameResults.forEach(processUser);
+      nameResults.forEach(processUser);
       emailResults.forEach(processUser);
       
       const results = Array.from(userMap.values());
+      
+      // Sort results by relevance (exact name match first, then partial matches)
+      results.sort((a, b) => {
+        const aNameExact = a.name.toLowerCase() === normalizedQuery;
+        const bNameExact = b.name.toLowerCase() === normalizedQuery;
+        
+        if (aNameExact && !bNameExact) return -1;
+        if (!aNameExact && bNameExact) return 1;
+        
+        // Then sort by name alphabetically
+        return a.name.localeCompare(b.name);
+      });
       
       // Check for pending requests
       if (results.length > 0) {

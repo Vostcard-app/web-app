@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaUserFriends, FaUserPlus, FaSearch, FaUsers, FaEnvelope, FaCheck, FaTimes, FaEllipsisV, FaSms, FaWhatsapp, FaPaperPlane, FaAddressBook, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaUserFriends, FaUserPlus, FaSearch, FaUsers, FaEnvelope, FaCheck, FaTimes, FaEllipsisV, FaSms, FaWhatsapp, FaPaperPlane, FaUser } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { FriendService } from '../services/friendService';
 import { UserFriendService } from '../services/userFriendService';
 import { InvitationService } from '../services/invitationService';
-import { ContactService, type Contact } from '../services/contactService';
 import { type Friend, type FriendRequest, type FriendSearchResult, type InvitationRequest } from '../types/FriendModels';
 
 const FriendListView: React.FC = () => {
@@ -26,10 +25,6 @@ const FriendListView: React.FC = () => {
   const [inviteRecipient, setInviteRecipient] = useState('');
   const [inviteMessage, setInviteMessage] = useState('');
   const [sendingInvite, setSendingInvite] = useState(false);
-  const [showContactPicker, setShowContactPicker] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
-  const [contactRecipientOptions, setContactRecipientOptions] = useState<{ value: string; label: string }[]>([]);
-  const [loadingContacts, setLoadingContacts] = useState(false);
 
   useEffect(() => {
     if (user?.uid) {
@@ -135,8 +130,6 @@ const FriendListView: React.FC = () => {
         setShowInviteModal(false);
         setInviteRecipient('');
         setInviteMessage('');
-        setSelectedContact(null);
-        setContactRecipientOptions([]);
         await loadFriendData(); // Refresh data to show new invitation
       } else {
         alert(result.error || 'Failed to send invitation');
@@ -149,90 +142,11 @@ const FriendListView: React.FC = () => {
     }
   };
 
-  const handleOpenContactPicker = async () => {
-    try {
-      setLoadingContacts(true);
-      
-      // Check device support first
-      const deviceSupport = ContactService.getDeviceSupport();
-      
-      if (!deviceSupport.isSupported) {
-        alert(`${deviceSupport.supportMessage}\n\nAlternatives:\n• Copy email/phone from your contacts app\n• Use manual entry below\n• Share contact via text/email`);
-        return;
-      }
-
-      const result = await ContactService.getContacts();
-      
-      if (result.error) {
-        alert(`Contact access failed: ${result.error}\n\nYou can still:\n• Enter email/phone manually\n• Copy contact info from your contacts app`);
-        return;
-      }
-
-      if (result.contacts.length === 0) {
-        alert('No contacts selected or available.\n\nTry:\n• Selecting contacts from the picker\n• Using manual entry below');
-        return;
-      }
-
-      setShowContactPicker(true);
-    } catch (error) {
-      console.error('Error opening contact picker:', error);
-      alert('Contact picker failed. Please use manual entry below.');
-    } finally {
-      setLoadingContacts(false);
-    }
-  };
-
-  const handleSelectContact = (contact: Contact) => {
-    setSelectedContact(contact);
-    
-    // Validate contact for current invite method
-    const validation = ContactService.validateContactForInvitation(contact, inviteMethod);
-    
-    if (validation.isValid) {
-      setContactRecipientOptions(validation.availableOptions);
-      
-      // Auto-select if only one option
-      if (validation.availableOptions.length === 1) {
-        setInviteRecipient(validation.availableOptions[0].value);
-      }
-    } else {
-      setContactRecipientOptions([]);
-      alert(validation.error || 'No valid contact information found');
-    }
-    
-    setShowContactPicker(false);
-  };
-
-  const handleContactRecipientChange = (value: string) => {
-    setInviteRecipient(value);
-  };
-
-  const handleInviteMethodChange = (method: 'email' | 'sms' | 'whatsapp') => {
-    setInviteMethod(method);
-    
-    // Re-validate selected contact for new method
-    if (selectedContact) {
-      const validation = ContactService.validateContactForInvitation(selectedContact, method);
-      
-      if (validation.isValid) {
-        setContactRecipientOptions(validation.availableOptions);
-        
-        // Clear current recipient if it's not valid for new method
-        if (!validation.availableOptions.some(opt => opt.value === inviteRecipient)) {
-          setInviteRecipient('');
-        }
-      } else {
-        setContactRecipientOptions([]);
-        setInviteRecipient('');
-      }
-    }
-  };
-
   // Debounced search effect
   useEffect(() => {
     const timer = setTimeout(() => {
       handleUserSearch(searchQuery);
-    }, 500);
+    }, 200);
 
     return () => clearTimeout(timer);
   }, [searchQuery, user?.uid]);
@@ -433,7 +347,7 @@ const FriendListView: React.FC = () => {
           <FaSearch size={16} color="#666" style={{ marginRight: '8px' }} />
           <input
             type="text"
-            placeholder="Search by username or email..."
+            placeholder="Search by name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -481,15 +395,36 @@ const FriendListView: React.FC = () => {
           <div style={{ marginBottom: '20px' }}>
             <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>Search Results:</h4>
             {searchResults.map((result) => (
-              <div key={result.uid} style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '12px',
-                borderBottom: '1px solid #eee',
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                marginBottom: '8px'
-              }}>
+              <div 
+                key={result.uid} 
+                onClick={() => {
+                  if (!result.isFriend && !result.hasPendingRequest && !result.isBlocked) {
+                    handleSendFriendRequest(result.uid);
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px',
+                  borderBottom: '1px solid #eee',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  marginBottom: '8px',
+                  cursor: (!result.isFriend && !result.hasPendingRequest && !result.isBlocked) ? 'pointer' : 'default',
+                  transition: 'all 0.2s ease',
+                  border: '1px solid transparent'
+                }}
+                onMouseEnter={(e) => {
+                  if (!result.isFriend && !result.hasPendingRequest && !result.isBlocked) {
+                    e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    e.currentTarget.style.borderColor = '#007aff';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = 'transparent';
+                }}
+              >
                 <div style={{
                   width: '40px',
                   height: '40px',
@@ -503,7 +438,7 @@ const FriendListView: React.FC = () => {
                   {result.avatarURL ? (
                     <img 
                       src={result.avatarURL} 
-                      alt={result.username}
+                      alt={result.name}
                       style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
                     />
                   ) : (
@@ -511,7 +446,7 @@ const FriendListView: React.FC = () => {
                   )}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: '600', fontSize: '14px' }}>{result.username}</div>
+                  <div style={{ fontWeight: '600', fontSize: '14px' }}>{result.name}</div>
                   <div style={{ color: '#666', fontSize: '12px' }}>{result.email}</div>
                   {result.mutualFriends > 0 && (
                     <div style={{ color: '#007aff', fontSize: '12px' }}>
@@ -521,26 +456,30 @@ const FriendListView: React.FC = () => {
                 </div>
                 <div>
                   {result.isFriend ? (
-                    <span style={{ color: '#28a745', fontSize: '12px', fontWeight: '600' }}>Friends</span>
+                    <span style={{ color: '#28a745', fontSize: '12px', fontWeight: '600' }}>
+                      <FaCheck size={12} style={{ marginRight: '4px' }} />
+                      Friends
+                    </span>
                   ) : result.hasPendingRequest ? (
-                    <span style={{ color: '#ffc107', fontSize: '12px', fontWeight: '600' }}>Pending</span>
+                    <span style={{ color: '#ffc107', fontSize: '12px', fontWeight: '600' }}>
+                      Pending
+                    </span>
                   ) : result.isBlocked ? (
-                    <span style={{ color: '#dc3545', fontSize: '12px', fontWeight: '600' }}>Blocked</span>
+                    <span style={{ color: '#dc3545', fontSize: '12px', fontWeight: '600' }}>
+                      Blocked
+                    </span>
                   ) : (
-                    <button
-                      onClick={() => handleSendFriendRequest(result.uid)}
-                      style={{
-                        backgroundColor: '#007aff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Add Friend
-                    </button>
+                    <div style={{ 
+                      color: '#007aff', 
+                      fontSize: '12px', 
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <FaUserPlus size={12} />
+                      Tap to Add
+                    </div>
                   )}
                 </div>
               </div>
@@ -608,125 +547,6 @@ const FriendListView: React.FC = () => {
             <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>Find & Invite Friends</div>
             <div style={{ color: '#666', marginBottom: '16px' }}>
               Search for existing users or invite friends to join Vōstcard
-            </div>
-          </div>
-        )}
-
-        {/* Contact Picker Modal */}
-        {showContactPicker && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1001,
-            padding: '20px'
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              width: '100%',
-              maxWidth: '500px',
-              maxHeight: '70vh',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '20px 24px',
-                borderBottom: '1px solid #e0e0e0'
-              }}>
-                <h3 style={{ margin: 0, color: '#333' }}>Select Contact</h3>
-                <button
-                  onClick={() => setShowContactPicker(false)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '20px',
-                    color: '#666',
-                    cursor: 'pointer'
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-
-              <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '16px'
-              }}>
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                  <FaAddressBook size={48} color="#ccc" style={{ marginBottom: '16px' }} />
-                  <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
-                    Access Your Contacts
-                  </div>
-                  <div style={{ color: '#666', marginBottom: '20px' }}>
-                    {(() => {
-                      const deviceSupport = ContactService.getDeviceSupport();
-                      return deviceSupport.isSupported 
-                        ? "We'll request permission to access your contacts to help you invite friends easily."
-                        : `${deviceSupport.supportMessage}`;
-                    })()}
-                  </div>
-                  <button
-                    onClick={handleOpenContactPicker}
-                    disabled={!ContactService.getDeviceSupport().isSupported}
-                    style={{
-                      backgroundColor: ContactService.getDeviceSupport().isSupported ? '#007aff' : '#ccc',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '12px 24px',
-                      fontSize: '16px',
-                      cursor: ContactService.getDeviceSupport().isSupported ? 'pointer' : 'not-allowed',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      margin: '0 auto'
-                    }}
-                  >
-                    <FaAddressBook size={16} />
-                    {ContactService.getDeviceSupport().isSupported ? 'Choose Contacts' : 'Not Available'}
-                  </button>
-                </div>
-
-                <div style={{
-                  marginTop: '20px',
-                  padding: '16px',
-                  backgroundColor: ContactService.getDeviceSupport().isSupported ? '#f8f9fa' : '#fff3cd',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: '#666'
-                }}>
-                  <div style={{ fontWeight: '600', marginBottom: '8px' }}>
-                    {ContactService.getDeviceSupport().isSupported ? 'Note:' : 'Alternative Options:'}
-                  </div>
-                  {ContactService.getDeviceSupport().isSupported ? (
-                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                      <li>Your contacts are not stored on our servers</li>
-                      <li>We only access contact info you select</li>
-                      <li>You can always enter contact details manually</li>
-                    </ul>
-                  ) : (
-                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                      <li>Copy email/phone from your contacts app</li>
-                      <li>Use manual entry in the invitation form</li>
-                      <li>Share contact via text/email to yourself</li>
-                      <li>Try Chrome browser on Android for contact picker</li>
-                    </ul>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -858,8 +678,6 @@ const FriendListView: React.FC = () => {
                               <button
                   onClick={() => {
                     setShowInviteModal(false);
-                    setSelectedContact(null);
-                    setContactRecipientOptions([]);
                     setInviteRecipient('');
                     setInviteMessage('');
                   }}
@@ -882,7 +700,7 @@ const FriendListView: React.FC = () => {
               </label>
                               <div style={{ display: 'flex', gap: '8px' }}>
                   <button
-                    onClick={() => handleInviteMethodChange('email')}
+                    onClick={() => setInviteMethod('email')}
                     style={{
                       flex: 1,
                       padding: '12px',
@@ -900,7 +718,7 @@ const FriendListView: React.FC = () => {
                     Email
                   </button>
                   <button
-                    onClick={() => handleInviteMethodChange('sms')}
+                    onClick={() => setInviteMethod('sms')}
                     style={{
                       flex: 1,
                       padding: '12px',
@@ -918,7 +736,7 @@ const FriendListView: React.FC = () => {
                     SMS
                   </button>
                   <button
-                    onClick={() => handleInviteMethodChange('whatsapp')}
+                    onClick={() => setInviteMethod('whatsapp')}
                     style={{
                       flex: 1,
                       padding: '12px',
@@ -945,116 +763,34 @@ const FriendListView: React.FC = () => {
                 </label>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                   <button
-                    onClick={handleOpenContactPicker}
-                    disabled={loadingContacts || !ContactService.getDeviceSupport().isSupported}
+                    onClick={() => {
+                      alert('Contact picker functionality is removed. Please enter recipient manually.');
+                    }}
+                    disabled
                     style={{
                       flex: 1,
                       padding: '12px',
-                      border: `2px solid ${ContactService.getDeviceSupport().isSupported ? '#007aff' : '#ccc'}`,
+                      border: '2px solid #ccc',
                       borderRadius: '8px',
-                      backgroundColor: selectedContact ? '#e3f2fd' : 'white',
-                      color: ContactService.getDeviceSupport().isSupported ? '#007aff' : '#666',
-                      cursor: (loadingContacts || !ContactService.getDeviceSupport().isSupported) ? 'not-allowed' : 'pointer',
+                      backgroundColor: 'white',
+                      color: '#666',
+                      cursor: 'not-allowed',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
                       fontSize: '14px',
-                      opacity: ContactService.getDeviceSupport().isSupported ? 1 : 0.6
+                      opacity: 0.6
                     }}
                   >
-                    <FaAddressBook size={16} />
-                    {loadingContacts ? 'Loading...' : 
-                     selectedContact ? selectedContact.name : 
-                     ContactService.getDeviceSupport().isSupported ? 'Choose from Contacts' : 'Not Available on This Device'}
+                    <FaUser size={16} />
+                    Choose from Contacts (Not Available)
                   </button>
                   
-                  {selectedContact && (
-                    <button
-                      onClick={() => {
-                        setSelectedContact(null);
-                        setContactRecipientOptions([]);
-                        setInviteRecipient('');
-                      }}
-                      style={{
-                        padding: '12px',
-                        border: '2px solid #dc3545',
-                        borderRadius: '8px',
-                        backgroundColor: 'white',
-                        color: '#dc3545',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <FaTimes size={16} />
-                    </button>
-                  )}
+                  {/* Removed manual recipient input field */}
                 </div>
                 
-                {/* Device Support Info */}
-                {!ContactService.getDeviceSupport().isSupported && (
-                  <div style={{
-                    backgroundColor: '#fff3cd',
-                    border: '1px solid #ffeaa7',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    marginBottom: '12px',
-                    fontSize: '14px'
-                  }}>
-                    <div style={{ fontWeight: '600', marginBottom: '4px', color: '#856404' }}>
-                      💡 Contact Picker Not Available
-                    </div>
-                    <div style={{ color: '#856404', marginBottom: '8px' }}>
-                      {ContactService.getDeviceSupport().supportMessage}
-                    </div>
-                    <div style={{ color: '#856404', fontSize: '12px' }}>
-                      <strong>Quick tip:</strong> Use your phone's contacts app to copy email/phone numbers, then paste them in the manual entry field below.
-                    </div>
-                  </div>
-                )}
-                
-                {selectedContact && (
-                  <div style={{
-                    backgroundColor: '#f8f9fa',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    marginBottom: '12px'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <FaUser size={16} color="#666" />
-                      <span style={{ fontWeight: '600' }}>{selectedContact.name}</span>
-                    </div>
-                    
-                    {contactRecipientOptions.length > 0 && (
-                      <div>
-                        <label style={{ display: 'block', marginBottom: '4px', fontSize: '12px', color: '#666' }}>
-                          Select {inviteMethod === 'email' ? 'Email' : 'Phone Number'}:
-                        </label>
-                        <select
-                          value={inviteRecipient}
-                          onChange={(e) => handleContactRecipientChange(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #e0e0e0',
-                            borderRadius: '4px',
-                            fontSize: '14px',
-                            outline: 'none'
-                          }}
-                        >
-                          <option value="">Select...</option>
-                          {contactRecipientOptions.map((option, index) => (
-                            <option key={index} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Removed Device Support Info */}
               </div>
 
               {/* Manual Recipient Input (fallback) */}
@@ -1064,10 +800,9 @@ const FriendListView: React.FC = () => {
                 </label>
                 <input
                   type={inviteMethod === 'email' ? 'email' : 'tel'}
-                  value={selectedContact ? inviteRecipient : inviteRecipient}
+                  value={inviteRecipient}
                   onChange={(e) => setInviteRecipient(e.target.value)}
                   placeholder={inviteMethod === 'email' ? 'friend@example.com' : '+1234567890'}
-                  disabled={!!(selectedContact && contactRecipientOptions.length > 0)}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -1075,8 +810,7 @@ const FriendListView: React.FC = () => {
                     borderRadius: '8px',
                     fontSize: '16px',
                     outline: 'none',
-                    boxSizing: 'border-box',
-                    opacity: selectedContact && contactRecipientOptions.length > 0 ? 0.6 : 1
+                    boxSizing: 'border-box'
                   }}
                 />
               </div>
@@ -1109,8 +843,6 @@ const FriendListView: React.FC = () => {
                               <button
                   onClick={() => {
                     setShowInviteModal(false);
-                    setSelectedContact(null);
-                    setContactRecipientOptions([]);
                     setInviteRecipient('');
                     setInviteMessage('');
                   }}

@@ -56,6 +56,7 @@ export interface UserFriendData {
 export interface FriendSearchResult {
   uid: string;
   username: string;
+  name: string;
   email: string;
   avatarURL?: string;
   isFriend: boolean;
