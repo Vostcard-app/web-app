@@ -73,8 +73,8 @@ export class FriendService {
         return { success: false, error: 'User is not accepting friend requests' };
       }
       
-      // Create the friend request
-      const friendRequest: Omit<FriendRequest, 'id'> = {
+      // Create the friend request - only include message if it's not undefined
+      const friendRequest: any = {
         senderUID,
         senderUsername: senderData.username || 'Unknown',
         senderEmail: senderData.email || '',
@@ -83,14 +83,15 @@ export class FriendService {
         receiverUsername: receiverData.username || 'Unknown',
         receiverEmail: receiverData.email || '',
         status: FriendRequestStatus.PENDING,
-        message,
-        createdAt: new Date()
+        createdAt: serverTimestamp()
       };
       
-      const requestDoc = await addDoc(collection(db, 'friendRequests'), {
-        ...friendRequest,
-        createdAt: serverTimestamp()
-      });
+      // Only add message if it's not undefined and not empty
+      if (message && message.trim()) {
+        friendRequest.message = message.trim();
+      }
+      
+      const requestDoc = await addDoc(collection(db, 'friendRequests'), friendRequest);
       
       // Update both users' pending request arrays
       const batch = writeBatch(db);
