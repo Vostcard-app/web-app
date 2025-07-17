@@ -502,7 +502,7 @@ ${privateUrl}`);
         <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
       </div>
 
-      {/* 20% Container with User Info and Free Account Button */}
+      {/* 20% Container with User Info */}
       <div style={{
         position: 'relative',
         width: '100%',
@@ -518,13 +518,14 @@ ${privateUrl}`);
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           padding: '20px'
         }}>
-          {/* Top Section - Avatar and Username */}
+          {/* Avatar and Username - Centered */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: 12
           }}>
             <div style={{ 
@@ -555,49 +556,6 @@ ${privateUrl}`);
             }}>
               {vostcardUsername || 'Unknown User'}
             </div>
-          </div>
-
-          {/* Bottom Section - Free Account Button */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            <button
-              type="button"
-              style={{
-                cursor: 'pointer',
-                transition: 'transform 0.1s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#002B4D',
-                color: 'white',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                fontSize: 16,
-                fontWeight: 600,
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                border: 'none'
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Free Account button clicked!');
-                navigate('/user-guide');
-              }}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Free Account button touched!');
-                navigate('/user-guide');
-              }}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              Free Account
-            </button>
           </div>
         </div>
       </div>
@@ -649,14 +607,15 @@ ${privateUrl}`);
         minHeight: 'calc(100vh - 200px)',
         boxSizing: 'border-box'
       }}>
-        {/* Map and Heart Icons - Above Title */}
+        {/* Map Icon, Heart Icon, and Free Account Button - All on same line */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          gap: 24,
+          gap: 16,
           marginBottom: '16px',
-          marginTop: '25px'
+          marginTop: '25px',
+          flexWrap: 'wrap'
         }}>
           {/* Map Icon */}
           <div 
@@ -738,6 +697,44 @@ ${privateUrl}`);
               {likeCount}
             </span>
           </div>
+
+          {/* Free Account Button */}
+          <button
+            type="button"
+            style={{
+              cursor: 'pointer',
+              transition: 'transform 0.1s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#002B4D',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              fontSize: 14,
+              fontWeight: 600,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: 'none',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Free Account button clicked!');
+              navigate('/user-guide');
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Free Account button touched!');
+              navigate('/user-guide');
+            }}
+            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+              Join Free
+            </button>
         </div>
 
         {/* Title */}
