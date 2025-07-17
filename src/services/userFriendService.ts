@@ -2,10 +2,14 @@ import {
   doc, 
   updateDoc, 
   getDoc, 
-  setDoc
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
-import { type UserFriendData } from '../types/FriendModels';
+import { type UserFriendData, FriendRequestStatus } from '../types/FriendModels';
 
 /**
  * Service to manage user document updates for the friend system
@@ -187,130 +191,43 @@ export class UserFriendService {
       }
       
       const userData = userDoc.data();
+      
+      // Debug: Show ALL user data to see what's there
+      console.log('📊 Complete user document:', userData);
+      
       const pendingRequests = userData.pendingFriendRequests || [];
       
-      console.log('📊 User document data:', {
-        pendingFriendRequests: pendingRequests,
-        count: pendingRequests.length
-      });
+      console.log('📊 Pending requests array:', pendingRequests);
+      console.log('📊 Count:', pendingRequests.length);
       
       return pendingRequests.length;
     } catch (error) {
-      console.error('Error getting pending request count:', error);
+      console.error('❌ Error getting pending request count:', error);
       return 0;
     }
   }
   
   /**
-   * Check if two users are friends
+   * Get user's pending friend request count directly from friendRequests collection
    */
-  static async areFriends(userUID1: string, userUID2: string): Promise<boolean> {
+  static async getPendingRequestCountDirect(userUID: string): Promise<number> {
     try {
-      const userDoc = await getDoc(doc(db, 'users', userUID1));
+      console.log('🔍 Getting DIRECT pending request count for user:', userUID);
       
-      if (!userDoc.exists()) {
-        return false;
-      }
+      const requestsQuery = query(
+        collection(db, 'friendRequests'),
+        where('receiverUID', '==', userUID),
+        where('status', '==', FriendRequestStatus.PENDING)
+      );
       
-      const friends = userDoc.data().friends || [];
-      return friends.includes(userUID2);
+      const snapshot = await getDocs(requestsQuery);
+      const count = snapshot.size;
+      
+      console.log('📊 Direct count result:', count);
+      return count;
     } catch (error) {
-      console.error('Error checking if users are friends:', error);
-      return false;
+      console.error('❌ Error getting direct pending request count:', error);
+      return 0;
     }
   }
-  
-  /**
-   * Check if user is blocked by another user
-   */
-  static async isBlocked(userUID: string, potentialBlockerUID: string): Promise<boolean> {
-    try {
-      const blockerDoc = await getDoc(doc(db, 'users', potentialBlockerUID));
-      
-      if (!blockerDoc.exists()) {
-        return false;
-      }
-      
-      const blockedUsers = blockerDoc.data().blockedUsers || [];
-      return blockedUsers.includes(userUID);
-    } catch (error) {
-      console.error('Error checking if user is blocked:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Batch initialize friend fields for multiple users
-   */
-  static async batchInitializeFriendFields(userUIDs: string[]): Promise<{
-    success: boolean;
-    successCount: number;
-    errors: string[];
-  }> {
-    const results = await Promise.allSettled(
-      userUIDs.map(uid => this.initializeFriendFields(uid))
-    );
-    
-    let successCount = 0;
-    const errors: string[] = [];
-    
-    results.forEach((result, index) => {
-      if (result.status === 'fulfilled' && result.value.success) {
-        successCount++;
-      } else {
-        const error = result.status === 'rejected' 
-          ? result.reason 
-          : result.value.error || 'Unknown error';
-        errors.push(`User ${userUIDs[index]}: ${error}`);
-      }
-    });
-    
-    return {
-      success: successCount === userUIDs.length,
-      successCount,
-      errors
-    };
-  }
-  
-  /**
-   * Validate user document has required friend fields
-   */
-  static async validateUserFriendFields(userUID: string): Promise<{
-    isValid: boolean;
-    missingFields: string[];
-  }> {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userUID));
-      
-      if (!userDoc.exists()) {
-        return {
-          isValid: false,
-          missingFields: ['User document does not exist']
-        };
-      }
-      
-      const userData = userDoc.data();
-      const requiredFields = [
-        'friends',
-        'pendingFriendRequests',
-        'sentFriendRequests',
-        'vostboxUnreadCount',
-        'blockedUsers',
-        'friendRequestsEnabled'
-      ];
-      
-      const missingFields = requiredFields.filter(field => !userData.hasOwnProperty(field));
-      
-      return {
-        isValid: missingFields.length === 0,
-        missingFields
-      };
-    } catch (error) {
-      console.error('Error validating user friend fields:', error);
-      return {
-        isValid: false,
-        missingFields: ['Error validating fields']
-      };
-    }
-  }
-} 
+}

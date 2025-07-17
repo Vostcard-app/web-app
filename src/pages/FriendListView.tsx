@@ -42,18 +42,25 @@ const FriendListView: React.FC = () => {
       await UserFriendService.initializeFriendFields(user.uid);
       
       // Load friends, requests, and invitations
-      const [friendsList, requests, fCount, rCount, invitations] = await Promise.all([
+      const [friendsList, requests, fCount, rCount, rCountDirect, invitations] = await Promise.all([
         FriendService.getFriendsList(user.uid),
         FriendService.getPendingRequests(user.uid),
         UserFriendService.getFriendCount(user.uid),
         UserFriendService.getPendingRequestCount(user.uid),
+        UserFriendService.getPendingRequestCountDirect(user.uid), // Add this new method
         InvitationService.getSentInvitations(user.uid)
       ]);
+
+      console.log('📊 Count comparison:', {
+        fromUserDoc: rCount,
+        fromDirectQuery: rCountDirect,
+        actualRequestsLoaded: requests.length
+      });
 
       setFriends(friendsList);
       setPendingRequests(requests);
       setFriendCount(fCount);
-      setRequestCount(rCount);
+      setRequestCount(rCountDirect); // Use direct count for now
       setSentInvitations(invitations);
     } catch (error) {
       console.error('Error loading friend data:', error);

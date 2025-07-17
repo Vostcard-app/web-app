@@ -114,6 +114,8 @@ export class FriendService {
       const batch = writeBatch(db);
       
       console.log('📝 Updating user documents with request ID:', requestDoc.id);
+      console.log('📝 Sender UID:', senderUID);
+      console.log('📝 Receiver UID:', receiverUID);
       
       batch.update(doc(db, 'users', senderUID), {
         sentFriendRequests: arrayUnion(requestDoc.id)
@@ -123,8 +125,20 @@ export class FriendService {
         pendingFriendRequests: arrayUnion(requestDoc.id)
       });
       
-      console.log('🔄 Updating user documents...');
+      console.log('🔄 Committing batch update...');
       await batch.commit();
+      
+      console.log('✅ Batch update committed successfully');
+      
+      // Debug: Check if the update worked
+      const updatedReceiverDoc = await getDoc(doc(db, 'users', receiverUID));
+      if (updatedReceiverDoc.exists()) {
+        console.log('📊 Receiver document after update:', {
+          uid: receiverUID,
+          pendingFriendRequests: updatedReceiverDoc.data().pendingFriendRequests,
+          sentFriendRequests: updatedReceiverDoc.data().sentFriendRequests
+        });
+      }
       
       console.log('🎉 Friend request sent successfully!');
       return { success: true, requestId: requestDoc.id };
@@ -384,20 +398,26 @@ export class FriendService {
       const requestsQuery = query(
         collection(db, 'friendRequests'),
         where('receiverUID', '==', userUID),
-        where('status', '==', FriendRequestStatus.PENDING),
-        orderBy('createdAt', 'desc')  // Keep this line
+        where('status', '==', FriendRequestStatus.PENDING)
+        // Temporarily remove orderBy until index is created
+        // orderBy('createdAt', 'desc')
       );
       
       const requestDocs = await getDocs(requestsQuery);
       
       console.log('📊 Found requests:', requestDocs.size);
       
-      return requestDocs.docs.map(doc => ({
+      const requests = requestDocs.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         createdAt: doc.data().createdAt?.toDate() || new Date(),
         respondedAt: doc.data().respondedAt?.toDate()
       })) as FriendRequest[];
+      
+      // Sort manually in JavaScript for now
+      requests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      
+      return requests;
     } catch (error) {
       console.error('❌ Error getting pending requests:', error);
       return [];
