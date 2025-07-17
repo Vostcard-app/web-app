@@ -145,9 +145,9 @@ export class FriendService {
     } catch (error) {
       console.error('❌ Detailed error sending friend request:', error);
       console.error('❌ Error type:', typeof error);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error code:', error.code);
-      return { success: false, error: `Failed to send friend request: ${error.message}` };
+      console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('❌ Error code:', (error as any)?.code || 'Unknown code');
+      return { success: false, error: `Failed to send friend request: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
   
@@ -156,32 +156,42 @@ export class FriendService {
    */
   static async acceptFriendRequest(requestId: string, userUID: string): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('🔄 Starting friend request acceptance:', { requestId, userUID });
+      
       const requestDoc = await getDoc(doc(db, 'friendRequests', requestId));
       
       if (!requestDoc.exists()) {
+        console.log('❌ Friend request document not found:', requestId);
         return { success: false, error: 'Friend request not found' };
       }
       
       const requestData = requestDoc.data() as FriendRequest;
+      console.log('📋 Friend request data:', requestData);
       
       // Verify user is the receiver
       if (requestData.receiverUID !== userUID) {
+        console.log('❌ Unauthorized access:', { expectedReceiver: requestData.receiverUID, actualUser: userUID });
         return { success: false, error: 'Unauthorized' };
       }
       
       if (requestData.status !== FriendRequestStatus.PENDING) {
+        console.log('❌ Request already processed:', { currentStatus: requestData.status });
         return { success: false, error: 'Request already processed' };
       }
+      
+      console.log('✅ Validation passed, creating batch update...');
       
       const batch = writeBatch(db);
       
       // Update request status
+      console.log('📝 Updating request status to ACCEPTED');
       batch.update(doc(db, 'friendRequests', requestId), {
         status: FriendRequestStatus.ACCEPTED,
         respondedAt: serverTimestamp()
       });
       
       // Add to both users' friend arrays
+      console.log('📝 Adding friends to user documents');
       batch.update(doc(db, 'users', requestData.senderUID), {
         friends: arrayUnion(requestData.receiverUID),
         sentFriendRequests: arrayRemove(requestId)
@@ -192,20 +202,28 @@ export class FriendService {
         pendingFriendRequests: arrayRemove(requestId)
       });
       
+      console.log('🔄 Committing batch update...');
+      await batch.commit();
+      console.log('✅ Batch update committed successfully');
+      
       // Create friendship document
-      await addDoc(collection(db, 'friendships'), {
+      console.log('📝 Creating friendship document...');
+      const friendshipDoc = await addDoc(collection(db, 'friendships'), {
         user1UID: requestData.senderUID,
         user2UID: requestData.receiverUID,
         establishedAt: serverTimestamp(),
         lastInteraction: serverTimestamp()
       });
+      console.log('✅ Friendship document created:', friendshipDoc.id);
       
-      await batch.commit();
-      
+      console.log('🎉 Friend request accepted successfully!');
       return { success: true };
     } catch (error) {
-      console.error('Error accepting friend request:', error);
-      return { success: false, error: 'Failed to accept friend request' };
+      console.error('❌ Detailed error accepting friend request:', error);
+      console.error('❌ Error type:', typeof error);
+      console.error('❌ Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('❌ Error code:', (error as any)?.code || 'Unknown code');
+      return { success: false, error: `Failed to accept friend request: ${error instanceof Error ? error.message : 'Unknown error'}` };
     }
   }
   
@@ -343,44 +361,59 @@ export class FriendService {
    */
   static async getFriendsList(userUID: string): Promise<Friend[]> {
     try {
+      console.log('🔍 Getting friends list for user:', userUID);
+      
       const userDoc = await getDoc(doc(db, 'users', userUID));
       
       if (!userDoc.exists()) {
+        console.log('❌ User document does not exist');
         return [];
       }
       
       const friendUIDs = userDoc.data().friends || [];
+      console.log('📊 Friend UIDs from user document:', friendUIDs);
       
       if (friendUIDs.length === 0) {
+        console.log('📭 No friends found in user document');
         return [];
       }
       
       const friends: Friend[] = [];
       
-      // Get friend details in batches (Firestore 'in' query limit is 10)
-      const batchSize = 10;
-      for (let i = 0; i < friendUIDs.length; i += batchSize) {
-        const batch = friendUIDs.slice(i, i + batchSize);
-        const friendsQuery = query(
-          collection(db, 'users'),
-          where('uid', 'in', batch)
-        );
-        
-        const friendDocs = await getDocs(friendsQuery);
-        
-        friendDocs.forEach(doc => {
-          const data = doc.data();
-          friends.push({
-            uid: data.uid,
-            username: data.username || 'Unknown',
-            email: data.email || '',
-            avatarURL: data.avatarURL,
-            establishedAt: new Date(), // We'll get this from friendship doc if needed
-            status: FriendStatus.ACTIVE
-          });
-        });
+      // Get friend details by document ID (not uid field)
+      console.log('🔍 Fetching friend details...');
+      
+      for (const friendUID of friendUIDs) {
+        try {
+          const friendDoc = await getDoc(doc(db, 'users', friendUID));
+          
+          if (friendDoc.exists()) {
+            const data = friendDoc.data();
+            console.log(`✅ Found friend: ${friendUID}`, {
+              username: data.username,
+              email: data.email,
+              name: data.name,
+              firstName: data.firstName,
+              lastName: data.lastName
+            });
+            
+            friends.push({
+              uid: friendUID, // Use document ID as UID
+              username: data.username || data.name || `${data.firstName} ${data.lastName}`.trim() || 'Unknown',
+              email: data.email || '',
+              avatarURL: data.avatarURL,
+              establishedAt: new Date(), // We'll get this from friendship doc if needed
+              status: FriendStatus.ACTIVE
+            });
+          } else {
+            console.log(`❌ Friend document not found: ${friendUID}`);
+          }
+        } catch (error) {
+          console.error(`❌ Error fetching friend ${friendUID}:`, error);
+        }
       }
       
+      console.log('✅ Final friends list:', friends);
       return friends;
     } catch (error) {
       console.error('Error getting friends list:', error);

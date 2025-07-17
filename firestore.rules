@@ -48,10 +48,13 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId; // Explicitly allow creating user documents
       
       // Allow admins to update user roles for Guide conversion
+      // Allow friend-related updates for authenticated users
       allow update: if request.auth != null && (
         request.auth.uid == userId || // User updating their own profile
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' && 
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'convertedToGuideAt', 'convertedByAdmin']))
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'convertedToGuideAt', 'convertedByAdmin'])) ||
+        // Allow friend-related updates (business logic handles validation)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends', 'sentFriendRequests', 'pendingFriendRequests'])
       );
       
       // Allow authenticated users to manage their own likes

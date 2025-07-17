@@ -163,13 +163,19 @@ export class UserFriendService {
    */
   static async getFriendCount(userUID: string): Promise<number> {
     try {
+      console.log('🔍 Getting friend count for user:', userUID);
+      
       const userDoc = await getDoc(doc(db, 'users', userUID));
       
       if (!userDoc.exists()) {
+        console.log('❌ User document does not exist');
         return 0;
       }
       
-      return userDoc.data().friends?.length || 0;
+      const friends = userDoc.data().friends || [];
+      console.log('📊 Friend count:', friends.length, 'friends:', friends);
+      
+      return friends.length;
     } catch (error) {
       console.error('Error getting friend count:', error);
       return 0;
