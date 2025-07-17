@@ -937,10 +937,10 @@ const HomeView = () => {
                     textAlign: 'center',
                   }}
                 >
-                  {mapAreaPreference === 'nearby' && <><span style={{ marginRight: '8px' }}>🚶</span>Nearby 800m / 1/2mile</>}
-                  {mapAreaPreference === '1-mile' && <><span style={{ marginRight: '8px' }}>🏃</span>1 mile / 1.6k</>}
-                  {mapAreaPreference === '5-miles' && <><span style={{ marginRight: '8px' }}>🏃</span>5 miles / 8k</>}
-                  {mapAreaPreference === 'custom' && <><span style={{ marginRight: '8px' }}>📍</span>Custom {customDistance} Mile{customDistance !== 1 ? 's' : ''}</>}
+                  {mapAreaPreference === 'nearby' && <><span style={{ marginRight: '8px' }}>🚶</span>Near</>}
+                  {mapAreaPreference === '1-mile' && <><span style={{ marginRight: '8px' }}>🏃</span>Medium</>}
+                  {mapAreaPreference === '5-miles' && <><span style={{ marginRight: '8px' }}>🏃</span>Far</>}
+                  {mapAreaPreference === 'custom' && <><span style={{ marginRight: '8px' }}>📍</span>Custom</>}
                 </button>
               </div>
             )}
@@ -1024,9 +1024,9 @@ const HomeView = () => {
                     minWidth: '140px',
                   }}>
                     {[
-                      { key: 'nearby', label: '🚶 Nearby 800m / 1/2mile', description: 'Within 800 meters' },
-                      { key: '1-mile', label: '🏃 1 mile / 1.6k', description: 'Within 1 mile' },
-                      { key: '5-miles', label: '🏃 5 miles / 8k', description: 'Within 5 miles' },
+                      { key: 'nearby', label: '🚶 Near', description: 'Within 800m / .5 miles' },
+                      { key: '1-mile', label: '🏃 Medium', description: 'Within 1 mile /1.6k' },
+                      { key: '5-miles', label: '🏃 Far', description: 'Within 5 miles/ 8k' },
                       { key: 'custom', label: '📍 Custom', description: 'Custom distance' }
                     ].map((option) => (
                       <button
