@@ -17,11 +17,36 @@ export default function RegistrationPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Helper to check if username is unique
+  // Helper to check if username is unique (case-insensitive)
   const isUsernameUnique = async (username: string) => {
-    const q = query(collection(db, "users"), where("username", "==", username));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.empty;
+    try {
+      // First try exact match
+      const exactQuery = query(collection(db, "users"), where("username", "==", username));
+      let querySnapshot = await getDocs(exactQuery);
+      
+      if (!querySnapshot.empty) {
+        return false;
+      }
+      
+      // Then check case-insensitive match
+      const allUsersQuery = query(collection(db, "users"));
+      const allUsersSnapshot = await getDocs(allUsersQuery);
+      
+      const lowerUsername = username.toLowerCase();
+      for (const userDoc of allUsersSnapshot.docs) {
+        const userData = userDoc.data();
+        const storedUsername = userData.username;
+        
+        if (storedUsername && storedUsername.toLowerCase() === lowerUsername) {
+          return false; // Username already exists (case-insensitive)
+        }
+      }
+      
+      return true; // Username is unique
+    } catch (error) {
+      console.error("Error checking username uniqueness:", error);
+      return false; // Err on the side of caution
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -51,12 +76,30 @@ export default function RegistrationPage() {
     try {
       // For user, check username uniqueness
       if (formType === "user") {
-        const unique = await isUsernameUnique(username);
+        const trimmedUsername = username.trim();
+        
+        // Basic username validation
+        if (trimmedUsername.length < 3) {
+          setError("Username must be at least 3 characters long.");
+          setLoading(false);
+          return;
+        }
+        
+        if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+          setError("Username can only contain letters, numbers, and underscores.");
+          setLoading(false);
+          return;
+        }
+        
+        const unique = await isUsernameUnique(trimmedUsername);
         if (!unique) {
           setError("Username is already taken.");
           setLoading(false);
           return;
         }
+        
+        // Update the username to the trimmed version
+        setUsername(trimmedUsername);
       }
 
       // Create user in Firebase Auth
@@ -69,9 +112,10 @@ export default function RegistrationPage() {
 
       // Save extra info to Firestore
       if (formType === "user") {
+        const trimmedUsername = username.trim();
         await setDoc(doc(db, "users", user.uid), {
           name,
-          username,
+          username: trimmedUsername,
           email,
           userRole: "user",
           createdAt: new Date(),

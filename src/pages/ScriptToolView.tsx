@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useScripts } from '../context/ScriptContext';
 import { useVostcard } from '../context/VostcardContext';
+import CameraPermissionModal from '../components/CameraPermissionModal';
 
 export default function ScriptToolView() {
   const [topic, setTopic] = useState("");
@@ -10,6 +11,7 @@ export default function ScriptToolView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSaveButton, setShowSaveButton] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { createScript } = useScripts();
@@ -68,6 +70,29 @@ export default function ScriptToolView() {
       console.error("Script saving error:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to check camera permission before navigating
+  const checkCameraAndNavigate = async () => {
+    try {
+      const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
+      
+      if (permission.state === 'denied') {
+        setShowPermissionModal(true);
+        return;
+      }
+      
+      // If permission is granted or prompt, proceed with navigation
+      if (script.trim()) {
+        navigate(`/scrolling-camera?script=${encodeURIComponent(script)}`);
+      }
+    } catch (err) {
+      // If permission check fails, try to navigate anyway
+      console.warn('Permission check failed:', err);
+      if (script.trim()) {
+        navigate(`/scrolling-camera?script=${encodeURIComponent(script)}`);
+      }
     }
   };
 
@@ -218,12 +243,7 @@ export default function ScriptToolView() {
           {/* Roll Camera Button - always visible at bottom */}
           <button
             disabled={!script.trim()}
-            onClick={() => {
-              console.log('Roll Camera clicked, script:', script);
-              if (script.trim()) {
-                navigate(`/scrolling-camera?script=${encodeURIComponent(script)}`);
-              }
-            }}
+            onClick={checkCameraAndNavigate}
             style={{
               width: "100%",
               background: script.trim() ? "#07345c" : "#888",
@@ -241,6 +261,16 @@ export default function ScriptToolView() {
           </button>
         </div>
       </div>
+
+      {/* Camera Permission Modal */}
+      <CameraPermissionModal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        onRetry={() => {
+          setShowPermissionModal(false);
+          checkCameraAndNavigate();
+        }}
+      />
     </div>
   );
 } 

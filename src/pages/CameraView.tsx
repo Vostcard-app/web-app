@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { useVostcard } from '../context/VostcardContext';
+import CameraPermissionModal from '../components/CameraPermissionModal';
 import './CameraView.css';
 
 const CameraView: React.FC = () => {
@@ -18,6 +19,7 @@ const CameraView: React.FC = () => {
   const [debugInfo, setDebugInfo] = useState<string>('');
   const [recordingTime, setRecordingTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   // Enhanced camera permission check
   const checkCameraPermission = async (): Promise<boolean> => {
@@ -25,7 +27,7 @@ const CameraView: React.FC = () => {
       const permission = await navigator.permissions.query({ name: 'camera' as PermissionName });
       
       if (permission.state === 'denied') {
-        alert('Camera access is blocked. Please enable camera permissions in your browser settings.');
+        setShowPermissionModal(true);
         return false;
       }
       
@@ -123,8 +125,15 @@ const CameraView: React.FC = () => {
 
     } catch (err) {
       console.error('❌ Camera start failed:', err);
-      setError(`Camera failed to start: ${err.message}`);
-      setDebugInfo(`Error: ${err.message}`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      
+      // Show permission modal for permission-related errors
+      if (err instanceof Error && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
+        setShowPermissionModal(true);
+      } else {
+        setError(`Camera failed to start: ${errorMessage}`);
+        setDebugInfo(`Error: ${errorMessage}`);
+      }
     }
   };
 
@@ -168,7 +177,8 @@ const CameraView: React.FC = () => {
 
     } catch (err) {
       console.error('❌ Recording failed:', err);
-      setError(`Recording failed: ${err.message}`);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Recording failed: ${errorMessage}`);
     }
   };
 
@@ -209,6 +219,16 @@ const CameraView: React.FC = () => {
 
   return (
     <div className="camera-container">
+      {/* Camera Permission Modal */}
+      <CameraPermissionModal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        onRetry={() => {
+          setShowPermissionModal(false);
+          startCamera();
+        }}
+      />
+
       {/* Video Preview */}
       <video
         ref={videoRef}

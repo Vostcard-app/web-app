@@ -21,15 +21,43 @@ export default function LoginPage() {
   // Helper function to get email from username
   const getEmailFromUsername = async (username: string): Promise<string | null> => {
     try {
-      const q = query(collection(db, "users"), where("username", "==", username));
-      const querySnapshot = await getDocs(q);
+      const trimmedUsername = username.trim();
+      console.log('🔍 Looking up username:', { original: username, trimmed: trimmedUsername });
       
-      if (querySnapshot.empty) {
-        return null;
+      // Try exact match first
+      const exactQuery = query(collection(db, "users"), where("username", "==", trimmedUsername));
+      let querySnapshot = await getDocs(exactQuery);
+      
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const email = userDoc.data().email;
+        console.log('✅ Found exact match:', { username: trimmedUsername, email });
+        return email || null;
       }
       
-      const userDoc = querySnapshot.docs[0];
-      return userDoc.data().email || null;
+      // If no exact match, try case-insensitive search by getting all users and filtering
+      console.log('🔍 No exact match, trying case-insensitive search...');
+      const allUsersQuery = query(collection(db, "users"));
+      const allUsersSnapshot = await getDocs(allUsersQuery);
+      
+      const lowerUsername = trimmedUsername.toLowerCase();
+      for (const userDoc of allUsersSnapshot.docs) {
+        const userData = userDoc.data();
+        const storedUsername = userData.username;
+        
+        if (storedUsername && storedUsername.toLowerCase() === lowerUsername) {
+          const email = userData.email;
+          console.log('✅ Found case-insensitive match:', { 
+            searched: trimmedUsername, 
+            found: storedUsername, 
+            email 
+          });
+          return email || null;
+        }
+      }
+      
+      console.log('❌ No username match found');
+      return null;
     } catch (error) {
       console.error("Error looking up username:", error);
       return null;
@@ -49,16 +77,17 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    console.log('🔐 Attempting login with:', { usernameOrEmail, passwordLength: password.length });
+    console.log('🔐 Attempting login with:', { usernameOrEmail, trimmedInput: usernameOrEmail.trim(), passwordLength: password.length });
     console.log('🔐 Firebase auth object:', auth);
 
     try {
-      let emailToUse = usernameOrEmail;
+      const trimmedInput = usernameOrEmail.trim();
+      let emailToUse = trimmedInput;
       
       // If input is not an email, try to look up the email by username
-      if (!isEmail(usernameOrEmail)) {
+      if (!isEmail(trimmedInput)) {
         console.log('🔍 Input appears to be a username, looking up email...');
-        const foundEmail = await getEmailFromUsername(usernameOrEmail);
+        const foundEmail = await getEmailFromUsername(trimmedInput);
         
         if (!foundEmail) {
           setError("No account found with this username.");

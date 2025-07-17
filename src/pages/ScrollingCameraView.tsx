@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { MdCameraswitch } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
+import CameraPermissionModal from '../components/CameraPermissionModal';
 import './ScrollingCameraView.css';
 
 const ScrollingCameraView: React.FC = () => {
@@ -21,6 +22,7 @@ const ScrollingCameraView: React.FC = () => {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [scrollSpeed, setScrollSpeed] = useState(1);
   const [cameraReady, setCameraReady] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -108,12 +110,12 @@ const ScrollingCameraView: React.FC = () => {
       } catch (err) {
         console.error('❌ Camera/Audio failed:', err);
         const error = err as Error;
-        if (error.name === 'NotAllowedError') {
-          alert('Camera and microphone access denied. Please allow permissions and try again.');
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          setShowPermissionModal(true);
         } else if (error.name === 'NotFoundError') {
           alert('No camera or microphone found. Please check your device.');
         } else {
-          alert('Camera/Audio access failed. Please check permissions and try again.');
+          setShowPermissionModal(true);
         }
       }
     };
@@ -402,6 +404,17 @@ const ScrollingCameraView: React.FC = () => {
 
   return (
     <div className="scrolling-camera-container">
+      {/* Camera Permission Modal */}
+      <CameraPermissionModal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        onRetry={() => {
+          setShowPermissionModal(false);
+          setCameraReady(false);
+          // The startCamera effect will re-run when facingMode changes
+        }}
+      />
+
       {/* Timer */}
       <div className="recording-timer">
         {isRecording && <div className="recording-dot"></div>}
