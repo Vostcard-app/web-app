@@ -192,7 +192,7 @@ body {
 /* ✅ Recording Timer */
 .recording-timer {
   position: absolute;
-  top: 90px;
+  top: 50px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -303,9 +303,8 @@ body {
   align-items: center;
   gap: 8px;
   position: absolute;
-  top: 50%;
+  bottom: 33vh;
   right: 20px;
-  transform: translateY(-50%);
   z-index: 20;
 }
 

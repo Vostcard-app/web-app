@@ -407,20 +407,7 @@ const ScrollingCameraView: React.FC = () => {
         <span>{recordingTime}</span>
       </div>
 
-      {/* Status */}
-      <div style={{
-        position: 'absolute',
-        top: '130px',
-        left: '20px',
-        background: 'rgba(0, 0, 0, 0.7)',
-        color: 'white',
-        padding: '4px 8px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        zIndex: 10
-      }}>
-        📱 Portrait 9:16 • {userLocation ? '📍' : '📍?'} • {cameraReady ? '✅' : '⏳'}
-      </div>
+
 
 
 
