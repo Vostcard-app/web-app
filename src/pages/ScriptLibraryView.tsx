@@ -52,69 +52,71 @@ const ScriptLibraryView: React.FC = () => {
   };
 
   return (
-    <div style={{ 
-      height: '100vh',
-      backgroundColor: '#f5f5f5',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
+    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+      {/* 🔵 Header with Home Icon */}
       <div style={{
-        maxWidth: 1200,
-        margin: '0 auto',
-        width: '100%',
-        height: '100%',
+        backgroundColor: '#07345c',
+        height: '30px',
         display: 'flex',
-        flexDirection: 'column',
-        padding: 20,
-        boxSizing: 'border-box'
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingLeft: '16px',
+        color: 'white',
+        position: 'relative',
+        padding: '15px 0 24px 20px'
       }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>Script Library</h1>
+        
+        {/* Home Button */}
+        <FaHome
+          size={48}
+          style={{
+            cursor: 'pointer',
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => navigate('/home')}
+        />
+      </div>
+
+      {/* Content Area */}
+      <div style={{
+        padding: '20px',
+        height: 'calc(100vh - 120px)',
+        overflowY: 'auto',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto'
+      }}>
+        {/* New Script Button */}
+        <div style={{ marginBottom: 30, display: 'flex', justifyContent: 'flex-end' }}>
           <button 
-            onClick={() => navigate('/home')}
+            onClick={handleCreateNew}
             style={{ 
-              background: '#667eea', 
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
               color: 'white', 
               border: 'none', 
-              padding: 12, 
+              padding: '12px 24px', 
               borderRadius: 10, 
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              gap: 8
             }}
           >
-            <FaHome size={50} />
+            <FaPlus /> New Script
           </button>
-          <h1 style={{ margin: 0, color: '#333' }}>Script Library</h1>
         </div>
-        <button 
-          onClick={handleCreateNew}
-          style={{ 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
-            color: 'white', 
-            border: 'none', 
-            padding: '12px 24px', 
-            borderRadius: 10, 
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
-          }}
-        >
-          <FaPlus /> New Script
-        </button>
-      </div>
 
-      {/* Scripts List */}
-      <div style={{ 
-        flex: 1, 
-        overflowY: 'auto', 
-        paddingRight: 8,
-        marginRight: -8 
-      }}>
+        {/* Scripts List */}
         {!scripts || scripts.length === 0 ? (
           <div style={{ 
             textAlign: 'center', 
@@ -237,7 +239,6 @@ const ScriptLibraryView: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
       </div>
     </div>
   );
