@@ -25,6 +25,7 @@
     "react-icons": "^4.12.0",
     "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.23.0",
+    "use-contacts": "^1.2.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
