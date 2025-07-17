@@ -253,7 +253,8 @@ ${privateUrl}`;
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            cursor: 'pointer' 
+            cursor: 'pointer',
+            marginRight: '15px'
           }} 
           onClick={() => navigate(-1)}
         >
@@ -274,7 +275,7 @@ ${privateUrl}`;
               height: 50, 
               borderRadius: '50%', 
               overflow: 'hidden', 
-              marginRight: 16,
+              marginRight: 2,
               background: '#f0f0f0',
               display: 'flex',
               alignItems: 'center',
@@ -302,7 +303,7 @@ ${privateUrl}`;
               fontSize: '14px',
               textDecoration: 'underline',
               cursor: 'pointer',
-              marginRight: 16,
+              marginRight: 2,
               marginTop: '5px'
             }}
             onClick={() => navigate(`/profile/${vostcard.userID}`)}
@@ -518,7 +519,7 @@ ${privateUrl}`;
 
       {/* Description Link, Flag Icon, and Refresh Icon - All on Same Line */}
       <div style={{ 
-        padding: '10px 20px 20px 20px',
+        padding: '5px 20px 20px 20px',
         display: 'grid',
         gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
