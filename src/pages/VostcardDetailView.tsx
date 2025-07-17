@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
@@ -240,23 +240,41 @@ ${privateUrl}`;
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
           Vōstcard
         </span>
-        <button 
-          style={{ 
-            background: 'rgba(0,0,0,0.10)', 
-            border: 'none', 
-            borderRadius: '50%', 
-            width: 48, 
-            height: 48, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            cursor: 'pointer',
-            marginRight: '15px'
-          }} 
-          onClick={() => navigate('/home')}
-        >
-          <FaHome color="#fff" size={48} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button 
+            style={{ 
+              background: 'rgba(0,0,0,0.10)', 
+              border: 'none', 
+              borderRadius: '50%', 
+              width: 48, 
+              height: 48, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: 'pointer'
+            }} 
+            onClick={() => navigate(-1)}
+          >
+            <FaArrowLeft color="#fff" size={24} />
+          </button>
+          <button 
+            style={{ 
+              background: 'rgba(0,0,0,0.10)', 
+              border: 'none', 
+              borderRadius: '50%', 
+              width: 48, 
+              height: 48, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: 'pointer',
+              marginRight: '15px'
+            }} 
+            onClick={() => navigate('/home')}
+          >
+            <FaHome color="#fff" size={48} />
+          </button>
+        </div>
       </div>
 
       {/* User Info */}
@@ -463,7 +481,7 @@ ${privateUrl}`;
 
       {/* Worth Seeing Rating */}
       <div style={{
-        padding: '20px',
+        padding: '0',
         textAlign: 'center'
       }}>
         <div style={{ 
@@ -511,25 +529,27 @@ ${privateUrl}`;
             position: 'absolute',
             left: '15px'
           }}
-        >cd ~/vostcard-web-app
-
+        >
           <FaFlag size={24} />
         </button>
         
         {/* Description Link - Centered */}
-        <button
+        <div
           onClick={() => setShowDescriptionModal(true)}
           style={{
             background: 'none',
             border: 'none',
             color: '#007aff',
-            fontSize: '18px',
+            fontSize: '28px',
+            fontWeight: 'bold',
             textDecoration: 'underline',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontFamily: 'system-ui, sans-serif',
+            display: 'inline-block'
           }}
         >
           Description
-        </button>
+        </div>
 
         {/* Refresh Button - 20px from right */}
         <button
