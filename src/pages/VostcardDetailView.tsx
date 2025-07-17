@@ -263,7 +263,7 @@ ${privateUrl}`;
 
       {/* User Info */}
       <div style={{ 
-        padding: '20px', 
+        padding: '5px', 
         display: 'flex', 
         alignItems: 'center'
       }}>
@@ -495,7 +495,7 @@ ${privateUrl}`;
         </div>
       </div>
 
-      {/* Description Link and Flag Icon */}
+      {/* Description Link, Flag Icon, and Refresh Button */}
       <div style={{ 
         padding: '20px',
         position: 'relative',
@@ -532,22 +532,17 @@ ${privateUrl}`;
         >
           Description
         </button>
-      </div>
 
-      {/* Refresh Icon */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px 40px'
-      }}>
+        {/* Refresh Button - 20px from right */}
         <button
           onClick={handleRefresh}
           style={{
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#007aff'
+            color: '#007aff',
+            position: 'absolute',
+            right: '20px'
           }}
         >
           <FaSync size={24} />
