@@ -55,20 +55,7 @@ const ZoomControls = () => {
   );
 };
 
-const RecenterControl = ({ actualUserLocation }: { actualUserLocation: [number, number] | null }) => {
-  const map = useMap();
-  const recenter = () => {
-    if (actualUserLocation) {
-      console.log('🎯 Recentering to actual user GPS location:', actualUserLocation);
-      map.setView(actualUserLocation, 16);
-    }
-  };
-  return (
-    <div style={recenterControlStyle}>
-      <button style={zoomButton} onClick={recenter}><FaLocationArrow /></button>
-    </div>
-  );
-};
+
 
 const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) => {
   const map = useMap();
@@ -280,12 +267,7 @@ const zoomButton = {
   }
 };
 
-const recenterControlStyle = {
-  position: 'fixed' as const,
-  bottom: '120px', // Moved back from 25% to 120px
-  right: '16px', // Moved back from 20 to 16px
-  zIndex: 1002,
-};
+
 
 const offerPopupStyle = {
   background: '#f8f9fa',
@@ -314,10 +296,7 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
-  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom' | 'search'>('nearby');
-  const [customDistance, setCustomDistance] = useState(2);
-  const [showAreaSelector, setShowAreaSelector] = useState(false);
-  const [showDistanceSlider, setShowDistanceSlider] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLocation, setSearchLocation] = useState<[number, number] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -483,11 +462,7 @@ const HomeView = () => {
       
       console.log('📍 Loaded vostcards:', postedVostcardsData.length);
       
-      // Apply area preference filter
-      const filteredVostcards = filterVostcardsByArea(postedVostcardsData);
-      console.log(`📍 Filtered to ${filteredVostcards.length} vostcards for area: ${mapAreaPreference}`);
-      
-      setVostcards(filteredVostcards);
+      setVostcards(postedVostcardsData);
       setRetryCount(0); // Reset retry count on success
       setLastUpdateTime(Date.now());
       
@@ -624,91 +599,9 @@ const HomeView = () => {
     loadVostcards(true);
   };
 
-  // Handle area preference change
-  const handleAreaPreferenceChange = (area: 'nearby' | '1-mile' | '5-miles' | 'custom' | 'search') => {
-    setMapAreaPreference(area);
-    setShowAreaSelector(false);
-    if (area === 'custom') {
-      setShowDistanceSlider(true);
-    } else {
-      setShowDistanceSlider(false);
-      loadVostcards(true); // Reload vostcards with new preference
-    }
-  };
 
-  // Handle custom distance change
-  const handleCustomDistanceChange = (distance: number) => {
-    setCustomDistance(distance);
-    loadVostcards(true); // Reload vostcards with new distance
-  };
 
-  // Filter vostcards based on area preference
-  const filterVostcardsByArea = (vostcards: any[]) => {
-    // Use actualUserLocation for filtering if available, otherwise use userLocation
-    const referenceLocation = actualUserLocation || userLocation;
-    if (!referenceLocation) return vostcards;
 
-    switch (mapAreaPreference) {
-      case 'nearby':
-        // Show vostcards within 800m of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(
-            referenceLocation[0], referenceLocation[1],
-            lat, lng
-          );
-          return distance <= 0.8; // 800m = 0.8km radius
-        });
-      
-      case '1-mile':
-        // Show vostcards within 1 mile (1.6km) of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(
-            referenceLocation[0], referenceLocation[1],
-            lat, lng
-          );
-          return distance <= 1.6; // 1 mile = 1.6km radius
-        });
-      
-      case '5-miles':
-        // Show vostcards within 5 miles (8km) of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(
-            referenceLocation[0], referenceLocation[1],
-            lat, lng
-          );
-          return distance <= 8; // 5 miles = 8km radius
-        });
-      
-      case 'custom':
-        // Show vostcards within the custom distance of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(
-            referenceLocation[0], referenceLocation[1],
-            lat, lng
-          );
-          return distance <= customDistance;
-        });
-      
-      default:
-        return vostcards;
-    }
-  };
 
   // Filtering logic for Vostcards by category
   const filterVostcardsByCategory = (vostcards: any[]) => {
@@ -739,15 +632,11 @@ const HomeView = () => {
       if (isMenuOpen && !target.closest('[data-menu]')) {
         setIsMenuOpen(false);
       }
-      // Close area selector when clicking outside
-      if (showAreaSelector && !target.closest('[data-area-selector]')) {
-        setShowAreaSelector(false);
-      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMenuOpen, showAreaSelector]);
+  }, [isMenuOpen]);
 
   const menuItems = [
     { label: 'Browse Area', route: '/browse-area' },
@@ -812,7 +701,7 @@ const HomeView = () => {
   };
 
   // Update the filteredVostcards definition
-  const filteredVostcards = singleVostcard ? [singleVostcard] : filterVostcardsByCategory(filterVostcardsByArea(vostcards));
+  const filteredVostcards = singleVostcard ? [singleVostcard] : filterVostcardsByCategory(vostcards);
 
   return (
     <div style={{ 
@@ -925,138 +814,10 @@ const HomeView = () => {
                   <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
                   Offers
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowAreaSelector(!showAreaSelector)}
-                  style={{
-                    ...listViewButton,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    height: '48px',
-                    fontSize: '16px',
-                    textAlign: 'center',
-                  }}
-                >
-                  {mapAreaPreference === 'nearby' && <><span style={{ marginRight: '8px' }}>🚶</span>Near</>}
-                  {mapAreaPreference === '1-mile' && <><span style={{ marginRight: '8px' }}>🏃</span>Medium</>}
-                  {mapAreaPreference === '5-miles' && <><span style={{ marginRight: '8px' }}>🏃</span>Far</>}
-                  {mapAreaPreference === 'custom' && <><span style={{ marginRight: '8px' }}>📍</span>Custom</>}
-                </button>
               </div>
             )}
 
-            {/* Area Selector Dropdown and Custom Distance Slider - Only show when not in single vostcard mode */}
-            {!singleVostcard && (showAreaSelector || showDistanceSlider) && (
-              <div
-                style={{
-                  position: 'fixed',
-                  top: '150px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  zIndex: 1003
-                }}
-                data-area-selector
-              >
-                {/* Custom Distance Slider */}
-                {showDistanceSlider && (
-                  <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                    padding: '16px',
-                    minWidth: '200px',
-                  }}>
-                    <div style={{ marginBottom: '12px', textAlign: 'center' }}>
-                      <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
-                        Custom Distance
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>
-                        {customDistance} mile{customDistance !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="10"
-                      step="0.5"
-                      value={customDistance}
-                      onChange={(e) => handleCustomDistanceChange(parseFloat(e.target.value))}
-                      style={{
-                        width: '100%',
-                        height: '6px',
-                        borderRadius: '3px',
-                        background: '#e0e0e0',
-                        outline: 'none',
-                        WebkitAppearance: 'none',
-                        appearance: 'none'
-                      }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                      <span>0.5</span>
-                      <span>10</span>
-                    </div>
-                    <button
-                      onClick={() => setShowDistanceSlider(false)}
-                      style={{
-                        backgroundColor: '#002B4D',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '8px 16px',
-                        marginTop: '12px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        width: '100%'
-                      }}
-                    >
-                      Done
-                    </button>
-                  </div>
-                )}
 
-                {/* Area Selector */}
-                {showAreaSelector && !showDistanceSlider && (
-                  <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                    padding: '8px 0',
-                    minWidth: '140px',
-                  }}>
-                    {[
-                      { key: 'nearby', label: '🚶 Near', description: 'Within 800m / .5 miles' },
-                      { key: '1-mile', label: '🏃 Medium', description: 'Within 1 mile /1.6k' },
-                      { key: '5-miles', label: '🏃 Far', description: 'Within 5 miles/ 8k' },
-                      { key: 'custom', label: '📍 Custom', description: 'Custom distance' }
-                    ].map((option) => (
-                      <button
-                        key={option.key}
-                        onClick={() => handleAreaPreferenceChange(option.key as any)}
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          border: 'none',
-                          background: 'none',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          color: mapAreaPreference === option.key ? '#002B4D' : '#333',
-                          fontWeight: mapAreaPreference === option.key ? '600' : '400',
-                          borderBottom: '1px solid #f0f0f0'
-                        }}
-                      >
-                        <div style={{ fontWeight: '600' }}>{option.label}</div>
-                        <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                          {option.description}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Map Container */}
             <div style={{
@@ -1145,7 +906,6 @@ const HomeView = () => {
                   })}
 
                   <ZoomControls />
-                  <RecenterControl actualUserLocation={actualUserLocation} />
                   <MapCenter userLocation={userLocation} />
                 </MapContainer>
               )}

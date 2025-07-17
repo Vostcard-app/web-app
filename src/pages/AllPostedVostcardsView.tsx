@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser } from 'react-icons/fa';
+import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaLocationArrow } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import FollowButton from '../components/FollowButton';
 import { RatingService, type RatingStats } from '../services/ratingService';
+import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
 
 interface Vostcard {
   id: string;
@@ -22,8 +23,46 @@ const AllPostedVostcardsView: React.FC = () => {
   const [likeCounts, setLikeCounts] = useState<{ [vostcardId: string]: number }>({});
   const [likedStatus, setLikedStatus] = useState<{ [vostcardId: string]: boolean }>({});
   const [ratingStats, setRatingStats] = useState<{ [vostcardId: string]: RatingStats }>({});
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom'>('nearby');
+  const [customDistance, setCustomDistance] = useState(2);
+  const [showAreaSelector, setShowAreaSelector] = useState(false);
+  const [showDistanceSlider, setShowDistanceSlider] = useState(false);
   const navigate = useNavigate();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+
+  // Calculate distance between two points using Haversine formula
+  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }, []);
+
+  // Get distance to vostcard
+  const getDistanceToVostcard = useCallback((vostcard: Vostcard): string => {
+    if (!userLocation) return '-- km away';
+    
+    const lat = vostcard.latitude || vostcard.geo?.latitude;
+    const lng = vostcard.longitude || vostcard.geo?.longitude;
+    
+    if (!lat || !lng) return '-- km away';
+    
+    const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+    
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m away`;
+    } else {
+      return `${distance.toFixed(1)} km away`;
+    }
+  }, [userLocation, calculateDistance]);
 
   // Load like and rating data for each vostcard
   const loadData = useCallback(async (vostcardIds: string[]) => {
@@ -162,6 +201,123 @@ const AllPostedVostcardsView: React.FC = () => {
     }
   }, [toggleLike]);
 
+  // Get user location
+  const getUserLocation = useCallback(async () => {
+    setLocationLoading(true);
+    setLocationError(null);
+    
+    try {
+      console.log('📍 Getting user location for distance calculations...');
+      const location = await LocationService.getCurrentLocation();
+      
+      const locationCoords: [number, number] = [location.latitude, location.longitude];
+      console.log('📍 User location acquired:', locationCoords, `(${location.source})`);
+      
+      setUserLocation(locationCoords);
+      setLocationError(null);
+      
+    } catch (error) {
+      console.error('❌ Location error:', error);
+      const locationError = error as LocationError;
+      setLocationError(locationError.userFriendlyMessage);
+      
+      // Use fallback location
+      const fallback = LocationService.getFallbackLocation();
+      const fallbackCoords: [number, number] = [fallback.latitude, fallback.longitude];
+      setUserLocation(fallbackCoords);
+    } finally {
+      setLocationLoading(false);
+    }
+  }, []);
+
+  // Get user location on component mount
+  useEffect(() => {
+    getUserLocation();
+  }, [getUserLocation]);
+
+  // Close area selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (showAreaSelector && !target.closest('[data-area-selector]')) {
+        setShowAreaSelector(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showAreaSelector]);
+
+  // Handle area preference change
+  const handleAreaPreferenceChange = (area: 'nearby' | '1-mile' | '5-miles' | 'custom') => {
+    setMapAreaPreference(area);
+    setShowAreaSelector(false);
+    if (area === 'custom') {
+      setShowDistanceSlider(true);
+    } else {
+      setShowDistanceSlider(false);
+    }
+  };
+
+  // Handle custom distance change
+  const handleCustomDistanceChange = (distance: number) => {
+    setCustomDistance(distance);
+  };
+
+  // Filter vostcards based on area preference
+  const filterVostcardsByArea = (vostcards: Vostcard[]): Vostcard[] => {
+    if (!userLocation) return vostcards;
+
+    switch (mapAreaPreference) {
+      case 'nearby':
+        // Show vostcards within 800m of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+          return distance <= 0.8; // 800m = 0.8km radius
+        });
+      
+      case '1-mile':
+        // Show vostcards within 1 mile (1.6km) of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+          return distance <= 1.6; // 1 mile = 1.6km radius
+        });
+      
+      case '5-miles':
+        // Show vostcards within 5 miles (8km) of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+          return distance <= 8; // 5 miles = 8km radius
+        });
+      
+      case 'custom':
+        // Show vostcards within the custom distance of user location
+        return vostcards.filter(v => {
+          const lat = v.latitude || v.geo?.latitude;
+          const lng = v.longitude || v.geo?.longitude;
+          if (!lat || !lng) return false;
+          
+          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+          return distance <= customDistance;
+        });
+      
+      default:
+        return vostcards;
+    }
+  };
+
   // Count by platform (mocked as all Web for now)
   const iosCount = 0;
   const webCount = vostcards.length;
@@ -178,6 +334,13 @@ const AllPostedVostcardsView: React.FC = () => {
         overflow: 'hidden'
       }}
     >
+      {/* Add CSS animation for spinning icon */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
       {/* Header */}
       <div style={{
         background: '#002B4D',
@@ -191,19 +354,132 @@ const AllPostedVostcardsView: React.FC = () => {
         zIndex: 10
       }}>
         <div style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 1 }}>Vōstcard</div>
-        <button
-          style={{ 
-            background: 'none', 
-            border: 'none', 
-            color: 'white', 
-            fontSize: 50,
-            cursor: 'pointer' 
-          }}
-          onClick={() => navigate('/home')}
-        >
-          <FaHome />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: 'white', 
+              fontSize: 50,
+              cursor: 'pointer' 
+            }}
+            onClick={() => navigate('/home')}
+          >
+            <FaHome />
+          </button>
+        </div>
       </div>
+
+      {/* Area Selector Dropdown and Custom Distance Slider */}
+      {(showAreaSelector || showDistanceSlider) && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '90px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100
+          }}
+          data-area-selector
+        >
+          {/* Custom Distance Slider */}
+          {showDistanceSlider && (
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              padding: '16px',
+              minWidth: '200px',
+            }}>
+              <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
+                  Custom Distance
+                </div>
+                <div style={{ fontSize: '12px', color: '#666' }}>
+                  {customDistance} mile{customDistance !== 1 ? 's' : ''}
+                </div>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="10"
+                step="0.5"
+                value={customDistance}
+                onChange={(e) => handleCustomDistanceChange(parseFloat(e.target.value))}
+                style={{
+                  width: '100%',
+                  height: '6px',
+                  borderRadius: '3px',
+                  background: '#e0e0e0',
+                  outline: 'none',
+                  WebkitAppearance: 'none',
+                  appearance: 'none'
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                <span>0.5</span>
+                <span>10</span>
+              </div>
+              <button
+                onClick={() => setShowDistanceSlider(false)}
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '8px 16px',
+                  marginTop: '12px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  width: '100%'
+                }}
+              >
+                Done
+              </button>
+            </div>
+          )}
+
+          {/* Area Selector */}
+          {showAreaSelector && !showDistanceSlider && (
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              padding: '8px 0',
+              minWidth: '140px',
+            }}>
+              {[
+                { key: 'nearby', label: '🚶 Near', description: 'Within 800m / .5 miles' },
+                { key: '1-mile', label: '🏃 Medium', description: 'Within 1 mile /1.6k' },
+                { key: '5-miles', label: '🏃 Far', description: 'Within 5 miles/ 8k' },
+                { key: 'custom', label: '📍 Custom', description: 'Custom distance' }
+              ].map((option) => (
+                <button
+                  key={option.key}
+                  onClick={() => handleAreaPreferenceChange(option.key as any)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    color: mapAreaPreference === option.key ? '#002B4D' : '#333',
+                    fontWeight: mapAreaPreference === option.key ? '600' : '400',
+                    borderBottom: '1px solid #f0f0f0'
+                  }}
+                >
+                  <div style={{ fontWeight: '600' }}>{option.label}</div>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                    {option.description}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Summary Bar */}
       <div style={{
@@ -215,12 +491,37 @@ const AllPostedVostcardsView: React.FC = () => {
       }}>
         <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>Nearby Vōstcards</div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
-          <span style={{ fontWeight: 600 }}>Total: {vostcards.length}</span>
-          <span style={{ marginLeft: 12, color: '#888', fontSize: 14 }}>
-            Last updated: {lastUpdated ? `${Math.round((Date.now() - lastUpdated.getTime()) / 1000)} sec` : '--'}
+          <span style={{ fontWeight: 600 }}>
+            {(() => {
+              const filtered = filterVostcardsByArea(vostcards);
+              return filtered.length === vostcards.length 
+                ? `Total: ${vostcards.length}`
+                : `Showing: ${filtered.length} of ${vostcards.length}`;
+            })()}
           </span>
-          <span style={{ marginLeft: 12, color: '#888', fontSize: 14 }}>iOS: {iosCount}  B7 Web: {webCount}</span>
-          <FaInfoCircle style={{ marginLeft: 'auto', color: '#1976d2', fontSize: 18 }} />
+          {/* Area Preference Button */}
+          <button
+            style={{ 
+              background: '#f0f0f0', 
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              color: '#333', 
+              fontSize: 14,
+              padding: '6px 10px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+              marginLeft: 'auto'
+            }}
+            onClick={() => setShowAreaSelector(!showAreaSelector)}
+          >
+            {mapAreaPreference === 'nearby' && <><span>🚶</span>Near</>}
+            {mapAreaPreference === '1-mile' && <><span>🏃</span>Medium</>}
+            {mapAreaPreference === '5-miles' && <><span>🏃</span>Far</>}
+            {mapAreaPreference === 'custom' && <><span>📍</span>Custom</>}
+          </button>
         </div>
       </div>
 
@@ -240,7 +541,7 @@ const AllPostedVostcardsView: React.FC = () => {
         ) : vostcards.length === 0 ? (
           <div style={{ textAlign: 'center', marginTop: 40, color: '#888' }}>No posted Vostcards found.</div>
         ) : (
-          vostcards.map((v, idx) => (
+          filterVostcardsByArea(vostcards).map((v, idx) => (
             <React.Fragment key={v.id}>
               <div
                 style={{
@@ -280,8 +581,54 @@ const AllPostedVostcardsView: React.FC = () => {
                   }
                 }}
               >
+                {/* Creator Avatar and Username - Upper Left */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 12 }}>
+                  {v.avatarURL ? (
+                    <img 
+                      src={v.avatarURL} 
+                      alt="Creator Avatar" 
+                      style={{ 
+                        width: 32, 
+                        height: 32, 
+                        borderRadius: '50%', 
+                        objectFit: 'cover',
+                        border: '2px solid #e0e0e0'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    style={{ 
+                      width: 32, 
+                      height: 32, 
+                      borderRadius: '50%', 
+                      backgroundColor: '#e0e0e0',
+                      display: v.avatarURL ? 'none' : 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#666',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      border: '2px solid #e0e0e0'
+                    }}
+                  >
+                    <FaUser />
+                  </div>
+                  <div style={{ 
+                    color: '#444', 
+                    fontSize: 14, 
+                    fontWeight: 500 
+                  }}>
+                    {v.username || 'Unknown'}
+                  </div>
+                </div>
+
                 <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 2 }}>{v.title || 'Untitled'}</div>
-                <div style={{ color: '#888', fontSize: 15, marginBottom: 2 }}>0.0 km away</div>
+                <div style={{ color: '#888', fontSize: 15, marginBottom: 2 }}>{getDistanceToVostcard(v)}</div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                   <div style={{ color: '#444', fontSize: 15 }}>By {v.username || 'Unknown'}</div>
                   {v.userID && (
@@ -361,6 +708,32 @@ const AllPostedVostcardsView: React.FC = () => {
         <button style={{ background: '#e0e0e0', color: '#333', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 18, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
           <FaTimes /> Clear
         </button>
+        
+        {/* Update Location Button */}
+        <button
+          style={{ 
+            background: locationLoading ? '#ccc' : '#f0f0f0', 
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            color: locationError ? '#ffcc00' : '#333', 
+            fontSize: 18,
+            padding: '10px 16px',
+            cursor: locationLoading ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}
+          onClick={getUserLocation}
+          disabled={locationLoading}
+          title={locationError ? `Location Error: ${locationError}` : 'Update location for distance calculations'}
+        >
+          <FaLocationArrow style={{ 
+            color: locationError ? '#ffcc00' : '#333',
+            animation: locationLoading ? 'spin 1s linear infinite' : 'none'
+          }} />
+        </button>
+        
         <button style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 18, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
           <FaFilter /> Filter
         </button>
