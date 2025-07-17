@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
+import { FaHome } from 'react-icons/fa';
 import { useScripts } from '../context/ScriptContext';
 import { useVostcard } from '../context/VostcardContext';
 
@@ -71,63 +72,74 @@ export default function ScriptToolView() {
   };
 
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        background: "#fff",
-        overflow: "hidden"
-      }}
-    >
-      {/* Scrollable content area */}
+    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+      {/* 🔵 Header with Home Icon */}
       <div style={{
-        flex: 1,
-        overflow: "auto",
-        WebkitOverflowScrolling: "touch",
-        paddingBottom: 180
+        backgroundColor: '#07345c',
+        height: '30px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingLeft: '16px',
+        color: 'white',
+        position: 'relative',
+        padding: '15px 0 24px 20px'
+      }}>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>Script</h1>
+        
+        {/* Home Button */}
+        <FaHome
+          size={48}
+          style={{
+            cursor: 'pointer',
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => navigate('/home')}
+        />
+      </div>
+
+      {/* Content Area */}
+      <div style={{
+        padding: '20px',
+        height: 'calc(100vh - 120px)',
+        overflowY: 'auto',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto'
       }}>
         <div style={{
           width: "100%",
           maxWidth: 500,
           margin: "0 auto",
-          padding: 24,
           boxSizing: "border-box"
         }}>
-        {/* Header */}
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: 16
-        }}>
-          <button onClick={() => window.history.back()} style={{
-            background: "none",
-            border: "none",
-            color: "#007aff",
-            fontSize: 20,
-            marginRight: 8,
-            cursor: "pointer"
-          }}>{"< Back"}</button>
-          <h2 style={{ margin: 0, flex: 1, textAlign: "center" }}>Script</h2>
-        </div>
 
-        {/* Script Library Button */}
-        <button 
-          onClick={() => navigate('/script-library')}
-          style={{
-            width: "100%",
-            background: "#007aff",
-            color: "white",
-            padding: 12,
-            borderRadius: 8,
-            fontSize: 20,
-            marginBottom: 16,
-            border: "none",
-            cursor: "pointer"
-          }}
-        >
-          Script Library
-        </button>
+          {/* Script Library Button */}
+          <button 
+            onClick={() => navigate('/script-library')}
+            style={{
+              width: "100%",
+              background: "#07345c",
+              color: "white",
+              padding: 12,
+              borderRadius: 8,
+              fontSize: 20,
+              marginBottom: 16,
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            Script Library
+          </button>
 
 
 
@@ -214,7 +226,7 @@ export default function ScriptToolView() {
             }}
             style={{
               width: "100%",
-              background: script.trim() ? "#007aff" : "#888",
+              background: script.trim() ? "#07345c" : "#888",
               color: "white",
               padding: 16,
               borderRadius: 8,

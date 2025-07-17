@@ -101,7 +101,7 @@ const ScriptLibraryView: React.FC = () => {
           <button 
             onClick={handleCreateNew}
             style={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+              background: '#07345c', 
               color: 'white', 
               border: 'none', 
               padding: '12px 24px', 
@@ -130,7 +130,7 @@ const ScriptLibraryView: React.FC = () => {
             <button 
               onClick={handleCreateNew}
               style={{ 
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+                background: '#07345c', 
                 color: 'white', 
                 border: 'none', 
                 padding: '12px 24px', 
@@ -191,7 +191,7 @@ const ScriptLibraryView: React.FC = () => {
                     <button
                       onClick={() => handleUseScript(script)}
                       style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: '#07345c',
                         color: 'white',
                         border: 'none',
                         padding: '8px 16px',

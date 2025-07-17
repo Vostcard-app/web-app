@@ -17,7 +17,8 @@ interface BusinessAddress {
 }
 
 // Import the new location service
-import { LocationService, LocationResult, LocationError } from '../utils/locationService';
+import { LocationService } from '../utils/locationService';
+import type { LocationResult, LocationError } from '../utils/locationService';
 
 const EditStoreProfileView: React.FC = () => {
   const [storeName, setStoreName] = useState("");

@@ -112,90 +112,72 @@ const ScriptEditorView: React.FC = () => {
   };
 
   return (
-    <div style={{ 
-      maxWidth: 1000, 
-      margin: '0 auto', 
-      padding: 20,
-      minHeight: '100vh',
-      backgroundColor: '#f5f5f5'
-    }}>
-      {/* Header */}
-      <div style={{ 
-        marginBottom: 20, 
-        background: 'white', 
-        padding: 20, 
-        borderRadius: 15, 
-        boxShadow: '0 8px 32px rgba(0,0,0,0.1)' 
+    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+      {/* 🔵 Header with Home Icon */}
+      <div style={{
+        backgroundColor: '#07345c',
+        height: '30px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingLeft: '16px',
+        color: 'white',
+        position: 'relative',
+        padding: '15px 0 24px 20px'
       }}>
-        {/* First Line: Back/Home Icons and Save Script */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: 15 
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-            <button 
-              onClick={handleBack}
-              style={{ 
-                background: '#667eea', 
-                color: 'white', 
-                border: 'none', 
-                padding: 12, 
-                borderRadius: 10, 
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <FaArrowLeft size={20} />
-            </button>
-            <button 
-              onClick={() => navigate('/home')}
-              style={{ 
-                background: '#667eea', 
-                color: 'white', 
-                border: 'none', 
-                padding: 12, 
-                borderRadius: 10, 
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <FaHome size={20} />
-            </button>
-          </div>
-          
+        <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
           <button 
-            onClick={handleSave}
-            disabled={saving || !title.trim() || !content.trim()}
+            onClick={handleBack}
             style={{ 
-              background: (!title.trim() || !content.trim() || saving) ? '#ccc' : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)', 
+              background: 'rgba(255, 255, 255, 0.1)', 
               color: 'white', 
               border: 'none', 
-              padding: '12px 24px', 
-              borderRadius: 10, 
-              cursor: (!title.trim() || !content.trim() || saving) ? 'not-allowed' : 'pointer',
+              padding: 8, 
+              borderRadius: 8, 
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 8
+              justifyContent: 'center'
             }}
           >
-            <FaSave /> {saving ? 'Saving...' : 'Save Script'}
+            <FaArrowLeft size={18} />
           </button>
-        </div>
-        
-        {/* Second Line: Title */}
-        <div>
-          <h1 style={{ margin: 0, color: '#333' }}>
-            {isNewScript ? 'Create New Script' : 'Edit Script'}
+          <h1 style={{ fontSize: '30px', margin: 0 }}>
+            {isNewScript ? 'New Script' : 'Edit Script'}
           </h1>
         </div>
+        
+        {/* Home Button */}
+        <FaHome
+          size={48}
+          style={{
+            cursor: 'pointer',
+            position: 'absolute',
+            right: 44,
+            top: 15,
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={() => navigate('/home')}
+        />
       </div>
 
+      {/* Content Area */}
+      <div style={{
+        maxWidth: 1000,
+        margin: '0 auto',
+        padding: 20,
+        height: 'calc(100vh - 120px)',
+        overflowY: 'auto',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto'
+      }}>
       {/* Editor Content */}
       <div style={{ 
         background: 'white', 
@@ -249,7 +231,7 @@ const ScriptEditorView: React.FC = () => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Write your script content here..."
-            rows={15}
+            rows={10}
             style={{
               width: '100%',
               padding: '16px',
@@ -337,6 +319,7 @@ const ScriptEditorView: React.FC = () => {
             <FaSave /> {saving ? 'Saving...' : 'Save Script'}
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

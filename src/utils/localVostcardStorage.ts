@@ -1,4 +1,4 @@
-import { Vostcard } from '../context/VostcardContext';
+import type { Vostcard } from '../context/VostcardContext';
 
 // IndexedDB configuration (matching VostcardContext.tsx)
 const DB_NAME = 'VostcardDB';
