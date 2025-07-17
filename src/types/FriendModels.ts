@@ -75,6 +75,48 @@ export interface FriendActivity {
   data?: any; // Additional data specific to activity type
 }
 
+export interface InvitationRequest {
+  id: string;
+  senderUID: string;
+  senderUsername: string;
+  senderEmail: string;
+  senderAvatarURL?: string;
+  inviteeEmail?: string;
+  inviteePhone?: string;
+  inviteeWhatsApp?: string;
+  inviteMethod: 'email' | 'sms' | 'whatsapp';
+  message?: string;
+  inviteCode: string; // Unique code for tracking
+  status: 'pending' | 'accepted' | 'expired' | 'cancelled';
+  createdAt: Date;
+  sentAt?: Date;
+  acceptedAt?: Date;
+  expiresAt: Date;
+  registeredUserUID?: string; // Set when invitee registers
+}
+
+export interface InvitationLink {
+  inviteCode: string;
+  senderUID: string;
+  senderUsername: string;
+  expiresAt: Date;
+  isUsed: boolean;
+  usedByUID?: string;
+  usedAt?: Date;
+}
+
+export interface InvitationStats {
+  totalSent: number;
+  totalAccepted: number;
+  totalPending: number;
+  totalExpired: number;
+  invitesByMethod: {
+    email: number;
+    sms: number;
+    whatsapp: number;
+  };
+}
+
 // Constants for better type safety
 export const FriendRequestStatus = {
   PENDING: 'pending',
