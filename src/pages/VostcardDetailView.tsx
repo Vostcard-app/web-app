@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -9,7 +9,6 @@ import CommentsModal from '../components/CommentsModal';
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { fixBrokenSharedVostcard } = useVostcard();
   
   const [vostcard, setVostcard] = useState<any>(null);
@@ -24,26 +23,7 @@ const VostcardDetailView: React.FC = () => {
   const [userRating, setUserRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   
-  // Swipe navigation state
-  const [vostcardList, setVostcardList] = useState<string[]>([]);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null);
-  
   const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Initialize swipe navigation from location state
-  useEffect(() => {
-    const navigationState = location.state as any;
-    if (navigationState?.vostcardList && navigationState?.currentIndex !== undefined) {
-      setVostcardList(navigationState.vostcardList);
-      setCurrentIndex(navigationState.currentIndex);
-      console.log('📱 Swipe navigation enabled:', {
-        list: navigationState.vostcardList,
-        current: navigationState.currentIndex
-      });
-    }
-  }, [location.state]);
 
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -179,77 +159,6 @@ ${privateUrl}`;
     alert('Flag functionality not implemented yet');
   };
 
-  // Swipe navigation functions
-  const navigateToVostcard = (index: number) => {
-    if (index >= 0 && index < vostcardList.length) {
-      const newVostcardId = vostcardList[index];
-      console.log('📱 Navigating to vostcard:', newVostcardId, 'at index:', index);
-      
-      navigate(`/vostcard/${newVostcardId}`, {
-        state: {
-          vostcardList,
-          currentIndex: index
-        },
-        replace: true
-      });
-    }
-  };
-
-  const handleSwipeUp = () => {
-    // Swipe up = previous vostcard
-    const prevIndex = currentIndex - 1;
-    if (prevIndex >= 0) {
-      navigateToVostcard(prevIndex);
-    } else {
-      console.log('📱 At first vostcard, cannot go up');
-    }
-  };
-
-  const handleSwipeDown = () => {
-    // Swipe down = next vostcard
-    const nextIndex = currentIndex + 1;
-    if (nextIndex < vostcardList.length) {
-      navigateToVostcard(nextIndex);
-    } else {
-      console.log('📱 At last vostcard, cannot go down');
-    }
-  };
-
-  // Touch event handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distanceX = touchStart.x - touchEnd.x;
-    const distanceY = touchStart.y - touchEnd.y;
-    const isVerticalSwipe = Math.abs(distanceY) > Math.abs(distanceX);
-    const minSwipeDistance = 50;
-    
-    if (isVerticalSwipe && Math.abs(distanceY) > minSwipeDistance && vostcardList.length > 1) {
-      if (distanceY > 0) {
-        // Swiped up
-        handleSwipeUp();
-      } else {
-        // Swiped down
-        handleSwipeDown();
-      }
-    }
-  };
-
   if (loading) {
     return (
       <div style={{ 
@@ -321,9 +230,6 @@ ${privateUrl}`;
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
       }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Header */}
       <div style={{ 
