@@ -755,6 +755,8 @@ const HomeView = () => {
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
+    { label: 'Vōstbox', route: '/vostbox' },
+    { label: 'Friend List', route: '/friends' },
     { label: 'Script tool', route: '/script-library' },
     ...(userRole === 'admin' ? [{ label: 'Admin Panel', route: '/admin' }] : []), // Add admin panel for admins
     { label: 'Suggestion Box', route: '/suggestion-box' },

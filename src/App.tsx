@@ -48,6 +48,8 @@ import { AuthRedirect } from './components/AuthRedirect';
 import PublicVostcardView from './pages/PublicVostcardView';
 import EmailVostcardView from './pages/EmailVostcardView';
 import AdminPanel from './pages/AdminPanel';
+import FriendListView from './pages/FriendListView';
+import VostboxView from './pages/VostboxView';
 
 function App() {
   return (
@@ -82,6 +84,8 @@ function App() {
                   <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
                   <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
                   <Route path="/following" element={<FollowingView />} />
+                  <Route path="/friends" element={<FriendListView />} />
+                  <Route path="/vostbox" element={<VostboxView />} />
 
                   {/* 📜 Script Management */}
                   <Route path="/scripts" element={<ScriptLibraryView />} />
