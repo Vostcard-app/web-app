@@ -20,7 +20,7 @@ const ScriptEditorView: React.FC = () => {
   }, [loadScripts]);
 
   useEffect(() => {
-    if (scriptId && scripts.length > 0) {
+    if (scriptId && scriptId !== 'new' && scripts.length > 0) {
       // Editing existing script
       const script = scripts.find(s => s.id === scriptId);
       if (script) {
@@ -33,7 +33,7 @@ const ScriptEditorView: React.FC = () => {
         alert('Script not found');
         navigate('/script-library');
       }
-    } else if (!scriptId) {
+    } else if (!scriptId || scriptId === 'new') {
       // Creating new script
       setTitle('');
       setContent('');
