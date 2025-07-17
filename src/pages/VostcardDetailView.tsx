@@ -253,8 +253,7 @@ ${privateUrl}`;
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            cursor: 'pointer',
-            marginRight: '15px'
+            cursor: 'pointer' 
           }} 
           onClick={() => navigate(-1)}
         >
@@ -268,27 +267,48 @@ ${privateUrl}`;
         display: 'flex', 
         alignItems: 'center'
       }}>
-        <div style={{ 
-          width: 50, 
-          height: 50, 
-          borderRadius: '50%', 
-          overflow: 'hidden', 
-          marginRight: 16,
-          background: '#f0f0f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          {userProfile?.avatarURL ? (
-            <img 
-              src={userProfile.avatarURL} 
-              alt="User Avatar" 
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-            />
-          ) : (
-            <FaUserCircle size={50} color="#ccc" />
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div 
+            style={{ 
+              width: 50, 
+              height: 50, 
+              borderRadius: '50%', 
+              overflow: 'hidden', 
+              marginRight: 16,
+              background: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+            onClick={() => navigate(`/profile/${vostcard.userID}`)}
+          >
+            {userProfile?.avatarURL ? (
+              <img 
+                src={userProfile.avatarURL} 
+                alt="User Avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+              />
+            ) : (
+              <FaUserCircle size={50} color="#ccc" />
+            )}
+          </div>
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#007aff',
+              fontSize: '14px',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              marginRight: 16,
+              marginTop: '5px'
+            }}
+            onClick={() => navigate(`/profile/${vostcard.userID}`)}
+          >
+            View Profile
+          </button>
         </div>
         <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
           {vostcard.username || 'Anonymous'}
