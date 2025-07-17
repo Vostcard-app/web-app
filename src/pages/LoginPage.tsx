@@ -1,22 +1,47 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase/firebaseConfig";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "../firebase/firebaseConfig";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Helper function to check if input is an email
+  const isEmail = (input: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(input);
+  };
+
+  // Helper function to get email from username
+  const getEmailFromUsername = async (username: string): Promise<string | null> => {
+    try {
+      const q = query(collection(db, "users"), where("username", "==", username));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        return null;
+      }
+      
+      const userDoc = querySnapshot.docs[0];
+      return userDoc.data().email || null;
+    } catch (error) {
+      console.error("Error looking up username:", error);
+      return null;
+    }
+  };
+
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault();
     }
 
-    if (!email || !password) {
+    if (!usernameOrEmail || !password) {
       setError("Please fill in all fields");
       return;
     }
@@ -24,11 +49,28 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    console.log('🔐 Attempting login with:', { email, passwordLength: password.length });
+    console.log('🔐 Attempting login with:', { usernameOrEmail, passwordLength: password.length });
     console.log('🔐 Firebase auth object:', auth);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      let emailToUse = usernameOrEmail;
+      
+      // If input is not an email, try to look up the email by username
+      if (!isEmail(usernameOrEmail)) {
+        console.log('🔍 Input appears to be a username, looking up email...');
+        const foundEmail = await getEmailFromUsername(usernameOrEmail);
+        
+        if (!foundEmail) {
+          setError("No account found with this username.");
+          setLoading(false);
+          return;
+        }
+        
+        emailToUse = foundEmail;
+        console.log('✅ Found email for username:', emailToUse);
+      }
+
+      await signInWithEmailAndPassword(auth, emailToUse, password);
       console.log('✅ Login successful');
       // Auth redirect will handle navigation
     } catch (err: any) {
@@ -40,7 +82,7 @@ export default function LoginPage() {
       if (err.code) {
         switch (err.code) {
           case 'auth/user-not-found':
-            errorMessage = "No account found with this email address.";
+            errorMessage = "No account found with this email address or username.";
             break;
           case 'auth/wrong-password':
             errorMessage = "Incorrect password. Please try again.";
@@ -134,12 +176,12 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Email Input */}
+        {/* Username or Email Input */}
         <input
-          type="email" // Changed from "text" to "email"
+          type="text"
           placeholder="Username or Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={usernameOrEmail}
+          onChange={(e) => setUsernameOrEmail(e.target.value)}
           style={{
             width: '90%',
             maxWidth: 400,

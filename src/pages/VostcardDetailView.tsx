@@ -1,17 +1,25 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft } from 'react-icons/fa';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { fixBrokenSharedVostcard } = useVostcard();
   
+  // Navigation state from previous view
+  const navigationState = location.state as any;
+  const vostcardList = navigationState?.vostcardList || [];
+  const currentIndex = navigationState?.currentIndex || 0;
+  
   const [vostcard, setVostcard] = useState<any>(null);
+  const [availableVostcards, setAvailableVostcards] = useState<string[]>([]);
+  const [currentVostcardIndex, setCurrentVostcardIndex] = useState(0);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +32,32 @@ const VostcardDetailView: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Fetch available vostcards for navigation
+  const fetchAvailableVostcards = async () => {
+    try {
+      const vostcardsQuery = query(
+        collection(db, 'vostcards'),
+        orderBy('createdAt', 'desc')
+      );
+      const vostcardSnapshot = await getDocs(vostcardsQuery);
+      const allVostcardIds = vostcardSnapshot.docs.map(doc => doc.id);
+      
+      setAvailableVostcards(allVostcardIds);
+      
+      // If no navigation state provided, find current vostcard index in fetched list
+      if (!vostcardList.length && id) {
+        const currentIndex = allVostcardIds.findIndex(vostcardId => vostcardId === id);
+        setCurrentVostcardIndex(currentIndex !== -1 ? currentIndex : 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch available vostcards:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAvailableVostcards();
+  }, [id]);
 
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -156,13 +190,65 @@ ${privateUrl}`;
     alert('Flag functionality not implemented yet');
   };
 
+  // Navigation functions
+  const handlePreviousVostcard = () => {
+    if (vostcardList.length > 0) {
+      // Use provided list navigation
+      if (currentIndex > 0) {
+        const previousId = vostcardList[currentIndex - 1];
+        navigate(`/vostcard/${previousId}`, {
+          state: {
+            vostcardList,
+            currentIndex: currentIndex - 1
+          }
+        });
+      }
+    } else {
+      // Use fetched vostcards navigation
+      if (currentVostcardIndex > 0 && availableVostcards.length > 0) {
+        const previousId = availableVostcards[currentVostcardIndex - 1];
+        navigate(`/vostcard/${previousId}`);
+      }
+    }
+  };
+
+  const handleNextVostcard = () => {
+    if (vostcardList.length > 0) {
+      // Use provided list navigation
+      if (currentIndex < vostcardList.length - 1) {
+        const nextId = vostcardList[currentIndex + 1];
+        navigate(`/vostcard/${nextId}`, {
+          state: {
+            vostcardList,
+            currentIndex: currentIndex + 1
+          }
+        });
+      }
+    } else {
+      // Use fetched vostcards navigation
+      if (currentVostcardIndex < availableVostcards.length - 1 && availableVostcards.length > 0) {
+        const nextId = availableVostcards[currentVostcardIndex + 1];
+        navigate(`/vostcard/${nextId}`);
+      }
+    }
+  };
+
+  // Check if navigation is available
+  const canGoToPrevious = vostcardList.length > 0 
+    ? currentIndex > 0 
+    : currentVostcardIndex > 0 && availableVostcards.length > 0;
+  
+  const canGoToNext = vostcardList.length > 0 
+    ? currentIndex < vostcardList.length - 1 
+    : currentVostcardIndex < availableVostcards.length - 1 && availableVostcards.length > 0;
+
   if (loading) {
     return (
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '100vh',
+        height: '100%',
         backgroundColor: 'white'
       }}>
         <div style={{ textAlign: 'center' }}>
@@ -178,7 +264,7 @@ ${privateUrl}`;
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '100vh',
+        height: '100%',
         backgroundColor: 'white'
       }}>
         <div style={{ textAlign: 'center' }}>
@@ -207,7 +293,7 @@ ${privateUrl}`;
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '100vh',
+        height: '100%',
         backgroundColor: 'white'
       }}>
         <div style={{ textAlign: 'center' }}>
@@ -221,8 +307,7 @@ ${privateUrl}`;
     <div
       style={{
         background: '#fff',
-        minHeight: '100vh',
-        maxHeight: '100vh',
+        minHeight: '100%',
         overflowY: 'auto',
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
@@ -275,6 +360,54 @@ ${privateUrl}`;
             <FaHome color="#fff" size={48} />
           </button>
         </div>
+      </div>
+
+      {/* Navigation arrows - upper right below banner */}
+      <div style={{
+        position: 'absolute',
+        top: '88px', // Below the header
+        right: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        zIndex: 10
+      }}>
+        <button
+          onClick={handlePreviousVostcard}
+          disabled={!canGoToPrevious}
+          style={{
+            background: canGoToPrevious ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.3)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: canGoToPrevious ? 'pointer' : 'not-allowed',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }}
+        >
+          <FaArrowUp color="#fff" size={16} />
+        </button>
+        <button
+          onClick={handleNextVostcard}
+          disabled={!canGoToNext}
+          style={{
+            background: canGoToNext ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.3)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: canGoToNext ? 'pointer' : 'not-allowed',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }}
+        >
+          <FaArrowDown color="#fff" size={16} />
+        </button>
       </div>
 
       {/* User Info */}
@@ -579,7 +712,7 @@ ${privateUrl}`;
       {showDescriptionModal && (
         <div
           style={{
-            position: 'fixed',
+            position: 'absolute',
             top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.5)',
             display: 'flex',
@@ -626,7 +759,7 @@ ${privateUrl}`;
       {selectedPhoto && (
         <div
           style={{
-            position: 'fixed',
+            position: 'absolute',
             top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.95)',
             display: 'flex',
@@ -641,8 +774,8 @@ ${privateUrl}`;
             src={selectedPhoto}
             alt="Full size"
             style={{
-              width: '100vw',
-              height: '100vh',
+              width: '100%',
+              height: '100%',
               objectFit: 'contain',
               userSelect: 'none',
             }}
@@ -655,7 +788,7 @@ ${privateUrl}`;
       {showVideoModal && vostcard.videoURL && (
         <div
           style={{
-            position: 'fixed',
+            position: 'absolute',
             top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.9)',
             display: 'flex',
