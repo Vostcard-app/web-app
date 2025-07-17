@@ -20,6 +20,63 @@ export class ContactService {
   }
 
   /**
+   * Get detailed browser/device support information
+   */
+  static getDeviceSupport(): {
+    isSupported: boolean;
+    browserName: string;
+    deviceType: string;
+    supportMessage: string;
+  } {
+    const userAgent = navigator.userAgent;
+    const isAndroid = /Android/i.test(userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+    const isChrome = /Chrome/i.test(userAgent) && !/Edge/i.test(userAgent);
+    const isSafari = /Safari/i.test(userAgent) && !/Chrome/i.test(userAgent);
+    const isFirefox = /Firefox/i.test(userAgent);
+    const isMobile = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+
+    let browserName = 'Unknown';
+    let deviceType = 'Desktop';
+    let supportMessage = '';
+
+    // Determine browser
+    if (isChrome) browserName = 'Chrome';
+    else if (isSafari) browserName = 'Safari';
+    else if (isFirefox) browserName = 'Firefox';
+
+    // Determine device type
+    if (isAndroid) deviceType = 'Android';
+    else if (isIOS) deviceType = 'iOS';
+    else if (isMobile) deviceType = 'Mobile';
+
+    // Check actual API support
+    const isSupported = this.isContactPickerSupported();
+
+    // Generate support message
+    if (isSupported) {
+      supportMessage = `✅ Contact picker supported on ${browserName} ${deviceType}`;
+    } else {
+      if (isAndroid && isChrome) {
+        supportMessage = `⚠️ Contact picker should work on Chrome Android, but API not detected`;
+      } else if (isAndroid) {
+        supportMessage = `❌ Contact picker only works on Chrome browser on Android devices`;
+      } else if (isIOS) {
+        supportMessage = `❌ Contact picker not supported on iOS devices. Try Chrome on Android`;
+      } else {
+        supportMessage = `❌ Contact picker only works on Chrome browser on Android devices`;
+      }
+    }
+
+    return {
+      isSupported,
+      browserName,
+      deviceType,
+      supportMessage
+    };
+  }
+
+  /**
    * Check if we're running in a mobile app context
    */
   static isMobileApp(): boolean {

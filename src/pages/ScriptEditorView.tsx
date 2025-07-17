@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FaArrowLeft, FaHome, FaSave } from 'react-icons/fa';
+import { FaArrowLeft, FaHome, FaSave, FaMagic } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { generateScript } from '../utils/openaiHelper';
 
 const ScriptEditorView: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const ScriptEditorView: React.FC = () => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [polishing, setPolishing] = useState(false);
   const [isNewScript, setIsNewScript] = useState(true);
 
   useEffect(() => {
@@ -89,6 +91,24 @@ const ScriptEditorView: React.FC = () => {
 
   const handleBack = () => {
     navigate('/script-library');
+  };
+
+  const handlePolishScript = async () => {
+    if (!content.trim()) {
+      alert('Please enter some content to polish');
+      return;
+    }
+
+    setPolishing(true);
+    try {
+      const polishedScript = await generateScript(`Polish this script: ${content}`, "Professional");
+      setContent(polishedScript);
+    } catch (err) {
+      console.error('Script polishing error:', err);
+      alert('Failed to polish script. Please try again.');
+    } finally {
+      setPolishing(false);
+    }
   };
 
   return (
@@ -247,6 +267,30 @@ const ScriptEditorView: React.FC = () => {
           marginBottom: 20
         }}>
           {content.length} characters
+        </div>
+
+        {/* Polish Script Button */}
+        <div style={{ marginBottom: 20 }}>
+          <button 
+            onClick={handlePolishScript}
+            disabled={polishing || !content.trim()}
+            style={{ 
+              background: polishing ? '#ccc' : 'linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%)', 
+              color: 'white', 
+              border: 'none', 
+              padding: '12px 20px', 
+              borderRadius: 8, 
+              cursor: (polishing || !content.trim()) ? 'not-allowed' : 'pointer',
+              fontSize: '0.95rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              width: '100%',
+              justifyContent: 'center'
+            }}
+          >
+            <FaMagic /> {polishing ? 'Polishing Script...' : 'Polish My Script with AI'}
+          </button>
         </div>
 
         {/* Action Buttons */}

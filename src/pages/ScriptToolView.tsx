@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { generateScript } from "../utils/openaiHelper";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useScripts } from '../context/ScriptContext';
 import { useVostcard } from '../context/VostcardContext';
 
-const scriptStyles = [
-  "Bullet Points",
-  "Travel Log",
-  "Historical",
-  "Funny"
-];
-
 export default function ScriptToolView() {
   const [topic, setTopic] = useState("");
-  const [style, setStyle] = useState(scriptStyles[0]);
   const [script, setScript] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -48,45 +39,7 @@ export default function ScriptToolView() {
     console.log('Script state changed:', { script, scriptLength: script.length, hasContent: !!script.trim() });
   }, [script]);
 
-  const handleGenerateScript = async () => {
-    if (!topic.trim()) {
-      setError("Please enter a topic");
-      return;
-    }
 
-    setLoading(true);
-    setError("");
-
-    try {
-      const generatedScript = await generateScript(topic, style);
-      setScript(generatedScript);
-    } catch (err) {
-      setError("Failed to generate script. Please try again.");
-      console.error("Script generation error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePolishScript = async () => {
-    if (!script.trim()) {
-      setError("Please enter a script to polish");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const polishedScript = await generateScript(`Polish this script: ${script}`, "Professional");
-      setScript(polishedScript);
-    } catch (err) {
-      setError("Failed to polish script. Please try again.");
-      console.error("Script polishing error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSaveAndContinue = async () => {
     if (!script.trim()) {
@@ -176,41 +129,7 @@ export default function ScriptToolView() {
           Script Library
         </button>
 
-        {/* Topic Input */}
-        <input
-          type="text"
-          placeholder="Enter a topic (e.g. travel, baking, motivation)"
-          value={topic}
-          onChange={e => setTopic(e.target.value)}
-          style={{
-            width: "100%",
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 24,
-            fontSize: 16,
-            border: "1px solid #ccc"
-          }}
-        />
 
-        {/* Script Style Radio Buttons */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ marginBottom: 8, fontWeight: 600 }}>
-            Select a script style or type your own below:
-          </div>
-          {scriptStyles.map(opt => (
-            <div key={opt} style={{ marginBottom: 8 }}>
-              <label style={{ fontSize: 18 }}>
-                <input
-                  type="radio"
-                  checked={style === opt}
-                  onChange={() => setStyle(opt)}
-                  style={{ marginRight: 8 }}
-                />
-                {opt}
-              </label>
-            </div>
-          ))}
-        </div>
 
         {/* Script Textarea */}
         <textarea
@@ -240,43 +159,7 @@ export default function ScriptToolView() {
           </div>
         )}
 
-        {/* AI Buttons (side by side) */}
-        <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
-          <button 
-            onClick={handleGenerateScript}
-            disabled={loading || !topic.trim()}
-            style={{
-              flex: 1,
-              background: loading ? "#ccc" : "orange",
-              color: "white",
-              padding: 10,
-              borderRadius: 6,
-              fontSize: 14,
-              border: "none",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
-          >
-            {loading ? "Generating..." : "Generate Script with AI"}
-          </button>
-          <button 
-            onClick={handlePolishScript}
-            disabled={loading || !script.trim()}
-            style={{
-              flex: 1,
-              background: loading ? "#ccc" : "purple",
-              color: "white",
-              padding: 10,
-              borderRadius: 6,
-              fontSize: 14,
-              border: "none",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer"
-            }}
-          >
-            {loading ? "Polishing..." : "Polish My Script"}
-          </button>
-        </div>
+
 
         </div>
       </div>

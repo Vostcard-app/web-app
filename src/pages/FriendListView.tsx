@@ -152,22 +152,31 @@ const FriendListView: React.FC = () => {
   const handleOpenContactPicker = async () => {
     try {
       setLoadingContacts(true);
+      
+      // Check device support first
+      const deviceSupport = ContactService.getDeviceSupport();
+      
+      if (!deviceSupport.isSupported) {
+        alert(`${deviceSupport.supportMessage}\n\nAlternatives:\n• Copy email/phone from your contacts app\n• Use manual entry below\n• Share contact via text/email`);
+        return;
+      }
+
       const result = await ContactService.getContacts();
       
       if (result.error) {
-        alert(result.error);
+        alert(`Contact access failed: ${result.error}\n\nYou can still:\n• Enter email/phone manually\n• Copy contact info from your contacts app`);
         return;
       }
 
       if (result.contacts.length === 0) {
-        alert('No contacts available or selection cancelled');
+        alert('No contacts selected or available.\n\nTry:\n• Selecting contacts from the picker\n• Using manual entry below');
         return;
       }
 
       setShowContactPicker(true);
     } catch (error) {
       console.error('Error opening contact picker:', error);
-      alert('Failed to access contacts');
+      alert('Contact picker failed. Please use manual entry below.');
     } finally {
       setLoadingContacts(false);
     }
@@ -661,18 +670,24 @@ const FriendListView: React.FC = () => {
                     Access Your Contacts
                   </div>
                   <div style={{ color: '#666', marginBottom: '20px' }}>
-                    We'll request permission to access your contacts to help you invite friends easily.
+                    {(() => {
+                      const deviceSupport = ContactService.getDeviceSupport();
+                      return deviceSupport.isSupported 
+                        ? "We'll request permission to access your contacts to help you invite friends easily."
+                        : `${deviceSupport.supportMessage}`;
+                    })()}
                   </div>
                   <button
                     onClick={handleOpenContactPicker}
+                    disabled={!ContactService.getDeviceSupport().isSupported}
                     style={{
-                      backgroundColor: '#007aff',
+                      backgroundColor: ContactService.getDeviceSupport().isSupported ? '#007aff' : '#ccc',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
                       padding: '12px 24px',
                       fontSize: '16px',
-                      cursor: 'pointer',
+                      cursor: ContactService.getDeviceSupport().isSupported ? 'pointer' : 'not-allowed',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -681,24 +696,35 @@ const FriendListView: React.FC = () => {
                     }}
                   >
                     <FaAddressBook size={16} />
-                    Choose Contacts
+                    {ContactService.getDeviceSupport().isSupported ? 'Choose Contacts' : 'Not Available'}
                   </button>
                 </div>
 
                 <div style={{
                   marginTop: '20px',
                   padding: '16px',
-                  backgroundColor: '#f8f9fa',
+                  backgroundColor: ContactService.getDeviceSupport().isSupported ? '#f8f9fa' : '#fff3cd',
                   borderRadius: '8px',
                   fontSize: '14px',
                   color: '#666'
                 }}>
-                  <div style={{ fontWeight: '600', marginBottom: '8px' }}>Note:</div>
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                    <li>Contact access works best on mobile devices</li>
-                    <li>Your contacts are not stored on our servers</li>
-                    <li>You can always enter contact details manually</li>
-                  </ul>
+                  <div style={{ fontWeight: '600', marginBottom: '8px' }}>
+                    {ContactService.getDeviceSupport().isSupported ? 'Note:' : 'Alternative Options:'}
+                  </div>
+                  {ContactService.getDeviceSupport().isSupported ? (
+                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                      <li>Your contacts are not stored on our servers</li>
+                      <li>We only access contact info you select</li>
+                      <li>You can always enter contact details manually</li>
+                    </ul>
+                  ) : (
+                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                      <li>Copy email/phone from your contacts app</li>
+                      <li>Use manual entry in the invitation form</li>
+                      <li>Share contact via text/email to yourself</li>
+                      <li>Try Chrome browser on Android for contact picker</li>
+                    </ul>
+                  )}
                 </div>
               </div>
             </div>
@@ -920,24 +946,27 @@ const FriendListView: React.FC = () => {
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                   <button
                     onClick={handleOpenContactPicker}
-                    disabled={loadingContacts}
+                    disabled={loadingContacts || !ContactService.getDeviceSupport().isSupported}
                     style={{
                       flex: 1,
                       padding: '12px',
-                      border: '2px solid #007aff',
+                      border: `2px solid ${ContactService.getDeviceSupport().isSupported ? '#007aff' : '#ccc'}`,
                       borderRadius: '8px',
                       backgroundColor: selectedContact ? '#e3f2fd' : 'white',
-                      color: '#007aff',
-                      cursor: loadingContacts ? 'not-allowed' : 'pointer',
+                      color: ContactService.getDeviceSupport().isSupported ? '#007aff' : '#666',
+                      cursor: (loadingContacts || !ContactService.getDeviceSupport().isSupported) ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      fontSize: '14px'
+                      fontSize: '14px',
+                      opacity: ContactService.getDeviceSupport().isSupported ? 1 : 0.6
                     }}
                   >
                     <FaAddressBook size={16} />
-                    {loadingContacts ? 'Loading...' : selectedContact ? selectedContact.name : 'Choose from Contacts'}
+                    {loadingContacts ? 'Loading...' : 
+                     selectedContact ? selectedContact.name : 
+                     ContactService.getDeviceSupport().isSupported ? 'Choose from Contacts' : 'Not Available on This Device'}
                   </button>
                   
                   {selectedContact && (
@@ -963,6 +992,28 @@ const FriendListView: React.FC = () => {
                     </button>
                   )}
                 </div>
+                
+                {/* Device Support Info */}
+                {!ContactService.getDeviceSupport().isSupported && (
+                  <div style={{
+                    backgroundColor: '#fff3cd',
+                    border: '1px solid #ffeaa7',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    marginBottom: '12px',
+                    fontSize: '14px'
+                  }}>
+                    <div style={{ fontWeight: '600', marginBottom: '4px', color: '#856404' }}>
+                      💡 Contact Picker Not Available
+                    </div>
+                    <div style={{ color: '#856404', marginBottom: '8px' }}>
+                      {ContactService.getDeviceSupport().supportMessage}
+                    </div>
+                    <div style={{ color: '#856404', fontSize: '12px' }}>
+                      <strong>Quick tip:</strong> Use your phone's contacts app to copy email/phone numbers, then paste them in the manual entry field below.
+                    </div>
+                  </div>
+                )}
                 
                 {selectedContact && (
                   <div style={{

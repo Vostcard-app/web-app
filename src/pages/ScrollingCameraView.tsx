@@ -366,31 +366,32 @@ const ScrollingCameraView: React.FC = () => {
 
   const getAnimationDuration = () => {
     if (!script || script.trim().length === 0) {
-      return 30; // Default to 30 seconds if no script
+      return 27; // Default to 27 seconds if no script
     }
 
-    // Calculate optimal scroll duration to complete within 30 seconds
+    // Calculate optimal scroll duration to complete at 27 seconds
     const scriptLength = script.trim().length;
     const estimatedWords = scriptLength / 5; // Average 5 characters per word
     const averageReadingSpeed = 2.5; // Words per second for comfortable reading
-    const idealDuration = Math.max(25, estimatedWords / averageReadingSpeed); // At least 25 seconds for very short scripts
+    const idealDuration = Math.max(20, estimatedWords / averageReadingSpeed); // At least 20 seconds for very short scripts
     
-    // Ensure it doesn't exceed 30 seconds (accounting for recording time)
-    const maxDuration = 30;
+    // Set maximum duration to 27 seconds (finishing 3 seconds before recording ends)
+    const maxDuration = 27;
     const calculatedDuration = Math.min(idealDuration, maxDuration);
     
     // Apply user's speed adjustment
     const finalDuration = calculatedDuration / scrollSpeed;
     
-    console.log('📜 Script scroll calculation:', {
-      scriptLength,
-      estimatedWords,
-      idealDuration: idealDuration.toFixed(1) + 's',
-      maxDuration: maxDuration + 's',
-      calculatedDuration: calculatedDuration.toFixed(1) + 's',
-      scrollSpeed: scrollSpeed + 'x',
-      finalDuration: finalDuration.toFixed(1) + 's'
-    });
+          console.log('📜 Script scroll calculation:', {
+        scriptLength,
+        estimatedWords,
+        idealDuration: idealDuration.toFixed(1) + 's',
+        maxDuration: maxDuration + 's',
+        calculatedDuration: calculatedDuration.toFixed(1) + 's',
+        scrollSpeed: scrollSpeed + 'x',
+        finalDuration: finalDuration.toFixed(1) + 's',
+        finishTime: 'Completes at 27 seconds (3s buffer before recording ends)'
+      });
     
     return finalDuration;
   };
@@ -421,36 +422,7 @@ const ScrollingCameraView: React.FC = () => {
         📱 Portrait 9:16 • {userLocation ? '📍' : '📍?'} • {cameraReady ? '✅' : '⏳'}
       </div>
 
-      {/* Script Info Panel (shown before recording) */}
-      {script && !isRecording && (
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          background: 'rgba(0, 0, 0, 0.9)',
-          color: 'white',
-          padding: '20px',
-          borderRadius: '12px',
-          textAlign: 'center',
-          zIndex: 15,
-          maxWidth: '80%'
-        }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>📜 Script Ready</h3>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-            <strong>Duration:</strong> {getAnimationDuration().toFixed(1)} seconds
-          </div>
-          <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-            <strong>Words:</strong> ~{Math.round((script.trim().length / 5))} words
-          </div>
-          <div style={{ fontSize: '14px', marginBottom: '15px' }}>
-            <strong>Speed:</strong> {scrollSpeed.toFixed(1)}x
-          </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>
-            Script will auto-scroll to complete within 30 seconds
-          </div>
-        </div>
-      )}
+
 
       {/* Close */}
       <div className="top-controls">
