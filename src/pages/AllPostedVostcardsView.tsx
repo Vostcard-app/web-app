@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaLocationArrow } from 'react-icons/fa';
+import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaLocationArrow, FaPlay } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import FollowButton from '../components/FollowButton';
 import { RatingService, type RatingStats } from '../services/ratingService';
@@ -23,6 +23,7 @@ const AllPostedVostcardsView: React.FC = () => {
   const [likeCounts, setLikeCounts] = useState<{ [vostcardId: string]: number }>({});
   const [likedStatus, setLikedStatus] = useState<{ [vostcardId: string]: boolean }>({});
   const [ratingStats, setRatingStats] = useState<{ [vostcardId: string]: RatingStats }>({});
+  const [userProfiles, setUserProfiles] = useState<{ [userId: string]: any }>({});
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -48,27 +49,36 @@ const AllPostedVostcardsView: React.FC = () => {
 
   // Get distance to vostcard
   const getDistanceToVostcard = useCallback((vostcard: Vostcard): string => {
-    if (!userLocation) return '-- km away';
+    if (!userLocation) return '-- km / -- mi away';
     
     const lat = vostcard.latitude || vostcard.geo?.latitude;
     const lng = vostcard.longitude || vostcard.geo?.longitude;
     
-    if (!lat || !lng) return '-- km away';
+    if (!lat || !lng) return '-- km / -- mi away';
     
     const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
     
     if (distance < 1) {
-      return `${Math.round(distance * 1000)}m away`;
+      // Less than 1 km, show in meters and feet
+      const meters = Math.round(distance * 1000);
+      const feet = Math.round(meters * 3.28084);
+      return `${meters}m / ${feet}ft away`;
     } else {
-      return `${distance.toFixed(1)} km away`;
+      // 1 km or more, show in km and miles
+      const miles = (distance * 0.621371);
+      return `${distance.toFixed(1)} km / ${miles.toFixed(1)} mi away`;
     }
   }, [userLocation, calculateDistance]);
 
   // Load like and rating data for each vostcard
-  const loadData = useCallback(async (vostcardIds: string[]) => {
+  const loadData = useCallback(async (vostcardIds: string[], vostcardsList: Vostcard[]) => {
     const counts: { [key: string]: number } = {};
     const statuses: { [key: string]: boolean } = {};
     const ratings: { [key: string]: RatingStats } = {};
+    const profiles: { [key: string]: any } = {};
+    
+    // Get unique userIDs from vostcards
+    const userIds = [...new Set(vostcardsList.map(v => v.userID).filter(Boolean))];
     
     for (const id of vostcardIds) {
       try {
@@ -93,9 +103,23 @@ const AllPostedVostcardsView: React.FC = () => {
       }
     }
     
+    // Fetch user profiles for avatars
+    for (const userId of userIds) {
+      try {
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          profiles[userId] = userSnap.data();
+        }
+      } catch (error) {
+        console.error(`Error loading user profile for ${userId}:`, error);
+      }
+    }
+    
     setLikeCounts(counts);
     setLikedStatus(statuses);
     setRatingStats(ratings);
+    setUserProfiles(profiles);
   }, [getLikeCount, isLiked]);
 
   useEffect(() => {
@@ -119,7 +143,7 @@ const AllPostedVostcardsView: React.FC = () => {
         
         // Load like and rating data for all vostcards
         if (regularVostcards.length > 0) {
-          await loadData(regularVostcards.map(v => v.id));
+          await loadData(regularVostcards.map(v => v.id), regularVostcards);
         }
       } catch (error) {
         console.error('Error fetching posted vostcards:', error);
@@ -354,18 +378,17 @@ const AllPostedVostcardsView: React.FC = () => {
         zIndex: 10
       }}>
         <div style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 1 }}>Vōstcard</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <button
             style={{ 
               background: 'none', 
               border: 'none', 
               color: 'white', 
-              fontSize: 50,
               cursor: 'pointer' 
             }}
             onClick={() => navigate('/home')}
           >
-            <FaHome />
+            <FaHome size={48} />
           </button>
         </div>
       </div>
@@ -499,29 +522,37 @@ const AllPostedVostcardsView: React.FC = () => {
                 : `Showing: ${filtered.length} of ${vostcards.length}`;
             })()}
           </span>
-          {/* Area Preference Button */}
-          <button
-            style={{ 
-              background: '#f0f0f0', 
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              color: '#333', 
-              fontSize: 14,
-              padding: '6px 10px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease',
-              marginLeft: 'auto'
-            }}
-            onClick={() => setShowAreaSelector(!showAreaSelector)}
-          >
-            {mapAreaPreference === 'nearby' && <><span>🚶</span>Near</>}
-            {mapAreaPreference === '1-mile' && <><span>🏃</span>Medium</>}
-            {mapAreaPreference === '5-miles' && <><span>🏃</span>Far</>}
-            {mapAreaPreference === 'custom' && <><span>📍</span>Custom</>}
-          </button>
+          {/* Area Preference Button with Range Label */}
+          <div style={{ 
+            marginLeft: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            <button
+              style={{ 
+                background: '#f0f0f0', 
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                color: '#333', 
+                fontSize: 14,
+                padding: '6px 10px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              onClick={() => setShowAreaSelector(!showAreaSelector)}
+            >
+              {mapAreaPreference === 'nearby' && <><span>🚶</span>Near</>}
+              {mapAreaPreference === '1-mile' && <><span>🏃</span>Medium</>}
+              {mapAreaPreference === '5-miles' && <><span>🏃</span>Far</>}
+              {mapAreaPreference === 'custom' && <><span>📍</span>Custom</>}
+            </button>
+            <div style={{ fontSize: 12, color: '#666', textAlign: 'center' }}>Range</div>
+          </div>
         </div>
       </div>
 
@@ -581,72 +612,119 @@ const AllPostedVostcardsView: React.FC = () => {
                   }
                 }}
               >
-                {/* Creator Avatar and Username - Upper Left */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 12 }}>
-                  {v.avatarURL ? (
-                    <img 
-                      src={v.avatarURL} 
-                      alt="Creator Avatar" 
+                {/* Creator Avatar, Username, and Follow Button - Upper Left */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {userProfiles[v.userID]?.avatarURL ? (
+                      <img 
+                        src={userProfiles[v.userID].avatarURL} 
+                        alt="Creator Avatar" 
+                        style={{ 
+                          width: 32, 
+                          height: 32, 
+                          borderRadius: '50%', 
+                          objectFit: 'cover',
+                          border: '2px solid #e0e0e0'
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
                       style={{ 
                         width: 32, 
                         height: 32, 
                         borderRadius: '50%', 
-                        objectFit: 'cover',
+                        backgroundColor: '#e0e0e0',
+                        display: userProfiles[v.userID]?.avatarURL ? 'none' : 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#666',
+                        fontSize: 14,
+                        fontWeight: 600,
                         border: '2px solid #e0e0e0'
                       }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div 
-                    style={{ 
-                      width: 32, 
-                      height: 32, 
-                      borderRadius: '50%', 
-                      backgroundColor: '#e0e0e0',
-                      display: v.avatarURL ? 'none' : 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#666',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      border: '2px solid #e0e0e0'
-                    }}
-                  >
-                    <FaUser />
+                    >
+                      <FaUser />
+                    </div>
+                    <div style={{ 
+                      color: '#444', 
+                      fontSize: 14, 
+                      fontWeight: 500 
+                    }}>
+                      {v.username || 'Unknown'}
+                    </div>
                   </div>
-                  <div style={{ 
-                    color: '#444', 
-                    fontSize: 14, 
-                    fontWeight: 500 
-                  }}>
-                    {v.username || 'Unknown'}
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* Play Button - Upper Right */}
+                    <button
+                      style={{
+                        background: '#fff',
+                        color: '#002B4D',
+                        border: '1px solid #ddd',
+                        borderRadius: 8,
+                        width: 40,
+                        height: 40,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 16,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/vostcard/${v.id}`, {
+                          state: {
+                            vostcardList: vostcards.map(vc => vc.id),
+                            currentIndex: idx
+                          }
+                        });
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                      }}
+                    >
+                      <FaPlay />
+                    </button>
+
+                    {/* Follow Button */}
+                    {v.userID && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <FollowButton 
+                          targetUserId={v.userID} 
+                          targetUsername={v.username}
+                          size="small"
+                          variant="secondary"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 2 }}>{v.title || 'Untitled'}</div>
                 <div style={{ color: '#888', fontSize: 15, marginBottom: 2 }}>{getDistanceToVostcard(v)}</div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                  <div style={{ color: '#444', fontSize: 15 }}>By {v.username || 'Unknown'}</div>
-                  {v.userID && (
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <FollowButton 
-                        targetUserId={v.userID} 
-                        targetUsername={v.username}
-                        size="small"
-                        variant="secondary"
-                      />
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', fontSize: 15, marginBottom: 2 }}>
-                  <FaGlobe style={{ color: '#1976d2', marginRight: 6 }} />
-                  <span style={{ color: '#1976d2', fontWeight: 500 }}>Web App</span>
-                </div>
-                <div style={{ position: 'absolute', right: 16, bottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                
+
+                
+                {/* Bottom Row: Star Rating and Like */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'flex-end',
+                  gap: 12,
+                  marginTop: 8
+                }}>
                   {/* Star Rating */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <FaStar style={{ color: '#FFD700', fontSize: 18 }} />

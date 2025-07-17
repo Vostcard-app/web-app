@@ -1,20 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user: authUser, username: authUsername } = useAuth();
   const { fixBrokenSharedVostcard } = useVostcard();
   
   const [vostcard, setVostcard] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
@@ -22,6 +20,8 @@ const VostcardDetailView: React.FC = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -77,6 +77,27 @@ const VostcardDetailView: React.FC = () => {
     fetchVostcard();
   }, [id, fixBrokenSharedVostcard]);
 
+  // Fetch user profile when vostcard is loaded
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!vostcard?.userID) return;
+      
+      try {
+        const userRef = doc(db, 'users', vostcard.userID);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserProfile(userSnap.data());
+        }
+      } catch (err) {
+        console.error('Failed to load user profile:', err);
+      }
+    };
+    
+    if (vostcard?.userID) {
+      fetchUserProfile();
+    }
+  }, [vostcard?.userID]);
+
   const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
     const { videoWidth, videoHeight } = videoElement;
     setVideoOrientation(videoWidth > videoHeight ? 'landscape' : 'portrait');
@@ -122,109 +143,20 @@ ${privateUrl}`;
     }
   };
 
-  const handlePrivateShare = async () => {
-    try {
-      const vostcardRef = doc(db, 'vostcards', id!);
-      await updateDoc(vostcardRef, {
-        isShared: true
-      });
-      
-      const privateUrl = `${window.location.origin}/share/${id}`;
-      
-      const shareText = `Check it out I made this with Vōstcard
-
-
-"${vostcard?.title || 'Untitled Vostcard'}"
-
-
-"${vostcard?.description || 'No description'}"
-
-
-${privateUrl}`;
-      
-      if (navigator.share) {
-        navigator.share({
-          text: shareText
-        }).catch(console.error);
-      } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
-        }).catch(() => {
-          alert(`Share this message: ${shareText}`);
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing private Vostcard:', error);
-      alert('Failed to share Vostcard. Please try again.');
-    }
+  const handleLikeClick = () => {
+    setIsLiked(!isLiked);
   };
 
-  const handleEmailShare = async () => {
-    try {
-      if (!vostcard?.id) {
-        throw new Error('No vostcard to share');
-      }
-
-      await fixBrokenSharedVostcard(vostcard.id);
-
-      const emailUrl = `${window.location.origin}/email/${vostcard.id}`;
-      
-      const getUserFirstName = () => {
-        if (authUsername) {
-          return authUsername.split(' ')[0];
-        } else if (authUser?.displayName) {
-          return authUser.displayName.split(' ')[0];
-        } else if (authUser?.email) {
-          return authUser.email.split('@')[0];
-        }
-        return 'Anonymous';
-      };
-
-      const subjectLine = `Check out my Vōstcard: "${vostcard?.title || 'Title'}"`;
-      
-      const emailBody = `Hi,
-
-I made this with an app called Vōstcard
-
-View it here: ${emailUrl}
-
-${vostcard?.description || 'Description'}
-
-Cheers!
-
-${getUserFirstName()}`;
-
-      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subjectLine)}&body=${encodeURIComponent(emailBody)}`;
-      
-      window.open(mailtoUrl, '_blank');
-      
-      alert('✅ Vostcard shared! The recipient will be able to view it via the email link.');
-      
-    } catch (error) {
-      console.error('Error sharing Vostcard via email:', error);
-      alert('Failed to share Vostcard via email. Please try again.');
-    }
+  const handleRatingClick = (rating: number) => {
+    setUserRating(rating);
   };
 
-  const handleViewOnMap = () => {
-    if (!vostcard?.latitude || !vostcard?.longitude) {
-      alert('This Vostcard does not have location data.');
-      return;
-    }
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
-    // Navigate to home view with the Vostcard's location
-    const navigationState = {
-      browseLocation: {
-        coordinates: [vostcard.latitude, vostcard.longitude],
-        name: vostcard.title || 'Vostcard Location',
-        id: vostcard.id,
-        type: 'vostcard',
-        place: vostcard.title || 'Vostcard Location',
-      },
-    };
-
-    console.log('️ Navigating to map with Vostcard location:', navigationState);
-    navigate('/home', { state: navigationState });
+  const handleFlag = () => {
+    alert('Flag functionality not implemented yet');
   };
 
   if (loading) {
@@ -294,21 +226,47 @@ ${getUserFirstName()}`;
         background: '#fff',
         minHeight: '100vh',
         maxHeight: '100vh',
-        overflowY: 'scroll',
+        overflowY: 'auto',
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Banner */}
-      <div style={{ background: '#07345c', padding: '15px 0 24px 0', position: 'relative', textAlign: 'left', paddingLeft: '16px' }}>
-        <button style={{ position: 'absolute', right: 16, top: 26, background: 'rgba(0,0,0,0.10)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={() => navigate('/home')}>
-          <FaHome color="#fff" size={36} />
+      {/* Header */}
+      <div style={{ 
+        background: '#07345c', 
+        padding: '15px 16px 24px 16px', 
+        position: 'relative', 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
+          Vōstcard
+        </span>
+        <button 
+          style={{ 
+            background: 'rgba(0,0,0,0.10)', 
+            border: 'none', 
+            borderRadius: '50%', 
+            width: 48, 
+            height: 48, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            cursor: 'pointer' 
+          }} 
+          onClick={() => navigate(-1)}
+        >
+          <FaHome color="#fff" size={48} />
         </button>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>Vōstcard</span>
       </div>
 
       {/* User Info */}
-      <div style={{ padding: '20px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee' }}>
+      <div style={{ 
+        padding: '20px', 
+        display: 'flex', 
+        alignItems: 'center'
+      }}>
         <div style={{ 
           width: 50, 
           height: 50, 
@@ -320,112 +278,58 @@ ${getUserFirstName()}`;
           alignItems: 'center',
           justifyContent: 'center'
         }}>
-          {vostcard.avatarURL ? (
+          {userProfile?.avatarURL ? (
             <img 
-              src={vostcard.avatarURL} 
+              src={userProfile.avatarURL} 
               alt="User Avatar" 
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
             />
           ) : (
             <FaUserCircle size={50} color="#ccc" />
           )}
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px' }}>
-            {vostcard.username || 'Anonymous'}
-          </div>
-          <div style={{ fontSize: '14px', color: '#666' }}>
-            🔒 Private Share
-          </div>
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+          {vostcard.username || 'Anonymous'}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div style={{ padding: '20px', display: 'flex', gap: '12px', justifyContent: 'space-between' }}>
-        <button
-          onClick={handleShareClick}
-          style={{
-            flex: 1,
-            backgroundColor: '#007aff',
-            color: 'white',
-            border: 'none',
-            padding: '12px 0',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px'
-          }}
-        >
-          <FaShare size={16} />
-          Share
-        </button>
-        <button
-          onClick={handleEmailShare}
-          style={{
-            flex: 1,
-            backgroundColor: '#34c759',
-            color: 'white',
-            border: 'none',
-            padding: '12px 0',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px'
-          }}
-        >
-          <FaEnvelope size={16} />
-          Email
-        </button>
-        <button
-          onClick={handleViewOnMap}
-          style={{
-            flex: 1,
-            backgroundColor: '#ff9500',
-            color: 'white',
-            border: 'none',
-            padding: '12px 0',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px'
-          }}
-        >
-          <FaMap size={16} />
-          Map
-        </button>
-      </div>
-
       {/* Title */}
-      <div style={{ padding: '0 20px 20px 20px' }}>
-        <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: '#333' }}>
+      <div style={{ padding: '0 20px' }}>
+        <h1 style={{ 
+          margin: 0, 
+          fontSize: '32px', 
+          fontWeight: 'bold', 
+          color: '#333',
+          textAlign: 'center'
+        }}>
           {vostcard.title || 'Untitled Vostcard'}
-        </h2>
+        </h1>
       </div>
 
-      {/* Video */}
-      {vostcard.videoURL && (
-        <div style={{ padding: '0 20px 20px 20px' }}>
-          <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
+      {/* Media Section */}
+      <div style={{ 
+        padding: '20px', 
+        display: 'flex', 
+        gap: '10px',
+        height: '300px'
+      }}>
+        {/* Video Section */}
+        <div style={{ 
+          flex: 1,
+          backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          position: 'relative'
+        }}>
+          {vostcard.videoURL ? (
             <video
               ref={videoRef}
               src={vostcard.videoURL}
               style={{
                 width: '100%',
-                height: 'auto',
-                display: 'block',
-                borderRadius: '12px',
+                height: '100%',
+                objectFit: 'cover',
                 cursor: 'pointer'
               }}
               controls
@@ -433,60 +337,220 @@ ${getUserFirstName()}`;
               onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
               onClick={() => setShowVideoModal(true)}
             />
-          </div>
+          ) : null}
         </div>
-      )}
 
-      {/* Photos */}
-      {vostcard.photoURLs && vostcard.photoURLs.length > 0 && (
-        <div style={{ padding: '0 20px 20px 20px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px' }}>
-            {vostcard.photoURLs.map((photoURL: string, index: number) => (
-              <div key={index} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden' }}>
+        {/* Photos Section */}
+        <div style={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px'
+        }}>
+          {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
+            vostcard.photoURLs.slice(0, 2).map((photoURL: string, index: number) => (
+              <div key={index} style={{ 
+                flex: 1,
+                borderRadius: '8px', 
+                overflow: 'hidden'
+              }}>
                 <img
                   src={photoURL}
                   alt={`Photo ${index + 1}`}
                   style={{
                     width: '100%',
-                    height: '150px',
+                    height: '100%',
                     objectFit: 'cover',
-                    borderRadius: '8px',
                     cursor: 'pointer'
                   }}
                   onClick={() => setSelectedPhoto(photoURL)}
                 />
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Description */}
-      {vostcard.description && (
-        <div style={{ padding: '0 20px 20px 20px' }}>
-          <div style={{ 
-            backgroundColor: '#f8f9fa',
-            padding: '16px',
-            borderRadius: '12px',
-            border: '1px solid #e9ecef'
-          }}>
-            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
-              {vostcard.description}
+            ))
+          ) : (
+            <div style={{ 
+              flex: 1,
+              backgroundColor: '#f0f0f0',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#999'
+            }}>
+              No photos
             </div>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Posted Date */}
-      <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginTop: 8 }}>
-        Posted: {vostcard?.createdAt ? (
-          typeof vostcard.createdAt.toDate === 'function' ? vostcard.createdAt.toDate().toLocaleString() :
-          vostcard.createdAt instanceof Date ? vostcard.createdAt.toLocaleString() :
-          typeof vostcard.createdAt === 'string' || typeof vostcard.createdAt === 'number' ? new Date(vostcard.createdAt).toLocaleString() :
-          String(vostcard.createdAt)
-        ) : 'Unknown'}
       </div>
-      
+
+      {/* Action Icons Row */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '20px 40px',
+        borderBottom: '1px solid #eee'
+      }}>
+        <button
+          onClick={handleLikeClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isLiked ? '#ff3b30' : '#666'
+          }}
+        >
+          <FaHeart size={30} />
+        </button>
+        <button
+          onClick={() => {/* Handle star action */}}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ffd700'
+          }}
+        >
+          <FaStar size={30} />
+        </button>
+        <button
+          onClick={() => setShowCommentsModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaRegComment size={30} />
+        </button>
+        <button
+          onClick={handleShareClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaShare size={30} />
+        </button>
+      </div>
+
+      {/* Counts Row */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '10px 40px',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        <span>0</span>
+        <span>0.0</span>
+        <span>0</span>
+        <span></span>
+      </div>
+
+      {/* Worth Seeing Rating */}
+      <div style={{
+        padding: '20px',
+        textAlign: 'center'
+      }}>
+        <div style={{ 
+          fontSize: '18px', 
+          fontWeight: 'bold', 
+          marginBottom: '10px',
+          color: '#333'
+        }}>
+          Worth Seeing?
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              onClick={() => handleRatingClick(star)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: star <= userRating ? '#ffd700' : '#ddd'
+              }}
+            >
+              <FaStar size={24} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Description Link */}
+      <div style={{ 
+        padding: '20px',
+        textAlign: 'center',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <button
+          onClick={() => setShowDescriptionModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#007aff',
+            fontSize: '18px',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            margin: '0 auto'
+          }}
+        >
+          Description
+        </button>
+      </div>
+
+      {/* Flag and Refresh Icons */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '20px 40px',
+        marginTop: '20px'
+      }}>
+        <button
+          onClick={handleFlag}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#ff3b30'
+          }}
+        >
+          <FaFlag size={24} />
+        </button>
+        <button
+          onClick={handleRefresh}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#007aff'
+          }}
+        >
+          <FaSync size={24} />
+        </button>
+      </div>
+
       {/* Modals */}
       <CommentsModal
         isOpen={showCommentsModal}
@@ -494,41 +558,6 @@ ${getUserFirstName()}`;
         vostcardID={id!}
         vostcardTitle={vostcard?.title}
       />
-
-      {/* Modal for full-size photo */}
-      {selectedPhoto && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.95)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            cursor: 'zoom-out',
-          }}
-          onClick={() => setSelectedPhoto(null)}
-          onContextMenu={e => e.preventDefault()}
-        >
-          <img
-            src={selectedPhoto}
-            alt="Full size"
-            style={{
-              width: '100vw',
-              height: '100vh',
-              objectFit: 'contain',
-              borderRadius: 0,
-              boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-              background: '#000',
-              userSelect: 'none',
-              pointerEvents: 'auto',
-            }}
-            draggable={false}
-            onContextMenu={e => e.preventDefault()}
-          />
-        </div>
-      )}
 
       {/* Description Modal */}
       {showDescriptionModal && (
@@ -571,9 +600,38 @@ ${getUserFirstName()}`;
               </button>
             </div>
             <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
-              {vostcard.description}
+              {vostcard.description || 'No description available.'}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Photo Modal */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            cursor: 'zoom-out',
+          }}
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <img
+            src={selectedPhoto}
+            alt="Full size"
+            style={{
+              width: '100vw',
+              height: '100vh',
+              objectFit: 'contain',
+              userSelect: 'none',
+            }}
+            draggable={false}
+          />
         </div>
       )}
 
@@ -591,7 +649,6 @@ ${getUserFirstName()}`;
             cursor: 'zoom-out',
           }}
           onClick={() => setShowVideoModal(false)}
-          onContextMenu={e => e.preventDefault()}
         >
           <div
             style={{
@@ -610,8 +667,6 @@ ${getUserFirstName()}`;
                 maxWidth: videoOrientation === 'portrait' ? '100vh' : '100%',
                 maxHeight: videoOrientation === 'portrait' ? '100vw' : '100%',
                 objectFit: 'contain',
-                borderRadius: 0,
-                boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
                 transform: videoOrientation === 'portrait' ? 'rotate(90deg)' : 'none',
                 transformOrigin: 'center center',
               }}
@@ -619,7 +674,6 @@ ${getUserFirstName()}`;
               autoPlay
               playsInline
               onClick={(e) => e.stopPropagation()}
-              onContextMenu={e => e.preventDefault()}
               onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
             />
           </div>
