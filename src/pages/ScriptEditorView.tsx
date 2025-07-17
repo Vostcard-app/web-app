@@ -121,70 +121,79 @@ const ScriptEditorView: React.FC = () => {
     }}>
       {/* Header */}
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
         marginBottom: 20, 
         background: 'white', 
         padding: 20, 
         borderRadius: 15, 
         boxShadow: '0 8px 32px rgba(0,0,0,0.1)' 
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+        {/* First Line: Back/Home Icons and Save Script */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          marginBottom: 15 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+            <button 
+              onClick={handleBack}
+              style={{ 
+                background: '#667eea', 
+                color: 'white', 
+                border: 'none', 
+                padding: 12, 
+                borderRadius: 10, 
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <FaArrowLeft size={20} />
+            </button>
+            <button 
+              onClick={() => navigate('/home')}
+              style={{ 
+                background: '#667eea', 
+                color: 'white', 
+                border: 'none', 
+                padding: 12, 
+                borderRadius: 10, 
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <FaHome size={20} />
+            </button>
+          </div>
+          
           <button 
-            onClick={handleBack}
+            onClick={handleSave}
+            disabled={saving || !title.trim() || !content.trim()}
             style={{ 
-              background: '#667eea', 
+              background: (!title.trim() || !content.trim() || saving) ? '#ccc' : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)', 
               color: 'white', 
               border: 'none', 
-              padding: 12, 
+              padding: '12px 24px', 
               borderRadius: 10, 
-              cursor: 'pointer',
+              cursor: (!title.trim() || !content.trim() || saving) ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              gap: 8
             }}
           >
-            <FaArrowLeft />
+            <FaSave /> {saving ? 'Saving...' : 'Save Script'}
           </button>
-          <button 
-            onClick={() => navigate('/home')}
-            style={{ 
-              background: '#667eea', 
-              color: 'white', 
-              border: 'none', 
-              padding: 12, 
-              borderRadius: 10, 
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <FaHome />
-          </button>
+        </div>
+        
+        {/* Second Line: Title */}
+        <div>
           <h1 style={{ margin: 0, color: '#333' }}>
             {isNewScript ? 'Create New Script' : 'Edit Script'}
           </h1>
         </div>
-        
-        <button 
-          onClick={handleSave}
-          disabled={saving || !title.trim() || !content.trim()}
-          style={{ 
-            background: (!title.trim() || !content.trim() || saving) ? '#ccc' : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)', 
-            color: 'white', 
-            border: 'none', 
-            padding: '12px 24px', 
-            borderRadius: 10, 
-            cursor: (!title.trim() || !content.trim() || saving) ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
-          }}
-        >
-          <FaSave /> {saving ? 'Saving...' : 'Save Script'}
-        </button>
       </div>
 
       {/* Editor Content */}
