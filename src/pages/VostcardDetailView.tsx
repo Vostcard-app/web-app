@@ -100,7 +100,15 @@ const VostcardDetailView: React.FC = () => {
 
   const handleVideoLoadedMetadata = (videoElement: HTMLVideoElement) => {
     const { videoWidth, videoHeight } = videoElement;
-    setVideoOrientation(videoWidth > videoHeight ? 'landscape' : 'portrait');
+    
+    console.log('🎬 Video dimensions (ALWAYS PORTRAIT):', {
+      videoWidth,
+      videoHeight,
+      aspectRatio: videoWidth && videoHeight ? (videoWidth / videoHeight).toFixed(2) : 'unknown'
+    });
+
+    // All videos are portrait
+    setVideoOrientation('portrait');
   };
 
   const handleShareClick = async () => {
