@@ -253,7 +253,8 @@ ${privateUrl}`;
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
-            cursor: 'pointer' 
+            cursor: 'pointer',
+            marginRight: '15px'
           }} 
           onClick={() => navigate(-1)}
         >
@@ -466,7 +467,7 @@ ${privateUrl}`;
 
       {/* Worth Seeing Rating */}
       <div style={{
-        padding: '20px',
+        padding: '5px 20px 20px 20px',
         textAlign: 'center'
       }}>
         <div style={{ 
@@ -495,60 +496,60 @@ ${privateUrl}`;
         </div>
       </div>
 
-      {/* Description Link */}
+      {/* Description Link, Flag Icon, and Refresh Icon - All on Same Line */}
       <div style={{ 
-        padding: '20px',
-        textAlign: 'center',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <button
-          onClick={() => setShowDescriptionModal(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#007aff',
-            fontSize: '18px',
-            textDecoration: 'underline',
-            cursor: 'pointer',
-            margin: '0 auto'
-          }}
-        >
-          Description
-        </button>
-      </div>
-
-      {/* Flag and Refresh Icons */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-around',
+        padding: '10px 20px 20px 20px',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
-        padding: '20px 40px',
-        marginTop: '20px'
+        gap: '10px'
       }}>
-        <button
-          onClick={handleFlag}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#ff3b30'
-          }}
-        >
-          <FaFlag size={24} />
-        </button>
-        <button
-          onClick={handleRefresh}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#007aff'
-          }}
-        >
-          <FaSync size={24} />
-        </button>
+        {/* Flag Icon - 15px from left */}
+        <div style={{ justifySelf: 'start', paddingLeft: '15px' }}>
+          <button
+            onClick={handleFlag}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#ff3b30'
+            }}
+          >
+            <FaFlag size={24} />
+          </button>
+        </div>
+        
+        {/* Description Link - Centered */}
+        <div style={{ justifySelf: 'center' }}>
+          <button
+            onClick={() => setShowDescriptionModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#007aff',
+              fontSize: '18px',
+              textDecoration: 'underline',
+              cursor: 'pointer'
+            }}
+          >
+            Description
+          </button>
+        </div>
+
+        {/* Refresh Icon - 20px from right */}
+        <div style={{ justifySelf: 'end', paddingRight: '20px' }}>
+          <button
+            onClick={handleRefresh}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#007aff'
+            }}
+          >
+            <FaSync size={24} />
+          </button>
+        </div>
       </div>
 
       {/* Modals */}
