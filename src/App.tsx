@@ -49,6 +49,7 @@ import ReportBugView from './pages/ReportBugView';
 import PinPlacerTool from './pages/PinPlacerTool';
 import { AuthRedirect } from './components/AuthRedirect';
 import PublicVostcardView from './pages/PublicVostcardView';
+import PublicQuickcardView from './pages/PublicQuickcardView';
 import EmailVostcardView from './pages/EmailVostcardView';
 import AdminPanel from './pages/AdminPanel';
 import FriendListView from './pages/FriendListView';
@@ -75,6 +76,7 @@ function App() {
 
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
+                  <Route path="/share-quickcard/:id" element={<PublicQuickcardView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
                   <Route path="/public-map" element={<PublicHomeView />} />
 

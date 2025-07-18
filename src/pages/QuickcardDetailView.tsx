@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -125,7 +125,7 @@ const QuickcardDetailView: React.FC = () => {
         });
       }
       
-      const privateUrl = `${window.location.origin}/share/${id}`;
+      const privateUrl = `${window.location.origin}/share-quickcard/${id}`;
       
       const shareText = `Check it out I made this with Vōstcard
 
@@ -424,20 +424,7 @@ ${privateUrl}`;
         >
           <FaHeart size={30} />
         </button>
-        <button
-          onClick={() => {/* Handle star action */}}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffd700'
-          }}
-        >
-          <FaStar size={30} />
-        </button>
+
         <button
           onClick={() => setShowCommentsModal(true)}
           style={{
@@ -477,7 +464,6 @@ ${privateUrl}`;
         fontSize: '18px',
         color: '#666'
       }}>
-        <span>0</span>
         <span>0</span>
         <span></span>
       </div>
