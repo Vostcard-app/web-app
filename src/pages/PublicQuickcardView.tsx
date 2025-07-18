@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHome, FaHeart, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
@@ -689,6 +689,7 @@ const PublicQuickcardView: React.FC = () => {
           -webkit-overflow-scrolling: touch;
         }
       `}</style>
+      </div>
     </div>
   );
 };
