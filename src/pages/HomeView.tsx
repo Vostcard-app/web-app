@@ -67,15 +67,15 @@ const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) 
 
 // Define style objects at the top
 const listViewButtonContainerLeft = {
-  position: 'fixed',
-  top: '96px', // 80px header + 16px margin
+  position: 'absolute',
+  top: '16px', // 16px margin from top of map
   left: '16px',
   zIndex: 1002
 };
 
 const listViewButtonContainerRight = {
-  position: 'fixed',
-  top: '96px', // 80px header + 16px margin
+  position: 'absolute',
+  top: '16px', // 16px margin from top of map
   right: '16px',
   zIndex: 1002
 };
@@ -100,11 +100,7 @@ const listViewButton = {
 };
 
 const mapContainerStyle = {
-  position: 'fixed' as const,
-  top: 80,
-  left: 0,
-  right: 0,
-  bottom: 0,
+  flex: 1,
   zIndex: 1,
 };
 
@@ -215,7 +211,7 @@ const debugButtonStyle = {
 };
 
 const createButtonContainer = {
-  position: 'fixed' as const,
+  position: 'absolute' as const,
   bottom: 40,
   left: 15,
   right: 15,
@@ -237,7 +233,7 @@ const createButton = {
 };
 
 const zoomControlStyle = {
-  position: 'fixed' as const,
+  position: 'absolute' as const,
   top: '50%',
   right: 20,
   transform: 'translateY(-50%)',
@@ -416,7 +412,7 @@ const HomeView = () => {
   };
 
   const menuStyle = {
-    position: 'fixed' as const,
+    position: 'absolute' as const,
     top: '65px',
     right: '16px',
     backgroundColor: 'white',
@@ -706,7 +702,6 @@ const HomeView = () => {
   return (
     <div style={{ 
       height: '100vh', 
-      width: '100vw', 
       position: 'relative',
       overflow: 'hidden',
       backgroundColor: 'white',
@@ -723,10 +718,6 @@ const HomeView = () => {
         padding: '0 16px',
         flexShrink: 0,
         touchAction: 'manipulation',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
         zIndex: 1000
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
@@ -787,8 +778,8 @@ const HomeView = () => {
             {!singleVostcard && (
               <div
                 style={{
-                  position: 'fixed',
-                  top: '96px',
+                  position: 'absolute',
+                  top: '16px',
                   left: 0,
                   right: 0,
                   display: 'flex',
@@ -986,7 +977,7 @@ const HomeView = () => {
 
       {/* Filter Button - Lower Left */}
       <div style={{
-        position: 'fixed',
+        position: 'absolute',
         bottom: '120px',
         left: '16px',
         zIndex: 1002

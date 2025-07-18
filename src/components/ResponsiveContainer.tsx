@@ -25,7 +25,6 @@ const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
 
   // Define routes that should be fullscreen even on desktop
   const fullscreenRoutes = [
-    '/home',           // Map view
     '/browse-area',    // Map view
     '/camera',         // Camera view
     '/scrolling-camera', // Camera view
