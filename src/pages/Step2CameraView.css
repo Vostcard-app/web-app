@@ -1,0 +1,161 @@
+/* ✅ Global Reset */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: black;
+  -webkit-text-size-adjust: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ✅ Main Container */
+.step2-camera-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: black;
+}
+
+/* Mobile-specific optimizations */
+@media screen and (max-width: 768px) {
+  .step2-camera-container {
+    /* Prevent bounce scrolling on iOS */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Force GPU acceleration on mobile */
+    will-change: transform;
+  }
+}
+
+/* iPhone-specific optimizations */
+@supports (-webkit-touch-callout: none) {
+  .step2-camera-container {
+    /* iOS Safari specific optimizations */
+    -webkit-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ✅ Controls */
+.step2-camera-controls {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 1000;
+}
+
+.control-button {
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid white;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.1);
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+.control-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.capture-button {
+  background: #007aff;
+  border: 3px solid white;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 32px;
+  color: white;
+}
+
+.capture-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(0, 122, 255, 0.5);
+}
+
+.capture-button:active {
+  transform: scale(0.95);
+}
+
+.capture-button:disabled {
+  background: #666;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ✅ Animation for capturing state */
+.capture-button.capturing {
+  animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* ✅ Responsive adjustments */
+@media (max-height: 600px) {
+  .step2-camera-controls {
+    bottom: 20px;
+  }
+  
+  .control-button {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .capture-button {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+}
+
+/* ✅ Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .step2-camera-controls {
+    bottom: 15px;
+  }
+  
+  .control-button {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .capture-button {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+} 

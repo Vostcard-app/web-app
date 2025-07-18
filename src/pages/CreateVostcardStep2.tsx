@@ -3,6 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 
+/*
+  📱 CAMERA APPROACH: Currently using Step2CameraView for enhanced orientation handling
+  
+  🔄 TO REVERT TO FILE INPUT:
+  1. Replace handleAddPhoto with handleAddPhotoFallback
+  2. Remove the camera mode indicator
+  3. The file input code is already there and ready to use
+*/
+
 export default function CreateVostcardStep2() {
   const navigate = useNavigate();
   const { updateVostcard, currentVostcard } = useVostcard();
@@ -28,8 +37,19 @@ export default function CreateVostcardStep2() {
     }
   }, [currentVostcard]);
 
-  // Handler for when a thumbnail is tapped
+  // Handler for when a thumbnail is tapped - NEW: Navigate to dedicated camera view
   const handleAddPhoto = (index: number) => {
+    const photoType = index === 0 ? 'distant' : 'near';
+    navigate('/step2-camera', {
+      state: {
+        photoType,
+        photoIndex: index
+      }
+    });
+  };
+
+  // FALLBACK: Original file input handler (kept for easy reversion)
+  const handleAddPhotoFallback = (index: number) => {
     setActiveThumbnail(index);
     fileInputRef.current?.click();
   };
@@ -186,6 +206,17 @@ export default function CreateVostcardStep2() {
         >
           Save & Continue
         </button>
+
+        {/* Camera mode indicator */}
+        <div style={{
+          marginTop: 10,
+          fontSize: 12,
+          color: '#666',
+          textAlign: 'center',
+          fontStyle: 'italic'
+        }}>
+          📱 Using enhanced camera with orientation correction
+        </div>
       </div>
 
       {/* Hidden file inputs */}

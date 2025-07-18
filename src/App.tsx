@@ -21,6 +21,7 @@ import ListView from "./pages/ListView";
 import ScrollingCameraView from "./pages/ScrollingCameraView";
 import CameraView from "./pages/CameraView";
 import QuickcardCameraView from "./pages/QuickcardCameraView";
+import Step2CameraView from "./pages/Step2CameraView";
 import SavedVostcardsListView from "./components/SavedVostcardsListView";
 import SettingsView from "./pages/SettingsView";
 import AccountSettingsView from "./pages/AccountSettingsView";
@@ -109,6 +110,7 @@ function App() {
                   <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
                   <Route path="/camera" element={<CameraView />} />
                   <Route path="/quickcard-camera" element={<QuickcardCameraView />} />
+                  <Route path="/step2-camera" element={<Step2CameraView />} />
 
                   {/* 📦 Saved */}
                   <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
