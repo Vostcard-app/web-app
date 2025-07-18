@@ -527,10 +527,93 @@ const QuickcardCameraView: React.FC = () => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  // Removed photo selection option - camera only
+  // Hybrid approach: Advanced camera + Native camera option
+  const [showNativeOption, setShowNativeOption] = useState(true);
+  const [showFileTypeWarning, setShowFileTypeWarning] = useState(false);
+  const [fileTypeWarningMessage, setFileTypeWarningMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Handle native camera capture
+  const handleNativeCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    
+    if (!file) {
+      console.log('❌ No file selected');
+      return;
+    }
+
+    // Check if it's a video file
+    if (file.type.startsWith('video/')) {
+      setFileTypeWarningMessage('📸 Quickcards only accept photos!\n\nYou selected a video file. Please take a photo instead.');
+      setShowFileTypeWarning(true);
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Check if it's an image file
+    if (!file.type.startsWith('image/')) {
+      setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo file.');
+      setShowFileTypeWarning(true);
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Check if location is available
+    if (!userLocation) {
+      setFileTypeWarningMessage('📍 Location not available!\n\nPlease enable location services and try again.');
+      setShowFileTypeWarning(true);
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Process valid image file
+    console.log('📸 Native camera photo accepted:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      location: userLocation
+    });
+    
+    // Convert File to Blob for compatibility
+    const blob = new Blob([file], { type: file.type });
+    createQuickcard(blob, userLocation);
+    navigate('/create-step3');
+    
+    // Clear the file input for next use
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Trigger native camera
+  const useNativeCamera = () => {
+    fileInputRef.current?.click();
+  };
 
       return (
     <div className="quickcard-camera-container">
+      {/* Native camera file input (hidden) - This opens the native camera app */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleNativeCapture}
+      />
+
       {/* Camera Permission Modal */}
       <CameraPermissionModal
         isOpen={showPermissionModal}
@@ -618,6 +701,36 @@ const QuickcardCameraView: React.FC = () => {
              <MdFlashAuto size={20} />}
           </button>
         )}
+
+      {/* Native Camera Option */}
+      {showNativeOption && (
+        <div className="native-camera-option">
+          <button className="native-camera-button" onClick={useNativeCamera}>
+            📱 Use Native Camera
+          </button>
+          <div className="native-camera-hint">
+            Opens your device's camera app
+          </div>
+        </div>
+      )}
+
+      {/* File Type Warning Modal */}
+      {showFileTypeWarning && (
+        <div className="file-type-warning-overlay">
+          <div className="file-type-warning-modal">
+            <div className="file-type-warning-content">
+              <h3>⚠️ File Type Warning</h3>
+              <p>{fileTypeWarningMessage}</p>
+              <button 
+                className="file-type-warning-ok"
+                onClick={() => setShowFileTypeWarning(false)}
+              >
+                OK, Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
 
       {/* Zoom Controls */}
@@ -637,7 +750,26 @@ const QuickcardCameraView: React.FC = () => {
           <div className="settings-content">
             <h3>Camera Settings</h3>
             
-            
+            {/* Camera Mode Selection */}
+            <div className="setting-group">
+              <label>Camera Mode</label>
+              <div className="setting-options">
+                <button
+                  className="setting-option active"
+                  onClick={() => setShowSettings(false)}
+                >
+                  🎛️ Advanced Camera
+                </button>
+                {showNativeOption && (
+                  <button
+                    className="setting-option"
+                    onClick={useNativeCamera}
+                  >
+                    📱 Native Camera
+                  </button>
+                )}
+              </div>
+            </div>
             
             {/* Resolution */}
             <div className="setting-group">
