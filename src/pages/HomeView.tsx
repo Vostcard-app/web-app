@@ -611,7 +611,7 @@ const HomeView = () => {
     e.preventDefault();
     console.log('📱 Navigating to Create Quickcard');
     clearVostcard();
-    navigate('/camera?mode=quickcard');
+    navigate('/quickcard-camera');
   };
 
   const handleRetryLoad = () => {

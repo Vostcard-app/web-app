@@ -1,10 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaFlag } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
+import QuickcardPin from '../assets/quickcard_pin.png';
+
+// Custom quickcard icon for the map
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
 
 const QuickcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,8 +30,8 @@ const QuickcardDetailView: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [userRating, setUserRating] = useState(0);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -147,9 +159,7 @@ ${privateUrl}`;
     setIsLiked(!isLiked);
   };
 
-  const handleRatingClick = (rating: number) => {
-    setUserRating(rating);
-  };
+
 
   const handleRefresh = () => {
     window.location.reload();
@@ -281,35 +291,59 @@ ${privateUrl}`;
 
       {/* User Info */}
       <div style={{ 
-        padding: '5px', 
+        padding: '5px 20px', 
         display: 'flex', 
-        alignItems: 'center'
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
-        <div style={{ 
-          width: 50, 
-          height: 50, 
-          borderRadius: '50%', 
-          overflow: 'hidden', 
-          marginRight: 16,
-          background: '#f0f0f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          {userProfile?.avatarURL ? (
-            <img 
-              src={userProfile.avatarURL} 
-              alt="User Avatar" 
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-            />
-          ) : (
-            <FaUserCircle size={50} color="#ccc" />
-          )}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ 
+            width: 50, 
+            height: 50, 
+            borderRadius: '50%', 
+            overflow: 'hidden', 
+            marginRight: 16,
+            background: '#f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {userProfile?.avatarURL ? (
+              <img 
+                src={userProfile.avatarURL} 
+                alt="User Avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+              />
+            ) : (
+              <FaUserCircle size={50} color="#ccc" />
+            )}
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+            {quickcard.username || 'Anonymous'}
+          </div>
         </div>
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
-          {quickcard.username || 'Anonymous'}
-        </div>
+        <button
+          onClick={() => {
+            if (quickcard?.latitude && quickcard?.longitude) {
+              setShowMapModal(true);
+            } else {
+              alert('No location data available for this quickcard');
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#666',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px'
+          }}
+        >
+          <FaMap size={24} />
+        </button>
       </div>
 
       {/* Title */}
@@ -444,41 +478,11 @@ ${privateUrl}`;
         color: '#666'
       }}>
         <span>0</span>
-        <span>0.0</span>
         <span>0</span>
         <span></span>
       </div>
 
-      {/* Worth Seeing Rating */}
-      <div style={{
-        padding: '0',
-        textAlign: 'center'
-      }}>
-        <div style={{ 
-          fontSize: '18px', 
-          fontWeight: 'bold', 
-          marginBottom: '10px',
-          color: '#333'
-        }}>
-          Worth Seeing?
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              onClick={() => handleRatingClick(star)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: star <= userRating ? '#ffd700' : '#ddd'
-              }}
-            >
-              <FaStar size={24} />
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       {/* Description Link, Flag Icon, and Refresh Button */}
       <div style={{ 
@@ -544,6 +548,81 @@ ${privateUrl}`;
         vostcardID={id!}
         vostcardTitle={quickcard?.title}
       />
+
+      {/* Map Modal */}
+      {showMapModal && quickcard?.latitude && quickcard?.longitude && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setShowMapModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '500px',
+              height: '70vh',
+              maxHeight: '600px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Map Header */}
+            <div style={{
+              background: '#07345c',
+              color: 'white',
+              padding: '16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Quickcard Location</h3>
+              <button
+                onClick={() => setShowMapModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  fontSize: '20px'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            {/* Map Container */}
+            <div style={{ height: 'calc(100% - 68px)', width: '100%' }}>
+              <MapContainer
+                center={[quickcard.latitude, quickcard.longitude]}
+                zoom={16}
+                style={{ height: '100%', width: '100%' }}
+                zoomControl={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  maxZoom={22}
+                />
+                <Marker
+                  position={[quickcard.latitude, quickcard.longitude]}
+                  icon={quickcardIcon}
+                />
+              </MapContainer>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Description Modal */}
       {showDescriptionModal && (
