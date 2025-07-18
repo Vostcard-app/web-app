@@ -194,7 +194,7 @@ const CameraView: React.FC = () => {
         createQuickcard(blob, userLocation);
         
         // Navigate to step 3 for quickcard editing
-        navigate('/create-step3');
+        navigate('/quickcard-step3');
       } else {
         console.error('❌ Failed to capture photo or location not available');
         setError('Failed to capture photo. Please try again.');

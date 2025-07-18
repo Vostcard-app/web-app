@@ -464,7 +464,7 @@ const QuickcardCameraView: React.FC = () => {
     // Use the first photo for quickcard
     if (captures.length > 0) {
       createQuickcard(captures[0].blob, userLocation);
-      navigate('/create-step3');
+      navigate('/quickcard-step3');
     }
   };
 
@@ -499,7 +499,7 @@ const QuickcardCameraView: React.FC = () => {
         });
         
         createQuickcard(blob, userLocation);
-        navigate('/create-step3');
+        navigate('/quickcard-step3');
       } else {
         console.error('❌ Failed to capture photo');
         alert('Failed to capture photo. Please try again.');
@@ -589,7 +589,7 @@ const QuickcardCameraView: React.FC = () => {
     // Convert File to Blob for compatibility
     const blob = new Blob([file], { type: file.type });
     createQuickcard(blob, userLocation);
-    navigate('/create-step3');
+    navigate('/quickcard-step3');
     
     // Clear the file input for next use
     if (fileInputRef.current) {

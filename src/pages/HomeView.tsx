@@ -673,7 +673,7 @@ const HomeView = () => {
                   .then(res => res.blob())
                   .then(blob => {
                     createQuickcard(blob, userLocation);
-                    navigate('/create-step3');
+                    navigate('/quickcard-step3');
                   });
               }
             };

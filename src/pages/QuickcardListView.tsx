@@ -67,7 +67,7 @@ const QuickcardListView = () => {
     const quickcard = quickcards.find(q => q.id === quickcardId);
     if (quickcard) {
       setCurrentVostcard(quickcard);
-      navigate('/create-step3'); // Skip to step 3 for quickcards
+      navigate('/quickcard-step3'); // Skip to step 3 for quickcards
     }
   };
 
