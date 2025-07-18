@@ -14,6 +14,7 @@ const MyVostcardListView = () => {
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [postingIds, setPostingIds] = useState<Set<string>>(new Set());
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
   console.log('🔄 MyVostcardListView rendered', {
     authLoading,
@@ -22,6 +23,16 @@ const MyVostcardListView = () => {
     error,
     savedVostcardsCount: savedVostcards.length
   });
+
+  // Handle window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     console.log('🔄 Auth state changed:', { authLoading, user: !!user });
@@ -254,50 +265,73 @@ ${privateUrl}`;
   });
 
   return (
-    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
-      {/* 🔵 Header with Home Icon */}
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0'
+    }}>
+      {/* Mobile-style container with responsive design */}
       <div style={{
-        backgroundColor: '#07345c',
-        height: '30px',
+        width: isDesktop ? '390px' : '100%',
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh',
+        backgroundColor: '#f5f5f5',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktop ? '16px' : '0',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingLeft: '16px',
-        color: 'white',
-        position: 'relative',
-        padding: '15px 0 24px 20px'
-      }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>Private Vōstcards</h1>
-        
-        {/* Home Button */}
-        <FaHome
-          size={48}
-          style={{
-            cursor: 'pointer',
-            position: 'absolute',
-            right: 44,
-            top: 15,
-            background: 'rgba(0,0,0,0.10)',
-            border: 'none',
-            borderRadius: '50%',
-            width: 48,
-            height: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => navigate('/home')}
-        />
-      </div>
-
-      {/* 📋 List of Vostcards */}
-      <div style={{ 
-        padding: '20px', 
-        height: 'calc(100vh - 120px)', 
+        flexDirection: 'column',
         overflowY: 'auto',
-        overscrollBehavior: 'none',
-        WebkitOverflowScrolling: 'auto'
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease'
       }}>
+        {/* 🔵 Header with Home Icon */}
+        <div style={{
+          backgroundColor: '#07345c',
+          height: '30px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingLeft: '16px',
+          color: 'white',
+          position: 'relative',
+          padding: '15px 0 24px 20px',
+          borderRadius: isDesktop ? '16px 16px 0 0' : '0',
+          flexShrink: 0
+        }}>
+          <h1 style={{ fontSize: '30px', margin: 0 }}>Private Vōstcards</h1>
+          
+          {/* Home Button */}
+          <FaHome
+            size={48}
+            style={{
+              cursor: 'pointer',
+              position: 'absolute',
+              right: 44,
+              top: 15,
+              background: 'rgba(0,0,0,0.10)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={() => navigate('/home')}
+          />
+        </div>
+
+        {/* 📋 List of Vostcards */}
+        <div style={{ 
+          padding: '20px', 
+          flex: 1,
+          overflowY: 'auto',
+          overscrollBehavior: 'none',
+          WebkitOverflowScrolling: 'auto'
+        }}>
         {/* Error State */}
         {error && (
           <div style={{
@@ -670,6 +704,7 @@ ${privateUrl}`;
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
