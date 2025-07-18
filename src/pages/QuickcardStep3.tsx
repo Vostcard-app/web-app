@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaHome } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 import { auth } from '../firebase/firebaseConfig';
 
 const QuickcardStep3: React.FC = () => {
@@ -21,6 +21,7 @@ const QuickcardStep3: React.FC = () => {
     'None',
     'Landmark',
     'Fun Fact',
+    'Macabre',
     'Architecture',
     'Historical',
     'Museum',
@@ -40,18 +41,32 @@ const QuickcardStep3: React.FC = () => {
     hasPhotos: (photos?.length || 0) >= 1,  // Quickcards only need 1 photo
   };
 
-  // Check authentication status
+  console.log('🔍 Quickcard Step 3 Validation State:', {
+    title: title,
+    titleValid: validationState.hasTitle,
+    description: description,
+    descriptionValid: validationState.hasDescription,
+    categories: categories,
+    categoriesValid: validationState.hasCategories,
+    photosCount: photos.length,
+    photosValid: validationState.hasPhotos,
+    isQuickcard: true
+  });
+
+  // Check Firebase Auth
   useEffect(() => {
     const checkAuth = () => {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        setAuthStatus(`Signed in as ${currentUser.email}`);
+      const user = auth.currentUser;
+      if (user) {
+        setAuthStatus(`✅ Authenticated: ${user.email}`);
       } else {
-        setAuthStatus('Not signed in');
+        setAuthStatus('❌ Not authenticated');
       }
     };
-    
+
     checkAuth();
+    
+    // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged(checkAuth);
     return () => unsubscribe();
   }, []);
@@ -109,100 +124,80 @@ const QuickcardStep3: React.FC = () => {
   if (!validationState.hasPhotos) missingItems.push('Photo');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      {/* Header */}
+    <div style={{ 
+      backgroundColor: 'white', 
+      height: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column',
+      touchAction: 'manipulation',
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
+      WebkitTapHighlightColor: 'transparent'
+    }}>
+      
+      {/* 🔵 Header */}
       <div style={{
         backgroundColor: '#002B4D',
-        height: 70,
+        height: 80,
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '0 20px',
-        color: 'white',
+        justifyContent: 'space-between',
+        padding: '0 16px',
         flexShrink: 0,
-        position: 'relative'
+        touchAction: 'manipulation',
+        position: 'relative',
+        zIndex: 1000  // Higher than the modal overlay
       }}>
-        <button
-          onClick={() => navigate('/quickcard-camera')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'white',
-            fontSize: '24px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            padding: '5px'
-          }}
-        >
-          <FaArrowLeft />
-        </button>
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-          Complete Quickcard
-        </h1>
-        <button
-          onClick={() => navigate('/home')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'white',
-            fontSize: '28px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            padding: '5px'
-          }}
-        >
-          <FaHome />
-        </button>
+        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Quickcard</div>
+        <FaArrowLeft
+          size={28}
+          color="white"
+          style={{ cursor: 'pointer' }}
+          onClick={() => navigate(-1)}
+        />
       </div>
 
-      {/* Auth Status */}
-      <div style={{ padding: '16px', backgroundColor: '#f8f9fa', borderBottom: '1px solid #dee2e6' }}>
-        <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
-          {authStatus}
-        </p>
-      </div>
-
-      {/* Main Content */}
+      {/* 📝 Form */}
       <div style={{ 
+        padding: 16, 
         flex: 1, 
-        padding: '20px', 
-        paddingBottom: '120px',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        paddingBottom: 140, // Add space for the fixed buttons
+        touchAction: 'manipulation'
       }}>
-        <div style={{ marginBottom: 20 }}>
+        <div>
           <label style={labelStyle}>
             Title {validationState.hasTitle && <span style={{color: 'green'}}>✅</span>}
           </label>
           <input
-            type="text"
             value={title}
             onChange={(e) => updateVostcard({ title: e.target.value })}
+            placeholder="Enter Title"
             style={{
               ...inputStyle,
               touchAction: 'manipulation',
               fontSize: '18px',
               WebkitTextSizeAdjust: '100%'
             }}
-            placeholder="Enter quickcard title"
           />
         </div>
 
-        <div style={{ marginBottom: 20 }}>
+        <div>
           <label style={labelStyle}>
             Description {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
           </label>
           <textarea
             value={description}
             onChange={(e) => updateVostcard({ description: e.target.value })}
+            placeholder="Enter Description"
+            rows={4}
             style={{
               ...textareaStyle,
               touchAction: 'manipulation',
               fontSize: '18px',
               WebkitTextSizeAdjust: '100%'
             }}
-            placeholder="Describe your quickcard"
           />
         </div>
 
@@ -239,32 +234,9 @@ const QuickcardStep3: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Photo Preview */}
-        {photos.length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <label style={labelStyle}>
-              Photo {validationState.hasPhotos && <span style={{color: 'green'}}>✅</span>}
-            </label>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-              {photos.map((photo, index) => (
-                <div key={index} style={{
-                  width: '100px',
-                  height: '100px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  backgroundImage: `url(${photo instanceof File ? URL.createObjectURL(photo) : photo})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }} />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Fixed Bottom Button */}
+      {/* 🔘 Fixed Bottom Button */}
       <div style={{
         position: 'fixed',
         bottom: 0,
@@ -296,7 +268,7 @@ const QuickcardStep3: React.FC = () => {
         </button>
       </div>
 
-      {/* Category Modal */}
+      {/* ✅ Category Modal */}
       {isCategoryModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
@@ -356,6 +328,7 @@ const categorySelectStyle: React.CSSProperties = {
 };
 
 const saveButtonStyle: React.CSSProperties = {
+  backgroundColor: '#002B4D',
   color: 'white',
   border: 'none',
   width: '100%',
@@ -367,7 +340,7 @@ const saveButtonStyle: React.CSSProperties = {
 
 const missingTextStyle: React.CSSProperties = {
   color: 'orange',
-  marginBottom: 8,
+  marginTop: 8,
   textAlign: 'center'
 };
 
@@ -381,7 +354,7 @@ const modalOverlayStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  zIndex: 998,
+  zIndex: 998,  // Lower than the header
 };
 
 const modalContentStyle: React.CSSProperties = {
@@ -391,25 +364,24 @@ const modalContentStyle: React.CSSProperties = {
   width: '80%',
   maxWidth: 400,
   position: 'relative',
-  zIndex: 999
+  zIndex: 999  // Higher than overlay but lower than header
 };
 
 const categoryItemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   marginBottom: 10,
-  cursor: 'pointer'
+  cursor: 'pointer',
 };
 
 const doneButtonStyle: React.CSSProperties = {
+  marginTop: 20,
   backgroundColor: '#002B4D',
   color: 'white',
   border: 'none',
   padding: '10px 20px',
   borderRadius: 8,
   cursor: 'pointer',
-  width: '100%',
-  marginTop: 10
 };
 
 export default QuickcardStep3; 
