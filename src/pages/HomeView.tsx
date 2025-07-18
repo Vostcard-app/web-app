@@ -333,6 +333,7 @@ const HomeView = () => {
   const [returnToPublicView, setReturnToPublicView] = useState(false); // Add this state
   const [publicVostcardId, setPublicVostcardId] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isInfoMenuOpen, setIsInfoMenuOpen] = useState(false);
   const [loadingVostcards, setLoadingVostcards] = useState(true);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -729,18 +730,21 @@ const HomeView = () => {
     return R * c;
   };
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       if (isMenuOpen && !target.closest('[data-menu]')) {
         setIsMenuOpen(false);
       }
+      if (isInfoMenuOpen && !target.closest('[data-info-menu]')) {
+        setIsInfoMenuOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMenuOpen]);
+  }, [isMenuOpen, isInfoMenuOpen]);
 
   const menuItems = [
     { label: 'Browse Area', route: '/browse-area' },
@@ -757,6 +761,16 @@ const HomeView = () => {
     { label: 'Report a Bug', route: '/report-bug' },
     { label: 'Account Settings', route: '/account-settings' },
     { label: 'Logout', route: null },
+  ];
+
+  const infoMenuItems = [
+    { label: 'What is Vōstcard?', route: '/video/what-is-vostcard' },
+    { label: 'What is a Quickcard?', route: '/video/what-is-quickcard' },
+    { label: 'How to make a Vostcard', route: '/video/how-to-make-vostcard' },
+    { label: 'How to make a Quickcard', route: '/video/how-to-make-quickcard' },
+    { label: 'Pulldown menu. Sending Vostcards and Quickcards', route: '/video/pulldown-menu-sending' },
+    { label: 'Adding Friends', route: '/video/adding-friends' },
+    { label: 'Your Vostbaox', route: '/video/your-vostbaox' },
   ];
 
   const handleMenuItemClick = async (label: string, route: string | null) => {
@@ -779,6 +793,15 @@ const HomeView = () => {
       //   }
       // }
       
+      navigate(route);
+    }
+  };
+
+  const handleInfoMenuItemClick = (label: string, route: string | null) => {
+    setIsInfoMenuOpen(false);
+    
+    if (route) {
+      console.log(`ℹ️ Navigating to: ${route}`);
       navigate(route);
     }
   };
@@ -925,7 +948,7 @@ const HomeView = () => {
                 </button>
                 
                 <div
-                  onClick={() => navigate('/user-guide')}
+                  onClick={() => setIsInfoMenuOpen(!isInfoMenuOpen)}
                   style={{
                     cursor: 'pointer',
                     display: 'flex',
@@ -937,8 +960,8 @@ const HomeView = () => {
                     src={InfoPin} 
                     alt="Info Pin" 
                     style={{
-                      width: '32px',
-                      height: '32px',
+                      width: '50px',
+                      height: '50px',
                       marginBottom: '2px'
                     }}
                   />
@@ -1093,6 +1116,59 @@ const HomeView = () => {
                         textAlign: 'left'
                       }}
                       onClick={() => handleMenuItemClick(label, route)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Info Menu */}
+            {isInfoMenuOpen && (
+              <>
+                <div
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    zIndex: 1999
+                  }}
+                  onClick={() => setIsInfoMenuOpen(false)}
+                />
+                
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '65px',
+                    right: '120px',
+                    backgroundColor: 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    zIndex: 2000,
+                    minWidth: '160px',
+                    maxWidth: '180px',
+                    overflow: 'auto'
+                  }}
+                  data-info-menu 
+                  role="menu" 
+                  aria-label="Info menu"
+                >
+                  {infoMenuItems.map(({ label, route }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      style={{
+                        ...menuItemStyle,
+                        backgroundColor: route && location.pathname === route ? '#f0f0f0' : 'transparent',
+                        width: '100%',
+                        textAlign: 'left'
+                      }}
+                      onClick={() => handleInfoMenuItemClick(label, route)}
                     >
                       {label}
                     </button>

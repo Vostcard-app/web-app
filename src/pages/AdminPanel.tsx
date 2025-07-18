@@ -128,6 +128,22 @@ const AdminPanel: React.FC = () => {
           style={{ cursor: 'pointer', marginRight: '10px', fontSize: '18px' }}
         />
         <h1>Admin Panel</h1>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            marginLeft: '20px',
+            padding: '8px 16px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          🏠 Root View
+        </button>
       </div>
 
       {/* Name Migration Section */}

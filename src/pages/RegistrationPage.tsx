@@ -4,8 +4,30 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/
 import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 import InfoPin from "../assets/Info_pin.png";
+import { useResponsive } from "../hooks/useResponsive";
+
+const inputStyle = {
+  width: '100%',
+  marginBottom: 20,
+  fontSize: 20,
+  padding: '14px 10px',
+  borderRadius: 12,
+  border: '1px solid #eee',
+  background: '#f8f8f8',
+  color: '#222',
+  boxSizing: 'border-box' as const,
+};
+
+const linkStyle = {
+  color: '#07345c',
+  fontWeight: 600,
+  fontSize: 22,
+  textDecoration: 'underline',
+  cursor: 'pointer',
+};
 
 export default function RegistrationPage() {
+  const { isDesktop } = useResponsive();
   const [formType, setFormType] = useState<"user" | "advertiser">("user");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -148,19 +170,28 @@ export default function RegistrationPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        height: '100vh',
-        width: '100vw',
-        background: '#fff',
-        overflowY: 'auto', // Ensures vertical scrolling
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#fff',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0'
+    }}>
+      {/* Mobile-style container with responsive design */}
+      <div style={{
+        width: isDesktop ? '390px' : '100%',
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh',
+        backgroundColor: '#fff',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktop ? '16px' : '0',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        padding: 0,
-      }}
-    >
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease'
+      }}>
       {/* Header */}
       <div style={{
         background: '#07345c',
@@ -170,6 +201,8 @@ export default function RegistrationPage() {
         padding: '32px 24px 24px 24px',
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
+        borderTopLeftRadius: isDesktop ? 16 : 0,
+        borderTopRightRadius: isDesktop ? 16 : 0,
         width: '100%',
         boxSizing: 'border-box',
         flexShrink: 0,
@@ -372,26 +405,7 @@ export default function RegistrationPage() {
           {loading ? "Registering..." : "Register"}
         </button>
       </form>
+      </div>
     </div>
   );
 }
-
-const inputStyle = {
-  width: '100%',
-  marginBottom: 20,
-  fontSize: 20,
-  padding: '14px 10px',
-  borderRadius: 12,
-  border: '1px solid #eee',
-  background: '#f8f8f8',
-  color: '#222',
-  boxSizing: 'border-box' as const,
-};
-
-const linkStyle = {
-  color: '#07345c',
-  fontWeight: 600,
-  fontSize: 22,
-  textDecoration: 'underline',
-  cursor: 'pointer',
-};

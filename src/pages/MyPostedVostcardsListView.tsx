@@ -390,7 +390,7 @@ ${getUserFirstName()}`);
           style={{
             cursor: 'pointer',
             position: 'absolute',
-            right: 44,
+            right: 29,
             top: 15,
             background: 'rgba(0,0,0,0.10)',
             border: 'none',
