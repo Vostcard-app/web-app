@@ -467,7 +467,8 @@ const HomeView = () => {
     zIndex: 2000,
     minWidth: '180px',
     maxWidth: '200px',
-    overflow: 'hidden'
+    maxHeight: '70vh',
+    overflow: 'auto'
   };
 
   const menuItemStyle = {
