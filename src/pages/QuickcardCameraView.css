@@ -43,7 +43,7 @@ body {
 /* ✅ Controls */
 .quickcard-controls {
   position: absolute;
-  bottom: 40px;
+  bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -127,7 +127,7 @@ body {
 /* ✅ Responsive adjustments */
 @media (max-height: 600px) {
   .quickcard-controls {
-    bottom: 20px;
+    bottom: 70px;
   }
   
   .control-button {
@@ -145,7 +145,7 @@ body {
 /* ✅ Landscape mode adjustments */
 @media (orientation: landscape) and (max-height: 500px) {
   .quickcard-controls {
-    bottom: 15px;
+    bottom: 65px;
   }
   
   .control-button {

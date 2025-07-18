@@ -19,10 +19,13 @@ const QuickcardCameraView: React.FC = () => {
   const [cameraReady, setCameraReady] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isLandscapeMode, setIsLandscapeMode] = useState(false);
 
-  // Portrait dimensions - FIXED 9:16 aspect ratio for quickcards
+  // Dynamic dimensions based on device orientation
   const PORTRAIT_WIDTH = 720;
   const PORTRAIT_HEIGHT = 1280;
+  const LANDSCAPE_WIDTH = 1280;
+  const LANDSCAPE_HEIGHT = 720;
 
   // Get user location
   useEffect(() => {
@@ -257,61 +260,7 @@ const QuickcardCameraView: React.FC = () => {
         }}
       />
 
-      {/* Mode indicator */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '80px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0, 0, 255, 0.8)',
-          color: 'white',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          zIndex: 1000
-        }}
-      >
-        📱 Quickcard Camera
-      </div>
 
-      {/* Location status */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '120px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: userLocation ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 165, 0, 0.8)',
-          color: 'white',
-          padding: '6px 12px',
-          borderRadius: '16px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          zIndex: 1000
-        }}
-      >
-        📍 {userLocation ? 'Location Ready' : 'Getting Location...'}
-      </div>
-
-      {/* Camera facing mode indicator */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '160px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0, 0, 0, 0.6)',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: '12px',
-          fontSize: '12px',
-          zIndex: 1000
-        }}
-      >
-        {facingMode === 'user' ? '🤳 Front Camera' : '📷 Back Camera'}
-      </div>
 
       {/* Controls */}
       <div className="quickcard-controls">
