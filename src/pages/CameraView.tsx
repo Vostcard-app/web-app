@@ -9,17 +9,47 @@ const CameraView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const { setVideo, saveLocalVostcard, loadLocalVostcard } = useVostcard();
+  const { setVideo, createQuickcard } = useVostcard();
 
   const [isRecording, setIsRecording] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>('');
   const [recordingTime, setRecordingTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Check if we're in quickcard mode
+  const searchParams = new URLSearchParams(location.search);
+  const isQuickcardMode = searchParams.get('mode') === 'quickcard';
+
+  console.log('📱 CameraView mode:', isQuickcardMode ? 'Quickcard' : 'Regular');
+
+  // Get user location for quickcards
+  useEffect(() => {
+    if (isQuickcardMode) {
+      const getCurrentLocation = () => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            console.log('📍 Location captured for quickcard');
+          },
+          (error) => {
+            console.error('❌ Error getting location:', error);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+        );
+      };
+      getCurrentLocation();
+    }
+  }, [isQuickcardMode]);
 
   // Enhanced camera permission check
   const checkCameraPermission = async (): Promise<boolean> => {
@@ -135,6 +165,41 @@ const CameraView: React.FC = () => {
         setDebugInfo(`Error: ${errorMessage}`);
       }
     }
+  };
+
+  // Capture photo for quickcards
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return;
+
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw current video frame to canvas
+    ctx.drawImage(video, 0, 0);
+
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+      if (blob && userLocation) {
+        console.log('📸 Photo captured for quickcard:', blob.size, 'bytes');
+        console.log('📍 Location:', userLocation);
+        
+        // Create quickcard with photo and location
+        createQuickcard(blob, userLocation);
+        
+        // Navigate to step 3 for quickcard editing
+        navigate('/create-step3');
+      } else {
+        console.error('❌ Failed to capture photo or location not available');
+        setError('Failed to capture photo. Please try again.');
+      }
+    }, 'image/jpeg', 0.8);
   };
 
   // Start recording
@@ -285,9 +350,9 @@ const CameraView: React.FC = () => {
 
       {/* Record/Stop Button */}
       <button
-        onClick={isRecording ? stopRecording : startRecording}
+        onClick={isQuickcardMode ? capturePhoto : (isRecording ? stopRecording : startRecording)}
         className={isRecording ? 'stop-button' : 'record-button'}
-        disabled={!streamRef.current}
+        disabled={!streamRef.current || (isQuickcardMode && !userLocation)}
         style={{
           position: 'absolute',
           bottom: '25%',
@@ -295,13 +360,71 @@ const CameraView: React.FC = () => {
           transform: 'translateX(-50%)',
           width: '100px',
           height: '100px',
-          backgroundColor: isRecording ? 'darkred' : 'red',
+          backgroundColor: isRecording ? 'darkred' : (isQuickcardMode ? 'blue' : 'red'),
           borderRadius: '50%',
           border: '6px solid white',
           cursor: 'pointer',
           zIndex: 1000
         }}
+      >
+        {isQuickcardMode && (
+          <div style={{ 
+            color: 'white', 
+            fontSize: '40px', 
+            lineHeight: '1' 
+          }}>
+            📸
+          </div>
+        )}
+      </button>
+
+      {/* Hidden canvas for photo capture */}
+      <canvas
+        ref={canvasRef}
+        style={{ display: 'none' }}
       />
+
+      {/* Mode indicator */}
+      {isQuickcardMode && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(0, 0, 255, 0.8)',
+            color: 'white',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            zIndex: 1000
+          }}
+        >
+          📱 Quickcard Mode
+        </div>
+      )}
+
+      {/* Location status for quickcards */}
+      {isQuickcardMode && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '120px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: userLocation ? 'rgba(0, 255, 0, 0.8)' : 'rgba(255, 165, 0, 0.8)',
+            color: 'white',
+            padding: '6px 12px',
+            borderRadius: '16px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            zIndex: 1000
+          }}
+        >
+          📍 {userLocation ? 'Location Ready' : 'Getting Location...'}
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (

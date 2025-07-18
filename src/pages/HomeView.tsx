@@ -607,6 +607,13 @@ const HomeView = () => {
     navigate('/create-step1');
   };
 
+  const handleCreateQuickcard = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('📱 Navigating to Create Quickcard');
+    clearVostcard();
+    navigate('/camera?mode=quickcard');
+  };
+
   const handleRetryLoad = () => {
     setRetryCount(prev => prev + 1);
     loadVostcards(true);
@@ -655,6 +662,7 @@ const HomeView = () => {
     { label: 'Browse Area', route: '/browse-area' },
     { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },  // Fix the route to match App.tsx
     { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
+    { label: 'Quickcards', route: '/quickcards' },  // Add quickcards menu item
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
     { label: 'Vōstbox', route: '/vostbox' },
@@ -931,7 +939,7 @@ const HomeView = () => {
               <button 
                 type="button" 
                 style={quickcardButton} 
-                onClick={() => console.log('Create Quickcard clicked')}
+                onClick={handleCreateQuickcard}
               >
                 Create Quickcard
               </button>

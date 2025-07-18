@@ -25,6 +25,7 @@ export interface Vostcard {
   createdAt: string;
   updatedAt: string;
   isOffer?: boolean; // New field for offers
+  isQuickcard?: boolean; // New field for quickcards
   offerDetails?: {
     discount?: string;
     validUntil?: string;
@@ -96,6 +97,10 @@ interface VostcardContextProps {
   cleanupDeletionMarkers: () => void;
   clearDeletionMarkers: () => void;
   manualCleanupFirebase: () => Promise<void>;
+  // Quickcard-specific methods
+  quickcards: Vostcard[];
+  createQuickcard: (photo: Blob, geo: { latitude: number; longitude: number }) => void;
+  saveQuickcard: () => Promise<void>;
 }
 
 // IndexedDB configuration
@@ -218,6 +223,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const authContext = useAuth();
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
+  const [quickcards, setQuickcards] = useState<Vostcard[]>([]);
   const [scripts, setScripts] = useState<Script[]>([]);
   const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
   const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
@@ -715,6 +721,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
       mediaUploadStatus: 'complete',
       isOffer: localVostcard.isOffer || false,
+      isQuickcard: localVostcard.isQuickcard || false,
       offerDetails: localVostcard.offerDetails || null,
       script: localVostcard.script || null,
       scriptId: localVostcard.scriptId || null
@@ -772,6 +779,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       createdAt: firebaseVostcard.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       updatedAt: firebaseVostcard.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       isOffer: firebaseVostcard.isOffer || false,
+      isQuickcard: firebaseVostcard.isQuickcard || false,
       offerDetails: firebaseVostcard.offerDetails || null,
       script: firebaseVostcard.script || null,
       scriptId: firebaseVostcard.scriptId || null,
@@ -1198,6 +1206,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
+        isQuickcard: currentVostcard.isQuickcard || false,
         offerDetails: currentVostcard.offerDetails || null,
         script: currentVostcard.script || null,
         scriptId: currentVostcard.scriptId || null
@@ -1596,6 +1605,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: (vostcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'complete',
         isOffer: vostcard.isOffer || false,
+        isQuickcard: vostcard.isQuickcard || false,
         offerDetails: vostcard.offerDetails || null,
         visibility: 'public'
       });
@@ -2127,6 +2137,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
                 mediaUploadStatus: 'complete',
                 isOffer: localVostcard.isOffer || false,
+                isQuickcard: localVostcard.isQuickcard || false,
                 offerDetails: localVostcard.offerDetails || null,
                 script: localVostcard.script || null,
                 scriptId: localVostcard.scriptId || null
@@ -2517,6 +2528,53 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [setLastSyncTimestamp, loadAllLocalVostcards]);
 
+  // Quickcard-specific methods
+
+  const createQuickcard = useCallback((photo: Blob, geo: { latitude: number; longitude: number }) => {
+    console.log('📱 Creating quickcard with photo and geo:', geo);
+    
+    const user = auth.currentUser;
+    const username = getCorrectUsername(authContext);
+    const newQuickcard: Vostcard = {
+      id: uuidv4(),
+      state: 'private',
+      video: null, // Quickcards don't have videos
+      title: '',
+      description: '',
+      photos: [photo],
+      categories: [],
+      geo,
+      username,
+      userID: user?.uid || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isQuickcard: true, // Mark as quickcard
+      hasVideo: false,
+      hasPhotos: true,
+    };
+    
+    setCurrentVostcard(newQuickcard);
+    console.log('✅ Quickcard created:', newQuickcard.id);
+  }, [authContext]);
+
+  const saveQuickcard = useCallback(async () => {
+    console.log('📱 Saving quickcard...');
+    if (!currentVostcard || !currentVostcard.isQuickcard) {
+      console.error('❌ No quickcard to save');
+      return;
+    }
+    
+    try {
+      // Use the existing saveLocalVostcard method which handles both IndexedDB and Firebase
+      await saveLocalVostcard();
+      
+      console.log('✅ Quickcard saved successfully');
+    } catch (error) {
+      console.error('❌ Error saving quickcard:', error);
+      throw error;
+    }
+  }, [currentVostcard, saveLocalVostcard]);
+
   return (
     <VostcardContext.Provider
       value={{
@@ -2582,6 +2640,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         cleanupDeletionMarkers,
         clearDeletionMarkers,
         manualCleanupFirebase,
+        // Quickcard-specific methods
+        quickcards,
+        createQuickcard,
+        saveQuickcard,
       }}
     >
       {children}

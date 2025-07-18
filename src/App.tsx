@@ -50,6 +50,8 @@ import EmailVostcardView from './pages/EmailVostcardView';
 import AdminPanel from './pages/AdminPanel';
 import FriendListView from './pages/FriendListView';
 import VostboxView from './pages/VostboxView';
+import QuickcardListView from './pages/QuickcardListView';
+import QuickcardDetailView from './pages/QuickcardDetailView';
 
 function App() {
   return (
@@ -86,6 +88,10 @@ function App() {
                   <Route path="/following" element={<FollowingView />} />
                   <Route path="/friends" element={<FriendListView />} />
                   <Route path="/vostbox" element={<VostboxView />} />
+
+                  {/* 📱 Quickcard Routes */}
+                  <Route path="/quickcards" element={<QuickcardListView />} />
+                  <Route path="/quickcard/:id" element={<QuickcardDetailView />} />
 
                   {/* 📜 Script Management */}
                   <Route path="/scripts" element={<ScriptLibraryView />} />

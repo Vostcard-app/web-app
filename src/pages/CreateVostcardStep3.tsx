@@ -38,11 +38,12 @@ const CreateVostcardStep3: React.FC = () => {
   'Made for kids',]
   
   // Debug validation state
+  const isQuickcard = currentVostcard?.isQuickcard || false;
   const validationState = {
     hasTitle: title.trim() !== '',
     hasDescription: description.trim() !== '',
     hasCategories: (categories?.length || 0) > 0,
-    hasPhotos: (photos?.length || 0) > 0,  // Changed from >= 2 to > 0
+    hasPhotos: isQuickcard ? (photos?.length || 0) >= 1 : (photos?.length || 0) >= 2,  // Quickcards need 1 photo, regular vostcards need 2
     hasVideo: !!currentVostcard?.video,
     hasGeo: !!currentVostcard?.geo
   };
@@ -57,7 +58,8 @@ const CreateVostcardStep3: React.FC = () => {
     photosCount: photos.length,
     photosValid: validationState.hasPhotos,
     video: !!currentVostcard?.video,
-    geo: !!currentVostcard?.geo
+    geo: !!currentVostcard?.geo,
+    isQuickcard: isQuickcard
   });
 
   // Check Firebase Auth
@@ -203,7 +205,13 @@ const CreateVostcardStep3: React.FC = () => {
   if (!validationState.hasTitle) missingItems.push('Title');
   if (!validationState.hasDescription) missingItems.push('Description');
   if (!validationState.hasCategories) missingItems.push('Categories');
-  if (!validationState.hasPhotos) missingItems.push('Photos (need at least 2)');
+  if (!validationState.hasPhotos) {
+    if (isQuickcard) {
+      missingItems.push('Photos (need at least 1)');
+    } else {
+      missingItems.push('Photos (need at least 2)');
+    }
+  }
 
   return (
     <div style={{ 
