@@ -34,10 +34,13 @@ const UserGuideView: React.FC = () => {
           style={{ cursor: 'pointer', marginRight: '20px' }}
           onClick={() => navigate(-1)} // Go back to previous page
         />
-        <span style={{
+        <span 
+          onClick={() => navigate('/home')}
+          style={{
           fontSize: '2.2rem',
           fontWeight: 700,
           letterSpacing: '0.01em',
+          cursor: 'pointer',
         }}>
           Vōstcard
         </span>

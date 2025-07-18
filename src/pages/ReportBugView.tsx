@@ -62,7 +62,9 @@ const ReportBugView: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', margin: 0 }}>Vōstcard</span>
+        <span 
+          onClick={() => navigate('/home')}
+          style={{ color: 'white', fontWeight: 700, fontSize: '30px', margin: 0, cursor: 'pointer' }}>Vōstcard</span>
         <FaHome
           size={48}
           style={{

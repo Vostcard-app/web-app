@@ -43,7 +43,9 @@ const AdvertiserPortal: React.FC = () => {
         fontSize: '24px',
         fontWeight: 'bold',
       }}>
-        <span>Vōstcard Advertiser Portal</span>
+        <span><span 
+          onClick={() => navigate('/home')}
+          style={{ cursor: 'pointer' }}>Vōstcard</span> Advertiser Portal</span>
         <button
           onClick={() => {
             // sign out the user and navigate to login

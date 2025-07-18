@@ -69,7 +69,9 @@ const RootView: React.FC = () => {
         zIndex: 1000,
         position: 'relative',
       }}>
-        <span style={{ marginLeft: 24 }}>Vōstcard</span>
+        <span 
+          onClick={() => navigate('/home')}
+          style={{ marginLeft: 24, cursor: 'pointer' }}>Vōstcard</span>
       </div>
 
       {/* Map Background - Wrapped in error boundary */}

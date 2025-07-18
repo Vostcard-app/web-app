@@ -240,7 +240,9 @@ const CreateVostcardStep3: React.FC = () => {
         position: 'relative',
         zIndex: 1000  // Higher than the modal overlay
       }}>
-        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Vōstcard</div>
+        <div 
+          onClick={() => navigate('/home')}
+          style={{ color: 'white', fontSize: 28, fontWeight: 'bold', cursor: 'pointer' }}>Vōstcard</div>
         <FaArrowLeft
           size={28}
           color="white"

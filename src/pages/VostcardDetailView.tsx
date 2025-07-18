@@ -350,7 +350,9 @@ ${privateUrl}`;
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
+        <span 
+          onClick={() => navigate('/home')}
+          style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem', cursor: 'pointer' }}>
           Vōstcard
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

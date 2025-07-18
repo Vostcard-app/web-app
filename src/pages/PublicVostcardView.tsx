@@ -499,7 +499,9 @@ ${privateUrl}`);
         display: 'flex',
         alignItems: 'center',
       }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0 }}>Vōstcard</span>
+        <span 
+          onClick={() => navigate('/home')}
+          style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0, cursor: 'pointer' }}>Vōstcard</span>
       </div>
 
       {/* 20% Container with User Info */}

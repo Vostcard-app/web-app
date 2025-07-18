@@ -282,11 +282,14 @@ const UserSettingsView: React.FC = () => {
         justifyContent: 'space-between',
         flexShrink: 0,
       }}>
-        <h1 style={{
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{
           color: 'white',
           fontWeight: 700,
           fontSize: '2.5rem',
           margin: 0,
+          cursor: 'pointer',
         }}>Vōstcard</h1>
         <button
           onClick={() => navigate(-1)}

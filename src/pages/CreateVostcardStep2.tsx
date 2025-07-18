@@ -132,7 +132,9 @@ export default function CreateVostcardStep2() {
         boxSizing: 'border-box',
         position: 'relative'
       }}>
-        <span style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.01em' }}>Vōstcard</span>
+        <span 
+          onClick={() => navigate('/home')}
+          style={{ fontSize: 32, fontWeight: 700, letterSpacing: '0.01em', cursor: 'pointer' }}>Vōstcard</span>
         <button
           onClick={() => navigate(-1)}
           style={{

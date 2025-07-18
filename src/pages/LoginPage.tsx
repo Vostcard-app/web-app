@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
+import { useResponsive } from "../hooks/useResponsive";
 
 export default function LoginPage() {
+  const { isDesktop } = useResponsive();
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -140,18 +142,34 @@ export default function LoginPage() {
   };
 
   return (
-    <form onSubmit={handleLogin} style={{
-      height: '100vh',
-      background: '#f5f5f5',
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#f5f5f5',
       display: 'flex',
-      flexDirection: 'column',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      overflow: 'hidden'
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0'
     }}>
+      {/* Mobile-style container with responsive design */}
+      <form onSubmit={handleLogin} style={{
+        width: isDesktop ? '390px' : '100%',
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh',
+        backgroundColor: '#f5f5f5',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktop ? '16px' : '0',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease',
+        position: isDesktop ? 'relative' : 'fixed',
+        top: isDesktop ? 'auto' : 0,
+        left: isDesktop ? 'auto' : 0,
+        right: isDesktop ? 'auto' : 0,
+        bottom: isDesktop ? 'auto' : 0,
+        overflow: 'hidden'
+      }}>
       {/* Header */}
       <div style={{
         background: '#07345c',
@@ -161,12 +179,17 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        borderTopLeftRadius: isDesktop ? 16 : 0,
+        borderTopRightRadius: isDesktop ? 16 : 0,
         flexShrink: 0 // Prevent header from shrinking
       }}>
-        <span style={{
+        <span 
+          onClick={() => navigate('/home')}
+          style={{
           fontSize: '2.2rem',
           fontWeight: 700,
           letterSpacing: '0.01em',
+          cursor: 'pointer',
         }}>
           Vōstcard
         </span>
@@ -324,5 +347,6 @@ export default function LoginPage() {
         </button>
       </div>
     </form>
+    </div>
   );
 }

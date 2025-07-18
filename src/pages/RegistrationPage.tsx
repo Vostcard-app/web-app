@@ -207,11 +207,14 @@ export default function RegistrationPage() {
         boxSizing: 'border-box',
         flexShrink: 0,
       }}>
-        <h1 style={{
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{
           color: 'white',
           fontWeight: 700,
           fontSize: '2.5rem',
           margin: 0,
+          cursor: 'pointer',
         }}>Vōstcard</h1>
         <div
           onClick={() => navigate("/user-guide")}
@@ -275,7 +278,7 @@ export default function RegistrationPage() {
             background: formType === "advertiser" ? "#07345c" : "#eee",
             color: formType === "advertiser" ? "#fff" : "#07345c",
             border: 'none',
-            borderRadius: '0 32px 32px 0',
+            borderRadius: '0 8px 8px 0',
             fontWeight: 700,
             fontSize: 28,
             cursor: 'pointer',

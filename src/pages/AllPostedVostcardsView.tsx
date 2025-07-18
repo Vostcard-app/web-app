@@ -377,7 +377,9 @@ const AllPostedVostcardsView: React.FC = () => {
         flexShrink: 0,
         zIndex: 10
       }}>
-        <div style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 1 }}>Vōstcard</div>
+        <div 
+          onClick={() => navigate('/home')}
+          style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 1, cursor: 'pointer' }}>Vōstcard</div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <button
             style={{ 
