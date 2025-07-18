@@ -55,6 +55,14 @@ const ZoomControls = () => {
   );
 };
 
+const RecenterControl = ({ onRecenter }: { onRecenter: () => void }) => {
+  return (
+    <div style={recenterControlStyle}>
+      <button style={zoomButton} onClick={onRecenter}><FaLocationArrow /></button>
+    </div>
+  );
+};
+
 
 
 const MapCenter = ({ userLocation }: { userLocation: [number, number] | null }) => {
@@ -85,18 +93,19 @@ const listViewButton = {
   color: 'white',
   border: 'none',
   borderRadius: '8px',
-  padding: '12px 20px',
+  padding: '0px 20px',
   fontSize: '16px',
   fontWeight: 500,
   cursor: 'pointer',
   boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
   pointerEvents: 'auto' as const,
   transition: 'transform 0.1s ease',
-  height: '48px',
+  height: '40px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   textAlign: 'center' as const, // Ensure text is centered horizontally
+  lineHeight: '1', // Ensure clean line height for better centering
 };
 
 const mapContainerStyle = {
@@ -226,13 +235,17 @@ const createButton = {
   color: 'white',
   border: 'none',
   borderRadius: 12,
-  padding: '18px 20px',
+  padding: '0px 20px',
   fontSize: 18,
   fontWeight: 700,
   cursor: 'pointer',
   boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  width: '48%'
+  width: '48%',
+  height: '40px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
 };
 
 const quickcardButton = {
@@ -240,18 +253,33 @@ const quickcardButton = {
   color: 'white',
   border: 'none',
   borderRadius: 12,
-  padding: '18px 20px',
+  padding: '0px 20px',
   fontSize: 18,
   fontWeight: 700,
   cursor: 'pointer',
   boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  width: '48%'
+  width: '48%',
+  height: '40px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
 };
 
 const zoomControlStyle = {
   position: 'absolute' as const,
   top: '50%',
+  right: 20,
+  transform: 'translateY(-50%)',
+  zIndex: 1000,
+  display: 'flex',
+  flexDirection: 'column' as const,
+  gap: 8,
+};
+
+const recenterControlStyle = {
+  position: 'absolute' as const,
+  top: '33%',
   right: 20,
   transform: 'translateY(-50%)',
   zIndex: 1000,
@@ -721,6 +749,15 @@ const HomeView = () => {
     navigate('/offers-list');
   };
 
+  // Recenter map to user's actual GPS location
+  const handleRecenter = () => {
+    if (actualUserLocation) {
+      console.log('🎯 Recentering map to user location:', actualUserLocation);
+      setUserLocation(actualUserLocation);
+      setBrowseLocation(null); // Clear browse location when recentering
+    }
+  };
+
   // Update the filteredVostcards definition
   const filteredVostcards = singleVostcard ? [singleVostcard] : filterVostcardsByCategory(vostcards);
 
@@ -922,6 +959,7 @@ const HomeView = () => {
                   })}
 
                   <ZoomControls />
+                  <RecenterControl onRecenter={handleRecenter} />
                   <MapCenter userLocation={userLocation} />
                 </MapContainer>
               )}
