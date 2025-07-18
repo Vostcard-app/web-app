@@ -15,6 +15,7 @@ const MyPostedVostcardsListView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
   console.log('🔄 MyPostedVostcardsListView rendered', {
     authLoading,
@@ -23,6 +24,16 @@ const MyPostedVostcardsListView = () => {
     error,
     postedVostcardsCount: postedVostcards.length
   });
+
+  // Handle window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     console.log('🔄 Auth state changed:', { authLoading, user: !!user });
@@ -335,19 +346,42 @@ ${getUserFirstName()}`);
   });
 
   return (
-    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
-      {/* 🔵 Header with Home Icon */}
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0'
+    }}>
+      {/* Mobile-style container with responsive design */}
       <div style={{
-        backgroundColor: '#07345c',
-        height: '30px',
+        width: isDesktop ? '390px' : '100%',
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh',
+        backgroundColor: '#f5f5f5',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktop ? '16px' : '0',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingLeft: '16px',
-        color: 'white',
-        position: 'relative',
-        padding: '15px 0 24px 20px'
+        flexDirection: 'column',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease'
       }}>
+        {/* 🔵 Header with Home Icon */}
+        <div style={{
+          backgroundColor: '#07345c',
+          height: '30px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingLeft: '16px',
+          color: 'white',
+          position: 'relative',
+          padding: '15px 0 24px 20px',
+          borderRadius: isDesktop ? '16px 16px 0 0' : '0',
+          flexShrink: 0
+        }}>
         <h1 style={{ fontSize: '30px', margin: 0 }}>Posted Vōstcards</h1>
         
         {/* Home Button */}
@@ -371,14 +405,14 @@ ${getUserFirstName()}`);
         />
       </div>
 
-      {/* 📋 List of Vostcards */}
-      <div style={{ 
-        padding: '20px', 
-        height: 'calc(100vh - 120px)', 
-        overflowY: 'auto',
-        overscrollBehavior: 'none',
-        WebkitOverflowScrolling: 'auto'
-      }}>
+        {/* 📋 List of Vostcards */}
+        <div style={{ 
+          padding: '20px', 
+          flex: 1,
+          overflowY: 'auto',
+          overscrollBehavior: 'none',
+          WebkitOverflowScrolling: 'auto'
+        }}>
         {/* Error State */}
         {error && (
           <div style={{
@@ -706,6 +740,7 @@ ${getUserFirstName()}`);
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -309,7 +309,7 @@ ${privateUrl}`;
             style={{
               cursor: 'pointer',
               position: 'absolute',
-              right: 44,
+              right: 29,
               top: 15,
               background: 'rgba(0,0,0,0.10)',
               border: 'none',
@@ -391,7 +391,7 @@ ${privateUrl}`;
               Retry
             </button>
           </div>
-        ) : savedVostcards.length === 0 ? (
+        ) : savedVostcards.filter(vostcard => !vostcard.isQuickcard).length === 0 ? (
           <div style={{
             padding: '40px',
             textAlign: 'center',
@@ -425,12 +425,13 @@ ${privateUrl}`;
               fontSize: '14px',
               color: '#495057'
             }}>
-              {savedVostcards.length} Private Vōstcard{savedVostcards.length !== 1 ? 's' : ''}
+              {savedVostcards.filter(vostcard => !vostcard.isQuickcard).length} Private Vōstcard{savedVostcards.filter(vostcard => !vostcard.isQuickcard).length !== 1 ? 's' : ''}
             </div>
 
             {/* Vostcard List */}
             <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               {[...savedVostcards]
+                .filter(vostcard => !vostcard.isQuickcard)
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((vostcard, index) => {
                   const missingItems = getVostcardStatus(vostcard);
