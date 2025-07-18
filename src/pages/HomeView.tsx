@@ -878,7 +878,6 @@ const HomeView = () => {
       {/* Main content area */}
       <div style={{ 
         flex: 1, 
-        paddingTop: 80, 
         position: 'relative',
         overflow: 'hidden'
       }}>
