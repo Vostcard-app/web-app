@@ -212,7 +212,7 @@ const debugButtonStyle = {
 
 const createButtonContainer = {
   position: 'absolute' as const,
-  bottom: 40,
+  bottom: 80,
   left: 15,
   right: 15,
   zIndex: 1000,
@@ -978,7 +978,7 @@ const HomeView = () => {
       {/* Filter Button - Lower Left */}
       <div style={{
         position: 'absolute',
-        bottom: '120px',
+        bottom: '160px',
         left: '16px',
         zIndex: 1002
       }}>
