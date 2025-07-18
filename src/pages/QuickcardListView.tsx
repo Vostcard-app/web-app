@@ -9,7 +9,7 @@ import { db } from '../firebase/firebaseConfig';
 const QuickcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { savedVostcards, loadAllLocalVostcardsImmediate, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
+  const { savedVostcards, loadAllLocalVostcardsImmediate, deletePrivateVostcard, setCurrentVostcard, syncInBackground } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -42,10 +42,14 @@ const QuickcardListView = () => {
             return;
           }
 
-          // Load quickcards
+          // Load quickcards immediately from IndexedDB
           await loadAllLocalVostcardsImmediate();
           
-          console.log('✅ Quickcards loaded successfully');
+          // Then sync with Firebase in the background
+          console.log('🔄 Starting Firebase sync for quickcards...');
+          await syncInBackground();
+          
+          console.log('✅ Quickcards loaded and synced successfully');
           
         } catch (error) {
           console.error('❌ Error loading quickcards:', error);
@@ -57,7 +61,7 @@ const QuickcardListView = () => {
 
       loadData();
     }
-  }, [authLoading, user, loadAllLocalVostcardsImmediate, navigate]);
+  }, [authLoading, user, loadAllLocalVostcardsImmediate, navigate, syncInBackground]);
 
   const handleEdit = (quickcardId: string) => {
     const quickcard = quickcards.find(q => q.id === quickcardId);
