@@ -47,6 +47,32 @@ const QuickcardCameraView: React.FC = () => {
     getCurrentLocation();
   }, []);
 
+  // Detect device orientation
+  useEffect(() => {
+    const checkOrientation = () => {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      setIsLandscapeMode(isLandscape);
+      console.log('📱 Device orientation:', isLandscape ? 'Landscape' : 'Portrait');
+    };
+
+    // Check initial orientation
+    checkOrientation();
+
+    // Listen for orientation changes
+    const handleOrientationChange = () => {
+      // Small delay to ensure dimensions are updated
+      setTimeout(checkOrientation, 100);
+    };
+
+    window.addEventListener('resize', handleOrientationChange);
+    window.addEventListener('orientationchange', handleOrientationChange);
+
+    return () => {
+      window.removeEventListener('resize', handleOrientationChange);
+      window.removeEventListener('orientationchange', handleOrientationChange);
+    };
+  }, []);
+
   // Start camera
   useEffect(() => {
     const startCamera = async () => {
@@ -96,7 +122,7 @@ const QuickcardCameraView: React.FC = () => {
     };
   }, [facingMode]);
 
-  // Canvas animation loop - ALWAYS renders portrait 9:16 with proper orientation handling
+  // Canvas animation loop - Adapts to device orientation
   useEffect(() => {
     if (!cameraReady || !videoRef.current || !canvasRef.current) return;
 
@@ -104,9 +130,14 @@ const QuickcardCameraView: React.FC = () => {
     const ctx = canvas.getContext('2d');
     const video = videoRef.current;
 
-    // Set canvas to FIXED portrait dimensions
-    canvas.width = PORTRAIT_WIDTH;
-    canvas.height = PORTRAIT_HEIGHT;
+    // Set canvas dimensions based on device orientation
+    if (isLandscapeMode) {
+      canvas.width = LANDSCAPE_WIDTH;
+      canvas.height = LANDSCAPE_HEIGHT;
+    } else {
+      canvas.width = PORTRAIT_WIDTH;
+      canvas.height = PORTRAIT_HEIGHT;
+    }
 
     const animate = () => {
       if (!ctx || !video || video.videoWidth === 0 || video.videoHeight === 0) {
@@ -123,39 +154,62 @@ const QuickcardCameraView: React.FC = () => {
       
       ctx.save();
       
-      if (isVideoLandscape) {
-        // Camera is landscape - rotate to portrait
-        // Move to center of canvas
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        
-        // Rotate 90 degrees clockwise
-        ctx.rotate(Math.PI / 2);
-        
-        // Scale to fill portrait canvas (video height becomes canvas width)
-        const scaleX = canvas.width / video.videoHeight;
-        const scaleY = canvas.height / video.videoWidth;
-        const scale = Math.max(scaleX, scaleY);
-        
-        ctx.scale(scale, scale);
-        
-        // Draw video centered (swap width/height due to rotation)
-        ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
-        
+      if (isLandscapeMode) {
+        // Device is in landscape mode
+        if (isVideoLandscape) {
+          // Video is landscape, device is landscape - draw normally
+          const scaleX = canvas.width / video.videoWidth;
+          const scaleY = canvas.height / video.videoHeight;
+          const scale = Math.max(scaleX, scaleY);
+          
+          const scaledWidth = video.videoWidth * scale;
+          const scaledHeight = video.videoHeight * scale;
+          
+          // Center the video
+          const x = (canvas.width - scaledWidth) / 2;
+          const y = (canvas.height - scaledHeight) / 2;
+          
+          ctx.drawImage(video, x, y, scaledWidth, scaledHeight);
+        } else {
+          // Video is portrait, device is landscape - rotate video
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(Math.PI / 2);
+          
+          const scaleX = canvas.width / video.videoHeight;
+          const scaleY = canvas.height / video.videoWidth;
+          const scale = Math.max(scaleX, scaleY);
+          
+          ctx.scale(scale, scale);
+          ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
+        }
       } else {
-        // Camera is already portrait - draw normally
-        // Scale to fill canvas while maintaining aspect ratio
-        const scaleX = canvas.width / video.videoWidth;
-        const scaleY = canvas.height / video.videoHeight;
-        const scale = Math.max(scaleX, scaleY);
-        
-        const scaledWidth = video.videoWidth * scale;
-        const scaledHeight = video.videoHeight * scale;
-        
-        // Center the video
-        const x = (canvas.width - scaledWidth) / 2;
-        const y = (canvas.height - scaledHeight) / 2;
-        
-        ctx.drawImage(video, x, y, scaledWidth, scaledHeight);
+        // Device is in portrait mode
+        if (isVideoLandscape) {
+          // Video is landscape, device is portrait - rotate video
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(Math.PI / 2);
+          
+          const scaleX = canvas.width / video.videoHeight;
+          const scaleY = canvas.height / video.videoWidth;
+          const scale = Math.max(scaleX, scaleY);
+          
+          ctx.scale(scale, scale);
+          ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
+        } else {
+          // Video is portrait, device is portrait - draw normally
+          const scaleX = canvas.width / video.videoWidth;
+          const scaleY = canvas.height / video.videoHeight;
+          const scale = Math.max(scaleX, scaleY);
+          
+          const scaledWidth = video.videoWidth * scale;
+          const scaledHeight = video.videoHeight * scale;
+          
+          // Center the video
+          const x = (canvas.width - scaledWidth) / 2;
+          const y = (canvas.height - scaledHeight) / 2;
+          
+          ctx.drawImage(video, x, y, scaledWidth, scaledHeight);
+        }
       }
       
       ctx.restore();
@@ -178,7 +232,7 @@ const QuickcardCameraView: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [cameraReady, facingMode]);
+  }, [cameraReady, facingMode, isLandscapeMode]);
 
   // Capture photo with proper orientation
   const capturePhoto = () => {
@@ -192,9 +246,14 @@ const QuickcardCameraView: React.FC = () => {
     // Get the current frame from the canvas (which has proper orientation)
     canvasRef.current.toBlob((blob) => {
       if (blob) {
+        const currentWidth = isLandscapeMode ? LANDSCAPE_WIDTH : PORTRAIT_WIDTH;
+        const currentHeight = isLandscapeMode ? LANDSCAPE_HEIGHT : PORTRAIT_HEIGHT;
+        const orientation = isLandscapeMode ? 'landscape' : 'portrait';
+        
         console.log('📸 Quickcard photo captured with proper orientation:', {
           size: blob.size,
-          dimensions: `${PORTRAIT_WIDTH}x${PORTRAIT_HEIGHT}`,
+          dimensions: `${currentWidth}x${currentHeight}`,
+          orientation: orientation,
           location: userLocation
         });
         
