@@ -48,10 +48,10 @@ const AdvertiserPortal: React.FC = () => {
           style={{ cursor: 'pointer' }}>Vōstcard</span> Advertiser Portal</span>
         <button
           onClick={() => {
-            // sign out the user and navigate to login
+            // sign out the user and navigate to root
             import('../firebase/firebaseConfig').then(({ auth }) => {
               auth.signOut().then(() => {
-                navigate('/login');
+                navigate('/');
               });
             });
           }}

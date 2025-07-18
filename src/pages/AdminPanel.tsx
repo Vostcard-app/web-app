@@ -144,6 +144,25 @@ const AdminPanel: React.FC = () => {
         >
           🏠 Root View
         </button>
+        <button
+          onClick={() => {
+            // Open RootView in a new tab to avoid navigation issues
+            window.open('/', '_blank');
+          }}
+          style={{
+            marginLeft: '10px',
+            padding: '8px 16px',
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          🗂️ Root View (New Tab)
+        </button>
       </div>
 
       {/* Name Migration Section */}

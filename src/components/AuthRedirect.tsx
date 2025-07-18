@@ -40,7 +40,7 @@ export const AuthRedirect = () => {
 
     // If not authenticated and trying to access protected route
     if (!user && !isPublicRoute && !isDynamicRoute) {
-      navigate('/login');
+      navigate('/');
       return;
     }
 
@@ -54,15 +54,16 @@ export const AuthRedirect = () => {
       return;
     }
 
-    // If authenticated and on root, redirect to home
-    if (user && location.pathname === '/') {
-      if (userRole === 'advertiser') {
-        navigate('/advertiser-portal');
-      } else {
-        navigate('/home');
-      }
-      return;
-    }
+    // Allow both authenticated and unauthenticated users to access root view
+    // Commenting out auto-redirect from root so users can stay on RootView
+    // if (user && location.pathname === '/') {
+    //   if (userRole === 'advertiser') {
+    //     navigate('/advertiser-portal');
+    //   } else {
+    //     navigate('/home');
+    //   }
+    //   return;
+    // }
 
   }, [user, userRole, loading, navigate, location.pathname]);
 

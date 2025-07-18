@@ -2,8 +2,10 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaHome, FaTrash } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { useResponsive } from '../hooks/useResponsive';
 
 const ScriptLibraryView: React.FC = () => {
+  const { isDesktop } = useResponsive();
   const navigate = useNavigate();
   const { scripts, loadScripts, deleteScript } = useVostcard();
 
@@ -52,7 +54,28 @@ const ScriptLibraryView: React.FC = () => {
   };
 
   return (
-    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0'
+    }}>
+      {/* Mobile-style container with responsive design */}
+      <div style={{
+        width: isDesktop ? '390px' : '100%',
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh',
+        backgroundColor: '#f5f5f5',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktop ? '16px' : '0',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease'
+      }}>
       {/* 🔵 Header with Home Icon */}
       <div style={{
         backgroundColor: '#07345c',
@@ -63,7 +86,10 @@ const ScriptLibraryView: React.FC = () => {
         paddingLeft: '16px',
         color: 'white',
         position: 'relative',
-        padding: '15px 0 24px 20px'
+        padding: '15px 0 24px 20px',
+        borderTopLeftRadius: isDesktop ? 16 : 0,
+        borderTopRightRadius: isDesktop ? 16 : 0,
+        flexShrink: 0
       }}>
         <h1 style={{ fontSize: '30px', margin: 0 }}>Script Library</h1>
         
@@ -240,6 +266,7 @@ const ScriptLibraryView: React.FC = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

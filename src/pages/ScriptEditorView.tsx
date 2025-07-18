@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaHome, FaSave, FaMagic } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { generateScript } from '../utils/openaiHelper';
+import { useResponsive } from '../hooks/useResponsive';
 
 const ScriptEditorView: React.FC = () => {
+  const { isDesktop } = useResponsive();
   const navigate = useNavigate();
   const { scriptId } = useParams<{ scriptId: string }>();
   const { scripts, loadScripts, saveScript, updateScript } = useVostcard();
@@ -112,7 +114,28 @@ const ScriptEditorView: React.FC = () => {
   };
 
   return (
-    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0'
+    }}>
+      {/* Mobile-style container with responsive design */}
+      <div style={{
+        width: isDesktop ? '390px' : '100%',
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh',
+        backgroundColor: '#f5f5f5',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktop ? '16px' : '0',
+        display: 'flex',
+        flexDirection: 'column',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease'
+      }}>
       {/* 🔵 Header with Home Icon */}
       <div style={{
         backgroundColor: '#07345c',
@@ -123,7 +146,10 @@ const ScriptEditorView: React.FC = () => {
         paddingLeft: '16px',
         color: 'white',
         position: 'relative',
-        padding: '15px 0 24px 20px'
+        padding: '15px 0 24px 20px',
+        borderTopLeftRadius: isDesktop ? 16 : 0,
+        borderTopRightRadius: isDesktop ? 16 : 0,
+        flexShrink: 0
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
           <button 
@@ -321,6 +347,7 @@ const ScriptEditorView: React.FC = () => {
         </div>
       </div>
       </div>
+    </div>
     </div>
   );
 };
