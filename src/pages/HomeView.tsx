@@ -11,6 +11,7 @@ import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'fireb
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.svg';
+import InfoPin from '../assets/Info_pin.png';
 import { signOut } from 'firebase/auth';
 import './HomeView.css';
 import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
@@ -109,7 +110,8 @@ const listViewButton = {
 };
 
 const mapContainerStyle = {
-  flex: 1,
+  width: '100%',
+  height: '100%',
   zIndex: 1,
 };
 
@@ -912,6 +914,7 @@ const HomeView = () => {
                   <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
                   List View
                 </button>
+                
                 <button 
                   type="button"
                   style={{ ...listViewButton, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }} 
@@ -920,10 +923,36 @@ const HomeView = () => {
                   <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
                   Offers
                 </button>
+                
+                <div
+                  onClick={() => navigate('/user-guide')}
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}
+                >
+                  <img 
+                    src={InfoPin} 
+                    alt="Info Pin" 
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      marginBottom: '2px'
+                    }}
+                  />
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: '500',
+                    color: '#002B4D',
+                    textAlign: 'center'
+                  }}>
+                    Quick Guide
+                  </span>
+                </div>
               </div>
             )}
-
-
 
             {/* Map Container */}
             <div style={{
@@ -934,78 +963,67 @@ const HomeView = () => {
               bottom: 0,
               zIndex: 1
             }}>
-              {/* Existing map content */}
               {mapError ? (
                 <div style={errorOverlayStyle}>
                   <div style={errorContentStyle}>
-                    <h3>Map Error</h3>
-                    <p>{mapError}</p>
+                    <h3 style={{ color: '#d32f2f', margin: '0 0 16px 0' }}>Map Error</h3>
+                    <p style={{ color: '#666', margin: '0 0 16px 0', fontSize: '14px' }}>
+                      {mapError}
+                    </p>
                     <button onClick={handleRetryLoad} style={retryButtonStyle}>
-                      Retry {retryCount > 0 && `(${retryCount})`}
+                      Retry ({retryCount})
                     </button>
                   </div>
                 </div>
-              ) : !userLocation ? (
-                <div style={loadingOverlayStyle}>
-                  <div style={loadingContentStyle}>
-                    Getting your location...
-                  </div>
-                </div>
-              ) : (
-                <MapContainer 
-                  center={userLocation} 
-                  zoom={16} 
-                  maxZoom={22} 
-                  style={{ height: '100%', width: '100%' }} 
+              ) : userLocation ? (
+                <MapContainer
+                  center={userLocation}
+                  zoom={16}
+                  style={mapContainerStyle}
                   zoomControl={false}
+                  attributionControl={false}
                 >
-                  <TileLayer 
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
-                    maxZoom={22}
-                  />
-
-                  {/* Use actualUserLocation for the user location marker */}
+                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  
+                  {/* User location marker */}
                   {actualUserLocation && (
                     <Marker position={actualUserLocation} icon={userIcon}>
                       <Popup>Your Location</Popup>
                     </Marker>
                   )}
-
-                  {filteredVostcards.map((v: any) => {
-                    const lat = v.latitude || v.geo?.latitude;
-                    const lng = v.longitude || v.geo?.longitude;
-                    if (!lat || !lng) return null;
+                  
+                  {/* Vostcard markers */}
+                  {filteredVostcards.map((vostcard) => {
+                    if (!vostcard.latitude || !vostcard.longitude) return null;
+                    
+                    const position: [number, number] = [vostcard.latitude, vostcard.longitude];
+                    const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole);
+                    
                     return (
                       <Marker
-                        key={v.id}
-                        position={[lat, lng]}
-                        icon={getVostcardIcon(v.isOffer, v.userRole)}
+                        key={vostcard.id}
+                        position={position}
+                        icon={icon}
                         eventHandlers={{
                           click: () => {
-                            if (v.isOffer) {
-                              console.log("📍 Navigating to Offer view for ID:", v.id);
-                              navigate(`/offer/${v.id}`);
-                            } else {
-                              console.log("📍 Navigating to Vostcard detail view for ID:", v.id);
-                              navigate(`/vostcard/${v.id}`);
-                            }
+                            navigate(`/vostcard/${vostcard.id}`);
                           }
                         }}
                       >
                         <Popup>
-                          <h3>{v.title || 'Untitled'}</h3>
-                          <p>{v.description || 'No description'}</p>
-                          {v.isOffer && v.offerDetails?.discount && (
-                            <div style={offerPopupStyle}>
-                              <strong>🎁 Special Offer:</strong> {v.offerDetails.discount}
-                              {v.offerDetails.validUntil && <div><small>Valid until: {v.offerDetails.validUntil}</small></div>}
-                            </div>
-                          )}
-                          {v.categories && Array.isArray(v.categories) && v.categories.length > 0 && (
-                            <p><strong>Categories:</strong> {v.categories.join(', ')}</p>
-                          )}
-                          <p><small>Posted at: {v.createdAt?.toDate?.() || 'Unknown'}</small></p>
+                          <div style={{ textAlign: 'center', minWidth: '150px' }}>
+                            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>
+                              {vostcard.title}
+                            </h3>
+                            <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
+                              by {vostcard.username}
+                            </p>
+                            {vostcard.isOffer && (
+                              <div style={offerPopupStyle}>
+                                <strong>🎁 Special Offer!</strong>
+                              </div>
+                            )}
+                          </div>
                         </Popup>
                       </Marker>
                     );
@@ -1015,6 +1033,12 @@ const HomeView = () => {
                   <RecenterControl onRecenter={handleRecenter} />
                   <MapCenter userLocation={userLocation} />
                 </MapContainer>
+              ) : (
+                <div style={loadingOverlayStyle}>
+                  <div style={loadingContentStyle}>
+                    Getting your location...
+                  </div>
+                </div>
               )}
             </div>
 
