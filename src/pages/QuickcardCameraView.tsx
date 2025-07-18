@@ -527,109 +527,10 @@ const QuickcardCameraView: React.FC = () => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  // Native camera fallback
-  const [showNativeOption, setShowNativeOption] = useState(false);
-  const [showFileTypeWarning, setShowFileTypeWarning] = useState(false);
-  const [fileTypeWarningMessage, setFileTypeWarningMessage] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Removed photo selection option - camera only
 
-  // Always show photo selection option
-  useEffect(() => {
-    setShowNativeOption(true);
-  }, []);
-
-  // Handle native camera capture
-  const handleNativeCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    
-    if (!file) {
-      console.log('❌ No file selected');
-      return;
-    }
-
-    // Check if it's a video file
-    if (file.type.startsWith('video/')) {
-      setFileTypeWarningMessage('📸 Quickcards only accept photos!\n\nYou selected a video file. Please go to your camera app, take a photo, and then select the photo file instead.');
-      setShowFileTypeWarning(true);
-      
-      // Clear the file input for next use
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-      console.log('❌ Video file rejected:', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-      });
-      return;
-    }
-
-    // Check if it's an image file
-    if (!file.type.startsWith('image/')) {
-      setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo file. Only image files are supported for Quickcards.');
-      setShowFileTypeWarning(true);
-      
-      // Clear the file input for next use
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      
-      console.log('❌ Non-image file rejected:', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-      });
-      return;
-    }
-
-    // Check if location is available
-    if (!userLocation) {
-      setFileTypeWarningMessage('📍 Location not available!\n\nPlease enable location services and try again. Quickcards require location data.');
-      setShowFileTypeWarning(true);
-      
-      // Clear the file input for next use
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    // Process valid image file
-    console.log('📸 Native camera photo accepted:', {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      location: userLocation
-    });
-    
-    // Convert File to Blob for compatibility
-    const blob = new Blob([file], { type: file.type });
-    createQuickcard(blob, userLocation);
-    navigate('/create-step3');
-    
-    // Clear the file input for next use
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  // Trigger photo selection
-  const choosePhoto = () => {
-    fileInputRef.current?.click();
-  };
-
-  return (
+      return (
     <div className="quickcard-camera-container">
-      {/* Photo selection file input (hidden) */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleNativeCapture}
-      />
-
       {/* Camera Permission Modal */}
       <CameraPermissionModal
         isOpen={showPermissionModal}
@@ -698,35 +599,7 @@ const QuickcardCameraView: React.FC = () => {
         </div>
       )}
 
-      {/* Photo Selection Option */}
-      {showNativeOption && (
-        <div className="native-camera-option">
-          <button className="native-camera-button" onClick={choosePhoto}>
-            📁 Choose Photo
-          </button>
-          <div className="native-camera-hint">
-            Take photos with your camera app, then select them here
-          </div>
-        </div>
-      )}
 
-      {/* File Type Warning Modal */}
-      {showFileTypeWarning && (
-        <div className="file-type-warning-overlay">
-          <div className="file-type-warning-modal">
-            <div className="file-type-warning-content">
-              <h3>⚠️ File Type Warning</h3>
-              <p>{fileTypeWarningMessage}</p>
-              <button 
-                className="file-type-warning-ok"
-                onClick={() => setShowFileTypeWarning(false)}
-              >
-                OK, Got It
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Top Controls */}
       <div className="top-controls">
@@ -764,26 +637,7 @@ const QuickcardCameraView: React.FC = () => {
           <div className="settings-content">
             <h3>Camera Settings</h3>
             
-                        {/* Photo Options */}
-            <div className="setting-group">
-              <label>Photo Options</label>
-              <div className="setting-options">
-                <button
-                  className="setting-option active"
-                  onClick={() => setShowSettings(false)}
-                >
-                  🎛️ Live Camera
-                </button>
-                {showNativeOption && (
-                  <button
-                    className="setting-option"
-                    onClick={choosePhoto}
-                  >
-                    📁 Choose Existing Photo
-                  </button>
-                )}
-              </div>
-            </div>
+            
             
             {/* Resolution */}
             <div className="setting-group">
