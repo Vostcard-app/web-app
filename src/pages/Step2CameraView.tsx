@@ -226,6 +226,7 @@ const Step2CameraView: React.FC = () => {
     navigate('/create-step2');
   };
 
+  // Replace the camera button clicks with navigation to the native camera
   const handleTakePhoto = (photoType: 'distant' | 'near', photoIndex: number) => {
     navigate('/vostcard-camera', { 
       state: { 

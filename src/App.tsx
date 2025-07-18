@@ -56,6 +56,7 @@ import FriendListView from './pages/FriendListView';
 import VostboxView from './pages/VostboxView';
 import QuickcardListView from './pages/QuickcardListView';
 import QuickcardDetailView from './pages/QuickcardDetailView';
+import VostcardCameraView from "./pages/VostcardCameraView";
 
 function App() {
   return (
@@ -115,6 +116,7 @@ function App() {
                   <Route path="/camera" element={<CameraView />} />
                   <Route path="/quickcard-camera" element={<QuickcardCameraView />} />
                   <Route path="/step2-camera" element={<Step2CameraView />} />
+                  <Route path="/vostcard-camera" element={<VostcardCameraView />} />
 
                   {/* 📦 Saved */}
                   <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
