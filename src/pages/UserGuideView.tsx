@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaTimes } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
+import InfoPin from '../assets/Info_pin.png';
 
 const UserGuideView: React.FC = () => {
   const navigate = useNavigate();
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  
+  // YouTube video ID extracted from the provided URL
+  const youtubeVideoId = 'CCOErz2RxwI';
+  const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   return (
     <div style={{
@@ -21,29 +28,61 @@ const UserGuideView: React.FC = () => {
         background: '#07345c',
         color: 'white',
         width: '100%',
-        padding: '20px',
+        padding: '20px 24px',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         zIndex: 1000,
         position: 'relative',
       }}>
-        <FaArrowLeft 
-          size={24} 
-          color="white" 
-          style={{ cursor: 'pointer', marginRight: '20px' }}
-          onClick={() => navigate(-1)} // Go back to previous page
-        />
-        <span 
-          onClick={() => navigate('/home')}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <FaArrowLeft 
+            size={24} 
+            color="white" 
+            style={{ cursor: 'pointer', marginRight: '20px' }}
+            onClick={() => navigate(-1)} // Go back to previous page
+          />
+          <span 
+            onClick={() => navigate('/home')}
+            style={{
+            fontSize: '2.2rem',
+            fontWeight: 700,
+            letterSpacing: '0.01em',
+            cursor: 'pointer',
+          }}>
+            Vōstcard
+          </span>
+        </div>
+        
+        <div 
+          onClick={() => setShowVideoModal(true)}
           style={{
-          fontSize: '2.2rem',
-          fontWeight: 700,
-          letterSpacing: '0.01em',
-          cursor: 'pointer',
-        }}>
-          Vōstcard
-        </span>
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginRight: '35px'
+          }}
+        >
+          <img 
+            src={InfoPin} 
+            alt="Info Pin" 
+            style={{
+              width: '50px',
+              height: '50px',
+              marginBottom: '2px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            What is Vōstcard?
+          </span>
+        </div>
       </div>
 
       {/* Content Area */}
@@ -183,6 +222,94 @@ const UserGuideView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {showVideoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.9)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setShowVideoModal(false)}
+          >
+            <button
+              onClick={() => setShowVideoModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10001,
+                fontSize: '18px',
+                color: 'white',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            <div style={{ 
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <iframe
+                src={youtubeEmbedUrl}
+                width="100%"
+                height="100%"
+                style={{
+                  minHeight: '315px',
+                  maxWidth: '560px',
+                  aspectRatio: '16/9',
+                  borderRadius: 8,
+                  border: 'none'
+                }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '14px',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              Tap outside video or ✕ to close
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

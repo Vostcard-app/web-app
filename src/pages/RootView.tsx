@@ -105,7 +105,7 @@ const RootView: React.FC = () => {
             color: 'white',
             textAlign: 'center'
           }}>
-            Quick Guide
+            What is Vōstcard?
           </span>
         </div>
       </div>
