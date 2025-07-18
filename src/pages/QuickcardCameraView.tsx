@@ -527,8 +527,112 @@ const QuickcardCameraView: React.FC = () => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  // Native camera fallback
+  const [showNativeOption, setShowNativeOption] = useState(false);
+  const [showFileTypeWarning, setShowFileTypeWarning] = useState(false);
+  const [fileTypeWarningMessage, setFileTypeWarningMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Detect if we're on mobile and native camera might be preferred
+  useEffect(() => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    setShowNativeOption(isMobile && !isStandalone);
+  }, []);
+
+  // Handle native camera capture
+  const handleNativeCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    
+    if (!file) {
+      console.log('❌ No file selected');
+      return;
+    }
+
+    // Check if it's a video file
+    if (file.type.startsWith('video/')) {
+      setFileTypeWarningMessage('📸 Quickcards only accept photos!\n\nPlease take a photo instead of recording a video. Videos are not supported for Quickcards.');
+      setShowFileTypeWarning(true);
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      console.log('❌ Video file rejected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+      return;
+    }
+
+    // Check if it's an image file
+    if (!file.type.startsWith('image/')) {
+      setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo file. Only image files are supported for Quickcards.');
+      setShowFileTypeWarning(true);
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      console.log('❌ Non-image file rejected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+      return;
+    }
+
+    // Check if location is available
+    if (!userLocation) {
+      setFileTypeWarningMessage('📍 Location not available!\n\nPlease enable location services and try again. Quickcards require location data.');
+      setShowFileTypeWarning(true);
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Process valid image file
+    console.log('📸 Native camera photo accepted:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      location: userLocation
+    });
+    
+    // Convert File to Blob for compatibility
+    const blob = new Blob([file], { type: file.type });
+    createQuickcard(blob, userLocation);
+    navigate('/create-step3');
+    
+    // Clear the file input for next use
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Trigger native camera
+  const useNativeCamera = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="quickcard-camera-container">
+      {/* Native camera file input (hidden) */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleNativeCapture}
+      />
+
       {/* Camera Permission Modal */}
       <CameraPermissionModal
         isOpen={showPermissionModal}
@@ -597,6 +701,36 @@ const QuickcardCameraView: React.FC = () => {
         </div>
       )}
 
+      {/* Native Camera Option */}
+      {showNativeOption && (
+        <div className="native-camera-option">
+          <button className="native-camera-button" onClick={useNativeCamera}>
+            📱 Use Native Camera
+          </button>
+          <div className="native-camera-hint">
+            Photos only - videos will be rejected
+          </div>
+        </div>
+      )}
+
+      {/* File Type Warning Modal */}
+      {showFileTypeWarning && (
+        <div className="file-type-warning-overlay">
+          <div className="file-type-warning-modal">
+            <div className="file-type-warning-content">
+              <h3>⚠️ File Type Warning</h3>
+              <p>{fileTypeWarningMessage}</p>
+              <button 
+                className="file-type-warning-ok"
+                onClick={() => setShowFileTypeWarning(false)}
+              >
+                OK, Got It
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Controls */}
       <div className="top-controls">
         <button className="control-button" onClick={closeCamera}>
@@ -632,6 +766,27 @@ const QuickcardCameraView: React.FC = () => {
         <div className="settings-panel">
           <div className="settings-content">
             <h3>Camera Settings</h3>
+            
+            {/* Camera Mode Selection */}
+            <div className="setting-group">
+              <label>Camera Mode</label>
+              <div className="setting-options">
+                <button
+                  className="setting-option active"
+                  onClick={() => setShowSettings(false)}
+                >
+                  🎛️ Advanced Mode
+                </button>
+                                 {showNativeOption && (
+                   <button
+                     className="setting-option"
+                     onClick={useNativeCamera}
+                   >
+                     📱 Native Camera (Photos Only)
+                   </button>
+                 )}
+              </div>
+            </div>
             
             {/* Resolution */}
             <div className="setting-group">
@@ -784,12 +939,12 @@ const QuickcardCameraView: React.FC = () => {
            '📸'}
         </button>
 
-                 <button
-           className="control-button"
-           onClick={() => updateSetting('gridLines', !settings.gridLines)}
-         >
-           <MdGrid3X3 size={24} color={settings.gridLines ? '#007aff' : 'white'} />
-         </button>
+        <button
+          className="control-button"
+          onClick={() => updateSetting('gridLines', !settings.gridLines)}
+        >
+          <MdGrid3X3 size={24} color={settings.gridLines ? '#007aff' : 'white'} />
+        </button>
       </div>
     </div>
   );

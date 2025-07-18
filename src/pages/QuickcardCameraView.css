@@ -122,6 +122,119 @@ body {
   animation: timerPulse 1s ease-in-out infinite;
 }
 
+/* ✅ Native Camera Option */
+.native-camera-option {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 400;
+}
+
+.native-camera-button {
+  background: rgba(0, 122, 255, 0.9);
+  border: 2px solid white;
+  border-radius: 25px;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+}
+
+.native-camera-button:hover {
+  background: rgba(0, 122, 255, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+}
+
+.native-camera-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(0, 122, 255, 0.3);
+}
+
+.native-camera-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ✅ File Type Warning Modal */
+.file-type-warning-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.file-type-warning-modal {
+  background: rgba(20, 20, 20, 0.95);
+  border-radius: 20px;
+  padding: 0;
+  max-width: 90%;
+  max-height: 80%;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.file-type-warning-content {
+  padding: 30px;
+  text-align: center;
+}
+
+.file-type-warning-content h3 {
+  color: #ff6b6b;
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.file-type-warning-content p {
+  color: white;
+  margin: 0 0 25px 0;
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.file-type-warning-ok {
+  background: #007aff;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.file-type-warning-ok:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+}
+
+.file-type-warning-ok:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(0, 122, 255, 0.3);
+}
+
 @keyframes timerPulse {
   0%, 100% {
     transform: translate(-50%, -50%) scale(1);
@@ -511,6 +624,71 @@ body {
   .timer-countdown {
     font-size: 50px;
     padding: 10px 20px;
+  }
+  
+  .native-camera-option {
+    top: 60px;
+  }
+  
+  .native-camera-button {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+  
+  .native-camera-hint {
+    font-size: 10px;
+    margin-top: 6px;
+  }
+  
+  .file-type-warning-content {
+    padding: 20px;
+  }
+  
+  .file-type-warning-content h3 {
+    font-size: 20px;
+  }
+  
+  .file-type-warning-content p {
+    font-size: 14px;
+  }
+  
+  .file-type-warning-ok {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}
+
+/* ✅ Additional landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  .native-camera-option {
+    top: 50px;
+  }
+  
+  .native-camera-button {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .native-camera-hint {
+    font-size: 9px;
+    margin-top: 4px;
+  }
+  
+  .file-type-warning-content {
+    padding: 15px;
+  }
+  
+  .file-type-warning-content h3 {
+    font-size: 18px;
+  }
+  
+  .file-type-warning-content p {
+    font-size: 13px;
+  }
+  
+  .file-type-warning-ok {
+    padding: 8px 16px;
+    font-size: 13px;
   }
 }
 
