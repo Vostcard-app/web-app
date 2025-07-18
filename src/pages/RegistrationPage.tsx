@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
+import InfoPin from "../assets/Info_pin.png";
 
 export default function RegistrationPage() {
   const [formType, setFormType] = useState<"user" | "advertiser">("user");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
@@ -54,10 +56,10 @@ export default function RegistrationPage() {
     setError("");
     setLoading(true);
 
-    console.log("🔐 Registering advertiser with:", { email, password, formType });
+    console.log("🔐 Registering user with:", { email, password, formType });
 
     // Basic validation
-    if (!name || !email || !password || (formType === "user" && !username) || (formType === "advertiser" && !businessName)) {
+    if (!firstName || !lastName || !email || !password || (formType === "user" && !username) || (formType === "advertiser" && !businessName)) {
       setError("Please fill out all required fields.");
       setLoading(false);
       return;
@@ -114,7 +116,8 @@ export default function RegistrationPage() {
       if (formType === "user") {
         const trimmedUsername = username.trim();
         await setDoc(doc(db, "users", user.uid), {
-          name,
+          firstName,
+          lastName,
           username: trimmedUsername,
           email,
           userRole: "user",
@@ -122,7 +125,8 @@ export default function RegistrationPage() {
         });
       } else {
         await setDoc(doc(db, "advertisers", user.uid), {
-          name,
+          firstName,
+          lastName,
           businessName,
           email,
           userRole: "advertiser",
@@ -176,23 +180,32 @@ export default function RegistrationPage() {
           fontSize: '2.5rem',
           margin: 0,
         }}>Vōstcard</h1>
-        <button
-          onClick={() => navigate("/")}
+        <div
+          onClick={() => navigate("/user-guide")}
           style={{
-            background: 'rgba(255,255,255,0.15)',
-            border: 'none',
-            borderRadius: '50%',
-            width: 56,
-            height: 56,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
             cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
-          <i className="fas fa-home" style={{ color: 'white', fontSize: 28 }}></i>
-        </button>
+          <img 
+            src={InfoPin} 
+            alt="Info Pin" 
+            style={{
+              width: '40px',
+              height: '40px',
+              marginBottom: '4px'
+            }}
+          />
+          <span style={{
+            fontSize: '12px',
+            fontWeight: '500',
+            color: 'white'
+          }}>
+            Quick Guide
+          </span>
+        </div>
       </div>
 
       {/* Large Account Type Toggle */}
@@ -254,9 +267,16 @@ export default function RegistrationPage() {
       >
         <input
           type="text"
-          placeholder="Name"
-          value={name}
-          onChange={e => setName(e.target.value)}
+          placeholder="First Name"
+          value={firstName}
+          onChange={e => setFirstName(e.target.value)}
+          style={inputStyle}
+        />
+        <input
+          type="text"
+          placeholder="Last Name"
+          value={lastName}
+          onChange={e => setLastName(e.target.value)}
           style={inputStyle}
         />
         {formType === "user" && (
