@@ -32,6 +32,13 @@ export interface VostboxReplyOptions {
   replyMessage: string;
 }
 
+export interface QuickcardSendOptions {
+  senderUID: string;
+  receiverUID: string;
+  quickcardID: string;
+  message?: string;
+}
+
 export class VostboxService {
   
   /**
@@ -114,6 +121,89 @@ export class VostboxService {
     } catch (error) {
       console.error('Error sending vostcard to friend:', error);
       return { success: false, error: 'Failed to send vostcard' };
+    }
+  }
+
+  /**
+   * Send a quickcard to a friend's Vōstbox
+   */
+  static async sendQuickcardToFriend(options: QuickcardSendOptions): Promise<{ success: boolean; error?: string; messageId?: string }> {
+    try {
+      const { senderUID, receiverUID, quickcardID, message } = options;
+      
+      // Get sender information
+      const senderDoc = await getDoc(doc(db, 'users', senderUID));
+      if (!senderDoc.exists()) {
+        return { success: false, error: 'Sender not found' };
+      }
+      const senderData = senderDoc.data();
+      
+      // Get receiver information
+      const receiverDoc = await getDoc(doc(db, 'users', receiverUID));
+      if (!receiverDoc.exists()) {
+        return { success: false, error: 'Receiver not found' };
+      }
+      const receiverData = receiverDoc.data();
+      
+      // Check if users are friends
+      if (!senderData.friends?.includes(receiverUID)) {
+        return { success: false, error: 'Users are not friends' };
+      }
+      
+      // Check if sender is blocked
+      if (receiverData.blockedUsers?.includes(senderUID)) {
+        return { success: false, error: 'Cannot send to this user' };
+      }
+      
+      // Get quickcard information
+      const quickcardDoc = await getDoc(doc(db, 'quickcards', quickcardID));
+      if (!quickcardDoc.exists()) {
+        return { success: false, error: 'Quickcard not found' };
+      }
+      const quickcardData = quickcardDoc.data();
+      
+      // Verify sender owns the quickcard or has permission to share
+      if (quickcardData.userID !== senderUID && quickcardData.userId !== senderUID) {
+        return { success: false, error: 'No permission to share this quickcard' };
+      }
+      
+      // Create the vostbox message
+      const vostboxMessage: Omit<VostboxMessage, 'id'> = {
+        senderUID,
+        senderUsername: senderData.username || 'Unknown',
+        senderAvatarURL: senderData.avatarURL,
+        receiverUID,
+        quickcardID,
+        quickcardTitle: quickcardData.title || 'Untitled',
+        quickcardDescription: quickcardData.description,
+        quickcardVideoURL: quickcardData.videoURL,
+        quickcardPhotoURLs: quickcardData.photoURLs || [],
+        message,
+        sharedAt: new Date(),
+        isRead: false
+      };
+      
+      // Save to database
+      const messageDoc = await addDoc(collection(db, 'vostbox'), {
+        ...vostboxMessage,
+        sharedAt: serverTimestamp()
+      });
+      
+      // Update receiver's unread count
+      await updateDoc(doc(db, 'users', receiverUID), {
+        vostboxUnreadCount: increment(1)
+      });
+      
+      // Mark quickcard as shared with friend
+      await updateDoc(doc(db, 'quickcards', quickcardID), {
+        sharedWith: arrayUnion(receiverUID),
+        shareCount: increment(1)
+      });
+      
+      return { success: true, messageId: messageDoc.id };
+    } catch (error) {
+      console.error('Error sending quickcard to friend:', error);
+      return { success: false, error: 'Failed to send quickcard' };
     }
   }
   

@@ -485,6 +485,48 @@ const PublicQuickcardView: React.FC = () => {
           gap: '20px',
           marginBottom: '24px'
         }}>
+          {/* Map Icon */}
+          <button
+            onClick={() => {
+              if (quickcard?.latitude && quickcard?.longitude) {
+                navigate('/public-map', {
+                  state: {
+                    singleVostcard: {
+                      id: quickcard.id,
+                      title: quickcard.title,
+                      description: quickcard.description,
+                      latitude: quickcard.latitude,
+                      longitude: quickcard.longitude,
+                      photoURLs: quickcard.photoURLs,
+                      username: quickcard.username,
+                      createdAt: quickcard.createdAt,
+                      visibility: 'public',
+                      state: 'posted',
+                      isQuickcard: true // Add this to identify it as a quickcard
+                    }
+                  }
+                });
+              } else {
+                alert('No location data available for this quickcard');
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '4px',
+              color: '#666',
+              padding: '8px'
+            }}
+          >
+            <FaMap size={24} />
+            <span style={{ fontSize: '12px' }}>Map</span>
+          </button>
+
+          {/* Share Button */}
           <button
             onClick={handleShare}
             style={{
@@ -495,7 +537,8 @@ const PublicQuickcardView: React.FC = () => {
               flexDirection: 'column',
               alignItems: 'center',
               gap: '4px',
-              color: '#666'
+              color: '#666',
+              padding: '8px'
             }}
           >
             <FaShare size={24} />
@@ -535,7 +578,64 @@ const PublicQuickcardView: React.FC = () => {
             Create Your Own Free Account
           </button>
         </div>
-      </div>
+
+      {/* Photo Modal */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            cursor: 'zoom-out',
+          }}
+          onClick={() => setSelectedPhoto(null)}
+          onContextMenu={e => e.preventDefault()}
+        >
+          <button
+            onClick={() => setSelectedPhoto(null)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 2001,
+              fontSize: '18px',
+              color: 'white',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <FaTimes />
+          </button>
+          <img
+            src={selectedPhoto}
+            alt="Full size"
+            style={{
+              width: '100vw',
+              height: '100vh',
+              objectFit: 'contain',
+              borderRadius: 0,
+              boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+              background: '#000',
+              userSelect: 'none',
+              pointerEvents: 'auto',
+            }}
+            draggable={false}
+            onContextMenu={e => e.preventDefault()}
+          />
+        </div>
+      )}
 
       {/* Like Message */}
       <AnimatePresence>
@@ -563,39 +663,6 @@ const PublicQuickcardView: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Photo Modal */}
-      {selectedPhoto && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.95)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000,
-            cursor: 'zoom-out',
-          }}
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <img
-            src={selectedPhoto}
-            alt="Full size"
-            style={{
-              width: '100vw',
-              height: '100vh',
-              objectFit: 'contain',
-              borderRadius: 0,
-              boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-              background: '#000',
-              userSelect: 'none',
-              pointerEvents: 'auto',
-            }}
-            draggable={false}
-          />
-        </div>
-      )}
 
       {/* CSS Animation */}
       <style>{`

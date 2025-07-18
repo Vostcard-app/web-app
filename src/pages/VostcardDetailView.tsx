@@ -1,16 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
+import { VostboxService } from '../services/vostboxService';
+import { type Friend } from '../types/FriendModels';
+import FriendPickerModal from '../components/FriendPickerModal';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { fixBrokenSharedVostcard } = useVostcard();
+  const { user } = useAuth();
   
   // Navigation state from previous view
   const navigationState = location.state as any;
@@ -30,6 +34,7 @@ const VostcardDetailView: React.FC = () => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [showFriendPicker, setShowFriendPicker] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -188,6 +193,28 @@ ${privateUrl}`;
 
   const handleFlag = () => {
     alert('Flag functionality not implemented yet');
+  };
+
+  const handleSendToFriend = async (friendUID: string, message?: string) => {
+    if (!user?.uid || !id) return;
+    
+    try {
+      const result = await VostboxService.sendVostcardToFriend({
+        senderUID: user.uid,
+        receiverUID: friendUID,
+        vostcardID: id,
+        message
+      });
+      
+      if (result.success) {
+        alert('Vostcard sent to friend!');
+      } else {
+        alert(result.error || 'Failed to send vostcard');
+      }
+    } catch (error) {
+      console.error('Error sending vostcard:', error);
+      alert('Failed to send vostcard');
+    }
   };
 
   // Navigation functions
@@ -828,6 +855,15 @@ ${privateUrl}`;
           </div>
         </div>
       )}
+
+      {/* Send to Friend Modal */}
+      <FriendPickerModal
+        isOpen={showFriendPicker}
+        onClose={() => setShowFriendPicker(false)}
+        onSendToFriend={handleSendToFriend}
+        title="Send Vostcard to Friend"
+        itemType="vostcard"
+      />
     </div>
   );
 };

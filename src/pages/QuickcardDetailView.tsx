@@ -9,6 +9,9 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
 import QuickcardPin from '../assets/quickcard_pin.png';
+import { useAuth } from '../context/AuthContext';
+import { VostboxService } from '../services/vostboxService';
+import FriendPickerModal from '../components/FriendPickerModal';
 
 // Custom quickcard icon for the map
 const quickcardIcon = new L.Icon({
@@ -22,6 +25,7 @@ const QuickcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { fixBrokenSharedVostcard } = useVostcard();
+  const { user } = useAuth();
   
   const [quickcard, setQuickcard] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -32,6 +36,7 @@ const QuickcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [showFriendPicker, setShowFriendPicker] = useState(false);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -167,6 +172,28 @@ ${privateUrl}`;
 
   const handleFlag = () => {
     alert('Flag functionality not implemented yet');
+  };
+
+  const handleSendToFriend = async (friendUID: string, message?: string) => {
+    if (!user?.uid || !id) return;
+    
+    try {
+      const result = await VostboxService.sendQuickcardToFriend({
+        senderUID: user.uid,
+        receiverUID: friendUID,
+        quickcardID: id,
+        message
+      });
+      
+      if (result.success) {
+        alert('Quickcard sent to friend!');
+      } else {
+        alert(result.error || 'Failed to send quickcard');
+      }
+    } catch (error) {
+      console.error('Error sending quickcard:', error);
+      alert('Failed to send quickcard');
+    }
   };
 
   if (loading) {
@@ -685,6 +712,15 @@ ${privateUrl}`;
           />
         </div>
       )}
+
+      {/* Friend Picker Modal */}
+      <FriendPickerModal
+        isOpen={showFriendPicker}
+        onClose={() => setShowFriendPicker(false)}
+        onSendToFriend={handleSendToFriend}
+        title="Send Quickcard to Friend"
+        itemType="quickcard"
+      />
     </div>
   );
 };
