@@ -122,7 +122,7 @@ body {
   animation: timerPulse 1s ease-in-out infinite;
 }
 
-/* ✅ Native Camera Option */
+/* ✅ Photo Selection Option */
 .native-camera-option {
   position: absolute;
   top: 80px;

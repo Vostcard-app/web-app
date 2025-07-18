@@ -533,11 +533,9 @@ const QuickcardCameraView: React.FC = () => {
   const [fileTypeWarningMessage, setFileTypeWarningMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Detect if we're on mobile and native camera might be preferred
+  // Always show photo selection option
   useEffect(() => {
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    setShowNativeOption(isMobile && !isStandalone);
+    setShowNativeOption(true);
   }, []);
 
   // Handle native camera capture
@@ -551,7 +549,7 @@ const QuickcardCameraView: React.FC = () => {
 
     // Check if it's a video file
     if (file.type.startsWith('video/')) {
-      setFileTypeWarningMessage('📸 Quickcards only accept photos!\n\nPlease take a photo instead of recording a video. Videos are not supported for Quickcards.');
+      setFileTypeWarningMessage('📸 Quickcards only accept photos!\n\nYou selected a video file. Please go to your camera app, take a photo, and then select the photo file instead.');
       setShowFileTypeWarning(true);
       
       // Clear the file input for next use
@@ -616,19 +614,18 @@ const QuickcardCameraView: React.FC = () => {
     }
   };
 
-  // Trigger native camera
-  const useNativeCamera = () => {
+  // Trigger photo selection
+  const choosePhoto = () => {
     fileInputRef.current?.click();
   };
 
   return (
     <div className="quickcard-camera-container">
-      {/* Native camera file input (hidden) */}
+      {/* Photo selection file input (hidden) */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         style={{ display: 'none' }}
         onChange={handleNativeCapture}
       />
@@ -701,14 +698,14 @@ const QuickcardCameraView: React.FC = () => {
         </div>
       )}
 
-      {/* Native Camera Option */}
+      {/* Photo Selection Option */}
       {showNativeOption && (
         <div className="native-camera-option">
-          <button className="native-camera-button" onClick={useNativeCamera}>
-            📱 Use Native Camera
+          <button className="native-camera-button" onClick={choosePhoto}>
+            📁 Choose Photo
           </button>
           <div className="native-camera-hint">
-            Photos only - videos will be rejected
+            Take photos with your camera app, then select them here
           </div>
         </div>
       )}
@@ -767,24 +764,24 @@ const QuickcardCameraView: React.FC = () => {
           <div className="settings-content">
             <h3>Camera Settings</h3>
             
-            {/* Camera Mode Selection */}
+                        {/* Photo Options */}
             <div className="setting-group">
-              <label>Camera Mode</label>
+              <label>Photo Options</label>
               <div className="setting-options">
                 <button
                   className="setting-option active"
                   onClick={() => setShowSettings(false)}
                 >
-                  🎛️ Advanced Mode
+                  🎛️ Live Camera
                 </button>
-                                 {showNativeOption && (
-                   <button
-                     className="setting-option"
-                     onClick={useNativeCamera}
-                   >
-                     📱 Native Camera (Photos Only)
-                   </button>
-                 )}
+                {showNativeOption && (
+                  <button
+                    className="setting-option"
+                    onClick={choosePhoto}
+                  >
+                    📁 Choose Existing Photo
+                  </button>
+                )}
               </div>
             </div>
             
