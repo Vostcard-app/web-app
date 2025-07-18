@@ -322,7 +322,7 @@ const offerPopupStyle = {
 const HomeView = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearVostcard, manualSync } = useVostcard();
+  const { clearVostcard, manualSync, createQuickcard } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [actualUserLocation, setActualUserLocation] = useState<[number, number] | null>(null);
@@ -637,9 +637,62 @@ const HomeView = () => {
 
   const handleCreateQuickcard = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('📱 Navigating to Create Quickcard');
+    console.log('📱 Opening native camera for Quickcard');
     clearVostcard();
-    navigate('/quickcard-camera');
+    
+    // Create a temporary file input and trigger native camera directly
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.capture = 'environment'; // Use back camera
+    fileInput.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        // Get location for quickcard
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLocation = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            };
+            
+            console.log('📸 Native camera photo captured for quickcard:', {
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              location: userLocation
+            });
+            
+            // Store photo data temporarily for the context to use
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const imageData = e.target?.result;
+              if (imageData) {
+                // Convert to blob and create quickcard
+                fetch(imageData as string)
+                  .then(res => res.blob())
+                  .then(blob => {
+                    createQuickcard(blob, userLocation);
+                    navigate('/create-step3');
+                  });
+              }
+            };
+            reader.readAsDataURL(file);
+          },
+          (error) => {
+            console.error('❌ Error getting location:', error);
+            alert('📍 Location is required for quickcards. Please enable location services and try again.');
+          }
+        );
+      } else if (file && file.type.startsWith('video/')) {
+        alert('📸 Quickcards only accept photos!\n\nYou selected a video file. Please take a photo instead.');
+      } else if (file) {
+        alert('📸 Invalid file type!\n\nPlease select a photo file.');
+      }
+    };
+    
+    // Trigger the native camera
+    fileInput.click();
   };
 
   const handleRetryLoad = () => {
