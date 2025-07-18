@@ -216,6 +216,9 @@ const createButtonContainer = {
   left: 15,
   right: 15,
   zIndex: 1000,
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '4%'
 };
 
 const createButton = {
@@ -223,13 +226,27 @@ const createButton = {
   color: 'white',
   border: 'none',
   borderRadius: 12,
-  padding: '18px 40px',
-  fontSize: 22,
+  padding: '18px 20px',
+  fontSize: 18,
   fontWeight: 700,
   cursor: 'pointer',
   boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-  width: '100%'
+  width: '48%'
+};
+
+const quickcardButton = {
+  background: '#002B4D',
+  color: 'white',
+  border: 'none',
+  borderRadius: 12,
+  padding: '18px 20px',
+  fontSize: 18,
+  fontWeight: 700,
+  cursor: 'pointer',
+  boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  width: '48%'
 };
 
 const zoomControlStyle = {
@@ -902,7 +919,7 @@ const HomeView = () => {
               )}
             </div>
 
-            {/* Create Vostcard Button */}
+            {/* Create Vostcard & Quickcard Buttons */}
             <div style={createButtonContainer}>
               <button 
                 type="button" 
@@ -910,6 +927,13 @@ const HomeView = () => {
                 onClick={handleCreateVostcard}
               >
                 Create Vōstcard
+              </button>
+              <button 
+                type="button" 
+                style={quickcardButton} 
+                onClick={() => console.log('Create Quickcard clicked')}
+              >
+                Create Quickcard
               </button>
             </div>
 
