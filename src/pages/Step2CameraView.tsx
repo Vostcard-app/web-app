@@ -226,6 +226,15 @@ const Step2CameraView: React.FC = () => {
     navigate('/create-step2');
   };
 
+  const handleTakePhoto = (photoType: 'distant' | 'near', photoIndex: number) => {
+    navigate('/vostcard-camera', { 
+      state: { 
+        photoType,
+        photoIndex
+      }
+    });
+  };
+
   return (
     <div className="step2-camera-container">
       {/* Camera Permission Modal */}
