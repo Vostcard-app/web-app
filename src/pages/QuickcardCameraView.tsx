@@ -1,10 +1,40 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
-import { MdCameraswitch } from 'react-icons/md';
+import { MdCameraswitch, MdFlashOn, MdFlashOff, MdFlashAuto, MdSettings, MdGrid3X3, MdTimer, MdCameraAlt, MdZoomIn, MdZoomOut, MdHdrOn, MdHdrOff } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
 import CameraPermissionModal from '../components/CameraPermissionModal';
 import './QuickcardCameraView.css';
+
+// Advanced camera interfaces
+interface CameraSettings {
+  flashMode: 'auto' | 'on' | 'off';
+  resolution: 'HD' | 'FHD' | '4K';
+  aspectRatio: '16:9' | '4:3' | '1:1';
+  sceneMode: 'auto' | 'hdr' | 'night' | 'portrait';
+  gridLines: boolean;
+  timer: 0 | 3 | 5 | 10;
+  burstMode: boolean;
+  exposure: number; // -2 to +2
+  whiteBalance: 'auto' | 'daylight' | 'cloudy' | 'tungsten' | 'fluorescent';
+}
+
+// Extended interface for experimental camera features
+interface ExtendedMediaTrackCapabilities extends MediaTrackCapabilities {
+  torch?: boolean;
+  zoom?: { min: number; max: number; step: number };
+  focusMode?: string[];
+}
+
+interface ExtendedMediaTrackConstraints extends MediaTrackConstraints {
+  zoom?: { ideal: number };
+}
+
+interface PhotoCapture {
+  blob: Blob;
+  timestamp: number;
+  settings: CameraSettings;
+}
 
 const QuickcardCameraView: React.FC = () => {
   const navigate = useNavigate();
@@ -12,20 +42,64 @@ const QuickcardCameraView: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationRef = useRef<number>();
+  const timerRef = useRef<NodeJS.Timeout>();
   const { createQuickcard } = useVostcard();
   
+  // Basic camera states
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isLandscapeMode, setIsLandscapeMode] = useState(false);
+  
+  // Advanced camera states
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [maxZoom, setMaxZoom] = useState(3);
+  const [showSettings, setShowSettings] = useState(false);
+  const [focusPoint, setFocusPoint] = useState<{ x: number; y: number } | null>(null);
+  const [timerCountdown, setTimerCountdown] = useState(0);
+  const [burstPhotos, setBurstPhotos] = useState<PhotoCapture[]>([]);
+  const [isFlashSupported, setIsFlashSupported] = useState(false);
+  
+  // Camera settings
+  const [settings, setSettings] = useState<CameraSettings>({
+    flashMode: 'auto',
+    resolution: 'FHD',
+    aspectRatio: '16:9',
+    sceneMode: 'auto',
+    gridLines: false,
+    timer: 0,
+    burstMode: false,
+    exposure: 0,
+    whiteBalance: 'auto'
+  });
 
-  // Dynamic dimensions based on device orientation
-  const PORTRAIT_WIDTH = 720;
-  const PORTRAIT_HEIGHT = 1280;
-  const LANDSCAPE_WIDTH = 1280;
-  const LANDSCAPE_HEIGHT = 720;
+  // Dynamic dimensions based on device orientation and aspect ratio
+  const getDimensions = () => {
+    const baseWidth = isLandscapeMode ? 1280 : 720;
+    const baseHeight = isLandscapeMode ? 720 : 1280;
+    
+    // Apply resolution multiplier
+    const resolutionMultiplier = settings.resolution === 'HD' ? 0.75 : settings.resolution === '4K' ? 1.5 : 1;
+    
+    // Apply aspect ratio
+    let width = baseWidth * resolutionMultiplier;
+    let height = baseHeight * resolutionMultiplier;
+    
+    if (settings.aspectRatio === '4:3') {
+      if (isLandscapeMode) {
+        height = width * 3 / 4;
+      } else {
+        width = height * 3 / 4;
+      }
+    } else if (settings.aspectRatio === '1:1') {
+      const size = Math.min(width, height);
+      width = height = size;
+    }
+    
+    return { width: Math.round(width), height: Math.round(height) };
+  };
 
   // Get user location
   useEffect(() => {
@@ -55,12 +129,8 @@ const QuickcardCameraView: React.FC = () => {
       console.log('📱 Device orientation:', isLandscape ? 'Landscape' : 'Portrait');
     };
 
-    // Check initial orientation
     checkOrientation();
-
-    // Listen for orientation changes
     const handleOrientationChange = () => {
-      // Small delay to ensure dimensions are updated
       setTimeout(checkOrientation, 100);
     };
 
@@ -73,39 +143,66 @@ const QuickcardCameraView: React.FC = () => {
     };
   }, []);
 
-  // Start camera
+  // Volume button capture
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === 'AudioVolumeUp' || event.key === 'AudioVolumeDown') {
+        event.preventDefault();
+        if (cameraReady && userLocation && !isCapturing) {
+          handleCapturePhoto();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [cameraReady, userLocation, isCapturing]);
+
+  // Start camera with advanced constraints
   useEffect(() => {
     const startCamera = async () => {
       try {
-        console.log('📱 Starting quickcard camera...');
+        console.log('📱 Starting advanced quickcard camera...');
         
-        // Get camera stream
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // Check flash support
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        // Advanced constraints based on settings
+        const constraints: MediaStreamConstraints = {
           video: {
             facingMode,
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
+            width: { ideal: getDimensions().width },
+            height: { ideal: getDimensions().height },
+            ...(zoomLevel > 1 && { zoom: { ideal: zoomLevel } } as any),
+            ...(settings.whiteBalance !== 'auto' && { whiteBalanceMode: settings.whiteBalance as any }),
+            ...(settings.exposure !== 0 && { exposureMode: 'manual', exposureCompensation: settings.exposure as any }),
           }
-        });
-        
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
+        
+        // Check flash/torch support
+        const videoTrack = stream.getVideoTracks()[0];
+        const capabilities = videoTrack.getCapabilities() as ExtendedMediaTrackCapabilities;
+        setIsFlashSupported(!!capabilities.torch);
+        setMaxZoom(capabilities.zoom?.max || 3);
         
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true;
           videoRef.current.onloadedmetadata = () => {
-            console.log('📱 Quickcard camera metadata loaded');
+            console.log('📱 Advanced camera ready');
             setCameraReady(true);
           };
         }
 
       } catch (err) {
-        console.error('❌ Quickcard camera failed:', err);
+        console.error('❌ Advanced camera failed:', err);
         const error = err as Error;
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
           setShowPermissionModal(true);
-        } else if (error.name === 'NotFoundError') {
-          alert('No camera found. Please check your device.');
         } else {
           setShowPermissionModal(true);
         }
@@ -118,26 +215,24 @@ const QuickcardCameraView: React.FC = () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       streamRef.current?.getTracks().forEach(track => track.stop());
     };
-  }, [facingMode]);
+  }, [facingMode, zoomLevel, settings.resolution, settings.aspectRatio, settings.whiteBalance, settings.exposure]);
 
-  // Canvas animation loop - Adapts to device orientation
+  // Canvas animation loop with zoom support
   useEffect(() => {
     if (!cameraReady || !videoRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const video = videoRef.current;
+    const dimensions = getDimensions();
 
-    // Set canvas dimensions based on device orientation
-    if (isLandscapeMode) {
-      canvas.width = LANDSCAPE_WIDTH;
-      canvas.height = LANDSCAPE_HEIGHT;
-    } else {
-      canvas.width = PORTRAIT_WIDTH;
-      canvas.height = PORTRAIT_HEIGHT;
-    }
+    canvas.width = dimensions.width;
+    canvas.height = dimensions.height;
 
     const animate = () => {
       if (!ctx || !video || video.videoWidth === 0 || video.videoHeight === 0) {
@@ -145,19 +240,25 @@ const QuickcardCameraView: React.FC = () => {
         return;
       }
 
-      // Clear canvas with black background
       ctx.fillStyle = 'black';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Check if camera video is landscape or portrait
       const isVideoLandscape = video.videoWidth > video.videoHeight;
       
       ctx.save();
       
+      // Apply zoom
+      if (zoomLevel > 1) {
+        ctx.scale(zoomLevel, zoomLevel);
+        ctx.translate(
+          (canvas.width * (1 - zoomLevel)) / (2 * zoomLevel),
+          (canvas.height * (1 - zoomLevel)) / (2 * zoomLevel)
+        );
+      }
+
+      // Orientation handling with zoom
       if (isLandscapeMode) {
-        // Device is in landscape mode
         if (isVideoLandscape) {
-          // Video is landscape, device is landscape - draw normally
           const scaleX = canvas.width / video.videoWidth;
           const scaleY = canvas.height / video.videoHeight;
           const scale = Math.max(scaleX, scaleY);
@@ -165,13 +266,11 @@ const QuickcardCameraView: React.FC = () => {
           const scaledWidth = video.videoWidth * scale;
           const scaledHeight = video.videoHeight * scale;
           
-          // Center the video
           const x = (canvas.width - scaledWidth) / 2;
           const y = (canvas.height - scaledHeight) / 2;
           
           ctx.drawImage(video, x, y, scaledWidth, scaledHeight);
         } else {
-          // Video is portrait, device is landscape - rotate video
           ctx.translate(canvas.width / 2, canvas.height / 2);
           ctx.rotate(Math.PI / 2);
           
@@ -183,9 +282,7 @@ const QuickcardCameraView: React.FC = () => {
           ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
         }
       } else {
-        // Device is in portrait mode
         if (isVideoLandscape) {
-          // Video is landscape, device is portrait - rotate video
           ctx.translate(canvas.width / 2, canvas.height / 2);
           ctx.rotate(Math.PI / 2);
           
@@ -196,7 +293,6 @@ const QuickcardCameraView: React.FC = () => {
           ctx.scale(scale, scale);
           ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
         } else {
-          // Video is portrait, device is portrait - draw normally
           const scaleX = canvas.width / video.videoWidth;
           const scaleY = canvas.height / video.videoHeight;
           const scale = Math.max(scaleX, scaleY);
@@ -204,7 +300,6 @@ const QuickcardCameraView: React.FC = () => {
           const scaledWidth = video.videoWidth * scale;
           const scaledHeight = video.videoHeight * scale;
           
-          // Center the video
           const x = (canvas.width - scaledWidth) / 2;
           const y = (canvas.height - scaledHeight) / 2;
           
@@ -232,42 +327,185 @@ const QuickcardCameraView: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [cameraReady, facingMode, isLandscapeMode]);
+  }, [cameraReady, facingMode, isLandscapeMode, zoomLevel, settings.resolution, settings.aspectRatio]);
 
-  // Capture photo with proper orientation
-  const capturePhoto = () => {
+  // Flash/torch control
+  const toggleFlash = async () => {
+    if (!streamRef.current || !isFlashSupported) return;
+    
+    const videoTrack = streamRef.current.getVideoTracks()[0];
+    const capabilities = videoTrack.getCapabilities() as ExtendedMediaTrackCapabilities;
+    
+    if (capabilities.torch) {
+      const nextMode = settings.flashMode === 'off' ? 'on' : settings.flashMode === 'on' ? 'auto' : 'off';
+      
+      try {
+        await videoTrack.applyConstraints({
+          advanced: [{ torch: nextMode === 'on' } as any]
+        });
+        setSettings(prev => ({ ...prev, flashMode: nextMode }));
+      } catch (err) {
+        console.error('❌ Flash control failed:', err);
+      }
+    }
+  };
+
+  // Zoom controls
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.5, maxZoom));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.5, 1));
+  };
+
+  // Pinch to zoom
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+      (e.currentTarget as any).dataset.initialDistance = distance;
+      (e.currentTarget as any).dataset.initialZoom = zoomLevel;
+    }
+  }, [zoomLevel]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+      
+      const initialDistance = parseFloat((e.currentTarget as any).dataset.initialDistance || '0');
+      const initialZoom = parseFloat((e.currentTarget as any).dataset.initialZoom || '1');
+      
+      if (initialDistance > 0) {
+        const scale = distance / initialDistance;
+        const newZoom = Math.min(Math.max(initialZoom * scale, 1), maxZoom);
+        setZoomLevel(newZoom);
+      }
+    }
+  }, [maxZoom]);
+
+  // Tap to focus
+  const handleTapFocus = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect || !streamRef.current) return;
+
+    const x = ((e as any).clientX - rect.left) / rect.width;
+    const y = ((e as any).clientY - rect.top) / rect.height;
+    
+    setFocusPoint({ x: x * 100, y: y * 100 });
+    
+    // Apply focus constraints
+    const videoTrack = streamRef.current.getVideoTracks()[0];
+    const capabilities = videoTrack.getCapabilities() as ExtendedMediaTrackCapabilities;
+    
+    if (capabilities.focusMode) {
+      try {
+        videoTrack.applyConstraints({
+          advanced: [{ focusMode: 'single-shot' } as any]
+        });
+      } catch (err) {
+        console.error('❌ Focus control failed:', err);
+      }
+    }
+    
+    // Hide focus point after 2 seconds
+    setTimeout(() => setFocusPoint(null), 2000);
+  }, []);
+
+  // Timer countdown
+  const startTimer = (duration: number) => {
+    setTimerCountdown(duration);
+    const countdown = setInterval(() => {
+      setTimerCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdown);
+          handleCapturePhoto();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Burst mode capture
+  const handleBurstCapture = async () => {
+    if (!canvasRef.current || !userLocation) return;
+    
+    const burstCount = 5;
+    const burstInterval = 200; // 200ms between shots
+    const captures: PhotoCapture[] = [];
+    
+    for (let i = 0; i < burstCount; i++) {
+      await new Promise(resolve => setTimeout(resolve, i * burstInterval));
+      
+      canvasRef.current.toBlob((blob) => {
+        if (blob) {
+          captures.push({
+            blob,
+            timestamp: Date.now(),
+            settings: { ...settings }
+          });
+        }
+      }, 'image/jpeg', 0.9);
+    }
+    
+    setBurstPhotos(captures);
+    
+    // Use the first photo for quickcard
+    if (captures.length > 0) {
+      createQuickcard(captures[0].blob, userLocation);
+      navigate('/create-step3');
+    }
+  };
+
+  // Main capture function
+  const handleCapturePhoto = () => {
     if (!canvasRef.current || !userLocation) {
       alert('Camera not ready or location not available');
       return;
     }
 
+    if (settings.timer > 0) {
+      startTimer(settings.timer);
+      return;
+    }
+
+    if (settings.burstMode) {
+      handleBurstCapture();
+      return;
+    }
+
     setIsCapturing(true);
 
-    // Get the current frame from the canvas (which has proper orientation)
     canvasRef.current.toBlob((blob) => {
       if (blob) {
-        const currentWidth = isLandscapeMode ? LANDSCAPE_WIDTH : PORTRAIT_WIDTH;
-        const currentHeight = isLandscapeMode ? LANDSCAPE_HEIGHT : PORTRAIT_HEIGHT;
-        const orientation = isLandscapeMode ? 'landscape' : 'portrait';
-        
-        console.log('📸 Quickcard photo captured with proper orientation:', {
+        const dimensions = getDimensions();
+        console.log('📸 Advanced quickcard photo captured:', {
           size: blob.size,
-          dimensions: `${currentWidth}x${currentHeight}`,
-          orientation: orientation,
+          dimensions: `${dimensions.width}x${dimensions.height}`,
+          zoom: zoomLevel,
+          settings: settings,
           location: userLocation
         });
         
-        // Create quickcard with photo and location
         createQuickcard(blob, userLocation);
-        
-        // Navigate to step 3 for quickcard editing
         navigate('/create-step3');
       } else {
         console.error('❌ Failed to capture photo');
         alert('Failed to capture photo. Please try again.');
         setIsCapturing(false);
       }
-    }, 'image/jpeg', 0.9); // High quality JPEG
+    }, 'image/jpeg', 0.9);
   };
 
   // Switch camera
@@ -282,6 +520,11 @@ const QuickcardCameraView: React.FC = () => {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
     navigate(-1);
+  };
+
+  // Settings update handler
+  const updateSetting = <K extends keyof CameraSettings>(key: K, value: CameraSettings[K]) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -305,9 +548,14 @@ const QuickcardCameraView: React.FC = () => {
         style={{ display: 'none' }}
       />
 
-      {/* Canvas - PORTRAIT 9:16 display with proper orientation */}
+      {/* Canvas with touch controls */}
       <canvas
         ref={canvasRef}
+        className="camera-canvas"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTapFocus}
+        onClick={handleTapFocus}
         style={{
           position: 'absolute',
           top: 0,
@@ -315,27 +563,207 @@ const QuickcardCameraView: React.FC = () => {
           width: '100%',
           height: '100%',
           backgroundColor: 'black',
-          objectFit: 'contain'
+          objectFit: 'contain',
+          touchAction: 'none'
         }}
       />
 
+      {/* Grid Lines */}
+      {settings.gridLines && (
+        <div className="grid-lines">
+          <div className="grid-line grid-vertical" style={{ left: '33.33%' }} />
+          <div className="grid-line grid-vertical" style={{ left: '66.66%' }} />
+          <div className="grid-line grid-horizontal" style={{ top: '33.33%' }} />
+          <div className="grid-line grid-horizontal" style={{ top: '66.66%' }} />
+        </div>
+      )}
 
+      {/* Focus Point */}
+      {focusPoint && (
+        <div
+          className="focus-point"
+          style={{
+            left: `${focusPoint.x}%`,
+            top: `${focusPoint.y}%`,
+            transform: 'translate(-50%, -50%)'
+          }}
+        />
+      )}
 
-      {/* Controls */}
+      {/* Timer Countdown */}
+      {timerCountdown > 0 && (
+        <div className="timer-countdown">
+          {timerCountdown}
+        </div>
+      )}
+
+      {/* Top Controls */}
+      <div className="top-controls">
+        <button className="control-button" onClick={closeCamera}>
+          <AiOutlineClose size={20} />
+        </button>
+        
+        <button className="control-button" onClick={() => setShowSettings(!showSettings)}>
+          <MdSettings size={20} />
+        </button>
+        
+        {isFlashSupported && (
+          <button className="control-button" onClick={toggleFlash}>
+            {settings.flashMode === 'off' ? <MdFlashOff size={20} /> :
+             settings.flashMode === 'on' ? <MdFlashOn size={20} /> :
+             <MdFlashAuto size={20} />}
+          </button>
+        )}
+      </div>
+
+      {/* Zoom Controls */}
+      <div className="zoom-controls">
+        <button className="zoom-button" onClick={handleZoomOut} disabled={zoomLevel <= 1}>
+          <MdZoomOut size={20} />
+        </button>
+        <div className="zoom-level">{zoomLevel.toFixed(1)}x</div>
+        <button className="zoom-button" onClick={handleZoomIn} disabled={zoomLevel >= maxZoom}>
+          <MdZoomIn size={20} />
+        </button>
+      </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <div className="settings-panel">
+          <div className="settings-content">
+            <h3>Camera Settings</h3>
+            
+            {/* Resolution */}
+            <div className="setting-group">
+              <label>Resolution</label>
+              <div className="setting-options">
+                {['HD', 'FHD', '4K'].map(res => (
+                  <button
+                    key={res}
+                    className={`setting-option ${settings.resolution === res ? 'active' : ''}`}
+                    onClick={() => updateSetting('resolution', res as any)}
+                  >
+                    {res}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Aspect Ratio */}
+            <div className="setting-group">
+              <label>Aspect Ratio</label>
+              <div className="setting-options">
+                {['16:9', '4:3', '1:1'].map(ratio => (
+                  <button
+                    key={ratio}
+                    className={`setting-option ${settings.aspectRatio === ratio ? 'active' : ''}`}
+                    onClick={() => updateSetting('aspectRatio', ratio as any)}
+                  >
+                    {ratio}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Scene Mode */}
+            <div className="setting-group">
+              <label>Scene Mode</label>
+              <div className="setting-options">
+                {[
+                  { key: 'auto', label: 'Auto' },
+                  { key: 'hdr', label: 'HDR' },
+                  { key: 'night', label: 'Night' },
+                  { key: 'portrait', label: 'Portrait' }
+                ].map(mode => (
+                  <button
+                    key={mode.key}
+                    className={`setting-option ${settings.sceneMode === mode.key ? 'active' : ''}`}
+                    onClick={() => updateSetting('sceneMode', mode.key as any)}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Timer */}
+            <div className="setting-group">
+              <label>Timer</label>
+              <div className="setting-options">
+                {[0, 3, 5, 10].map(time => (
+                  <button
+                    key={time}
+                    className={`setting-option ${settings.timer === time ? 'active' : ''}`}
+                    onClick={() => updateSetting('timer', time as any)}
+                  >
+                    {time === 0 ? 'Off' : `${time}s`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Toggles */}
+            <div className="setting-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.gridLines}
+                  onChange={(e) => updateSetting('gridLines', e.target.checked)}
+                />
+                Grid Lines
+              </label>
+            </div>
+
+            <div className="setting-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={settings.burstMode}
+                  onChange={(e) => updateSetting('burstMode', e.target.checked)}
+                />
+                Burst Mode
+              </label>
+            </div>
+
+            {/* Manual Controls */}
+            <div className="setting-group">
+              <label>Exposure: {settings.exposure}</label>
+              <input
+                type="range"
+                min="-2"
+                max="2"
+                step="0.1"
+                value={settings.exposure}
+                onChange={(e) => updateSetting('exposure', parseFloat(e.target.value))}
+              />
+            </div>
+
+            <div className="setting-group">
+              <label>White Balance</label>
+              <select
+                value={settings.whiteBalance}
+                onChange={(e) => updateSetting('whiteBalance', e.target.value as any)}
+              >
+                <option value="auto">Auto</option>
+                <option value="daylight">Daylight</option>
+                <option value="cloudy">Cloudy</option>
+                <option value="tungsten">Tungsten</option>
+                <option value="fluorescent">Fluorescent</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Controls */}
       <div className="quickcard-controls">
-        {/* Close Button */}
-        <button
-          className="control-button"
-          onClick={closeCamera}
-          style={{ marginRight: 15 }}
-        >
-          <AiOutlineClose size={24} color="white" />
+        <button className="control-button" onClick={handleSwitchCamera}>
+          <MdCameraswitch size={24} color="white" />
         </button>
 
-        {/* Capture Button */}
         <button
           className="capture-button"
-          onClick={capturePhoto}
+          onClick={handleCapturePhoto}
           disabled={!cameraReady || !userLocation || isCapturing}
           style={{
             backgroundColor: cameraReady && userLocation && !isCapturing ? '#007aff' : '#666',
@@ -350,18 +778,18 @@ const QuickcardCameraView: React.FC = () => {
             justifyContent: 'center'
           }}
         >
-          {isCapturing ? '⏳' : '📸'}
+          {isCapturing ? '⏳' : 
+           settings.burstMode ? '📸📸📸' :
+           settings.timer > 0 ? <MdTimer size={32} /> :
+           '📸'}
         </button>
 
-        {/* Switch Camera Button */}
-        <button
-          className="control-button"
-          onClick={handleSwitchCamera}
-          disabled={!cameraReady}
-          style={{ marginLeft: 15 }}
-        >
-          <MdCameraswitch size={24} color="white" />
-        </button>
+                 <button
+           className="control-button"
+           onClick={() => updateSetting('gridLines', !settings.gridLines)}
+         >
+           <MdGrid3X3 size={24} color={settings.gridLines ? '#007aff' : 'white'} />
+         </button>
       </div>
     </div>
   );
