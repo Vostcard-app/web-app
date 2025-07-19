@@ -965,89 +965,105 @@ const AllPostedVostcardsView: React.FC = () => {
           />
           <div style={{
             position: 'fixed',
-            top: '50%',
+            top: '10%',
             left: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translateX(-50%)',
             backgroundColor: 'white',
             borderRadius: '12px',
-            padding: '24px',
             maxWidth: '300px',
             width: '90%',
-            maxHeight: '60vh',
-            overflowY: 'auto',
+            height: '80vh',
             zIndex: 2001,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-          }}>
-                         <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Filter Content</h3>
-             
-             {/* Friends Filtering - Moved to top */}
-             <div style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '16px' }}>
-               <label style={{ 
-                 display: 'flex', 
-                 alignItems: 'center',
-                 fontSize: '14px',
-                 cursor: 'pointer',
-                 padding: '8px',
-                 borderRadius: '4px',
-                 backgroundColor: showFriendsOnly ? '#e8f4fd' : 'transparent'
-               }}>
-                 <input
-                   type="checkbox"
-                   checked={showFriendsOnly}
-                   onChange={(e) => setShowFriendsOnly(e.target.checked)}
-                   style={{ marginRight: '8px' }}
-                 />
-                 👥 Posts by friends only ({userFriends.length} friends)
-               </label>
-             </div>
-             
-             {/* Type Filtering */}
-             <div style={{ marginBottom: '20px' }}>
-               <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Content Type</h4>
-              {availableTypes.map((type) => (
-                <label key={type} style={{ 
-                  display: 'block', 
-                  marginBottom: '10px', 
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            display: 'flex',
+            flexDirection: 'column'
+                      }}>
+            {/* Scrollable Content Area */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '24px 24px 0 24px'
+            }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Filter Content</h3>
+              
+              {/* Friends Filtering - Moved to top */}
+              <div style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '16px' }}>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
                   fontSize: '14px',
                   cursor: 'pointer',
-                  padding: '6px',
+                  padding: '8px',
                   borderRadius: '4px',
-                  backgroundColor: selectedTypes.includes(type) ? '#e8f4fd' : 'transparent'
+                  backgroundColor: showFriendsOnly ? '#e8f4fd' : 'transparent'
                 }}>
                   <input
                     type="checkbox"
-                    checked={selectedTypes.includes(type)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedTypes(prev => [...prev, type]);
-                      } else {
-                        setSelectedTypes(prev => prev.filter(t => t !== type));
-                      }
-                    }}
+                    checked={showFriendsOnly}
+                    onChange={(e) => setShowFriendsOnly(e.target.checked)}
                     style={{ marginRight: '8px' }}
                   />
-                  {type === 'Vostcard' && '📹'} 
-                  {type === 'Quickcard' && '📸'} 
-                  {type === 'Guide' && '📚'} 
-                  {type}
+                  👥 Posts by friends only ({userFriends.length} friends)
                 </label>
-                             ))}
-             </div>
+              </div>
+              
+              {/* Type Filtering */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Content Type</h4>
+                {availableTypes.map((type) => (
+                  <label key={type} style={{ 
+                    display: 'block', 
+                    marginBottom: '10px', 
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    padding: '6px',
+                    borderRadius: '4px',
+                    backgroundColor: selectedTypes.includes(type) ? '#e8f4fd' : 'transparent'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedTypes.includes(type)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTypes(prev => [...prev, type]);
+                        } else {
+                          setSelectedTypes(prev => prev.filter(t => t !== type));
+                        }
+                      }}
+                      style={{ marginRight: '8px' }}
+                    />
+                    {type === 'Vostcard' && '📹'} 
+                    {type === 'Quickcard' && '📸'} 
+                    {type === 'Guide' && '📚'} 
+                    {type}
+                  </label>
+                ))}
+              </div>
+            </div>
              
-             <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
-                             <button
-                 onClick={() => {
-                   setSelectedTypes([]);
-                   setShowFriendsOnly(false);
-                 }}
-                 style={{
+            {/* Fixed Button Area */}
+            <div style={{
+              borderTop: '1px solid #eee',
+              padding: '16px 24px',
+              display: 'flex',
+              gap: '8px',
+              backgroundColor: 'white',
+              borderRadius: '0 0 12px 12px'
+            }}>
+              <button
+                onClick={() => {
+                  setSelectedTypes([]);
+                  setShowFriendsOnly(false);
+                }}
+                style={{
                   flex: 1,
-                  padding: '10px',
+                  padding: '12px',
                   border: '1px solid #ddd',
                   borderRadius: '6px',
                   backgroundColor: 'white',
                   color: '#666',
-                  fontSize: '14px',
+                  fontSize: '16px',
+                  fontWeight: '500',
                   cursor: 'pointer'
                 }}
               >
@@ -1057,12 +1073,13 @@ const AllPostedVostcardsView: React.FC = () => {
                 onClick={() => setShowFilterModal(false)}
                 style={{
                   flex: 1,
-                  padding: '10px',
+                  padding: '12px',
                   border: 'none',
                   borderRadius: '6px',
                   backgroundColor: '#002B4D',
                   color: 'white',
-                  fontSize: '14px',
+                  fontSize: '16px',
+                  fontWeight: '500',
                   cursor: 'pointer'
                 }}
               >
