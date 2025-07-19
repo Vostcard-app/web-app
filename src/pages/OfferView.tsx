@@ -186,7 +186,6 @@ const OfferView: React.FC = () => {
         top: 0,
         zIndex: 10,
         color: 'white',
-        position: 'relative', // Add for absolute positioning
         flexShrink: 0 // Match MyVostcardListView
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -297,6 +296,18 @@ const OfferView: React.FC = () => {
                 />
               </div>
             )}
+            
+            {/* Tell them Vōstcard sent you message */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '16px',
+              fontStyle: 'italic',
+              fontWeight: 'bold',
+              color: '#002B4D',
+              fontSize: '16px'
+            }}>
+              Tell them Vōstcard sent you
+            </div>
             
             <h1 style={{ 
               fontSize: '28px', 
