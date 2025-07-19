@@ -1330,18 +1330,18 @@ const HomeView = () => {
           />
           <div style={{
             position: 'fixed',
-            top: '50%',
+            top: '10%',
             left: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translateX(-50%)',
             backgroundColor: 'white',
             borderRadius: '12px',
-            padding: '24px',
             maxWidth: '300px',
             width: '90%',
-            maxHeight: '60vh',
-            overflowY: 'auto',
+            height: '80vh',
             zIndex: 2001,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
                         <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Filter Content</h3>
             
