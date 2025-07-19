@@ -6,6 +6,7 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
+import InfoPin from '../assets/Info_pin.png'; // Add this import
 
 const PublicQuickcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,11 @@ const PublicQuickcardView: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showLikeMessage, setShowLikeMessage] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false); // Add this for the video modal
+
+  // YouTube video ID extracted from the provided URL
+  const youtubeVideoId = 'CCOErz2RxwI';
+  const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   // Load quickcard data
   useEffect(() => {
@@ -260,36 +266,45 @@ const PublicQuickcardView: React.FC = () => {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Header - Matching QuickcardDetailView */}
+      {/* Header - Added InfoPin where back button was */}
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 24px 16px', 
         position: 'relative', 
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between' // Changed back to space-between for InfoPin
       }}>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
           Vōstcard
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button 
-            style={{ 
-              background: 'rgba(0,0,0,0.10)', 
-              border: 'none', 
-              borderRadius: '50%', 
-              width: 48, 
-              height: 48, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              cursor: 'pointer'
-            }} 
-            onClick={() => navigate('/user-guide')}
-          >
-            <FaArrowLeft color="#fff" size={24} />
-          </button>
-          {/* Removed the Home button */}
+        {/* Added InfoPin where back button used to be */}
+        <div 
+          onClick={() => setShowVideoModal(true)}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <img 
+            src={InfoPin} 
+            alt="Info Pin" 
+            style={{
+              width: '50px',
+              height: '50px',
+              marginBottom: '2px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            What is Vōstcard?
+          </span>
         </div>
       </div>
 
@@ -399,6 +414,19 @@ const PublicQuickcardView: React.FC = () => {
             No photo available
           </div>
         )}
+      </div>
+
+      {/* Added text under photo */}
+      <div style={{
+        textAlign: 'center',
+        color: '#666',
+        fontSize: '14px',
+        fontStyle: 'italic',
+        marginTop: '-10px',
+        marginBottom: '20px',
+        padding: '0 20px'
+      }}>
+        Made with Vostcard a free app
       </div>
 
       {/* Action Icons Row - Added Map icon between Comment and Share */}
