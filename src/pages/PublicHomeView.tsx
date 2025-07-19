@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
+import QuickcardPin from '../assets/quickcard_pin.png'; // Add quickcard pin import
 
 // Custom icons for the map
 const vostcardIcon = new L.Icon({
@@ -17,6 +18,14 @@ const vostcardIcon = new L.Icon({
 
 const offerIcon = new L.Icon({
   iconUrl: OfferPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+// Add quickcard icon
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
   iconSize: [75, 75],
   iconAnchor: [37.5, 75],
   popupAnchor: [0, -75],
@@ -128,13 +137,26 @@ const PublicHomeView: React.FC = () => {
 
   const center: [number, number] = [singleVostcard.latitude, singleVostcard.longitude];
   const isOffer = singleVostcard.isOffer;
+  const isQuickcard = singleVostcard.isQuickcard; // Add quickcard check
 
+  // Updated pin click handler to use correct URL for quickcards
   const handlePinClick = () => {
-    navigate(`/share/${singleVostcard.id}`);
+    if (isQuickcard) {
+      navigate(`/share-quickcard/${singleVostcard.id}`);
+    } else {
+      navigate(`/share/${singleVostcard.id}`);
+    }
   };
 
   const handleHomeClick = () => {
     navigate('/');
+  };
+
+  // Function to get the correct icon
+  const getIcon = () => {
+    if (isQuickcard) return quickcardIcon;
+    if (isOffer) return offerIcon;
+    return vostcardIcon;
   };
 
   return (
@@ -151,41 +173,43 @@ const PublicHomeView: React.FC = () => {
         left: 0,
         right: 0,
         height: '60px',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#002B4D',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 20px',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        zIndex: 1000
+        padding: '0 16px',
+        zIndex: 1001,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
         <button
+          onClick={handleHomeClick}
           style={{
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '8px 16px',
+            color: 'white',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            backgroundColor: '#007aff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '14px',
-            cursor: 'pointer',
-            fontWeight: '500'
+            gap: '8px'
           }}
-          onClick={handleHomeClick}
         >
           <FaHome size={16} />
-          Back to Home
+          Go to Vostcard
         </button>
         
-        <h1 style={{
-          margin: 0,
-          fontSize: '18px',
+        <h1 style={{ 
+          color: 'white', 
+          margin: 0, 
+          fontSize: '18px', 
           fontWeight: '600',
-          color: '#333'
+          textAlign: 'center',
+          flex: 1
         }}>
-          {isOffer ? 'Shared Offer Location' : 'Shared Vostcard Location'}
+          {isQuickcard ? 'Quickcard Location' : 'Vostcard Location'}
         </h1>
         
         <div style={{ width: '100px' }} /> {/* Spacer for centering */}
@@ -211,10 +235,10 @@ const PublicHomeView: React.FC = () => {
             maxZoom={22}
           />
 
-          {/* Single Vostcard Pin */}
+          {/* Single Vostcard/Quickcard Pin */}
           <Marker
             position={center}
-            icon={isOffer ? offerIcon : vostcardIcon}
+            icon={getIcon()} // Use the correct icon based on type
             eventHandlers={{
               click: handlePinClick
             }}
@@ -222,11 +246,28 @@ const PublicHomeView: React.FC = () => {
             <Popup>
               <div style={{ textAlign: 'center', minWidth: '200px' }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
-                  {singleVostcard.title || 'Untitled'}
+                  {singleVostcard.title || (isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
                 </h3>
                 <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
                   {singleVostcard.description || 'No description'}
                 </p>
+                
+                {/* Show quickcard indicator */}
+                {isQuickcard && (
+                  <div style={{
+                    backgroundColor: '#e8f4ff',
+                    border: '1px solid #b3d9ff',
+                    borderRadius: '6px',
+                    padding: '8px',
+                    marginBottom: '12px'
+                  }}>
+                    <strong style={{ color: '#0066cc' }}>📱 Quickcard</strong>
+                    <br />
+                    <span style={{ fontSize: '12px' }}>Quick photo with location</span>
+                  </div>
+                )}
+                
+                {/* Existing offer details */}
                 {isOffer && singleVostcard.offerDetails?.discount && (
                   <div style={{
                     backgroundColor: '#e8f4ff',
@@ -245,25 +286,28 @@ const PublicHomeView: React.FC = () => {
                     )}
                   </div>
                 )}
+                
+                {/* Categories */}
                 {singleVostcard.categories && Array.isArray(singleVostcard.categories) && singleVostcard.categories.length > 0 && (
                   <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#666' }}>
                     <strong>Categories:</strong> {singleVostcard.categories.join(', ')}
                   </p>
                 )}
+                
                 <button
+                  onClick={handlePinClick}
                   style={{
-                    padding: '8px 16px',
                     backgroundColor: '#007aff',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
+                    padding: '8px 16px',
                     fontSize: '14px',
                     cursor: 'pointer',
-                    fontWeight: '500'
+                    marginTop: '8px'
                   }}
-                  onClick={handlePinClick}
                 >
-                  View {isOffer ? 'Offer' : 'Vostcard'}
+                  View {isQuickcard ? 'Quickcard' : 'Vostcard'}
                 </button>
               </div>
             </Popup>
