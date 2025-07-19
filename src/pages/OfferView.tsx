@@ -175,16 +175,19 @@ const OfferView: React.FC = () => {
         overflowY: 'auto',
         position: 'relative'
       }}>
-      {/* Header */}
+      {/* Header - Updated to match MyVostcardListView dimensions */}
       <div style={{
-        backgroundColor: '#002B4D',
-        padding: '16px 20px',
+        backgroundColor: '#07345c', // Changed from '#002B4D' to match
+        padding: '15px 0 24px 20px', // Changed from '16px 20px' to match exactly
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
         top: 0,
-        zIndex: 10
+        zIndex: 10,
+        color: 'white',
+        position: 'relative', // Add for absolute positioning
+        flexShrink: 0 // Match MyVostcardListView
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <button
@@ -206,28 +209,32 @@ const OfferView: React.FC = () => {
           <h1 style={{
             color: 'white',
             margin: 0,
-            fontSize: '24px',
+            fontSize: '30px', // Changed from '24px' to match
             fontWeight: 600
           }}>
             {storeName}
           </h1>
         </div>
-        <button
-          onClick={() => navigate('/home')}
+        
+        {/* Home Icon - Positioned absolutely like MyVostcardListView */}
+        <FaHome
+          size={48} // Changed from 24 to 48 to match
           style={{
-            background: 'none',
-            border: 'none',
-            color: 'white',
             cursor: 'pointer',
-            padding: '8px',
+            position: 'absolute',
+            right: 29, // Match exact positioning
+            top: 15,   // Match exact positioning
+            background: 'rgba(0,0,0,0.10)',
+            border: 'none',
             borderRadius: '50%',
+            width: 48,
+            height: 48,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}
-        >
-          <FaHome size={20} />
-        </button>
+          onClick={() => navigate('/home')}
+        />
       </div>
 
       {/* Scrollable Content Container */}

@@ -101,6 +101,7 @@ interface VostcardContextProps {
   quickcards: Vostcard[];
   createQuickcard: (photo: Blob, geo: { latitude: number; longitude: number }) => void;
   saveQuickcard: () => Promise<void>;
+  postQuickcard: () => Promise<void>; // Add this line
 }
 
 // IndexedDB configuration
@@ -2575,6 +2576,117 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard, saveLocalVostcard]);
 
+  const postQuickcard = useCallback(async () => {
+    console.log('📱 Posting quickcard to map...');
+    if (!currentVostcard || !currentVostcard.isQuickcard) {
+      console.error('❌ No quickcard to post');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert('User not authenticated. Please log in first.');
+      return;
+    }
+
+    // Check if Quickcard has required data for posting
+    if (!currentVostcard.title || !currentVostcard.description || (currentVostcard.categories?.length || 0) === 0) {
+      alert('Please fill in title, description, and select at least one category before posting.');
+      return;
+    }
+
+    if (!currentVostcard.geo) {
+      alert('Location is required to post a Quickcard to the map. Please try again.');
+      return;
+    }
+
+    try {
+      console.log('📥 Starting quickcard post to Firebase (public map)...');
+      const vostcardId = currentVostcard.id;
+      const userID = user.uid;
+      const username = getCorrectUsername(authContext, currentVostcard.username);
+
+      // --- Upload photos to Firebase Storage (quickcards don't have videos) ---
+      let photoURLs: string[] = [];
+      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+        photoURLs = await Promise.all(
+          currentVostcard.photos.map((photo, idx) =>
+            photo instanceof Blob ? uploadPhoto(userID, vostcardId, idx, photo) : Promise.resolve('')
+          )
+        );
+      }
+
+      console.log('🔍 DEBUG: Final quickcard username before Firestore save:', {
+        username: username,
+        authContextUsername: authContext.username,
+        userEmail: authContext.user?.email,
+        userID: userID,
+        vostcardId: vostcardId,
+        isQuickcard: true
+      });
+
+      const docRef = doc(db, 'vostcards', vostcardId);
+      await setDoc(docRef, {
+        id: vostcardId,
+        title: currentVostcard.title || '',
+        description: currentVostcard.description || '',
+        categories: currentVostcard.categories || [],
+        username: username,
+        userID: userID,
+        videoURL: '', // Quickcards don't have videos
+        photoURLs: photoURLs,
+        latitude: currentVostcard.geo.latitude,
+        longitude: currentVostcard.geo.longitude,
+        avatarURL: user.photoURL || '',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        state: 'posted', // Mark as posted to appear on public map
+        hasVideo: false, // Quickcards never have videos
+        hasPhotos: (currentVostcard.photos?.length || 0) > 0,
+        mediaUploadStatus: 'complete',
+        isOffer: false, // Quickcards are not offers
+        isQuickcard: true, // Mark as quickcard
+        offerDetails: null,
+        visibility: 'public'
+      });
+
+      console.log('✅ Quickcard posted successfully to Firebase!');
+
+      // Update the IndexedDB entry to mark it as posted
+      try {
+        const localDB = await openDB();
+        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        // Update the local copy to mark as posted
+        const updatedVostcard = {
+          ...currentVostcard,
+          state: 'posted' as const,
+          updatedAt: new Date().toISOString()
+        };
+        
+        await store.put(updatedVostcard);
+        console.log('✅ Local quickcard updated to posted state');
+        
+        // Update the savedVostcards state
+        setSavedVostcards(prev => 
+          prev.map(v => v.id === vostcardId ? updatedVostcard : v)
+        );
+        
+      } catch (localError) {
+        console.error('❌ Error updating local quickcard state:', localError);
+        // Continue anyway - Firebase post was successful
+      }
+
+      // Clear the current vostcard since it's now posted
+      clearVostcard();
+      
+    } catch (error) {
+      console.error('❌ Error posting quickcard:', error);
+      throw error;
+    }
+  }, [currentVostcard, authContext]);
+
   return (
     <VostcardContext.Provider
       value={{
@@ -2644,6 +2756,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         quickcards,
         createQuickcard,
         saveQuickcard,
+        postQuickcard,
       }}
     >
       {children}

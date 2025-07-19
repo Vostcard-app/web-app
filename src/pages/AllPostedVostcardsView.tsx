@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaLocationArrow, FaPlay } from 'react-icons/fa';
+import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaLocationArrow, FaPlay, FaCameraRetro, FaVideo } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import FollowButton from '../components/FollowButton';
 import { RatingService, type RatingStats } from '../services/ratingService';
@@ -126,27 +126,42 @@ const AllPostedVostcardsView: React.FC = () => {
     const fetchAllPostedVostcards = async () => {
       setLoading(true);
       try {
-        console.log('🔄 Fetching all posted vostcards...');
-        const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
-        const snapshot = await getDocs(q);
-        const allVostcards = snapshot.docs.map(doc => ({
+        console.log('🔄 Fetching all posted vostcards and quickcards...');
+        
+        // Query 1: Regular posted vostcards
+        const q1 = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
+        const snapshot1 = await getDocs(q1);
+        const postedVostcards = snapshot1.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Vostcard[];
         
-        // Filter out offers - only show regular vostcards in this view
-        const regularVostcards = allVostcards.filter(v => !v.isOffer);
+        // Query 2: Posted quickcards (they have state: 'posted' AND isQuickcard: true)  
+        // Since we already got all posted items in query 1, we just need to include quickcards from that result
         
-        console.log('📋 Loaded vostcards:', regularVostcards.length);
-        setVostcards(regularVostcards);
+        // Combine and filter: Include regular vostcards + posted quickcards, exclude offers
+        const allContent = postedVostcards.filter(v => 
+          !v.isOffer && // Exclude offers
+          (
+            !v.isQuickcard || // Include regular vostcards
+            (v.isQuickcard && v.state === 'posted') // Include posted quickcards
+          )
+        );
+        
+        console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
+          regular: allContent.filter(v => !v.isQuickcard).length,
+          quickcards: allContent.filter(v => v.isQuickcard).length
+        });
+        
+        setVostcards(allContent);
         setLastUpdated(new Date());
         
-        // Load like and rating data for all vostcards
-        if (regularVostcards.length > 0) {
-          await loadData(regularVostcards.map(v => v.id), regularVostcards);
+        // Load like and rating data for all content
+        if (allContent.length > 0) {
+          await loadData(allContent.map(v => v.id), allContent);
         }
       } catch (error) {
-        console.error('Error fetching posted vostcards:', error);
+        console.error('Error fetching posted content:', error);
       } finally {
         setLoading(false);
       }
@@ -714,7 +729,30 @@ const AllPostedVostcardsView: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 2 }}>{v.title || 'Untitled'}</div>
+                {/* Enhanced Title Section with Type Indicators */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 2 }}>
+                  <div style={{ fontWeight: 700, fontSize: 20, flex: 1 }}>
+                    {v.title || 'Untitled'}
+                  </div>
+                  
+                  {/* Type Badge with Icon */}
+                  <div style={{
+                    backgroundColor: v.isQuickcard ? '#FF6B6B' : '#4ECDC4',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    flexShrink: 0
+                  }}>
+                    {v.isQuickcard ? <FaCameraRetro style={{ fontSize: '8px' }} /> : <FaVideo style={{ fontSize: '8px' }} />}
+                    {v.isQuickcard ? 'Quick' : 'Vōst'}
+                  </div>
+                </div>
+                
                 <div style={{ color: '#888', fontSize: 15, marginBottom: 2 }}>{getDistanceToVostcard(v)}</div>
                 
 

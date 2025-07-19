@@ -507,14 +507,35 @@ const HomeView = () => {
         console.log('🔄 Force refreshing vostcards after posting');
       }
       
-      // 🔧 FIX: Query for both public vostcards AND offers
-      const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
-      const querySnapshot = await getDocs(q);
-      const postedVostcardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Enhanced query: Get both regular posted vostcards AND posted quickcards
+      console.log('🔄 Loading posted vostcards and quickcards');
       
-      console.log('📍 Loaded vostcards:', postedVostcardsData.length);
+      // Query 1: Regular posted vostcards
+      const q1 = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
+      const snapshot1 = await getDocs(q1);
+      const postedVostcards = snapshot1.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as any[]; // Assuming Vostcard type is any[] or needs a type definition
       
-      setVostcards(postedVostcardsData);
+      // Query 2: Posted quickcards (they have state: 'posted' AND isQuickcard: true)  
+      // Since we already got all posted items in query 1, we just need to include quickcards from that result
+      
+      // Combine and filter: Include regular vostcards + posted quickcards, exclude offers
+      const allContent = postedVostcards.filter(v => 
+        !v.isOffer && // Exclude offers
+        (
+          !v.isQuickcard || // Include regular vostcards
+          (v.isQuickcard && v.state === 'posted') // Include posted quickcards
+        )
+      );
+      
+      console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
+        regular: allContent.filter(v => !v.isQuickcard).length,
+        quickcards: allContent.filter(v => v.isQuickcard).length
+      });
+      
+      setVostcards(allContent);
       setRetryCount(0); // Reset retry count on success
       setLastUpdateTime(Date.now());
       
@@ -1047,7 +1068,12 @@ const HomeView = () => {
                         icon={icon}
                         eventHandlers={{
                           click: () => {
-                            navigate(`/vostcard/${vostcard.id}`);
+                            // Check if it's an offer and route appropriately
+                            if (vostcard.isOffer) {
+                              navigate(`/offer/${vostcard.id}`);
+                            } else {
+                              navigate(`/vostcard/${vostcard.id}`);
+                            }
                           }
                         }}
                       >

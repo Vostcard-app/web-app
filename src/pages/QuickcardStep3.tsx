@@ -10,6 +10,7 @@ const QuickcardStep3: React.FC = () => {
     currentVostcard,
     updateVostcard,
     saveQuickcard,
+    postQuickcard, // Add this import
     clearVostcard,
   } = useVostcard();
   const { title = '', description = '', categories = [], photos = [] } = currentVostcard || {};
@@ -41,6 +42,19 @@ const QuickcardStep3: React.FC = () => {
     hasPhotos: (photos?.length || 0) >= 1,  // Quickcards only need 1 photo
   };
 
+  // Check if quickcard is ready for posting (all validation must pass)
+  const isReadyForPosting = validationState.hasTitle && 
+    validationState.hasDescription && 
+    validationState.hasCategories && 
+    validationState.hasPhotos;
+
+  // Create specific missing items list
+  const missingItems = [];
+  if (!validationState.hasTitle) missingItems.push('Title');
+  if (!validationState.hasDescription) missingItems.push('Description');
+  if (!validationState.hasCategories) missingItems.push('Categories');
+  if (!validationState.hasPhotos) missingItems.push('Photos (need at least 1)');
+
   console.log('🔍 Quickcard Step 3 Validation State:', {
     title: title,
     titleValid: validationState.hasTitle,
@@ -50,7 +64,8 @@ const QuickcardStep3: React.FC = () => {
     categoriesValid: validationState.hasCategories,
     photosCount: photos.length,
     photosValid: validationState.hasPhotos,
-    isQuickcard: true
+    isQuickcard: true,
+    isReadyForPosting
   });
 
   // Check Firebase Auth
@@ -79,7 +94,7 @@ const QuickcardStep3: React.FC = () => {
     }
   };
 
-  const handleSaveQuickcard = async () => {
+  const handleSavePrivately = async () => {
     const user = auth.currentUser;
     if (!user) {
       alert("❌ Please sign in to save your quickcard.");
@@ -87,41 +102,54 @@ const QuickcardStep3: React.FC = () => {
       return;
     }
     
-    // Show success message immediately
-    alert('Your Quickcard has been saved and is available in your Quickcards list.');
-    
-    // Navigate to quickcards list
-    navigate('/quickcards');
-    
     try {
-      console.log('💾 Starting quickcard save process...');
+      console.log('💾 Starting quickcard private save...');
       
       // Save the quickcard privately
       await saveQuickcard();
       
-      // Clear the current vostcard state
-      clearVostcard();
+      // Show success message
+      alert('Your Quickcard has been saved privately and is available in your Quickcards list.');
       
-      console.log('✅ Quickcard saved successfully');
+      // Navigate to quickcards list
+      navigate('/quickcards');
       
     } catch (error) {
-      console.error('❌ Error saving quickcard:', error);
-      // Don't show error alert since user is already redirected
+      console.error('❌ Error saving quickcard privately:', error);
+      alert('Failed to save quickcard. Please try again.');
     }
   };
 
-  const isSaveEnabled =
-    validationState.hasTitle &&
-    validationState.hasDescription &&
-    validationState.hasCategories &&
-    validationState.hasPhotos;
-
-  // Create specific missing items list
-  const missingItems = [];
-  if (!validationState.hasTitle) missingItems.push('Title');
-  if (!validationState.hasDescription) missingItems.push('Description');
-  if (!validationState.hasCategories) missingItems.push('Categories');
-  if (!validationState.hasPhotos) missingItems.push('Photo');
+  const handlePostToMap = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("❌ Please sign in to post your quickcard.");
+      navigate('/login');
+      return;
+    }
+    
+    if (!isReadyForPosting) {
+      alert(`Please complete the following before posting: ${missingItems.join(', ')}`);
+      return;
+    }
+    
+    try {
+      console.log('📍 Starting quickcard post to map...');
+      
+      // Post the quickcard to the public map
+      await postQuickcard();
+      
+      // Show success message
+      alert('🎉 Quickcard posted successfully! It will appear on the map for everyone to see.');
+      
+      // Navigate to home to see it on the map
+      navigate('/home', { state: { freshLoad: true } });
+      
+    } catch (error) {
+      console.error('❌ Error posting quickcard:', error);
+      alert('Failed to post quickcard. Please try again.');
+    }
+  };
 
   return (
     <div style={{ 
@@ -147,9 +175,18 @@ const QuickcardStep3: React.FC = () => {
         flexShrink: 0,
         touchAction: 'manipulation',
         position: 'relative',
-        zIndex: 1000  // Higher than the modal overlay
+        zIndex: 1000
       }}>
-        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>Quickcard</div>
+        <div 
+          onClick={() => navigate('/home')}
+          style={{ 
+            color: 'white', 
+            fontSize: 28, 
+            fontWeight: 'bold', 
+            cursor: 'pointer' 
+          }}>
+          Vōstcard
+        </div>
         <FaArrowLeft
           size={28}
           color="white"
@@ -163,7 +200,7 @@ const QuickcardStep3: React.FC = () => {
         padding: 16, 
         flex: 1, 
         overflowY: 'auto',
-        paddingBottom: 140, // Add space for the fixed buttons
+        paddingBottom: 180, // Increased space for two buttons
         touchAction: 'manipulation'
       }}>
         <div>
@@ -236,7 +273,7 @@ const QuickcardStep3: React.FC = () => {
         </div>
       </div>
 
-      {/* 🔘 Fixed Bottom Button */}
+      {/* 🔘 Fixed Bottom Buttons */}
       <div style={{
         position: 'fixed',
         bottom: 0,
@@ -249,22 +286,35 @@ const QuickcardStep3: React.FC = () => {
         zIndex: 100,
         touchAction: 'manipulation'
       }}>
-        {!isSaveEnabled && (
+        {!isReadyForPosting && (
           <div style={missingTextStyle}>
             Missing: {missingItems.join(', ')}
           </div>
         )}
 
+        {/* Save Privately Button */}
         <button
-          onClick={handleSaveQuickcard}
-          disabled={!isSaveEnabled}
+          onClick={handleSavePrivately}
           style={{
             ...saveButtonStyle,
-            backgroundColor: isSaveEnabled ? '#002B4D' : '#aaa',
+            backgroundColor: '#002B4D', // Always enabled for private save
             touchAction: 'manipulation'
           }}
         >
-          Save Quickcard
+          Save Privately
+        </button>
+
+        {/* Post to Map Button */}
+        <button
+          onClick={handlePostToMap}
+          disabled={!isReadyForPosting}
+          style={{
+            ...postButtonStyle,
+            backgroundColor: isReadyForPosting ? '#28a745' : '#aaa', // Green when ready
+            touchAction: 'manipulation'
+          }}
+        >
+          Post to Map
         </button>
       </div>
 
@@ -335,12 +385,24 @@ const saveButtonStyle: React.CSSProperties = {
   padding: '14px',
   borderRadius: 8,
   fontSize: 18,
+  cursor: 'pointer',
+  marginBottom: 10
+};
+
+const postButtonStyle: React.CSSProperties = {
+  color: 'white',
+  border: 'none',
+  width: '100%',
+  padding: '14px',
+  borderRadius: 8,
+  fontSize: 18,
   cursor: 'pointer'
 };
 
 const missingTextStyle: React.CSSProperties = {
   color: 'orange',
   marginTop: 8,
+  marginBottom: 8,
   textAlign: 'center'
 };
 
@@ -354,7 +416,7 @@ const modalOverlayStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  zIndex: 998,  // Lower than the header
+  zIndex: 998,
 };
 
 const modalContentStyle: React.CSSProperties = {
@@ -364,7 +426,7 @@ const modalContentStyle: React.CSSProperties = {
   width: '80%',
   maxWidth: 400,
   position: 'relative',
-  zIndex: 999  // Higher than overlay but lower than header
+  zIndex: 999
 };
 
 const categoryItemStyle: React.CSSProperties = {
