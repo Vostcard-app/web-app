@@ -289,27 +289,11 @@ const PublicQuickcardView: React.FC = () => {
           >
             <FaArrowLeft color="#fff" size={24} />
           </button>
-          <button 
-            style={{ 
-              background: 'rgba(0,0,0,0.10)', 
-              border: 'none', 
-              borderRadius: '50%', 
-              width: 48, 
-              height: 48, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              cursor: 'pointer',
-              marginRight: '15px'
-            }} 
-            onClick={() => navigate('/user-guide')}
-          >
-            <FaHome color="#fff" size={48} />
-          </button>
+          {/* Removed the Home button */}
         </div>
       </div>
 
-      {/* User Info - Matching QuickcardDetailView */}
+      {/* User Info - Modified to have Login/Register button */}
       <div style={{ 
         padding: '5px 20px', 
         display: 'flex', 
@@ -343,43 +327,21 @@ const PublicQuickcardView: React.FC = () => {
             {quickcardUsername || 'Anonymous'}
           </div>
         </div>
+        {/* Replaced map button with Login/Register button */}
         <button
-          onClick={() => {
-            if (quickcard?.latitude && quickcard?.longitude) {
-              navigate('/public-map', {
-                state: {
-                  singleVostcard: {
-                    id: quickcard.id,
-                    title: quickcard.title,
-                    description: quickcard.description,
-                    latitude: quickcard.latitude || quickcard.geo?.latitude,
-                    longitude: quickcard.longitude || quickcard.geo?.longitude,
-                    photoURLs: quickcard.photoURLs,
-                    username: quickcard.username,
-                    isQuickcard: true,
-                    categories: quickcard.categories,
-                    createdAt: quickcard.createdAt,
-                    visibility: 'public',
-                    state: 'posted'
-                  }
-                }
-              });
-            } else {
-              alert('No location data available for this quickcard');
-            }
-          }}
+          onClick={() => navigate('/user-guide')}
           style={{
-            background: 'none',
+            backgroundColor: '#007aff',
+            color: 'white',
             border: 'none',
+            borderRadius: '8px',
+            padding: '8px 16px',
             cursor: 'pointer',
-            color: '#666',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px'
+            fontSize: '14px',
+            fontWeight: 'bold'
           }}
         >
-          <FaMap size={24} />
+          Login/Register
         </button>
       </div>
 
@@ -439,7 +401,7 @@ const PublicQuickcardView: React.FC = () => {
         )}
       </div>
 
-      {/* Action Icons Row - Matching QuickcardDetailView */}
+      {/* Action Icons Row - Added Map icon between Comment and Share */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -477,6 +439,45 @@ const PublicQuickcardView: React.FC = () => {
           <FaRegComment size={30} />
         </button>
 
+        {/* Added Map icon here */}
+        <button
+          onClick={() => {
+            if (quickcard?.latitude && quickcard?.longitude) {
+              navigate('/public-map', {
+                state: {
+                  singleVostcard: {
+                    id: quickcard.id,
+                    title: quickcard.title,
+                    description: quickcard.description,
+                    latitude: quickcard.latitude || quickcard.geo?.latitude,
+                    longitude: quickcard.longitude || quickcard.geo?.longitude,
+                    photoURLs: quickcard.photoURLs,
+                    username: quickcard.username,
+                    isQuickcard: true,
+                    categories: quickcard.categories,
+                    createdAt: quickcard.createdAt,
+                    visibility: 'public',
+                    state: 'posted'
+                  }
+                }
+              });
+            } else {
+              alert('No location data available for this quickcard');
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaMap size={30} />
+        </button>
+
         <button
           onClick={handleShare}
           style={{
@@ -493,7 +494,7 @@ const PublicQuickcardView: React.FC = () => {
         </button>
       </div>
 
-      {/* Counts Row - Matching QuickcardDetailView */}
+      {/* Counts Row - Updated to show counts for 4 icons */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -503,6 +504,8 @@ const PublicQuickcardView: React.FC = () => {
         color: '#666'
       }}>
         <span>{likeCount}</span>
+        <span></span>
+        <span></span>
         <span></span>
       </div>
 
