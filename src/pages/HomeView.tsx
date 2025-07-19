@@ -866,12 +866,12 @@ const HomeView = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        position: 'fixed', // Add this
-        top: 0, // Add this
-        left: 0, // Add this
-        right: 0, // Add this
-        zIndex: 1000, // Add this
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', // Add shadow
+        position: 'fixed', // Fixed positioning
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000, // High z-index
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         touchAction: 'manipulation'
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
@@ -917,7 +917,8 @@ const HomeView = () => {
       <div style={{ 
         flex: 1, 
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        paddingTop: '80px' // Add padding for fixed header
       }}>
         {loading && showAuthLoading ? (
           <div style={authLoadingOverlayStyle}>
@@ -932,7 +933,7 @@ const HomeView = () => {
               <div
                 style={{
                   position: 'absolute',
-                  top: '16px',
+                  top: '16px', // Keep original 16px from the top of the content area (now below fixed header)
                   left: 0,
                   right: 0,
                   display: 'flex',
@@ -990,10 +991,10 @@ const HomeView = () => {
               </div>
             )}
 
-            {/* Map Container */}
+            {/* Map Container - Adjust positioning */}
             <div style={{
               position: 'absolute',
-              top: 0,
+              top: 0, // Start at the top of the content area (below fixed header)
               left: 0,
               right: 0,
               bottom: 0,
