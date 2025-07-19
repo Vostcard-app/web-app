@@ -266,10 +266,10 @@ const PublicQuickcardView: React.FC = () => {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Fixed Header - Content height set to 30px */}
+      {/* Fixed Header - Reduced padding */}
       <div style={{ 
         background: '#07345c', 
-        padding: '15px 16px 24px 16px', 
+        padding: '5px 16px 5px 16px', // Changed from '15px 16px 24px 16px'
         position: 'fixed',
         top: 0,
         left: 0,
@@ -278,18 +278,18 @@ const PublicQuickcardView: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        height: '69px' // 15px + 30px + 24px = 69px total
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        // Removed explicit height - let it size naturally
       }}>
         <span 
           onClick={() => navigate('/home')}
           style={{ 
             color: 'white', 
             fontWeight: 700, 
-            fontSize: '1.8rem', // Reduced from 2.5rem to fit in 30px
+            fontSize: '1.8rem',
             cursor: 'pointer',
             userSelect: 'none',
-            lineHeight: '30px' // Set exact line height to 30px
+            lineHeight: '30px'
           }}
         >
           Vōstcard
@@ -301,7 +301,7 @@ const PublicQuickcardView: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            height: '30px', // Set container height to 30px
+            height: '30px',
             justifyContent: 'center'
           }}
         >
@@ -309,13 +309,13 @@ const PublicQuickcardView: React.FC = () => {
             src={InfoPin} 
             alt="Info Pin" 
             style={{
-              width: '24px', // Reduced from 50px to fit in 30px height
+              width: '24px',
               height: '24px',
               marginBottom: '1px'
             }}
           />
           <span style={{
-            fontSize: '8px', // Reduced from 10px
+            fontSize: '8px',
             fontWeight: '500',
             color: 'white',
             textAlign: 'center',
@@ -326,8 +326,8 @@ const PublicQuickcardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Spacer adjusted for new header height */}
-      <div style={{ height: '69px' }}></div> {/* Updated from 85px to 69px */}
+      {/* Spacer adjusted for new header height (5px + ~30px content + 5px = ~40px) */}
+      <div style={{ height: '40px' }}></div>
 
       {/* User Info - Back to original positioning */}
       <div style={{ 
