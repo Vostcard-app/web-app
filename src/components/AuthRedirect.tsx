@@ -35,6 +35,7 @@ export const AuthRedirect = () => {
       '/script-editor/',
       '/flag/',
       '/share/',
+      '/share-quickcard/',  // Add this line
       '/email/'
     ].some(prefix => location.pathname.startsWith(prefix));
 
