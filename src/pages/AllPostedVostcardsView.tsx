@@ -4,6 +4,7 @@ import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaLocationArrow, FaPlay, FaCameraRetro, FaVideo } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
 import { RatingService, type RatingStats } from '../services/ratingService';
 import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
@@ -31,7 +32,18 @@ const AllPostedVostcardsView: React.FC = () => {
   const [customDistance, setCustomDistance] = useState(2);
   const [showAreaSelector, setShowAreaSelector] = useState(false);
   const [showDistanceSlider, setShowDistanceSlider] = useState(false);
+  
+  // Type filtering state (Offers are never filtered out)
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const availableTypes = ['Vostcard', 'Quickcard', 'Guide'];
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  
+  // Friends filtering state
+  const [showFriendsOnly, setShowFriendsOnly] = useState(false);
+  const [userFriends, setUserFriends] = useState<string[]>([]);
+  
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
   // Calculate distance between two points using Haversine formula
@@ -218,6 +230,28 @@ const AllPostedVostcardsView: React.FC = () => {
     };
   }, [vostcards, setupLikeListeners]);
 
+  // Fetch user friends list
+  useEffect(() => {
+    const fetchUserFriends = async () => {
+      if (user?.uid) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            setUserFriends(userData.friends || []);
+          }
+        } catch (error) {
+          console.error('Error fetching user friends:', error);
+        }
+      } else {
+        setUserFriends([]);
+      }
+    };
+
+    fetchUserFriends();
+  }, [user]);
+
   // Handle like toggle
   const handleLikeToggle = useCallback(async (vostcardId: string, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -355,6 +389,48 @@ const AllPostedVostcardsView: React.FC = () => {
       default:
         return vostcards;
     }
+  };
+
+  // Type filtering function (Offers are never filtered out)
+  const filterVostcardsByType = (vostcards: Vostcard[]): Vostcard[] => {
+    // If no types are selected, show all
+    if (selectedTypes.length === 0) return vostcards;
+    
+    return vostcards.filter(v => {
+      // Always include offers regardless of type filter
+      if (v.isOffer) return true;
+      
+      // Check if it matches selected types
+      if (selectedTypes.includes('Vostcard') && !v.isQuickcard && !v.isOffer && v.userRole !== 'guide') return true;
+      if (selectedTypes.includes('Quickcard') && v.isQuickcard) return true;
+      if (selectedTypes.includes('Guide') && v.userRole === 'guide' && !v.isOffer) return true;
+      
+      return false;
+    });
+  };
+
+  // Combined filtering function
+  const filterVostcards = (vostcards: Vostcard[]): Vostcard[] => {
+    let filtered = vostcards;
+    
+    // Apply area filtering first
+    filtered = filterVostcardsByArea(filtered);
+    
+    // Then apply type filtering
+    filtered = filterVostcardsByType(filtered);
+    
+    // Finally apply friends filtering
+    if (showFriendsOnly) {
+      filtered = filtered.filter(v => {
+        // Always include offers regardless of friends filter
+        if (v.isOffer) return true;
+        
+        // Include posts by friends (check if author is in user's friends list)
+        return userFriends.includes(v.userID || '');
+      });
+    }
+    
+    return filtered;
   };
 
   // Count by platform (mocked as all Web for now)
@@ -533,7 +609,7 @@ const AllPostedVostcardsView: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
           <span style={{ fontWeight: 600 }}>
             {(() => {
-              const filtered = filterVostcardsByArea(vostcards);
+              const filtered = filterVostcards(vostcards);
               return filtered.length === vostcards.length 
                 ? `Total: ${vostcards.length}`
                 : `Showing: ${filtered.length} of ${vostcards.length}`;
@@ -589,7 +665,7 @@ const AllPostedVostcardsView: React.FC = () => {
         ) : vostcards.length === 0 ? (
           <div style={{ textAlign: 'center', marginTop: 40, color: '#888' }}>No posted Vostcards found.</div>
         ) : (
-          filterVostcardsByArea(vostcards).map((v, idx) => (
+          filterVostcards(vostcards).map((v, idx) => (
             <React.Fragment key={v.id}>
               <div
                 style={{
@@ -852,10 +928,150 @@ const AllPostedVostcardsView: React.FC = () => {
           }} />
         </button>
         
-        <button style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 18, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <FaFilter /> Filter
+        <button 
+          onClick={() => setShowFilterModal(true)}
+          style={{ 
+            background: (selectedTypes.length > 0 || showFriendsOnly) ? '#FF6B35' : '#002B4D', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '10px 22px', 
+            fontSize: 18, 
+            fontWeight: 500, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8,
+            cursor: 'pointer'
+          }}
+        >
+          <FaFilter /> Filter {(selectedTypes.length > 0 || showFriendsOnly) && `(${selectedTypes.length + (showFriendsOnly ? 1 : 0)})`}
         </button>
       </div>
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 2000
+            }}
+            onClick={() => setShowFilterModal(false)}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '300px',
+            width: '90%',
+            maxHeight: '60vh',
+            overflowY: 'auto',
+            zIndex: 2001,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+          }}>
+                         <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Filter Content</h3>
+             
+             {/* Friends Filtering - Moved to top */}
+             <div style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '16px' }}>
+               <label style={{ 
+                 display: 'flex', 
+                 alignItems: 'center',
+                 fontSize: '14px',
+                 cursor: 'pointer',
+                 padding: '8px',
+                 borderRadius: '4px',
+                 backgroundColor: showFriendsOnly ? '#e8f4fd' : 'transparent'
+               }}>
+                 <input
+                   type="checkbox"
+                   checked={showFriendsOnly}
+                   onChange={(e) => setShowFriendsOnly(e.target.checked)}
+                   style={{ marginRight: '8px' }}
+                 />
+                 👥 Posts by friends only ({userFriends.length} friends)
+               </label>
+             </div>
+             
+             {/* Type Filtering */}
+             <div style={{ marginBottom: '20px' }}>
+               <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Content Type</h4>
+              {availableTypes.map((type) => (
+                <label key={type} style={{ 
+                  display: 'block', 
+                  marginBottom: '10px', 
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '4px',
+                  backgroundColor: selectedTypes.includes(type) ? '#e8f4fd' : 'transparent'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.includes(type)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedTypes(prev => [...prev, type]);
+                      } else {
+                        setSelectedTypes(prev => prev.filter(t => t !== type));
+                      }
+                    }}
+                    style={{ marginRight: '8px' }}
+                  />
+                  {type === 'Vostcard' && '📹'} 
+                  {type === 'Quickcard' && '📸'} 
+                  {type === 'Guide' && '📚'} 
+                  {type}
+                </label>
+                             ))}
+             </div>
+             
+             <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
+                             <button
+                 onClick={() => {
+                   setSelectedTypes([]);
+                   setShowFriendsOnly(false);
+                 }}
+                 style={{
+                  flex: 1,
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  color: '#666',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

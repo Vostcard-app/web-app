@@ -362,6 +362,15 @@ const HomeView = () => {
     'Made for kids',
   ];
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Type filtering state (Offers are never filtered out)
+  const availableTypes = ['Vostcard', 'Quickcard', 'Guide'];
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  
+  // Friends filtering state
+  const [showFriendsOnly, setShowFriendsOnly] = useState(false);
+  const [userFriends, setUserFriends] = useState<string[]>([]);
+  
   const [showVideoModal, setShowVideoModal] = useState(false);
   
   // YouTube video ID extracted from the provided URL
@@ -521,13 +530,11 @@ const HomeView = () => {
       // Query 2: Posted quickcards (they have state: 'posted' AND isQuickcard: true)  
       // Since we already got all posted items in query 1, we just need to include quickcards from that result
       
-      // Combine and filter: Include regular vostcards + posted quickcards, exclude offers
+      // Combine and filter: Include regular vostcards + posted quickcards + offers
       const allContent = postedVostcards.filter(v => 
-        !v.isOffer && // Exclude offers
-        (
-          !v.isQuickcard || // Include regular vostcards
-          (v.isQuickcard && v.state === 'posted') // Include posted quickcards
-        )
+        // Include regular vostcards, posted quickcards, and offers
+        !v.isQuickcard || // Include regular vostcards and offers
+        (v.isQuickcard && v.state === 'posted') // Include posted quickcards
       );
       
       console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
@@ -605,9 +612,9 @@ const HomeView = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch user avatar
+  // Fetch user avatar and friends list
   useEffect(() => {
-    const fetchUserAvatar = async () => {
+    const fetchUserData = async () => {
       if (user?.uid) {
         try {
           const userDocRef = doc(db, 'users', user.uid);
@@ -615,16 +622,18 @@ const HomeView = () => {
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
             setUserAvatar(userData.avatarURL || null);
+            setUserFriends(userData.friends || []);
           }
         } catch (error) {
-          console.error('Error fetching user avatar:', error);
+          console.error('Error fetching user data:', error);
         }
       } else {
         setUserAvatar(null);
+        setUserFriends([]);
       }
     };
 
-    fetchUserAvatar();
+    fetchUserData();
   }, [user]);
 
   const addCoordinatesToVostcard = async (vostcardId: string, lat: number, lng: number) => {
@@ -736,13 +745,48 @@ const HomeView = () => {
 
 
 
-  // Filtering logic for Vostcards by category
-  const filterVostcardsByCategory = (vostcards: any[]) => {
-    if (selectedCategories.length === 0 || selectedCategories.includes('None')) return vostcards;
-    return vostcards.filter(v => {
-      if (!v.categories || !Array.isArray(v.categories)) return false;
-      return v.categories.some((cat: string) => selectedCategories.includes(cat));
-    });
+  // Enhanced filtering logic for Vostcards by category and type
+  const filterVostcards = (vostcards: any[]) => {
+    let filtered = vostcards;
+    
+    // Category filtering (if categories are selected and not 'None')
+    if (selectedCategories.length > 0 && !selectedCategories.includes('None')) {
+      filtered = filtered.filter(v => {
+        // Always include offers regardless of category filter
+        if (v.isOffer) return true;
+        
+        if (!v.categories || !Array.isArray(v.categories)) return false;
+        return v.categories.some((cat: string) => selectedCategories.includes(cat));
+      });
+    }
+    
+    // Type filtering (if types are selected)
+    if (selectedTypes.length > 0) {
+      filtered = filtered.filter(v => {
+        // Always include offers regardless of type filter
+        if (v.isOffer) return true;
+        
+        // Check if it matches selected types
+        if (selectedTypes.includes('Vostcard') && !v.isQuickcard && !v.isOffer && v.userRole !== 'guide') return true;
+        if (selectedTypes.includes('Quickcard') && v.isQuickcard) return true;
+        if (selectedTypes.includes('Guide') && v.userRole === 'guide' && !v.isOffer) return true;
+        
+        return false;
+      });
+    }
+    
+    // Friends filtering (if friends only is enabled)
+    if (showFriendsOnly) {
+      filtered = filtered.filter(v => {
+        // Always include offers regardless of friends filter
+        if (v.isOffer) return true;
+        
+        // Include posts by friends (check if author is in user's friends list)
+        return userFriends.includes(v.userID || v.userId);
+      });
+    }
+    
+    return filtered;
   };
 
   // Calculate distance between two points in kilometers
@@ -869,7 +913,7 @@ const HomeView = () => {
   };
 
   // Update the filteredVostcards definition
-  const filteredVostcards = singleVostcard ? [singleVostcard] : filterVostcardsByCategory(vostcards);
+  const filteredVostcards = singleVostcard ? [singleVostcard] : filterVostcards(vostcards);
 
   return (
     <div style={{ 
@@ -1253,8 +1297,16 @@ const HomeView = () => {
           onClick={() => setShowFilterModal(!showFilterModal)}
           style={{
             ...zoomButton,
-            backgroundColor: selectedCategories.length > 0 && !selectedCategories.includes('None') ? '#002B4D' : '#fff',
-            color: selectedCategories.length > 0 && !selectedCategories.includes('None') ? 'white' : '#002B4D'
+            backgroundColor: (
+              (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+              selectedTypes.length > 0 ||
+              showFriendsOnly
+            ) ? '#002B4D' : '#fff',
+            color: (
+              (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+              selectedTypes.length > 0 ||
+              showFriendsOnly
+            ) ? 'white' : '#002B4D'
           }}
         >
           <FaFilter />
@@ -1291,41 +1343,103 @@ const HomeView = () => {
             zIndex: 2001,
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Filter by Category</h3>
+                        <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600' }}>Filter Content</h3>
             
-            {availableCategories.map((category) => (
-              <label key={category} style={{ 
-                display: 'block', 
-                marginBottom: '12px', 
+            {/* Friends Filtering - Moved to top */}
+            <div style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '16px' }}>
+              <label style={{ 
+                display: 'flex', 
+                alignItems: 'center',
                 fontSize: '14px',
                 cursor: 'pointer',
                 padding: '8px',
                 borderRadius: '4px',
-                backgroundColor: selectedCategories.includes(category) ? '#f0f8ff' : 'transparent'
+                backgroundColor: showFriendsOnly ? '#e8f4fd' : 'transparent'
               }}>
                 <input
                   type="checkbox"
-                  checked={selectedCategories.includes(category)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      if (category === 'None') {
-                        setSelectedCategories(['None']);
-                      } else {
-                        setSelectedCategories(prev => prev.filter(c => c !== 'None').concat(category));
-                      }
-                    } else {
-                      setSelectedCategories(prev => prev.filter(c => c !== category));
-                    }
-                  }}
+                  checked={showFriendsOnly}
+                  onChange={(e) => setShowFriendsOnly(e.target.checked)}
                   style={{ marginRight: '8px' }}
                 />
-                {category}
+                👥 Posts by friends only ({userFriends.length} friends)
               </label>
-            ))}
+            </div>
+            
+            {/* Type Filtering */}
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Content Type</h4>
+              {availableTypes.map((type) => (
+                <label key={type} style={{ 
+                  display: 'block', 
+                  marginBottom: '10px', 
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '4px',
+                  backgroundColor: selectedTypes.includes(type) ? '#e8f4fd' : 'transparent'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.includes(type)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedTypes(prev => [...prev, type]);
+                      } else {
+                        setSelectedTypes(prev => prev.filter(t => t !== type));
+                      }
+                    }}
+                    style={{ marginRight: '8px' }}
+                  />
+                  {type === 'Vostcard' && '📹'} 
+                  {type === 'Quickcard' && '📸'} 
+                  {type === 'Guide' && '📚'} 
+                  {type}
+                </label>
+              ))}
+            </div>
+            
+            {/* Category Filtering */}
+            <div style={{ marginBottom: '20px' }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Category</h4>
+              {availableCategories.map((category) => (
+                <label key={category} style={{ 
+                  display: 'block', 
+                  marginBottom: '10px', 
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '4px',
+                  backgroundColor: selectedCategories.includes(category) ? '#f0f8ff' : 'transparent'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.includes(category)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        if (category === 'None') {
+                          setSelectedCategories(['None']);
+                        } else {
+                          setSelectedCategories(prev => prev.filter(c => c !== 'None').concat(category));
+                        }
+                      } else {
+                        setSelectedCategories(prev => prev.filter(c => c !== category));
+                      }
+                    }}
+                    style={{ marginRight: '8px' }}
+                  />
+                  {category}
+                </label>
+              ))}
+                         </div>
             
             <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
               <button
-                onClick={() => setSelectedCategories([])}
+                onClick={() => {
+                  setSelectedCategories([]);
+                  setSelectedTypes([]);
+                  setShowFriendsOnly(false);
+                }}
                 style={{
                   flex: 1,
                   padding: '10px',
