@@ -1,18 +1,22 @@
 {
   "name": "Vōstcard",
   "short_name": "Vōstcard",
-  "description": "Create and share location-based video cards",
+  "description": "Share Your World",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
   "theme_color": "#002B4D",
-  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
-      "src": "/Vostcard_pin.svg",
-      "sizes": "any",
+      "src": "/vite.svg",
+      "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "categories": ["social", "photo", "travel"],
+  "lang": "en",
+  "dir": "ltr"
 } 

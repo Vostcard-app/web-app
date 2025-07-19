@@ -3,13 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
-    <!-- Updated title and meta tags for proper link previews -->
+    <!-- Prevent mobile browser headers -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Vōstcard" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Prevent Safari from showing sharing context -->
+    <meta name="apple-touch-fullscreen" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- Hide browser UI elements -->
+    <meta name="msapplication-tap-highlight" content="no" />
+    
+    <!-- Updated title and meta tags -->
     <title>Vōstcard - Share Your World</title>
     <meta name="description" content="Create and share location-based photo stories with Vōstcard. Capture moments, add context, and share your world with friends." />
     
-    <!-- Open Graph tags for social sharing -->
+    <!-- Open Graph tags -->
     <meta property="og:title" content="Vōstcard - Share Your World" />
     <meta property="og:description" content="Create and share location-based photo stories with Vōstcard. Capture moments, add context, and share your world with friends." />
     <meta property="og:type" content="website" />
@@ -21,13 +35,7 @@
     <meta name="twitter:title" content="Vōstcard - Share Your World" />
     <meta name="twitter:description" content="Create and share location-based photo stories with Vōstcard. Capture moments, add context, and share your world with friends." />
     
-    <!-- PWA meta tags -->
     <meta name="theme-color" content="#002B4D" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Vōstcard" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    
     <link rel="manifest" href="/manifest.json" />
   </head>
   <body>
