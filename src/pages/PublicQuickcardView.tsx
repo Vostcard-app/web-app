@@ -493,25 +493,38 @@ const PublicQuickcardView: React.FC = () => {
             const lng = quickcard?.longitude || quickcard?.geo?.longitude;
             
             if (lat && lng) {
-              console.log('📍 Opening quickcard location on map:', { lat, lng, title: quickcard?.title });
-              navigate('/public-map', {
-                state: {
-                  singleVostcard: {
-                    id: quickcard.id,
-                    title: quickcard.title || 'Quickcard',
-                    description: quickcard.description || 'View this quickcard location',
-                    latitude: lat,
-                    longitude: lng,
-                    photoURLs: quickcard.photoURLs || [],
-                    username: quickcard.username || 'Unknown',
-                    isQuickcard: true,
-                    categories: quickcard.categories || [],
-                    createdAt: quickcard.createdAt,
-                    visibility: 'public',
-                    state: 'posted'
+              const quickcardData = {
+                id: quickcard.id,
+                title: quickcard.title || 'Quickcard',
+                description: quickcard.description || 'View this quickcard location',
+                latitude: lat,
+                longitude: lng,
+                photoURLs: quickcard.photoURLs || [],
+                username: quickcard.username || 'Unknown',
+                isQuickcard: true,
+                categories: quickcard.categories || [],
+                createdAt: quickcard.createdAt,
+                visibility: 'public',
+                state: 'posted'
+              };
+
+              if (user) {
+                // Authenticated user - go to HomeView with full map features
+                console.log('📍 Opening quickcard location on authenticated map (HomeView):', { lat, lng, title: quickcard?.title, user: user.email });
+                navigate('/home', {
+                  state: {
+                    singleVostcard: quickcardData
                   }
-                }
-              });
+                });
+              } else {
+                // Non-authenticated user - go to public map view  
+                console.log('📍 Opening quickcard location on public map:', { lat, lng, title: quickcard?.title });
+                navigate('/public-map', {
+                  state: {
+                    singleVostcard: quickcardData
+                  }
+                });
+              }
             } else {
               alert('No location data available for this quickcard');
             }
