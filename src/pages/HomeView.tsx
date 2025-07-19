@@ -933,7 +933,7 @@ const HomeView = () => {
               <div
                 style={{
                   position: 'absolute',
-                  top: '16px', // Keep original 16px from the top of the content area (now below fixed header)
+                  top: '96px', // Changed from '16px' to '96px' (80px header + 16px spacing)
                   left: 0,
                   right: 0,
                   display: 'flex',
