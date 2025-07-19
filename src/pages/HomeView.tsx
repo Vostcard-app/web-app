@@ -421,21 +421,21 @@ const HomeView = () => {
   // Check for single vostcard state from navigation
   const singleVostcardState = location.state?.singleVostcard;
 
-  // Handle single vostcard view from navigation - run FIRST
+  // Handle target quickcard from navigation - center map but show all content
   useEffect(() => {
     if (singleVostcardState) {
-      console.log('📍 Setting up single vostcard view:', singleVostcardState.title);
-      setSingleVostcard(singleVostcardState);
-      // Set user location to the vostcard's location IMMEDIATELY
+      console.log('📍 Centering map on target quickcard:', singleVostcardState.title);
+      setSingleVostcard(singleVostcardState); // Keep reference for highlighting
+      // Set user location to the quickcard's location IMMEDIATELY
       if (singleVostcardState.latitude && singleVostcardState.longitude) {
         const vostcardLocation: [number, number] = [singleVostcardState.latitude, singleVostcardState.longitude];
         setUserLocation(vostcardLocation);
         // Also set actualUserLocation to prevent location fetching from overriding
         setActualUserLocation(vostcardLocation);
-        console.log('📍 Set map center to vostcard location:', vostcardLocation);
+        console.log('📍 Set map center to quickcard location:', vostcardLocation);
       }
-      // Set vostcards to only show this single vostcard
-      setVostcards([singleVostcardState]);
+      // DON'T restrict vostcards - let loadVostcards() load all public content
+      // This allows filtering and viewing all pins while centered on target quickcard
       // Clear the state to prevent re-triggering
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -1136,9 +1136,11 @@ const HomeView = () => {
                         icon={icon}
                         eventHandlers={{
                           click: () => {
-                            // Check if it's an offer and route appropriately
+                            // Check content type and route appropriately
                             if (vostcard.isOffer) {
                               navigate(`/offer/${vostcard.id}`);
+                            } else if (vostcard.isQuickcard) {
+                              navigate(`/quickcard/${vostcard.id}`);
                             } else {
                               navigate(`/vostcard/${vostcard.id}`);
                             }
