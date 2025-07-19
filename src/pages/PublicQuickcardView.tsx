@@ -489,19 +489,23 @@ const PublicQuickcardView: React.FC = () => {
 
         <button
           onClick={() => {
-            if (quickcard?.latitude && quickcard?.longitude) {
+            const lat = quickcard?.latitude || quickcard?.geo?.latitude;
+            const lng = quickcard?.longitude || quickcard?.geo?.longitude;
+            
+            if (lat && lng) {
+              console.log('📍 Opening quickcard location on map:', { lat, lng, title: quickcard?.title });
               navigate('/public-map', {
                 state: {
                   singleVostcard: {
                     id: quickcard.id,
-                    title: quickcard.title,
-                    description: quickcard.description,
-                    latitude: quickcard.latitude || quickcard.geo?.latitude,
-                    longitude: quickcard.longitude || quickcard.geo?.longitude,
-                    photoURLs: quickcard.photoURLs,
-                    username: quickcard.username,
+                    title: quickcard.title || 'Quickcard',
+                    description: quickcard.description || 'View this quickcard location',
+                    latitude: lat,
+                    longitude: lng,
+                    photoURLs: quickcard.photoURLs || [],
+                    username: quickcard.username || 'Unknown',
                     isQuickcard: true,
-                    categories: quickcard.categories,
+                    categories: quickcard.categories || [],
                     createdAt: quickcard.createdAt,
                     visibility: 'public',
                     state: 'posted'
