@@ -858,7 +858,7 @@ const HomeView = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* 🔵 Header - Always show the banner */}
+      {/* Fixed Header - Always show the banner */}
       <div style={{
         backgroundColor: '#002B4D',
         height: 80,
@@ -866,9 +866,13 @@ const HomeView = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        flexShrink: 0,
-        touchAction: 'manipulation',
-        zIndex: 1000
+        position: 'fixed', // Add this
+        top: 0, // Add this
+        left: 0, // Add this
+        right: 0, // Add this
+        zIndex: 1000, // Add this
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)', // Add shadow
+        touchAction: 'manipulation'
       }}>
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
           {singleVostcard ? 'Vōstcard Location' : 'Vōstcard'}
