@@ -89,8 +89,8 @@ const QuickcardListView = () => {
         });
       }
       
-      // Generate private share URL
-      const privateUrl = `${window.location.origin}/share/${quickcard.id}`;
+      // Generate private share URL - FIXED: Use share-quickcard instead of share
+      const privateUrl = `${window.location.origin}/share-quickcard/${quickcard.id}`;
       
       const shareText = `Check it out I made this with Vōstcard
 
