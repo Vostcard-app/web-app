@@ -12,6 +12,7 @@ import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'fireb
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.svg';
+import QuickcardPin from '../assets/quickcard_pin.png';
 import InfoPin from '../assets/Info_pin.png';
 import InfoButton from '../assets/Info_button.png'; // Add this import
 import { signOut } from 'firebase/auth';
@@ -35,6 +36,13 @@ const offerIcon = new L.Icon({
 
 const guideIcon = new L.Icon({
   iconUrl: GuidePin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],  // Center-bottom of the 75px icon
+  popupAnchor: [0, -75],   // Popup 75px above the anchor
+});
+
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
   iconSize: [75, 75],
   iconAnchor: [37.5, 75],  // Center-bottom of the 75px icon
   popupAnchor: [0, -75],   // Popup 75px above the anchor
@@ -467,9 +475,12 @@ const HomeView = () => {
     }
   };
 
-  const getVostcardIcon = (isOffer: boolean, userRole?: string) => {
+  const getVostcardIcon = (isOffer: boolean, userRole?: string, isQuickcard?: boolean) => {
     if (isOffer) {
       return offerIcon;
+    }
+    if (isQuickcard) {
+      return quickcardIcon;
     }
     if (userRole === 'guide') {
       return guideIcon;
@@ -1105,7 +1116,7 @@ const HomeView = () => {
                     if (!vostcard.latitude || !vostcard.longitude) return null;
                     
                     const position: [number, number] = [vostcard.latitude, vostcard.longitude];
-                    const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole);
+                    const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
                     
                     return (
                       <Marker
