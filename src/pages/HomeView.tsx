@@ -421,13 +421,18 @@ const HomeView = () => {
   // Check for single vostcard state from navigation
   const singleVostcardState = location.state?.singleVostcard;
 
-  // Handle single vostcard view from navigation
+  // Handle single vostcard view from navigation - run FIRST
   useEffect(() => {
     if (singleVostcardState) {
+      console.log('📍 Setting up single vostcard view:', singleVostcardState.title);
       setSingleVostcard(singleVostcardState);
-      // Set user location to the vostcard's location
+      // Set user location to the vostcard's location IMMEDIATELY
       if (singleVostcardState.latitude && singleVostcardState.longitude) {
-        setUserLocation([singleVostcardState.latitude, singleVostcardState.longitude]);
+        const vostcardLocation: [number, number] = [singleVostcardState.latitude, singleVostcardState.longitude];
+        setUserLocation(vostcardLocation);
+        // Also set actualUserLocation to prevent location fetching from overriding
+        setActualUserLocation(vostcardLocation);
+        console.log('📍 Set map center to vostcard location:', vostcardLocation);
       }
       // Set vostcards to only show this single vostcard
       setVostcards([singleVostcardState]);
@@ -567,8 +572,14 @@ const HomeView = () => {
     }
   };
  
-  // Get user location with error handling - Always get GPS location for recentering
+  // Get user location with error handling - Skip if viewing single vostcard
   useEffect(() => {
+    // Skip location fetching entirely when viewing a single vostcard
+    if (singleVostcard) {
+      console.log('📍 Skipping GPS location fetch - viewing single vostcard');
+      return;
+    }
+
     const getUserLocation = async () => {
       try {
         console.log('📍 Getting user location...');
@@ -579,7 +590,7 @@ const HomeView = () => {
         
         setActualUserLocation(locationCoords);
         
-        if (!browseLocationState && !singleVostcard && !browseLocation) {
+        if (!browseLocationState && !browseLocation) {
           setUserLocation(locationCoords);
         }
         
@@ -598,7 +609,7 @@ const HomeView = () => {
         const fallback = LocationService.getFallbackLocation();
         const fallbackCoords: [number, number] = [fallback.latitude, fallback.longitude];
         
-        if (!browseLocationState && !singleVostcard && !browseLocation) {
+        if (!browseLocationState && !browseLocation) {
           setUserLocation(fallbackCoords);
         }
       }
