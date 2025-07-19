@@ -165,12 +165,16 @@ const UserProfileView: React.FC = () => {
         <h1 
           onClick={() => navigate('/home')}
           style={{
-          color: 'white',
-          fontWeight: 700,
-          fontSize: '2.5rem',
-          margin: 0,
-          cursor: 'pointer',
-        }}>Vōstcard</h1>
+            color: 'white',
+            fontWeight: 700,
+            fontSize: '2.5rem',
+            margin: 0,
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+        >
+          Vōstcard
+        </h1>
         <button
           onClick={() => navigate("/home")}
           style={{

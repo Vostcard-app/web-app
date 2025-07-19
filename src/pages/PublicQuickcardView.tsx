@@ -266,11 +266,11 @@ const PublicQuickcardView: React.FC = () => {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Fixed Header - Only this is fixed */}
+      {/* Fixed Header - Content height set to 30px */}
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 24px 16px', 
-        position: 'fixed', // Fixed header
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
@@ -278,9 +278,20 @@ const PublicQuickcardView: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        height: '69px' // 15px + 30px + 24px = 69px total
       }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
+        <span 
+          onClick={() => navigate('/home')}
+          style={{ 
+            color: 'white', 
+            fontWeight: 700, 
+            fontSize: '1.8rem', // Reduced from 2.5rem to fit in 30px
+            cursor: 'pointer',
+            userSelect: 'none',
+            lineHeight: '30px' // Set exact line height to 30px
+          }}
+        >
           Vōstcard
         </span>
         <div 
@@ -289,31 +300,34 @@ const PublicQuickcardView: React.FC = () => {
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center'
+            alignItems: 'center',
+            height: '30px', // Set container height to 30px
+            justifyContent: 'center'
           }}
         >
           <img 
             src={InfoPin} 
             alt="Info Pin" 
             style={{
-              width: '50px',
-              height: '50px',
-              marginBottom: '2px'
+              width: '24px', // Reduced from 50px to fit in 30px height
+              height: '24px',
+              marginBottom: '1px'
             }}
           />
           <span style={{
-            fontSize: '10px',
+            fontSize: '8px', // Reduced from 10px
             fontWeight: '500',
             color: 'white',
-            textAlign: 'center'
+            textAlign: 'center',
+            lineHeight: '1'
           }}>
             What is Vōstcard?
           </span>
         </div>
       </div>
 
-      {/* Spacer to push content down - exactly the height of the fixed header */}
-      <div style={{ height: '85px' }}></div>
+      {/* Spacer adjusted for new header height */}
+      <div style={{ height: '69px' }}></div> {/* Updated from 85px to 69px */}
 
       {/* User Info - Back to original positioning */}
       <div style={{ 

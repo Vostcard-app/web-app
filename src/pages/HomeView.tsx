@@ -13,6 +13,7 @@ import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.svg';
 import InfoPin from '../assets/Info_pin.png';
+import InfoButton from '../assets/Info_button.png'; // Add this import
 import { signOut } from 'firebase/auth';
 import './HomeView.css';
 import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
@@ -858,7 +859,7 @@ const HomeView = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Fixed Header - Always show the banner */}
+      {/* Fixed Header - Make title clickable */}
       <div style={{
         backgroundColor: '#002B4D',
         height: 80,
@@ -866,15 +867,24 @@ const HomeView = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        position: 'fixed', // Fixed positioning
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 1000, // High z-index
+        zIndex: 1000,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         touchAction: 'manipulation'
       }}>
-        <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
+        <div 
+          onClick={() => navigate('/home')}
+          style={{ 
+            color: 'white', 
+            fontSize: 28, 
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+        >
           {singleVostcard ? 'Vōstcard Location' : 'Vōstcard'}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -933,7 +943,7 @@ const HomeView = () => {
               <div
                 style={{
                   position: 'absolute',
-                  top: '96px', // Changed from '16px' to '96px' (80px header + 16px spacing)
+                  top: '96px',
                   left: 0,
                   right: 0,
                   display: 'flex',
@@ -961,33 +971,27 @@ const HomeView = () => {
                   Offers
                 </button>
                 
-                <div
-                  onClick={() => setIsInfoMenuOpen(!isInfoMenuOpen)}
-                  style={{
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
+                {/* Info button with larger image, same button size */}
+                <button
+                  type="button"
+                  style={{ 
+                    ...listViewButton, 
+                    textAlign: 'center', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center' 
                   }}
+                  onClick={() => setIsInfoMenuOpen(!isInfoMenuOpen)}
                 >
                   <img 
-                    src={InfoPin} 
-                    alt="Info Pin" 
+                    src={InfoButton} 
+                    alt="Info" 
                     style={{
-                      width: '50px',
-                      height: '50px',
-                      marginBottom: '2px'
+                      width: '32px',    // Increased from 24px to 32px
+                      height: '32px'    // Increased from 24px to 32px
                     }}
                   />
-                  <span style={{
-                    fontSize: '10px',
-                    fontWeight: '500',
-                    color: '#002B4D',
-                    textAlign: 'center'
-                  }}>
-                    Quick Guide
-                  </span>
-                </div>
+                </button>
               </div>
             )}
 
