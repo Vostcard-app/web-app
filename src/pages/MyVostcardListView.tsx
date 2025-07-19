@@ -117,13 +117,18 @@ const MyVostcardListView = () => {
         });
       }
       
-      // Generate private share URL
-      const privateUrl = `${window.location.origin}/share/${vostcard.id}`;
+      // Generate private share URL - Check if it's a quickcard
+      const isQuickcard = vostcard.isQuickcard === true;
+      const privateUrl = isQuickcard 
+        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
+        : `${window.location.origin}/share/${vostcard.id}`;
+      
+      const itemType = isQuickcard ? 'Quickcard' : 'Vostcard';
       
       const shareText = `Check it out I made this with Vōstcard
 
 
-"${vostcard?.title || 'Untitled Vostcard'}"
+"${vostcard?.title || `Untitled ${itemType}`}"
 
 
 "${vostcard?.description || 'No description'}"
@@ -143,8 +148,8 @@ ${privateUrl}`;
         });
       }
     } catch (error) {
-      console.error('Error sharing Vostcard:', error);
-      alert('Failed to share Vostcard. Please try again.');
+      console.error(`Error sharing ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}:`, error);
+      alert(`Failed to share ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}. Please try again.`);
     }
   };
 
