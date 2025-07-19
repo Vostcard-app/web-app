@@ -654,7 +654,7 @@ const AllPostedVostcardsView: React.FC = () => {
         flex: 1,
         overflowY: 'auto',
         overflowX: 'hidden',
-        padding: '0 0 80px 0',
+        padding: '0 0 100px 0',
         WebkitOverflowScrolling: 'touch',
         // Prevent bounce scrolling
         overscrollBehavior: 'contain',
@@ -884,9 +884,9 @@ const AllPostedVostcardsView: React.FC = () => {
         )}
       </div>
 
-      {/* Filter/Clear Bar */}
+      {/* Filter/Clear Bar - Fixed for mobile visibility */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed',
         left: 0,
         right: 0,
         bottom: 0,
@@ -895,37 +895,30 @@ const AllPostedVostcardsView: React.FC = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '12px 24px',
-        zIndex: 20,
-        flexShrink: 0
+        padding: '16px 24px',
+        zIndex: 1000,
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.1)'
       }}>
-        <button style={{ background: '#e0e0e0', color: '#333', border: 'none', borderRadius: 8, padding: '10px 22px', fontSize: 18, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <FaTimes /> Clear
-        </button>
-        
-        {/* Update Location Button */}
-        <button
-          style={{ 
-            background: locationLoading ? '#ccc' : '#f0f0f0', 
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            color: locationError ? '#ffcc00' : '#333', 
-            fontSize: 18,
-            padding: '10px 16px',
-            cursor: locationLoading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.2s ease'
+        <button 
+          onClick={() => {
+            setSelectedTypes([]);
+            setShowFriendsOnly(false);
           }}
-          onClick={getUserLocation}
-          disabled={locationLoading}
-          title={locationError ? `Location Error: ${locationError}` : 'Update location for distance calculations'}
+          style={{ 
+            background: '#e0e0e0', 
+            color: '#333', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '12px 24px', 
+            fontSize: 16, 
+            fontWeight: 500, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8,
+            cursor: 'pointer'
+          }}
         >
-          <FaLocationArrow style={{ 
-            color: locationError ? '#ffcc00' : '#333',
-            animation: locationLoading ? 'spin 1s linear infinite' : 'none'
-          }} />
+          <FaTimes /> Clear
         </button>
         
         <button 
@@ -935,8 +928,8 @@ const AllPostedVostcardsView: React.FC = () => {
             color: 'white', 
             border: 'none', 
             borderRadius: 8, 
-            padding: '10px 22px', 
-            fontSize: 18, 
+            padding: '12px 24px', 
+            fontSize: 16, 
             fontWeight: 500, 
             display: 'flex', 
             alignItems: 'center', 
