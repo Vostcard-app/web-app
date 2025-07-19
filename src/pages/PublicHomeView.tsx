@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaPlus, FaMinus, FaLocationArrow } from 'react-icons/fa';
+import { FaHome, FaPlus, FaMinus, FaLocationArrow, FaArrowLeft, FaInfoCircle } from 'react-icons/fa';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png'; // Add quickcard pin import
@@ -148,9 +148,7 @@ const PublicHomeView: React.FC = () => {
     }
   };
 
-  const handleHomeClick = () => {
-    navigate('/');
-  };
+
 
   // Function to get the correct icon
   const getIcon = () => {
@@ -181,38 +179,61 @@ const PublicHomeView: React.FC = () => {
         zIndex: 1001,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
+        {/* Return Icon */}
         <button
-          onClick={handleHomeClick}
+          onClick={() => navigate(-1)}
           style={{
-            backgroundColor: 'rgba(255,255,255,0.15)',
+            background: 'none',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <FaArrowLeft size={20} />
+        </button>
+        
+        {/* Login/Register Button */}
+        <button
+          onClick={() => navigate('/login')}
+          style={{
+            backgroundColor: '#007aff',
+            color: 'white',
             border: 'none',
             borderRadius: '8px',
             padding: '8px 16px',
-            color: 'white',
+            cursor: 'pointer',
             fontSize: '14px',
-            fontWeight: '600',
+            fontWeight: 'bold'
+          }}
+        >
+          Login/Register
+        </button>
+        
+        {/* What is Vostcard Button */}
+        <button
+          onClick={() => {
+            // You can add video modal logic here if needed
+            navigate('/user-guide');
+          }}
+          style={{
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            border: 'none',
+            borderRadius: '50%',
+            padding: '8px',
+            color: 'white',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px'
+            justifyContent: 'center'
           }}
         >
-          <FaHome size={16} />
-          Go to Vostcard
+          <FaInfoCircle size={20} />
         </button>
-        
-        <h1 style={{ 
-          color: 'white', 
-          margin: 0, 
-          fontSize: '18px', 
-          fontWeight: '600',
-          textAlign: 'center',
-          flex: 1
-        }}>
-          {isQuickcard ? 'Quickcard Location' : 'Vostcard Location'}
-        </h1>
-        
-        <div style={{ width: '100px' }} /> {/* Spacer for centering */}
       </div>
 
       {/* Map Container */}
