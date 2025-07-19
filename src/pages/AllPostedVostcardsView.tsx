@@ -38,6 +38,24 @@ const AllPostedVostcardsView: React.FC = () => {
   const availableTypes = ['Vostcard', 'Quickcard', 'Guide'];
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   
+  // Category filtering state (same as HomeView)
+  const availableCategories = [
+    'None',
+    'Landmark',
+    'Fun Fact',
+    'Macabre',
+    'Architecture',
+    'Historical',
+    'Museum',
+    'Gallery',
+    'Restaurant',
+    'Nature',
+    'Drive Mode Event',
+    'Wish you were here',
+    'Made for kids',
+  ];
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
   // Friends filtering state
   const [showFriendsOnly, setShowFriendsOnly] = useState(false);
   const [userFriends, setUserFriends] = useState<string[]>([]);
@@ -418,6 +436,17 @@ const AllPostedVostcardsView: React.FC = () => {
     
     // Then apply type filtering
     filtered = filterVostcardsByType(filtered);
+    
+    // Apply category filtering (same logic as HomeView)
+    if (selectedCategories.length > 0 && !selectedCategories.includes('None')) {
+      filtered = filtered.filter(v => {
+        // Always include offers regardless of category filter
+        if (v.isOffer) return true;
+        
+        if (!v.categories || !Array.isArray(v.categories)) return false;
+        return v.categories.some((cat: string) => selectedCategories.includes(cat));
+      });
+    }
     
     // Finally apply friends filtering
     if (showFriendsOnly) {
@@ -899,11 +928,12 @@ const AllPostedVostcardsView: React.FC = () => {
         zIndex: 1000,
         boxShadow: '0 -2px 8px rgba(0,0,0,0.1)'
       }}>
-        <button 
-          onClick={() => {
-            setSelectedTypes([]);
-            setShowFriendsOnly(false);
-          }}
+                      <button
+                onClick={() => {
+                  setSelectedTypes([]);
+                  setSelectedCategories([]);
+                  setShowFriendsOnly(false);
+                }}
           style={{ 
             background: '#e0e0e0', 
             color: '#333', 
@@ -924,7 +954,11 @@ const AllPostedVostcardsView: React.FC = () => {
         <button 
           onClick={() => setShowFilterModal(true)}
           style={{ 
-            background: (selectedTypes.length > 0 || showFriendsOnly) ? '#FF6B35' : '#002B4D', 
+            background: (
+              selectedTypes.length > 0 || 
+              showFriendsOnly ||
+              (selectedCategories.length > 0 && !selectedCategories.includes('None'))
+            ) ? '#FF6B35' : '#002B4D', 
             color: 'white', 
             border: 'none', 
             borderRadius: 8, 
@@ -937,7 +971,15 @@ const AllPostedVostcardsView: React.FC = () => {
             cursor: 'pointer'
           }}
         >
-          <FaFilter /> Filter {(selectedTypes.length > 0 || showFriendsOnly) && `(${selectedTypes.length + (showFriendsOnly ? 1 : 0)})`}
+          <FaFilter /> Filter {(
+            selectedTypes.length > 0 || 
+            showFriendsOnly ||
+            (selectedCategories.length > 0 && !selectedCategories.includes('None'))
+          ) && `(${
+            selectedTypes.length + 
+            (showFriendsOnly ? 1 : 0) + 
+            (selectedCategories.length > 0 && !selectedCategories.includes('None') ? selectedCategories.length : 0)
+          })`}
         </button>
       </div>
 
@@ -1029,6 +1071,40 @@ const AllPostedVostcardsView: React.FC = () => {
                     {type === 'Quickcard' && '📸'} 
                     {type === 'Guide' && '📚'} 
                     {type}
+                  </label>
+                ))}
+              </div>
+              
+              {/* Category Filtering */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Category</h4>
+                {availableCategories.map((category) => (
+                  <label key={category} style={{ 
+                    display: 'block', 
+                    marginBottom: '10px', 
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    padding: '6px',
+                    borderRadius: '4px',
+                    backgroundColor: selectedCategories.includes(category) ? '#f0f8ff' : 'transparent'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(category)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          if (category === 'None') {
+                            setSelectedCategories(['None']);
+                          } else {
+                            setSelectedCategories(prev => prev.filter(c => c !== 'None').concat(category));
+                          }
+                        } else {
+                          setSelectedCategories(prev => prev.filter(c => c !== category));
+                        }
+                      }}
+                      style={{ marginRight: '8px' }}
+                    />
+                    {category}
                   </label>
                 ))}
               </div>
