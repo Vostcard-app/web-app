@@ -266,24 +266,23 @@ const PublicQuickcardView: React.FC = () => {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Fixed Header - Always visible at top */}
+      {/* Fixed Header - Only this is fixed */}
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 24px 16px', 
-        position: 'fixed', // Changed from 'relative' to 'fixed'
+        position: 'fixed', // Fixed header
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 1000, // High z-index to stay on top
+        zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)' // Add shadow for better visibility
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
           Vōstcard
         </span>
-        {/* InfoPin */}
         <div 
           onClick={() => setShowVideoModal(true)}
           style={{
@@ -313,503 +312,500 @@ const PublicQuickcardView: React.FC = () => {
         </div>
       </div>
 
-      {/* Content Container - Add top padding to account for fixed header */}
-      <div style={{ paddingTop: '85px' }}> {/* Adjust this value based on header height */}
-        
-        {/* User Info */}
-        <div style={{ 
-          padding: '5px 20px', 
-          display: 'flex', 
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{ 
-              width: 50, 
-              height: 50, 
-              borderRadius: '50%', 
-              overflow: 'hidden', 
-              marginRight: 16,
-              background: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {userProfile?.avatarURL ? (
-                <img 
-                  src={userProfile.avatarURL} 
-                  alt="User Avatar" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-                />
-              ) : (
-                <FaUserCircle size={50} color="#ccc" />
-              )}
-            </div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
-              {quickcardUsername || 'Anonymous'}
-            </div>
-          </div>
-          {/* Login/Register button */}
-          <button
-            onClick={() => navigate('/user-guide')}
-            style={{
-              backgroundColor: '#007aff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 'bold'
-            }}
-          >
-            Login/Register
-          </button>
-        </div>
+      {/* Spacer to push content down - exactly the height of the fixed header */}
+      <div style={{ height: '85px' }}></div>
 
-        {/* Title */}
-        <div style={{ padding: '0 20px' }}>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '32px', 
-            fontWeight: 'bold', 
-            color: '#333',
-            textAlign: 'center'
-          }}>
-            {title}
-          </h1>
-        </div>
-
-        {/* Photo Section - Matching QuickcardDetailView */}
-        <div style={{ 
-          padding: '20px', 
-          display: 'flex', 
-          justifyContent: 'center',
-          height: '300px'
-        }}>
-          {photoURLs.length > 0 ? (
-            <div style={{ 
-              width: '100%',
-              backgroundColor: 'transparent',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              position: 'relative'
-            }}>
-              <img
-                src={photoURLs[0]}
-                alt="Quickcard"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setSelectedPhoto(photoURLs[0])}
-              />
-            </div>
-          ) : (
-            <div style={{ 
-              width: '100%',
-              backgroundColor: '#f0f0f0',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#999',
-              fontSize: '18px'
-            }}>
-              No photo available
-            </div>
-          )}
-        </div>
-
-        {/* Added text under photo */}
-        <div style={{
-          textAlign: 'center',
-          color: '#666',
-          fontSize: '14px',
-          fontStyle: 'italic',
-          marginTop: '-10px',
-          marginBottom: '20px',
-          padding: '0 20px'
-        }}>
-          Made with Vostcard a free app
-        </div>
-
-        {/* Action Icons Row - Removed top padding */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          padding: '10px 40px 20px 40px', // Changed from '20px 40px' to '10px 40px 20px 40px' to reduce top padding
-          borderBottom: '1px solid #eee'
-        }}>
-          <button
-            onClick={handleLike}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isLiked ? '#ff3b30' : '#666'
-            }}
-          >
-            <FaHeart size={30} />
-          </button>
-
-          <button
-            onClick={() => alert('Comments not available in public view')}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666'
-            }}
-          >
-            <FaRegComment size={30} />
-          </button>
-
-          {/* Map icon */}
-          <button
-            onClick={() => {
-              if (quickcard?.latitude && quickcard?.longitude) {
-                navigate('/public-map', {
-                  state: {
-                    singleVostcard: {
-                      id: quickcard.id,
-                      title: quickcard.title,
-                      description: quickcard.description,
-                      latitude: quickcard.latitude || quickcard.geo?.latitude,
-                      longitude: quickcard.longitude || quickcard.geo?.longitude,
-                      photoURLs: quickcard.photoURLs,
-                      username: quickcard.username,
-                      isQuickcard: true,
-                      categories: quickcard.categories,
-                      createdAt: quickcard.createdAt,
-                      visibility: 'public',
-                      state: 'posted'
-                    }
-                  }
-                });
-              } else {
-                alert('No location data available for this quickcard');
-              }
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666'
-            }}
-          >
-            <FaMap size={30} />
-          </button>
-
-          <button
-            onClick={handleShare}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666'
-            }}
-          >
-            <FaShare size={30} />
-          </button>
-        </div>
-
-        {/* Counts Row - Matching QuickcardDetailView */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          padding: '10px 40px',
-          fontSize: '18px',
-          color: '#666'
-        }}>
-          <span>{likeCount}</span>
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-
-        {/* Description Link, Flag Icon, and Refresh Button - Removed top padding */}
-        <div style={{ 
-          padding: '5px 20px 20px 20px', // Changed from '20px' to '5px 20px 20px 20px' to reduce top padding
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center'
-        }}>
-          {/* Flag Icon - 15px from left */}
-          <button
-            onClick={handleFlag}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#ff3b30',
-              position: 'absolute',
-              left: '15px'
-            }}
-          >
-            <FaFlag size={24} />
-          </button>
-          
-          {/* Description Link - Centered */}
-          <div
-            onClick={() => setShowDescriptionModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#007aff',
-              fontSize: '28px',
-              fontWeight: 'bold',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontFamily: 'system-ui, sans-serif',
-              display: 'inline-block'
-            }}
-          >
-            Description
-          </div>
-
-          {/* Refresh Button - 20px from right */}
-          <button
-            onClick={handleRefresh}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#007aff',
-              position: 'absolute',
-              right: '20px'
-            }}
-          >
-            <FaSync size={24} />
-          </button>
-        </div>
-
-        {/* Bottom CTA section - Keep original design for marketing */}
-        <div style={{ 
-          textAlign: 'center', 
-          borderTop: '1px solid #eee',
-          paddingTop: '24px',
-          marginTop: '24px',
-          padding: '24px 20px'
-        }}>
+      {/* User Info - Back to original positioning */}
+      <div style={{ 
+        padding: '5px 20px', 
+        display: 'flex', 
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ 
-            color: '#666', 
-            fontSize: 14, 
-            lineHeight: 1.4, 
-            marginBottom: '12px' 
+            width: 50, 
+            height: 50, 
+            borderRadius: '50%', 
+            overflow: 'hidden', 
+            marginRight: 16,
+            background: '#f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
-            This quickcard was created with Vostcard
+            {userProfile?.avatarURL ? (
+              <img 
+                src={userProfile.avatarURL} 
+                alt="User Avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+              />
+            ) : (
+              <FaUserCircle size={50} color="#ccc" />
+            )}
           </div>
-          <button
-            onClick={() => navigate('/user-guide')}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            Create Your Own Free Account
-          </button>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+            {quickcardUsername || 'Anonymous'}
+          </div>
         </div>
+        <button
+          onClick={() => navigate('/user-guide')}
+          style={{
+            backgroundColor: '#007aff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '8px 16px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: 'bold'
+          }}
+        >
+          Login/Register
+        </button>
+      </div>
 
-        {/* Description Modal */}
-        {showDescriptionModal && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-            }}
-            onClick={() => setShowDescriptionModal(false)}
-          >
-            <div
-              style={{
-                background: 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                maxWidth: '90vw',
-                maxHeight: '80vh',
-                overflow: 'auto',
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
-                <button
-                  onClick={() => setShowDescriptionModal(false)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '24px',
-                    cursor: 'pointer',
-                    color: '#666'
-                  }}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
-                {description || 'No description available.'}
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Title - Back to original positioning */}
+      <div style={{ padding: '0 20px' }}>
+        <h1 style={{ 
+          margin: 0, 
+          fontSize: '32px', 
+          fontWeight: 'bold', 
+          color: '#333',
+          textAlign: 'center'
+        }}>
+          {title}
+        </h1>
+      </div>
 
-        {/* Photo Modal */}
-        {selectedPhoto && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.95)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2000,
-              cursor: 'zoom-out',
-            }}
-            onClick={() => setSelectedPhoto(null)}
-            onContextMenu={e => e.preventDefault()}
-          >
-            <button
-              onClick={() => setSelectedPhoto(null)}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'rgba(255,255,255,0.2)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 2001,
-                fontSize: '18px',
-                color: 'white',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <FaTimes />
-            </button>
+      {/* Photo Section - Back to original positioning */}
+      <div style={{ 
+        padding: '20px', 
+        display: 'flex', 
+        justifyContent: 'center',
+        height: '300px'
+      }}>
+        {photoURLs.length > 0 ? (
+          <div style={{ 
+            width: '100%',
+            backgroundColor: 'transparent',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            position: 'relative'
+          }}>
             <img
-              src={selectedPhoto}
-              alt="Full size"
+              src={photoURLs[0]}
+              alt="Quickcard"
               style={{
-                width: '100vw',
-                height: '100vh',
-                objectFit: 'contain',
-                borderRadius: 0,
-                boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-                background: '#000',
-                userSelect: 'none',
-                pointerEvents: 'auto',
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                cursor: 'pointer'
               }}
-              draggable={false}
-              onContextMenu={e => e.preventDefault()}
+              onClick={() => setSelectedPhoto(photoURLs[0])}
             />
           </div>
-        )}
-
-        {/* Like Message */}
-        <AnimatePresence>
-          {showLikeMessage && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50 }}
-              style={{
-                position: 'fixed',
-                bottom: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: '#28a745',
-                color: 'white',
-                padding: '12px 20px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                zIndex: 1000,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
-              }}
-            >
-              Thanks for the love! ❤️
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Safari Sharing Banner Notice - Only show once */}
-        {!user && (
-          <div style={{
-            backgroundColor: '#f0f8ff',
-            border: '1px solid #b3d9ff',
-            borderRadius: '8px',
-            padding: '12px',
-            margin: '10px 20px',
-            fontSize: '14px',
-            textAlign: 'center',
-            color: '#0066cc'
+        ) : (
+          <div style={{ 
+            width: '100%',
+            backgroundColor: '#f0f0f0',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#999',
+            fontSize: '18px'
           }}>
-            💡 <strong>Tip:</strong> For the best experience, tap the Share button below and "Add to Home Screen" to use Vōstcard like a native app!
+            No photo available
           </div>
         )}
-
-        {/* CSS Animation - Moved inside the main div */}
-        <style>{`
-          @keyframes slideDown {
-            from {
-              opacity: 0;
-              transform: translateX(-50%) translateY(-10px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(-50%) translateY(0);
-            }
-          }
-          
-          /* Prevent bounce scrolling on body when this page is active */
-          body {
-            overscroll-behavior: contain;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-y;
-          }
-          
-          /* Ensure smooth scrolling on iOS */
-          * {
-            -webkit-overflow-scrolling: touch;
-          }
-        `}</style>
       </div>
+
+      {/* Made with Vostcard text - Back to original positioning */}
+      <div style={{
+        textAlign: 'center',
+        color: '#666',
+        fontSize: '14px',
+        fontStyle: 'italic',
+        marginTop: '-10px',
+        marginBottom: '20px',
+        padding: '0 20px'
+      }}>
+        Made with Vostcard a free app
+      </div>
+
+      {/* Action Icons Row - Back to original positioning */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '10px 40px 20px 40px',
+        borderBottom: '1px solid #eee'
+      }}>
+        <button
+          onClick={handleLike}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isLiked ? '#ff3b30' : '#666'
+          }}
+        >
+          <FaHeart size={30} />
+        </button>
+
+        <button
+          onClick={() => alert('Comments not available in public view')}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaRegComment size={30} />
+        </button>
+
+        <button
+          onClick={() => {
+            if (quickcard?.latitude && quickcard?.longitude) {
+              navigate('/public-map', {
+                state: {
+                  singleVostcard: {
+                    id: quickcard.id,
+                    title: quickcard.title,
+                    description: quickcard.description,
+                    latitude: quickcard.latitude || quickcard.geo?.latitude,
+                    longitude: quickcard.longitude || quickcard.geo?.longitude,
+                    photoURLs: quickcard.photoURLs,
+                    username: quickcard.username,
+                    isQuickcard: true,
+                    categories: quickcard.categories,
+                    createdAt: quickcard.createdAt,
+                    visibility: 'public',
+                    state: 'posted'
+                  }
+                }
+              });
+            } else {
+              alert('No location data available for this quickcard');
+            }
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaMap size={30} />
+        </button>
+
+        <button
+          onClick={handleShare}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaShare size={30} />
+        </button>
+      </div>
+
+      {/* Counts Row - Back to original positioning */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '10px 40px',
+        fontSize: '18px',
+        color: '#666'
+      }}>
+        <span>{likeCount}</span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      {/* Description Link, Flag Icon, and Refresh Button - Back to original positioning */}
+      <div style={{ 
+        padding: '5px 20px 20px 20px',
+        position: 'relative',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        {/* Flag Icon - 15px from left */}
+        <button
+          onClick={handleFlag}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#ff3b30',
+            position: 'absolute',
+            left: '15px'
+          }}
+        >
+          <FaFlag size={24} />
+        </button>
+        
+        {/* Description Link - Centered */}
+        <div
+          onClick={() => setShowDescriptionModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#007aff',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            fontFamily: 'system-ui, sans-serif',
+            display: 'inline-block'
+          }}
+        >
+          Description
+        </div>
+
+        {/* Refresh Button - 20px from right */}
+        <button
+          onClick={handleRefresh}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#007aff',
+            position: 'absolute',
+            right: '20px'
+          }}
+        >
+          <FaSync size={24} />
+        </button>
+      </div>
+
+      {/* Bottom CTA section - Keep original design for marketing */}
+      <div style={{ 
+        textAlign: 'center', 
+        borderTop: '1px solid #eee',
+        paddingTop: '24px',
+        marginTop: '24px',
+        padding: '24px 20px'
+      }}>
+        <div style={{ 
+          color: '#666', 
+          fontSize: 14, 
+          lineHeight: 1.4, 
+          marginBottom: '12px' 
+        }}>
+          This quickcard was created with Vostcard
+        </div>
+        <button
+          onClick={() => navigate('/user-guide')}
+          style={{
+            backgroundColor: '#002B4D',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          Create Your Own Free Account
+        </button>
+      </div>
+
+      {/* Description Modal */}
+      {showDescriptionModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowDescriptionModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '24px',
+              borderRadius: '12px',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              overflow: 'auto',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
+              <button
+                onClick={() => setShowDescriptionModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
+              {description || 'No description available.'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Modal */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            cursor: 'zoom-out',
+          }}
+          onClick={() => setSelectedPhoto(null)}
+          onContextMenu={e => e.preventDefault()}
+        >
+          <button
+            onClick={() => setSelectedPhoto(null)}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              zIndex: 2001,
+              fontSize: '18px',
+              color: 'white',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <FaTimes />
+          </button>
+          <img
+            src={selectedPhoto}
+            alt="Full size"
+            style={{
+              width: '100vw',
+              height: '100vh',
+              objectFit: 'contain',
+              borderRadius: 0,
+              boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+              background: '#000',
+              userSelect: 'none',
+              pointerEvents: 'auto',
+            }}
+            draggable={false}
+            onContextMenu={e => e.preventDefault()}
+          />
+        </div>
+      )}
+
+      {/* Like Message */}
+      <AnimatePresence>
+        {showLikeMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            style={{
+              position: 'fixed',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#28a745',
+              color: 'white',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              zIndex: 1000,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+            }}
+          >
+            Thanks for the love! ❤️
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Safari Sharing Banner Notice - Only show once */}
+      {!user && (
+        <div style={{
+          backgroundColor: '#f0f8ff',
+          border: '1px solid #b3d9ff',
+          borderRadius: '8px',
+          padding: '12px',
+          margin: '10px 20px',
+          fontSize: '14px',
+          textAlign: 'center',
+          color: '#0066cc'
+        }}>
+          💡 <strong>Tip:</strong> For the best experience, tap the Share button below and "Add to Home Screen" to use Vōstcard like a native app!
+        </div>
+      )}
+
+      {/* CSS Animation - Moved inside the main div */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+          }
+        }
+        
+        /* Prevent bounce scrolling on body when this page is active */
+        body {
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+          touch-action: pan-y;
+        }
+        
+        /* Ensure smooth scrolling on iOS */
+        * {
+          -webkit-overflow-scrolling: touch;
+        }
+      `}</style>
     </div>
   );
 };
