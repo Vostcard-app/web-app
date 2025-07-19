@@ -429,12 +429,12 @@ const PublicQuickcardView: React.FC = () => {
         Made with Vostcard a free app
       </div>
 
-      {/* Action Icons Row - Added Map icon between Comment and Share */}
+      {/* Action Icons Row - Removed top padding */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        padding: '20px 40px',
+        padding: '10px 40px 20px 40px', // Changed from '20px 40px' to '10px 40px 20px 40px' to reduce top padding
         borderBottom: '1px solid #eee'
       }}>
         <button
@@ -467,7 +467,7 @@ const PublicQuickcardView: React.FC = () => {
           <FaRegComment size={30} />
         </button>
 
-        {/* Added Map icon here */}
+        {/* Map icon */}
         <button
           onClick={() => {
             if (quickcard?.latitude && quickcard?.longitude) {
@@ -522,7 +522,7 @@ const PublicQuickcardView: React.FC = () => {
         </button>
       </div>
 
-      {/* Counts Row - Updated to show counts for 4 icons */}
+      {/* Counts Row - Matching QuickcardDetailView */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -537,9 +537,9 @@ const PublicQuickcardView: React.FC = () => {
         <span></span>
       </div>
 
-      {/* Description Link, Flag Icon, and Refresh Button - Matching QuickcardDetailView */}
+      {/* Description Link, Flag Icon, and Refresh Button - Removed top padding */}
       <div style={{ 
-        padding: '20px',
+        padding: '5px 20px 20px 20px', // Changed from '20px' to '5px 20px 20px 20px' to reduce top padding
         position: 'relative',
         display: 'flex',
         justifyContent: 'center',
