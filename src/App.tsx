@@ -61,6 +61,8 @@ import QuickcardDetailView from './pages/QuickcardDetailView';
 import VostcardCameraView from "./pages/VostcardCameraView";
 import VostcardStudioView from './pages/VostcardStudioView';
 import DrivecardsListView from './pages/DrivecardsListView';
+import SharedVostcardView from './pages/SharedVostcardView';
+import SharedQuickcardView from './pages/SharedQuickcardView';
 
 function App() {
   return (
@@ -168,6 +170,10 @@ function App() {
 
                   {/* 🎵 Drivecards */}
                   <Route path="/drivecards" element={<DrivecardsListView />} />
+
+                  {/* 🔗 Shared Content */}
+                  <Route path="/shared/vostcard/:id" element={<SharedVostcardView />} />
+                  <Route path="/shared/quickcard/:id" element={<SharedQuickcardView />} />
                 </Routes>
               </ResponsiveContainer>
               </Router>
