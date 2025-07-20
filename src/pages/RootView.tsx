@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+// Create a custom user location icon
+const userLocationIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiLz4KPC9zdmc+',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+  popupAnchor: [0, -8],
+});
 
 const RootView: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +30,7 @@ const RootView: React.FC = () => {
           setLocationError(error.message);
           // Keep default location
         },
-        { enableHighAccuracy: true, timeout: 5000 } // Reduced timeout
+        { enableHighAccuracy: true, timeout: 5000 }
       );
     } else {
       setLocationError('Geolocation not supported');
@@ -51,6 +60,10 @@ const RootView: React.FC = () => {
           .bobbing-pin {
             animation: bobbing 2s ease-in-out infinite;
           }
+          
+          .leaflet-container {
+            font-family: inherit;
+          }
         `}
       </style>
 
@@ -71,64 +84,75 @@ const RootView: React.FC = () => {
         <span style={{ marginLeft: 24 }}>Vōstcard</span>
       </div>
 
-      {/* Map Background - Wrapped in error boundary */}
+      {/* Live Map Background - FIXED z-index */}
       <div style={{
-        height: '100%',
+        height: 'calc(100% - 80px)',
         width: '100%',
         position: 'absolute',
-        top: 0,
+        top: '80px',
         left: 0,
-        zIndex: -1,
+        zIndex: 1, // Changed from -1 to 1 to make map visible
       }}>
         {userLocation ? (
-          <div style={{ height: '100%', width: '100%' }}>
-            <MapContainer
-              center={userLocation}
-              zoom={13}
-              style={{ height: '100%', width: '100%' }}
-              zoomControl={false}
-              dragging={false}
-              touchZoom={false}
-              doubleClickZoom={false}
-              scrollWheelZoom={false}
-              boxZoom={false}
-              keyboard={false}
-              attributionControl={false}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-            </MapContainer>
-          </div>
+          <MapContainer
+            center={userLocation}
+            zoom={14}
+            style={{ height: '100%', width: '100%' }}
+            zoomControl={true}
+            dragging={true}
+            touchZoom={true}
+            doubleClickZoom={true}
+            scrollWheelZoom={true}
+            attributionControl={false}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            
+            {/* User location marker */}
+            <Marker position={userLocation} icon={userLocationIcon}>
+              <Popup>
+                <div style={{ textAlign: 'center' }}>
+                  <strong>Your Location</strong>
+                  <br />
+                  <small>Welcome to Vōstcard!</small>
+                </div>
+              </Popup>
+            </Marker>
+          </MapContainer>
         ) : (
-          // Fallback pattern while loading location
+          // Loading state with better visual feedback
           <div style={{
             height: '100%',
             width: '100%',
             backgroundColor: '#e8f4f8',
-            backgroundImage: `
-              linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
-              linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
-              linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%), 
-              linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)
-            `,
-            backgroundSize: '20px 20px',
-            backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
-          }}
-          />
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            color: '#666',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            <div>📍 Loading your location...</div>
+            <div style={{ fontSize: '14px', opacity: 0.7 }}>
+              Map will appear once location is found
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Semi-transparent overlay to make content more readable */}
+      {/* Semi-transparent overlay - Reduced opacity and allows map interaction */}
       <div style={{
         position: 'absolute',
-        top: 0,
+        top: '80px',
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        zIndex: 5
+        backgroundColor: 'rgba(255, 255, 255, 0.1)', // Much more transparent
+        zIndex: 10,
+        pointerEvents: 'none' // Allow map interactions through overlay
       }} />
 
       {/* Debug Info */}
@@ -137,14 +161,22 @@ const RootView: React.FC = () => {
           position: 'absolute',
           top: '100px',
           left: '10px',
-          background: 'rgba(255,0,0,0.8)',
+          background: 'rgba(255,0,0,0.9)',
           color: 'white',
-          padding: '10px',
-          borderRadius: '5px',
+          padding: '12px',
+          borderRadius: '8px',
           zIndex: 2000,
-          fontSize: '12px'
+          fontSize: '14px',
+          maxWidth: '300px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}>
-          Location Error: {locationError}
+          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+            📍 Location Issue
+          </div>
+          <div>{locationError}</div>
+          <div style={{ fontSize: '12px', marginTop: '8px', opacity: 0.9 }}>
+            Using default location (Dublin)
+          </div>
         </div>
       )}
 
@@ -153,7 +185,8 @@ const RootView: React.FC = () => {
         position: 'absolute',
         top: '50%',
         left: '50%',
-        zIndex: 2000
+        zIndex: 2000,
+        pointerEvents: 'none' // Don't block map interactions
       }}>
         <img 
           src="/Vostcard_pin.png"
@@ -183,7 +216,7 @@ const RootView: React.FC = () => {
         padding: '0 20px',
         boxSizing: 'border-box',
         marginTop: '80px',
-        pointerEvents: 'auto' // Ensure pointer events work
+        pointerEvents: 'auto'
       }}>
         <button
           type="button"
@@ -213,9 +246,9 @@ const RootView: React.FC = () => {
             cursor: 'pointer',
             letterSpacing: '0.01em',
             position: 'relative',
-            zIndex: 2001, // Slightly higher than container
-            pointerEvents: 'auto', // Ensure it can receive clicks
-            touchAction: 'manipulation' // Better touch handling
+            zIndex: 2001,
+            pointerEvents: 'auto',
+            touchAction: 'manipulation'
           }}
         >
           User Guide
