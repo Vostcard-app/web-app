@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer } from 'react-leaflet';
-import VostcardPin from '../assets/Vostcard_pin.png';
 import 'leaflet/dist/leaflet.css';
 
 const RootView: React.FC = () => {
@@ -157,7 +156,7 @@ const RootView: React.FC = () => {
         zIndex: 2000
       }}>
         <img 
-          src={VostcardPin}
+          src="/Vostcard_pin.png"
           alt="Vostcard Pin"
           className="bobbing-pin"
           style={{
@@ -166,7 +165,7 @@ const RootView: React.FC = () => {
             filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
           }}
           onError={(e) => {
-            console.error('VostcardPin failed to load');
+            console.error('Vostcard_pin.png failed to load');
             e.currentTarget.style.display = 'none';
           }}
         />
