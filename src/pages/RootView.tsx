@@ -97,7 +97,7 @@ const RootView: React.FC = () => {
           borderRadius: '4px',
           fontWeight: 'bold'
         }}>
-          v2024.2-desktop-fix
+          v2024.3-responsive-fix
         </div>
         
         <div 
@@ -343,10 +343,30 @@ const RootView: React.FC = () => {
         </button>
       </div>
 
-      {/* Desktop-Specific CSS Fix */}
+      {/* Responsive CSS Fix */}
       <style>{`
+        /* Mobile-first: Default responsive behavior */
+        @media screen and (max-width: 768px) {
+          div[style*="position: fixed"][style*="top: 50%"],
+          div[style*="position: fixed"][style*="bottom: 92px"] {
+            position: fixed !important;
+            left: 0 !important;
+            right: 0 !important;
+            padding: 0 20px !important;
+            box-sizing: border-box !important;
+          }
+          
+          div[style*="position: fixed"] button {
+            width: 100% !important;
+            max-width: 400px !important;
+            margin: 0 auto !important;
+            padding: 16px 0 !important;
+            font-size: 24px !important;
+          }
+        }
+        
+        /* Desktop: Force button visibility */
         @media screen and (min-width: 769px) {
-          /* Force desktop button visibility */
           div[style*="position: fixed"][style*="top: 50%"],
           div[style*="position: fixed"][style*="bottom: 92px"] {
             position: fixed !important;
@@ -356,9 +376,12 @@ const RootView: React.FC = () => {
             opacity: 1 !important;
             pointer-events: auto !important;
             transform: translateZ(0) !important;
+            left: 0 !important;
+            right: 0 !important;
+            padding: 0 20px !important;
+            box-sizing: border-box !important;
           }
           
-          /* Force button element visibility */
           div[style*="position: fixed"] button {
             display: block !important;
             visibility: visible !important;
@@ -368,11 +391,9 @@ const RootView: React.FC = () => {
             z-index: 999999 !important;
             transform: translateZ(0) !important;
             min-height: 50px !important;
-          }
-          
-          /* Override any potential hiding styles */
-          body div[style*="position: fixed"] {
-            display: flex !important;
+            width: 100% !important;
+            max-width: 400px !important;
+            margin: 0 auto !important;
           }
           
           /* Ensure buttons are above everything */
