@@ -265,27 +265,27 @@ class DrivecardStorageService {
     }
   }
 
-  // Save Drivecard to Firebase (temporary workaround)
+  // Save Drivecard to Firebase
   async saveToFirebase(drivecard: Drivecard): Promise<void> {
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
 
     try {
-      console.log('☁️ Saving to Firebase (without audio for now):', drivecard.id);
+      console.log('☁️ Saving to Firebase with audio:', drivecard.id);
       const docRef = doc(db, 'drivecards', drivecard.id);
       
-      // TEMPORARY: Skip audio upload until storage rules are fixed
-      // let audioURL = drivecard._firebaseAudioURL || '';
-      // if (drivecard.audio && drivecard.audio instanceof Blob) {
-      //   audioURL = await this.uploadAudio(user.uid, drivecard.id, drivecard.audio);
-      // }
+      // Upload audio if exists
+      let audioURL = drivecard._firebaseAudioURL || '';
+      if (drivecard.audio && drivecard.audio instanceof Blob) {
+        audioURL = await this.uploadAudio(user.uid, drivecard.id, drivecard.audio);
+      }
 
       await setDoc(docRef, {
         id: drivecard.id,
         title: drivecard.title,
         username: drivecard.username,
         userID: user.uid,
-        audioURL: '', // Empty for now until storage rules are fixed
+        audioURL: audioURL, // Now includes the uploaded audio URL
         latitude: drivecard.geo.latitude,
         longitude: drivecard.geo.longitude,
         address: drivecard.geo.address || null,
@@ -294,8 +294,7 @@ class DrivecardStorageService {
         updatedAt: Timestamp.now()
       });
 
-      console.log('✅ Saved Drivecard metadata to Firebase:', drivecard.id);
-      console.log('⚠️ Audio not uploaded - storage rules need to be deployed');
+      console.log('✅ Saved Drivecard with audio to Firebase:', drivecard.id);
     } catch (err) {
       console.error('❌ Failed to save to Firebase:', err);
       throw err;
