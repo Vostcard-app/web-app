@@ -1,4 +1,3 @@
-// DriveCard Storage Service - Handles local and Firebase storage for Drivecards
 import { auth, db, storage } from '../firebase/firebaseConfig';
 import { 
   collection, 
@@ -96,15 +95,9 @@ class DrivecardStorageService {
   // Save Drivecard to IndexedDB
   async saveToIndexedDB(drivecard: Drivecard): Promise<void> {
     try {
-      console.log('🔄 Opening IndexedDB for save...');
-      const db = await this.openDB();
+      console.log('🔄 Preparing Drivecard for IndexedDB save...');
       
-      console.log('🔄 Creating transaction...');
-      const transaction = db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      // Convert audio Blob to base64 for storage
-      console.log('🔄 Processing audio for storage...');
+      // STEP 1: Convert audio to base64 FIRST (outside any DB operations)
       let audioBase64 = null;
       if (drivecard.audio && drivecard.audio instanceof Blob) {
         console.log('🎵 Converting audio blob, size:', drivecard.audio.size);
@@ -115,19 +108,28 @@ class DrivecardStorageService {
         }
         
         audioBase64 = await this.blobToBase64(drivecard.audio);
-        console.log('✅ Audio converted to base64');
+        console.log('✅ Audio converted to base64 successfully');
       }
       
+      // STEP 2: Create the storable object with base64 audio
       const storableDrivecard = {
         ...drivecard,
         _audioBase64: audioBase64,
         audio: null // Remove actual Blob for storage
       };
 
-      console.log('🔄 Saving to IndexedDB store...');
+      // STEP 3: Now do all IndexedDB operations synchronously
+      console.log('🔄 Opening IndexedDB for save...');
+      const db = await this.openDB();
+      
+      console.log('🔄 Creating transaction and saving immediately...');
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+
+      // Do the put operation immediately while transaction is active
+      const request = store.put(storableDrivecard);
+      
       await new Promise<void>((resolve, reject) => {
-        const request = store.put(storableDrivecard);
-        
         request.onsuccess = () => {
           console.log('✅ IndexedDB put successful');
           resolve();
@@ -138,7 +140,6 @@ class DrivecardStorageService {
           reject(request.error);
         };
         
-        // Add transaction error handler
         transaction.onerror = () => {
           console.error('❌ IndexedDB transaction error:', transaction.error);
           reject(transaction.error);
@@ -264,28 +265,27 @@ class DrivecardStorageService {
     }
   }
 
-  // Save Drivecard to Firebase
+  // Save Drivecard to Firebase (temporary workaround)
   async saveToFirebase(drivecard: Drivecard): Promise<void> {
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
 
     try {
-      console.log('☁️ Saving to Firebase:', drivecard.id);
+      console.log('☁️ Saving to Firebase (without audio for now):', drivecard.id);
       const docRef = doc(db, 'drivecards', drivecard.id);
       
-      // Upload audio if needed
-      let audioURL = drivecard._firebaseAudioURL || '';
-      
-      if (drivecard.audio && drivecard.audio instanceof Blob) {
-        audioURL = await this.uploadAudio(user.uid, drivecard.id, drivecard.audio);
-      }
+      // TEMPORARY: Skip audio upload until storage rules are fixed
+      // let audioURL = drivecard._firebaseAudioURL || '';
+      // if (drivecard.audio && drivecard.audio instanceof Blob) {
+      //   audioURL = await this.uploadAudio(user.uid, drivecard.id, drivecard.audio);
+      // }
 
       await setDoc(docRef, {
         id: drivecard.id,
         title: drivecard.title,
         username: drivecard.username,
         userID: user.uid,
-        audioURL,
+        audioURL: '', // Empty for now until storage rules are fixed
         latitude: drivecard.geo.latitude,
         longitude: drivecard.geo.longitude,
         address: drivecard.geo.address || null,
@@ -294,7 +294,8 @@ class DrivecardStorageService {
         updatedAt: Timestamp.now()
       });
 
-      console.log('✅ Saved Drivecard to Firebase:', drivecard.id);
+      console.log('✅ Saved Drivecard metadata to Firebase:', drivecard.id);
+      console.log('⚠️ Audio not uploaded - storage rules need to be deployed');
     } catch (err) {
       console.error('❌ Failed to save to Firebase:', err);
       throw err;
