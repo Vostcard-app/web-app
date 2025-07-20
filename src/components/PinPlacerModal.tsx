@@ -3,14 +3,14 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { FaTimes, FaSearch, FaMapPin, FaCheck } from 'react-icons/fa';
-import { geocodingService } from '../services/geocodingService';
+import { GeocodingService } from '../services/geocodingService';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
 interface PinPlacerModalProps {
@@ -112,27 +112,53 @@ const PinPlacerModal: React.FC<PinPlacerModalProps> = ({
     setSearchError(null);
 
     try {
-      const results = await geocodingService.searchLocation(searchQuery);
+      // Simple geocoding using the existing GeocodingService
+      // For search, we'll try to parse the query as "city, state, country" format
+      const parts = searchQuery.split(',').map(part => part.trim());
       
-      if (results.length > 0) {
-        const firstResult = results[0];
-        const newPosition: [number, number] = [
-          firstResult.coordinates[0],
-          firstResult.coordinates[1]
-        ];
-        
-        setMapCenter(newPosition);
-        setMapZoom(15);
-        setSelectedPosition(newPosition);
-        setCurrentAddress(firstResult.name);
-        
-        console.log('📍 Location found:', firstResult.name, newPosition);
-      } else {
-        setSearchError('Location not found. Please try a different search term.');
+      let streetAddress = '';
+      let city = '';
+      let state = '';
+      let postalCode = '';
+      let country = 'United States'; // Default country
+      
+      if (parts.length === 1) {
+        // Single term - treat as city
+        city = parts[0];
+      } else if (parts.length === 2) {
+        // Two parts - city, state or city, country
+        city = parts[0];
+        if (parts[1].length === 2) {
+          state = parts[1]; // Likely a state abbreviation
+        } else {
+          country = parts[1];
+        }
+      } else if (parts.length >= 3) {
+        // Three or more parts - city, state, country
+        city = parts[0];
+        state = parts[1];
+        country = parts[2];
       }
+
+      const result = await GeocodingService.geocodeAddress(
+        streetAddress,
+        city,
+        state,
+        postalCode,
+        country
+      );
+      
+      const newPosition: [number, number] = [result.latitude, result.longitude];
+      
+      setMapCenter(newPosition);
+      setMapZoom(15);
+      setSelectedPosition(newPosition);
+      setCurrentAddress(result.displayAddress);
+      
+      console.log('📍 Location found:', result.displayAddress, newPosition);
     } catch (error) {
       console.error('Search error:', error);
-      setSearchError('Search failed. Please try again.');
+      setSearchError('Location not found. Please try a different search term.');
     } finally {
       setIsSearching(false);
     }
@@ -141,10 +167,13 @@ const PinPlacerModal: React.FC<PinPlacerModalProps> = ({
   const handlePositionChange = async (position: [number, number]) => {
     setSelectedPosition(position);
     
-    // Reverse geocode to get address
+    // Reverse geocode to get address using GeocodingService
     try {
-      const address = await geocodingService.reverseGeocode(position[0], position[1]);
-      setCurrentAddress(address);
+      const mapLocation = await GeocodingService.createMapLocationFromCoordinates(
+        position[0], 
+        position[1]
+      );
+      setCurrentAddress(mapLocation.displayAddress);
     } catch (error) {
       console.error('Reverse geocoding failed:', error);
       setCurrentAddress(`${position[0].toFixed(6)}, ${position[1].toFixed(6)}`);
@@ -236,7 +265,7 @@ const PinPlacerModal: React.FC<PinPlacerModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Search for a location..."
+                placeholder="Search for a location (e.g., New York, NY)"
                 style={{
                   width: '100%',
                   padding: '10px 16px',
