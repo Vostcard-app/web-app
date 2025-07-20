@@ -83,9 +83,6 @@ const RootView: React.FC = () => {
         position: 'relative',
       }}>
         <span>Vōstcard</span>
-        
-
-        
         <div 
           onClick={() => setShowVideoModal(true)}
           style={{
@@ -220,23 +217,43 @@ const RootView: React.FC = () => {
         />
       </div>
 
-      {/* User Guide Button - Simple Working Version */}
+      {/* User Guide Button */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed', // Changed from absolute to fixed
         top: '50%',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 1000,
+        zIndex: 9999, // Higher z-index
         padding: '0 20px',
         boxSizing: 'border-box',
-        marginTop: '80px'
+        marginTop: '80px',
+        pointerEvents: 'auto',
+        // Force visibility
+        visibility: 'visible',
+        opacity: 1
       }}>
         <button
-          onClick={() => navigate('/user-guide')}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof console !== 'undefined' && console.log) {
+              console.log('User Guide button clicked!');
+            }
+            navigate('/user-guide');
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof console !== 'undefined' && console.log) {
+              console.log('User Guide button touched!');
+            }
+            navigate('/user-guide');
+          }}
           style={{
-            background: '#E62A2E',
+            background: '#E62A2E', // Original red color
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -247,29 +264,45 @@ const RootView: React.FC = () => {
             maxWidth: '400px',
             boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)',
             cursor: 'pointer',
-            letterSpacing: '0.01em'
+            letterSpacing: '0.01em',
+            position: 'relative',
+            zIndex: 10001, // Keep the higher z-index that worked
+            pointerEvents: 'auto',
+            touchAction: 'manipulation',
+            display: 'block',
+            visibility: 'visible',
+            opacity: 1
           }}
         >
           User Guide
         </button>
       </div>
 
-      {/* Login Button - Simple Working Version */}
+      {/* Log In Button at Bottom */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed', // Changed from absolute to fixed
         bottom: '92px',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 1000,
+        zIndex: 9999, // Higher z-index
         padding: '0 20px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        // Force visibility
+        visibility: 'visible',
+        opacity: 1
       }}>
         <button
-          onClick={() => navigate('/login')}
+          type="button"
+          onClick={() => {
+            if (typeof console !== 'undefined' && console.log) {
+              console.log('Login/Register button clicked!');
+            }
+            navigate('/login');
+          }}
           style={{
-            background: '#07345c',
+            background: '#07345c', // Original blue color
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -280,14 +313,18 @@ const RootView: React.FC = () => {
             maxWidth: '400px',
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
             cursor: 'pointer',
-            letterSpacing: '0.01em'
+            letterSpacing: '0.01em',
+            position: 'relative',
+            zIndex: 10001, // Keep the higher z-index that worked
+            pointerEvents: 'auto',
+            display: 'block',
+            visibility: 'visible',
+            opacity: 1
           }}
         >
           Login/Register
         </button>
       </div>
-
-
 
       {/* Video Modal */}
       <AnimatePresence>
