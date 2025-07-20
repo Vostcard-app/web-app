@@ -30,8 +30,8 @@ const RootView: React.FC = () => {
 
   return (
     <div style={{ 
-      height: '100vh', 
-      width: '100vw', 
+      height: '100%', 
+      width: '100%', 
       position: 'relative', 
       overflow: 'hidden',
       backgroundColor: '#f5f5f5'
