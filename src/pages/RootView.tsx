@@ -23,12 +23,11 @@ const RootView: React.FC = () => {
     const getLocation = () => {
       if (!navigator.geolocation) {
         setLocationError('Geolocation not supported');
-        setUserLocation([40.7128, -74.0060]); // Default to NYC
+        setUserLocation([40.7128, -74.0060]);
         setIsLocationLoading(false);
         return;
       }
 
-      // Set default location immediately so map shows right away
       setUserLocation([40.7128, -74.0060]);
 
       navigator.geolocation.getCurrentPosition(
@@ -42,7 +41,6 @@ const RootView: React.FC = () => {
           console.warn('📍 Location error:', error.message);
           setLocationError(`Location: ${error.message}`);
           setIsLocationLoading(false);
-          // Keep default NYC location
         },
         {
           enableHighAccuracy: false,
@@ -69,7 +67,7 @@ const RootView: React.FC = () => {
       paddingBottom: 'env(safe-area-inset-bottom)'
     }}>
       
-      {/* CSS for mobile optimization */}
+      {/* CSS */}
       <style>{`
         @keyframes bobbing {
           0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
@@ -84,11 +82,6 @@ const RootView: React.FC = () => {
           font-family: inherit;
           height: 100% !important;
           width: 100% !important;
-        }
-        
-        .leaflet-control-zoom {
-          margin-top: 10px !important;
-          margin-right: 10px !important;
         }
       `}</style>
 
@@ -107,13 +100,13 @@ const RootView: React.FC = () => {
         Vōstcard
       </div>
 
-      {/* Map Container */}
+      {/* Map Container - Leave space for bottom buttons */}
       <div style={{
         position: 'absolute',
         top: '64px',
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: '90px', // IMPORTANT: Leave space for bottom buttons
         zIndex: 1
       }}>
         {userLocation ? (
@@ -177,7 +170,9 @@ const RootView: React.FC = () => {
         top: '50%',
         left: '50%',
         zIndex: 100,
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        transform: 'translate(-50%, -50%)',
+        marginTop: '-45px' // Move up slightly to account for button space
       }}>
         <img 
           src="/Vostcard_pin.png"
@@ -195,25 +190,13 @@ const RootView: React.FC = () => {
         />
       </div>
 
-      {/* Semi-transparent overlay */}
-      <div style={{
-        position: 'absolute',
-        top: '64px',
-        left: 0,
-        right: 0,
-        bottom: '180px', // More space for 3 buttons
-        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        zIndex: 10,
-        pointerEvents: 'none'
-      }} />
-
       {/* User Guide Button - Centered in map area */}
       <div style={{
         position: 'absolute',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        marginTop: '120px', // Below the pin
+        marginTop: '80px', // Below the pin
         zIndex: 2000,
         width: 'calc(100% - 32px)',
         maxWidth: '400px'
@@ -238,18 +221,22 @@ const RootView: React.FC = () => {
         </button>
       </div>
 
-      {/* Login & Register Buttons - Bottom */}
+      {/* FIXED: Login & Register Buttons - Higher z-index and proper positioning */}
       <div style={{
-        position: 'absolute',
-        bottom: '20px',
+        position: 'fixed', // Changed from absolute to fixed
+        bottom: 'calc(20px + env(safe-area-inset-bottom))', // Account for safe area
         left: '16px',
         right: '16px',
-        zIndex: 100,
+        zIndex: 3000, // Higher z-index to ensure visibility
         display: 'flex',
-        gap: '12px'
+        gap: '12px',
+        pointerEvents: 'auto' // Ensure buttons are clickable
       }}>
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            console.log('🔐 Login button clicked');
+            navigate('/login');
+          }}
           style={{
             background: '#07345c',
             color: 'white',
@@ -261,14 +248,18 @@ const RootView: React.FC = () => {
             flex: 1,
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
             cursor: 'pointer',
-            touchAction: 'manipulation'
+            touchAction: 'manipulation',
+            minHeight: '54px' // Ensure minimum touch target size
           }}
         >
           Log In
         </button>
         
         <button
-          onClick={() => navigate('/register')}
+          onClick={() => {
+            console.log('📝 Register button clicked');
+            navigate('/register');
+          }}
           style={{
             background: '#28a745',
             color: 'white',
@@ -280,14 +271,15 @@ const RootView: React.FC = () => {
             flex: 1,
             boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
             cursor: 'pointer',
-            touchAction: 'manipulation'
+            touchAction: 'manipulation',
+            minHeight: '54px'
           }}
         >
           Register
         </button>
       </div>
 
-      {/* Debug info (shows if location permission denied) */}
+      {/* Debug info */}
       {locationError && (
         <div style={{
           position: 'absolute',
