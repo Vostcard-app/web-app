@@ -5,7 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import PublicVostcardView from './PublicVostcardView';
 import SharedContentHeader from '../components/SharedContentHeader';
-import { FaHome, FaHeart, FaMap, FaPlus, FaEye } from 'react-icons/fa';
+import { FaHome, FaPlus, FaEye } from 'react-icons/fa';
 
 const SharedVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,5 +41,4 @@ const SharedVostcardView: React.FC = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.state === 'posted' || data.isPrivatelyShared) {
-            setVostcard(data);
-            set 
+            setVostcard(data); 

@@ -5,7 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import PublicQuickcardView from './PublicQuickcardView';
 import SharedContentHeader from '../components/SharedContentHeader';
-import { FaHome, FaHeart, FaMap, FaPlus, FaEye } from 'react-icons/fa';
+import { FaHome, FaPlus, FaEye } from 'react-icons/fa';
 
 const SharedQuickcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -168,9 +168,6 @@ const SharedQuickcardView: React.FC = () => {
                   gap: '4px',
                   transition: 'transform 0.2s ease'
                 }}
-                onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >
                 <FaPlus size={16} />
                 Add to My Map
@@ -193,9 +190,6 @@ const SharedQuickcardView: React.FC = () => {
                   gap: '4px',
                   transition: 'transform 0.2s ease'
                 }}
-                onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >
                 <FaEye size={16} />
                 View Near Me
@@ -218,9 +212,6 @@ const SharedQuickcardView: React.FC = () => {
                   gap: '4px',
                   transition: 'transform 0.2s ease'
                 }}
-                onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
               >
                 <FaHome size={16} />
                 Go to Home
