@@ -531,14 +531,14 @@ ${privateUrl}`;
           )}
         </div>
       ) : (
-        // Regular vostcard layout - video and photo side by side
+        // Regular vostcard layout - video thumbnail on left, 2 photos stacked on right
         <div style={{ 
           padding: '20px', 
           display: 'flex', 
           gap: '10px',
           height: '300px'
         }}>
-          {/* Video Section */}
+          {/* Video Thumbnail Section */}
           <div style={{ 
             flex: 1,
             backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
@@ -547,29 +547,74 @@ ${privateUrl}`;
             position: 'relative'
           }}>
             {vostcard.videoURL ? (
-              <video
-                ref={videoRef}
-                src={vostcard.videoURL}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  cursor: 'pointer'
-                }}
-                controls
-                playsInline
-                onClick={() => setShowVideoModal(true)}
-              />
-            ) : null}
+              <>
+                <video
+                  ref={videoRef}
+                  src={vostcard.videoURL}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    cursor: 'pointer'
+                  }}
+                  playsInline
+                  muted
+                  onClick={() => setShowVideoModal(true)}
+                />
+                {/* Play Button Overlay */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '60px',
+                    height: '60px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    zIndex: 2
+                  }}
+                  onClick={() => setShowVideoModal(true)}
+                >
+                  <div
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: '20px solid white',
+                      borderTop: '12px solid transparent',
+                      borderBottom: '12px solid transparent',
+                      marginLeft: '4px'
+                    }}
+                  />
+                </div>
+              </>
+            ) : (
+              <div style={{ 
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#f0f0f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#999'
+              }}>
+                No video
+              </div>
+            )}
           </div>
 
-          {/* Photos Section */}
+          {/* Photos Section - 2 photos stacked vertically */}
           <div style={{ 
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px'
+            gap: '5px'
           }}>
+            {/* First Photo */}
             {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
               <div style={{ 
                 flex: 1,
@@ -578,7 +623,7 @@ ${privateUrl}`;
               }}>
                 <img
                   src={vostcard.photoURLs[0]}
-                  alt="Photo"
+                  alt="Photo 1"
                   style={{
                     width: '100%',
                     height: '100%',
@@ -596,9 +641,44 @@ ${privateUrl}`;
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#999'
+                color: '#999',
+                fontSize: '14px'
               }}>
-                No photos
+                No photo
+              </div>
+            )}
+            
+            {/* Second Photo */}
+            {vostcard.photoURLs && vostcard.photoURLs.length > 1 ? (
+              <div style={{ 
+                flex: 1,
+                borderRadius: '8px', 
+                overflow: 'hidden'
+              }}>
+                <img
+                  src={vostcard.photoURLs[1]}
+                  alt="Photo 2"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setSelectedPhoto(vostcard.photoURLs[1])}
+                />
+              </div>
+            ) : (
+              <div style={{ 
+                flex: 1,
+                backgroundColor: '#f0f0f0',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#999',
+                fontSize: '14px'
+              }}>
+                No photo
               </div>
             )}
           </div>

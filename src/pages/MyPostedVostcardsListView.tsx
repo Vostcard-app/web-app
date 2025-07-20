@@ -382,7 +382,7 @@ ${getUserFirstName()}`);
           borderRadius: isDesktop ? '16px 16px 0 0' : '0',
           flexShrink: 0
         }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>Posted Vōstcards</h1>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>My Posts</h1>
         
         {/* Home Button */}
         <FaHome
@@ -506,7 +506,7 @@ ${getUserFirstName()}`);
               fontSize: '14px',
               color: '#495057'
             }}>
-              {postedVostcards.length} Posted Vōstcard{postedVostcards.length !== 1 ? 's' : ''} on the Map
+              {postedVostcards.length} Post{postedVostcards.length !== 1 ? 's' : ''} on the Map
             </div>
 
             {/* Vostcard List */}
@@ -530,17 +530,32 @@ ${getUserFirstName()}`);
                     opacity: unpostingIds.has(vostcard.id) ? 0.5 : 1
                   }}
                 >
-                  {/* Title */}
+                  {/* Title with Type Indicator */}
                   <div style={{
-                    marginBottom: '12px'
+                    marginBottom: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
                   }}>
                     <h3 style={{ 
-                      margin: '0 0 4px 0', 
+                      margin: 0, 
                       color: '#002B4D',
                       fontSize: '18px'
                     }}>
-                      {vostcard.title || 'Untitled Vōstcard'}
+                      {vostcard.title || 'Untitled'}
                     </h3>
+                    {/* Type Badge */}
+                    <span style={{
+                      backgroundColor: vostcard.isQuickcard ? '#ff9800' : '#2196f3',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase'
+                    }}>
+                      {vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}
+                    </span>
                   </div>
 
                   {/* Description */}
