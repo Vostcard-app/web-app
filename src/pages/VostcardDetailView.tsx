@@ -487,79 +487,123 @@ ${privateUrl}`;
       </div>
 
       {/* Media Section */}
-      <div style={{ 
-        padding: '20px', 
-        display: 'flex', 
-        gap: '10px',
-        height: '300px'
-      }}>
-        {/* Video Section */}
+      {vostcard.isQuickcard ? (
+        // Quickcard layout - single centered photo
         <div style={{ 
-          flex: 1,
-          backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          position: 'relative'
-        }}>
-          {vostcard.videoURL ? (
-            <video
-              ref={videoRef}
-              src={vostcard.videoURL}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                cursor: 'pointer'
-              }}
-              controls
-              playsInline
-              onClick={() => setShowVideoModal(true)}
-            />
-          ) : null}
-        </div>
-
-        {/* Photos Section */}
-        <div style={{ 
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '10px'
+          padding: '20px', 
+          display: 'flex', 
+          justifyContent: 'center',
+          height: '300px'
         }}>
           {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
-            vostcard.photoURLs.slice(0, 2).map((photoURL: string, index: number) => (
-              <div key={index} style={{ 
+            <div style={{ 
+              width: '100%',
+              backgroundColor: 'transparent',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <img
+                src={vostcard.photoURLs[0]}
+                alt="Quickcard"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  cursor: 'pointer'
+                }}
+                onClick={() => setSelectedPhoto(vostcard.photoURLs[0])}
+              />
+            </div>
+          ) : (
+            <div style={{ 
+              width: '100%',
+              backgroundColor: '#f0f0f0',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#999',
+              fontSize: '18px'
+            }}>
+              No photo available
+            </div>
+          )}
+        </div>
+      ) : (
+        // Regular vostcard layout - video and photo side by side
+        <div style={{ 
+          padding: '20px', 
+          display: 'flex', 
+          gap: '10px',
+          height: '300px'
+        }}>
+          {/* Video Section */}
+          <div style={{ 
+            flex: 1,
+            backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            position: 'relative'
+          }}>
+            {vostcard.videoURL ? (
+              <video
+                ref={videoRef}
+                src={vostcard.videoURL}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  cursor: 'pointer'
+                }}
+                controls
+                playsInline
+                onClick={() => setShowVideoModal(true)}
+              />
+            ) : null}
+          </div>
+
+          {/* Photos Section */}
+          <div style={{ 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+          }}>
+            {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
+              <div style={{ 
                 flex: 1,
                 borderRadius: '8px', 
                 overflow: 'hidden'
               }}>
                 <img
-                  src={photoURL}
-                  alt={`Photo ${index + 1}`}
+                  src={vostcard.photoURLs[0]}
+                  alt="Photo"
                   style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
                     cursor: 'pointer'
                   }}
-                  onClick={() => setSelectedPhoto(photoURL)}
+                  onClick={() => setSelectedPhoto(vostcard.photoURLs[0])}
                 />
               </div>
-            ))
-          ) : (
-            <div style={{ 
-              flex: 1,
-              backgroundColor: '#f0f0f0',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#999'
-            }}>
-              No photos
-            </div>
-          )}
+            ) : (
+              <div style={{ 
+                flex: 1,
+                backgroundColor: '#f0f0f0',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#999'
+              }}>
+                No photos
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Action Icons Row */}
       <div style={{
