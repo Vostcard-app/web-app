@@ -84,21 +84,7 @@ const RootView: React.FC = () => {
       }}>
         <span>Vōstcard</span>
         
-        {/* Version indicator - remove after confirming deployment */}
-        <div style={{
-          position: 'absolute',
-          top: '5px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'lime',
-          color: 'black',
-          padding: '2px 8px',
-          fontSize: '12px',
-          borderRadius: '4px',
-          fontWeight: 'bold'
-        }}>
-          v2024.3-responsive-fix
-        </div>
+
         
         <div 
           onClick={() => setShowVideoModal(true)}
@@ -234,43 +220,23 @@ const RootView: React.FC = () => {
         />
       </div>
 
-      {/* User Guide Button */}
+      {/* User Guide Button - Simple Working Version */}
       <div style={{
-        position: 'fixed', // Changed from absolute to fixed
+        position: 'absolute',
         top: '50%',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 9999, // Higher z-index
+        zIndex: 1000,
         padding: '0 20px',
         boxSizing: 'border-box',
-        marginTop: '80px',
-        pointerEvents: 'auto',
-        // Force visibility
-        visibility: 'visible',
-        opacity: 1
+        marginTop: '80px'
       }}>
         <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (typeof console !== 'undefined' && console.log) {
-              console.log('User Guide button clicked!');
-            }
-            navigate('/user-guide');
-          }}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (typeof console !== 'undefined' && console.log) {
-              console.log('User Guide button touched!');
-            }
-            navigate('/user-guide');
-          }}
+          onClick={() => navigate('/user-guide')}
           style={{
-            background: '#E62A2E', // Original red color
+            background: '#E62A2E',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -281,45 +247,29 @@ const RootView: React.FC = () => {
             maxWidth: '400px',
             boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)',
             cursor: 'pointer',
-            letterSpacing: '0.01em',
-            position: 'relative',
-            zIndex: 10001, // Keep the higher z-index that worked
-            pointerEvents: 'auto',
-            touchAction: 'manipulation',
-            display: 'block',
-            visibility: 'visible',
-            opacity: 1
+            letterSpacing: '0.01em'
           }}
         >
           User Guide
         </button>
       </div>
 
-      {/* Log In Button at Bottom */}
+      {/* Login Button - Simple Working Version */}
       <div style={{
-        position: 'fixed', // Changed from absolute to fixed
+        position: 'absolute',
         bottom: '92px',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 9999, // Higher z-index
+        zIndex: 1000,
         padding: '0 20px',
-        boxSizing: 'border-box',
-        // Force visibility
-        visibility: 'visible',
-        opacity: 1
+        boxSizing: 'border-box'
       }}>
         <button
-          type="button"
-          onClick={() => {
-            if (typeof console !== 'undefined' && console.log) {
-              console.log('Login/Register button clicked!');
-            }
-            navigate('/login');
-          }}
+          onClick={() => navigate('/login')}
           style={{
-            background: '#07345c', // Original blue color
+            background: '#07345c',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -330,80 +280,14 @@ const RootView: React.FC = () => {
             maxWidth: '400px',
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
             cursor: 'pointer',
-            letterSpacing: '0.01em',
-            position: 'relative',
-            zIndex: 10001, // Keep the higher z-index that worked
-            pointerEvents: 'auto',
-            display: 'block',
-            visibility: 'visible',
-            opacity: 1
+            letterSpacing: '0.01em'
           }}
         >
           Login/Register
         </button>
       </div>
 
-      {/* Responsive CSS Fix */}
-      <style>{`
-        /* Mobile-first: Default responsive behavior */
-        @media screen and (max-width: 768px) {
-          div[style*="position: fixed"][style*="top: 50%"],
-          div[style*="position: fixed"][style*="bottom: 92px"] {
-            position: fixed !important;
-            left: 0 !important;
-            right: 0 !important;
-            padding: 0 20px !important;
-            box-sizing: border-box !important;
-          }
-          
-          div[style*="position: fixed"] button {
-            width: 100% !important;
-            max-width: 400px !important;
-            margin: 0 auto !important;
-            padding: 16px 0 !important;
-            font-size: 24px !important;
-          }
-        }
-        
-        /* Desktop: Force button visibility */
-        @media screen and (min-width: 769px) {
-          div[style*="position: fixed"][style*="top: 50%"],
-          div[style*="position: fixed"][style*="bottom: 92px"] {
-            position: fixed !important;
-            z-index: 999999 !important;
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-            transform: translateZ(0) !important;
-            left: 0 !important;
-            right: 0 !important;
-            padding: 0 20px !important;
-            box-sizing: border-box !important;
-          }
-          
-          div[style*="position: fixed"] button {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-            position: relative !important;
-            z-index: 999999 !important;
-            transform: translateZ(0) !important;
-            min-height: 50px !important;
-            width: 100% !important;
-            max-width: 400px !important;
-            margin: 0 auto !important;
-          }
-          
-          /* Ensure buttons are above everything */
-          .leaflet-container,
-          .leaflet-map-pane,
-          .leaflet-tile-pane {
-            z-index: 1 !important;
-          }
-        }
-      `}</style>
+
 
       {/* Video Modal */}
       <AnimatePresence>
