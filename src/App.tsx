@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { VostcardProvider } from "./context/VostcardContext";
 import { ScriptProvider } from "./context/ScriptContext";
 import { FollowingProvider } from "./context/FollowingContext";
+import { DriveModeProvider } from "./context/DriveModeContext";
 import ResponsiveContainer from "./components/ResponsiveContainer";
 
 import RootView from "./pages/RootView";
@@ -65,7 +66,8 @@ function App() {
       <VostcardProvider>
         <ScriptProvider>
           <FollowingProvider>
-            <Router>
+            <DriveModeProvider>
+              <Router>
               <AuthRedirect />
               <ResponsiveContainer>
                 <Routes>
@@ -162,7 +164,8 @@ function App() {
                   <Route path="/studio" element={<VostcardStudioView />} />
                 </Routes>
               </ResponsiveContainer>
-            </Router>
+              </Router>
+            </DriveModeProvider>
           </FollowingProvider>
         </ScriptProvider>
       </VostcardProvider>

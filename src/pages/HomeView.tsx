@@ -7,6 +7,7 @@ import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMap
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
+import { useDriveMode } from '../context/DriveModeContext';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -336,6 +337,7 @@ const HomeView = () => {
   const location = useLocation();
   const { clearVostcard, manualSync, createQuickcard } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
+  const { isDriveModeEnabled, enableDriveMode, disableDriveMode } = useDriveMode();
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [actualUserLocation, setActualUserLocation] = useState<[number, number] | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
@@ -851,7 +853,8 @@ const HomeView = () => {
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
     { label: 'Script tool', route: '/script-library' },
-    ...(userRole === 'admin' || userRole === 'guide' ? [{ label: '🚀 Vostcard Studio', route: '/studio' }] : []),
+    { label: `Drive Mode ${isDriveModeEnabled ? 'ON' : 'OFF'}`, route: null },
+    ...(userRole === 'admin' || userRole === 'guide' ? [{ label: 'Vostcard Studio', route: '/studio' }] : []),
     ...(userRole === 'admin' ? [{ label: 'Admin Panel', route: '/admin' }] : []),
     { label: 'Account Settings', route: '/account-settings' },
     { label: 'Suggestion Box', route: '/suggestion-box' },
@@ -874,6 +877,15 @@ const HomeView = () => {
     
     if (label === 'Logout') {
       handleLogout();
+    } else if (label.startsWith('Drive Mode')) {
+      // Toggle Drive Mode
+      if (isDriveModeEnabled) {
+        disableDriveMode();
+        console.log('🛑 Drive Mode disabled from menu');
+      } else {
+        enableDriveMode(true); // Manual enable
+        console.log('🚗 Drive Mode enabled from menu');
+      }
     } else if (route) {
       console.log(`🔄 Navigating to: ${route}`);
       
