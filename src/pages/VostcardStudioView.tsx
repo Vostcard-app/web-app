@@ -242,13 +242,22 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
+    if (!selectedLocation) {
+      alert('Please set a location for your Drivecard using Pin Placer.');
+      return;
+    }
+
     try {
-      // Create new Drivecard with default "Drive mode" category
+      // Create new Drivecard with selected location
       const newDrivecard: Drivecard = {
         id: `drivecard_${Date.now()}`,
         title: title.trim(),
         audio: audioBlob,
-        geo: { latitude: 0, longitude: 0 }, // Will be set when Pin Place is implemented
+        geo: { 
+          latitude: selectedLocation.latitude, 
+          longitude: selectedLocation.longitude,
+          address: selectedLocation.address 
+        },
         category: 'Drive mode',
         userID: user.uid,
         username: user.displayName || user.email?.split('@')[0] || 'Anonymous',
@@ -261,6 +270,7 @@ const VostcardStudioView: React.FC = () => {
       
       // Clear form
       setTitle('');
+      setSelectedLocation(null);
       clearRecording();
       
       alert('Drivecard saved successfully!');
@@ -272,16 +282,49 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handlePinPlacer = () => {
-    // Navigate to a Drivecard-specific pin placer
+    // Store current form data in session storage
+    sessionStorage.setItem('drivecardFormData', JSON.stringify({
+      title: title,
+      audioBlob: audioBlob ? 'has_audio' : null, // Can't serialize Blob
+      audioSource: audioSource,
+      audioFileName: audioFileName
+    }));
+    
+    // Navigate to pin placer without passing functions
     navigate('/drivecard-pin-placer', {
       state: {
-        title: title || 'New Drivecard',
-        onLocationSelected: (location: any) => {
-          setSelectedLocation(location);
-        }
+        title: title || 'New Drivecard'
       }
     });
   };
+
+  // Check for location data when component mounts or when returning from pin placer
+  useEffect(() => {
+    const savedLocation = sessionStorage.getItem('drivecardLocation');
+    if (savedLocation) {
+      try {
+        const location = JSON.parse(savedLocation);
+        setSelectedLocation(location);
+        sessionStorage.removeItem('drivecardLocation'); // Clear after using
+      } catch (error) {
+        console.error('Error parsing saved location:', error);
+      }
+    }
+
+    // Restore form data if available
+    const savedFormData = sessionStorage.getItem('drivecardFormData');
+    if (savedFormData) {
+      try {
+        const formData = JSON.parse(savedFormData);
+        if (formData.title && !title) {
+          setTitle(formData.title);
+        }
+        sessionStorage.removeItem('drivecardFormData'); // Clear after using
+      } catch (error) {
+        console.error('Error parsing saved form data:', error);
+      }
+    }
+  }, []);
 
   // Access denied screen
   if (!hasAccess) {
@@ -635,18 +678,56 @@ const VostcardStudioView: React.FC = () => {
               Pin Placer
             </button>
             
+            {/* Location Display */}
+            {selectedLocation && (
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#333',
+                  marginBottom: '8px'
+                }}>
+                  Location
+                </label>
+                <div style={{
+                  backgroundColor: '#e8f5e8',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  border: '1px solid #4caf50',
+                  fontSize: '14px',
+                  color: '#2e7d32'
+                }}>
+                  📍 {selectedLocation.address || `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`}
+                  <button
+                    onClick={() => setSelectedLocation(null)}
+                    style={{
+                      marginLeft: '8px',
+                      background: 'none',
+                      border: 'none',
+                      color: '#d32f2f',
+                      cursor: 'pointer',
+                      fontSize: '12px'
+                    }}
+                  >
+                    ✕ Remove
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button 
               onClick={handleSaveDrivecard}
-              disabled={!title.trim() || !audioBlob || isRecording}
+              disabled={!title.trim() || !audioBlob || !selectedLocation || isRecording}
               style={{
-                backgroundColor: (!title.trim() || !audioBlob || isRecording) ? '#ccc' : '#002B4D',
+                backgroundColor: (!title.trim() || !audioBlob || !selectedLocation || isRecording) ? '#ccc' : '#002B4D',
                 color: 'white',
                 border: 'none',
                 padding: '12px 8px',
                 borderRadius: '4px',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                cursor: (!title.trim() || !audioBlob || isRecording) ? 'not-allowed' : 'pointer'
+                cursor: (!title.trim() || !audioBlob || !selectedLocation || isRecording) ? 'not-allowed' : 'pointer'
               }}
             >
               Save
