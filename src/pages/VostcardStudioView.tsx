@@ -6,6 +6,8 @@ import { useStudioAccess, useStudioAccessSummary } from '../hooks/useStudioAcces
 import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from '../components/shared';
 import PinPlacerModal from '../components/PinPlacerModal';
+import { drivecardService } from '../services/drivecardService';
+import type { Drivecard } from '../types/VostcardTypes';
 
 const VostcardStudioView: React.FC = () => {
   const navigate = useNavigate();
@@ -234,7 +236,7 @@ const VostcardStudioView: React.FC = () => {
 
     try {
       // Create new Drivecard with default "Drive mode" category
-      const newDrivecard = {
+      const newDrivecard: Drivecard = {
         id: `drivecard_${Date.now()}`,
         title: title.trim(),
         audio: audioBlob,
@@ -246,13 +248,8 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // TODO: Save to local storage and/or Firebase
-      console.log('💾 Saving Drivecard:', {
-        ...newDrivecard,
-        audio: `Blob(${audioBlob.size} bytes)`,
-        audioSource: audioSource,
-        fileName: audioFileName
-      });
+      // Save to storage service
+      await drivecardService.save(newDrivecard);
       
       // Clear form
       setTitle('');

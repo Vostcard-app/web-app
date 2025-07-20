@@ -6,6 +6,7 @@ import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/fire
 import { db } from '../firebase/firebaseConfig';
 import { LoadingSpinner, ErrorMessage } from '../components/shared';
 import type { Drivecard } from '../types/VostcardTypes';
+import { drivecardService } from '../services/drivecardService';
 
 const DrivecardsListView: React.FC = () => {
   const navigate = useNavigate();
@@ -62,20 +63,8 @@ const DrivecardsListView: React.FC = () => {
         return;
       }
 
-      // Load Drivecards from Firebase
-      const q = query(
-        collection(db, 'drivecards'),
-        where('userID', '==', user.uid)
-      );
-      
-      const snapshot = await getDocs(q);
-      const loadedDrivecards = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate?.() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate?.() || new Date()
-      })) as Drivecard[];
-
+      // Load Drivecards using the service
+      const loadedDrivecards = await drivecardService.loadAll();
       setDrivecards(loadedDrivecards);
       console.log('✅ Drivecards loaded successfully:', loadedDrivecards.length);
       
@@ -112,8 +101,8 @@ const DrivecardsListView: React.FC = () => {
     try {
       setDeletingIds(prev => new Set([...prev, drivecardId]));
       
-      // Delete from Firebase
-      await deleteDoc(doc(db, 'drivecards', drivecardId));
+      // Delete using the service
+      await drivecardService.delete(drivecardId);
       
       // Remove from local state
       setDrivecards(prev => prev.filter(d => d.id !== drivecardId));
