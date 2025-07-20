@@ -41,6 +41,13 @@ const DrivecardPinPlacer: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Array<{
+    latitude: number;
+    longitude: number;
+    displayAddress: string;
+    name: string;
+  }>>([]);
+  const [showResults, setShowResults] = useState(false);
   
   const markerRef = useRef<any>(null);
   const { title = 'New Drivecard' } = location.state || {};
@@ -63,6 +70,7 @@ const DrivecardPinPlacer: React.FC = () => {
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setPinPosition([lat, lng]);
+    setShowResults(false); // Hide search results when clicking map
   };
 
   const handleSearch = async () => {
@@ -70,33 +78,52 @@ const DrivecardPinPlacer: React.FC = () => {
     
     setIsSearching(true);
     setError(null);
+    setShowResults(false);
 
     try {
-      // Use a geocoding service to search for the location
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
-      );
+      // Use the existing Netlify geocode function
+      const response = await fetch('/.netlify/functions/geocode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'search',
+          searchQuery: searchQuery.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      if (!response.ok) throw new Error('Search failed');
-      
-      const results = await response.json();
-      
-      if (results.length > 0) {
-        const result = results[0];
-        const lat = parseFloat(result.lat);
-        const lng = parseFloat(result.lon);
-        setPinPosition([lat, lng]);
-        setSearchQuery(''); // Clear search after successful search
+      if (data.results && data.results.length > 0) {
+        setSearchResults(data.results);
+        setShowResults(true);
+        
+        // Auto-select first result
+        const firstResult = data.results[0];
+        setPinPosition([firstResult.latitude, firstResult.longitude]);
       } else {
         setError('Location not found. Please try a different search.');
+        setSearchResults([]);
       }
       
     } catch (err) {
       console.error('Search error:', err);
       setError('Failed to search for location. Please try again.');
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleSearchResultClick = (result: typeof searchResults[0]) => {
+    setPinPosition([result.latitude, result.longitude]);
+    setSearchQuery(result.name);
+    setShowResults(false);
   };
 
   const handleConfirm = () => {
@@ -181,43 +208,93 @@ const DrivecardPinPlacer: React.FC = () => {
         </div>
 
         {/* Search row */}
-        <div style={{
-          display: 'flex',
-          gap: '8px',
-          alignItems: 'center'
-        }}>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search for a location..."
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center'
+          }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (showResults) setShowResults(false); // Hide results while typing
+              }}
+              placeholder="Search for a location..."
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
+            />
+            <button
+              onClick={handleSearch}
+              disabled={isSearching || !searchQuery.trim()}
+              style={{
+                backgroundColor: isSearching || !searchQuery.trim() ? '#ccc' : '#007aff',
+                color: 'white',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <FaSearch size={12} />
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+
+          {/* Search Results Dropdown */}
+          {showResults && searchResults.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              backgroundColor: 'white',
               border: '1px solid #ddd',
               borderRadius: '6px',
-              fontSize: '14px'
-            }}
-          />
-          <button
-            onClick={handleSearch}
-            disabled={isSearching || !searchQuery.trim()}
-            style={{
-              backgroundColor: '#007aff',
-              color: 'white',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            <FaSearch size={12} />
-            {isSearching ? 'Searching...' : 'Search'}
-          </button>
+              marginTop: '4px',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              zIndex: 1001,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  onClick={() => handleSearchResultClick(result)}
+                  style={{
+                    padding: '12px',
+                    borderBottom: index < searchResults.length - 1 ? '1px solid #eee' : 'none',
+                    cursor: 'pointer',
+                    backgroundColor: 'white',
+                    '&:hover': { backgroundColor: '#f5f5f5' }
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '2px' }}>
+                    {result.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    {result.displayAddress}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -225,7 +302,7 @@ const DrivecardPinPlacer: React.FC = () => {
       <div style={{ 
         height: '100%', 
         width: '100%', 
-        paddingTop: '100px',
+        paddingTop: '120px',
         paddingBottom: '80px'
       }}>
         <MapContainer
@@ -307,7 +384,7 @@ const DrivecardPinPlacer: React.FC = () => {
       {error && (
         <div style={{
           position: 'absolute',
-          top: '120px',
+          top: '140px',
           left: '16px',
           right: '16px',
           backgroundColor: '#ffebee',
