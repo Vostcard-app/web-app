@@ -271,10 +271,16 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
-  const handleLocationSelected = (location: { latitude: number; longitude: number; address?: string }) => {
-    setSelectedLocation(location);
-    setShowPinPlacer(false);
-    console.log('📍 Location selected:', location);
+  const handlePinPlacer = () => {
+    // Navigate to a Drivecard-specific pin placer
+    navigate('/drivecard-pin-placer', {
+      state: {
+        title: title || 'New Drivecard',
+        onLocationSelected: (location: any) => {
+          setSelectedLocation(location);
+        }
+      }
+    });
   };
 
   // Access denied screen
@@ -609,7 +615,7 @@ const VostcardStudioView: React.FC = () => {
             </button>
             
             <button 
-              onClick={() => setShowPinPlacer(true)}
+              onClick={handlePinPlacer}
               style={{
                 backgroundColor: '#002B4D',
                 color: 'white',
