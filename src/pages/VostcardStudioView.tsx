@@ -17,6 +17,14 @@ const VostcardStudioView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState('');
   
+  // Pin Placer Modal state
+  const [showPinPlacer, setShowPinPlacer] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address?: string;
+  } | null>(null);
+  
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -261,6 +269,12 @@ const VostcardStudioView: React.FC = () => {
       console.error('❌ Error saving Drivecard:', error);
       alert('Failed to save Drivecard. Please try again.');
     }
+  };
+
+  const handleLocationSelected = (location: { latitude: number; longitude: number; address?: string }) => {
+    setSelectedLocation(location);
+    setShowPinPlacer(false);
+    console.log('📍 Location selected:', location);
   };
 
   // Access denied screen
@@ -654,6 +668,15 @@ const VostcardStudioView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Pin Placer Modal */}
+      {showPinPlacer && (
+        <PinPlacerModal
+          isOpen={showPinPlacer}
+          onClose={() => setShowPinPlacer(false)}
+          onLocationSelected={handleLocationSelected}
+        />
+      )}
     </div>
   );
 };
