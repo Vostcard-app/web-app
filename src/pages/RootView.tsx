@@ -28,45 +28,43 @@ const RootView: React.FC = () => {
         return;
       }
 
-      // Set default location immediately
+      // Set default location immediately so map shows right away
       setUserLocation([40.7128, -74.0060]);
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('📍 Mobile location success');
+          console.log('📍 Location found:', position.coords);
           setUserLocation([position.coords.latitude, position.coords.longitude]);
           setLocationError(null);
           setIsLocationLoading(false);
         },
         (error) => {
-          console.warn('📍 Mobile location error:', error.message);
+          console.warn('📍 Location error:', error.message);
           setLocationError(`Location: ${error.message}`);
           setIsLocationLoading(false);
           // Keep default NYC location
         },
         {
-          enableHighAccuracy: false, // Less battery drain
-          timeout: 8000, // Shorter timeout
-          maximumAge: 300000 // 5 minutes cache
+          enableHighAccuracy: false,
+          timeout: 8000,
+          maximumAge: 300000
         }
       );
     };
 
-    // Small delay to ensure everything is mounted
     setTimeout(getLocation, 100);
   }, []);
 
   return (
     <div style={{ 
-      height: '100svh', // Mobile-friendly viewport
-      minHeight: '100vh', // Fallback
+      height: '100svh',
+      minHeight: '100vh',
       width: '100vw',
-      position: 'fixed', // Prevents mobile scrolling issues
+      position: 'fixed',
       top: 0,
       left: 0,
       overflow: 'hidden',
       backgroundColor: '#f5f5f5',
-      // Mobile safe areas
       paddingTop: 'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)'
     }}>
@@ -82,18 +80,12 @@ const RootView: React.FC = () => {
           animation: bobbing 2s ease-in-out infinite;
         }
         
-        /* Mobile leaflet fixes */
         .leaflet-container {
           font-family: inherit;
           height: 100% !important;
           width: 100% !important;
         }
         
-        .leaflet-control-container {
-          pointer-events: auto;
-        }
-        
-        /* Better mobile touch */
         .leaflet-control-zoom {
           margin-top: 10px !important;
           margin-right: 10px !important;
@@ -115,10 +107,10 @@ const RootView: React.FC = () => {
         Vōstcard
       </div>
 
-      {/* Map Container - Mobile optimized */}
+      {/* Map Container */}
       <div style={{
         position: 'absolute',
-        top: '64px', // Header height
+        top: '64px',
         left: 0,
         right: 0,
         bottom: 0,
@@ -127,15 +119,14 @@ const RootView: React.FC = () => {
         {userLocation ? (
           <MapContainer
             center={userLocation}
-            zoom={13} // Slightly zoomed out for mobile
+            zoom={13}
             style={{ height: '100%', width: '100%' }}
             zoomControl={true}
             dragging={true}
             touchZoom={true}
             doubleClickZoom={true}
-            scrollWheelZoom={false} // Disable for better mobile scrolling
+            scrollWheelZoom={false}
             attributionControl={false}
-            // Mobile-specific options
             tap={true}
             touchExtend={1}
           >
@@ -145,7 +136,6 @@ const RootView: React.FC = () => {
               maxZoom={18}
             />
             
-            {/* User location marker */}
             <Marker position={userLocation} icon={userLocationIcon}>
               <Popup>
                 <div style={{ textAlign: 'center' }}>
@@ -157,7 +147,6 @@ const RootView: React.FC = () => {
             </Marker>
           </MapContainer>
         ) : (
-          /* Loading state */
           <div style={{
             height: '100%',
             backgroundColor: '#e8f4f8',
@@ -171,20 +160,13 @@ const RootView: React.FC = () => {
             textAlign: 'center'
           }}>
             <div style={{ marginBottom: '16px' }}>
-              {isLocationLoading ? '📍 Loading your location...' : '📍 Using default location'}
+              {isLocationLoading ? '📍 Loading your location...' : '📍 Map ready'}
             </div>
             {locationError && (
-              <div style={{ 
-                fontSize: '14px', 
-                color: '#999',
-                marginBottom: '16px'
-              }}>
+              <div style={{ fontSize: '14px', color: '#999', marginBottom: '16px' }}>
                 {locationError}
               </div>
             )}
-            <div style={{ fontSize: '14px', opacity: 0.7 }}>
-              Map will appear once loaded
-            </div>
           </div>
         )}
       </div>
@@ -202,7 +184,7 @@ const RootView: React.FC = () => {
           alt="Vostcard Pin"
           className="bobbing-pin"
           style={{
-            width: '60px', // Smaller for mobile
+            width: '60px',
             height: '60px',
             filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
           }}
@@ -219,22 +201,22 @@ const RootView: React.FC = () => {
         top: '64px',
         left: 0,
         right: 0,
-        bottom: '140px', // Space for buttons
+        bottom: '180px', // More space for 3 buttons
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         zIndex: 10,
         pointerEvents: 'none'
       }} />
 
-      {/* Mobile-optimized buttons */}
+      {/* User Guide Button - Centered in map area */}
       <div style={{
         position: 'absolute',
-        bottom: '20px',
-        left: '16px',
-        right: '16px',
-        zIndex: 100,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        marginTop: '120px', // Below the pin
+        zIndex: 2000,
+        width: 'calc(100% - 32px)',
+        maxWidth: '400px'
       }}>
         <button
           onClick={() => navigate('/user-guide')}
@@ -243,9 +225,10 @@ const RootView: React.FC = () => {
             color: 'white',
             border: 'none',
             borderRadius: '8px',
-            fontSize: '18px',
+            fontSize: '20px',
             fontWeight: 600,
             padding: '16px',
+            width: '100%',
             boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)',
             cursor: 'pointer',
             touchAction: 'manipulation'
@@ -253,7 +236,18 @@ const RootView: React.FC = () => {
         >
           User Guide
         </button>
-        
+      </div>
+
+      {/* Login & Register Buttons - Bottom */}
+      <div style={{
+        position: 'absolute',
+        bottom: '20px',
+        left: '16px',
+        right: '16px',
+        zIndex: 100,
+        display: 'flex',
+        gap: '12px'
+      }}>
         <button
           onClick={() => navigate('/login')}
           style={{
@@ -264,6 +258,7 @@ const RootView: React.FC = () => {
             fontSize: '18px',
             fontWeight: 600,
             padding: '16px',
+            flex: 1,
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
             cursor: 'pointer',
             touchAction: 'manipulation'
@@ -271,9 +266,28 @@ const RootView: React.FC = () => {
         >
           Log In
         </button>
+        
+        <button
+          onClick={() => navigate('/register')}
+          style={{
+            background: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '18px',
+            fontWeight: 600,
+            padding: '16px',
+            flex: 1,
+            boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
+            cursor: 'pointer',
+            touchAction: 'manipulation'
+          }}
+        >
+          Register
+        </button>
       </div>
 
-      {/* Debug info for mobile (remove in production) */}
+      {/* Debug info (shows if location permission denied) */}
       {locationError && (
         <div style={{
           position: 'absolute',
@@ -287,7 +301,7 @@ const RootView: React.FC = () => {
           fontSize: '12px',
           zIndex: 200
         }}>
-          {locationError}
+          📍 {isLocationLoading ? 'Getting your location...' : 'Using default location (NYC)'}
         </div>
       )}
     </div>
