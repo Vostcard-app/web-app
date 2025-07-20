@@ -14,251 +14,282 @@ const userLocationIcon = new L.Icon({
 
 const RootView: React.FC = () => {
   const navigate = useNavigate();
-  const [debugInfo, setDebugInfo] = useState('Starting mobile debug...');
-  const [screenInfo, setScreenInfo] = useState('');
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLocationLoading, setIsLocationLoading] = useState(true);
 
+  // Mobile-optimized geolocation
   useEffect(() => {
-    console.log('📱 Mobile RootView mounted');
-    
-    // Get screen information
-    const screenDebug = `Screen: ${window.innerWidth}x${window.innerHeight}, Device: ${window.screen.width}x${window.screen.height}`;
-    setScreenInfo(screenDebug);
-    console.log('📱', screenDebug);
-    
-    setDebugInfo('Mobile app is loading...');
-    
-    // Test geolocation with mobile-specific settings
-    if (navigator.geolocation) {
-      console.log('📱 Testing geolocation...');
+    const getLocation = () => {
+      if (!navigator.geolocation) {
+        setLocationError('Geolocation not supported');
+        setUserLocation([40.7128, -74.0060]); // Default to NYC
+        setIsLocationLoading(false);
+        return;
+      }
+
+      // Set default location immediately
+      setUserLocation([40.7128, -74.0060]);
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          console.log('📍 Mobile location found:', position.coords);
-          setDebugInfo(`✅ Location working: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
+          console.log('📍 Mobile location success');
+          setUserLocation([position.coords.latitude, position.coords.longitude]);
+          setLocationError(null);
+          setIsLocationLoading(false);
         },
         (error) => {
-          console.error('❌ Mobile location error:', error);
-          let errorMsg = 'Location failed: ';
-          switch(error.code) {
-            case 1: errorMsg += 'Permission denied'; break;
-            case 2: errorMsg += 'Position unavailable'; break;  
-            case 3: errorMsg += 'Timeout'; break;
-            default: errorMsg += error.message;
-          }
-          setDebugInfo(errorMsg);
+          console.warn('📍 Mobile location error:', error.message);
+          setLocationError(`Location: ${error.message}`);
+          setIsLocationLoading(false);
+          // Keep default NYC location
         },
         {
-          enableHighAccuracy: false, // Less aggressive for mobile
-          timeout: 10000,
-          maximumAge: 60000
+          enableHighAccuracy: false, // Less battery drain
+          timeout: 8000, // Shorter timeout
+          maximumAge: 300000 // 5 minutes cache
         }
       );
-    } else {
-      setDebugInfo('❌ Geolocation not supported');
-    }
+    };
+
+    // Small delay to ensure everything is mounted
+    setTimeout(getLocation, 100);
   }, []);
 
   return (
     <div style={{ 
-      height: '100svh', // Small viewport height - better for mobile
-      minHeight: '100vh', // Fallback for older browsers
+      height: '100svh', // Mobile-friendly viewport
+      minHeight: '100vh', // Fallback
       width: '100vw',
-      backgroundColor: '#e8f4f8', // Light blue so you can see if anything loads
-      display: 'flex',
-      flexDirection: 'column',
-      color: '#333',
-      fontFamily: 'system-ui, sans-serif',
-      overflow: 'hidden',
       position: 'fixed', // Prevents mobile scrolling issues
       top: 0,
       left: 0,
-      // Add safe area padding for mobile
+      overflow: 'hidden',
+      backgroundColor: '#f5f5f5',
+      // Mobile safe areas
       paddingTop: 'env(safe-area-inset-top)',
-      paddingBottom: 'env(safe-area-inset-bottom)',
-      paddingLeft: 'env(safe-area-inset-left)',
-      paddingRight: 'env(safe-area-inset-right)'
+      paddingBottom: 'env(safe-area-inset-bottom)'
     }}>
       
-      {/* Mobile Header - Fixed position */}
+      {/* CSS for mobile optimization */}
+      <style>{`
+        @keyframes bobbing {
+          0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
+          50% { transform: translate(-50%, -50%) translateY(-15px); }
+        }
+        
+        .bobbing-pin {
+          animation: bobbing 2s ease-in-out infinite;
+        }
+        
+        /* Mobile leaflet fixes */
+        .leaflet-container {
+          font-family: inherit;
+          height: 100% !important;
+          width: 100% !important;
+        }
+        
+        .leaflet-control-container {
+          pointer-events: auto;
+        }
+        
+        /* Better mobile touch */
+        .leaflet-control-zoom {
+          margin-top: 10px !important;
+          margin-right: 10px !important;
+        }
+      `}</style>
+
+      {/* Header */}
       <div style={{
         background: '#07345c',
         color: 'white',
-        padding: '12px 16px',
+        padding: '16px 20px',
         textAlign: 'center',
-        fontSize: '18px',
-        fontWeight: 'bold',
-        position: 'sticky',
-        top: 0,
+        fontSize: '24px',
+        fontWeight: 700,
+        position: 'relative',
         zIndex: 1000,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
-        📱 Vōstcard Mobile Debug
+        Vōstcard
       </div>
 
-      {/* Scrollable Content */}
+      {/* Map Container - Mobile optimized */}
       <div style={{
-        flex: 1,
-        padding: '20px 16px',
+        position: 'absolute',
+        top: '64px', // Header height
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 1
+      }}>
+        {userLocation ? (
+          <MapContainer
+            center={userLocation}
+            zoom={13} // Slightly zoomed out for mobile
+            style={{ height: '100%', width: '100%' }}
+            zoomControl={true}
+            dragging={true}
+            touchZoom={true}
+            doubleClickZoom={true}
+            scrollWheelZoom={false} // Disable for better mobile scrolling
+            attributionControl={false}
+            // Mobile-specific options
+            tap={true}
+            touchExtend={1}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; OpenStreetMap contributors'
+              maxZoom={18}
+            />
+            
+            {/* User location marker */}
+            <Marker position={userLocation} icon={userLocationIcon}>
+              <Popup>
+                <div style={{ textAlign: 'center' }}>
+                  <strong>Your Location</strong>
+                  <br />
+                  <small>Welcome to Vōstcard!</small>
+                </div>
+              </Popup>
+            </Marker>
+          </MapContainer>
+        ) : (
+          /* Loading state */
+          <div style={{
+            height: '100%',
+            backgroundColor: '#e8f4f8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column',
+            fontSize: '16px',
+            color: '#666',
+            padding: '20px',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '16px' }}>
+              {isLocationLoading ? '📍 Loading your location...' : '📍 Using default location'}
+            </div>
+            {locationError && (
+              <div style={{ 
+                fontSize: '14px', 
+                color: '#999',
+                marginBottom: '16px'
+              }}>
+                {locationError}
+              </div>
+            )}
+            <div style={{ fontSize: '14px', opacity: 0.7 }}>
+              Map will appear once loaded
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Centered Vostcard Pin */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        zIndex: 100,
+        pointerEvents: 'none'
+      }}>
+        <img 
+          src="/Vostcard_pin.png"
+          alt="Vostcard Pin"
+          className="bobbing-pin"
+          style={{
+            width: '60px', // Smaller for mobile
+            height: '60px',
+            filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
+          }}
+          onError={(e) => {
+            console.warn('Vostcard_pin.png failed to load');
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      </div>
+
+      {/* Semi-transparent overlay */}
+      <div style={{
+        position: 'absolute',
+        top: '64px',
+        left: 0,
+        right: 0,
+        bottom: '140px', // Space for buttons
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        zIndex: 10,
+        pointerEvents: 'none'
+      }} />
+
+      {/* Mobile-optimized buttons */}
+      <div style={{
+        position: 'absolute',
+        bottom: '20px',
+        left: '16px',
+        right: '16px',
+        zIndex: 100,
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        overflow: 'auto'
+        gap: '12px'
       }}>
+        <button
+          onClick={() => navigate('/user-guide')}
+          style={{
+            background: '#E62A2E',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '18px',
+            fontWeight: 600,
+            padding: '16px',
+            boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)',
+            cursor: 'pointer',
+            touchAction: 'manipulation'
+          }}
+        >
+          User Guide
+        </button>
         
-        {/* Status Card */}
-        <div style={{
-          background: 'white',
-          borderRadius: '12px',
-          padding: '20px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          width: '100%',
-          maxWidth: '350px',
-          marginBottom: '20px'
-        }}>
-          <h2 style={{ 
-            margin: '0 0 16px 0', 
-            color: '#07345c',
-            fontSize: '20px'
-          }}>
-            📱 Mobile Status
-          </h2>
-          
-          <div style={{ 
-            marginBottom: '16px', 
-            fontSize: '14px',
-            padding: '12px',
-            background: '#f8f9fa',
-            borderRadius: '6px',
-            wordBreak: 'break-all'
-          }}>
-            {debugInfo}
-          </div>
-
-          <div style={{ 
-            fontSize: '12px',
-            color: '#666',
-            marginBottom: '16px',
-            wordBreak: 'break-all'
-          }}>
-            {screenInfo}
-          </div>
-
-          <div style={{ 
-            fontSize: '12px',
-            color: '#666',
-            marginBottom: '16px'
-          }}>
-            User Agent: {navigator.userAgent.substring(0, 50)}...
-          </div>
-        </div>
-
-        {/* Mobile-Optimized Buttons */}
-        <div style={{
-          width: '100%',
-          maxWidth: '350px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
-        }}>
-          <button
-            onClick={() => {
-              console.log('📱 Login button tapped');
-              navigate('/login');
-            }}
-            style={{
-              background: '#07345c',
-              color: 'white',
-              border: 'none',
-              padding: '16px 24px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              touchAction: 'manipulation', // Improves mobile touch
-              width: '100%'
-            }}
-          >
-            🔐 Test Login
-          </button>
-          
-          <button
-            onClick={() => {
-              console.log('📱 User Guide button tapped');
-              navigate('/user-guide');
-            }}
-            style={{
-              background: '#E62A2E',
-              color: 'white',
-              border: 'none',
-              padding: '16px 24px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              touchAction: 'manipulation',
-              width: '100%'
-            }}
-          >
-            📖 Test User Guide
-          </button>
-
-          <button
-            onClick={() => {
-              console.log('📱 Reloading...');
-              window.location.reload();
-            }}
-            style={{
-              background: '#28a745',
-              color: 'white',
-              border: 'none',
-              padding: '16px 24px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              touchAction: 'manipulation',
-              width: '100%'
-            }}
-          >
-            🔄 Reload App
-          </button>
-
-          <button
-            onClick={() => {
-              // Test if it's a map issue by going to a simple page
-              console.log('📱 Testing simple navigation');
-              navigate('/user-guide');
-            }}
-            style={{
-              background: '#6f42c1',
-              color: 'white',
-              border: 'none',
-              padding: '16px 24px',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              touchAction: 'manipulation',
-              width: '100%'
-            }}
-          >
-            🧪 Test Simple Page
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/login')}
+          style={{
+            background: '#07345c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '18px',
+            fontWeight: 600,
+            padding: '16px',
+            boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
+            cursor: 'pointer',
+            touchAction: 'manipulation'
+          }}
+        >
+          Log In
+        </button>
       </div>
 
-      {/* Mobile Footer */}
-      <div style={{
-        padding: '16px',
-        textAlign: 'center',
-        color: '#666',
-        fontSize: '12px',
-        background: 'rgba(255,255,255,0.9)'
-      }}>
-        📱 If you see this, React is working on mobile!<br/>
-        Check console for errors (inspect in desktop browser)
-      </div>
+      {/* Debug info for mobile (remove in production) */}
+      {locationError && (
+        <div style={{
+          position: 'absolute',
+          top: '80px',
+          left: '10px',
+          right: '10px',
+          background: 'rgba(255,165,0,0.9)',
+          color: 'white',
+          padding: '8px 12px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          zIndex: 200
+        }}>
+          {locationError}
+        </div>
+      )}
     </div>
   );
 };
