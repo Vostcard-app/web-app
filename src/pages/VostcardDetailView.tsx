@@ -548,19 +548,19 @@ ${privateUrl}`;
           }}>
             {vostcard.videoURL ? (
               <>
-                <video
-                  ref={videoRef}
-                  src={vostcard.videoURL}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    cursor: 'pointer'
-                  }}
-                  playsInline
+              <video
+                ref={videoRef}
+                src={vostcard.videoURL}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  cursor: 'pointer'
+                }}
+                playsInline
                   muted
-                  onClick={() => setShowVideoModal(true)}
-                />
+                onClick={() => setShowVideoModal(true)}
+              />
                 {/* Play Button Overlay */}
                 <div
                   style={{

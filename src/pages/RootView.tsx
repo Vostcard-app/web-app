@@ -94,21 +94,21 @@ const RootView: React.FC = () => {
         zIndex: 1, // Changed from -1 to 1 to make map visible
       }}>
         {userLocation ? (
-          <MapContainer
-            center={userLocation}
+            <MapContainer
+              center={userLocation}
             zoom={14}
-            style={{ height: '100%', width: '100%' }}
+              style={{ height: '100%', width: '100%' }}
             zoomControl={true}
             dragging={true}
             touchZoom={true}
             doubleClickZoom={true}
             scrollWheelZoom={true}
-            attributionControl={false}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
+              attributionControl={false}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
             
             {/* User location marker */}
             <Marker position={userLocation} icon={userLocationIcon}>
@@ -120,7 +120,7 @@ const RootView: React.FC = () => {
                 </div>
               </Popup>
             </Marker>
-          </MapContainer>
+            </MapContainer>
         ) : (
           // Loading state with better visual feedback
           <div style={{
