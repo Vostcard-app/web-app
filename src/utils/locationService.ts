@@ -3,6 +3,9 @@ export interface LocationResult {
   longitude: number;
   accuracy: number;
   source: 'gps' | 'network' | 'fallback';
+  speed?: number; // Speed in mph (if available)
+  heading?: number; // Direction in degrees (if available)
+  timestamp: number; // When the location was obtained
 }
 
 export interface LocationError {
@@ -94,7 +97,10 @@ export class LocationService {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
-            source
+            source,
+            speed: position.coords.speed ? position.coords.speed * 2.237 : undefined, // Convert m/s to mph
+            heading: position.coords.heading || undefined,
+            timestamp: Date.now()
           });
         },
         (error) => {
@@ -200,7 +206,8 @@ export class LocationService {
       latitude: 40.7128,
       longitude: -74.0060,
       accuracy: 0,
-      source: 'fallback'
+      source: 'fallback',
+      timestamp: Date.now()
     };
   }
 
@@ -231,7 +238,229 @@ export class LocationService {
       latitude: 40.7589,
       longitude: -73.9851,
       accuracy: 0,
-      source: 'fallback'
+      source: 'fallback',
+      timestamp: Date.now()
     };
+  }
+
+  // === DRIVE MODE ENHANCEMENTS ===
+
+  private static watchId: number | null = null;
+  private static lastKnownLocation: LocationResult | null = null;
+  private static locationHistory: LocationResult[] = [];
+  private static speedUpdateCallback: ((speed: number) => void) | null = null;
+  private static locationUpdateCallback: ((location: LocationResult) => void) | null = null;
+
+  /**
+   * Start continuous location tracking for Drive Mode
+   */
+  static startContinuousTracking(
+    onLocationUpdate: (location: LocationResult) => void,
+    onSpeedUpdate: (speed: number) => void
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation not supported'));
+        return;
+      }
+
+      // Store callbacks
+      this.locationUpdateCallback = onLocationUpdate;
+      this.speedUpdateCallback = onSpeedUpdate;
+
+      // High accuracy options for driving
+      const options: PositionOptions = {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 5000 // 5 seconds max age for drive mode
+      };
+
+      this.watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const location: LocationResult = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            source: 'gps',
+            speed: position.coords.speed ? position.coords.speed * 2.237 : undefined, // Convert m/s to mph
+            heading: position.coords.heading || undefined,
+            timestamp: Date.now()
+          };
+
+          // Calculate speed if GPS doesn't provide it
+          const calculatedSpeed = this.calculateSpeedFromHistory(location);
+          if (!location.speed && calculatedSpeed !== null) {
+            location.speed = calculatedSpeed;
+          }
+
+          // Update location history (keep last 10 locations)
+          this.locationHistory.push(location);
+          if (this.locationHistory.length > 10) {
+            this.locationHistory.shift();
+          }
+
+          this.lastKnownLocation = location;
+
+          // Call callbacks
+          onLocationUpdate(location);
+          if (location.speed !== undefined) {
+            onSpeedUpdate(location.speed);
+          }
+
+          console.log(`📍 Drive Mode location update: ${location.latitude}, ${location.longitude}, Speed: ${location.speed?.toFixed(1) || 'Unknown'} mph`);
+        },
+        (error) => {
+          console.error('Drive Mode location error:', error);
+          // Don't reject on single failures, keep trying
+        },
+        options
+      );
+
+      // Resolve immediately since watchPosition is async
+      resolve();
+    });
+  }
+
+  /**
+   * Stop continuous location tracking
+   */
+  static stopContinuousTracking(): void {
+    if (this.watchId !== null) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+    
+    this.locationUpdateCallback = null;
+    this.speedUpdateCallback = null;
+    this.locationHistory = [];
+    
+    console.log('📍 Stopped continuous location tracking');
+  }
+
+  /**
+   * Calculate speed from location history when GPS doesn't provide it
+   */
+  private static calculateSpeedFromHistory(currentLocation: LocationResult): number | null {
+    if (this.locationHistory.length === 0) return null;
+
+    const lastLocation = this.locationHistory[this.locationHistory.length - 1];
+    const timeDiff = (currentLocation.timestamp - lastLocation.timestamp) / 1000; // seconds
+    
+    if (timeDiff < 2) return null; // Too short interval for accurate calculation
+
+    const distance = this.calculateDistance(
+      lastLocation.latitude,
+      lastLocation.longitude,
+      currentLocation.latitude,
+      currentLocation.longitude
+    );
+
+    // Convert distance (miles) and time (seconds) to mph
+    const speed = (distance / timeDiff) * 3600; // miles per hour
+    
+    // Filter out unrealistic speeds (over 200 mph indicates GPS error)
+    return speed > 200 ? null : speed;
+  }
+
+  /**
+   * Calculate distance between two points (Haversine formula)
+   */
+  private static calculateDistance(
+    lat1: number, lon1: number, 
+    lat2: number, lon2: number
+  ): number {
+    const R = 3959; // Earth's radius in miles
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+    
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) * 
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  /**
+   * Convert degrees to radians
+   */
+  private static toRad(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
+
+  /**
+   * Get current speed (mph) from most recent location
+   */
+  static getCurrentSpeed(): number {
+    return this.lastKnownLocation?.speed || 0;
+  }
+
+  /**
+   * Check if user is currently driving (speed > threshold)
+   */
+  static isDriving(speedThreshold: number = 15): boolean {
+    const speed = this.getCurrentSpeed();
+    return speed > speedThreshold;
+  }
+
+  /**
+   * Get smoothed speed from recent history
+   */
+  static getAverageSpeed(samples: number = 5): number {
+    if (this.locationHistory.length === 0) return 0;
+    
+    const recentLocations = this.locationHistory.slice(-samples);
+    const speedReadings = recentLocations
+      .map(loc => loc.speed)
+      .filter(speed => speed !== undefined) as number[];
+    
+    if (speedReadings.length === 0) return 0;
+    
+    return speedReadings.reduce((sum, speed) => sum + speed, 0) / speedReadings.length;
+  }
+
+  /**
+   * Find vostcards within specified radius
+   */
+  static findNearbyVostcards(
+    userLocation: LocationResult, 
+    vostcards: any[], 
+    radiusMiles: number = 0.33
+  ): any[] {
+    return vostcards.filter(vostcard => {
+      if (!vostcard.latitude || !vostcard.longitude) return false;
+      
+      const distance = this.calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        vostcard.latitude,
+        vostcard.longitude
+      );
+      
+      return distance <= radiusMiles;
+    });
+  }
+
+  /**
+   * Check if location has good accuracy for driving
+   */
+  static hasGoodAccuracy(location: LocationResult): boolean {
+    // Good accuracy for driving: within 20 meters (65 feet)
+    return location.accuracy <= 20;
+  }
+
+  /**
+   * Get last known location
+   */
+  static getLastKnownLocation(): LocationResult | null {
+    return this.lastKnownLocation;
+  }
+
+  /**
+   * Get location history for debugging
+   */
+  static getLocationHistory(): LocationResult[] {
+    return [...this.locationHistory];
   }
 } 
