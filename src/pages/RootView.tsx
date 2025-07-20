@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes } from 'react-icons/fa';
-import VostcardPin from '../assets/Vostcard_pin.png';
-import InfoPin from '../assets/Info_pin.png';
 import 'leaflet/dist/leaflet.css';
 
 const RootView: React.FC = () => {
@@ -91,7 +89,7 @@ const RootView: React.FC = () => {
           }}
         >
           <img 
-            src={InfoPin} 
+            src="/Info_pin.png"  // Changed from {InfoPin}
             alt="Info Pin" 
             style={{
               width: '50px',
@@ -195,7 +193,7 @@ const RootView: React.FC = () => {
         zIndex: 2000
       }}>
         <img 
-          src={VostcardPin}
+          src="/Vostcard_pin.svg"  // Changed from {VostcardPin} and note: it's SVG in public folder
           alt="Vostcard Pin"
           className="bobbing-pin"
           style={{
