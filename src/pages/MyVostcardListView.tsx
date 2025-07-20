@@ -45,7 +45,7 @@ const MyVostcardListView = () => {
           
           if (!user) {
             console.log('❌ No user authenticated');
-            setError('Please log in to view your private Vostcards.');
+            setError('Please log in to view your private posts.');
             navigate('/login');
             return;
           }
@@ -59,11 +59,11 @@ const MyVostcardListView = () => {
             // Don't show error to user since local data is already loaded
           });
           
-          console.log('✅ Private Vostcards loaded successfully');
+          console.log('✅ Private Posts loaded successfully');
           
         } catch (error) {
-          console.error('❌ Error loading private Vostcards:', error);
-          setError(`Failed to load private Vostcards: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          console.error('❌ Error loading private posts:', error);
+          setError(`Failed to load private posts: ${error instanceof Error ? error.message : 'Unknown error'}`);
         } finally {
           setLoading(false);
         }
@@ -157,11 +157,11 @@ ${privateUrl}`;
     e.preventDefault();
     e.stopPropagation();
     
-    if (!window.confirm('Are you sure you want to delete this Vōstcard permanently? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete this post permanently? This action cannot be undone.')) {
       return;
     }
 
-    console.log('🗑️ Delete clicked for private vostcard:', vostcardId);
+    console.log('🗑️ Delete clicked for private post:', vostcardId);
     console.log('🗑️ Current savedVostcards count before deletion:', savedVostcards.length);
     console.log('🗑️ Vostcard to delete exists in list:', savedVostcards.some(v => v.id === vostcardId));
     
@@ -173,7 +173,7 @@ ${privateUrl}`;
       console.log('🗑️ Calling deletePrivateVostcard...');
       await deletePrivateVostcard(vostcardId);
       
-      console.log('✅ Private vostcard deleted successfully:', vostcardId);
+      console.log('✅ Private post deleted successfully:', vostcardId);
       console.log('✅ Current savedVostcards count after deletion:', savedVostcards.length);
       
       // Force refresh the local vostcards list to ensure UI updates
@@ -191,7 +191,7 @@ ${privateUrl}`;
       });
       
     } catch (error) {
-      console.error('❌ Failed to delete private vostcard:', error);
+      console.error('❌ Failed to delete private post:', error);
       console.error('❌ Delete error details:', {
         vostcardId,
         error: error instanceof Error ? error.message : String(error),
@@ -205,7 +205,7 @@ ${privateUrl}`;
         return newSet;
       });
       
-      alert('Failed to delete Vōstcard. Please try again.');
+      alert('Failed to delete post. Please try again.');
     }
   };
 
@@ -218,7 +218,7 @@ ${privateUrl}`;
       return;
     }
 
-    console.log('📤 Post clicked for private vostcard:', vostcard.id);
+    console.log('📤 Post clicked for private post:', vostcard.id);
     
     try {
       // Show loading state
@@ -227,7 +227,7 @@ ${privateUrl}`;
       // Post the vostcard
       await postVostcard(vostcard);
       
-      console.log('✅ Private vostcard posted successfully:', vostcard.id);
+      console.log('✅ Private post posted successfully:', vostcard.id);
       
       // Clear loading state
       setPostingIds(prev => {
@@ -237,7 +237,7 @@ ${privateUrl}`;
       });
       
     } catch (error) {
-      console.error('❌ Failed to post private vostcard:', error);
+      console.error('❌ Failed to post private post:', error);
       
       // Clear loading state
       setPostingIds(prev => {
@@ -246,12 +246,12 @@ ${privateUrl}`;
         return newSet;
       });
       
-      alert('Failed to post Vōstcard. Please try again.');
+      alert('Failed to publish post. Please try again.');
     }
   };
 
   const handleRetry = () => {
-    console.log('🔄 Retrying to load private Vostcards...');
+    console.log('🔄 Retrying to load private posts...');
     loadAllLocalVostcardsImmediate();
   };
 
@@ -306,7 +306,7 @@ ${privateUrl}`;
           borderRadius: isDesktop ? '16px 16px 0 0' : '0',
           flexShrink: 0
         }}>
-          <h1 style={{ fontSize: '30px', margin: 0 }}>Private Vōstcards</h1>
+          <h1 style={{ fontSize: '30px', margin: 0 }}>Private Posts</h1>
           
           {/* Home Button */}
           <FaHome
@@ -372,7 +372,7 @@ ${privateUrl}`;
             textAlign: 'center',
             color: '#666'
           }}>
-            <p>Loading your private Vostcards...</p>
+            <p>Loading your private posts...</p>
           </div>
         ) : error ? (
           <div style={{
@@ -396,14 +396,14 @@ ${privateUrl}`;
               Retry
             </button>
           </div>
-        ) : savedVostcards.filter(vostcard => !vostcard.isQuickcard).length === 0 ? (
+        ) : savedVostcards.length === 0 ? (
           <div style={{
             padding: '40px',
             textAlign: 'center',
             color: '#666'
           }}>
-            <h2>No Private Vōstcards Found</h2>
-            <p>You haven't created any private Vōstcards yet.</p>
+            <h2>No Private Posts Found</h2>
+            <p>You haven't created any private posts yet.</p>
             <button
               onClick={() => navigate('/home')}
               style={{
@@ -416,7 +416,7 @@ ${privateUrl}`;
                 marginTop: '10px'
               }}
             >
-              Create Your First Vōstcard
+              Create Your First Post
             </button>
           </div>
         ) : (
@@ -430,13 +430,12 @@ ${privateUrl}`;
               fontSize: '14px',
               color: '#495057'
             }}>
-              {savedVostcards.filter(vostcard => !vostcard.isQuickcard).length} Private Vōstcard{savedVostcards.filter(vostcard => !vostcard.isQuickcard).length !== 1 ? 's' : ''}
+              {savedVostcards.length} Private Post{savedVostcards.length !== 1 ? 's' : ''}
             </div>
 
-            {/* Vostcard List */}
+            {/* Private Posts List */}
             <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               {[...savedVostcards]
-                .filter(vostcard => !vostcard.isQuickcard)
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((vostcard, index) => {
                   const missingItems = getVostcardStatus(vostcard);
@@ -457,17 +456,32 @@ ${privateUrl}`;
                         opacity: isDeleting || isPosting ? 0.5 : 1
                       }}
                     >
-                      {/* Title */}
+                      {/* Title with Type Indicator */}
                       <div style={{
-                        marginBottom: '12px'
+                        marginBottom: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                       }}>
                         <h3 style={{ 
-                          margin: '0 0 4px 0', 
+                          margin: 0, 
                           color: '#002B4D',
                           fontSize: '18px'
                         }}>
-                          {vostcard.title || 'Untitled Vōstcard'}
+                          {vostcard.title || 'Untitled'}
                         </h3>
+                        {/* Type Badge */}
+                        <span style={{
+                          backgroundColor: vostcard.isQuickcard ? '#ff9800' : '#2196f3',
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          textTransform: 'uppercase'
+                        }}>
+                          {vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}
+                        </span>
                       </div>
 
                       {/* Description */}

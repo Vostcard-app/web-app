@@ -843,19 +843,18 @@ const HomeView = () => {
   }, [isMenuOpen, isInfoMenuOpen]);
 
   const menuItems = [
+    { label: 'Private Posts', route: '/edit-my-vostcards' },
+    { label: 'Public Posts', route: '/my-posted-vostcards' },
     { label: 'Browse Area', route: '/browse-area' },
-    { label: 'My Private Vōstcards', route: '/edit-my-vostcards' },  // Fix the route to match App.tsx
-    { label: 'My Posted Vōstcards', route: '/my-posted-vostcards' },
-    { label: 'Quickcards', route: '/quickcards' },  // Add quickcards menu item
-    { label: 'Liked Vōstcards', route: '/liked-vostcards' },
-    { label: 'Following', route: '/following' },
     { label: 'Vōstbox', route: '/vostbox' },
     { label: 'Friend List', route: '/friends' },
+    { label: 'Liked Vōstcards', route: '/liked-vostcards' },
+    { label: 'Following', route: '/following' },
     { label: 'Script tool', route: '/script-library' },
-    ...(userRole === 'admin' ? [{ label: 'Admin Panel', route: '/admin' }] : []), // Add admin panel for admins
+    ...(userRole === 'admin' ? [{ label: 'Admin Panel', route: '/admin' }] : []),
+    { label: 'Account Settings', route: '/account-settings' },
     { label: 'Suggestion Box', route: '/suggestion-box' },
     { label: 'Report a Bug', route: '/report-bug' },
-    { label: 'Account Settings', route: '/account-settings' },
     { label: 'Logout', route: null },
   ];
 
@@ -879,8 +878,8 @@ const HomeView = () => {
       
       // ❌ REMOVED: The slow sync that was causing the delay
       // This was the problematic code:
-      // if (label === 'My Private Vōstcards') {
-      //   console.log('🔄 Syncing private vostcards before navigation...');
+      // if (label === 'Private Posts') {
+      //   console.log('🔄 Syncing private posts before navigation...');
       //   try {
       //     await manualSync();
       //     console.log('✅ Sync completed successfully');
