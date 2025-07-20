@@ -310,7 +310,6 @@ const DrivecardPinPlacer: React.FC = () => {
           zoom={16}
           style={{ height: '100%', width: '100%' }}
           zoomControl={true}
-          key={`${pinPosition[0]}-${pinPosition[1]}`}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
