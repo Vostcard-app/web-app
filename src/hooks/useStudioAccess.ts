@@ -11,7 +11,7 @@ export interface StudioPermissions {
   canViewAnalytics: boolean;
   canBatchEdit: boolean;
   canAccessAdvancedTools: boolean;
-  role: 'none' | 'guide' | 'admin';
+  role: 'none' | 'guide' | 'admin' | 'user';
   restrictions: string[];
 }
 
@@ -23,7 +23,7 @@ export interface StudioAccessInfo {
   upgradeMessage?: string;
 }
 
-const STUDIO_ROLES = ['admin', 'guide'] as const;
+const STUDIO_ROLES = ['admin', 'guide', 'user'] as const;
 type StudioRole = typeof STUDIO_ROLES[number];
 
 export const useStudioAccess = (): StudioAccessInfo => {
@@ -41,21 +41,19 @@ export const useStudioAccess = (): StudioAccessInfo => {
       };
     }
 
-    // Check if user has studio access role
-    const hasStudioRole = STUDIO_ROLES.includes(userRole as StudioRole);
-    
-    if (!hasStudioRole) {
-      return {
-        hasAccess: false,
-        permissions: getDefaultPermissions(),
-        userRole: userRole,
-        accessReason: `Role '${userRole}' does not have studio access`,
-        upgradeMessage: 'Vostcard Studio is available for Guide and Admin users. Contact support to upgrade your account.'
-      };
+    // All authenticated users have studio access now
+    // Map userRole to studio role, defaulting to 'user' for regular users
+    let studioRole: StudioRole;
+    if (userRole === 'admin') {
+      studioRole = 'admin';
+    } else if (userRole === 'guide') {
+      studioRole = 'guide';
+    } else {
+      studioRole = 'user'; // Default for all other authenticated users
     }
 
     // Grant access with role-specific permissions
-    const permissions = getRolePermissions(userRole as StudioRole);
+    const permissions = getRolePermissions(studioRole);
     
     return {
       hasAccess: true,
@@ -121,6 +119,25 @@ function getRolePermissions(role: StudioRole): StudioPermissions {
         canAccessAdvancedTools: true,
         role: 'guide',
         restrictions: ['Cannot delete vostcards created by others']
+      };
+
+    case 'user':
+      return {
+        ...basePermissions,
+        canEdit: true,
+        canDelete: false, // Regular users cannot delete others' content
+        canPublish: true,
+        canManageTemplates: false, // Regular users cannot manage templates
+        canViewAnalytics: false, // Regular users cannot view analytics
+        canBatchEdit: true,
+        canAccessAdvancedTools: false, // Regular users have limited advanced tools
+        role: 'user',
+        restrictions: [
+          'Cannot delete vostcards created by others',
+          'Cannot manage templates',
+          'Cannot view analytics',
+          'Limited advanced tools access'
+        ]
       };
 
     default:

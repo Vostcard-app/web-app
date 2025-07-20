@@ -2,15 +2,15 @@
 
 ## Overview
 
-**Vostcard Studio** is a comprehensive professional content creation and management interface designed for **Admin** and **Guide** users. It provides advanced tools for creating, editing, and managing vostcards with enterprise-grade features and workflows.
+**Vostcard Studio** is a comprehensive professional content creation and management interface available to **all authenticated users**. It provides advanced tools for creating, editing, and managing vostcards with enterprise-grade features and workflows, with different permission levels based on user roles.
 
 ## ✨ Key Features
 
 ### 🔐 **Access Control**
-- **Role-based access**: Only Admin and Guide users can access the Studio
-- **Granular permissions**: Different capabilities based on user role
+- **Universal access**: All authenticated users can access the Studio
+- **Granular permissions**: Different capabilities based on user role (Admin/Guide/User)
 - **Secure authentication**: Integration with existing auth system
-- **Access denied gracefully** with upgrade messaging for regular users
+- **Role-based features**: Advanced features available to Admin and Guide users
 
 ### 🎨 **Advanced Editor**
 - **Tabbed interface**: Content, Media, Style, Location, Settings
@@ -64,8 +64,20 @@ Restrictions: ["Cannot delete vostcards created by others"]
 
 ### **Regular Users**
 ```typescript
-❌ No studio access
-Shows upgrade message with contact information
+✅ Full studio access
+✅ Edit own content
+❌ Delete others' content  
+✅ Publish content
+❌ Manage templates
+❌ View analytics
+✅ Batch operations
+❌ Limited advanced tools
+Restrictions: [
+  "Cannot delete vostcards created by others",
+  "Cannot manage templates", 
+  "Cannot view analytics",
+  "Limited advanced tools access"
+]
 ```
 
 ## 🏗️ Technical Architecture
@@ -113,9 +125,9 @@ const { savedVostcards, postedVostcards } = useVostcard();
 ## 🚀 Getting Started
 
 ### **1. Access Studio**
-- Must be logged in as Admin or Guide user
-- Navigate to `/studio` or use menu: "🚀 Vostcard Studio"
-- Access control automatically enforced
+- Must be logged in (any authenticated user)
+- Navigate to `/studio` or use menu: "Vostcard Studio"
+- Role-based features automatically configured
 
 ### **2. Studio Dashboard**
 - Overview of content statistics
@@ -181,8 +193,7 @@ src/
 <Route path="/studio" element={<VostcardStudioView />} />
 
 // HomeView.tsx menu integration
-...(userRole === 'admin' || userRole === 'guide' ? 
-  [{ label: '🚀 Vostcard Studio', route: '/studio' }] : [])
+{ label: 'Vostcard Studio', route: '/studio' } // Available to all users
 ```
 
 ### **Access Control Hook**

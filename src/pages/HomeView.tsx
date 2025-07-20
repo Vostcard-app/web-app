@@ -854,7 +854,7 @@ const HomeView = () => {
     { label: 'Following', route: '/following' },
     { label: 'Script tool', route: '/script-library' },
     { label: `Drive Mode ${isDriveModeEnabled ? 'ON' : 'OFF'}`, route: null },
-    ...(userRole === 'admin' || userRole === 'guide' ? [{ label: 'Vostcard Studio', route: '/studio' }] : []),
+    { label: 'Vostcard Studio', route: '/studio' },
     ...(userRole === 'admin' ? [{ label: 'Admin Panel', route: '/admin' }] : []),
     { label: 'Account Settings', route: '/account-settings' },
     { label: 'Suggestion Box', route: '/suggestion-box' },
