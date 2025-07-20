@@ -78,7 +78,7 @@ const RootView: React.FC = () => {
         position: 'absolute',
         top: 0,
         left: 0,
-        zIndex: 0,
+        zIndex: -1,
       }}>
         {userLocation ? (
           <div style={{ height: '100%', width: '100%' }}>
