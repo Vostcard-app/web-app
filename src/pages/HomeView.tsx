@@ -851,6 +851,7 @@ const HomeView = () => {
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
     { label: 'Script tool', route: '/script-library' },
+    ...(userRole === 'admin' || userRole === 'guide' ? [{ label: '🚀 Vostcard Studio', route: '/studio' }] : []),
     ...(userRole === 'admin' ? [{ label: 'Admin Panel', route: '/admin' }] : []),
     { label: 'Account Settings', route: '/account-settings' },
     { label: 'Suggestion Box', route: '/suggestion-box' },

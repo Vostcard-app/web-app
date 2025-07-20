@@ -57,6 +57,7 @@ import VostboxView from './pages/VostboxView';
 import QuickcardListView from './pages/QuickcardListView';
 import QuickcardDetailView from './pages/QuickcardDetailView';
 import VostcardCameraView from "./pages/VostcardCameraView";
+import VostcardStudioView from './pages/VostcardStudioView';
 
 function App() {
   return (
@@ -156,6 +157,9 @@ function App() {
 
                   {/* 🔐 Admin Panel */}
                   <Route path="/admin" element={<AdminPanel />} />
+                  
+                  {/* 🚀 Vostcard Studio */}
+                  <Route path="/studio" element={<VostcardStudioView />} />
                 </Routes>
               </ResponsiveContainer>
             </Router>
