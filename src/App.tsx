@@ -59,6 +59,7 @@ import QuickcardListView from './pages/QuickcardListView';
 import QuickcardDetailView from './pages/QuickcardDetailView';
 import VostcardCameraView from "./pages/VostcardCameraView";
 import VostcardStudioView from './pages/VostcardStudioView';
+import DrivecardsListView from './pages/DrivecardsListView';
 
 function App() {
   return (
@@ -162,6 +163,9 @@ function App() {
                   
                   {/* 🚀 Vostcard Studio */}
                   <Route path="/studio" element={<VostcardStudioView />} />
+
+                  {/* 🎵 Drivecards */}
+                  <Route path="/drivecards" element={<DrivecardsListView />} />
                 </Routes>
               </ResponsiveContainer>
               </Router>

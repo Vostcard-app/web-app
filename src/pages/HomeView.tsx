@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -20,6 +20,7 @@ import { signOut } from 'firebase/auth';
 import './HomeView.css';
 import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
 import LocationDebugger from '../components/LocationDebugger';
+import DriveModePlayer from '../components/DriveModePlayer';
 
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
@@ -352,6 +353,31 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
   const [showAuthLoading, setShowAuthLoading] = useState(true);
+  const [currentSpeed, setCurrentSpeed] = useState(0);
+
+  // Enhanced location tracking with speed calculation
+  const [previousLocation, setPreviousLocation] = useState<{
+    coords: [number, number];
+    timestamp: number;
+  } | null>(null);
+
+  // Calculate speed from location changes
+  const calculateSpeed = useCallback((
+    newLocation: [number, number],
+    previousLoc: { coords: [number, number]; timestamp: number }
+  ): number => {
+    const distance = calculateDistance(
+      previousLoc.coords[0],
+      previousLoc.coords[1],
+      newLocation[0],
+      newLocation[1]
+    );
+    
+    const timeDiff = (Date.now() - previousLoc.timestamp) / 1000;
+    
+    if (timeDiff <= 0) return 0; // Avoid division by zero
+    return (distance / timeDiff) * 3600; // Convert to mph
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchLocation, setSearchLocation] = useState<[number, number] | null>(null);
@@ -852,6 +878,7 @@ const HomeView = () => {
     { label: 'Friend List', route: '/friends' },
     { label: 'Liked Vōstcards', route: '/liked-vostcards' },
     { label: 'Following', route: '/following' },
+    { label: 'Drivecards', route: '/drivecards' },
     { label: 'Script tool', route: '/script-library' },
     { label: `Drive Mode ${isDriveModeEnabled ? 'ON' : 'OFF'}`, route: null },
     { label: 'Vostcard Studio', route: '/studio' },
@@ -1614,6 +1641,15 @@ const HomeView = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Drive Mode Player */}
+      {userLocation && (
+        <DriveModePlayer
+          userLocation={userLocation}
+          userSpeed={currentSpeed}
+          isEnabled={isDriveModeEnabled}
+        />
+      )}
     </div>
   );
 };

@@ -133,4 +133,34 @@ export const AVAILABLE_CATEGORIES = [
 export const AVAILABLE_TYPES = ['Vostcard', 'Quickcard', 'Guide'] as const;
 
 export type CategoryType = typeof AVAILABLE_CATEGORIES[number];
-export type PostType = typeof AVAILABLE_TYPES[number]; 
+export type PostType = typeof AVAILABLE_TYPES[number];
+
+// Drivecard interface - for Drive Mode usage with title, location, audio, and default category
+export interface Drivecard {
+  id: string;
+  title: string;
+  audio: Blob | null;
+  geo: { latitude: number; longitude: number; address?: string };
+  category: string; // Defaults to "Drive mode"
+  userID: string;
+  username: string;
+  createdAt: string;
+  updatedAt: string;
+  _audioBase64?: string | null;
+  _firebaseAudioURL?: string | null;
+}
+
+// Firebase Drivecard (from Firestore)
+export interface FirebaseDrivecard {
+  id: string;
+  title: string;
+  username: string;
+  userID: string;
+  audioURL?: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+  category: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+} 
