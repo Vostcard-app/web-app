@@ -48,6 +48,7 @@ import SuggestionBoxView from './pages/SuggestionBoxView';
 import FlagFormView from './pages/FlagFormView';
 import ReportBugView from './pages/ReportBugView';
 import PinPlacerTool from './pages/PinPlacerTool';
+import DrivecardPinPlacer from './pages/DrivecardPinPlacer';
 import { AuthRedirect } from './components/AuthRedirect';
 import PublicVostcardView from './pages/PublicVostcardView';
 import PublicQuickcardView from './pages/PublicQuickcardView';
@@ -157,6 +158,7 @@ function App() {
 
                   {/* 📍 Pin Placer */}
                   <Route path="/pin-placer" element={<PinPlacerTool />} />
+                  <Route path="/drivecard-pin-placer" element={<DrivecardPinPlacer />} />
 
                   {/* 🔐 Admin Panel */}
                   <Route path="/admin" element={<AdminPanel />} />

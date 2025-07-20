@@ -33,33 +33,298 @@ const MapClickHandler: React.FC<{
 const DrivecardPinPlacer: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Get current user location or default to NYC
+  const [pinPosition, setPinPosition] = useState<[number, number]>([40.7128, -74.0060]);
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{
-    latitude: number;
-    longitude: number;
-    address?: string;
-  } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  
+  const markerRef = useRef<any>(null);
+  const { title = 'New Drivecard' } = location.state || {};
 
+  // Get user's current location on component mount
   useEffect(() => {
-    const state = location.state as {
-      title: string;
-      onLocationSelected: (location: any) => void;
-    } | null;
-
-    if (state && state.onLocationSelected) {
-      state.onLocationSelected(selectedLocation);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setPinPosition([latitude, longitude]);
+        },
+        (error) => {
+          console.warn('Could not get current location:', error);
+          // Keep default NYC location
+        }
+      );
     }
-  }, [selectedLocation, location.state]);
+  }, []);
 
-  const handleMapClick = (lat: number, lng: number) => {
-    setSelectedLocation({ latitude: lat, longitude: lng });
-    setIsDragging(false);
+  const handleLocationSelect = (lat: number, lng: number) => {
+    setPinPosition([lat, lng]);
   };
 
-  const handleDragEnd = () => {
-    setIsDragging(false);
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setError(null);
+
+    try {
+      // Use a geocoding service to search for the location
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`
+      );
+      
+      if (!response.ok) throw new Error('Search failed');
+      
+      const results = await response.json();
+      
+      if (results.length > 0) {
+        const result = results[0];
+        const lat = parseFloat(result.lat);
+        const lng = parseFloat(result.lon);
+        setPinPosition([lat, lng]);
+        setSearchQuery(''); // Clear search after successful search
+      } else {
+        setError('Location not found. Please try a different search.');
+      }
+      
+    } catch (err) {
+      console.error('Search error:', err);
+      setError('Failed to search for location. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
+  const handleConfirm = () => {
+    const [latitude, longitude] = pinPosition;
+    
+    // Store the location in session storage
+    sessionStorage.setItem('drivecardLocation', JSON.stringify({
+      latitude,
+      longitude,
+      address: searchQuery || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+    }));
+    
+    // Navigate back to studio
+    navigate('/studio');
+  };
+
+  const handleCancel = () => {
+    navigate('/studio');
+  };
+
+  return (
+    <div style={{ 
+      height: '100vh', 
+      width: '100%', 
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Header */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        padding: '12px 16px',
+        borderBottom: '1px solid #e0e0e0',
+        zIndex: 1000
+      }}>
+        {/* Top row - Title and Home */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '12px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <FaHome 
+              size={20} 
+              color="#007aff" 
+              style={{ cursor: 'pointer' }}
+              onClick={handleCancel}
+            />
+            <h2 style={{ 
+              margin: 0, 
+              fontSize: '18px', 
+              fontWeight: 600,
+              color: '#333'
+            }}>
+              Pin Placer - {title}
+            </h2>
+          </div>
+          
+          <button
+            onClick={handleConfirm}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FaCheck size={16} />
+            Confirm
+          </button>
+        </div>
+
+        {/* Search row */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center'
+        }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search for a location..."
+            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}
+          />
+          <button
+            onClick={handleSearch}
+            disabled={isSearching || !searchQuery.trim()}
+            style={{
+              backgroundColor: '#007aff',
+              color: 'white',
+              border: 'none',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <FaSearch size={12} />
+            {isSearching ? 'Searching...' : 'Search'}
+          </button>
+        </div>
+      </div>
+
+      {/* Map */}
+      <div style={{ 
+        height: '100%', 
+        width: '100%', 
+        paddingTop: '100px',
+        paddingBottom: '80px'
+      }}>
+        <MapContainer
+          center={pinPosition}
+          zoom={16}
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={true}
+          key={`${pinPosition[0]}-${pinPosition[1]}`}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          
+          <MapClickHandler 
+            onLocationSelect={handleLocationSelect}
+            isDragging={isDragging}
+          />
+          
+          <Marker
+            position={pinPosition}
+            ref={markerRef}
+            icon={defaultIcon}
+            draggable={true}
+            eventHandlers={{
+              dragstart: () => {
+                setIsDragging(true);
+              },
+              dragend: (e) => {
+                setIsDragging(false);
+                const marker = e.target;
+                const newPos = marker.getLatLng();
+                setPinPosition([newPos.lat, newPos.lng]);
+              }
+            }}
+          />
+        </MapContainer>
+      </div>
+
+      {/* Bottom Controls */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        padding: '16px',
+        borderTop: '1px solid #e0e0e0',
+        display: 'flex',
+        gap: '12px',
+        alignItems: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: '12px', color: '#666' }}>
+          📍 Tap map or drag pin to set Drivecard location
+        </div>
+
+        <button
+          onClick={handleCancel}
+          style={{
+            backgroundColor: '#f5f5f5',
+            color: '#666',
+            border: '1px solid #ddd',
+            padding: '12px 16px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <FaTimes size={14} />
+          Cancel
+        </button>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div style={{
+          position: 'absolute',
+          top: '120px',
+          left: '16px',
+          right: '16px',
+          backgroundColor: '#ffebee',
+          color: '#c62828',
+          padding: '12px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          zIndex: 1000
+        }}>
+          {error}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default DrivecardPinPlacer; 
   const handleBack = () => {
     navigate('/drivecard-studio');
   };
