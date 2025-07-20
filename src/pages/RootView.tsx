@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer } from 'react-leaflet';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes } from 'react-icons/fa';
+import VostcardPin from '../assets/Vostcard_pin.png';
 import 'leaflet/dist/leaflet.css';
 
 const RootView: React.FC = () => {
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<[number, number] | null>([53.3498, -6.2603]); // Default location
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  
-  // YouTube video ID extracted from the provided URL
-  const youtubeVideoId = 'CCOErz2RxwI';
-  const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   // Get user's current location
   useEffect(() => {
@@ -24,9 +18,7 @@ const RootView: React.FC = () => {
           setLocationError(null);
         },
         (error) => {
-          if (typeof console !== 'undefined' && console.error) {
-            console.error('Error getting location:', error);
-          }
+          console.error('Error getting location:', error);
           setLocationError(error.message);
           // Keep default location
         },
@@ -42,11 +34,8 @@ const RootView: React.FC = () => {
       height: '100vh', 
       width: '100vw', 
       position: 'relative', 
-      overflow: 'visible', // Changed from hidden
-      backgroundColor: '#f5f5f5',
-      // Force hardware acceleration and prevent layout issues
-      transform: 'translateZ(0)',
-      WebkitTransform: 'translateZ(0)'
+      overflow: 'hidden',
+      backgroundColor: '#f5f5f5'
     }}>
       {/* CSS Animation Styles */}
       <style>
@@ -71,10 +60,8 @@ const RootView: React.FC = () => {
         background: '#07345c',
         color: 'white',
         width: '100%',
-        padding: '20px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        padding: '20px 0',
+        textAlign: 'left',
         fontWeight: 700,
         fontSize: '2.2rem',
         letterSpacing: '0.01em',
@@ -82,38 +69,10 @@ const RootView: React.FC = () => {
         zIndex: 1000,
         position: 'relative',
       }}>
-        <span>Vōstcard</span>
-        <div 
-          onClick={() => setShowVideoModal(true)}
-          style={{
-            cursor: 'pointer',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            marginRight: '35px'
-          }}
-        >
-          <img 
-            src="/Info_pin.png"
-            alt="Info Pin" 
-            style={{
-              width: '50px',
-              height: '50px',
-              marginBottom: '2px'
-            }}
-          />
-          <span style={{
-            fontSize: '10px',
-            fontWeight: '500',
-            color: 'white',
-            textAlign: 'center'
-          }}>
-            What is Vōstcard?
-          </span>
-        </div>
+        <span style={{ marginLeft: 24 }}>Vōstcard</span>
       </div>
 
-      {/* Map Background - Restored */}
+      {/* Map Background - Wrapped in error boundary */}
       <div style={{
         height: '100%',
         width: '100%',
@@ -189,8 +148,6 @@ const RootView: React.FC = () => {
           Location Error: {locationError}
         </div>
       )}
-      
-
 
       {/* Bobbing Vostcard Pin in Center */}
       <div style={{
@@ -200,7 +157,7 @@ const RootView: React.FC = () => {
         zIndex: 2000
       }}>
         <img 
-          src="/Vostcard_pin.png"
+          src={VostcardPin}
           alt="Vostcard Pin"
           className="bobbing-pin"
           style={{
@@ -209,9 +166,7 @@ const RootView: React.FC = () => {
             filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
           }}
           onError={(e) => {
-            if (typeof console !== 'undefined' && console.error) {
-              console.error('VostcardPin failed to load');
-            }
+            console.error('VostcardPin failed to load');
             e.currentTarget.style.display = 'none';
           }}
         />
@@ -219,41 +174,34 @@ const RootView: React.FC = () => {
 
       {/* User Guide Button */}
       <div style={{
-        position: 'fixed', // Changed from absolute to fixed
+        position: 'absolute',
         top: '50%',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 9999, // Higher z-index
+        zIndex: 2000,
         padding: '0 20px',
         boxSizing: 'border-box',
         marginTop: '80px',
-        pointerEvents: 'auto',
-        // Force visibility
-        visibility: 'visible',
-        opacity: 1
+        pointerEvents: 'auto' // Ensure pointer events work
       }}>
         <button
           type="button"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (typeof console !== 'undefined' && console.log) {
-              console.log('User Guide button clicked!');
-            }
+            console.log('User Guide button clicked!');
             navigate('/user-guide');
           }}
           onTouchStart={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (typeof console !== 'undefined' && console.log) {
-              console.log('User Guide button touched!');
-            }
+            console.log('User Guide button touched!');
             navigate('/user-guide');
           }}
           style={{
-            background: '#E62A2E', // Original red color
+            background: '#E62A2E',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -266,12 +214,9 @@ const RootView: React.FC = () => {
             cursor: 'pointer',
             letterSpacing: '0.01em',
             position: 'relative',
-            zIndex: 10001, // Keep the higher z-index that worked
-            pointerEvents: 'auto',
-            touchAction: 'manipulation',
-            display: 'block',
-            visibility: 'visible',
-            opacity: 1
+            zIndex: 2001, // Slightly higher than container
+            pointerEvents: 'auto', // Ensure it can receive clicks
+            touchAction: 'manipulation' // Better touch handling
           }}
         >
           User Guide
@@ -280,29 +225,24 @@ const RootView: React.FC = () => {
 
       {/* Log In Button at Bottom */}
       <div style={{
-        position: 'fixed', // Changed from absolute to fixed
+        position: 'absolute',
         bottom: '92px',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 9999, // Higher z-index
+        zIndex: 2000,
         padding: '0 20px',
-        boxSizing: 'border-box',
-        // Force visibility
-        visibility: 'visible',
-        opacity: 1
+        boxSizing: 'border-box'
       }}>
         <button
           type="button"
           onClick={() => {
-            if (typeof console !== 'undefined' && console.log) {
-              console.log('Login/Register button clicked!');
-            }
+            console.log('Log In button clicked!');
             navigate('/login');
           }}
           style={{
-            background: '#07345c', // Original blue color
+            background: '#07345c',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -314,105 +254,12 @@ const RootView: React.FC = () => {
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
             cursor: 'pointer',
             letterSpacing: '0.01em',
-            position: 'relative',
-            zIndex: 10001, // Keep the higher z-index that worked
-            pointerEvents: 'auto',
-            display: 'block',
-            visibility: 'visible',
-            opacity: 1
+            zIndex: 2000
           }}
         >
-          Login/Register
+          Log In
         </button>
       </div>
-
-      {/* Video Modal */}
-      <AnimatePresence>
-        {showVideoModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.9)',
-              zIndex: 10000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px'
-            }}
-            onClick={() => setShowVideoModal(false)}
-          >
-            <button
-              onClick={() => setShowVideoModal(false)}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'rgba(255,255,255,0.2)',
-                border: 'none',
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 10001,
-                fontSize: '18px',
-                color: 'white',
-                backdropFilter: 'blur(10px)'
-              }}
-            >
-              <FaTimes />
-            </button>
-
-            <div style={{ 
-              position: 'relative',
-              maxWidth: '90vw',
-              maxHeight: '90vh',
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <iframe
-                src={youtubeEmbedUrl}
-                width="100%"
-                height="100%"
-                style={{
-                  minHeight: '315px',
-                  maxWidth: '560px',
-                  aspectRatio: '16/9',
-                  borderRadius: 8,
-                  border: 'none'
-                }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-
-            <div style={{
-              position: 'absolute',
-              bottom: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: 'rgba(255,255,255,0.8)',
-              fontSize: '14px',
-              textAlign: 'center',
-              pointerEvents: 'none'
-            }}>
-              Tap outside video or ✕ to close
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };
