@@ -24,7 +24,9 @@ const RootView: React.FC = () => {
           setLocationError(null);
         },
         (error) => {
-          console.error('Error getting location:', error);
+          if (typeof console !== 'undefined' && console.error) {
+            console.error('Error getting location:', error);
+          }
           setLocationError(error.message);
           // Keep default location
         },
@@ -202,7 +204,9 @@ const RootView: React.FC = () => {
             filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
           }}
           onError={(e) => {
-            console.error('VostcardPin failed to load');
+            if (typeof console !== 'undefined' && console.error) {
+              console.error('VostcardPin failed to load');
+            }
             e.currentTarget.style.display = 'none';
           }}
         />
@@ -227,13 +231,17 @@ const RootView: React.FC = () => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('User Guide button clicked!');
+            if (typeof console !== 'undefined' && console.log) {
+              console.log('User Guide button clicked!');
+            }
             navigate('/user-guide');
           }}
           onTouchStart={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('User Guide button touched!');
+            if (typeof console !== 'undefined' && console.log) {
+              console.log('User Guide button touched!');
+            }
             navigate('/user-guide');
           }}
           style={{
@@ -274,7 +282,9 @@ const RootView: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            console.log('Login/Register button clicked!');
+            if (typeof console !== 'undefined' && console.log) {
+              console.log('Login/Register button clicked!');
+            }
             navigate('/login');
           }}
           style={{
