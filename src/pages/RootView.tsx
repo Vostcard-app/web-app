@@ -97,7 +97,7 @@ const RootView: React.FC = () => {
           borderRadius: '4px',
           fontWeight: 'bold'
         }}>
-          v2024.1
+          v2024.2-desktop-fix
         </div>
         
         <div 
@@ -342,6 +342,47 @@ const RootView: React.FC = () => {
           Login/Register
         </button>
       </div>
+
+      {/* Desktop-Specific CSS Fix */}
+      <style>{`
+        @media screen and (min-width: 769px) {
+          /* Force desktop button visibility */
+          div[style*="position: fixed"][style*="top: 50%"],
+          div[style*="position: fixed"][style*="bottom: 92px"] {
+            position: fixed !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: translateZ(0) !important;
+          }
+          
+          /* Force button element visibility */
+          div[style*="position: fixed"] button {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 999999 !important;
+            transform: translateZ(0) !important;
+            min-height: 50px !important;
+          }
+          
+          /* Override any potential hiding styles */
+          body div[style*="position: fixed"] {
+            display: flex !important;
+          }
+          
+          /* Ensure buttons are above everything */
+          .leaflet-container,
+          .leaflet-map-pane,
+          .leaflet-tile-pane {
+            z-index: 1 !important;
+          }
+        }
+      `}</style>
 
       {/* Video Modal */}
       <AnimatePresence>
