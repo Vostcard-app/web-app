@@ -83,6 +83,23 @@ const RootView: React.FC = () => {
         position: 'relative',
       }}>
         <span>Vōstcard</span>
+        
+        {/* Version indicator - remove after confirming deployment */}
+        <div style={{
+          position: 'absolute',
+          top: '5px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'lime',
+          color: 'black',
+          padding: '2px 8px',
+          fontSize: '12px',
+          borderRadius: '4px',
+          fontWeight: 'bold'
+        }}>
+          v2024.1
+        </div>
+        
         <div 
           onClick={() => setShowVideoModal(true)}
           style={{
