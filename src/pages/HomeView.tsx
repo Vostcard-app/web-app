@@ -1,4 +1,37 @@
+    const highlightVostcard = location.state?.highlightVostcard;
+    const showSharedContext = location.state?.showSharedContext;
+
+    if (centerLocation && highlightVostcard) {
+      console.log('📍 Handling shared content navigation:', {
+        centerLocation,
+        highlightVostcard,
+        sharedContent
+      });
+
+      // Center map on shared content location
+      setUserLocation(centerLocation);
+      setActualUserLocation(centerLocation);
+
+      // Keep reference to highlight the shared vostcard
+      setSingleVostcard({
+        id: highlightVostcard,
+        latitude: centerLocation[0],
+        longitude: centerLocation[1],
+        isSharedContent: true,
+        sharedContext: sharedContent
+      });
+
+      // Show a temporary notification about shared content
+      if (showSharedContext && sharedContent) {
+        setTimeout(() => {
+          // You can add a toast notification here if you have one
+          console.log(`📍 Viewing shared ${sharedContent.type}: ${sharedContent.title}`);
+        }, 1000);
 import React, { useEffect, useState, useCallback } from 'react';
+      }
+
+      // Clear the navigation state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -469,6 +502,46 @@ const HomeView = () => {
     }
   }, [singleVostcardState, navigate, location.pathname]);
 
+  // Handle shared content navigation state
+  useEffect(() => {
+    const sharedContent = location.state?.sharedContent;
+    const centerLocation = location.state?.centerLocation;
+    const highlightVostcard = location.state?.highlightVostcard;
+    const showSharedContext = location.state?.showSharedContext;
+
+    if (centerLocation && highlightVostcard) {
+      console.log('📍 Handling shared content navigation:', {
+        centerLocation,
+        highlightVostcard,
+        sharedContent
+      });
+
+      // Center map on shared content location
+      setUserLocation(centerLocation);
+      setActualUserLocation(centerLocation);
+
+      // Keep reference to highlight the shared vostcard
+      setSingleVostcard({
+        id: highlightVostcard,
+        latitude: centerLocation[0],
+        longitude: centerLocation[1],
+        isSharedContent: true,
+        sharedContext: sharedContent
+      });
+
+      // Show a temporary notification about shared content
+      if (showSharedContext && sharedContent) {
+        setTimeout(() => {
+          // You can add a toast notification here if you have one
+          console.log(`📍 Viewing shared ${sharedContent.type}: ${sharedContent.title}`);
+        }, 1000);
+      }
+
+      // Clear the navigation state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state?.centerLocation, location.state?.highlightVostcard, navigate, location.pathname]);
+
   // Debug authentication state and manage auth loading overlay
   useEffect(() => {
     console.log('🏠 HomeView: Auth state:', {
@@ -581,6 +654,22 @@ const HomeView = () => {
         // Include regular vostcards, posted quickcards, and offers
         !v.isQuickcard || // Include regular vostcards and offers
         (v.isQuickcard && v.state === 'posted') // Include posted quickcards
+    const showSharedContext = location.state?.showSharedContext;
+
+    if (centerLocation && highlightVostcard) {
+      console.log('📍 Handling shared content navigation:', {
+        centerLocation,
+        highlightVostcard,
+        sharedContent
+      });
+
+      // Center map on shared content location
+      setUserLocation(centerLocation);
+      setActualUserLocation(centerLocation);
+
+      // Keep reference to highlight the shared vostcard
+      setSingleVostcard({
+        id: highlightVostcard,
       );
       
       console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
@@ -1168,6 +1257,9 @@ const HomeView = () => {
                     const position: [number, number] = [vostcard.latitude, vostcard.longitude];
                     const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
                     
+                    // Check if this is the highlighted shared vostcard
+                    const isHighlighted = singleVostcard?.id === vostcard.id && singleVostcard?.isSharedContent;
+                    
                     return (
                       <Marker
                         key={vostcard.id}
@@ -1175,11 +1267,11 @@ const HomeView = () => {
                         icon={icon}
                         eventHandlers={{
                           click: () => {
-                            // Check content type and route appropriately
-                            if (vostcard.isOffer) {
-                              navigate(`/offer/${vostcard.id}`);
-                            } else if (vostcard.isQuickcard) {
+                            console.log('📍 Vostcard pin clicked:', vostcard.title);
+                            if (vostcard.isQuickcard) {
                               navigate(`/quickcard/${vostcard.id}`);
+                            } else if (vostcard.isOffer) {
+                              navigate(`/offer/${vostcard.id}`);
                             } else {
                               navigate(`/vostcard/${vostcard.id}`);
                             }
@@ -1187,16 +1279,37 @@ const HomeView = () => {
                         }}
                       >
                         <Popup>
-                          <div style={{ textAlign: 'center', minWidth: '150px' }}>
-                            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>
-                              {vostcard.title}
-                            </h3>
-                            <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
-                              by {vostcard.username}
-                            </p>
-                            {vostcard.isOffer && (
-                              <div style={offerPopupStyle}>
-                                <strong>🎁 Special Offer!</strong>
+                          <div style={{ 
+                            textAlign: 'center', 
+                            minWidth: 150,
+                            background: isHighlighted ? '#fff3cd' : 'white',
+                            border: isHighlighted ? '2px solid #856404' : 'none',
+                            borderRadius: isHighlighted ? '8px' : '0',
+                            padding: isHighlighted ? '8px' : '4px'
+                          }}>
+                            {isHighlighted && (
+                              <div style={{
+                                fontSize: '12px',
+                                color: '#856404',
+                                fontWeight: 'bold',
+                                marginBottom: '4px'
+                              }}>
+                                📤 Shared with you
+                              </div>
+                            )}
+                            <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '4px' }}>
+                              {vostcard.title || 'Untitled'}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                              by {vostcard.username || 'Unknown'}
+                            </div>
+                            {isHighlighted && (
+                              <div style={{
+                                fontSize: '11px',
+                                color: '#856404',
+                                fontStyle: 'italic'
+                              }}>
+                                Click to view details
                               </div>
                             )}
                           </div>

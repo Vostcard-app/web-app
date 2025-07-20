@@ -633,26 +633,45 @@ ${privateUrl}`);
               border: '1px solid #e0e0e0'
             }}
             onClick={() => {
-              navigate('/public-map', {
-                state: {
-                  singleVostcard: {
-                    id: vostcard.id,
-                    title: vostcard.title,
-                    description: vostcard.description,
-                    latitude: vostcard.latitude,
-                    longitude: vostcard.longitude,
-                    videoURL: vostcard.videoURL,
-                    photoURLs: vostcard.photoURLs,
-                    username: vostcard.username,
-                    isOffer: vostcard.isOffer,
-                    offerDetails: vostcard.offerDetails,
-                    categories: vostcard.categories,
-                    createdAt: vostcard.createdAt,
-                    visibility: 'public',
-                    state: 'posted'
+              if (user && vostcard.latitude && vostcard.longitude) {
+                // Authenticated user - show on their personal map centered on shared content
+                console.log('📍 Authenticated user viewing shared vostcard on personal map');
+                navigate('/home', {
+                  state: {
+                    centerLocation: [vostcard.latitude, vostcard.longitude],
+                    highlightVostcard: vostcard.id,
+                    showSharedContext: true,
+                    sharedContent: {
+                      id: vostcard.id,
+                      title: vostcard.title,
+                      type: 'vostcard'
+                    }
                   }
-                }
-              });
+                });
+              } else {
+                // Anonymous user or no location - use public map
+                console.log('📍 Anonymous user viewing shared vostcard on public map');
+                navigate('/public-map', {
+                  state: {
+                    singleVostcard: {
+                      id: vostcard.id,
+                      title: vostcard.title,
+                      description: vostcard.description,
+                      latitude: vostcard.latitude,
+                      longitude: vostcard.longitude,
+                      videoURL: vostcard.videoURL,
+                      photoURLs: vostcard.photoURLs,
+                      username: vostcard.username,
+                      isOffer: vostcard.isOffer,
+                      offerDetails: vostcard.offerDetails,
+                      categories: vostcard.categories,
+                      createdAt: vostcard.createdAt,
+                      visibility: 'public',
+                      state: 'posted'
+                    }
+                  }
+                });
+              }
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
