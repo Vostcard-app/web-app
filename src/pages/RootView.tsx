@@ -43,7 +43,10 @@ const RootView: React.FC = () => {
       width: '100vw', 
       position: 'relative', 
       overflow: 'hidden',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: '#f5f5f5',
+      // Force hardware acceleration and prevent layout issues
+      transform: 'translateZ(0)',
+      WebkitTransform: 'translateZ(0)'
     }}>
       {/* CSS Animation Styles */}
       <style>
@@ -186,6 +189,22 @@ const RootView: React.FC = () => {
           Location Error: {locationError}
         </div>
       )}
+      
+      {/* Debug: Component Status */}
+      <div style={{
+        position: 'fixed',
+        bottom: '10px',
+        left: '10px',
+        background: 'rgba(0,0,0,0.7)',
+        color: 'white',
+        padding: '8px',
+        borderRadius: '4px',
+        fontSize: '12px',
+        zIndex: 10000,
+        pointerEvents: 'none'
+      }}>
+        RootView Loaded ✓
+      </div>
 
       {/* Bobbing Vostcard Pin in Center */}
       <div style={{
@@ -214,17 +233,20 @@ const RootView: React.FC = () => {
 
       {/* User Guide Button */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed', // Changed from absolute to fixed
         top: '50%',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 2000,
+        zIndex: 9999, // Higher z-index
         padding: '0 20px',
         boxSizing: 'border-box',
         marginTop: '80px',
-        pointerEvents: 'auto' // Ensure pointer events work
+        pointerEvents: 'auto',
+        // Force visibility
+        visibility: 'visible',
+        opacity: 1
       }}>
         <button
           type="button"
@@ -258,9 +280,12 @@ const RootView: React.FC = () => {
             cursor: 'pointer',
             letterSpacing: '0.01em',
             position: 'relative',
-            zIndex: 2001, // Slightly higher than container
-            pointerEvents: 'auto', // Ensure it can receive clicks
-            touchAction: 'manipulation' // Better touch handling
+            zIndex: 10001, // Higher z-index
+            pointerEvents: 'auto',
+            touchAction: 'manipulation',
+            display: 'block',
+            visibility: 'visible',
+            opacity: 1
           }}
         >
           User Guide
@@ -269,15 +294,18 @@ const RootView: React.FC = () => {
 
       {/* Log In Button at Bottom */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed', // Changed from absolute to fixed
         bottom: '92px',
         left: 0,
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
-        zIndex: 2000,
+        zIndex: 9999, // Higher z-index
         padding: '0 20px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        // Force visibility
+        visibility: 'visible',
+        opacity: 1
       }}>
         <button
           type="button"
@@ -300,7 +328,12 @@ const RootView: React.FC = () => {
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
             cursor: 'pointer',
             letterSpacing: '0.01em',
-            zIndex: 2000
+            position: 'relative',
+            zIndex: 10001, // Higher z-index
+            pointerEvents: 'auto',
+            display: 'block',
+            visibility: 'visible',
+            opacity: 1
           }}
         >
           Login/Register
