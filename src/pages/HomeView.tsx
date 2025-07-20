@@ -1,40 +1,4 @@
-    const highlightVostcard = location.state?.highlightVostcard;
-    const showSharedContext = location.state?.showSharedContext;
-
-    if (centerLocation && highlightVostcard) {
-      console.log('📍 Handling shared content navigation:', {
-        centerLocation,
-        highlightVostcard,
-        sharedContent
-      });
-
-      // Center map on shared content location
-      setUserLocation(centerLocation);
-      setActualUserLocation(centerLocation);
-
-      // Keep reference to highlight the shared vostcard
-      setSingleVostcard({
-        id: highlightVostcard,
-        latitude: centerLocation[0],
-        longitude: centerLocation[1],
-        isSharedContent: true,
-        sharedContext: sharedContent
-      });
-
-      // Show a temporary notification about shared content
-      if (showSharedContext && sharedContent) {
-        setTimeout(() => {
-          // You can add a toast notification here if you have one
-          console.log(`📍 Viewing shared ${sharedContent.type}: ${sharedContent.title}`);
-        }, 1000);
 import React, { useEffect, useState, useCallback } from 'react';
-      }
-
-      // Clear the navigation state to prevent re-triggering
-      navigate(location.pathname, { replace: true, state: {} });
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -654,22 +618,6 @@ const HomeView = () => {
         // Include regular vostcards, posted quickcards, and offers
         !v.isQuickcard || // Include regular vostcards and offers
         (v.isQuickcard && v.state === 'posted') // Include posted quickcards
-    const showSharedContext = location.state?.showSharedContext;
-
-    if (centerLocation && highlightVostcard) {
-      console.log('📍 Handling shared content navigation:', {
-        centerLocation,
-        highlightVostcard,
-        sharedContent
-      });
-
-      // Center map on shared content location
-      setUserLocation(centerLocation);
-      setActualUserLocation(centerLocation);
-
-      // Keep reference to highlight the shared vostcard
-      setSingleVostcard({
-        id: highlightVostcard,
       );
       
       console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
