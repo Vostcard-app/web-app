@@ -113,7 +113,7 @@ const RootView: React.FC = () => {
         </div>
       </div>
 
-      {/* Simplified Background - No Map for Testing */}
+      {/* Map Background - Restored */}
       <div style={{
         height: '100%',
         width: '100%',
@@ -121,24 +121,45 @@ const RootView: React.FC = () => {
         top: 0,
         left: 0,
         zIndex: 0,
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
       }}>
-        {/* Simple gradient background instead of map */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          color: 'white',
-          fontSize: '18px',
-          textAlign: 'center',
-          background: 'rgba(0,0,0,0.5)',
-          padding: '20px',
-          borderRadius: '10px'
-        }}>
-          🗺️ Map Temporarily Disabled<br/>
-          <small>Testing button visibility</small>
-        </div>
+        {userLocation ? (
+          <div style={{ height: '100%', width: '100%' }}>
+            <MapContainer
+              center={userLocation}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+              dragging={false}
+              touchZoom={false}
+              doubleClickZoom={false}
+              scrollWheelZoom={false}
+              boxZoom={false}
+              keyboard={false}
+              attributionControl={false}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+            </MapContainer>
+          </div>
+        ) : (
+          // Fallback pattern while loading location
+          <div style={{
+            height: '100%',
+            width: '100%',
+            backgroundColor: '#e8f4f8',
+            backgroundImage: `
+              linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
+              linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%), 
+              linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%), 
+              linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%)
+            `,
+            backgroundSize: '20px 20px',
+            backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px'
+          }}
+          />
+        )}
       </div>
 
       {/* Semi-transparent overlay to make content more readable */}
@@ -169,50 +190,7 @@ const RootView: React.FC = () => {
         </div>
       )}
       
-      {/* SUPER SIMPLE TEST - No positioning */}
-      <h1 style={{
-        color: 'white',
-        fontSize: '48px',
-        textAlign: 'center',
-        background: 'red',
-        margin: 0,
-        padding: '20px'
-      }}>
-        🚨 CAN YOU SEE THIS TEXT? 🚨
-      </h1>
-      
-      {/* Debug: Component Status */}
-      <div style={{
-        position: 'fixed',
-        bottom: '10px',
-        left: '10px',
-        background: 'rgba(0,0,0,0.9)',
-        color: 'lime',
-        padding: '12px',
-        borderRadius: '6px',
-        fontSize: '14px',
-        zIndex: 10000,
-        pointerEvents: 'none',
-        border: '2px solid lime'
-      }}>
-        🟢 RootView Loaded & Buttons Should Be Visible!
-      </div>
 
-      {/* Debug: Button Status */}
-      <div style={{
-        position: 'fixed',
-        top: '10px',
-        right: '10px',
-        background: 'rgba(255,0,0,0.9)',
-        color: 'white',
-        padding: '8px',
-        borderRadius: '4px',
-        fontSize: '12px',
-        zIndex: 10000,
-        pointerEvents: 'none'
-      }}>
-        🔴 If you can see this but not buttons - CSS issue!
-      </div>
 
       {/* Bobbing Vostcard Pin in Center */}
       <div style={{
@@ -275,26 +253,25 @@ const RootView: React.FC = () => {
             navigate('/user-guide');
           }}
           style={{
-            background: '#FF0000', // Bright red for testing
+            background: '#E62A2E', // Original red color
             color: 'white',
-            border: '4px solid yellow', // Bright border
-            borderRadius: '12px',
-            fontSize: '28px', // Larger
-            fontWeight: 700,
-            padding: '20px 0',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '24px',
+            fontWeight: 600,
+            padding: '16px 0',
             width: '100%',
             maxWidth: '400px',
-            boxShadow: '0 8px 24px rgba(255, 0, 0, 0.8)', // Strong shadow
+            boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)',
             cursor: 'pointer',
             letterSpacing: '0.01em',
             position: 'relative',
-            zIndex: 10001,
+            zIndex: 10001, // Keep the higher z-index that worked
             pointerEvents: 'auto',
             touchAction: 'manipulation',
             display: 'block',
             visibility: 'visible',
-            opacity: 1,
-            textShadow: '2px 2px 4px rgba(0,0,0,0.8)' // Text shadow
+            opacity: 1
           }}
         >
           User Guide
@@ -325,25 +302,24 @@ const RootView: React.FC = () => {
             navigate('/login');
           }}
           style={{
-            background: '#0000FF', // Bright blue for testing
+            background: '#07345c', // Original blue color
             color: 'white',
-            border: '4px solid lime', // Bright border
-            borderRadius: '12px',
-            fontSize: '28px', // Larger
-            fontWeight: 700,
-            padding: '20px 0',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '24px',
+            fontWeight: 600,
+            padding: '16px 0',
             width: '100%',
             maxWidth: '400px',
-            boxShadow: '0 8px 24px rgba(0, 0, 255, 0.8)', // Strong shadow
+            boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
             cursor: 'pointer',
             letterSpacing: '0.01em',
             position: 'relative',
-            zIndex: 10001,
+            zIndex: 10001, // Keep the higher z-index that worked
             pointerEvents: 'auto',
             display: 'block',
             visibility: 'visible',
-            opacity: 1,
-            textShadow: '2px 2px 4px rgba(0,0,0,0.8)' // Text shadow
+            opacity: 1
           }}
         >
           Login/Register
