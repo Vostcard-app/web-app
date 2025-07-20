@@ -73,109 +73,114 @@ function App() {
             <DriveModeProvider>
               <Router>
               <AuthRedirect />
-              <ResponsiveContainer>
-                <Routes>
-                  {/* 🔑 Authentication */}
+              <Routes>
+                  {/* 🔑 Authentication - NO ResponsiveContainer for these routes */}
                   <Route path="/" element={<RootView />} />
                   <Route path="/landing" element={<LandingPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegistrationPage />} />
                   <Route path="/user-guide" element={<UserGuideView />} />
 
-                  {/*  Public Access */}
+                  {/*  Public Access - NO ResponsiveContainer */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
                   <Route path="/share-quickcard/:id" element={<PublicQuickcardView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
                   <Route path="/public-map" element={<PublicHomeView />} />
 
-                  {/* 🏠 Main */}
-                  <Route path="/home" element={<HomeView />} />
-                  <Route path="/browse-area" element={<BrowseAreaView />} />
-                  <Route path="/list" element={<ListView />} />
-                  <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
-                  <Route path="/offers-list" element={<OffersListView />} />
-    
-                  <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
-                  <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
-                  <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
-                  <Route path="/following" element={<FollowingView />} />
-                  <Route path="/friends" element={<FriendListView />} />
-                  <Route path="/vostbox" element={<VostboxView />} />
+                  {/* All other routes WITH ResponsiveContainer */}
+                  <Route path="/*" element={
+                    <ResponsiveContainer>
+                      <Routes>
+                        {/* 🏠 Main */}
+                        <Route path="/home" element={<HomeView />} />
+                        <Route path="/browse-area" element={<BrowseAreaView />} />
+                        <Route path="/list" element={<ListView />} />
+                        <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
+                        <Route path="/offers-list" element={<OffersListView />} />
 
-                  {/* 📱 Quickcard Routes */}
-                  <Route path="/quickcards" element={<QuickcardListView />} />
-                  <Route path="/quickcard/:id" element={<QuickcardDetailView />} />
+                        <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
+                        <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
+                        <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
+                        <Route path="/following" element={<FollowingView />} />
+                        <Route path="/friends" element={<FriendListView />} />
+                        <Route path="/vostbox" element={<VostboxView />} />
 
-                  {/* 📜 Script Management */}
-                  <Route path="/scripts" element={<ScriptLibraryView />} />
-                  <Route path="/script-library" element={<ScriptLibraryView />} />
-                  <Route path="/script-editor" element={<ScriptEditorView />} />
-                  <Route path="/script-editor/:scriptId" element={<ScriptEditorView />} />
+                        {/* 📱 Quickcard Routes */}
+                        <Route path="/quickcards" element={<QuickcardListView />} />
+                        <Route path="/quickcard/:id" element={<QuickcardDetailView />} />
 
-                  {/* 🎥 Vostcard Creation */}
-                  <Route path="/create-step1" element={<CreateVostcardStep1 />} />
-                  <Route path="/create-step2" element={<CreateVostcardStep2 />} />
-                  <Route path="/create-step3" element={<CreateVostcardStep3 />} />
-                  <Route path="/quickcard-step3" element={<QuickcardStep3 />} />
+                        {/* 📜 Script Management */}
+                        <Route path="/scripts" element={<ScriptLibraryView />} />
+                        <Route path="/script-library" element={<ScriptLibraryView />} />
+                        <Route path="/script-editor" element={<ScriptEditorView />} />
+                        <Route path="/script-editor/:scriptId" element={<ScriptEditorView />} />
 
-                  {/* 📷 Camera */}
-                  <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
-                  <Route path="/camera" element={<CameraView />} />
-                  <Route path="/quickcard-camera" element={<QuickcardCameraView />} />
-                  <Route path="/step2-camera" element={<Step2CameraView />} />
-                  <Route path="/vostcard-camera" element={<VostcardCameraView />} />
+                        {/* 🎥 Vostcard Creation */}
+                        <Route path="/create-step1" element={<CreateVostcardStep1 />} />
+                        <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+                        <Route path="/create-step3" element={<CreateVostcardStep3 />} />
+                        <Route path="/quickcard-step3" element={<QuickcardStep3 />} />
 
-                  {/* 📦 Saved */}
-                  <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
+                        {/* 📷 Camera */}
+                        <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
+                        <Route path="/camera" element={<CameraView />} />
+                        <Route path="/quickcard-camera" element={<QuickcardCameraView />} />
+                        <Route path="/step2-camera" element={<Step2CameraView />} />
+                        <Route path="/vostcard-camera" element={<VostcardCameraView />} />
 
-                  {/* 📄 Vostcard Detail */}
-                  <Route path="/vostcard/:id" element={<VostcardDetailView />} />
-                  <Route path="/offer/:id" element={<OfferView />} />
+                        {/* 📦 Saved */}
+                        <Route path="/saved-vostcards" element={<SavedVostcardsListView />} />
 
-                  {/*  Flag Vostcard */}
-                  <Route path="/flag-form" element={<FlagFormView />} />
-                  <Route path="/flag/:vostcardID/:title/:username" element={<FlagFormView />} />
+                        {/* 📄 Vostcard Detail */}
+                        <Route path="/vostcard/:id" element={<VostcardDetailView />} />
+                        <Route path="/offer/:id" element={<OfferView />} />
 
-                  {/* 👤 User Profile */}
-                  <Route path="/profile/:userId" element={<UserProfileView />} />
+                        {/*  Flag Vostcard */}
+                        <Route path="/flag-form" element={<FlagFormView />} />
+                        <Route path="/flag/:vostcardID/:title/:username" element={<FlagFormView />} />
 
-                  {/* ⚙️ Settings */}
-                  <Route path="/settings" element={<SettingsView />} />
-                  <Route path="/user-settings" element={<UserSettingsView />} />
-                  <Route path="/account-settings" element={<AccountSettingsView />} />
-                  <Route path="/suggestion-box" element={<SuggestionBoxView />} />
-                  <Route path="/report-bug" element={<ReportBugView />} />
+                        {/* 👤 User Profile */}
+                        <Route path="/profile/:userId" element={<UserProfileView />} />
 
-                  {/* 📣 Advertiser Portal */}
-                  <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
+                        {/* ⚙️ Settings */}
+                        <Route path="/settings" element={<SettingsView />} />
+                        <Route path="/user-settings" element={<UserSettingsView />} />
+                        <Route path="/account-settings" element={<AccountSettingsView />} />
+                        <Route path="/suggestion-box" element={<SuggestionBoxView />} />
+                        <Route path="/report-bug" element={<ReportBugView />} />
 
-                  {/* 📄 Create Offer */}
-                  <Route path="/create-offer" element={<CreateOfferView />} />
+                        {/* 📣 Advertiser Portal */}
+                        <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
 
-                  {/* 🏪 Store Profile */}
-                  <Route path="/store-profile-page" element={<EditStoreProfileView />} />
+                        {/* 📄 Create Offer */}
+                        <Route path="/create-offer" element={<CreateOfferView />} />
 
-                  {/* 📄 Script Tool */}
-                  <Route path="/script-tool" element={<ScriptToolView />} />
+                        {/* 🏪 Store Profile */}
+                        <Route path="/store-profile-page" element={<EditStoreProfileView />} />
 
-                  {/* 📍 Pin Placer */}
-                  <Route path="/pin-placer" element={<PinPlacerTool />} />
-                  <Route path="/drivecard-pin-placer" element={<DrivecardPinPlacer />} />
+                        {/* 📄 Script Tool */}
+                        <Route path="/script-tool" element={<ScriptToolView />} />
 
-                  {/* 🔐 Admin Panel */}
-                  <Route path="/admin" element={<AdminPanel />} />
-                  
-                  {/* 🚀 Vostcard Studio */}
-                  <Route path="/studio" element={<VostcardStudioView />} />
+                        {/* 📍 Pin Placer */}
+                        <Route path="/pin-placer" element={<PinPlacerTool />} />
+                        <Route path="/drivecard-pin-placer" element={<DrivecardPinPlacer />} />
 
-                  {/* 🎵 Drivecards */}
-                  <Route path="/drivecards" element={<DrivecardsListView />} />
+                        {/* 🔐 Admin Panel */}
+                        <Route path="/admin" element={<AdminPanel />} />
 
-                  {/* 🔗 Shared Content */}
-                  <Route path="/shared/vostcard/:id" element={<SharedVostcardView />} />
-                  <Route path="/shared/quickcard/:id" element={<SharedQuickcardView />} />
-                </Routes>
-              </ResponsiveContainer>
+                        {/* 🚀 Vostcard Studio */}
+                        <Route path="/studio" element={<VostcardStudioView />} />
+
+                        {/* 🎵 Drivecards */}
+                        <Route path="/drivecards" element={<DrivecardsListView />} />
+
+                        {/* 🔗 Shared Content */}
+                        <Route path="/shared/vostcard/:id" element={<SharedVostcardView />} />
+                        <Route path="/shared/quickcard/:id" element={<SharedQuickcardView />} />
+                      </Routes>
+                    </ResponsiveContainer>
+                  } />
+              </Routes>
               </Router>
             </DriveModeProvider>
           </FollowingProvider>
