@@ -1,15 +1,20 @@
-import React, { useEffect, useState } from 'react'; // 🔧 ONLY ADDED useState import
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaShare, FaTimes } from 'react-icons/fa'; // 🔧 Replaced FaEnvelope with FaShare
+import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaShare, FaTimes } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import { collection, query, where, getDocs, doc, setDoc, deleteDoc, Timestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 
+// ✅ NEW: Import our refactored utilities and types
+import { getVostcardStatus, isReadyToPost, generateShareText, createErrorMessage } from '../utils/vostcardUtils';
+import { LoadingSpinner, ErrorMessage } from '../components/shared';
+import type { Vostcard } from '../types/VostcardTypes';
+
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, loadAllLocalVostcardsImmediate, syncInBackground, deletePrivateVostcard, setCurrentVostcard, postVostcard } = useVostcard(); // 🔧 ONLY PERFORMANCE CHANGE + postVostcard
+  const { savedVostcards, loadAllLocalVostcardsImmediate, syncInBackground, deletePrivateVostcard, setCurrentVostcard, postVostcard } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -63,7 +68,8 @@ const MyVostcardListView = () => {
           
         } catch (error) {
           console.error('❌ Error loading private posts:', error);
-          setError(`Failed to load private posts: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          // ✅ NEW: Use utility for consistent error handling
+          setError(createErrorMessage(error, 'Failed to load private posts'));
         } finally {
           setLoading(false);
         }
@@ -71,28 +77,14 @@ const MyVostcardListView = () => {
 
       loadData();
     }
-  }, [authLoading, user, loadAllLocalVostcardsImmediate, syncInBackground]);
+  }, [authLoading, user, loadAllLocalVostcardsImmediate, syncInBackground, navigate]);
 
-  // Check what's missing for posting
-  const getVostcardStatus = (vostcard: any) => {
-    const missing = [];
-    
-    if (!vostcard.video) missing.push('Video');
-    if (!vostcard.title) missing.push('Title');
-    if (!vostcard.description) missing.push('Description');
-    if (!vostcard.categories || vostcard.categories.length === 0) missing.push('Categories');
-    if (!vostcard.photos || vostcard.photos.length < 2) missing.push('Photos (need at least 2)');
-    if (!vostcard.geo) missing.push('Location');
-    
-    return missing;
-  };
-
-  const isReadyToPost = (vostcard: any) => {
-    return getVostcardStatus(vostcard).length === 0;
-  };
+  // ✅ REMOVED: Replaced with imported utility functions
+  // const getVostcardStatus = (vostcard: any) => { ... }
+  // const isReadyToPost = (vostcard: any) => { ... }
 
   const handleEdit = (vostcardId: string) => {
-    const vostcard = savedVostcards.find(v => v.id === vostcardId);
+    const vostcard = savedVostcards.find((v: Vostcard) => v.id === vostcardId);
     if (vostcard) {
       setCurrentVostcard(vostcard);
       navigate('/create-step2');
@@ -103,7 +95,7 @@ const MyVostcardListView = () => {
     navigate(`/vostcard/${vostcardId}`);
   };
 
-  const handleShare = async (e: React.MouseEvent, vostcard: any) => {
+  const handleShare = async (e: React.MouseEvent, vostcard: Vostcard) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -117,29 +109,16 @@ const MyVostcardListView = () => {
         });
       }
       
-      // Generate private share URL - Check if it's a quickcard
+      // ✅ NEW: Use utility function for consistent share text
       const isQuickcard = vostcard.isQuickcard === true;
       const privateUrl = isQuickcard 
         ? `${window.location.origin}/share-quickcard/${vostcard.id}`
         : `${window.location.origin}/share/${vostcard.id}`;
       
-      const itemType = isQuickcard ? 'Quickcard' : 'Vostcard';
-      
-      const shareText = `Check it out I made this with Vōstcard
-
-
-"${vostcard?.title || `Untitled ${itemType}`}"
-
-
-"${vostcard?.description || 'No description'}"
-
-
-${privateUrl}`;
+      const shareText = generateShareText(vostcard, privateUrl);
       
       if (navigator.share) {
-        navigator.share({
-          text: shareText
-        }).catch(console.error);
+        navigator.share({ text: shareText }).catch(console.error);
       } else {
         navigator.clipboard.writeText(shareText).then(() => {
           alert('Private share message copied to clipboard!');
@@ -209,7 +188,7 @@ ${privateUrl}`;
     }
   };
 
-  const handlePost = async (e: React.MouseEvent, vostcard: any) => {
+  const handlePost = async (e: React.MouseEvent, vostcard: Vostcard) => {
     e.preventDefault();
     e.stopPropagation();
     
@@ -339,63 +318,12 @@ ${privateUrl}`;
         }}>
         {/* Error State */}
         {error && (
-          <div style={{
-            backgroundColor: '#ffebee',
-            color: '#c62828',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-            border: '1px solid #ffcdd2'
-          }}>
-            <p style={{ margin: 0 }}>{error}</p>
-            <button
-              onClick={handleRetry}
-              style={{
-                backgroundColor: '#c62828',
-                color: 'white',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                marginTop: '8px'
-              }}
-            >
-              Retry
-            </button>
-          </div>
+          <ErrorMessage message={error} onRetry={handleRetry} />
         )}
 
         {/* Loading State */}
         {loading && !error ? (
-          <div style={{
-            padding: '40px',
-            textAlign: 'center',
-            color: '#666'
-          }}>
-            <p>Loading your private posts...</p>
-          </div>
-        ) : error ? (
-          <div style={{
-            padding: '40px',
-            textAlign: 'center',
-            color: '#e74c3c'
-          }}>
-            <p>{error}</p>
-            <button
-              onClick={handleRetry}
-              style={{
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '10px 20px',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                marginTop: '10px'
-              }}
-            >
-              Retry
-            </button>
-          </div>
+          <LoadingSpinner />
         ) : savedVostcards.length === 0 ? (
           <div style={{
             padding: '40px',
