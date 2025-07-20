@@ -42,7 +42,7 @@ const RootView: React.FC = () => {
       height: '100vh', 
       width: '100vw', 
       position: 'relative', 
-      overflow: 'hidden',
+      overflow: 'visible', // Changed from hidden
       backgroundColor: '#f5f5f5',
       // Force hardware acceleration and prevent layout issues
       transform: 'translateZ(0)',
@@ -168,6 +168,18 @@ const RootView: React.FC = () => {
           Location Error: {locationError}
         </div>
       )}
+      
+      {/* SUPER SIMPLE TEST - No positioning */}
+      <h1 style={{
+        color: 'white',
+        fontSize: '48px',
+        textAlign: 'center',
+        background: 'red',
+        margin: 0,
+        padding: '20px'
+      }}>
+        🚨 CAN YOU SEE THIS TEXT? 🚨
+      </h1>
       
       {/* Debug: Component Status */}
       <div style={{
