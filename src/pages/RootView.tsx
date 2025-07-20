@@ -89,7 +89,7 @@ const RootView: React.FC = () => {
           }}
         >
           <img 
-            src="/Info_pin.png"  // Changed from {InfoPin}
+            src="/Info_pin.png"
             alt="Info Pin" 
             style={{
               width: '50px',
@@ -193,7 +193,7 @@ const RootView: React.FC = () => {
         zIndex: 2000
       }}>
         <img 
-          src="/Vostcard_pin.svg"  // Changed from {VostcardPin} and note: it's SVG in public folder
+          src="/Vostcard_pin.png"
           alt="Vostcard Pin"
           className="bobbing-pin"
           style={{
