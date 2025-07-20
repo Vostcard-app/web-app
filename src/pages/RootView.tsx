@@ -100,13 +100,13 @@ const RootView: React.FC = () => {
         Vōstcard
       </div>
 
-      {/* Map Container - Leave space for bottom buttons */}
+      {/* Map Container - Leave space for bottom button */}
       <div style={{
         position: 'absolute',
         top: '64px',
         left: 0,
         right: 0,
-        bottom: '90px', // IMPORTANT: Leave space for bottom buttons
+        bottom: '90px', // Space for single bottom button
         zIndex: 1
       }}>
         {userLocation ? (
@@ -172,7 +172,7 @@ const RootView: React.FC = () => {
         zIndex: 100,
         pointerEvents: 'none',
         transform: 'translate(-50%, -50%)',
-        marginTop: '-45px' // Move up slightly to account for button space
+        marginTop: '-45px'
       }}>
         <img 
           src="/Vostcard_pin.png"
@@ -221,20 +221,20 @@ const RootView: React.FC = () => {
         </button>
       </div>
 
-      {/* FIXED: Login & Register Buttons - Higher z-index and proper positioning */}
+      {/* Single Log In / Register Button - Same width as User Guide */}
       <div style={{
-        position: 'fixed', // Changed from absolute to fixed
-        bottom: 'calc(20px + env(safe-area-inset-bottom))', // Account for safe area
-        left: '16px',
-        right: '16px',
-        zIndex: 3000, // Higher z-index to ensure visibility
-        display: 'flex',
-        gap: '12px',
-        pointerEvents: 'auto' // Ensure buttons are clickable
+        position: 'fixed',
+        bottom: 'calc(20px + env(safe-area-inset-bottom))',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 3000,
+        width: 'calc(100% - 32px)', // Same width calculation as User Guide
+        maxWidth: '400px', // Same max width as User Guide
+        pointerEvents: 'auto'
       }}>
         <button
           onClick={() => {
-            console.log('🔐 Login button clicked');
+            console.log('🔐 Log In / Register button clicked');
             navigate('/login');
           }}
           style={{
@@ -242,40 +242,17 @@ const RootView: React.FC = () => {
             color: 'white',
             border: 'none',
             borderRadius: '8px',
-            fontSize: '18px',
+            fontSize: '20px', // Same font size as User Guide
             fontWeight: 600,
             padding: '16px',
-            flex: 1,
+            width: '100%', // Full width of container
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
-            cursor: 'pointer',
-            touchAction: 'manipulation',
-            minHeight: '54px' // Ensure minimum touch target size
-          }}
-        >
-          Log In
-        </button>
-        
-        <button
-          onClick={() => {
-            console.log('📝 Register button clicked');
-            navigate('/register');
-          }}
-          style={{
-            background: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '18px',
-            fontWeight: 600,
-            padding: '16px',
-            flex: 1,
-            boxShadow: '0 4px 12px rgba(40, 167, 69, 0.3)',
             cursor: 'pointer',
             touchAction: 'manipulation',
             minHeight: '54px'
           }}
         >
-          Register
+          Log In / Register
         </button>
       </div>
 
