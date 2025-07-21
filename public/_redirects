@@ -1,5 +1,8 @@
-# Handle client-side routing
-/*    /index.html   200
+# API routes should go to Netlify functions (MUST come before catch-all)
+/api/*   /.netlify/functions/:splat   200
 
-# API routes should go to Netlify functions
-/api/*   /.netlify/functions/:splat   200 
+# Allow direct Netlify function calls (MUST come before catch-all)
+/.netlify/functions/*   200
+
+# Handle client-side routing (catch-all MUST be last)
+/*    /index.html   200 
