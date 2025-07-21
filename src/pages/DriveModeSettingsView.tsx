@@ -1,7 +1,7 @@
 // Drive Mode Settings View - Comprehensive settings and preferences for Drive Mode
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHome, FaCar, FaMusic, FaInfoCircle, FaList, FaCog, FaSpeedometer, FaMapMarkerAlt, FaVolumeUp, FaClock, FaPlay, FaPause, FaSkipForward } from 'react-icons/fa';
+import { FaArrowLeft, FaHome, FaCar, FaMusic, FaInfoCircle, FaList, FaCog, FaDigitalTachograph, FaMapMarkerAlt, FaVolumeUp, FaClock, FaPlay, FaPause, FaSkipForward } from 'react-icons/fa';
 import { useDriveMode } from '../context/DriveModeContext';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
@@ -135,7 +135,7 @@ const DriveModeSettingsView: React.FC = () => {
         }}>
           {[
             { key: 'settings', label: 'Settings', icon: FaCog },
-            { key: 'status', label: 'Status', icon: FaSpeedometer },
+            { key: 'status', label: 'Status', icon: FaDigitalTachograph },
             { key: 'info', label: 'Info', icon: FaInfoCircle }
           ].map(section => (
             <button
@@ -222,7 +222,7 @@ const DriveModeSettingsView: React.FC = () => {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <FaSpeedometer />
+                  <FaDigitalTachograph />
                   Current Speed: {currentSpeed.toFixed(0)} mph
                   {isAutoEnabled && <span>(Auto-enabled)</span>}
                 </div>

@@ -1002,8 +1002,7 @@ const HomeView = () => {
           bottom: 20,
           left: 15,
           right: 15,
-          zIndex: 20000, // Changed from 2000 to 20000 to be above all modals
-          zIndex: 2000, // Changed from 1000 to 2000
+          zIndex: 20000, // Keep only the higher value
           display: 'flex',
           justifyContent: 'space-between',
           gap: '4%'
@@ -1146,8 +1145,8 @@ const HomeView = () => {
         {/* Filter button */}
         <div style={{
           position: 'absolute',
-          bottom: '95px',
-          left: '16px',
+          top: '66.7%', // 2/3 down the screen
+          right: 20, // Right side matching zoom controls
           zIndex: 1002
         }}>
           <button
