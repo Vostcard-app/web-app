@@ -61,8 +61,19 @@ const QuickAudio: React.FC = () => {
 
   const startRecording = async () => {
     try {
-      console.log('🎤 Attempting to start audio recording...');
+      console.log('🎤 === STARTING NEW RECORDING ===');
+      console.log('🎤 Current state:', { 
+        isRecording, 
+        audioBlob: !!audioBlob, 
+        recordingTime,
+        chunks: audioChunksRef.current.length 
+      });
+      
+      // Clear any previous state
       setRecordingError(null);
+      setAudioBlob(null);
+      setRecordingTime(0);
+      audioChunksRef.current = [];
       
       // Request microphone permission
       console.log('🎤 Requesting microphone permission...');
@@ -100,15 +111,39 @@ const QuickAudio: React.FC = () => {
       
       // Handle data available
       mediaRecorder.ondataavailable = (event) => {
+        console.log('🎤 Data available:', {
+          size: event.data.size,
+          type: event.data.type,
+          totalChunks: audioChunksRef.current.length + 1
+        });
+        
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
+          console.log('✅ Audio chunk added, total chunks:', audioChunksRef.current.length);
+        } else {
+          console.log('❌ Received empty audio chunk');
         }
       };
       
       // Handle recording stop
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        setAudioBlob(audioBlob);
+        console.log('🎤 MediaRecorder stopped, chunks:', audioChunksRef.current.length);
+        
+        // Only create audio blob if we have data and we intended to stop
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          console.log('✅ Audio recording completed:', {
+            size: audioBlob.size,
+            type: audioBlob.type,
+            duration: recordingTime,
+            chunks: audioChunksRef.current.length
+          });
+          setAudioBlob(audioBlob);
+        } else {
+          console.log('❌ No audio chunks available, recording may have failed');
+          setRecordingError('Recording failed - no audio captured. Please try again.');
+        }
+        
         setIsRecording(false);
         
         // Stop all tracks
@@ -116,12 +151,6 @@ const QuickAudio: React.FC = () => {
           streamRef.current.getTracks().forEach(track => track.stop());
           streamRef.current = null;
         }
-        
-        console.log('✅ Audio recording completed:', {
-          size: audioBlob.size,
-          type: audioBlob.type,
-          duration: recordingTime
-        });
       };
       
       // Add error handling for MediaRecorder
@@ -133,16 +162,41 @@ const QuickAudio: React.FC = () => {
       
       // Start recording
       console.log('🎤 Starting MediaRecorder...');
-      mediaRecorder.start(1000); // Collect data every second
-      setIsRecording(true);
-      setRecordingTime(0);
+      console.log('🎤 MediaRecorder state before start:', mediaRecorder.state);
       
-      // Start timer
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-      
-      console.log('✅ Audio recording started successfully');
+      try {
+        mediaRecorder.start(1000); // Collect data every second
+        console.log('🎤 MediaRecorder.start() called successfully');
+        console.log('🎤 MediaRecorder state after start:', mediaRecorder.state);
+        
+        setIsRecording(true);
+        setRecordingTime(0);
+        
+        // Start timer
+        recordingTimerRef.current = setInterval(() => {
+          setRecordingTime(prev => prev + 1);
+        }, 1000);
+        
+        // Check recording state after a brief delay
+        setTimeout(() => {
+          console.log('🎤 Recording state check:', {
+            mediaRecorderState: mediaRecorder.state,
+            isRecording: isRecording,
+            chunks: audioChunksRef.current.length
+          });
+        }, 100);
+        
+        console.log('✅ Audio recording started successfully');
+      } catch (startError) {
+        console.error('❌ Error calling mediaRecorder.start():', startError);
+        setRecordingError(`Failed to start recording: ${startError instanceof Error ? startError.message : 'Unknown error'}`);
+        
+        // Clean up stream if start failed
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+      }
       
     } catch (error) {
       console.error('❌ Failed to start recording:', error);
@@ -186,15 +240,21 @@ const QuickAudio: React.FC = () => {
   };
 
   const reRecord = () => {
+    console.log('🎤 Re-recording: clearing previous audio');
     setAudioBlob(null);
     setRecordingTime(0);
     setRecordingError(null);
+    
+    // Clear audio chunks
+    audioChunksRef.current = [];
     
     // Stop any existing audio playback
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
+    
+    console.log('✅ Re-record state cleared');
   };
 
   const saveAudio = () => {
