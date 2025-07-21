@@ -1,7 +1,7 @@
 // Drive Mode Settings View - Comprehensive settings and preferences for Drive Mode
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHome, FaCar, FaMusic, FaInfoCircle, FaList, FaCog, FaDigitalTachograph, FaMapMarkerAlt, FaVolumeUp, FaClock, FaPlay, FaPause, FaSkipForward } from 'react-icons/fa';
+import { FaArrowLeft, FaHome, FaCar, FaMusic, FaInfoCircle, FaList, FaCog, FaDigitalTachograph, FaMapMarkerAlt, FaVolumeUp, FaClock, FaPlay, FaPause, FaFastForward } from 'react-icons/fa';
 import { useDriveMode } from '../context/DriveModeContext';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
@@ -534,7 +534,7 @@ const DriveModeSettingsView: React.FC = () => {
                         gap: '5px'
                       }}
                     >
-                      <FaSkipForward />
+                      <FaFastForward />
                       Skip
                     </button>
                     
