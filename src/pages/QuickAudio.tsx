@@ -11,6 +11,7 @@ const QuickAudio: React.FC = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [testingMicrophone, setTestingMicrophone] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
   
   // Audio recording refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -572,6 +573,91 @@ const QuickAudio: React.FC = () => {
     }
   };
 
+  // Handle audio file upload
+  const handleAudioUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    console.log('🎤 === UPLOADING AUDIO FILE ===');
+    console.log('📁 File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: new Date(file.lastModified)
+    });
+
+    setUploadingFile(true);
+    setRecordingError(null);
+
+    // Validate file type
+    const validAudioTypes = [
+      'audio/mp3',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/m4a',
+      'audio/aac',
+      'audio/ogg',
+      'audio/webm',
+      'audio/mp4'
+    ];
+
+    if (!validAudioTypes.some(type => file.type.includes(type.split('/')[1]))) {
+      console.error('❌ Invalid file type:', file.type);
+      setRecordingError(`Invalid file type: ${file.type}. Please upload an audio file (MP3, WAV, M4A, etc.)`);
+      setUploadingFile(false);
+      return;
+    }
+
+    // Check file size (limit to 50MB)
+    const maxSizeBytes = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSizeBytes) {
+      console.error('❌ File too large:', file.size);
+      setRecordingError(`File too large: ${Math.round(file.size / 1024 / 1024)}MB. Maximum size is 50MB.`);
+      setUploadingFile(false);
+      return;
+    }
+
+    // Get audio duration
+    const audio = new Audio();
+    const url = URL.createObjectURL(file);
+    audio.src = url;
+
+    audio.onloadedmetadata = () => {
+      const duration = Math.round(audio.duration);
+      console.log('✅ Audio file loaded:', {
+        duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
+        durationSeconds: duration
+      });
+
+      setRecordingTime(duration);
+      setAudioBlob(file);
+      setUploadingFile(false);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      
+      console.log('✅ Audio file upload completed successfully');
+    };
+
+    audio.onerror = () => {
+      console.error('❌ Error loading audio file');
+      setRecordingError('Error loading audio file. Please make sure it\'s a valid audio file.');
+      setUploadingFile(false);
+      URL.revokeObjectURL(url);
+    };
+  };
+
+  const triggerFileUpload = () => {
+    console.log('🎤 Triggering file upload dialog');
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'audio/*';
+    fileInput.onchange = (event) => {
+      handleAudioUpload(event as any);
+    };
+    fileInput.click();
+  };
+
   const saveAudio = () => {
     if (audioBlob) {
       // Pass the audio blob back to the previous screen via navigation state
@@ -711,13 +797,13 @@ const QuickAudio: React.FC = () => {
           width: '200px',
           height: '200px',
           borderRadius: '50%',
-          backgroundColor: isRecording ? '#ff4444' : audioBlob ? '#4CAF50' : '#e0e0e0',
+          backgroundColor: isRecording ? '#ff4444' : audioBlob ? '#4CAF50' : uploadingFile ? '#673ab7' : '#e0e0e0',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '30px',
-          border: `8px solid ${isRecording ? '#ff6666' : audioBlob ? '#66BB6A' : '#bbb'}`,
-          boxShadow: isRecording ? '0 0 30px rgba(255, 68, 68, 0.3)' : 'none',
+          border: `8px solid ${isRecording ? '#ff6666' : audioBlob ? '#66BB6A' : uploadingFile ? '#9c27b0' : '#bbb'}`,
+          boxShadow: isRecording ? '0 0 30px rgba(255, 68, 68, 0.3)' : uploadingFile ? '0 0 30px rgba(103, 58, 183, 0.3)' : 'none',
           transition: 'all 0.3s ease'
         }}>
           {isRecording ? (
@@ -732,6 +818,13 @@ const QuickAudio: React.FC = () => {
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>✅</div>
               <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
                 {formatTime(recordingTime)}
+              </div>
+            </div>
+          ) : uploadingFile ? (
+            <div style={{ textAlign: 'center', color: 'white' }}>
+              <div style={{ fontSize: '48px', marginBottom: '10px' }}>📤</div>
+              <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                Processing...
               </div>
             </div>
           ) : (
@@ -759,6 +852,18 @@ const QuickAudio: React.FC = () => {
               <div style={{ fontWeight: 'bold', color: '#4CAF50' }}>Recording Complete!</div>
               <div style={{ fontSize: '14px', color: '#666' }}>Duration: {formatTime(recordingTime)}</div>
             </div>
+          ) : uploadingFile ? (
+            <div style={{ color: '#673ab7', fontSize: '16px', fontWeight: 'bold' }}>
+              📤 Uploading audio file...
+              <div style={{ 
+                marginTop: '5px', 
+                fontSize: '14px', 
+                color: '#666',
+                fontWeight: 'normal' 
+              }}>
+                Please wait while we process your file
+              </div>
+            </div>
           ) : recordingError ? (
             <div style={{ color: '#ff4444', fontSize: '16px' }}>
               {recordingError}
@@ -769,7 +874,17 @@ const QuickAudio: React.FC = () => {
                   color: '#666',
                   fontStyle: 'italic' 
                 }}>
-                  💡 Try the "Test Microphone" button first, then try the "Fallback Method" button below, or use a different browser
+                  💡 Try the "Test Microphone" button first, then try the "Fallback Method" button, or use "Upload Audio File" to import from your device
+                </div>
+              )}
+              {recordingError.includes('fallback method') && (
+                <div style={{ 
+                  marginTop: '10px', 
+                  fontSize: '14px', 
+                  color: '#666',
+                  fontStyle: 'italic' 
+                }}>
+                  📱 Safari doesn't support web audio recording. Use "Upload Audio File" to import from your device's Voice Memos or other recording apps
                 </div>
               )}
             </div>
@@ -801,7 +916,7 @@ const QuickAudio: React.FC = () => {
             <>
               <button
                 onClick={isRecording ? stopRecording : startRecording}
-                disabled={!!recordingError || testingMicrophone}
+                disabled={!!recordingError || testingMicrophone || uploadingFile}
                 style={{
                   backgroundColor: isRecording ? '#ff4444' : '#007aff',
                   color: 'white',
@@ -810,8 +925,8 @@ const QuickAudio: React.FC = () => {
                   borderRadius: '12px',
                   fontSize: '18px',
                   fontWeight: 'bold',
-                  cursor: (recordingError || testingMicrophone) ? 'not-allowed' : 'pointer',
-                  opacity: (recordingError || testingMicrophone) ? 0.6 : 1,
+                  cursor: (recordingError || testingMicrophone || uploadingFile) ? 'not-allowed' : 'pointer',
+                  opacity: (recordingError || testingMicrophone || uploadingFile) ? 0.6 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -835,7 +950,7 @@ const QuickAudio: React.FC = () => {
               {/* Test Microphone Button */}
               <button
                 onClick={testMicrophone}
-                disabled={isRecording || testingMicrophone}
+                disabled={isRecording || testingMicrophone || uploadingFile}
                 style={{
                   backgroundColor: testingMicrophone ? '#ffc107' : '#28a745',
                   color: testingMicrophone ? '#333' : 'white',
@@ -844,8 +959,8 @@ const QuickAudio: React.FC = () => {
                   borderRadius: '8px',
                   fontSize: '16px',
                   fontWeight: 'bold',
-                  cursor: (isRecording || testingMicrophone) ? 'not-allowed' : 'pointer',
-                  opacity: (isRecording || testingMicrophone) ? 0.7 : 1,
+                  cursor: (isRecording || testingMicrophone || uploadingFile) ? 'not-allowed' : 'pointer',
+                  opacity: (isRecording || testingMicrophone || uploadingFile) ? 0.7 : 1,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -860,7 +975,7 @@ const QuickAudio: React.FC = () => {
               {recordingError && recordingError.includes('stopped too quickly') && (
                 <button
                   onClick={startRecordingFallback}
-                  disabled={isRecording || testingMicrophone}
+                  disabled={isRecording || testingMicrophone || uploadingFile}
                   style={{
                     backgroundColor: '#ff9800',
                     color: 'white',
@@ -869,8 +984,8 @@ const QuickAudio: React.FC = () => {
                     borderRadius: '8px',
                     fontSize: '16px',
                     fontWeight: 'bold',
-                    cursor: (isRecording || testingMicrophone) ? 'not-allowed' : 'pointer',
-                    opacity: (isRecording || testingMicrophone) ? 0.7 : 1,
+                    cursor: (isRecording || testingMicrophone || uploadingFile) ? 'not-allowed' : 'pointer',
+                    opacity: (isRecording || testingMicrophone || uploadingFile) ? 0.7 : 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -881,6 +996,30 @@ const QuickAudio: React.FC = () => {
                   🔧 Try Fallback Method
                 </button>
               )}
+
+              {/* Upload Audio File Button - show when recording fails or as general option */}
+              <button
+                onClick={triggerFileUpload}
+                disabled={isRecording || testingMicrophone || uploadingFile}
+                style={{
+                  backgroundColor: uploadingFile ? '#9c27b0' : '#673ab7',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: (isRecording || testingMicrophone || uploadingFile) ? 'not-allowed' : 'pointer',
+                  opacity: (isRecording || testingMicrophone || uploadingFile) ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                }}
+              >
+                {uploadingFile ? '📤 Uploading...' : '📁 Upload Audio File'}
+              </button>
             </>
           ) : (
             // Post-recording buttons
