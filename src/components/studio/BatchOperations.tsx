@@ -27,6 +27,7 @@ export const BatchOperations: React.FC = () => {
   const [filteredVostcards, setFilteredVostcards] = useState<ExtendedVostcard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'regular' | 'quickcards'>('all');
 
   // Load all vostcards on mount
   useEffect(() => {
@@ -54,10 +55,18 @@ export const BatchOperations: React.FC = () => {
     setAllVostcards(combined);
   }, [savedVostcards, postedVostcards]);
 
-  // Apply search filter
+  // Apply filters
   useEffect(() => {
     let filtered = [...allVostcards];
 
+    // Apply type filter
+    if (typeFilter === 'quickcards') {
+      filtered = filtered.filter(v => v.isQuickcard === true);
+    } else if (typeFilter === 'regular') {
+      filtered = filtered.filter(v => !v.isQuickcard);
+    }
+
+    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(v => 
@@ -75,7 +84,7 @@ export const BatchOperations: React.FC = () => {
     });
 
     setFilteredVostcards(filtered);
-  }, [allVostcards, searchQuery]);
+  }, [allVostcards, searchQuery, typeFilter]);
 
   // Selection handlers
   const handleSelectAll = () => {
@@ -178,10 +187,31 @@ export const BatchOperations: React.FC = () => {
           marginBottom: '20px'
         }}>
           <h3 style={{ margin: 0, color: '#2c3e50' }}>
-            Batch Operations ({filteredVostcards.length} vostcards)
+            Batch Operations ({filteredVostcards.length} items)
+            {typeFilter === 'all' && (
+              <span style={{ fontSize: '14px', color: '#6c757d', marginLeft: '8px' }}>
+                ({allVostcards.filter(v => !v.isQuickcard).length} vostcards, {allVostcards.filter(v => v.isQuickcard).length} quickcards)
+              </span>
+            )}
           </h3>
           
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            {/* Type Filter */}
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as 'all' | 'regular' | 'quickcards')}
+              style={{
+                padding: '8px 12px',
+                border: '1px solid #ced4da',
+                borderRadius: '4px',
+                backgroundColor: 'white'
+              }}
+            >
+              <option value="all">All Content</option>
+              <option value="regular">Vostcards</option>
+              <option value="quickcards">📱 Quickcards</option>
+            </select>
+
             {/* Search */}
             <div style={{ position: 'relative' }}>
               <FaSearch 

@@ -24,6 +24,7 @@ interface VostcardEditContextProps {
   
   // Quickcard operations
   createQuickcard: (photo: Blob, geo: { latitude: number; longitude: number }) => void;
+  loadQuickcard: (quickcard: Vostcard) => void;
   
   // Publishing
   publishVostcard: () => Promise<void>;
@@ -231,6 +232,25 @@ export const VostcardEditProvider: React.FC<{ children: React.ReactNode }> = ({ 
     console.log('✅ Created quickcard:', quickcard.id);
   }, [user, getUsernameForVostcard]);
 
+  // Load existing quickcard for editing
+  const loadQuickcard = useCallback((quickcard: Vostcard) => {
+    if (!quickcard.isQuickcard) {
+      console.warn('Attempted to load non-quickcard as quickcard');
+      return;
+    }
+
+    // Create a copy for editing to avoid mutating original
+    const quickcardForEditing: Vostcard = {
+      ...quickcard,
+      state: 'private', // Reset to private when loading for editing
+      updatedAt: new Date().toISOString(),
+    };
+
+    setCurrentVostcard(quickcardForEditing);
+    setIsDirty(false);
+    console.log('✅ Loaded quickcard for editing:', quickcard.id, quickcard.title);
+  }, []);
+
   // Publish vostcard to public map
   const publishVostcard = useCallback(async () => {
     if (!currentVostcard) {
@@ -298,6 +318,7 @@ export const VostcardEditProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     // Quickcard operations
     createQuickcard,
+    loadQuickcard,
     
     // Publishing
     publishVostcard,

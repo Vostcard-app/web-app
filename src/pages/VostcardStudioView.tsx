@@ -3,12 +3,15 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { drivecardService } from '../services/drivecardService';
-import type { Drivecard } from '../types/VostcardTypes';
+import { QuickcardImporter } from '../components/studio/QuickcardImporter';
+import { useVostcardEdit } from '../context/VostcardEditContext';
+import type { Drivecard, Vostcard } from '../types/VostcardTypes';
 
 const VostcardStudioView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
+  const { loadQuickcard } = useVostcardEdit();
   
   const canAccessDrivecard = userRole === 'guide' || userRole === 'admin';
   
@@ -19,6 +22,9 @@ const VostcardStudioView: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'quickcard' | 'drivecard'>(
     editingDrivecardId && canAccessDrivecard ? 'drivecard' : 'quickcard'
   );
+
+  // Quickcard import state
+  const [showQuickcardImporter, setShowQuickcardImporter] = useState(false);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -300,6 +306,18 @@ const VostcardStudioView: React.FC = () => {
     };
   }, []);
 
+  // Handle quickcard import
+  const handleQuickcardImport = (quickcard: Vostcard) => {
+    loadQuickcard(quickcard);
+    setShowQuickcardImporter(false);
+    // Navigate to the advanced editor to continue editing
+    navigate('/studio', { state: { editingQuickcard: quickcard.id, activeTab: 'quickcard' } });
+  };
+
+  const handleCancelImport = () => {
+    setShowQuickcardImporter(false);
+  };
+
   return (
     <div style={{
       backgroundColor: 'white', 
@@ -481,31 +499,82 @@ const VostcardStudioView: React.FC = () => {
             borderRadius: '8px',
             padding: '20px',
             width: '100%',
-            maxWidth: '350px',
+            maxWidth: '500px',
             backgroundColor: '#f9f9f9',
-            border: '1px solid #ddd',
-            textAlign: 'center'
+            border: '1px solid #ddd'
           }}>
-            <h3>📝 Quickcard Editor</h3>
-            <p style={{ color: '#666', marginBottom: '20px' }}>
-              Select an existing quickcard to add audio and enhance
-            </p>
-            <button
-              onClick={() => navigate('/quickcards')}
-              style={{
-                backgroundColor: '#007aff',
-                color: 'white',
-                border: 'none',
-                padding: '12px 20px',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                width: '100%'
-              }}
-            >
-              Browse My Quickcards
-            </button>
+            {!showQuickcardImporter ? (
+              <div style={{ textAlign: 'center' }}>
+                <h3>📝 Quickcard Studio</h3>
+                <p style={{ color: '#666', marginBottom: '20px' }}>
+                  Import and enhance your quickcards with audio, improved content, and professional editing tools
+                </p>
+                
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => setShowQuickcardImporter(true)}
+                    style={{
+                      backgroundColor: '#007aff',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    📱 Import Quickcard
+                  </button>
+                  
+                  <button
+                    onClick={() => navigate('/quickcards')}
+                    style={{
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    📋 Browse Library
+                  </button>
+                </div>
+
+                <div style={{
+                  marginTop: '20px',
+                  padding: '16px',
+                  backgroundColor: '#e8f4fd',
+                  borderRadius: '8px',
+                  border: '1px solid #bee5eb',
+                  fontSize: '14px',
+                  color: '#0c5460',
+                  textAlign: 'left'
+                }}>
+                  <strong>💡 Studio Features:</strong>
+                  <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                    <li>Add audio narration to quickcards</li>
+                    <li>Enhanced editing with advanced tools</li>
+                    <li>Convert quickcards to full vostcards</li>
+                    <li>Professional content management</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <QuickcardImporter
+                onImport={handleQuickcardImport}
+                onCancel={handleCancelImport}
+              />
+            )}
           </div>
         )}
 

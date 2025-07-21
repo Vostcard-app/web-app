@@ -838,28 +838,7 @@ const HomeView = () => {
               Menu
             </div>
             
-            {/* Browse Button - Moved from bottom navigation */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/browse-area');
-              }}
-              style={menuItemStyle}
-            >
-              🗺️ Browse Area
-            </button>
-
-            {/* Friends Button - Moved from bottom navigation */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/friends');
-              }}
-              style={menuItemStyle}
-            >
-              👥 Friends
-            </button>
-            
+            {/* 1. Private Posts */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -870,6 +849,7 @@ const HomeView = () => {
               📱 Private Posts
             </button>
             
+            {/* 2. Public Posts */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -877,49 +857,21 @@ const HomeView = () => {
               }}
               style={menuItemStyle}
             >
-              🌍 My Posts
+              🌍 Public Posts
             </button>
             
+            {/* 3. Browse Area */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
-                navigate('/quickcards');
+                navigate('/browse-area');
               }}
               style={menuItemStyle}
             >
-              📸 Quickcards
+              🗺️ Browse Area
             </button>
             
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/liked-vostcards');
-              }}
-              style={menuItemStyle}
-            >
-              ❤️ Liked
-            </button>
-            
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/following');
-              }}
-              style={menuItemStyle}
-            >
-              👥 Following
-            </button>
-
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/vostbox');
-              }}
-              style={menuItemStyle}
-            >
-              📬 Vōstbox
-            </button>
-            
+            {/* 4. Drive Mode */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -930,11 +882,56 @@ const HomeView = () => {
               🚗 Drive Mode
             </button>
             
+            {/* 5. Vōstbox */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/vostbox');
+              }}
+              style={menuItemStyle}
+            >
+              📬 Vōstbox
+            </button>
+            
+            {/* 6. Friend List */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/friends');
+              }}
+              style={menuItemStyle}
+            >
+              👥 Friend List
+            </button>
+            
+            {/* 7. Liked */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/liked-vostcards');
+              }}
+              style={menuItemStyle}
+            >
+              ❤️ Liked
+            </button>
+            
+            {/* 8. Following */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/following');
+              }}
+              style={menuItemStyle}
+            >
+              👥 Following
+            </button>
+
+            {/* 9. Vostcard Studio */}
             {(userRole === 'guide' || userRole === 'admin') && (
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
-                  navigate('/studio'); // Changed from '/vostcard-studio' to '/studio'
+                  navigate('/studio');
                 }}
                 style={menuItemStyle}
               >
@@ -942,6 +939,7 @@ const HomeView = () => {
               </button>
             )}
             
+            {/* 10. Settings */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -952,16 +950,7 @@ const HomeView = () => {
               ⚙️ Settings
             </button>
             
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/report-bug');
-              }}
-              style={menuItemStyle}
-            >
-              🐛 Report Bug
-            </button>
-            
+            {/* 11. Suggestion Box */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -972,6 +961,18 @@ const HomeView = () => {
               💡 Suggestion Box
             </button>
             
+            {/* 12. Report a bug */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/report-bug');
+              }}
+              style={menuItemStyle}
+            >
+              🐛 Report a bug
+            </button>
+            
+            {/* 13. Logout */}
             <button
               onClick={handleLogout}
               style={{ ...menuItemStyle, color: '#d32f2f' }}

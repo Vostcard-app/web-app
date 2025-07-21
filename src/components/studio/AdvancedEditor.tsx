@@ -428,7 +428,19 @@ const MediaTab: React.FC = () => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
         {/* Video Section */}
         <div>
-          <h5 style={{ marginBottom: '15px' }}>Video Content</h5>
+          <h5 style={{ marginBottom: '15px' }}>
+            Video Content
+            {currentVostcard?.isQuickcard && (
+              <span style={{ 
+                fontSize: '12px', 
+                color: '#6c757d', 
+                fontWeight: 'normal', 
+                marginLeft: '8px' 
+              }}>
+                (Optional for Quickcards)
+              </span>
+            )}
+          </h5>
           <div style={{
             border: '2px dashed #ced4da',
             borderRadius: '8px',
@@ -460,7 +472,10 @@ const MediaTab: React.FC = () => {
               <div>
                 <FaVideo size={32} color="#6c757d" style={{ marginBottom: '10px' }} />
                 <p style={{ margin: '0 0 15px 0', color: '#6c757d' }}>
-                  Upload a video file for your vostcard
+                  {currentVostcard?.isQuickcard 
+                    ? 'Add video to convert your quickcard into a full vostcard'
+                    : 'Upload a video file for your vostcard'
+                  }
                 </p>
                 <button
                   onClick={() => videoInputRef.current?.click()}
@@ -474,7 +489,7 @@ const MediaTab: React.FC = () => {
                   }}
                 >
                   <FaVideo style={{ marginRight: '8px' }} />
-                  Upload Video
+                  {currentVostcard?.isQuickcard ? 'Add Video' : 'Upload Video'}
                 </button>
               </div>
             )}

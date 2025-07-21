@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { Icon, LatLng } from 'leaflet';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
-import { FaHome, FaCheck, FaTimes, FaMapMarkerAlt, FaCrosshairs } from 'react-icons/fa';
+import { FaHome, FaCheck, FaTimes, FaMapMarkerAlt, FaCrosshairs, FaSearch } from 'react-icons/fa';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import 'leaflet/dist/leaflet.css';
 
@@ -69,6 +69,17 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   
+  // Search functionality
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<Array<{
+    latitude: number;
+    longitude: number;
+    displayAddress: string;
+    name: string;
+  }>>([]);
+  const [showResults, setShowResults] = useState(false);
+  
   const markerRef = useRef<any>(null);
 
   // Check if position has changed
@@ -82,6 +93,60 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
 
   const handleLocationSelect = (lat: number, lng: number) => {
     setPinPosition([lat, lng]);
+    setShowResults(false); // Hide search results when clicking map
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setError(null);
+    setShowResults(false);
+
+    try {
+      // Use the existing Netlify geocode function
+      const response = await fetch('/.netlify/functions/geocode', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'search',
+          searchQuery: searchQuery.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.results && data.results.length > 0) {
+        setSearchResults(data.results);
+        setShowResults(true);
+        
+        // Auto-select first result
+        const firstResult = data.results[0];
+        setPinPosition([firstResult.latitude, firstResult.longitude]);
+      } else {
+        setError('Location not found. Please try a different search.');
+        setSearchResults([]);
+      }
+      
+    } catch (err) {
+      console.error('Search error:', err);
+      setError('Failed to search for location. Please try again.');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchResultClick = (result: typeof searchResults[0]) => {
+    setPinPosition([result.latitude, result.longitude]);
+    setSearchQuery(result.name);
+    setShowResults(false);
   };
 
   const handleSave = async () => {
@@ -192,26 +257,22 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         backgroundColor: 'white',
         padding: '12px 16px',
         borderBottom: '1px solid #e0e0e0',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '12px'
+        zIndex: 1000
       }}>
-        {/* Left section with home icon */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px',
-          flex: 1
+        {/* Top row - Title and Save */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '12px'
         }}>
-          <FaHome 
-            size={20} 
-            color="#007aff" 
-            style={{ cursor: 'pointer' }}
-            onClick={handleCancel}
-          />
-          <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <FaHome 
+              size={20} 
+              color="#007aff" 
+              style={{ cursor: 'pointer' }}
+              onClick={handleCancel}
+            />
             <h2 style={{ 
               margin: 0, 
               fontSize: '18px', 
@@ -220,65 +281,141 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             }}>
               Pin Placer - {actualPinData?.title}
             </h2>
-            <p style={{ 
-              margin: 0, 
-              fontSize: '12px', 
-              color: '#666',
-              marginTop: '2px'
-            }}>
-              {actualPinData?.isOffer ? 'Offer' : 'Vostcard'} • Tap or drag to adjust position
-            </p>
           </div>
+          
+          <button
+            onClick={handleSave}
+            disabled={isLoading || !hasChanges}
+            style={{
+              backgroundColor: hasChanges ? '#002B4D' : '#e0e0e0',
+              color: hasChanges ? 'white' : '#999',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: (hasChanges && !isLoading) ? 'pointer' : 'not-allowed',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {isLoading ? (
+              <>
+                <div style={{
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #fff',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FaCheck size={16} />
+                Save
+              </>
+            )}
+          </button>
         </div>
 
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={isLoading || !hasChanges}
-          style={{
-            backgroundColor: hasChanges ? '#002B4D' : '#e0e0e0',
-            color: hasChanges ? 'white' : '#999',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 600,
-            cursor: (hasChanges && !isLoading) ? 'pointer' : 'not-allowed',
+        {/* Search row */}
+        <div style={{ position: 'relative' }}>
+          <div style={{
             display: 'flex',
-            alignItems: 'center',
             gap: '8px',
-            minWidth: '100px',
-            boxShadow: hasChanges ? '0 2px 8px rgba(0,43,77,0.2)' : 'none',
-            transition: 'all 0.2s ease',
-            marginLeft: 'auto'
-          }}
-        >
-          {isLoading ? (
-            <>
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '2px solid #fff',
-                borderTop: '2px solid transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }} />
-              Saving...
-            </>
-          ) : (
-            <>
-              <FaCheck size={16} />
-              Save
-            </>
+            alignItems: 'center'
+          }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (showResults) setShowResults(false); // Hide results while typing
+              }}
+              placeholder="Search for a location..."
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              style={{
+                flex: 1,
+                padding: '8px 12px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
+            />
+            <button
+              onClick={handleSearch}
+              disabled={isSearching || !searchQuery.trim()}
+              style={{
+                backgroundColor: isSearching || !searchQuery.trim() ? '#ccc' : '#007aff',
+                color: 'white',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <FaSearch size={12} />
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+
+          {/* Search Results Dropdown */}
+          {showResults && searchResults.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              backgroundColor: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              marginTop: '4px',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              zIndex: 1001,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  onClick={() => handleSearchResultClick(result)}
+                  style={{
+                    padding: '12px',
+                    borderBottom: index < searchResults.length - 1 ? '1px solid #eee' : 'none',
+                    cursor: 'pointer',
+                    backgroundColor: 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '2px' }}>
+                    {result.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666' }}>
+                    {result.displayAddress}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Map */}
       <div style={{ 
         height: '100%', 
         width: '100%', 
-        paddingTop: '64px',
+        paddingTop: '120px',
         paddingBottom: '80px'
       }}>
         <MapContainer
@@ -394,7 +531,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
       {error && (
         <div style={{
           position: 'absolute',
-          top: '80px',
+          top: '130px',
           left: '16px',
           right: '16px',
           backgroundColor: '#ffebee',

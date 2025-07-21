@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { VostcardProvider } from "./context/VostcardContext";
+import { VostcardStorageProvider, VostcardEditProvider } from "./context";
 import { ScriptProvider } from "./context/ScriptContext";
 import { FollowingProvider } from "./context/FollowingContext";
 import { DriveModeProvider } from "./context/DriveModeContext";
@@ -68,10 +69,12 @@ function App() {
   return (
     <AuthProvider>
       <VostcardProvider>
-        <ScriptProvider>
-          <FollowingProvider>
-            <DriveModeProvider>
-              <Router>
+        <VostcardStorageProvider>
+          <VostcardEditProvider>
+            <ScriptProvider>
+              <FollowingProvider>
+                <DriveModeProvider>
+                  <Router>
               <AuthRedirect />
               <ResponsiveContainer>
                 <Routes>
@@ -164,9 +167,11 @@ function App() {
                 </Routes>
               </ResponsiveContainer>
             </Router>
-            </DriveModeProvider>
-          </FollowingProvider>
-        </ScriptProvider>
+                </DriveModeProvider>
+              </FollowingProvider>
+            </ScriptProvider>
+          </VostcardEditProvider>
+        </VostcardStorageProvider>
       </VostcardProvider>
     </AuthProvider>
   );
