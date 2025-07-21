@@ -838,6 +838,28 @@ const HomeView = () => {
               Menu
             </div>
             
+            {/* Browse Button - Moved from bottom navigation */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/browse-area');
+              }}
+              style={menuItemStyle}
+            >
+              🗺️ Browse Area
+            </button>
+
+            {/* Friends Button - Moved from bottom navigation */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/friends');
+              }}
+              style={menuItemStyle}
+            >
+              👥 Friends
+            </button>
+            
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1253,7 +1275,7 @@ const HomeView = () => {
         )}
       </div>
 
-      {/* Bottom Navigation - 4 buttons */}
+      {/* Bottom Navigation - 2 buttons */}
       <div style={{
         position: 'fixed',
         bottom: shouldUseContainer ? 40 : 20,
@@ -1264,61 +1286,9 @@ const HomeView = () => {
         zIndex: 99999,
         display: 'flex',
         justifyContent: 'space-between',
-        gap: '2%',
+        gap: '4%',
         padding: shouldUseContainer ? '0 15px' : '0',
       }}>
-        {/* Browse Button */}
-        <button
-          onClick={() => navigate('/browse-area')}
-          style={{
-            background: '#002B4D',
-            color: 'white',
-            border: 'none',
-            borderRadius: 12,
-            padding: '8px 4px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '23%',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            lineHeight: '1.2'
-          }}
-        >
-          Browse
-        </button>
-
-        {/* Friends Button */}
-        <button
-          onClick={() => navigate('/friends')}
-          style={{
-            background: '#002B4D',
-            color: 'white',
-            border: 'none',
-            borderRadius: 12,
-            padding: '8px 4px',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '23%',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            lineHeight: '1.2'
-          }}
-        >
-          Friends
-        </button>
-
         {/* Create Vostcard Button */}
         <button
           onTouchStart={handleCreateTouchStart}
@@ -1330,7 +1300,7 @@ const HomeView = () => {
             border: 'none',
             borderRadius: 12,
             padding: '8px 4px',
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: 600,
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
