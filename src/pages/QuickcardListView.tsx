@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaShare, FaTimes } from 'react-icons/fa';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaShare, FaTimes, FaMicrophone } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -8,11 +8,15 @@ import { db } from '../firebase/firebaseConfig';
 
 const QuickcardListView = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const { savedVostcards, loadAllLocalVostcardsImmediate, deletePrivateVostcard, setCurrentVostcard, syncInBackground } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+
+  // Check if we came from Vostcard Studio
+  const fromStudio = location.state?.fromStudio === true;
 
   // Filter quickcards from savedVostcards
   const quickcards = savedVostcards.filter(vostcard => vostcard.isQuickcard === true);
@@ -68,6 +72,15 @@ const QuickcardListView = () => {
     if (quickcard) {
       setCurrentVostcard(quickcard);
       navigate('/quickcard-step3'); // Skip to step 3 for quickcards
+    }
+  };
+
+  // NEW: Handle selecting quickcard for audio enhancement
+  const handleSelectForAudio = (quickcardId: string) => {
+    const quickcard = quickcards.find(q => q.id === quickcardId);
+    if (quickcard) {
+      setCurrentVostcard(quickcard);
+      navigate('/vostcard-studio'); // Navigate back to studio with selected quickcard
     }
   };
 
@@ -178,7 +191,9 @@ ${privateUrl}`;
         position: 'relative',
         padding: '15px 0 24px 20px'
       }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>Quickcards</h1>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>
+          {fromStudio ? 'Select Quickcard for Audio' : 'Quickcards'}
+        </h1>
         
         {/* Home Button */}
         <FaHome

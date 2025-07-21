@@ -590,7 +590,9 @@ const VostcardStudioView: React.FC = () => {
                   Select an existing quickcard to add audio and enhance
                 </div>
                 <button
-                  onClick={() => navigate('/quickcards')}
+                  onClick={() => navigate('/quickcards', { 
+                    state: { fromStudio: true } 
+                  })}
                   style={{
                     backgroundColor: '#007aff',
                     color: 'white',
