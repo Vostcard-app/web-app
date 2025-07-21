@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaMicrophone } from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 import { auth } from '../firebase/firebaseConfig';
 
 const QuickcardStep3: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const {
     currentVostcard,
     updateVostcard,
@@ -19,9 +18,7 @@ const QuickcardStep3: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
   
-  // Audio state (managed by QuickAudio screen)
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+
   
   const availableCategories = [
     'None',
@@ -91,38 +88,7 @@ const QuickcardStep3: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Initialize audio state from current vostcard
-  useEffect(() => {
-    const vostcardWithAudio = currentVostcard as any;
-    if (vostcardWithAudio?.audio && vostcardWithAudio.audio instanceof Blob) {
-      setAudioBlob(vostcardWithAudio.audio);
-      // We don't have the original recording time, so just set it to 0
-      setRecordingTime(0);
-    }
-  }, [currentVostcard]);
 
-  // Handle returned audio from QuickAudio screen
-  useEffect(() => {
-    const state = location.state as any;
-    if (state?.audioBlob) {
-      console.log('📱 Received audio from QuickAudio:', {
-        size: state.audioBlob.size,
-        duration: state.recordingTime || 0
-      });
-      
-      setAudioBlob(state.audioBlob);
-      setRecordingTime(state.recordingTime || 0);
-      
-      // Save audio to vostcard context
-      updateVostcard({ 
-        audio: state.audioBlob, 
-        hasAudio: true 
-      } as any);
-      
-      // Clear the navigation state to prevent re-processing
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, [location.state, updateVostcard]);
 
   const handleCategoryToggle = (category: string) => {
     if (categories.includes(category)) {
@@ -189,22 +155,7 @@ const QuickcardStep3: React.FC = () => {
     }
   };
 
-  const clearRecording = () => {
-    setAudioBlob(null);
-    setRecordingTime(0);
-    
-    // Clear audio from vostcard context
-    updateVostcard({ 
-      audio: null, 
-      hasAudio: false 
-    } as any);
-  };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   return (
     <div style={{ 
@@ -327,87 +278,7 @@ const QuickcardStep3: React.FC = () => {
           )}
         </div>
 
-        {/* 🎤 Optional Audio Recording */}
-        <div style={{ marginTop: 20 }}>
 
-          {/* Audio Status */}
-          <div style={{
-            backgroundColor: audioBlob ? '#4caf50' : '#f5f5f5',
-            padding: '12px',
-            borderRadius: '6px',
-            marginBottom: '10px',
-            textAlign: 'center',
-            border: '1px solid #ddd'
-          }}>
-            {audioBlob ? (
-              <div>
-                <div style={{ color: '#2e7d32', fontWeight: 'bold' }}>
-                  ✅ Audio Recording Ready
-                </div>
-                <div style={{ fontSize: '14px' }}>
-                  Duration: {formatTime(recordingTime)}
-                </div>
-              </div>
-            ) : (
-              <div style={{ color: '#666' }}>
-                Optional: Record audio to enhance your quickcard
-              </div>
-            )}
-          </div>
-
-          {/* Recording Controls */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: audioBlob ? '1fr 1fr' : '1fr',
-            gap: '10px'
-          }}>
-            <button 
-              onClick={() => {
-                console.log('🎤 Audio button clicked');
-                navigate('/quick-audio');
-              }}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                padding: '12px 8px',
-                borderRadius: '4px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                touchAction: 'manipulation'
-              }}
-            >
-              <>
-                <FaMicrophone size={16} />
-                {audioBlob ? 'Change Audio' : 'Add Audio'}
-              </>
-            </button>
-            
-            {audioBlob && (
-              <button 
-                onClick={clearRecording}
-                style={{
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  touchAction: 'manipulation'
-                }}
-              >
-                Clear Audio
-              </button>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* 🔘 Fixed Bottom Buttons */}
