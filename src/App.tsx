@@ -56,6 +56,7 @@ import ReportBugView from "./pages/ReportBugView";
 import FlagFormView from "./pages/FlagFormView";
 import SuggestionBoxView from "./pages/SuggestionBoxView";
 import DrivecardsListView from "./pages/DrivecardsListView";
+import DriveModeSettingsView from "./pages/DriveModeSettingsView";
 import VostcardStudioView from "./pages/VostcardStudioView";
 import ExampleView from "./pages/ExampleView";
 import PublicVostcardView from "./pages/PublicVostcardView";
@@ -153,6 +154,7 @@ function App() {
 
                   {/* 🏎️ Drive Mode */}
                   <Route path="/drivecards" element={<DrivecardsListView />} />
+                  <Route path="/drive-mode-settings" element={<DriveModeSettingsView />} />
 
                   {/* 🎬 Studio */}
                   <Route path="/studio" element={<VostcardStudioView />} />
