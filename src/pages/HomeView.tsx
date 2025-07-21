@@ -887,11 +887,21 @@ const HomeView = () => {
             >
               👥 Following
             </button>
+
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/vostbox');
+              }}
+              style={menuItemStyle}
+            >
+              📬 Vōstbox
+            </button>
             
             <button
               onClick={() => {
                 setIsMenuOpen(false);
-                navigate('/drivecards');
+                navigate('/drive-mode-settings');
               }}
               style={menuItemStyle}
             >
@@ -1243,20 +1253,73 @@ const HomeView = () => {
         )}
       </div>
 
-      {/* Create buttons - MOVED OUTSIDE THE MAIN CONTAINER */}
+      {/* Bottom Navigation - 4 buttons */}
       <div style={{
         position: 'fixed',
-        bottom: shouldUseContainer ? 40 : 20, // Different bottom position for desktop
+        bottom: shouldUseContainer ? 40 : 20,
         left: shouldUseContainer ? '50%' : 15,
         right: shouldUseContainer ? 'auto' : 15,
         transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
-        width: shouldUseContainer ? '360px' : 'auto', // Match container width on desktop
-        zIndex: 20000,
+        width: shouldUseContainer ? '360px' : 'auto',
+        zIndex: 99999,
         display: 'flex',
         justifyContent: 'space-between',
-        gap: '4%',
-        padding: shouldUseContainer ? '0 15px' : '0'
+        gap: '2%',
+        padding: shouldUseContainer ? '0 15px' : '0',
       }}>
+        {/* Browse Button */}
+        <button
+          onClick={() => navigate('/browse-area')}
+          style={{
+            background: '#002B4D',
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '8px 4px',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            width: '23%',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            lineHeight: '1.2'
+          }}
+        >
+          Browse
+        </button>
+
+        {/* Friends Button */}
+        <button
+          onClick={() => navigate('/friends')}
+          style={{
+            background: '#002B4D',
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '8px 4px',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            width: '23%',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            lineHeight: '1.2'
+          }}
+        >
+          Friends
+        </button>
+
+        {/* Create Vostcard Button */}
         <button
           onTouchStart={handleCreateTouchStart}
           onTouchEnd={handleCreateTouchEnd}
@@ -1266,22 +1329,26 @@ const HomeView = () => {
             color: 'white',
             border: 'none',
             borderRadius: 12,
-            padding: '0px 20px',
-            fontSize: 18,
-            fontWeight: 700,
+            padding: '8px 4px',
+            fontSize: 14,
+            fontWeight: 600,
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '48%',
-            height: '40px',
+            width: '23%',
+            height: '50px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transform: isCreatePressed ? 'scale(0.95)' : 'scale(1)'
+            transform: isCreatePressed ? 'scale(0.95)' : 'scale(1)',
+            textAlign: 'center',
+            lineHeight: '1.2'
           }}
         >
           Create Vostcard
         </button>
+
+        {/* Create Quickcard Button */}
         <button
           onTouchStart={handleQuickcardTouchStart}
           onTouchEnd={handleQuickcardTouchEnd}
@@ -1291,18 +1358,20 @@ const HomeView = () => {
             color: 'white',
             border: 'none',
             borderRadius: 12,
-            padding: '0px 20px',
-            fontSize: 18,
-            fontWeight: 700,
+            padding: '8px 4px',
+            fontSize: 14,
+            fontWeight: 600,
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '48%',
-            height: '40px',
+            width: '23%',
+            height: '50px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transform: isQuickcardPressed ? 'scale(0.95)' : 'scale(1)'
+            transform: isQuickcardPressed ? 'scale(0.95)' : 'scale(1)',
+            textAlign: 'center',
+            lineHeight: '1.2'
           }}
         >
           Create Quickcard

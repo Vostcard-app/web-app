@@ -1,7 +1,7 @@
 // Vostcard Studio - Professional content creation and management interface
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaRocket, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaRocket, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaList } from 'react-icons/fa';
 import { useStudioAccess, useStudioAccessSummary } from '../hooks/useStudioAccess';
 import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from '../components/shared';
@@ -885,7 +885,8 @@ const VostcardStudioView: React.FC = () => {
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '10px'
+            gap: '10px',
+            marginBottom: '15px'
           }}>
             <button 
               onClick={isRecording ? stopRecording : startRecording}
@@ -961,6 +962,29 @@ const VostcardStudioView: React.FC = () => {
               <FaMapMarkerAlt size={14} />
               Pin Placer
             </button>
+
+            {/* Library Button */}
+            <button
+              onClick={() => navigate('/drivecards')}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                padding: '12px 8px',
+                borderRadius: '4px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              <FaList size={14} />
+              Library
+            </button>
+          </div>
             
             {/* Location Display */}
             {selectedLocation && (
@@ -1011,12 +1035,13 @@ const VostcardStudioView: React.FC = () => {
                 borderRadius: '4px',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                cursor: (!title.trim() || !audioBlob || !selectedLocation || isRecording) ? 'not-allowed' : 'pointer'
+                cursor: (!title.trim() || !audioBlob || !selectedLocation || isRecording) ? 'not-allowed' : 'pointer',
+                width: '100%',
+                marginBottom: '10px'
               }}
             >
               Save
             </button>
-          </div>
 
           {/* Clear Audio Button */}
           {audioBlob && !isRecording && (
