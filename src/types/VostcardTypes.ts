@@ -25,10 +25,14 @@ export interface Vostcard {
   scriptId?: string;
   hasVideo?: boolean;
   hasPhotos?: boolean;
+  hasAudio?: boolean; // NEW: Indicates if quickcard has audio content
+  audio?: Blob | null; // NEW: Audio blob for quickcards (optional)
   _videoBase64?: string | null;
   _photosBase64?: string[];
+  _audioBase64?: string | null; // NEW: For IndexedDB serialization
   _firebaseVideoURL?: string | null;
   _firebasePhotoURLs?: string[];
+  _firebaseAudioURL?: string | null; // NEW: Firebase audio URL for synced quickcards
   _isMetadataOnly?: boolean;
 }
 
