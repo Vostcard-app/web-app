@@ -19,7 +19,6 @@ import InfoPin from '../assets/Info_pin.png';
 import InfoButton from '../assets/Info_button.png';
 import { signOut } from 'firebase/auth';
 import './HomeView.css';
-import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
 import LocationDebugger from '../components/LocationDebugger';
 import DriveModePlayer from '../components/DriveModePlayer';
 
@@ -227,31 +226,63 @@ const HomeView = () => {
     }
   }, [loading, lastUpdateTime]);
 
-  // Location handling
+  // FIXED: Location handling using direct geolocation API
   useEffect(() => {
-    const handleLocationUpdate = (result: LocationResult) => {
-      console.log('📍 Location updated:', result);
-      setUserLocation([result.latitude, result.longitude]);
-      setActualUserLocation([result.latitude, result.longitude]);
+    let watchId: number | null = null;
+
+    const handleLocationSuccess = (position: GeolocationPosition) => {
+      const { latitude, longitude } = position.coords;
+      console.log('📍 Location updated:', { latitude, longitude });
+      setUserLocation([latitude, longitude]);
+      setActualUserLocation([latitude, longitude]);
     };
 
-    const handleLocationError = (error: LocationError) => {
+    const handleLocationError = (error: GeolocationPositionError) => {
       console.error('📍 Location error:', error.message);
-      setUserLocation([40.7128, -74.0060]); // Default to NYC
+      // Default to New York City if location fails
+      const defaultLocation: [number, number] = [40.7128, -74.0060];
+      setUserLocation(defaultLocation);
+      setActualUserLocation(defaultLocation);
     };
 
-    const locationService = new LocationService({
-      onLocationUpdate: handleLocationUpdate,
-      onLocationError: handleLocationError,
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 300000
-    });
+    const startLocationWatch = () => {
+      if ('geolocation' in navigator) {
+        // First try to get current position
+        navigator.geolocation.getCurrentPosition(
+          handleLocationSuccess,
+          handleLocationError,
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 300000
+          }
+        );
 
-    locationService.startWatching();
+        // Then start watching for position changes
+        watchId = navigator.geolocation.watchPosition(
+          handleLocationSuccess,
+          handleLocationError,
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 300000
+          }
+        );
+      } else {
+        console.error('📍 Geolocation is not supported by this browser');
+        const defaultLocation: [number, number] = [40.7128, -74.0060];
+        setUserLocation(defaultLocation);
+        setActualUserLocation(defaultLocation);
+      }
+    };
 
+    startLocationWatch();
+
+    // Cleanup function
     return () => {
-      locationService.stopWatching();
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
   }, []);
 
