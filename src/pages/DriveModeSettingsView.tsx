@@ -374,6 +374,90 @@ const DriveModeSettingsView: React.FC = () => {
                 </div>
               </div>
 
+              {/* Category Filters */}
+              <div style={{
+                backgroundColor: '#f8f9fa',
+                padding: '20px',
+                borderRadius: '12px',
+                marginBottom: '20px'
+              }}>
+                <h4 style={{ margin: '0 0 15px 0', color: '#002B4D' }}>🏷️ Category Filters</h4>
+                
+                <div style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
+                  Select categories to exclude from Drive Mode playback
+                </div>
+                
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: '8px'
+                }}>
+                  {[
+                    'Landmark',
+                    'Fun Fact', 
+                    'Macabre',
+                    'Architecture',
+                    'Historical',
+                    'Museum',
+                    'Gallery',
+                    'Restaurant',
+                    'Nature',
+                    'Drive Mode Event',
+                    'Wish you were here',
+                    'Made for kids'
+                  ].map(category => (
+                    <label
+                      key={category}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 10px',
+                        backgroundColor: settings.excludedCategories?.includes(category) ? '#ffebee' : 'white',
+                        border: `1px solid ${settings.excludedCategories?.includes(category) ? '#ffcdd2' : '#e0e0e0'}`,
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={settings.excludedCategories?.includes(category) || false}
+                        onChange={(e) => {
+                          const currentExcluded = settings.excludedCategories || [];
+                          if (e.target.checked) {
+                            updateSettings({ 
+                              excludedCategories: [...currentExcluded, category] 
+                            });
+                          } else {
+                            updateSettings({ 
+                              excludedCategories: currentExcluded.filter((c: string) => c !== category) 
+                            });
+                          }
+                        }}
+                        style={{ transform: 'scale(0.9)' }}
+                      />
+                      <span style={{ 
+                        color: settings.excludedCategories?.includes(category) ? '#d32f2f' : '#333',
+                        fontWeight: settings.excludedCategories?.includes(category) ? '600' : '400'
+                      }}>
+                        {category}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                
+                <div style={{ 
+                  fontSize: '11px', 
+                  color: '#999', 
+                  marginTop: '10px',
+                  fontStyle: 'italic'
+                }}>
+                  Excluded categories: {settings.excludedCategories?.length || 0} of 12
+                </div>
+              </div>
+
               {/* Override Settings */}
               <div style={{
                 backgroundColor: '#f8f9fa',
@@ -405,54 +489,7 @@ const DriveModeSettingsView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Quick Actions */}
-              <div style={{
-                display: 'flex',
-                gap: '10px',
-                marginTop: '20px'
-              }}>
-                <button
-                  onClick={() => navigate('/drivecards')}
-                  style={{
-                    flex: 1,
-                    backgroundColor: '#3498db',
-                    color: 'white',
-                    border: 'none',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <FaList />
-                  View Drivecards
-                </button>
-                
-                <button
-                  onClick={() => navigate('/studio')}
-                  style={{
-                    flex: 1,
-                    backgroundColor: '#9b59b6',
-                    color: 'white',
-                    border: 'none',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <FaMusic />
-                  Create Content
-                </button>
-              </div>
+
             </div>
           )}
 

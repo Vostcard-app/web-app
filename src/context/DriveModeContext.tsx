@@ -9,6 +9,7 @@ export interface DriveModeSettings {
   triggerDistance: number; // miles - trigger vostcards within this distance
   autoDisableAfterStop: number; // minutes - disable after being stopped this long
   allowManualOverride: boolean;
+  excludedCategories?: string[]; // categories to exclude from Drive Mode playback
 }
 
 interface CurrentPlayback {
@@ -65,7 +66,8 @@ const DEFAULT_SETTINGS: DriveModeSettings = {
   autoEnableSpeed: 25, // mph - enable when driving 25+ mph
   triggerDistance: 0.33, // 1/3 mile
   autoDisableAfterStop: 5, // minutes
-  allowManualOverride: true
+  allowManualOverride: true,
+  excludedCategories: [] // no categories excluded by default
 };
 
 export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
