@@ -18,6 +18,7 @@ const QuickAudio: React.FC = () => {
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recordingStartTimeRef = useRef<number>(0);
 
   // Check microphone availability on mount
   useEffect(() => {
@@ -40,6 +41,16 @@ const QuickAudio: React.FC = () => {
           console.error('❌ Not in secure context - getUserMedia requires HTTPS');
           setRecordingError('🔒 Audio recording requires HTTPS. Please use a secure connection.');
           return;
+        }
+
+        // Detect Safari and iOS
+        const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        console.log('🎤 Browser detection:', { isSafari, isIOS });
+
+        if (isIOS && isSafari) {
+          console.log('⚠️ Safari on iOS detected - MediaRecorder may have limitations');
+          // Set a warning but don't block - we'll try anyway
         }
 
         // Check if MediaRecorder is supported
@@ -151,19 +162,42 @@ const QuickAudio: React.FC = () => {
       streamRef.current = stream;
       audioChunksRef.current = [];
       
-      // Determine best MIME type with extensive checking
+      // Determine best MIME type with Safari-specific handling
       console.log('🎤 Checking MIME type support...');
-      const supportedTypes = [
-        'audio/webm;codecs=opus',
-        'audio/webm',
-        'audio/ogg;codecs=opus', 
-        'audio/mp4',
-        'audio/wav',
-        'audio/mpeg'
-      ];
+      
+      // Detect Safari/iOS for special handling
+      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      let supportedTypes;
+      if (isIOS && isSafari) {
+        // Safari iOS has limited support - prioritize what works
+        supportedTypes = [
+          'audio/mp4',
+          'audio/wav',
+          '', // Let browser choose as fallback
+        ];
+        console.log('🎤 Using Safari iOS optimized MIME types');
+      } else {
+        supportedTypes = [
+          'audio/webm;codecs=opus',
+          'audio/webm',
+          'audio/ogg;codecs=opus', 
+          'audio/mp4',
+          'audio/wav',
+          'audio/mpeg'
+        ];
+      }
       
       let mimeType = '';
       for (const type of supportedTypes) {
+        if (type === '') {
+          // Empty string means let browser choose
+          console.log(`🎤 browser default: ✅ Using as fallback`);
+          if (!mimeType) mimeType = type;
+          continue;
+        }
+        
         const supported = MediaRecorder.isTypeSupported(type);
         console.log(`🎤 ${type}: ${supported ? '✅ Supported' : '❌ Not supported'}`);
         if (supported && !mimeType) {
@@ -171,14 +205,29 @@ const QuickAudio: React.FC = () => {
         }
       }
       
-      if (!mimeType) {
-        console.log('🎤 No specific MIME type supported, letting browser choose');
-      }
-      
       console.log('🎤 Selected MIME type:', mimeType || 'browser default');
       
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+      // Create MediaRecorder with Safari-specific options
+      let mediaRecorderOptions: MediaRecorderOptions = {};
+      
+      if (mimeType) {
+        mediaRecorderOptions.mimeType = mimeType;
+      }
+      
+      // Safari-specific adjustments
+      if (isIOS && isSafari) {
+        console.log('🎤 Applying Safari iOS specific MediaRecorder options');
+        // Don't specify audioBitsPerSecond for Safari - let it choose
+        // Some versions of Safari don't handle custom bitrates well
+      } else {
+        // For other browsers, we can be more specific
+        if (!mimeType || mimeType.includes('webm')) {
+          mediaRecorderOptions.audioBitsPerSecond = 128000;
+        }
+      }
+      
+      console.log('🎤 MediaRecorder options:', mediaRecorderOptions);
+      const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
       mediaRecorderRef.current = mediaRecorder;
       
       // Handle data available
@@ -225,9 +274,15 @@ const QuickAudio: React.FC = () => {
           console.log('   - Browser compatibility issue');
           console.log('   - Audio format not supported');
           
-          // Provide more specific error based on timing
+          // Provide more specific error based on timing and browser
+          const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          
           if (recordingTime < 2) {
-            setRecordingError('Recording stopped too quickly. Check browser microphone permissions or try a different browser.');
+            const safariAdvice = (isIOS && isSafari) 
+              ? ' Safari on iOS has limited MediaRecorder support - try Chrome, Firefox, or Edge instead.'
+              : ' Check browser microphone permissions.';
+            setRecordingError(`Recording stopped too quickly.${safariAdvice}`);
           } else {
             setRecordingError('No audio was captured during recording. Please check your microphone and try again.');
           }
@@ -283,12 +338,17 @@ const QuickAudio: React.FC = () => {
       console.log('🎤 MediaRecorder state before start:', mediaRecorder.state);
       
       try {
-        mediaRecorder.start(1000); // Collect data every second
+        // Safari-specific timing adjustments
+        const dataInterval = (isIOS && isSafari) ? 500 : 1000; // Safari works better with 500ms intervals
+        
+        console.log('🎤 Starting MediaRecorder with interval:', dataInterval);
+        mediaRecorder.start(dataInterval);
         console.log('🎤 MediaRecorder.start() called successfully');
         console.log('🎤 MediaRecorder state after start:', mediaRecorder.state);
         
         setIsRecording(true);
         setRecordingTime(0);
+        recordingStartTimeRef.current = Date.now();
         
         // Start timer
         recordingTimerRef.current = setInterval(() => {
@@ -313,8 +373,13 @@ const QuickAudio: React.FC = () => {
           
           // If MediaRecorder stopped unexpectedly within 1 second
           if (mediaRecorder.state === 'inactive' && isRecording) {
-            console.log('❌ MediaRecorder stopped unexpectedly within 1 second');
-            setRecordingError('Recording stopped unexpectedly. This may be a browser compatibility issue.');
+            const timeSinceStart = Date.now() - recordingStartTimeRef.current;
+            console.log(`❌ MediaRecorder stopped unexpectedly after ${timeSinceStart}ms`);
+            
+            const browserSpecificAdvice = (isIOS && isSafari) 
+              ? 'Safari on iOS has known audio recording limitations. Try using Chrome or Firefox instead.'
+              : 'This may be a browser compatibility issue.';
+            setRecordingError(`Recording stopped unexpectedly after ${Math.round(timeSinceStart/1000)}s. ${browserSpecificAdvice}`);
             setIsRecording(false);
           }
         }, 1000);
@@ -593,11 +658,28 @@ const QuickAudio: React.FC = () => {
           ) : recordingError ? (
             <div style={{ color: '#ff4444', fontSize: '16px' }}>
               {recordingError}
+              {recordingError.includes('stopped too quickly') && (
+                <div style={{ 
+                  marginTop: '10px', 
+                  fontSize: '14px', 
+                  color: '#666',
+                  fontStyle: 'italic' 
+                }}>
+                  💡 Try the "Test Microphone" button first, or try a different browser like Chrome
+                </div>
+              )}
             </div>
           ) : (
             <div>
               <div style={{ fontWeight: 'bold' }}>Ready to Record</div>
-              <div style={{ fontSize: '14px', color: '#666' }}>Tap the record button to start</div>
+              <div style={{ fontSize: '14px', color: '#666' }}>
+                Tap the record button to start
+                {/iPad|iPhone|iPod/.test(navigator.userAgent) && (
+                  <div style={{ marginTop: '5px', fontSize: '12px', fontStyle: 'italic' }}>
+                    📱 iOS detected - ensure microphone permissions are enabled
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
