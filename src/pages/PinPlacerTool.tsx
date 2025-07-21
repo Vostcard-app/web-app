@@ -52,8 +52,18 @@ const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
   
   useEffect(() => {
-    map.setView(center, map.getZoom());
-  }, [center, map]);
+    console.log('🗺️ MapUpdater updating to:', center);
+    console.log('🗺️ Map current center:', map.getCenter());
+    try {
+      // Add a small delay to ensure the map is ready
+      setTimeout(() => {
+        map.setView(center, 16, { animate: true });
+        console.log('✅ Map view updated successfully to:', center);
+      }, 50);
+    } catch (error) {
+      console.error('❌ Error updating map view:', error);
+    }
+  }, [center[0], center[1], map]); // Watch individual coordinates
   
   return null;
 };
@@ -69,6 +79,11 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
     actualPinData?.latitude || 40.7128,
     actualPinData?.longitude || -74.0060
   ]);
+  
+  // Debug: Log when pinPosition changes
+  useEffect(() => {
+    console.log('📍 Pin position changed to:', pinPosition);
+  }, [pinPosition]);
   
   const [originalPosition] = useState<[number, number]>([
     actualPinData?.latitude || 40.7128,
@@ -139,6 +154,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         
         // Auto-select first result
         const firstResult = data.results[0];
+        console.log('🔍 Auto-selecting first result:', firstResult.name, 'at', [firstResult.latitude, firstResult.longitude]);
         setPinPosition([firstResult.latitude, firstResult.longitude]);
       } else {
         setError('Location not found. Please try a different search.');
@@ -156,9 +172,17 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
 
   const handleSearchResultClick = (result: typeof searchResults[0]) => {
     const newPosition: [number, number] = [result.latitude, result.longitude];
-    setPinPosition(newPosition);
-    setSearchQuery(result.name);
+    console.log('🎯 Search result clicked:', result.name, 'Position:', newPosition);
+    
+    // Force state update with a new array reference
+    setPinPosition([...newPosition]);
+    setSearchQuery(result.displayAddress || result.name);
     setShowResults(false);
+    
+    // Additional debugging
+    setTimeout(() => {
+      console.log('🕐 After state update, pinPosition should be:', newPosition);
+    }, 100);
   };
 
   const handleSave = async () => {
@@ -453,7 +477,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         paddingBottom: '80px'
       }}>
         <MapContainer
-          center={pinPosition}
+          center={[originalPosition[0], originalPosition[1]]}
           zoom={16}
           style={{ height: '100%', width: '100%' }}
           zoomControl={false}
