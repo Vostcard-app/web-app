@@ -501,7 +501,7 @@ const HomeView = () => {
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        overflow: shouldUseContainer ? 'visible' : 'hidden' // Allow overflow on desktop to show buttons
+        overflow: 'hidden'
       }}>
         {/* Header */}
         <div style={{
@@ -996,69 +996,6 @@ const HomeView = () => {
           </div>
         )}
 
-        {/* Create buttons */}
-        <div style={{
-          position: 'absolute',
-          bottom: 20,
-          left: 15,
-          right: 15,
-          zIndex: 20000, // Keep only the higher value
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: '4%'
-        }}>
-          <button
-            onTouchStart={handleCreateTouchStart}
-            onTouchEnd={handleCreateTouchEnd}
-            onClick={handleCreateClick}
-            style={{
-              background: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: 12,
-              padding: '0px 20px',
-              fontSize: 18,
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              width: '48%',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: isCreatePressed ? 'scale(0.95)' : 'scale(1)'
-            }}
-          >
-            Create Vostcard
-          </button>
-          <button
-            onTouchStart={handleQuickcardTouchStart}
-            onTouchEnd={handleQuickcardTouchEnd}
-            onClick={handleCreateQuickcard}
-            style={{
-              background: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: 12,
-              padding: '0px 20px',
-              fontSize: 18,
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
-              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              width: '48%',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transform: isQuickcardPressed ? 'scale(0.95)' : 'scale(1)'
-            }}
-          >
-            Create Quickcard
-          </button>
-        </div>
-
         {/* Zoom controls */}
         <div style={{
           position: 'absolute',
@@ -1304,6 +1241,72 @@ const HomeView = () => {
             isEnabled={isDriveModeEnabled}
           />
         )}
+      </div>
+
+      {/* Create buttons - MOVED OUTSIDE THE MAIN CONTAINER */}
+      <div style={{
+        position: 'fixed',
+        bottom: shouldUseContainer ? 40 : 20, // Different bottom position for desktop
+        left: shouldUseContainer ? '50%' : 15,
+        right: shouldUseContainer ? 'auto' : 15,
+        transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
+        width: shouldUseContainer ? '360px' : 'auto', // Match container width on desktop
+        zIndex: 20000,
+        display: 'flex',
+        justifyContent: 'space-between',
+        gap: '4%',
+        padding: shouldUseContainer ? '0 15px' : '0'
+      }}>
+        <button
+          onTouchStart={handleCreateTouchStart}
+          onTouchEnd={handleCreateTouchEnd}
+          onClick={handleCreateClick}
+          style={{
+            background: '#002B4D',
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '0px 20px',
+            fontSize: 18,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            width: '48%',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: isCreatePressed ? 'scale(0.95)' : 'scale(1)'
+          }}
+        >
+          Create Vostcard
+        </button>
+        <button
+          onTouchStart={handleQuickcardTouchStart}
+          onTouchEnd={handleQuickcardTouchEnd}
+          onClick={handleCreateQuickcard}
+          style={{
+            background: '#002B4D',
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '0px 20px',
+            fontSize: 18,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            width: '48%',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: isQuickcardPressed ? 'scale(0.95)' : 'scale(1)'
+          }}
+        >
+          Create Quickcard
+        </button>
       </div>
     </div>
   );
