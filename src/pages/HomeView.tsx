@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -11,17 +11,18 @@ import { useResponsive } from '../hooks/useResponsive';
 import { useDriveMode } from '../context/DriveModeContext';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
+import './HomeView.css';
+import LocationDebugger from '../components/LocationDebugger';
+import DriveModePlayer from '../components/DriveModePlayer';
+import InfoButton from '../assets/Info_button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.svg';
 import QuickcardPin from '../assets/quickcard_pin.png';
 import InfoPin from '../assets/Info_pin.png';
-import InfoButton from '../assets/Info_button.png';
-import { signOut } from 'firebase/auth';
-import './HomeView.css';
-import LocationDebugger from '../components/LocationDebugger';
-import DriveModePlayer from '../components/DriveModePlayer';
 
+// FIXED: Import pin images from assets folder for better Leaflet compatibility
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
   iconSize: [75, 75],
@@ -50,6 +51,7 @@ const quickcardIcon = new L.Icon({
   popupAnchor: [0, -75],
 });
 
+// FIXED: Import user location icon from assets folder
 const userIcon = new L.Icon({
   iconUrl: InfoPin,
   iconSize: [50, 50],
@@ -76,7 +78,7 @@ const HomeView = () => {
   const { 
     clearVostcard, 
     loadLocalVostcard, 
-    vostcards: savedVostcards, 
+    savedVostcards, 
     loadAllLocalVostcardsImmediate 
   } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
@@ -192,7 +194,7 @@ const HomeView = () => {
       
       if (forceRefresh) {
         console.log('🔄 Force refreshing vostcards after posting');
-                                  } else {
+      } else {
         console.log('🔄 Loading posted vostcards and quickcards');
       }
       
@@ -222,6 +224,30 @@ const HomeView = () => {
       setLoadingVostcards(false);
     }
   }, [singleVostcard, loadingVostcards]);
+
+  // Load user avatar
+  useEffect(() => {
+    const loadUserAvatar = async () => {
+      if (user?.uid) {
+        try {
+          const userRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.avatarURL) {
+              setUserAvatar(userData.avatarURL);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to load user avatar:', error);
+        }
+      }
+    };
+
+    if (user?.uid && !userAvatar) {
+      loadUserAvatar();
+    }
+  }, [user?.uid, userAvatar]);
 
   // Initial load
   useEffect(() => {
@@ -297,7 +323,7 @@ const HomeView = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-                setIsMenuOpen(false);
+      setIsMenuOpen(false);
       navigate('/');
     } catch (error) {
       console.error('Logout failed:', error);
@@ -438,7 +464,7 @@ const HomeView = () => {
     borderBottom: '1px solid #f0f0f0',
     backgroundColor: 'transparent',
     border: 'none',
-                fontSize: '14px',
+    fontSize: '14px',
     textAlign: 'left' as const,
     color: '#333',
     transition: 'background-color 0.2s ease'
@@ -463,7 +489,7 @@ const HomeView = () => {
         height: shouldUseContainer ? '844px' : '100vh',
         backgroundColor: 'white',
         boxShadow: shouldUseContainer ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
-        borderRadius: shouldUseContainer ? '16px 16px 0 0' : '0',
+        borderRadius: shouldUseContainer ? '16px' : '0',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
@@ -482,7 +508,7 @@ const HomeView = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           touchAction: 'manipulation',
           flexShrink: 0,
-          borderRadius: shouldUseContainer ? '16px 16px 0 0' : '0'
+          borderRadius: shouldUseContainer ? '16px' : '0'
         }}>
           <div 
             onClick={() => navigate('/home')}
@@ -641,8 +667,8 @@ const HomeView = () => {
                       color: 'white',
                       border: 'none',
                       padding: '8px',
-                      width: '40px',
-                      height: '40px',
+                      width: '50px',
+                      height: '50px',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
@@ -651,15 +677,7 @@ const HomeView = () => {
                       boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                     }}
                   >
-                    <img
-                      src={InfoButton}
-                      alt="Info"
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        filter: 'brightness(0) saturate(100%) invert(100%)'
-                      }}
-                    />
+                    <FaInfo size={20} color="white" />
                   </button>
                 </div>
               )}
@@ -1196,7 +1214,7 @@ const HomeView = () => {
         {/* Drive Mode Player */}
         {userLocation && (
           <DriveModePlayer
-            userLocation={userLocation}
+            userLocation={{ latitude: userLocation[0], longitude: userLocation[1] }}
             userSpeed={currentSpeed}
             isEnabled={isDriveModeEnabled}
           />
