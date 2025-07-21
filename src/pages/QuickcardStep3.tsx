@@ -234,20 +234,10 @@ const QuickcardStep3: React.FC = () => {
       setIsRecording(true);
       setRecordingTime(0);
       
-      // Start timer
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          const newTime = prev + 1;
-          
-          // Auto-stop at 30 seconds for quickcards
-          if (newTime >= 30) {
-            stopRecording();
-            return 30;
-          }
-          
-          return newTime;
-        });
-      }, 1000);
+             // Start timer
+       recordingTimerRef.current = setInterval(() => {
+         setRecordingTime(prev => prev + 1);
+       }, 1000);
       
       console.log('🎤 Started audio recording');
       
@@ -435,20 +425,6 @@ const QuickcardStep3: React.FC = () => {
 
         {/* 🎤 Optional Audio Recording */}
         <div style={{ marginTop: 20 }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            marginBottom: 10,
-            gap: 8
-          }}>
-            <FaMicrophone 
-              size={20} 
-              color={isRecording ? '#ff3b30' : '#666'} 
-            />
-            <label style={labelStyle}>
-              If you'd like you can add sound
-            </label>
-          </div>
 
           {/* Audio Status */}
           <div style={{
@@ -469,7 +445,7 @@ const QuickcardStep3: React.FC = () => {
                   🔴 Recording...
                 </div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                  {formatTime(recordingTime)} / 0:30
+                  {formatTime(recordingTime)}
                 </div>
               </div>
             ) : audioBlob ? (

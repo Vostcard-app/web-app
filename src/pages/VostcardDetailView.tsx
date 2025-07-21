@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -37,7 +37,12 @@ const VostcardDetailView: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [showFriendPicker, setShowFriendPicker] = useState(false);
   
+  // Audio state
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch available vostcards for navigation
   const fetchAvailableVostcards = async () => {
@@ -138,6 +143,49 @@ const VostcardDetailView: React.FC = () => {
     }
   }, [vostcard?.userID]);
 
+  // Detect and analyze audio when vostcard loads
+  useEffect(() => {
+    const detectAudio = async () => {
+      const vostcardWithAudio = vostcard as any;
+      if (vostcardWithAudio?.audio || vostcardWithAudio?._firebaseAudioURL) {
+        try {
+          // Create temporary audio element to get duration
+          const audio = new Audio();
+          
+          if (vostcardWithAudio.audio instanceof Blob) {
+            audio.src = URL.createObjectURL(vostcardWithAudio.audio);
+          } else if (vostcardWithAudio._firebaseAudioURL) {
+            audio.src = vostcardWithAudio._firebaseAudioURL;
+          }
+          
+          audio.onloadedmetadata = () => {
+            setAudioDuration(audio.duration);
+            // Clean up
+            if (vostcardWithAudio.audio instanceof Blob) {
+              URL.revokeObjectURL(audio.src);
+            }
+          };
+        } catch (error) {
+          console.error('Error detecting audio:', error);
+        }
+      }
+    };
+
+    if (vostcard) {
+      detectAudio();
+    }
+  }, [vostcard]);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
 
 
   const handleShareClick = async () => {
@@ -182,6 +230,85 @@ ${privateUrl}`;
 
   const handleLikeClick = () => {
     setIsLiked(!isLiked);
+  };
+
+  const handleAudioClick = () => {
+    const vostcardWithAudio = vostcard as any;
+    if (vostcardWithAudio?.audio || vostcardWithAudio?._firebaseAudioURL) {
+      if (isPlayingAudio) {
+        // Stop audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setIsPlayingAudio(false);
+      } else {
+        // Play audio
+        playAudio();
+      }
+    }
+  };
+
+  const playAudio = async () => {
+    const vostcardWithAudio = vostcard as any;
+    if (!vostcardWithAudio?.audio && !vostcardWithAudio?._firebaseAudioURL) return;
+    
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      // Create new audio element
+      const audio = new Audio();
+      audioRef.current = audio;
+
+      // Set audio source
+      if (vostcardWithAudio.audio instanceof Blob) {
+        audio.src = URL.createObjectURL(vostcardWithAudio.audio);
+      } else if (vostcardWithAudio._firebaseAudioURL) {
+        audio.src = vostcardWithAudio._firebaseAudioURL;
+      } else {
+        console.error('No audio source available');
+        return;
+      }
+
+      // Set up event listeners
+      audio.onloadedmetadata = () => {
+        setAudioDuration(audio.duration);
+      };
+
+      audio.onplay = () => {
+        setIsPlayingAudio(true);
+      };
+
+      audio.onpause = () => {
+        setIsPlayingAudio(false);
+      };
+
+      audio.onended = () => {
+        setIsPlayingAudio(false);
+        audioRef.current = null;
+      };
+
+      // Play audio
+      await audio.play();
+      
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const formatAudioDuration = (duration: number) => {
+    if (duration < 60) {
+      return `${Math.round(duration)}s`;
+    } else {
+      const minutes = Math.floor(duration / 60);
+      const seconds = Math.round(duration % 60);
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
   };
 
   const handleRatingClick = (rating: number) => {
@@ -749,6 +876,23 @@ ${privateUrl}`;
         >
           <FaShare size={30} />
         </button>
+        {/* Audio button - only show if vostcard has audio */}
+        {((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL) && (
+          <button
+            onClick={handleAudioClick}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: isPlayingAudio ? '#007aff' : '#666'
+            }}
+          >
+            <FaVolumeUp size={30} />
+          </button>
+        )}
       </div>
 
       {/* Counts Row */}
@@ -764,6 +908,10 @@ ${privateUrl}`;
         <span>0.0</span>
         <span>0</span>
         <span></span>
+        {/* Audio duration - only show if vostcard has audio */}
+        {((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL) && (
+          <span>{audioDuration ? formatAudioDuration(audioDuration) : '...'}</span>
+        )}
       </div>
 
       {/* Worth Seeing Rating */}
