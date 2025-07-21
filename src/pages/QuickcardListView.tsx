@@ -178,31 +178,34 @@ ${privateUrl}`;
   });
 
   return (
-    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+    <div style={{ 
+      height: '100vh', 
+      width: '100vw', 
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
       {/* Header with Home Icon */}
       <div style={{
         backgroundColor: '#07345c',
-        height: '30px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingLeft: '16px',
         color: 'white',
         position: 'relative',
-        padding: '15px 0 24px 20px'
+        padding: '15px 20px 15px 20px',
+        flexShrink: 0
       }}>
         <h1 style={{ fontSize: '30px', margin: 0 }}>
           {fromStudio ? 'Select Quickcard for Audio' : 'Quickcards'}
         </h1>
         
         {/* Home Button */}
-        <FaHome
-          size={48}
+        <button
+          onClick={() => navigate('/home')}
           style={{
             cursor: 'pointer',
-            position: 'absolute',
-            right: 44,
-            top: 15,
             background: 'rgba(0,0,0,0.10)',
             border: 'none',
             borderRadius: '50%',
@@ -210,110 +213,49 @@ ${privateUrl}`;
             height: 48,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            color: 'white'
           }}
-          onClick={() => navigate('/home')}
-        />
+        >
+          <FaHome size={24} />
+        </button>
       </div>
 
-      {/* Loading state */}
-      {loading && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '50vh',
-          color: '#666'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '18px', marginBottom: '10px' }}>Loading quickcards...</div>
-          </div>
-        </div>
-      )}
-
-      {/* Error state */}
-      {error && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '50vh',
-          color: '#d32f2f'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '18px', marginBottom: '10px' }}>❌ {error}</div>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                cursor: 'pointer'
-              }}
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Content */}
-      {!loading && !error && (
-        <div style={{ padding: '20px' }}>
-          {/* Summary */}
+      {/* Content Area */}
+      <div style={{ 
+        flex: 1,
+        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Loading state */}
+        {loading && (
           <div style={{
-            backgroundColor: 'white',
-            padding: '20px',
-            borderRadius: '12px',
-            marginBottom: '20px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            border: '1px solid #e0e0e0'
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flex: 1,
+            color: '#666'
           }}>
-            <h2 style={{ 
-              margin: '0 0 10px 0', 
-              color: '#002B4D',
-              fontSize: '20px'
-            }}>
-              {quickcards.length} Quickcard{quickcards.length !== 1 ? 's' : ''}
-            </h2>
-            <p style={{ 
-              margin: 0, 
-              color: '#666',
-              fontSize: '14px'
-            }}>
-              Your private quickcards with single photos
-            </p>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '18px', marginBottom: '10px' }}>Loading quickcards...</div>
+            </div>
           </div>
+        )}
 
-          {/* Empty state */}
-          {quickcards.length === 0 ? (
-            <div style={{
-              backgroundColor: 'white',
-              padding: '40px',
-              borderRadius: '12px',
-              textAlign: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid #e0e0e0'
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '20px' }}>📱</div>
-              <h3 style={{ 
-                margin: '0 0 10px 0', 
-                color: '#002B4D',
-                fontSize: '18px'
-              }}>
-                No Quickcards Yet
-              </h3>
-              <p style={{ 
-                margin: '0 0 20px 0', 
-                color: '#666',
-                fontSize: '14px'
-              }}>
-                Create your first quickcard using the "Create Quickcard" button on the home screen
-              </p>
+        {/* Error state */}
+        {error && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            flex: 1,
+            color: '#d32f2f'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '18px', marginBottom: '10px' }}>❌ {error}</div>
               <button
-                onClick={() => navigate('/home')}
+                onClick={() => window.location.reload()}
                 style={{
                   backgroundColor: '#002B4D',
                   color: 'white',
@@ -323,15 +265,96 @@ ${privateUrl}`;
                   cursor: 'pointer'
                 }}
               >
-                Go to Home
+                Retry
               </button>
             </div>
-          ) : (
-            /* Quickcards List */
-            <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              {[...quickcards]
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .map((quickcard) => {
+          </div>
+        )}
+
+        {/* Content */}
+        {!loading && !error && (
+          <div style={{ 
+            padding: '20px',
+            flex: 1,
+            overflow: 'auto'
+          }}>
+            {/* Summary */}
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid #e0e0e0'
+            }}>
+              <h2 style={{ 
+                margin: '0 0 10px 0', 
+                color: '#002B4D',
+                fontSize: '20px'
+              }}>
+                {quickcards.length} Quickcard{quickcards.length !== 1 ? 's' : ''}
+              </h2>
+              <p style={{ 
+                margin: 0, 
+                color: '#666',
+                fontSize: '14px'
+              }}>
+                {fromStudio 
+                  ? 'Select a quickcard to enhance with audio in Vostcard Studio' 
+                  : 'Your private quickcards with single photos'
+                }
+              </p>
+            </div>
+
+            {/* Empty state or Quickcards List */}
+            {quickcards.length === 0 ? (
+              <div style={{
+                backgroundColor: 'white',
+                padding: '40px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                border: '1px solid #e0e0e0'
+              }}>
+                <div style={{ fontSize: '48px', marginBottom: '20px' }}>📱</div>
+                <h3 style={{ 
+                  margin: '0 0 10px 0', 
+                  color: '#002B4D',
+                  fontSize: '18px'
+                }}>
+                  No Quickcards Yet
+                </h3>
+                <p style={{ 
+                  margin: '0 0 20px 0', 
+                  color: '#666',
+                  fontSize: '14px'
+                }}>
+                  Create your first quickcard using the "Create Quickcard" button on the home screen
+                </p>
+                <button
+                  onClick={() => navigate('/home')}
+                  style={{
+                    backgroundColor: '#002B4D',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Go to Home
+                </button>
+              </div>
+            ) : (
+              /* Quickcards List */
+              <div style={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}>
+                {[...quickcards]
+                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                  .map((quickcard) => {
                   const isDeleting = deletingIds.has(quickcard.id);
                   
                   return (
@@ -528,10 +551,11 @@ ${privateUrl}`;
                     </div>
                   );
                 })}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
