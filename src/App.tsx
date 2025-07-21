@@ -19,6 +19,7 @@ import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
 import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
 import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
 import QuickcardStep3 from "./pages/QuickcardStep3";
+import QuickAudio from "./pages/QuickAudio";
 import ListView from "./pages/ListView";
 import ScrollingCameraView from "./pages/ScrollingCameraView";
 import CameraView from "./pages/CameraView";
@@ -119,6 +120,7 @@ function App() {
                   <Route path="/create-step2" element={<CreateVostcardStep2 />} />
                   <Route path="/create-step3" element={<CreateVostcardStep3 />} />
                   <Route path="/quickcard-step3" element={<QuickcardStep3 />} />
+                  <Route path="/quick-audio" element={<QuickAudio />} />
                   <Route path="/step2-camera" element={<Step2CameraView />} />
 
                   {/* 📍 Location */}

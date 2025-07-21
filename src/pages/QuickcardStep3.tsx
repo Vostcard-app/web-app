@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaMicrophone, FaStop } from 'react-icons/fa';
+import { FaArrowLeft, FaMicrophone } from 'react-icons/fa';
 import { auth } from '../firebase/firebaseConfig';
 
 const QuickcardStep3: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     currentVostcard,
     updateVostcard,
@@ -18,17 +19,9 @@ const QuickcardStep3: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
   
-  // Audio recording state
-  const [isRecording, setIsRecording] = useState(false);
+  // Audio state (managed by QuickAudio screen)
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [recordingError, setRecordingError] = useState<string | null>(null);
-  
-  // Audio recording refs
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
   
   const availableCategories = [
     'None',
@@ -108,6 +101,29 @@ const QuickcardStep3: React.FC = () => {
     }
   }, [currentVostcard]);
 
+  // Handle returned audio from QuickAudio screen
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.audioBlob) {
+      console.log('📱 Received audio from QuickAudio:', {
+        size: state.audioBlob.size,
+        duration: state.recordingTime || 0
+      });
+      
+      setAudioBlob(state.audioBlob);
+      setRecordingTime(state.recordingTime || 0);
+      
+      // Save audio to vostcard context
+      updateVostcard({ 
+        audio: state.audioBlob, 
+        hasAudio: true 
+      } as any);
+      
+      // Clear the navigation state to prevent re-processing
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [location.state, updateVostcard]);
+
   const handleCategoryToggle = (category: string) => {
     if (categories.includes(category)) {
       updateVostcard({ categories: categories.filter((c) => c !== category) });
@@ -173,148 +189,9 @@ const QuickcardStep3: React.FC = () => {
     }
   };
 
-  // Audio recording functions
-  const startRecording = async () => {
-    try {
-      console.log('🎤 Attempting to start audio recording...');
-      setRecordingError(null);
-      
-      // Check if MediaRecorder is supported
-      if (!window.MediaRecorder) {
-        throw new Error('MediaRecorder is not supported in this browser');
-      }
-      
-      // Request microphone permission
-      console.log('🎤 Requesting microphone permission...');
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100
-        } 
-      });
-      
-      console.log('✅ Microphone permission granted, stream obtained');
-      streamRef.current = stream;
-      audioChunksRef.current = [];
-      
-      // Determine best MIME type
-      let mimeType = 'audio/webm;codecs=opus';
-      if (!MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        if (MediaRecorder.isTypeSupported('audio/webm')) {
-          mimeType = 'audio/webm';
-        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-          mimeType = 'audio/mp4';
-        } else if (MediaRecorder.isTypeSupported('audio/wav')) {
-          mimeType = 'audio/wav';
-        } else {
-          mimeType = ''; // Let browser choose
-        }
-      }
-      
-      console.log('🎤 Using MIME type:', mimeType);
-      
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
-      mediaRecorderRef.current = mediaRecorder;
-      
-      // Handle data available
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      
-      // Handle recording stop
-      mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(audioBlob);
-        setIsRecording(false);
-        
-        // Save audio to vostcard context
-        updateVostcard({ 
-          audio: audioBlob, 
-          hasAudio: true 
-        } as any);
-        
-        // Stop all tracks
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-        
-        console.log('✅ Audio recording completed:', {
-          size: audioBlob.size,
-          type: audioBlob.type,
-          duration: recordingTime
-        });
-      };
-      
-      // Add error handling for MediaRecorder
-      mediaRecorder.onerror = (event) => {
-        console.error('❌ MediaRecorder error:', event);
-        setRecordingError('Recording error occurred. Please try again.');
-        setIsRecording(false);
-      };
-      
-      // Start recording
-      console.log('🎤 Starting MediaRecorder...');
-      mediaRecorder.start(1000); // Collect data every second
-      setIsRecording(true);
-      setRecordingTime(0);
-      
-      // Start timer
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-      
-      console.log('✅ Audio recording started successfully');
-      
-    } catch (error) {
-      console.error('❌ Failed to start recording:', error);
-      
-      if (error instanceof Error) {
-        console.log('❌ Error details:', {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        });
-        
-        if (error.name === 'NotAllowedError') {
-          setRecordingError('🎤 Microphone permission denied. Please click "Allow" when prompted and try again.');
-        } else if (error.name === 'NotFoundError') {
-          setRecordingError('🎤 No microphone found. Please connect a microphone and try again.');
-        } else if (error.name === 'NotSupportedError') {
-          setRecordingError('🎤 Audio recording not supported in this browser. Try using Chrome or Firefox.');
-        } else if (error.message.includes('MediaRecorder')) {
-          setRecordingError('🎤 MediaRecorder not supported in this browser. Try using Chrome or Firefox.');
-        } else {
-          setRecordingError(`🎤 Recording failed: ${error.message}`);
-        }
-      } else {
-        setRecordingError('🎤 Failed to start recording. Please check your microphone permissions.');
-      }
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      
-      // Clear timer
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
-      
-      console.log('🛑 Stopped audio recording');
-    }
-  };
-
   const clearRecording = () => {
     setAudioBlob(null);
     setRecordingTime(0);
-    setRecordingError(null);
     
     // Clear audio from vostcard context
     updateVostcard({ 
@@ -328,60 +205,6 @@ const QuickcardStep3: React.FC = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  // Check microphone availability on mount
-  useEffect(() => {
-    const checkMicrophoneSupport = async () => {
-      try {
-        // Check if MediaRecorder is supported
-        if (!window.MediaRecorder) {
-          setRecordingError('🎤 Audio recording not supported in this browser. Try Chrome or Firefox.');
-          return;
-        }
-        
-        // Check if getUserMedia is supported
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          setRecordingError('🎤 Microphone access not supported in this browser.');
-          return;
-        }
-        
-        console.log('🎤 MediaRecorder and getUserMedia are supported');
-        
-        // Optionally check microphone permissions (but don't request them yet)
-        if (navigator.permissions) {
-          try {
-            const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-            console.log('🎤 Microphone permission status:', permission.state);
-            
-            if (permission.state === 'denied') {
-              setRecordingError('🎤 Microphone permission denied. Please enable microphone access in your browser settings.');
-            }
-          } catch (e) {
-            // Permission API might not be supported, that's okay
-            console.log('🎤 Permission API not supported, will request permission when recording');
-          }
-        }
-        
-      } catch (error) {
-        console.error('🎤 Error checking microphone support:', error);
-        setRecordingError('🎤 Unable to check microphone support.');
-      }
-    };
-    
-    checkMicrophoneSupport();
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (mediaRecorderRef.current && isRecording) {
-        stopRecording();
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [isRecording]);
 
   return (
     <div style={{ 
@@ -509,27 +332,14 @@ const QuickcardStep3: React.FC = () => {
 
           {/* Audio Status */}
           <div style={{
-            backgroundColor: isRecording ? '#ffeb3b' : audioBlob ? '#4caf50' : '#f5f5f5',
+            backgroundColor: audioBlob ? '#4caf50' : '#f5f5f5',
             padding: '12px',
             borderRadius: '6px',
             marginBottom: '10px',
             textAlign: 'center',
             border: '1px solid #ddd'
           }}>
-            {isRecording ? (
-              <div>
-                <div style={{ 
-                  color: '#d32f2f', 
-                  fontWeight: 'bold', 
-                  marginBottom: '4px' 
-                }}>
-                  🔴 Recording...
-                </div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
-                  {formatTime(recordingTime)}
-                </div>
-              </div>
-            ) : audioBlob ? (
+            {audioBlob ? (
               <div>
                 <div style={{ color: '#2e7d32', fontWeight: 'bold' }}>
                   ✅ Audio Recording Ready
@@ -545,21 +355,6 @@ const QuickcardStep3: React.FC = () => {
             )}
           </div>
 
-          {/* Recording Error */}
-          {recordingError && (
-            <div style={{
-              backgroundColor: '#ffebee',
-              color: '#d32f2f',
-              padding: '8px',
-              borderRadius: '4px',
-              fontSize: '14px',
-              marginBottom: '10px',
-              border: '1px solid #ffcdd2'
-            }}>
-              {recordingError}
-            </div>
-          )}
-
           {/* Recording Controls */}
           <div style={{
             display: 'grid',
@@ -568,24 +363,18 @@ const QuickcardStep3: React.FC = () => {
           }}>
             <button 
               onClick={() => {
-                console.log('🎤 Recording button clicked, isRecording:', isRecording);
-                if (isRecording) {
-                  stopRecording();
-                } else {
-                  startRecording();
-                }
+                console.log('🎤 Audio button clicked');
+                navigate('/quick-audio');
               }}
-              disabled={!!recordingError}
               style={{
-                backgroundColor: isRecording ? '#f44336' : '#002B4D',
+                backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
                 padding: '12px 8px',
                 borderRadius: '4px',
                 fontSize: '16px',
                 fontWeight: 'bold',
-                cursor: recordingError ? 'not-allowed' : 'pointer',
-                opacity: recordingError ? 0.6 : 1,
+                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -593,17 +382,10 @@ const QuickcardStep3: React.FC = () => {
                 touchAction: 'manipulation'
               }}
             >
-              {isRecording ? (
-                <>
-                  <FaStop size={16} />
-                  Stop Recording
-                </>
-              ) : (
-                <>
-                  <FaMicrophone size={16} />
-                  {audioBlob ? 'Record Again' : 'Start Recording'}
-                </>
-              )}
+              <>
+                <FaMicrophone size={16} />
+                {audioBlob ? 'Change Audio' : 'Add Audio'}
+              </>
             </button>
             
             {audioBlob && (
