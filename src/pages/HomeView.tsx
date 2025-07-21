@@ -934,7 +934,7 @@ const HomeView = () => {
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
-                  navigate('/vostcard-studio');
+                  navigate('/studio'); // Changed from '/vostcard-studio' to '/studio'
                 }}
                 style={menuItemStyle}
               >
