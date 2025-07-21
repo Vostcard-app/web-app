@@ -1002,6 +1002,7 @@ const HomeView = () => {
           bottom: 20,
           left: 15,
           right: 15,
+          zIndex: 20000, // Changed from 2000 to 20000 to be above all modals
           zIndex: 2000, // Changed from 1000 to 2000
           display: 'flex',
           justifyContent: 'space-between',
