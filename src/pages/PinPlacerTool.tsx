@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import { Icon, LatLng } from 'leaflet';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
@@ -44,6 +44,17 @@ const MapClickHandler: React.FC<{
       }
     }
   });
+  return null;
+};
+
+// Component to update map view when position changes
+const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  
   return null;
 };
 
@@ -144,7 +155,8 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
   };
 
   const handleSearchResultClick = (result: typeof searchResults[0]) => {
-    setPinPosition([result.latitude, result.longitude]);
+    const newPosition: [number, number] = [result.latitude, result.longitude];
+    setPinPosition(newPosition);
     setSearchQuery(result.name);
     setShowResults(false);
   };
@@ -455,6 +467,8 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
             onLocationSelect={handleLocationSelect}
             isDragging={isDragging}
           />
+          
+          <MapUpdater center={pinPosition} />
           
           <Marker
             position={pinPosition}
