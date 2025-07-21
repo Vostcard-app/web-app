@@ -176,9 +176,16 @@ const QuickcardStep3: React.FC = () => {
   // Audio recording functions
   const startRecording = async () => {
     try {
+      console.log('🎤 Attempting to start audio recording...');
       setRecordingError(null);
       
+      // Check if MediaRecorder is supported
+      if (!window.MediaRecorder) {
+        throw new Error('MediaRecorder is not supported in this browser');
+      }
+      
       // Request microphone permission
+      console.log('🎤 Requesting microphone permission...');
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -187,14 +194,28 @@ const QuickcardStep3: React.FC = () => {
         } 
       });
       
+      console.log('✅ Microphone permission granted, stream obtained');
       streamRef.current = stream;
       audioChunksRef.current = [];
       
-      // Create MediaRecorder
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
+      // Determine best MIME type
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+          mimeType = 'audio/wav';
+        } else {
+          mimeType = ''; // Let browser choose
+        }
+      }
       
+      console.log('🎤 Using MIME type:', mimeType);
+      
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
       mediaRecorderRef.current = mediaRecorder;
       
       // Handle data available
@@ -229,31 +250,49 @@ const QuickcardStep3: React.FC = () => {
         });
       };
       
+      // Add error handling for MediaRecorder
+      mediaRecorder.onerror = (event) => {
+        console.error('❌ MediaRecorder error:', event);
+        setRecordingError('Recording error occurred. Please try again.');
+        setIsRecording(false);
+      };
+      
       // Start recording
+      console.log('🎤 Starting MediaRecorder...');
       mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
       setRecordingTime(0);
       
-             // Start timer
-       recordingTimerRef.current = setInterval(() => {
-         setRecordingTime(prev => prev + 1);
-       }, 1000);
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
       
-      console.log('🎤 Started audio recording');
+      console.log('✅ Audio recording started successfully');
       
     } catch (error) {
       console.error('❌ Failed to start recording:', error);
       
       if (error instanceof Error) {
+        console.log('❌ Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+        
         if (error.name === 'NotAllowedError') {
-          setRecordingError('Microphone permission denied. Please allow microphone access and try again.');
+          setRecordingError('🎤 Microphone permission denied. Please click "Allow" when prompted and try again.');
         } else if (error.name === 'NotFoundError') {
-          setRecordingError('No microphone found. Please connect a microphone and try again.');
+          setRecordingError('🎤 No microphone found. Please connect a microphone and try again.');
+        } else if (error.name === 'NotSupportedError') {
+          setRecordingError('🎤 Audio recording not supported in this browser. Try using Chrome or Firefox.');
+        } else if (error.message.includes('MediaRecorder')) {
+          setRecordingError('🎤 MediaRecorder not supported in this browser. Try using Chrome or Firefox.');
         } else {
-          setRecordingError('Failed to start recording. Please try again.');
+          setRecordingError(`🎤 Recording failed: ${error.message}`);
         }
       } else {
-        setRecordingError('Failed to start recording. Please try again.');
+        setRecordingError('🎤 Failed to start recording. Please check your microphone permissions.');
       }
     }
   };
@@ -289,6 +328,48 @@ const QuickcardStep3: React.FC = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Check microphone availability on mount
+  useEffect(() => {
+    const checkMicrophoneSupport = async () => {
+      try {
+        // Check if MediaRecorder is supported
+        if (!window.MediaRecorder) {
+          setRecordingError('🎤 Audio recording not supported in this browser. Try Chrome or Firefox.');
+          return;
+        }
+        
+        // Check if getUserMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setRecordingError('🎤 Microphone access not supported in this browser.');
+          return;
+        }
+        
+        console.log('🎤 MediaRecorder and getUserMedia are supported');
+        
+        // Optionally check microphone permissions (but don't request them yet)
+        if (navigator.permissions) {
+          try {
+            const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+            console.log('🎤 Microphone permission status:', permission.state);
+            
+            if (permission.state === 'denied') {
+              setRecordingError('🎤 Microphone permission denied. Please enable microphone access in your browser settings.');
+            }
+          } catch (e) {
+            // Permission API might not be supported, that's okay
+            console.log('🎤 Permission API not supported, will request permission when recording');
+          }
+        }
+        
+      } catch (error) {
+        console.error('🎤 Error checking microphone support:', error);
+        setRecordingError('🎤 Unable to check microphone support.');
+      }
+    };
+    
+    checkMicrophoneSupport();
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -486,7 +567,14 @@ const QuickcardStep3: React.FC = () => {
             gap: '10px'
           }}>
             <button 
-              onClick={isRecording ? stopRecording : startRecording}
+              onClick={() => {
+                console.log('🎤 Recording button clicked, isRecording:', isRecording);
+                if (isRecording) {
+                  stopRecording();
+                } else {
+                  startRecording();
+                }
+              }}
               disabled={!!recordingError}
               style={{
                 backgroundColor: isRecording ? '#f44336' : '#002B4D',
