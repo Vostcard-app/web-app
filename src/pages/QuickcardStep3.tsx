@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaMicrophone, FaStop } from 'react-icons/fa';
 import { auth } from '../firebase/firebaseConfig';
 
 const QuickcardStep3: React.FC = () => {
@@ -17,6 +17,18 @@ const QuickcardStep3: React.FC = () => {
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
+  
+  // Audio recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
+  
+  // Audio recording refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   
   const availableCategories = [
     'None',
@@ -49,7 +61,7 @@ const QuickcardStep3: React.FC = () => {
     validationState.hasPhotos;
 
   // Create specific missing items list
-  const missingItems = [];
+  const missingItems: string[] = [];
   if (!validationState.hasTitle) missingItems.push('Title');
   if (!validationState.hasDescription) missingItems.push('Description');
   if (!validationState.hasCategories) missingItems.push('Categories');
@@ -85,6 +97,16 @@ const QuickcardStep3: React.FC = () => {
     const unsubscribe = auth.onAuthStateChanged(checkAuth);
     return () => unsubscribe();
   }, []);
+
+  // Initialize audio state from current vostcard
+  useEffect(() => {
+    const vostcardWithAudio = currentVostcard as any;
+    if (vostcardWithAudio?.audio && vostcardWithAudio.audio instanceof Blob) {
+      setAudioBlob(vostcardWithAudio.audio);
+      // We don't have the original recording time, so just set it to 0
+      setRecordingTime(0);
+    }
+  }, [currentVostcard]);
 
   const handleCategoryToggle = (category: string) => {
     if (categories.includes(category)) {
@@ -150,6 +172,145 @@ const QuickcardStep3: React.FC = () => {
       alert('Failed to post quickcard. Please try again.');
     }
   };
+
+  // Audio recording functions
+  const startRecording = async () => {
+    try {
+      setRecordingError(null);
+      
+      // Request microphone permission
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        } 
+      });
+      
+      streamRef.current = stream;
+      audioChunksRef.current = [];
+      
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      
+      mediaRecorderRef.current = mediaRecorder;
+      
+      // Handle data available
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      // Handle recording stop
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        setIsRecording(false);
+        
+        // Save audio to vostcard context
+        updateVostcard({ 
+          audio: audioBlob, 
+          hasAudio: true 
+        } as any);
+        
+        // Stop all tracks
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+        
+        console.log('✅ Audio recording completed:', {
+          size: audioBlob.size,
+          type: audioBlob.type,
+          duration: recordingTime
+        });
+      };
+      
+      // Start recording
+      mediaRecorder.start(1000); // Collect data every second
+      setIsRecording(true);
+      setRecordingTime(0);
+      
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          const newTime = prev + 1;
+          
+          // Auto-stop at 30 seconds for quickcards
+          if (newTime >= 30) {
+            stopRecording();
+            return 30;
+          }
+          
+          return newTime;
+        });
+      }, 1000);
+      
+      console.log('🎤 Started audio recording');
+      
+    } catch (error) {
+      console.error('❌ Failed to start recording:', error);
+      
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          setRecordingError('Microphone permission denied. Please allow microphone access and try again.');
+        } else if (error.name === 'NotFoundError') {
+          setRecordingError('No microphone found. Please connect a microphone and try again.');
+        } else {
+          setRecordingError('Failed to start recording. Please try again.');
+        }
+      } else {
+        setRecordingError('Failed to start recording. Please try again.');
+      }
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
+      console.log('🛑 Stopped audio recording');
+    }
+  };
+
+  const clearRecording = () => {
+    setAudioBlob(null);
+    setRecordingTime(0);
+    setRecordingError(null);
+    
+    // Clear audio from vostcard context
+    updateVostcard({ 
+      audio: null, 
+      hasAudio: false 
+    } as any);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && isRecording) {
+        stopRecording();
+      }
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isRecording]);
 
   return (
     <div style={{ 
@@ -270,6 +431,136 @@ const QuickcardStep3: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* 🎤 Optional Audio Recording */}
+        <div style={{ marginTop: 20 }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            marginBottom: 10,
+            gap: 8
+          }}>
+            <FaMicrophone 
+              size={20} 
+              color={isRecording ? '#ff3b30' : '#666'} 
+            />
+            <label style={labelStyle}>
+              If you'd like you can add sound
+            </label>
+          </div>
+
+          {/* Audio Status */}
+          <div style={{
+            backgroundColor: isRecording ? '#ffeb3b' : audioBlob ? '#4caf50' : '#f5f5f5',
+            padding: '12px',
+            borderRadius: '6px',
+            marginBottom: '10px',
+            textAlign: 'center',
+            border: '1px solid #ddd'
+          }}>
+            {isRecording ? (
+              <div>
+                <div style={{ 
+                  color: '#d32f2f', 
+                  fontWeight: 'bold', 
+                  marginBottom: '4px' 
+                }}>
+                  🔴 Recording...
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                  {formatTime(recordingTime)} / 0:30
+                </div>
+              </div>
+            ) : audioBlob ? (
+              <div>
+                <div style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                  ✅ Audio Recording Ready
+                </div>
+                <div style={{ fontSize: '14px' }}>
+                  Duration: {formatTime(recordingTime)}
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: '#666' }}>
+                Optional: Record audio to enhance your quickcard
+              </div>
+            )}
+          </div>
+
+          {/* Recording Error */}
+          {recordingError && (
+            <div style={{
+              backgroundColor: '#ffebee',
+              color: '#d32f2f',
+              padding: '8px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              marginBottom: '10px',
+              border: '1px solid #ffcdd2'
+            }}>
+              {recordingError}
+            </div>
+          )}
+
+          {/* Recording Controls */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: audioBlob ? '1fr 1fr' : '1fr',
+            gap: '10px'
+          }}>
+            <button 
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={!!recordingError}
+              style={{
+                backgroundColor: isRecording ? '#f44336' : '#002B4D',
+                color: 'white',
+                border: 'none',
+                padding: '12px 8px',
+                borderRadius: '4px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: recordingError ? 'not-allowed' : 'pointer',
+                opacity: recordingError ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                touchAction: 'manipulation'
+              }}
+            >
+              {isRecording ? (
+                <>
+                  <FaStop size={16} />
+                  Stop Recording
+                </>
+              ) : (
+                <>
+                  <FaMicrophone size={16} />
+                  {audioBlob ? 'Record Again' : 'Start Recording'}
+                </>
+              )}
+            </button>
+            
+            {audioBlob && (
+              <button 
+                onClick={clearRecording}
+                style={{
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  touchAction: 'manipulation'
+                }}
+              >
+                Clear Audio
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
