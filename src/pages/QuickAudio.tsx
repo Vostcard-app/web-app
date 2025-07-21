@@ -10,6 +10,7 @@ const QuickAudio: React.FC = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [recordingError, setRecordingError] = useState<string | null>(null);
+  const [testingMicrophone, setTestingMicrophone] = useState(false);
   
   // Audio recording refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -22,19 +23,45 @@ const QuickAudio: React.FC = () => {
   useEffect(() => {
     const checkMicrophoneSupport = async () => {
       try {
+        // Log browser and environment info
+        console.log('🎤 Browser info:', {
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          cookieEnabled: navigator.cookieEnabled,
+          onLine: navigator.onLine,
+          protocol: window.location.protocol,
+          isSecureContext: window.isSecureContext,
+          hostname: window.location.hostname
+        });
+
+        // Check if we're in a secure context (required for getUserMedia in most browsers)
+        if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+          console.error('❌ Not in secure context - getUserMedia requires HTTPS');
+          setRecordingError('🔒 Audio recording requires HTTPS. Please use a secure connection.');
+          return;
+        }
+
         // Check if MediaRecorder is supported
         if (!window.MediaRecorder) {
+          console.error('❌ MediaRecorder not available');
           setRecordingError('🎤 Audio recording not supported in this browser. Try Chrome or Firefox.');
           return;
         }
         
+        console.log('✅ MediaRecorder available:', {
+          MediaRecorder: !!window.MediaRecorder,
+          constructor: MediaRecorder.toString()
+        });
+        
         // Check if getUserMedia is supported
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.error('❌ getUserMedia not available');
           setRecordingError('🎤 Microphone access not supported in this browser.');
           return;
         }
         
-        console.log('🎤 MediaRecorder and getUserMedia are supported');
+        console.log('✅ getUserMedia available');
         
         // Check microphone permissions
         if (navigator.permissions) {
@@ -48,6 +75,18 @@ const QuickAudio: React.FC = () => {
           } catch (e) {
             console.log('🎤 Permission API not supported, will request permission when recording');
           }
+        }
+        
+        // Test basic MediaRecorder creation (without stream)
+        try {
+          // Create a dummy AudioContext to test basic audio support
+          if (window.AudioContext || (window as any).webkitAudioContext) {
+            console.log('✅ AudioContext available');
+          } else {
+            console.log('❌ AudioContext not available');
+          }
+        } catch (audioError) {
+          console.log('❌ Error testing audio context:', audioError);
         }
         
       } catch (error) {
@@ -86,24 +125,57 @@ const QuickAudio: React.FC = () => {
       });
       
       console.log('✅ Microphone permission granted, stream obtained');
+      console.log('🎤 Stream details:', {
+        id: stream.id,
+        active: stream.active,
+        tracks: stream.getTracks().map(track => ({
+          kind: track.kind,
+          label: track.label,
+          enabled: track.enabled,
+          readyState: track.readyState,
+          muted: track.muted
+        }))
+      });
+      
+      // Check if stream has any audio tracks
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        console.error('❌ No audio tracks in stream');
+        setRecordingError('No audio tracks available. Please check microphone permissions.');
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      
+      console.log('✅ Audio tracks found:', audioTracks.length);
+      
       streamRef.current = stream;
       audioChunksRef.current = [];
       
-      // Determine best MIME type
-      let mimeType = 'audio/webm;codecs=opus';
-      if (!MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        if (MediaRecorder.isTypeSupported('audio/webm')) {
-          mimeType = 'audio/webm';
-        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-          mimeType = 'audio/mp4';
-        } else if (MediaRecorder.isTypeSupported('audio/wav')) {
-          mimeType = 'audio/wav';
-        } else {
-          mimeType = ''; // Let browser choose
+      // Determine best MIME type with extensive checking
+      console.log('🎤 Checking MIME type support...');
+      const supportedTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus', 
+        'audio/mp4',
+        'audio/wav',
+        'audio/mpeg'
+      ];
+      
+      let mimeType = '';
+      for (const type of supportedTypes) {
+        const supported = MediaRecorder.isTypeSupported(type);
+        console.log(`🎤 ${type}: ${supported ? '✅ Supported' : '❌ Not supported'}`);
+        if (supported && !mimeType) {
+          mimeType = type;
         }
       }
       
-      console.log('🎤 Using MIME type:', mimeType);
+      if (!mimeType) {
+        console.log('🎤 No specific MIME type supported, letting browser choose');
+      }
+      
+      console.log('🎤 Selected MIME type:', mimeType || 'browser default');
       
       // Create MediaRecorder
       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
@@ -128,10 +200,16 @@ const QuickAudio: React.FC = () => {
       // Handle recording stop
       mediaRecorder.onstop = () => {
         console.log('🎤 MediaRecorder stopped, chunks:', audioChunksRef.current.length);
+        console.log('🎤 Stop event details:', {
+          wasRecording: isRecording,
+          recordingTime,
+          streamActive: !!streamRef.current,
+          streamTracks: streamRef.current ? streamRef.current.getTracks().length : 0
+        });
         
         // Only create audio blob if we have data and we intended to stop
         if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
           console.log('✅ Audio recording completed:', {
             size: audioBlob.size,
             type: audioBlob.type,
@@ -141,14 +219,33 @@ const QuickAudio: React.FC = () => {
           setAudioBlob(audioBlob);
         } else {
           console.log('❌ No audio chunks available, recording may have failed');
-          setRecordingError('Recording failed - no audio captured. Please try again.');
+          console.log('❌ Possible causes:');
+          console.log('   - MediaRecorder stopped immediately after starting');
+          console.log('   - Microphone permission denied');
+          console.log('   - Browser compatibility issue');
+          console.log('   - Audio format not supported');
+          
+          // Provide more specific error based on timing
+          if (recordingTime < 2) {
+            setRecordingError('Recording stopped too quickly. Check browser microphone permissions or try a different browser.');
+          } else {
+            setRecordingError('No audio was captured during recording. Please check your microphone and try again.');
+          }
         }
         
         setIsRecording(false);
         
         // Stop all tracks
         if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current.getTracks().forEach(track => {
+            console.log('🎤 Stopping track:', {
+              kind: track.kind,
+              label: track.label,
+              enabled: track.enabled,
+              readyState: track.readyState
+            });
+            track.stop();
+          });
           streamRef.current = null;
         }
       };
@@ -156,8 +253,29 @@ const QuickAudio: React.FC = () => {
       // Add error handling for MediaRecorder
       mediaRecorder.onerror = (event) => {
         console.error('❌ MediaRecorder error:', event);
+        console.error('❌ MediaRecorder error details:', {
+          error: event.error,
+          type: event.type,
+          target: event.target
+        });
         setRecordingError('Recording error occurred. Please try again.');
         setIsRecording(false);
+      };
+
+      // Add state change handler for debugging
+      mediaRecorder.onstart = () => {
+        console.log('✅ MediaRecorder started - onstart event fired');
+        console.log('🎤 MediaRecorder state in onstart:', mediaRecorder.state);
+      };
+
+      // Add pause handler
+      mediaRecorder.onpause = () => {
+        console.log('⏸️ MediaRecorder paused');
+      };
+
+      // Add resume handler  
+      mediaRecorder.onresume = () => {
+        console.log('▶️ MediaRecorder resumed');
       };
       
       // Start recording
@@ -177,14 +295,42 @@ const QuickAudio: React.FC = () => {
           setRecordingTime(prev => prev + 1);
         }, 1000);
         
-        // Check recording state after a brief delay
+        // Check recording state after brief delays
         setTimeout(() => {
-          console.log('🎤 Recording state check:', {
+          console.log('🎤 Recording state check (100ms):', {
             mediaRecorderState: mediaRecorder.state,
             isRecording: isRecording,
             chunks: audioChunksRef.current.length
           });
         }, 100);
+
+        setTimeout(() => {
+          console.log('🎤 Recording state check (1s):', {
+            mediaRecorderState: mediaRecorder.state,
+            isRecording: isRecording,
+            chunks: audioChunksRef.current.length
+          });
+          
+          // If MediaRecorder stopped unexpectedly within 1 second
+          if (mediaRecorder.state === 'inactive' && isRecording) {
+            console.log('❌ MediaRecorder stopped unexpectedly within 1 second');
+            setRecordingError('Recording stopped unexpectedly. This may be a browser compatibility issue.');
+            setIsRecording(false);
+          }
+        }, 1000);
+
+        setTimeout(() => {
+          console.log('🎤 Recording state check (3s):', {
+            mediaRecorderState: mediaRecorder.state,
+            isRecording: isRecording,
+            chunks: audioChunksRef.current.length
+          });
+          
+          // If we're still recording but have no chunks after 3 seconds, there's an issue
+          if (mediaRecorder.state === 'recording' && audioChunksRef.current.length === 0) {
+            console.log('⚠️ Recording active but no chunks received after 3 seconds');
+          }
+        }, 3000);
         
         console.log('✅ Audio recording started successfully');
       } catch (startError) {
@@ -284,6 +430,40 @@ const QuickAudio: React.FC = () => {
       audio.onended = () => {
         audioRef.current = null;
       };
+    }
+  };
+
+  const testMicrophone = async () => {
+    setTestingMicrophone(true);
+    setRecordingError(null);
+    
+    try {
+      console.log('🎤 === TESTING MICROPHONE ACCESS ===');
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        } 
+      });
+      
+      console.log('✅ Test: Microphone access granted');
+      console.log('🎤 Test: Stream active:', stream.active);
+      console.log('🎤 Test: Audio tracks:', stream.getAudioTracks().length);
+      
+      // Test stream for a moment then stop
+      setTimeout(() => {
+        console.log('🎤 Test: Stopping test stream');
+        stream.getTracks().forEach(track => track.stop());
+        setTestingMicrophone(false);
+        console.log('✅ Test completed - microphone appears to be working');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('❌ Test: Microphone test failed:', error);
+      setRecordingError(`Microphone test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setTestingMicrophone(false);
     }
   };
 
@@ -432,38 +612,64 @@ const QuickAudio: React.FC = () => {
         }}>
           {!audioBlob ? (
             // Recording buttons
-            <button
-              onClick={isRecording ? stopRecording : startRecording}
-              disabled={!!recordingError}
-              style={{
-                backgroundColor: isRecording ? '#ff4444' : '#007aff',
-                color: 'white',
-                border: 'none',
-                padding: '16px',
-                borderRadius: '12px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                cursor: recordingError ? 'not-allowed' : 'pointer',
-                opacity: recordingError ? 0.6 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }}
-            >
-              {isRecording ? (
-                <>
-                  <FaStop size={20} />
-                  Stop Recording
-                </>
-              ) : (
-                <>
-                  <FaMicrophone size={20} />
-                  Start Recording
-                </>
-              )}
-            </button>
+            <>
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={!!recordingError || testingMicrophone}
+                style={{
+                  backgroundColor: isRecording ? '#ff4444' : '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: (recordingError || testingMicrophone) ? 'not-allowed' : 'pointer',
+                  opacity: (recordingError || testingMicrophone) ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}
+              >
+                {isRecording ? (
+                  <>
+                    <FaStop size={20} />
+                    Stop Recording
+                  </>
+                ) : (
+                  <>
+                    <FaMicrophone size={20} />
+                    Start Recording
+                  </>
+                )}
+              </button>
+
+              {/* Test Microphone Button */}
+              <button
+                onClick={testMicrophone}
+                disabled={isRecording || testingMicrophone}
+                style={{
+                  backgroundColor: testingMicrophone ? '#ffc107' : '#28a745',
+                  color: testingMicrophone ? '#333' : 'white',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: (isRecording || testingMicrophone) ? 'not-allowed' : 'pointer',
+                  opacity: (isRecording || testingMicrophone) ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                }}
+              >
+                {testingMicrophone ? '🔄 Testing...' : '🔍 Test Microphone'}
+              </button>
+            </>
           ) : (
             // Post-recording buttons
             <>
