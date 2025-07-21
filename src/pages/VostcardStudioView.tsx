@@ -25,6 +25,20 @@ const VostcardStudioView: React.FC = () => {
 
   // Quickcard import state
   const [showQuickcardImporter, setShowQuickcardImporter] = useState(false);
+  const [showQuickcardCreator, setShowQuickcardCreator] = useState(false);
+  
+  // Quickcard creation state
+  const [quickcardTitle, setQuickcardTitle] = useState('');
+  const [quickcardPhoto, setQuickcardPhoto] = useState<Blob | null>(null);
+  const [quickcardPhotoPreview, setQuickcardPhotoPreview] = useState<string | null>(null);
+  const [quickcardLocation, setQuickcardLocation] = useState<{
+    latitude: number;
+    longitude: number;
+    address?: string;
+  } | null>(null);
+  const [quickcardAudio, setQuickcardAudio] = useState<Blob | null>(null);
+  const [quickcardAudioSource, setQuickcardAudioSource] = useState<'recording' | 'file' | null>(null);
+  const [quickcardAudioFileName, setQuickcardAudioFileName] = useState<string | null>(null);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -286,6 +300,8 @@ const VostcardStudioView: React.FC = () => {
   // Handle location data from pin placer
   useEffect(() => {
     const savedLocation = sessionStorage.getItem('drivecardLocation');
+    const quickcardLocation = sessionStorage.getItem('quickcardLocation');
+    
     if (savedLocation) {
       try {
         const location = JSON.parse(savedLocation);
@@ -293,6 +309,25 @@ const VostcardStudioView: React.FC = () => {
         sessionStorage.removeItem('drivecardLocation');
       } catch (error) {
         console.error('Error parsing saved location:', error);
+      }
+    }
+
+    if (quickcardLocation) {
+      try {
+        const location = JSON.parse(quickcardLocation);
+        setQuickcardLocation(location);
+        sessionStorage.removeItem('quickcardLocation');
+        
+        // Restore quickcard creator state
+        const creatorState = sessionStorage.getItem('quickcardCreatorState');
+        if (creatorState) {
+          const state = JSON.parse(creatorState);
+          setQuickcardTitle(state.title || '');
+          setShowQuickcardCreator(true);
+          sessionStorage.removeItem('quickcardCreatorState');
+        }
+      } catch (error) {
+        console.error('Error parsing quickcard location:', error);
       }
     }
   }, []);
@@ -316,6 +351,126 @@ const VostcardStudioView: React.FC = () => {
 
   const handleCancelImport = () => {
     setShowQuickcardImporter(false);
+  };
+
+  const handleCancelCreator = () => {
+    setShowQuickcardCreator(false);
+    // Clear creation state
+    setQuickcardTitle('');
+    setQuickcardPhoto(null);
+    setQuickcardPhotoPreview(null);
+    setQuickcardLocation(null);
+    setQuickcardAudio(null);
+    setQuickcardAudioSource(null);
+    setQuickcardAudioFileName(null);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setQuickcardPhoto(file);
+      const previewUrl = URL.createObjectURL(file);
+      setQuickcardPhotoPreview(previewUrl);
+    }
+  };
+
+  const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('audio/')) {
+      setQuickcardAudio(file);
+      setQuickcardAudioSource('file');
+      setQuickcardAudioFileName(file.name);
+    }
+  };
+
+  const handleQuickcardPinPlacer = () => {
+    // Store current quickcard state in sessionStorage
+    sessionStorage.setItem('quickcardCreatorState', JSON.stringify({
+      title: quickcardTitle,
+      photo: quickcardPhoto ? 'hasPhoto' : null,
+      audio: quickcardAudio ? 'hasAudio' : null,
+      audioSource: quickcardAudioSource,
+      audioFileName: quickcardAudioFileName
+    }));
+    
+    navigate('/pin-placer', {
+      state: {
+        returnTo: '/studio',
+        quickcardCreation: true,
+        title: quickcardTitle || 'New Quickcard',
+        pinData: {
+          id: 'temp_quickcard',
+          title: quickcardTitle || 'New Quickcard',
+          description: 'Quickcard location',
+          latitude: quickcardLocation?.latitude || 40.7128,
+          longitude: quickcardLocation?.longitude || -74.0060,
+          isOffer: false,
+          isQuickcard: true
+        }
+      }
+    });
+  };
+
+  const handleSaveQuickcard = async () => {
+    if (!quickcardTitle.trim()) {
+      alert('Please enter a title for your quickcard.');
+      return;
+    }
+
+    if (!quickcardPhoto) {
+      alert('Please add a photo for your quickcard.');
+      return;
+    }
+
+    if (!quickcardLocation) {
+      alert('Please set a location for your quickcard.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Create quickcard using VostcardEditContext
+      const quickcard: Vostcard = {
+        id: `quickcard_${Date.now()}`,
+        title: quickcardTitle.trim(),
+        description: '', // Can be added later in advanced editor
+        photos: [quickcardPhoto],
+        audio: quickcardAudio,
+        categories: [],
+        geo: quickcardLocation,
+        username: user?.displayName || user?.email || 'Unknown User',
+        userID: user?.uid || '',
+        state: 'private',
+        video: null,
+        isQuickcard: true,
+        hasVideo: false,
+        hasPhotos: true,
+        hasAudio: !!quickcardAudio,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // Load the quickcard into the editor for further editing
+      loadQuickcard(quickcard);
+      
+      // Navigate to advanced editor
+      navigate('/studio', { 
+        state: { 
+          editingQuickcard: quickcard.id,
+          activeTab: 'quickcard',
+          fromCreator: true
+        }
+      });
+      
+      console.log('✅ Quickcard created and loaded into editor');
+      
+    } catch (error) {
+      console.error('❌ Error creating quickcard:', error);
+      alert('Failed to create quickcard. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -503,7 +658,7 @@ const VostcardStudioView: React.FC = () => {
             backgroundColor: '#f9f9f9',
             border: '1px solid #ddd'
           }}>
-            {!showQuickcardImporter ? (
+            {!showQuickcardImporter && !showQuickcardCreator ? (
               <div style={{ textAlign: 'center' }}>
                 <h3>📝 Quickcard Studio</h3>
                 <p style={{ color: '#666', marginBottom: '20px' }}>
@@ -511,6 +666,25 @@ const VostcardStudioView: React.FC = () => {
                 </p>
                 
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => setShowQuickcardCreator(true)}
+                    style={{
+                      backgroundColor: '#ff6b35',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 20px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    📷 Create Quickcard
+                  </button>
+                  
                   <button
                     onClick={() => setShowQuickcardImporter(true)}
                     style={{
@@ -569,12 +743,286 @@ const VostcardStudioView: React.FC = () => {
                   </ul>
                 </div>
               </div>
-            ) : (
+            ) : showQuickcardImporter ? (
               <QuickcardImporter
                 onImport={handleQuickcardImport}
                 onCancel={handleCancelImport}
               />
-            )}
+            ) : showQuickcardCreator ? (
+              <div>
+                <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>
+                  📷 Create New Quickcard
+                </h3>
+                
+                {/* Title Input */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    marginBottom: '8px'
+                  }}>
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    value={quickcardTitle}
+                    onChange={(e) => setQuickcardTitle(e.target.value)}
+                    disabled={isLoading}
+                    placeholder="Enter quickcard title..."
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '2px solid #333',
+                      borderRadius: '4px',
+                      fontSize: '16px',
+                      backgroundColor: 'white',
+                      boxSizing: 'border-box',
+                      opacity: isLoading ? 0.6 : 1
+                    }}
+                  />
+                </div>
+
+                {/* Photo Upload */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    marginBottom: '8px'
+                  }}>
+                    Photo
+                  </label>
+                  <div style={{
+                    border: '2px dashed #ccc',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    backgroundColor: quickcardPhoto ? '#e8f5e8' : '#f9f9f9'
+                  }}>
+                    {quickcardPhotoPreview ? (
+                      <div>
+                        <img
+                          src={quickcardPhotoPreview}
+                          alt="Quickcard preview"
+                          style={{
+                            width: '100%',
+                            maxWidth: '200px',
+                            height: '150px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            marginBottom: '10px'
+                          }}
+                        />
+                        <div style={{ color: '#28a745', fontWeight: 'bold', marginBottom: '10px' }}>
+                          ✅ Photo Ready
+                        </div>
+                        <button
+                          onClick={() => document.getElementById('photo-input')?.click()}
+                          style={{
+                            backgroundColor: '#007aff',
+                            color: 'white',
+                            border: 'none',
+                            padding: '8px 16px',
+                            borderRadius: '4px',
+                            fontSize: '14px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Change Photo
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: '48px', marginBottom: '10px' }}>📷</div>
+                        <p style={{ color: '#666', margin: '0 0 10px 0' }}>
+                          Click to add a photo
+                        </p>
+                        <button
+                          onClick={() => document.getElementById('photo-input')?.click()}
+                          style={{
+                            backgroundColor: '#007aff',
+                            color: 'white',
+                            border: 'none',
+                            padding: '10px 20px',
+                            borderRadius: '6px',
+                            fontSize: '14px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📷 Add Photo
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      id="photo-input"
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Audio Upload (Optional) */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    marginBottom: '8px'
+                  }}>
+                    Audio (Optional)
+                  </label>
+                  <div style={{
+                    backgroundColor: quickcardAudio ? '#e8f5e8' : '#f5f5f5',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    textAlign: 'center'
+                  }}>
+                    {quickcardAudio ? (
+                      <div>
+                        <div style={{ color: '#28a745', fontWeight: 'bold' }}>
+                          ✅ Audio Ready
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                          {quickcardAudioSource === 'file' && quickcardAudioFileName}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ color: '#666', fontSize: '14px' }}>
+                        No audio added
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => document.getElementById('audio-input')?.click()}
+                    disabled={isLoading}
+                    style={{
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      marginTop: '8px',
+                      width: '100%'
+                    }}
+                  >
+                    🎵 Add Audio (Optional)
+                  </button>
+                  <input
+                    id="audio-input"
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleQuickcardAudioUpload}
+                    style={{ display: 'none' }}
+                  />
+                </div>
+
+                {/* Location */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    color: '#333',
+                    marginBottom: '8px'
+                  }}>
+                    Location
+                  </label>
+                  {quickcardLocation ? (
+                    <div style={{
+                      backgroundColor: '#e8f5e8',
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      border: '1px solid #4caf50',
+                      fontSize: '14px',
+                      color: '#2e7d32',
+                      marginBottom: '8px'
+                    }}>
+                      📍 {quickcardLocation.address || `${quickcardLocation.latitude.toFixed(4)}, ${quickcardLocation.longitude.toFixed(4)}`}
+                    </div>
+                  ) : (
+                    <div style={{
+                      backgroundColor: '#fff3cd',
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      border: '1px solid #ffc107',
+                      fontSize: '14px',
+                      color: '#856404',
+                      marginBottom: '8px'
+                    }}>
+                      📍 Location required
+                    </div>
+                  )}
+                  <button
+                    onClick={handleQuickcardPinPlacer}
+                    disabled={isLoading}
+                    style={{
+                      backgroundColor: '#007aff',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 16px',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <FaMapMarkerAlt size={14} />
+                    {quickcardLocation ? 'Change Location' : 'Set Location'}
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={handleCancelCreator}
+                    style={{
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveQuickcard}
+                    disabled={!quickcardTitle.trim() || !quickcardPhoto || !quickcardLocation || isLoading}
+                    style={{
+                      backgroundColor: (!quickcardTitle.trim() || !quickcardPhoto || !quickcardLocation || isLoading) 
+                        ? '#ccc' : '#ff6b35',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
+                      cursor: (!quickcardTitle.trim() || !quickcardPhoto || !quickcardLocation || isLoading) 
+                        ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {isLoading ? 'Creating...' : '✨ Create Quickcard'}
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
 

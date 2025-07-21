@@ -150,6 +150,24 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
   };
 
   const handleSave = async () => {
+    const [newLat, newLng] = pinPosition;
+    
+    // Check if this is quickcard creation mode
+    if (location.state?.quickcardCreation) {
+      console.log('📍 Saving quickcard location');
+      
+      // Store location for quickcard creation
+      sessionStorage.setItem('quickcardLocation', JSON.stringify({
+        latitude: newLat,
+        longitude: newLng,
+        address: searchQuery || `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`
+      }));
+      
+      // Navigate back to studio
+      navigate('/studio');
+      return;
+    }
+
     if (!actualPinData?.id) {
       setError('No pin data available to save');
       return;
@@ -160,8 +178,6 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
 
     try {
       console.log('📍 Updating pin location for:', actualPinData.id);
-      
-      const [newLat, newLng] = pinPosition;
       
       // Update the vostcard/offer in Firestore
       const docRef = doc(db, 'vostcards', actualPinData.id);
@@ -193,6 +209,12 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
   };
 
   const handleCancel = () => {
+    // Check if this is quickcard creation mode
+    if (location.state?.quickcardCreation) {
+      navigate('/studio');
+      return;
+    }
+
     // Navigate back to the detail view without saving
     if (actualPinData?.isOffer) {
       navigate(`/offer/${actualPinData.id}`);
