@@ -1002,7 +1002,7 @@ const HomeView = () => {
           bottom: 20,
           left: 15,
           right: 15,
-          zIndex: 1000,
+          zIndex: 2000, // Changed from 1000 to 2000
           display: 'flex',
           justifyContent: 'space-between',
           gap: '4%'
