@@ -11,9 +11,22 @@ import type { Drivecard } from '../types/VostcardTypes';
 
 const VostcardStudioView: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
   const { hasAccess, upgradeMessage } = useStudioAccess();
   const studioSummary = useStudioAccessSummary();
+  
+  // Check if user can access Drivecard section
+  const canAccessDrivecard = userRole === 'guide' || userRole === 'admin';
+  
+  // Section state - default to quickcard for all users, drivecard only for guides/admins
+  const [activeSection, setActiveSection] = useState<'quickcard' | 'drivecard'>('quickcard');
+
+  // Ensure non-privileged users stay on quickcard section
+  React.useEffect(() => {
+    if (activeSection === 'drivecard' && !canAccessDrivecard) {
+      setActiveSection('quickcard');
+    }
+  }, [activeSection, canAccessDrivecard]);
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState('');
   
@@ -326,6 +339,12 @@ const VostcardStudioView: React.FC = () => {
     }
   }, []);
 
+  // Handle location selection from PinPlacerModal
+  const handleLocationSelected = (location: { latitude: number; longitude: number; address?: string }) => {
+    setSelectedLocation(location);
+    setShowPinPlacer(false);
+  };
+
   // Access denied screen
   if (!hasAccess) {
     return (
@@ -471,30 +490,293 @@ const VostcardStudioView: React.FC = () => {
           fontSize: '24px',
           fontWeight: 'bold',
           color: '#333',
-          margin: '0 0 10px 0',
+          margin: '0 0 20px 0',
           textAlign: 'center'
         }}>
           Vostcard Studio
         </h1>
 
-        {/* Drive Mode Creator */}
+        {/* Section Navigation Tabs */}
         <div style={{
+          display: 'flex',
+          backgroundColor: '#f0f0f0',
           borderRadius: '8px',
-          padding: '0px 15px 15px 15px',
+          padding: '4px',
+          marginBottom: '20px',
           width: '100%',
-          maxWidth: '350px',
-          backgroundColor: 'white'
+          maxWidth: '350px'
         }}>
-          {/* Drive Mode Creator Header */}
+          {/* Quickcard Tab - Always visible */}
+          <button
+            onClick={() => setActiveSection('quickcard')}
+            style={{
+              flex: 1,
+              padding: '12px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              backgroundColor: activeSection === 'quickcard' ? '#007aff' : 'transparent',
+              color: activeSection === 'quickcard' ? 'white' : '#666',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            📝 Quickcard
+          </button>
+
+          {/* Drivecard Tab - Only for guides and admins */}
+          {canAccessDrivecard && (
+            <button
+              onClick={() => setActiveSection('drivecard')}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                border: 'none',
+                borderRadius: '6px',
+                backgroundColor: activeSection === 'drivecard' ? '#007aff' : 'transparent',
+                color: activeSection === 'drivecard' ? 'white' : '#666',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🚗 Drivecard
+            </button>
+          )}
+        </div>
+
+        {/* Section Content */}
+        {activeSection === 'quickcard' && (
           <div style={{
-            textAlign: 'left',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            color: '#333',
-            marginBottom: '5px'
+            borderRadius: '8px',
+            padding: '0px 15px 15px 15px',
+            width: '100%',
+            maxWidth: '350px',
+            backgroundColor: 'white'
           }}>
-            Drive Mode Creator
+            {/* Quickcard Editor Header */}
+            <div style={{
+              textAlign: 'left',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '15px'
+            }}>
+              📝 Quickcard Editor
+            </div>
+
+            {/* Quickcard Selection */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                Select Quickcard to Edit
+              </label>
+              <div style={{
+                backgroundColor: '#f9f9f9',
+                padding: '20px',
+                borderRadius: '8px',
+                border: '1px solid #ddd',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>📱</div>
+                <div style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
+                  Select an existing quickcard to add audio and enhance
+                </div>
+                <button
+                  onClick={() => navigate('/quickcards')}
+                  style={{
+                    backgroundColor: '#007aff',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Browse My Quickcards
+                </button>
+              </div>
+            </div>
+
+            {/* Audio Enhancement */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                Audio Enhancement
+              </label>
+
+              {/* Audio Status */}
+              <div style={{
+                backgroundColor: audioBlob ? '#4caf50' : '#f5f5f5',
+                padding: '12px',
+                borderRadius: '6px',
+                marginBottom: '10px',
+                textAlign: 'center',
+                border: '1px solid #ddd'
+              }}>
+                {audioBlob ? (
+                  <div>
+                    <div style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                      ✅ Audio Ready for Quickcard
+                    </div>
+                    <div style={{ fontSize: '14px' }}>
+                      {audioSource === 'recording' ? 'Recorded Audio' : audioFileName || 'Audio File'} • {formatFileSize(audioBlob.size)}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ color: '#666' }}>
+                    Record audio or upload a file to enhance your quickcard
+                  </div>
+                )}
+              </div>
+
+              {/* Audio Controls */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: audioBlob ? '1fr 1fr' : '1fr 1fr',
+                gap: '8px',
+                marginBottom: '10px'
+              }}>
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isRecording}
+                  style={{
+                    backgroundColor: isRecording ? '#ff4444' : '#007aff',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    cursor: isRecording ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {isRecording ? <FaStop size={12} /> : <FaMicrophone size={12} />}
+                  {isRecording ? 'Recording...' : 'Record'}
+                </button>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isRecording}
+                  style={{
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    cursor: isRecording ? 'not-allowed' : 'pointer',
+                    opacity: isRecording ? 0.6 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <FaUpload size={12} />
+                  Upload
+                </button>
+              </div>
+
+              {/* Recording Timer */}
+              {isRecording && (
+                <div style={{
+                  textAlign: 'center',
+                  color: '#ff4444',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  marginBottom: '10px'
+                }}>
+                  🔴 Recording: {formatTime(recordingTime)}
+                </div>
+              )}
+
+              {/* Clear Audio Button */}
+              {audioBlob && !isRecording && (
+                <button
+                  onClick={clearRecording}
+                  style={{
+                    backgroundColor: '#ff9800',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    width: '100%'
+                  }}
+                >
+                  Clear Audio
+                </button>
+              )}
+            </div>
+
+            {/* Info Box */}
+            <div style={{
+              backgroundColor: '#e3f2fd',
+              padding: '12px',
+              borderRadius: '6px',
+              border: '1px solid #2196f3',
+              fontSize: '12px',
+              color: '#1565c0',
+              textAlign: 'center'
+            }}>
+              💡 Add audio to your existing quickcards to make them more engaging and informative
+            </div>
           </div>
+        )}
+
+        {activeSection === 'drivecard' && canAccessDrivecard && (
+          <div style={{
+            borderRadius: '8px',
+            padding: '0px 15px 15px 15px',
+            width: '100%',
+            maxWidth: '350px',
+            backgroundColor: 'white'
+          }}>
+            {/* Drive Mode Creator Header */}
+            <div style={{
+              textAlign: 'left',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '5px'
+            }}>
+              🚗 Drive Mode Creator
+            </div>
+
+            {/* Role Info */}
+            <div style={{
+              backgroundColor: '#fff3cd',
+              padding: '8px 12px',
+              borderRadius: '4px',
+              border: '1px solid #ffc107',
+              fontSize: '12px',
+              color: '#856404',
+              textAlign: 'center',
+              marginBottom: '15px'
+            }}>
+              👑 {userRole === 'admin' ? 'Admin' : 'Guide'} Access • Create location-based audio content for Drive Mode
+            </div>
 
           {/* Title Input */}
           <div style={{ marginBottom: '15px' }}>
@@ -754,6 +1036,7 @@ const VostcardStudioView: React.FC = () => {
             </button>
           )}
         </div>
+        )}
       </div>
 
       {/* Pin Placer Modal */}
