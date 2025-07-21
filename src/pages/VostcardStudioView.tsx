@@ -290,25 +290,52 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handlePinPlacer = () => {
-    navigate('/drivecard-pin-placer', {
+    // Store current drivecard state in sessionStorage
+    sessionStorage.setItem('drivecardCreatorState', JSON.stringify({
+      title: title,
+      audio: audioBlob ? 'hasAudio' : null,
+      audioSource: audioSource,
+      audioFileName: audioFileName
+    }));
+
+    navigate('/pin-placer', {
       state: {
-        title: title || 'New Drivecard'
+        returnTo: '/studio',
+        drivecardCreation: true,
+        title: title || 'New Drivecard',
+        pinData: {
+          id: 'temp_drivecard',
+          title: title || 'New Drivecard',
+          description: 'Drivecard location',
+          latitude: selectedLocation?.latitude || 40.7128,
+          longitude: selectedLocation?.longitude || -74.0060,
+          isOffer: false,
+          isDrivecard: true
+        }
       }
     });
   };
 
   // Handle location data from pin placer
   useEffect(() => {
-    const savedLocation = sessionStorage.getItem('drivecardLocation');
+    const drivecardLocation = sessionStorage.getItem('drivecardLocation');
     const quickcardLocation = sessionStorage.getItem('quickcardLocation');
     
-    if (savedLocation) {
+    if (drivecardLocation) {
       try {
-        const location = JSON.parse(savedLocation);
+        const location = JSON.parse(drivecardLocation);
         setSelectedLocation(location);
         sessionStorage.removeItem('drivecardLocation');
+        
+        // Restore drivecard creator state
+        const creatorState = sessionStorage.getItem('drivecardCreatorState');
+        if (creatorState) {
+          const state = JSON.parse(creatorState);
+          setTitle(state.title || '');
+          sessionStorage.removeItem('drivecardCreatorState');
+        }
       } catch (error) {
-        console.error('Error parsing saved location:', error);
+        console.error('Error parsing drivecard location:', error);
       }
     }
 

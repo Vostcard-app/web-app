@@ -52,16 +52,13 @@ const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
   const map = useMap();
   
   useEffect(() => {
-    console.log('🗺️ MapUpdater updating to:', center);
-    console.log('🗺️ Map current center:', map.getCenter());
     try {
       // Add a small delay to ensure the map is ready
       setTimeout(() => {
         map.setView(center, 16, { animate: true });
-        console.log('✅ Map view updated successfully to:', center);
       }, 50);
     } catch (error) {
-      console.error('❌ Error updating map view:', error);
+      console.error('Error updating map view:', error);
     }
   }, [center[0], center[1], map]); // Watch individual coordinates
   
@@ -80,10 +77,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
     actualPinData?.longitude || -74.0060
   ]);
   
-  // Debug: Log when pinPosition changes
-  useEffect(() => {
-    console.log('📍 Pin position changed to:', pinPosition);
-  }, [pinPosition]);
+
   
   const [originalPosition] = useState<[number, number]>([
     actualPinData?.latitude || 40.7128,
@@ -154,7 +148,6 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
         
         // Auto-select first result
         const firstResult = data.results[0];
-        console.log('🔍 Auto-selecting first result:', firstResult.name, 'at', [firstResult.latitude, firstResult.longitude]);
         setPinPosition([firstResult.latitude, firstResult.longitude]);
       } else {
         setError('Location not found. Please try a different search.');
@@ -172,17 +165,9 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
 
   const handleSearchResultClick = (result: typeof searchResults[0]) => {
     const newPosition: [number, number] = [result.latitude, result.longitude];
-    console.log('🎯 Search result clicked:', result.name, 'Position:', newPosition);
-    
-    // Force state update with a new array reference
     setPinPosition([...newPosition]);
     setSearchQuery(result.displayAddress || result.name);
     setShowResults(false);
-    
-    // Additional debugging
-    setTimeout(() => {
-      console.log('🕐 After state update, pinPosition should be:', newPosition);
-    }, 100);
   };
 
   const handleSave = async () => {
@@ -190,10 +175,24 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
     
     // Check if this is quickcard creation mode
     if (location.state?.quickcardCreation) {
-      console.log('📍 Saving quickcard location');
       
       // Store location for quickcard creation
       sessionStorage.setItem('quickcardLocation', JSON.stringify({
+        latitude: newLat,
+        longitude: newLng,
+        address: searchQuery || `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`
+      }));
+      
+      // Navigate back to studio
+      navigate('/studio');
+      return;
+    }
+
+    // Check if this is drivecard creation mode
+    if (location.state?.drivecardCreation) {
+      
+      // Store location for drivecard creation
+      sessionStorage.setItem('drivecardLocation', JSON.stringify({
         latitude: newLat,
         longitude: newLng,
         address: searchQuery || `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`
@@ -247,6 +246,12 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
   const handleCancel = () => {
     // Check if this is quickcard creation mode
     if (location.state?.quickcardCreation) {
+      navigate('/studio');
+      return;
+    }
+
+    // Check if this is drivecard creation mode
+    if (location.state?.drivecardCreation) {
       navigate('/studio');
       return;
     }
