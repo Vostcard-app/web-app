@@ -16,41 +16,33 @@ const DriveModePlayer: React.FC<DriveModePlayerProps> = ({
   userSpeed,
   isEnabled
 }) => {
-  const { triggerNearbyVostcard, isDriveModeEnabled } = useDriveMode();
+  const { triggerNearbyVostcard, isDriveModeEnabled, settings } = useDriveMode();
   const { user } = useAuth();
   
   // Track played Drivecards to avoid repeats
   const playedDrivecards = useRef<Set<string>>(new Set());
   const lastLocationRef = useRef<{ latitude: number; longitude: number } | null>(null);
   
-  // Calculate trigger distance based on speed for ~30 seconds lead time
+  // Calculate trigger distance based on settings and speed
   const calculateTriggerDistance = useCallback((speed: number): number => {
+    // Use fixed distance mode
+    if (!settings.usePredictiveTrigger) {
+      return settings.triggerDistance;
+    }
+    
+    // Use predictive mode - calculate distance based on speed and lead time
+    
     // Handle stationary or very slow speeds
     if (speed <= 5) return 0.05; // ~100 yards for walking/stationary
     
-    // Base calculation: Speed * time (in hours) = distance
-    // We want roughly 15-30 seconds depending on speed
-    // Faster speeds get less time to avoid overwhelming the driver
+    // Convert speed (mph) and lead time (seconds) to distance (miles)
+    // Distance = speed × time, where time is converted from seconds to hours
+    const leadTimeHours = settings.predictiveLeadTime / 3600;
+    const distance = speed * leadTimeHours;
     
-    let leadTimeSeconds: number;
-    
-    if (speed >= 55) {
-      // Highway speeds: 15 seconds lead time
-      leadTimeSeconds = 15;
-    } else if (speed >= 35) {
-      // City/suburban speeds: 20-25 seconds lead time  
-      leadTimeSeconds = 20 + ((speed - 35) / 20) * 5; // 20-25 seconds
-    } else {
-      // Slow speeds: 25-30 seconds lead time
-      leadTimeSeconds = 25 + ((35 - speed) / 30) * 5; // 25-30 seconds
-    }
-    
-    // Convert to distance: speed (mph) * time (seconds) / 3600 (seconds per hour)
-    const distance = speed * (leadTimeSeconds / 3600);
-    
-    // Minimum distance of 0.05 miles (~90 yards), maximum of 1 mile
-    return Math.max(0.05, Math.min(distance, 1.0));
-  }, []);
+    // Apply reasonable limits: minimum 0.05 miles (~90 yards), maximum 2 miles
+    return Math.max(0.05, Math.min(distance, 2.0));
+  }, [settings.usePredictiveTrigger, settings.triggerDistance, settings.predictiveLeadTime]);
 
   // Calculate distance between two coordinates in miles
   const calculateDistance = useCallback((
@@ -97,7 +89,7 @@ const DriveModePlayer: React.FC<DriveModePlayerProps> = ({
         updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
       })) as Drivecard[];
       
-      // Filter by actual distance and exclude already played
+      // Filter by actual distance, exclude already played, and apply category filters
       const nearbyDrivecards = allDrivecards.filter(drivecard => {
         const distance = calculateDistance(
           location.latitude,
@@ -106,9 +98,13 @@ const DriveModePlayer: React.FC<DriveModePlayerProps> = ({
           drivecard.geo.longitude
         );
         
+        // Check if the drivecard's category is in the excluded list
+        const hasExcludedCategory = settings.excludedCategories?.includes(drivecard.category) || false;
+        
         return (
           distance <= maxDistance && 
           !playedDrivecards.current.has(drivecard.id) &&
+          !hasExcludedCategory &&
           Math.abs(drivecard.geo.longitude - location.longitude) <= lonRange
         );
       });
@@ -146,7 +142,11 @@ const DriveModePlayer: React.FC<DriveModePlayerProps> = ({
     
     const triggerDistance = calculateTriggerDistance(userSpeed);
     
-    console.log(`🚗 Checking Drivecards at ${userSpeed} mph (trigger distance: ${(triggerDistance * 5280).toFixed(0)} feet)`);
+    const modeText = settings.usePredictiveTrigger 
+      ? `predictive mode, ${settings.predictiveLeadTime}s lead time`
+      : `fixed distance mode`;
+    
+    console.log(`🚗 Checking Drivecards at ${userSpeed} mph (${modeText}, trigger distance: ${(triggerDistance * 5280).toFixed(0)} feet)`);
     
     const nearbyDrivecards = await loadNearbyDrivecards(userLocation, triggerDistance);
     

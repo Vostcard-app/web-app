@@ -329,7 +329,7 @@ const DriveModeSettingsView: React.FC = () => {
                 )}
               </div>
 
-              {/* Detection Settings */}
+              {/* Trigger Mode Settings */}
               <div style={{
                 backgroundColor: '#f8f9fa',
                 padding: '20px',
@@ -338,40 +338,134 @@ const DriveModeSettingsView: React.FC = () => {
               }}>
                 <h4 style={{ margin: '0 0 15px 0', color: '#002B4D' }}>
                   <FaMapMarkerAlt style={{ marginRight: '8px' }} />
-                  Detection Settings
+                  Trigger Mode
                 </h4>
                 
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '10px',
-                  marginBottom: '10px'
-                }}>
-                  <label style={{ minWidth: '120px', fontSize: '14px' }}>
-                    Trigger distance:
-                  </label>
-                  <input
-                    type="range"
-                    min="0.1"
-                    max="1.0"
-                    step="0.1"
-                    value={settings.triggerDistance}
-                    onChange={(e) => updateSettings({ triggerDistance: parseFloat(e.target.value) })}
-                    style={{ flex: 1 }}
-                  />
-                  <span style={{ 
-                    fontSize: '14px', 
-                    fontWeight: 'bold',
-                    minWidth: '80px',
-                    textAlign: 'right'
+                {/* Trigger Mode Toggle */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '10px',
+                    marginBottom: '10px',
+                    cursor: 'pointer'
                   }}>
-                    {formatDistance(settings.triggerDistance)}
-                  </span>
+                    <input
+                      type="radio"
+                      name="triggerMode"
+                      checked={!settings.usePredictiveTrigger}
+                      onChange={() => updateSettings({ usePredictiveTrigger: false })}
+                    />
+                    <span style={{ fontSize: '16px', fontWeight: '500' }}>
+                      📏 Fixed Distance Mode
+                    </span>
+                  </label>
+                  
+                  <label style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '10px',
+                    cursor: 'pointer'
+                  }}>
+                    <input
+                      type="radio"
+                      name="triggerMode"
+                      checked={settings.usePredictiveTrigger}
+                      onChange={() => updateSettings({ usePredictiveTrigger: true })}
+                    />
+                    <span style={{ fontSize: '16px', fontWeight: '500' }}>
+                      🚗 Predictive Mode (Speed-Based)
+                    </span>
+                  </label>
                 </div>
-                
-                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                  Distance from vostcards that will trigger automatic playback
-                </div>
+
+                {/* Fixed Distance Settings */}
+                {!settings.usePredictiveTrigger && (
+                  <div style={{ 
+                    padding: '15px',
+                    backgroundColor: '#e8f4fd',
+                    borderRadius: '8px',
+                    marginBottom: '10px'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px',
+                      marginBottom: '10px'
+                    }}>
+                      <label style={{ minWidth: '120px', fontSize: '14px' }}>
+                        Trigger distance:
+                      </label>
+                      <input
+                        type="range"
+                        min="0.1"
+                        max="1.0"
+                        step="0.1"
+                        value={settings.triggerDistance}
+                        onChange={(e) => updateSettings({ triggerDistance: parseFloat(e.target.value) })}
+                        style={{ flex: 1 }}
+                      />
+                      <span style={{ 
+                        fontSize: '14px', 
+                        fontWeight: 'bold',
+                        minWidth: '80px',
+                        textAlign: 'right'
+                      }}>
+                        {formatDistance(settings.triggerDistance)}
+                      </span>
+                    </div>
+                    
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      Triggers when you're within this fixed distance of a drivecard
+                    </div>
+                  </div>
+                )}
+
+                {/* Predictive Mode Settings */}
+                {settings.usePredictiveTrigger && (
+                  <div style={{ 
+                    padding: '15px',
+                    backgroundColor: '#fff3cd',
+                    borderRadius: '8px',
+                    marginBottom: '10px'
+                  }}>
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px',
+                      marginBottom: '10px'
+                    }}>
+                      <label style={{ minWidth: '120px', fontSize: '14px' }}>
+                        Lead time:
+                      </label>
+                      <input
+                        type="range"
+                        min="15"
+                        max="60"
+                        step="5"
+                        value={settings.predictiveLeadTime}
+                        onChange={(e) => updateSettings({ predictiveLeadTime: parseInt(e.target.value) })}
+                        style={{ flex: 1 }}
+                      />
+                      <span style={{ 
+                        fontSize: '14px', 
+                        fontWeight: 'bold',
+                        minWidth: '60px',
+                        textAlign: 'right'
+                      }}>
+                        {settings.predictiveLeadTime}s
+                      </span>
+                    </div>
+                    
+                    <div style={{ fontSize: '12px', color: '#856404', marginBottom: '8px' }}>
+                      ⚡ Calculates your speed and triggers drivecards {settings.predictiveLeadTime} seconds before you reach them
+                    </div>
+                    
+                    <div style={{ fontSize: '11px', color: '#6c757d', fontStyle: 'italic' }}>
+                      Example: At 30 mph, triggers {((30 * settings.predictiveLeadTime / 3600).toFixed(2))} miles before location
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Category Filters */}
@@ -670,7 +764,12 @@ const DriveModeSettingsView: React.FC = () => {
                 <ol style={{ paddingLeft: '20px', fontSize: '14px', color: '#333', lineHeight: '1.6' }}>
                   <li><strong>Speed Detection:</strong> Automatically enables at your set speed threshold (default 25+ mph)</li>
                   <li><strong>Location Monitoring:</strong> Continuously tracks GPS location while active</li>
-                  <li><strong>Geofencing:</strong> Detects vostcards within your set distance radius</li>
+                  <li><strong>Smart Triggering:</strong> 
+                    <ul style={{ marginTop: '4px', paddingLeft: '16px' }}>
+                      <li><strong>Fixed Distance:</strong> Triggers when within set radius of drivecards</li>
+                      <li><strong>Predictive Mode:</strong> Calculates your speed and triggers content ahead of time (15-60 seconds before arrival)</li>
+                    </ul>
+                  </li>
                   <li><strong>Category Filtering:</strong> Only triggers content marked with "Drive Mode" category</li>
                   <li><strong>Audio-only Playback:</strong> Extracts audio from video for safe driving</li>
                   <li><strong>Queue Management:</strong> Multiple nearby vostcards are queued automatically</li>
@@ -731,6 +830,7 @@ const DriveModeSettingsView: React.FC = () => {
                   <ul style={{ paddingLeft: '20px' }}>
                     <li>🎵 Audio extraction from video files</li>
                     <li>📍 Real-time GPS tracking and speed calculation</li>
+                    <li>🧠 Predictive triggering based on speed and customizable lead time</li>
                     <li>🔲 Efficient geofencing with Firebase queries</li>
                     <li>⚡ Background location services</li>
                     <li>🔊 Automatic volume adjustment for safety</li>

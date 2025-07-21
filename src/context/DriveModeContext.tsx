@@ -10,6 +10,8 @@ export interface DriveModeSettings {
   autoDisableAfterStop: number; // minutes - disable after being stopped this long
   allowManualOverride: boolean;
   excludedCategories?: string[]; // categories to exclude from Drive Mode playback
+  usePredictiveTrigger: boolean; // use speed-based predictive triggering instead of fixed distance
+  predictiveLeadTime: number; // seconds - how many seconds before arrival to trigger
 }
 
 interface CurrentPlayback {
@@ -67,7 +69,9 @@ const DEFAULT_SETTINGS: DriveModeSettings = {
   triggerDistance: 0.33, // 1/3 mile
   autoDisableAfterStop: 5, // minutes
   allowManualOverride: true,
-  excludedCategories: [] // no categories excluded by default
+  excludedCategories: [], // no categories excluded by default
+  usePredictiveTrigger: false, // use fixed distance by default
+  predictiveLeadTime: 30 // 30 seconds lead time when predictive mode is enabled
 };
 
 export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
