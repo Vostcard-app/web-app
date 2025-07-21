@@ -103,6 +103,8 @@ const HomeView = () => {
   const [userFriends, setUserFriends] = useState<string[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showInfoMenu, setShowInfoMenu] = useState(false);
+  const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('CCOErz2RxwI'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
@@ -470,9 +472,15 @@ const HomeView = () => {
     transition: 'background-color 0.2s ease'
   };
 
-  // YouTube video ID extracted from the provided URL
-  const youtubeVideoId = 'CCOErz2RxwI';
-  const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  // Tutorial video handlers
+  const handleTutorialVideo = (videoId: string, title: string) => {
+    setCurrentTutorialVideo(videoId);
+    setShowInfoMenu(false);
+    setShowVideoModal(true);
+  };
+
+  // YouTube video URL using current tutorial video
+  const youtubeEmbedUrl = `https://www.youtube.com/embed/${currentTutorialVideo}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   return (
     <div style={{ 
@@ -661,7 +669,7 @@ const HomeView = () => {
                   </button>
                   
                   <button
-                    onClick={() => setShowVideoModal(true)}
+                    onClick={() => setShowInfoMenu(!showInfoMenu)}
                     style={{
                       backgroundColor: '#002B4D',
                       color: 'white',
@@ -823,7 +831,7 @@ const HomeView = () => {
           )}
         </div>
 
-        {/* Menu */}
+        {/* Main Menu */}
         {isMenuOpen && (
           <div style={menuStyle}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', fontSize: '14px', fontWeight: 'bold', color: '#002B4D' }}>
@@ -880,6 +888,16 @@ const HomeView = () => {
               👥 Following
             </button>
             
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/drivecards');
+              }}
+              style={menuItemStyle}
+            >
+              🚗 Drive Mode
+            </button>
+            
             {(userRole === 'guide' || userRole === 'admin') && (
               <button
                 onClick={() => {
@@ -903,10 +921,77 @@ const HomeView = () => {
             </button>
             
             <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/report-bug');
+              }}
+              style={menuItemStyle}
+            >
+              🐛 Report Bug
+            </button>
+            
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/suggestion-box');
+              }}
+              style={menuItemStyle}
+            >
+              💡 Suggestion Box
+            </button>
+            
+            <button
               onClick={handleLogout}
               style={{ ...menuItemStyle, color: '#d32f2f' }}
             >
               🚪 Logout
+            </button>
+          </div>
+        )}
+
+        {/* Info/Tutorial Menu */}
+        {showInfoMenu && (
+          <div style={{
+            ...menuStyle,
+            right: '76px' // Position next to the info button to avoid overlap with main menu
+          }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', fontSize: '14px', fontWeight: 'bold', color: '#002B4D' }}>
+              📹 Tutorial Videos
+            </div>
+            
+            <button
+              onClick={() => handleTutorialVideo('CCOErz2RxwI', 'What is Vōstcard')}
+              style={menuItemStyle}
+            >
+              📍 What is Vōstcard
+            </button>
+            
+            <button
+              onClick={() => handleTutorialVideo('HOME_SCREEN_VIDEO_ID', 'Home Screen')}
+              style={menuItemStyle}
+            >
+              🏠 Home Screen
+            </button>
+            
+            <button
+              onClick={() => handleTutorialVideo('CREATE_VOSTCARD_VIDEO_ID', 'How to create a Vostcard')}
+              style={menuItemStyle}
+            >
+              🎬 How to create a Vostcard
+            </button>
+            
+            <button
+              onClick={() => handleTutorialVideo('QUICKCARD_VIDEO_ID', 'Quick Card')}
+              style={menuItemStyle}
+            >
+              📸 Quick Card
+            </button>
+            
+            <button
+              onClick={() => handleTutorialVideo('FILTERS_VIDEO_ID', 'Filters')}
+              style={menuItemStyle}
+            >
+              🔍 Filters
             </button>
           </div>
         )}
