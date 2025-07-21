@@ -780,7 +780,20 @@ const HomeView = () => {
     fileInput.capture = 'environment'; // Use back camera
     fileInput.onchange = (event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
-      if (file && file.type.startsWith('image/')) {
+      
+      // Handle file selection cancellation
+      if (!file) {
+        console.log('📱 User cancelled photo selection');
+        return;
+      }
+      
+      if (file.type.startsWith('image/')) {
+        console.log('📸 Valid image file selected:', {
+          name: file.name,
+          type: file.type,
+          size: file.size
+        });
+        
         // Get location for quickcard
         navigator.geolocation.getCurrentPosition(
           (position) => {
@@ -789,43 +802,89 @@ const HomeView = () => {
               longitude: position.coords.longitude,
             };
             
-            console.log('📸 Native camera photo captured for quickcard:', {
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              location: userLocation
-            });
+            console.log('📍 Location obtained:', userLocation);
             
-            // Store photo data temporarily for the context to use
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const imageData = e.target?.result;
-              if (imageData) {
-                // Convert to blob and create quickcard
-                fetch(imageData as string)
-                  .then(res => res.blob())
-                  .then(blob => {
-                    createQuickcard(blob, userLocation);
-                    navigate('/quickcard-step3');
-                  });
-              }
-            };
-            reader.readAsDataURL(file);
+            // Convert file to blob and create quickcard
+            try {
+              const reader = new FileReader();
+              
+              reader.onload = (e) => {
+                const imageData = e.target?.result;
+                if (imageData) {
+                  // Convert to blob and create quickcard with proper error handling
+                  fetch(imageData as string)
+                    .then(res => {
+                      if (!res.ok) {
+                        throw new Error(`Failed to convert image: ${res.status}`);
+                      }
+                      return res.blob();
+                    })
+                    .then(blob => {
+                      console.log('📸 Successfully converted photo to blob:', blob.size, 'bytes');
+                      try {
+                        createQuickcard(blob, userLocation);
+                        console.log('✅ Quickcard created successfully, navigating to step 3');
+                        navigate('/quickcard-step3');
+                      } catch (createError) {
+                        console.error('❌ Error creating quickcard:', createError);
+                        alert('Failed to create quickcard. Please try again.');
+                      }
+                    })
+                    .catch(blobError => {
+                      console.error('❌ Error converting photo to blob:', blobError);
+                      alert('Failed to process photo. Please try again.');
+                    });
+                } else {
+                  console.error('❌ No image data from FileReader');
+                  alert('Failed to read photo. Please try again.');
+                }
+              };
+              
+              reader.onerror = (readerError) => {
+                console.error('❌ FileReader error:', readerError);
+                alert('Failed to read photo. Please try again.');
+              };
+              
+              // Start reading the file
+              reader.readAsDataURL(file);
+              
+            } catch (readerSetupError) {
+              console.error('❌ Error setting up FileReader:', readerSetupError);
+              alert('Failed to process photo. Please try again.');
+            }
           },
           (error) => {
             console.error('❌ Error getting location:', error);
             alert('📍 Location is required for quickcards. Please enable location services and try again.');
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
           }
         );
-      } else if (file && file.type.startsWith('video/')) {
+      } else if (file.type.startsWith('video/')) {
+        console.log('❌ User selected video file');
         alert('📸 Quickcards only accept photos!\n\nYou selected a video file. Please take a photo instead.');
-      } else if (file) {
+      } else {
+        console.log('❌ User selected invalid file type:', file.type);
         alert('📸 Invalid file type!\n\nPlease select a photo file.');
       }
     };
     
+    // Add error handler for file input
+    fileInput.onerror = () => {
+      console.error('❌ File input error');
+      alert('Failed to open camera. Please try again.');
+    };
+    
     // Trigger the native camera
-    fileInput.click();
+    try {
+      fileInput.click();
+    } catch (clickError) {
+      console.error('❌ Error triggering camera:', clickError);
+      alert('Failed to open camera. Please try again.');
+    }
   };
 
   const handleRetryLoad = () => {
