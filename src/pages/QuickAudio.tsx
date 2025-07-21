@@ -179,11 +179,12 @@ const QuickAudio: React.FC = () => {
         ];
         console.log('🎤 Using Safari iOS optimized MIME types');
       } else {
+        // Prioritize basic audio/webm over codecs-specific versions for better compatibility
         supportedTypes = [
-          'audio/webm;codecs=opus',
-          'audio/webm',
-          'audio/ogg;codecs=opus', 
+          'audio/webm',           // More compatible than opus-specific
           'audio/mp4',
+          'audio/webm;codecs=opus', // Try opus after basic webm
+          'audio/ogg;codecs=opus', 
           'audio/wav',
           'audio/mpeg'
         ];
@@ -207,27 +208,21 @@ const QuickAudio: React.FC = () => {
       
       console.log('🎤 Selected MIME type:', mimeType || 'browser default');
       
-      // Create MediaRecorder with Safari-specific options
+      // Create MediaRecorder with minimal options to avoid compatibility issues
       let mediaRecorderOptions: MediaRecorderOptions = {};
       
       if (mimeType) {
         mediaRecorderOptions.mimeType = mimeType;
       }
       
-      // Safari-specific adjustments
-      if (isIOS && isSafari) {
-        console.log('🎤 Applying Safari iOS specific MediaRecorder options');
-        // Don't specify audioBitsPerSecond for Safari - let it choose
-        // Some versions of Safari don't handle custom bitrates well
-      } else {
-        // For other browsers, we can be more specific
-        if (!mimeType || mimeType.includes('webm')) {
-          mediaRecorderOptions.audioBitsPerSecond = 128000;
-        }
-      }
+      // REMOVED: audioBitsPerSecond - this was causing Chrome to immediately stop recording
+      // Let the browser choose the optimal bitrate instead
       
       console.log('🎤 MediaRecorder options:', mediaRecorderOptions);
+      console.log('🎤 Creating MediaRecorder...');
+      
       const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
+      console.log('✅ MediaRecorder created successfully');
       mediaRecorderRef.current = mediaRecorder;
       
       // Handle data available
@@ -321,6 +316,12 @@ const QuickAudio: React.FC = () => {
       mediaRecorder.onstart = () => {
         console.log('✅ MediaRecorder started - onstart event fired');
         console.log('🎤 MediaRecorder state in onstart:', mediaRecorder.state);
+        
+        // Double-check that we're actually recording
+        if (mediaRecorder.state !== 'recording') {
+          console.log('🚨 WARNING: onstart fired but state is not "recording"!');
+          console.log('🚨 This suggests immediate failure after start');
+        }
       };
 
       // Add pause handler
@@ -337,14 +338,21 @@ const QuickAudio: React.FC = () => {
       console.log('🎤 Starting MediaRecorder...');
       console.log('🎤 MediaRecorder state before start:', mediaRecorder.state);
       
+      // Give MediaRecorder a moment to initialize before starting
+      console.log('🎤 Waiting brief moment for MediaRecorder to initialize...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       try {
-        // Safari-specific timing adjustments
-        const dataInterval = (isIOS && isSafari) ? 500 : 1000; // Safari works better with 500ms intervals
+        // Use standard timing - the audioBitsPerSecond was the real issue
+        const dataInterval = 1000;
         
         console.log('🎤 Starting MediaRecorder with interval:', dataInterval);
+        console.log('🎤 MediaRecorder state before start:', mediaRecorder.state);
+        
         mediaRecorder.start(dataInterval);
+        
         console.log('🎤 MediaRecorder.start() called successfully');
-        console.log('🎤 MediaRecorder state after start:', mediaRecorder.state);
+        console.log('🎤 MediaRecorder state immediately after start:', mediaRecorder.state);
         
         setIsRecording(true);
         setRecordingTime(0);
@@ -355,6 +363,21 @@ const QuickAudio: React.FC = () => {
           setRecordingTime(prev => prev + 1);
         }, 1000);
         
+        // Immediate state verification after start
+        setTimeout(() => {
+          console.log('🎤 Recording state check (10ms):', {
+            mediaRecorderState: mediaRecorder.state,
+            isRecording: isRecording,
+            chunks: audioChunksRef.current.length
+          });
+          
+          if (mediaRecorder.state !== 'recording') {
+            console.log('❌ CRITICAL: MediaRecorder not in recording state after 10ms!');
+            console.log('❌ This indicates MediaRecorder immediately failed/stopped');
+            console.log('❌ Likely cause: MIME type or audio configuration rejection');
+          }
+        }, 10);
+
         // Check recording state after brief delays
         setTimeout(() => {
           console.log('🎤 Recording state check (100ms):', {
@@ -466,6 +489,87 @@ const QuickAudio: React.FC = () => {
     }
     
     console.log('✅ Re-record state cleared');
+  };
+
+  // Fallback recording with no MIME type specified
+  const startRecordingFallback = async () => {
+    try {
+      console.log('🎤 === FALLBACK RECORDING (NO MIME TYPE) ===');
+      setRecordingError(null);
+      setAudioBlob(null);
+      setRecordingTime(0);
+      audioChunksRef.current = [];
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true
+        } 
+      });
+
+      console.log('✅ Fallback: Stream obtained');
+      streamRef.current = stream;
+
+      // Create MediaRecorder with NO options - let browser choose everything
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+
+      console.log('🎤 Fallback: Created MediaRecorder with no options');
+      console.log('🎤 Fallback: MediaRecorder state:', mediaRecorder.state);
+
+      // Set up event handlers
+      mediaRecorder.ondataavailable = (event) => {
+        console.log('🎤 Fallback data available:', event.data.size);
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        console.log('🎤 Fallback recording stopped, chunks:', audioChunksRef.current.length);
+        if (audioChunksRef.current.length > 0) {
+          // Let browser choose the MIME type from the first chunk
+          const firstChunkType = audioChunksRef.current[0].type || 'audio/webm';
+          const audioBlob = new Blob(audioChunksRef.current, { type: firstChunkType });
+          console.log('✅ Fallback recording completed:', {
+            size: audioBlob.size,
+            type: firstChunkType,
+            chunks: audioChunksRef.current.length
+          });
+          setAudioBlob(audioBlob);
+        } else {
+          console.log('❌ Fallback also failed - no chunks');
+          setRecordingError('Recording failed even with fallback method. Your browser may not support audio recording.');
+        }
+        setIsRecording(false);
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+      };
+
+      mediaRecorder.onerror = (event) => {
+        console.error('❌ Fallback recording error:', event);
+        setRecordingError('Fallback recording failed');
+        setIsRecording(false);
+      };
+
+      // Start recording
+      mediaRecorder.start(1000);
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingStartTimeRef.current = Date.now();
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+      console.log('✅ Fallback recording started');
+
+    } catch (error) {
+      console.error('❌ Fallback recording failed:', error);
+      setRecordingError(`Fallback recording failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const saveAudio = () => {
@@ -665,7 +769,7 @@ const QuickAudio: React.FC = () => {
                   color: '#666',
                   fontStyle: 'italic' 
                 }}>
-                  💡 Try the "Test Microphone" button first, or try a different browser like Chrome
+                  💡 Try the "Test Microphone" button first, then try the "Fallback Method" button below, or use a different browser
                 </div>
               )}
             </div>
@@ -751,6 +855,32 @@ const QuickAudio: React.FC = () => {
               >
                 {testingMicrophone ? '🔄 Testing...' : '🔍 Test Microphone'}
               </button>
+
+              {/* Fallback Recording Button - only show if there's an error */}
+              {recordingError && recordingError.includes('stopped too quickly') && (
+                <button
+                  onClick={startRecordingFallback}
+                  disabled={isRecording || testingMicrophone}
+                  style={{
+                    backgroundColor: '#ff9800',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: (isRecording || testingMicrophone) ? 'not-allowed' : 'pointer',
+                    opacity: (isRecording || testingMicrophone) ? 0.7 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  🔧 Try Fallback Method
+                </button>
+              )}
             </>
           ) : (
             // Post-recording buttons
