@@ -501,7 +501,7 @@ const HomeView = () => {
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: shouldUseContainer ? 'visible' : 'hidden' // Allow overflow on desktop to show buttons
       }}>
         {/* Header */}
         <div style={{
