@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -127,9 +127,13 @@ const HomeView = () => {
   }, [browseLocationState, navigate, location.pathname]);
 
   // Handle fresh load state from navigation
+  const processedFreshLoadRef = useRef<boolean>(false);
+  
   useEffect(() => {
     const navigationState = location.state as any;
-    if (navigationState?.freshLoad) {
+    if (navigationState?.freshLoad && !processedFreshLoadRef.current) {
+      processedFreshLoadRef.current = true;
+      
       console.log('🔄 Fresh load requested after posting quickcard');
       setVostcards([]);
       setLoadingVostcards(true);
@@ -137,10 +141,15 @@ const HomeView = () => {
       setRetryCount(prev => prev + 1); // This will trigger the retry useEffect which calls loadVostcards
       setHasInitialLoad(false);
       
-      // Clear the navigation state immediately to prevent repeated calls
-      window.history.replaceState({}, '', location.pathname);
+      // Clear the navigation state using navigate to prevent repeated calls
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, location.pathname]);
+  }, [location.state, location.pathname, navigate]);
+  
+  // Reset the processed flag when location pathname changes
+  useEffect(() => {
+    processedFreshLoadRef.current = false;
+  }, [location.pathname]);
 
   // Handle target quickcard from navigation - center map but show all content
   useEffect(() => {

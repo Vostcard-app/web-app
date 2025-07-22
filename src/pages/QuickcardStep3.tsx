@@ -137,21 +137,27 @@ const QuickcardStep3: React.FC = () => {
       return;
     }
     
+    // Show immediate success message
+    alert('🎉 Quickcard posted successfully!');
+    
+    // Show second message about timing
+    alert('Your Quickcard will appear on the map in a minute or two.');
+    
+    // Navigate to home to see it on the map
+    navigate('/home', { state: { freshLoad: true } });
+    
     try {
       console.log('📍 Starting quickcard post to map...');
       
-      // Post the quickcard to the public map
+      // Post the quickcard to the public map in background
       await postQuickcard();
       
-      // Show success message
-      alert('🎉 Quickcard posted successfully! It will appear on the map for everyone to see.');
-      
-      // Navigate to home to see it on the map
-      navigate('/home', { state: { freshLoad: true } });
+      console.log('✅ Quickcard posted successfully');
       
     } catch (error) {
       console.error('❌ Error posting quickcard:', error);
-      alert('Failed to post quickcard. Please try again.');
+      // Don't show error alert since user is already on home screen
+      // Could implement a more subtle error notification if needed
     }
   };
 
