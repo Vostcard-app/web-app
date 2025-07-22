@@ -532,12 +532,23 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handleQuickcardPinPlacer = () => {
-    // Very simple - just navigate without complex state storage
+    console.log('🗺️ Pin placer button clicked!'); // Debug log
+    
+    // Navigate to pin placer with required pinData
     navigate('/pin-placer', {
       state: {
         returnTo: '/studio',
         quickcardCreation: true,
-        title: quickcardTitle || 'New Quickcard'
+        title: quickcardTitle || 'New Quickcard',
+        pinData: {
+          id: 'temp_quickcard',
+          title: quickcardTitle || 'New Quickcard',
+          description: 'Quickcard location',
+          latitude: quickcardLocation?.latitude || 40.7128,
+          longitude: quickcardLocation?.longitude || -74.0060,
+          isOffer: false,
+          isQuickcard: true
+        }
       }
     });
   };
