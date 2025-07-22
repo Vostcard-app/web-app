@@ -348,51 +348,77 @@ const HomeView = () => {
     }
   }, [retryCount, loadVostcards]);
 
-  // Location handling
+  // Location handling - IMPROVED FOR LAPTOPS
   useEffect(() => {
     let watchId: number | null = null;
 
     const handleLocationSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      console.log('📍 Location updated:', { latitude, longitude });
+      const { latitude, longitude, accuracy } = position.coords;
+      console.log('✅ Location updated:', { 
+        latitude: latitude.toFixed(6), 
+        longitude: longitude.toFixed(6), 
+        accuracy: `${accuracy}m`,
+        source: accuracy < 50 ? 'GPS' : 'Network/WiFi'
+      });
       setUserLocation([latitude, longitude]);
       setActualUserLocation([latitude, longitude]);
     };
 
     const handleLocationError = (error: GeolocationPositionError) => {
-      console.error('📍 Location error:', error.message);
+      console.error('❌ Location error:', {
+        code: error.code,
+        message: error.message,
+        type: error.code === 1 ? 'Permission Denied' : 
+               error.code === 2 ? 'Position Unavailable' : 
+               error.code === 3 ? 'Timeout' : 'Unknown'
+      });
+      
+      // Show user-friendly error in console
+      const errorMsg = error.code === 1 ? 
+        'Location permission denied. Click the location icon in your address bar to allow.' :
+        error.code === 2 ?
+        'Location unavailable. Check your device location settings.' :
+        'Location timeout. Using default location.';
+        
+      console.warn('📍 Location help:', errorMsg);
+      
       const defaultLocation: [number, number] = [40.7128, -74.0060];
       setUserLocation(defaultLocation);
       setActualUserLocation(defaultLocation);
     };
 
     const startLocationWatch = () => {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          handleLocationSuccess,
-          handleLocationError,
-          {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 300000
-          }
-        );
-
-        watchId = navigator.geolocation.watchPosition(
-          handleLocationSuccess,
-          handleLocationError,
-          {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 300000
-          }
-        );
-      } else {
-        console.error('📍 Geolocation is not supported by this browser');
+      if (!navigator.geolocation) {
+        console.error('❌ Geolocation not supported by this browser');
         const defaultLocation: [number, number] = [40.7128, -74.0060];
         setUserLocation(defaultLocation);
         setActualUserLocation(defaultLocation);
+        return;
       }
+
+      console.log('📍 Requesting location permission...');
+
+      // First try to get current position with laptop-friendly settings
+      navigator.geolocation.getCurrentPosition(
+        handleLocationSuccess,
+        handleLocationError,
+        {
+          enableHighAccuracy: false, // Use network location (faster for laptops)
+          timeout: 30000, // Longer timeout for laptops
+          maximumAge: 600000 // 10 minutes cache (laptops don't move much)
+        }
+      );
+
+      // Then start watching position with different settings
+      watchId = navigator.geolocation.watchPosition(
+        handleLocationSuccess,
+        handleLocationError,
+        {
+          enableHighAccuracy: false, // Network location is fine for laptops
+          timeout: 30000, // Longer timeout
+          maximumAge: 600000 // Longer cache time
+        }
+      );
     };
 
     startLocationWatch();
