@@ -152,9 +152,9 @@ const PublicHomeView: React.FC = () => {
   // Updated pin click handler to use correct URL for quickcards
   const handlePinClick = () => {
     if (isQuickcard) {
-      navigate(`/share-quickcard/${singleVostcard.id}`); // ✅ Back to public quickcard view
+      navigate(`/share-quickcard/${singleVostcard.id}`);
     } else {
-      navigate(`/share/${singleVostcard.id}`); // ✅ Back to public vostcard view  
+      navigate(`/share/${singleVostcard.id}`);
     }
   };
 
@@ -217,18 +217,12 @@ const PublicHomeView: React.FC = () => {
           <FaArrowLeft size={20} />
         </button>
         
-        {/* Login/Register Button */}
+        {/* Register/Login Button - Always the same regardless of auth status */}
         <button
           onClick={() => {
-            if (user) {
-              // User is authenticated - go to their HomeView
-              console.log('📱 Authenticated user accessing HomeView from public map');
-              navigate('/home');
-            } else {
-              // User is not authenticated - go to LoginView
-              console.log('📱 Non-authenticated user accessing LoginView from public map');
-              navigate('/login');
-            }
+            // Always go to LoginView - public map is separate from authenticated experience
+            console.log('📱 User accessing LoginView from public map');
+            navigate('/login');
           }}
           style={{
             backgroundColor: '#007aff',
@@ -241,7 +235,7 @@ const PublicHomeView: React.FC = () => {
             fontWeight: 'bold'
           }}
         >
-          {user ? 'Go to My Vostcard' : 'Login/Register'}
+          Register/Login
         </button>
         
         {/* What is Vostcard Button */}
