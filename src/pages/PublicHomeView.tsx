@@ -8,7 +8,6 @@ import { useAuth } from '../context/AuthContext';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
-import GuidePin from '../assets/Guide_pin.svg';
 
 // Custom icons for the map
 const vostcardIcon = new L.Icon({
@@ -35,7 +34,7 @@ const quickcardIcon = new L.Icon({
 
 // Add guide icon
 const guideIcon = new L.Icon({
-  iconUrl: GuidePin,
+  iconUrl: '/Guide_pin.png', // ✅ Use working PNG from public directory
   iconSize: [75, 75],
   iconAnchor: [37.5, 75],
   popupAnchor: [0, -75],
@@ -153,9 +152,9 @@ const PublicHomeView: React.FC = () => {
   // Updated pin click handler to use correct URL for quickcards
   const handlePinClick = () => {
     if (isQuickcard) {
-      navigate(`/share-quickcard/${singleVostcard.id}`);
+      navigate(`/share-quickcard/${singleVostcard.id}`); // ✅ Back to public quickcard view
     } else {
-      navigate(`/share/${singleVostcard.id}`);
+      navigate(`/share/${singleVostcard.id}`); // ✅ Back to public vostcard view  
     }
   };
 

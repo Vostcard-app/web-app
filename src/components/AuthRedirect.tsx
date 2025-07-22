@@ -17,6 +17,15 @@ const AuthRedirect = () => {
   });
 
   useEffect(() => {
+    // ✅ COMPLETELY bypass authentication for shared content
+    const sharedContentRoutes = ['/share/', '/share-quickcard/', '/email/', '/public-map'];
+    const isSharedContentRoute = sharedContentRoutes.some(prefix => location.pathname.startsWith(prefix));
+    
+    if (isSharedContentRoute) {
+      console.log('🔓 Bypassing authentication for shared content route:', location.pathname);
+      return; // No authentication logic at all - both logged-in and anonymous users see same experience
+    }
+
     // Skip redirection if still loading
     if (loading) {
       console.log('⏳ AuthRedirect: Still loading, skipping redirect logic');
@@ -24,19 +33,16 @@ const AuthRedirect = () => {
     }
 
     // Public routes that don't require auth
-    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/public-map'];
+    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
-    // Dynamic routes that should be allowed (with any ID)
+    // Dynamic routes that should be allowed (with any ID) 
     const isDynamicRoute = [
       '/vostcard/',
       '/offer/',
       '/profile/',
       '/script-editor/',
-      '/flag/',
-      '/share/',
-      '/share-quickcard/',  // Add this line
-      '/email/'
+      '/flag/'
     ].some(prefix => location.pathname.startsWith(prefix));
 
     // If not authenticated and trying to access protected route
@@ -66,7 +72,7 @@ const AuthRedirect = () => {
     //   return;
     // }
 
-  }, [user, userRole, loading, navigate, location.pathname]);
+  }, [loading, user, userRole, location.pathname, navigate]);
 
   return null;
 };
