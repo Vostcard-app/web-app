@@ -352,8 +352,28 @@ ${privateUrl}`;
         </div>
         <button
           onClick={() => {
+            // Navigate all users to public map view regardless of authentication status
             if (quickcard?.latitude && quickcard?.longitude) {
-              setShowMapModal(true);
+              console.log('📍 Opening quickcard location on public map for all users');
+              navigate('/public-map', {
+                state: {
+                  singleVostcard: {
+                    id: quickcard.id,
+                    title: quickcard.title,
+                    description: quickcard.description,
+                    latitude: quickcard.latitude,
+                    longitude: quickcard.longitude,
+                    photoURLs: quickcard.photoURLs,
+                    username: quickcard.username,
+                    isOffer: false,
+                    isQuickcard: true,
+                    categories: quickcard.categories,
+                    createdAt: quickcard.createdAt,
+                    visibility: 'public',
+                    state: 'posted'
+                  }
+                }
+              });
             } else {
               alert('No location data available for this quickcard');
             }

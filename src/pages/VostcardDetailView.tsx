@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp, FaMap } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -225,6 +225,36 @@ ${privateUrl}`;
     } catch (error) {
       console.error('Error sharing Vostcard:', error);
       alert('Failed to share Vostcard. Please try again.');
+    }
+  };
+
+  const handleMapClick = () => {
+    // Navigate all users to public map view regardless of authentication status
+    if (vostcard?.latitude && vostcard?.longitude) {
+      console.log('📍 Opening vostcard location on public map');
+      navigate('/public-map', {
+        state: {
+          singleVostcard: {
+            id: vostcard.id,
+            title: vostcard.title,
+            description: vostcard.description,
+            latitude: vostcard.latitude,
+            longitude: vostcard.longitude,
+            videoURL: vostcard.videoURL,
+            photoURLs: vostcard.photoURLs,
+            username: vostcard.username,
+            isOffer: vostcard.isOffer || false,
+            isQuickcard: vostcard.isQuickcard || false,
+            offerDetails: vostcard.offerDetails,
+            categories: vostcard.categories,
+            createdAt: vostcard.createdAt,
+            visibility: 'public',
+            state: 'posted'
+          }
+        }
+      });
+    } else {
+      alert('No location data available for this vostcard');
     }
   };
 
@@ -875,6 +905,20 @@ ${privateUrl}`;
           }}
         >
           <FaShare size={30} />
+        </button>
+        <button
+          onClick={handleMapClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaMap size={30} />
         </button>
         {/* Audio button - only show if vostcard has audio */}
         {((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL) && (

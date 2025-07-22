@@ -343,8 +343,8 @@ const HomeView = () => {
 
   const handleListViewClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('📋 Navigating to List View');
-    navigate('/list-view');
+    console.log('📋 Navigating to All Posted Vostcards View');
+    navigate('/all-posted-vostcards');
   };
 
   const handleOffersClick = (e: React.MouseEvent) => {

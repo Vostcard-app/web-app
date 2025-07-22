@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaPlus, FaMinus, FaLocationArrow, FaArrowLeft, FaInfoCircle } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png'; // Add quickcard pin import
@@ -100,6 +101,7 @@ const MapCenter = ({ center }: { center: [number, number] }) => {
 const PublicHomeView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const { singleVostcard } = location.state || {};
 
   // Handle case where no vostcard is provided
@@ -199,7 +201,17 @@ const PublicHomeView: React.FC = () => {
         
         {/* Login/Register Button */}
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            if (user) {
+              // User is authenticated - go to their HomeView
+              console.log('📱 Authenticated user accessing HomeView from public map');
+              navigate('/home');
+            } else {
+              // User is not authenticated - go to LoginView
+              console.log('📱 Non-authenticated user accessing LoginView from public map');
+              navigate('/login');
+            }
+          }}
           style={{
             backgroundColor: '#007aff',
             color: 'white',
@@ -211,7 +223,7 @@ const PublicHomeView: React.FC = () => {
             fontWeight: 'bold'
           }}
         >
-          Login/Register
+          {user ? 'Go to My Vostcard' : 'Login/Register'}
         </button>
         
         {/* What is Vostcard Button */}

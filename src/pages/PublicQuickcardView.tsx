@@ -508,23 +508,13 @@ const PublicQuickcardView: React.FC = () => {
                 state: 'posted'
               };
 
-              if (user) {
-                // Authenticated user - go to HomeView with full map features
-                console.log('📍 Opening quickcard location on authenticated map (HomeView):', { lat, lng, title: quickcard?.title, user: user.email });
-                navigate('/home', {
-                  state: {
-                    singleVostcard: quickcardData
-                  }
-                });
-              } else {
-                // Non-authenticated user - go to public map view  
-                console.log('📍 Opening quickcard location on public map:', { lat, lng, title: quickcard?.title });
-                navigate('/public-map', {
-                  state: {
-                    singleVostcard: quickcardData
-                  }
-                });
-              }
+              // Navigate all users to public map view regardless of authentication status
+              console.log('📍 Opening quickcard location on public map for all users:', { lat, lng, title: quickcard?.title });
+              navigate('/public-map', {
+                state: {
+                  singleVostcard: quickcardData
+                }
+              });
             } else {
               alert('No location data available for this quickcard');
             }

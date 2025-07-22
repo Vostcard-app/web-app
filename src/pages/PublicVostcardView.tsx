@@ -633,24 +633,9 @@ ${privateUrl}`);
               border: '1px solid #e0e0e0'
             }}
             onClick={() => {
-              if (user && vostcard.latitude && vostcard.longitude) {
-                // Authenticated user - show on their personal map centered on shared content
-                console.log('📍 Authenticated user viewing shared vostcard on personal map');
-                navigate('/home', {
-                  state: {
-                    centerLocation: [vostcard.latitude, vostcard.longitude],
-                    highlightVostcard: vostcard.id,
-                    showSharedContext: true,
-                    sharedContent: {
-                      id: vostcard.id,
-                      title: vostcard.title,
-                      type: 'vostcard'
-                    }
-                  }
-                });
-              } else {
-                // Anonymous user or no location - use public map
-                console.log('📍 Anonymous user viewing shared vostcard on public map');
+              // Navigate all users to public map view regardless of authentication status
+              if (vostcard.latitude && vostcard.longitude) {
+                console.log('📍 Opening vostcard location on public map for all users');
                 navigate('/public-map', {
                   state: {
                     singleVostcard: {
@@ -662,7 +647,8 @@ ${privateUrl}`);
                       videoURL: vostcard.videoURL,
                       photoURLs: vostcard.photoURLs,
                       username: vostcard.username,
-                      isOffer: vostcard.isOffer,
+                      isOffer: vostcard.isOffer || false,
+                      isQuickcard: vostcard.isQuickcard || false,
                       offerDetails: vostcard.offerDetails,
                       categories: vostcard.categories,
                       createdAt: vostcard.createdAt,
@@ -671,6 +657,8 @@ ${privateUrl}`);
                     }
                   }
                 });
+              } else {
+                alert('No location data available for this vostcard');
               }
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
