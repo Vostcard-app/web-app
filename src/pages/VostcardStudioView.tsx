@@ -58,7 +58,8 @@ const VostcardStudioView: React.FC = () => {
   const [quickcardAudio, setQuickcardAudio] = useState<Blob | null>(null);
   const [quickcardAudioSource, setQuickcardAudioSource] = useState<'recording' | 'file' | null>(null);
   const [quickcardAudioFileName, setQuickcardAudioFileName] = useState<string | null>(null);
-  const [quickcardCategory, setQuickcardCategory] = useState('None');
+  const [quickcardCategories, setQuickcardCategories] = useState<string[]>([]);
+  const [showQuickcardCategoryModal, setShowQuickcardCategoryModal] = useState(false);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -379,7 +380,7 @@ const VostcardStudioView: React.FC = () => {
             
             // Restore basic state
             setQuickcardTitle(state.title || '');
-            setQuickcardCategory(state.category || 'None');
+            setQuickcardCategories(state.categories || []);
             setQuickcardAudioSource(state.audioSource || null);
             setQuickcardAudioFileName(state.audioFileName || null);
             
@@ -457,7 +458,7 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardAudio(null);
     setQuickcardAudioSource(null);
     setQuickcardAudioFileName(null);
-    setQuickcardCategory('None');
+    setQuickcardCategories([]);
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -478,6 +479,14 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
+  const handleQuickcardCategoryToggle = (category: string) => {
+    if (quickcardCategories.includes(category)) {
+      setQuickcardCategories(prev => prev.filter(c => c !== category));
+    } else {
+      setQuickcardCategories(prev => [...prev, category]);
+    }
+  };
+
   const handleQuickcardPinPlacer = () => {
     // ✅ NEW: Store photo and audio as base64 in sessionStorage
     const storePhotoAsBase64 = async (file: File): Promise<string> => {
@@ -491,7 +500,7 @@ const VostcardStudioView: React.FC = () => {
     const prepareStateForStorage = async () => {
       const state: any = {
         title: quickcardTitle,
-        category: quickcardCategory,
+        categories: quickcardCategories,
         audioSource: quickcardAudioSource,
         audioFileName: quickcardAudioFileName
       };
@@ -512,7 +521,7 @@ const VostcardStudioView: React.FC = () => {
         try {
           state.audioBase64 = await storePhotoAsBase64(quickcardAudio);
           state.audioType = quickcardAudio.type;
-          console.log('�� Audio converted to base64 for storage');
+          console.log('🎵 Audio converted to base64 for storage');
         } catch (error) {
           console.error('❌ Failed to convert audio to base64:', error);
         }
@@ -569,7 +578,7 @@ const VostcardStudioView: React.FC = () => {
         description: '', // Can be added later in advanced editor
         photos: [quickcardPhoto],
         audio: quickcardAudio,
-        categories: [quickcardCategory],
+        categories: quickcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
@@ -604,6 +613,15 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handlePostQuickcardToMap = async () => {
+    console.log('🚀 QUICKCARD POST DEBUG: Starting post process...');
+    console.log('📋 Current form state:', {
+      title: quickcardTitle.trim(),
+      categories: quickcardCategories,
+      hasPhoto: !!quickcardPhoto,
+      hasLocation: !!quickcardLocation,
+      userRole: userRole
+    });
+
     if (!quickcardTitle.trim()) {
       alert('Please enter a title for your quickcard.');
       return;
@@ -619,21 +637,27 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
+    if (quickcardCategories.length === 0) {
+      alert('Please select at least one category for your quickcard.');
+      return;
+    }
+
     try {
       setIsLoading(true);
+      console.log('🚀 QUICKCARD POST DEBUG: Creating quickcard object...');
       
       // Create quickcard ready for posting
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
         title: quickcardTitle.trim(),
-        description: quickcardCategory, // Use category as description for now
+        description: quickcardCategories.join(', ') || 'Quickcard', // ✅ Use categories array
         photos: [quickcardPhoto],
         audio: quickcardAudio,
-        categories: [quickcardCategory],
+        categories: quickcardCategories, // ✅ Use categories array
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
-        userRole: userRole || 'user',
+        userRole: userRole || 'user', // This determines pin type!
         state: 'private', // Start as private, postQuickcard will change to posted
         video: null,
         isQuickcard: true,
@@ -644,12 +668,26 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
+      console.log('🚀 QUICKCARD POST DEBUG: Quickcard object created:', {
+        id: quickcard.id,
+        title: quickcard.title,
+        categories: quickcard.categories,
+        userRole: quickcard.userRole,
+        isQuickcard: quickcard.isQuickcard,
+        hasLocation: !!quickcard.geo
+      });
+
       // Set as current vostcard and post immediately
+      console.log('🚀 QUICKCARD POST DEBUG: Setting current vostcard...');
       setCurrentVostcard(quickcard);
+      
+      console.log('🚀 QUICKCARD POST DEBUG: Calling postQuickcard...');
       await postQuickcard();
       
+      console.log('✅ QUICKCARD POST DEBUG: Post completed successfully!');
+      
       alert('🎉 Quickcard posted to map successfully!');
-      alert('Your Quickcard will appear on the map in a minute or two.');
+      alert(`Your ${userRole === 'guide' ? 'Guide' : 'Quickcard'} will appear on the map in a minute or two.`);
       
       // Clear form
       resetQuickcardForm();
@@ -657,7 +695,7 @@ const VostcardStudioView: React.FC = () => {
       console.log('✅ Quickcard posted to map successfully');
       
     } catch (error) {
-      console.error('❌ Error posting quickcard:', error);
+      console.error('❌ QUICKCARD POST DEBUG: Error posting quickcard:', error);
       alert('Failed to post quickcard. Please try again.');
     } finally {
       setIsLoading(false);
@@ -670,10 +708,10 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardPhoto(null);
     setQuickcardPhotoPreview(null);
     setQuickcardAudio(null);
-    setQuickcardAudioSource('');
-    setQuickcardAudioFileName('');
+    setQuickcardAudioSource(null);
+    setQuickcardAudioFileName(null);
     setQuickcardLocation(null);
-    setQuickcardCategory('Landmark');
+    setQuickcardCategories([]);
   };
 
   return (
@@ -1045,399 +1083,60 @@ const VostcardStudioView: React.FC = () => {
               </div>
             )}
 
-            {/* Category Selection */}
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ 
-                display: 'block',
-                marginBottom: '5px',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                color: '#333'
-              }}>
-                Category
-              </label>
-              <select
-                value={quickcardCategory}
-                onChange={(e) => setQuickcardCategory(e.target.value)}
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '18px',
-                  backgroundColor: 'white',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                {availableCategories.map(category => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Two Action Buttons */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-              {/* Save as Draft Button */}
-              <button 
-                onClick={handleSaveQuickcardAsDraft}
-                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto}
-                style={{
-                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? '#ccc' : '#666',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? 'not-allowed' : 'pointer',
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaSave size={12} />
-                Save Draft
-              </button>
-
-              {/* Post to Map Button */}
-              <button 
-                onClick={handlePostQuickcardToMap}
-                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto}
-                style={{
-                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? '#ccc' : '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? 'not-allowed' : 'pointer',
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaGlobe size={12} />
-                Post to Map
-              </button>
-            </div>
-
-            {/* Clear Photo Button */}
-            {quickcardPhoto && (
-              <button
-                onClick={() => {
-                  setQuickcardPhoto(null);
-                  setQuickcardPhotoPreview(null);
-                }}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: '#ff9800',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  width: '100%',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                Clear Photo
-              </button>
-            )}
-
-            {/* Hidden File Inputs */}
-            <input
-              id="quickcard-photo-input"
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              style={{ display: 'none' }}
-            />
-            <input
-              id="quickcard-audio-input"
-              type="file"
-              accept="audio/*"
-              onChange={handleQuickcardAudioUpload}
-              style={{ display: 'none' }}
-            />
-          </div>
-        )}
-
-        {/* Drivecard Section */}
-        {activeSection === 'drivecard' && canAccessDrivecard && (
-          <div style={{
-            borderRadius: '8px',
-            padding: '15px',
-            width: '100%',
-            maxWidth: '350px',
-            backgroundColor: '#f9f9f9',
-            border: '1px solid #ddd'
-          }}>
-            <h3 style={{ marginTop: 0 }}>
-              🚗 {editingDrivecard ? 'Edit Drivecard' : 'Drive Mode Creator'}
-            </h3>
-            
-            {!editingDrivecard && (
-              <div style={{
-                backgroundColor: '#fff3cd',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #ffc107',
-                fontSize: '12px',
-                color: '#856404',
-                textAlign: 'center',
-                marginBottom: '20px'
-              }}>
-                👑 {userRole === 'admin' ? 'Admin' : 'Guide'} Access • Create location-based audio content for Drive Mode
-              </div>
-            )}
-
-            {/* Title Input */}
+            {/* Categories Section */}
             <div style={{ marginBottom: '15px' }}>
               <label style={{
                 display: 'block',
-                fontSize: '14px',
                 fontWeight: 'bold',
-                color: '#333',
-                marginBottom: '8px'
-              }}>
-                Title
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={isLoading}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  border: '2px solid #333',
-                  borderRadius: '4px',
-                  fontSize: '16px',
-                  backgroundColor: 'white',
-                  boxSizing: 'border-box',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              />
-            </div>
-
-            {/* Audio Status */}
-            <div style={{
-              backgroundColor: isRecording ? '#ffeb3b' : audioBlob ? '#4caf50' : '#f5f5f5',
-              padding: '12px',
-              borderRadius: '6px',
-              marginBottom: '10px',
-              textAlign: 'center',
-              border: '1px solid #ddd'
-            }}>
-              {isRecording ? (
-                <div>
-                  <div style={{ color: '#d32f2f', fontWeight: 'bold' }}>
-                    🔴 Recording... {formatTime(recordingTime)}
-                  </div>
-                </div>
-              ) : audioBlob ? (
-                <div>
-                  <div style={{ color: '#2e7d32', fontWeight: 'bold' }}>
-                    ✅ {editingDrivecard ? 'New Audio Ready' : 'Audio Ready'}
-                  </div>
-                  <div style={{ fontSize: '14px' }}>
-                    {audioSource === 'recording' ? `Duration: ${formatTime(recordingTime)}` : `File: ${audioFileName}`}
-                  </div>
-                </div>
-              ) : (
-                <div style={{ color: '#666' }}>
-                  {editingDrivecard 
-                    ? 'Record new audio or keep existing (optional)' 
-                    : 'Record audio or select audio file'
-                  }
-                </div>
-              )}
-            </div>
-
-            {/* Recording Error */}
-            {recordingError && (
-              <div style={{
-                backgroundColor: '#ffebee',
-                color: '#d32f2f',
-                padding: '8px',
-                borderRadius: '4px',
                 fontSize: '14px',
-                marginBottom: '10px',
-                border: '1px solid #ffcdd2'
-              }}>
-                {recordingError}
-              </div>
-            )}
-
-            {/* Button Grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '10px',
-              marginBottom: '15px'
-            }}>
-              <button 
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={!!recordingError || isLoading}
-                style={{
-                  backgroundColor: isRecording ? '#f44336' : '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: (recordingError || isLoading) ? 'not-allowed' : 'pointer',
-                  opacity: (recordingError || isLoading) ? 0.6 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                {isRecording ? <FaStop size={14} /> : <FaMicrophone size={14} />}
-                {isRecording ? 'Stop' : 'Record'}
-              </button>
-              
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isRecording || isLoading}
-                style={{
-                  backgroundColor: (isRecording || isLoading) ? '#ccc' : '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: (isRecording || isLoading) ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaUpload size={14} />
-                Add audio
-              </button>
-              
-              <button 
-                onClick={handlePinPlacer}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: isLoading ? '#ccc' : '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaMapMarkerAlt size={14} />
-                Pin Placer
-              </button>
-
-              <button
-                onClick={() => navigate('/drivecards')}
-                style={{
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaList size={14} />
-                Library
-              </button>
-            </div>
-            
-            {/* Location Display */}
-            {selectedLocation && (
-              <div style={{ marginBottom: '15px' }}>
-                <div style={{
-                  backgroundColor: '#e8f5e8',
-                  padding: '8px 12px',
-                  borderRadius: '4px',
-                  border: '1px solid #4caf50',
-                  fontSize: '14px',
-                  color: '#2e7d32'
-                }}>
-                  📍 {selectedLocation.address || `${selectedLocation.latitude.toFixed(4)}, ${selectedLocation.longitude.toFixed(4)}`}
-                  <button
-                    onClick={() => setSelectedLocation(null)}
-                    disabled={isLoading}
-                    style={{
-                      marginLeft: '8px',
-                      background: 'none',
-                      border: 'none',
-                      color: '#d32f2f',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      fontSize: '12px',
-                      opacity: isLoading ? 0.6 : 1
-                    }}
-                  >
-                    ✕ Remove
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Category Selection */}
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ 
-                display: 'block',
-                marginBottom: '5px',
-                fontSize: '12px',
-                fontWeight: 'bold',
+                marginBottom: '6px',
                 color: '#333'
               }}>
-                Category
+                Categories {quickcardCategories.length > 0 && <span style={{color: 'green'}}>✅</span>}
               </label>
-              <select
-                value={drivecardCategory}
-                onChange={(e) => setDrivecardCategory(e.target.value)}
-                disabled={isLoading || isRecording}
+              
+              <div
+                onClick={() => setShowQuickcardCategoryModal(true)}
+                disabled={isLoading}
                 style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #ddd',
+                  backgroundColor: '#f5f5f5',
+                  padding: '10px 12px',
                   borderRadius: '4px',
-                  fontSize: '18px',
-                  backgroundColor: 'white',
-                  cursor: (isLoading || isRecording) ? 'not-allowed' : 'pointer',
-                  opacity: (isLoading || isRecording) ? 0.6 : 1
+                  border: '1px solid #ddd',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  color: quickcardCategories.length > 0 ? '#333' : '#999',
+                  opacity: isLoading ? 0.6 : 1
                 }}
               >
-                {availableCategories.map(category => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+                {quickcardCategories.length > 0 ? 
+                  `${quickcardCategories.length} categor${quickcardCategories.length === 1 ? 'y' : 'ies'} selected` : 
+                  'Select Categories (Required)'
+                }
+              </div>
+
+              {/* Display Selected Categories */}
+              {quickcardCategories.length > 0 && (
+                <div style={{ marginTop: '8px' }}>
+                  {quickcardCategories.map((category, index) => (
+                    <span
+                      key={category}
+                      style={{
+                        display: 'inline-block',
+                        backgroundColor: '#e3f2fd',
+                        color: '#1976d2',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        marginRight: '6px',
+                        marginBottom: '4px'
+                      }}
+                    >
+                      {category}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Save/Update Button */}
@@ -1485,6 +1184,78 @@ const VostcardStudioView: React.FC = () => {
                 {editingDrivecard ? 'Clear New Audio' : 'Clear Audio'}
               </button>
             )}
+          </div>
+        )}
+
+        {/* Category Selection Modal */}
+        {showQuickcardCategoryModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 998
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '12px',
+              width: '80%',
+              maxWidth: '400px',
+              maxHeight: '60vh',
+              overflow: 'auto',
+              position: 'relative',
+              zIndex: 999
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: 'bold' }}>
+                Select Categories
+              </h3>
+              
+              {availableCategories.filter(cat => cat !== 'None').map((category) => (
+                <div
+                  key={category}
+                  onClick={() => handleQuickcardCategoryToggle(category)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '8px 0',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #f0f0f0'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={quickcardCategories.includes(category)}
+                    readOnly
+                    style={{ marginRight: '8px' }}
+                  />
+                  <span style={{ fontSize: '14px' }}>{category}</span>
+                </div>
+              ))}
+              
+              <button
+                onClick={() => setShowQuickcardCategoryModal(false)}
+                style={{
+                  marginTop: '15px',
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  width: '100%'
+                }}
+              >
+                Done
+              </button>
+            </div>
           </div>
         )}
       </div>
