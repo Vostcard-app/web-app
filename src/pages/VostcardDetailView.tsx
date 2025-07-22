@@ -9,6 +9,7 @@ import CommentsModal from '../components/CommentsModal';
 import { VostboxService } from '../services/vostboxService';
 import { type Friend } from '../types/FriendModels';
 import FriendPickerModal from '../components/FriendPickerModal';
+import SharedOptionsModal from '../components/SharedOptionsModal';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +36,7 @@ const VostcardDetailView: React.FC = () => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [userRating, setUserRating] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [showFriendPicker, setShowFriendPicker] = useState(false);
+  const [showSharedOptions, setShowSharedOptions] = useState(false);
   
   // Audio state
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -188,44 +189,8 @@ const VostcardDetailView: React.FC = () => {
 
 
 
-  const handleShareClick = async () => {
-    try {
-      if (vostcard?.id) {
-        const vostcardRef = doc(db, 'vostcards', vostcard.id);
-        await updateDoc(vostcardRef, {
-          isPrivatelyShared: true,
-          sharedAt: new Date()
-        });
-      }
-      
-      const privateUrl = `${window.location.origin}/share/${id}`;
-      
-      const shareText = `Check it out I made this with Vōstcard
-
-
-"${vostcard?.title || 'Untitled Vostcard'}"
-
-
-"${vostcard?.description || 'No description'}"
-
-
-${privateUrl}`;
-      
-      if (navigator.share) {
-        navigator.share({
-          text: shareText
-        }).catch(console.error);
-      } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
-        }).catch(() => {
-          alert(`Share this message: ${shareText}`);
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing Vostcard:', error);
-      alert('Failed to share Vostcard. Please try again.');
-    }
+  const handleShareClick = () => {
+    setShowSharedOptions(true);
   };
 
   const handleMapClick = () => {
@@ -353,27 +318,7 @@ ${privateUrl}`;
     alert('Flag functionality not implemented yet');
   };
 
-  const handleSendToFriend = async (friendUID: string, message?: string) => {
-    if (!user?.uid || !id) return;
-    
-    try {
-      const result = await VostboxService.sendVostcardToFriend({
-        senderUID: user.uid,
-        receiverUID: friendUID,
-        vostcardID: id,
-        message
-      });
-      
-      if (result.success) {
-        alert('Vostcard sent to friend!');
-      } else {
-        alert(result.error || 'Failed to send vostcard');
-      }
-    } catch (error) {
-      console.error('Error sending vostcard:', error);
-      alert('Failed to send vostcard');
-    }
-  };
+
 
   // Navigation functions
   const handlePreviousVostcard = () => {
@@ -1180,13 +1125,16 @@ ${privateUrl}`;
         </div>
       )}
 
-      {/* Send to Friend Modal */}
-      <FriendPickerModal
-        isOpen={showFriendPicker}
-        onClose={() => setShowFriendPicker(false)}
-        onSendToFriend={handleSendToFriend}
-        title="Send Vostcard to Friend"
-        itemType="vostcard"
+      {/* Share Options Modal */}
+      <SharedOptionsModal
+        isOpen={showSharedOptions}
+        onClose={() => setShowSharedOptions(false)}
+        item={{
+          id: id || '',
+          title: vostcard?.title,
+          description: vostcard?.description,
+          isQuickcard: vostcard?.isQuickcard
+        }}
       />
     </div>
   );

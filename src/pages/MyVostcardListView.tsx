@@ -10,6 +10,7 @@ import { db } from '../firebase/firebaseConfig';
 import { getVostcardStatus, isReadyToPost, generateShareText, createErrorMessage } from '../utils/vostcardUtils';
 import { LoadingSpinner, ErrorMessage } from '../components/shared';
 import type { Vostcard } from '../types/VostcardTypes';
+import SharedOptionsModal from '../components/SharedOptionsModal';
 
 const MyVostcardListView = () => {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ const MyVostcardListView = () => {
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const [postingIds, setPostingIds] = useState<Set<string>>(new Set());
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
+  const [showSharedOptions, setShowSharedOptions] = useState(false);
+  const [selectedVostcard, setSelectedVostcard] = useState<Vostcard | null>(null);
 
   console.log('🔄 MyVostcardListView rendered', {
     authLoading,
@@ -95,41 +98,12 @@ const MyVostcardListView = () => {
     navigate(`/vostcard/${vostcardId}`);
   };
 
-  const handleShare = async (e: React.MouseEvent, vostcard: Vostcard) => {
+  const handleShare = (e: React.MouseEvent, vostcard: Vostcard) => {
     e.preventDefault();
     e.stopPropagation();
     
-    try {
-      // Update the Vostcard to mark it as privately shared
-      if (vostcard?.id) {
-        const vostcardRef = doc(db, 'vostcards', vostcard.id);
-        await updateDoc(vostcardRef, {
-          isPrivatelyShared: true,
-          sharedAt: new Date()
-        });
-      }
-      
-      // ✅ NEW: Use utility function for consistent share text
-      const isQuickcard = vostcard.isQuickcard === true;
-      const privateUrl = isQuickcard 
-        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
-        : `${window.location.origin}/share/${vostcard.id}`;
-      
-      const shareText = generateShareText(vostcard, privateUrl);
-      
-      if (navigator.share) {
-        navigator.share({ text: shareText }).catch(console.error);
-      } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
-        }).catch(() => {
-          alert(`Share this message: ${shareText}`);
-        });
-      }
-    } catch (error) {
-      console.error(`Error sharing ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}:`, error);
-      alert(`Failed to share ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}. Please try again.`);
-    }
+    setSelectedVostcard(vostcard);
+    setShowSharedOptions(true);
   };
 
   const handleDelete = async (e: React.MouseEvent, vostcardId: string) => {
@@ -669,6 +643,23 @@ const MyVostcardListView = () => {
         )}
         </div>
       </div>
+
+      {/* Share Options Modal */}
+      {selectedVostcard && (
+        <SharedOptionsModal
+          isOpen={showSharedOptions}
+          onClose={() => {
+            setShowSharedOptions(false);
+            setSelectedVostcard(null);
+          }}
+          item={{
+            id: selectedVostcard.id,
+            title: selectedVostcard.title,
+            description: selectedVostcard.description,
+            isQuickcard: selectedVostcard.isQuickcard
+          }}
+        />
+      )}
     </div>
   );
 };

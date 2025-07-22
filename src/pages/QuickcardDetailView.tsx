@@ -12,6 +12,7 @@ import QuickcardPin from '../assets/quickcard_pin.png';
 import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import FriendPickerModal from '../components/FriendPickerModal';
+import SharedOptionsModal from '../components/SharedOptionsModal';
 
 // Custom quickcard icon for the map
 const quickcardIcon = new L.Icon({
@@ -36,7 +37,7 @@ const QuickcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
-  const [showFriendPicker, setShowFriendPicker] = useState(false);
+  const [showSharedOptions, setShowSharedOptions] = useState(false);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -120,44 +121,8 @@ const QuickcardDetailView: React.FC = () => {
     }
   }, [quickcard?.userID]);
 
-  const handleShareClick = async () => {
-    try {
-      if (quickcard?.id) {
-        const quickcardRef = doc(db, 'vostcards', quickcard.id);
-        await updateDoc(quickcardRef, {
-          isPrivatelyShared: true,
-          sharedAt: new Date()
-        });
-      }
-      
-      const privateUrl = `${window.location.origin}/share-quickcard/${id}`;
-      
-      const shareText = `Check it out I made this with Vōstcard
-
-
-"${quickcard?.title || 'Untitled Quickcard'}"
-
-
-"${quickcard?.description || 'No description'}"
-
-
-${privateUrl}`;
-      
-      if (navigator.share) {
-        navigator.share({
-          text: shareText
-        }).catch(console.error);
-      } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
-        }).catch(() => {
-          alert(`Share this message: ${shareText}`);
-        });
-      }
-    } catch (error) {
-      console.error('Error sharing Quickcard:', error);
-      alert('Failed to share Quickcard. Please try again.');
-    }
+  const handleShareClick = () => {
+    setShowSharedOptions(true);
   };
 
   const handleLikeClick = () => {
@@ -174,27 +139,7 @@ ${privateUrl}`;
     alert('Flag functionality not implemented yet');
   };
 
-  const handleSendToFriend = async (friendUID: string, message?: string) => {
-    if (!user?.uid || !id) return;
-    
-    try {
-      const result = await VostboxService.sendQuickcardToFriend({
-        senderUID: user.uid,
-        receiverUID: friendUID,
-        quickcardID: id,
-        message
-      });
-      
-      if (result.success) {
-        alert('Quickcard sent to friend!');
-      } else {
-        alert(result.error || 'Failed to send quickcard');
-      }
-    } catch (error) {
-      console.error('Error sending quickcard:', error);
-      alert('Failed to send quickcard');
-    }
-  };
+
 
   if (loading) {
     return (
@@ -738,13 +683,16 @@ ${privateUrl}`;
         </div>
       )}
 
-      {/* Friend Picker Modal */}
-      <FriendPickerModal
-        isOpen={showFriendPicker}
-        onClose={() => setShowFriendPicker(false)}
-        onSendToFriend={handleSendToFriend}
-        title="Send Quickcard to Friend"
-        itemType="quickcard"
+      {/* Share Options Modal */}
+      <SharedOptionsModal
+        isOpen={showSharedOptions}
+        onClose={() => setShowSharedOptions(false)}
+        item={{
+          id: id || '',
+          title: quickcard?.title,
+          description: quickcard?.description,
+          isQuickcard: true
+        }}
       />
     </div>
   );
