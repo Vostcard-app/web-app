@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaUser, FaSearch, FaPaperPlane } from 'react-icons/fa';
+import { FaTimes, FaUser, FaSearch, FaPaperPlane, FaUserPlus, FaEnvelope, FaSms, FaWhatsapp, FaAddressBook } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { FriendService } from '../services/friendService';
+import { InvitationService } from '../services/invitationService';
 import { type Friend } from '../types/FriendModels';
 
 interface FriendPickerModalProps {
@@ -27,6 +28,13 @@ const FriendPickerModal: React.FC<FriendPickerModalProps> = ({
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  
+  // Invitation state
+  const [showInviteSection, setShowInviteSection] = useState(false);
+  const [inviteMethod, setInviteMethod] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [inviteRecipient, setInviteRecipient] = useState('');
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
 
   useEffect(() => {
     if (isOpen && user?.uid) {
@@ -78,11 +86,68 @@ const FriendPickerModal: React.FC<FriendPickerModalProps> = ({
     }
   };
 
+  const handleSendInvitation = async () => {
+    if (!user?.uid || !inviteRecipient.trim()) return;
+    
+    try {
+      setSendingInvite(true);
+      const result = await InvitationService.sendInvitation({
+        senderUID: user.uid,
+        inviteMethod,
+        recipient: inviteRecipient.trim(),
+        message: inviteMessage.trim() || `Hey! I'm using Vōstcard to share ${itemType}s privately with friends. Join me!`
+      });
+
+      if (result.success) {
+        alert('Invitation sent successfully! 🎉');
+        setInviteRecipient('');
+        setInviteMessage('');
+        setShowInviteSection(false);
+      } else {
+        alert(result.error || 'Failed to send invitation');
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      alert('Failed to send invitation');
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
+  const handleContactsPicker = async () => {
+    try {
+      // Check if Contact Picker API is supported
+      if ('contacts' in navigator && 'select' in (navigator as any).contacts) {
+        const contacts = await (navigator as any).contacts.select(['name', 'email', 'tel']);
+        if (contacts && contacts.length > 0) {
+          const contact = contacts[0];
+          // Use email if available, otherwise phone
+          if (contact.email && contact.email.length > 0) {
+            setInviteRecipient(contact.email[0]);
+            setInviteMethod('email');
+          } else if (contact.tel && contact.tel.length > 0) {
+            setInviteRecipient(contact.tel[0]);
+            setInviteMethod('sms');
+          }
+        }
+      } else {
+        // Fallback for unsupported browsers
+        alert('Contact picker not supported on this device. Please enter contact details manually.');
+      }
+    } catch (error) {
+      console.error('Contact picker error:', error);
+      alert('Unable to access contacts. Please enter contact details manually.');
+    }
+  };
+
   const handleClose = () => {
     onClose();
     setSelectedFriend(null);
     setMessage('');
     setSearchQuery('');
+    setShowInviteSection(false);
+    setInviteRecipient('');
+    setInviteMessage('');
   };
 
   if (!isOpen) return null;
@@ -106,7 +171,7 @@ const FriendPickerModal: React.FC<FriendPickerModalProps> = ({
         borderRadius: '12px',
         width: '100%',
         maxWidth: '400px',
-        maxHeight: '80vh',
+        maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden'
@@ -132,6 +197,165 @@ const FriendPickerModal: React.FC<FriendPickerModalProps> = ({
           >
             <FaTimes size={20} />
           </button>
+        </div>
+
+        {/* Invite Friends Section */}
+        <div style={{ borderBottom: '1px solid #eee' }}>
+          <button
+            onClick={() => setShowInviteSection(!showInviteSection)}
+            style={{
+              width: '100%',
+              padding: '16px 20px',
+              border: 'none',
+              backgroundColor: showInviteSection ? '#f0f8ff' : 'transparent',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#007aff'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FaUserPlus size={16} />
+              Invite Friends to Vōstcard
+            </div>
+            <span style={{ transform: showInviteSection ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              ▼
+            </span>
+          </button>
+          
+          {showInviteSection && (
+            <div style={{ padding: '16px 20px', backgroundColor: '#fafbfc', borderTop: '1px solid #eee' }}>
+              <div style={{ marginBottom: '12px', fontSize: '13px', color: '#666' }}>
+                Send a request to join Vōstcard so they can see your shares privately
+              </div>
+              
+              {/* Contact Picker Button */}
+              <button
+                onClick={handleContactsPicker}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  marginBottom: '12px',
+                  border: '2px dashed #007aff',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  color: '#007aff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                <FaAddressBook size={16} />
+                Choose from Contacts
+              </button>
+              
+              {/* Method Selection */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                {[
+                  { method: 'email' as const, icon: FaEnvelope, label: 'Email' },
+                  { method: 'sms' as const, icon: FaSms, label: 'SMS' },
+                  { method: 'whatsapp' as const, icon: FaWhatsapp, label: 'WhatsApp' }
+                ].map(({ method, icon: Icon, label }) => (
+                  <button
+                    key={method}
+                    onClick={() => setInviteMethod(method)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      border: `2px solid ${inviteMethod === method ? '#007aff' : '#ddd'}`,
+                      borderRadius: '6px',
+                      backgroundColor: inviteMethod === method ? '#f0f8ff' : 'white',
+                      color: inviteMethod === method ? '#007aff' : '#666',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <Icon size={12} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Recipient Input */}
+              <input
+                type={inviteMethod === 'email' ? 'email' : 'tel'}
+                placeholder={
+                  inviteMethod === 'email' ? 'friend@email.com' : 
+                  inviteMethod === 'sms' ? '+1234567890' : 
+                  'WhatsApp number'
+                }
+                value={inviteRecipient}
+                onChange={(e) => setInviteRecipient(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  marginBottom: '12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+              
+              {/* Optional Message */}
+              <textarea
+                placeholder="Add a personal message (optional)"
+                value={inviteMessage}
+                onChange={(e) => setInviteMessage(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '50px',
+                  padding: '8px',
+                  marginBottom: '12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  resize: 'none',
+                  outline: 'none'
+                }}
+              />
+              
+              {/* Send Invitation Button */}
+              <button
+                onClick={handleSendInvitation}
+                disabled={!inviteRecipient.trim() || sendingInvite}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: inviteRecipient.trim() && !sendingInvite ? '#28a745' : '#ccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: inviteRecipient.trim() && !sendingInvite ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                {sendingInvite ? '⏳ Sending...' : (
+                  <>
+                    <FaPaperPlane size={12} />
+                    Send Invitation
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Search */}
@@ -165,7 +389,7 @@ const FriendPickerModal: React.FC<FriendPickerModalProps> = ({
         <div style={{ 
           flex: 1, 
           overflow: 'auto',
-          maxHeight: '300px'
+          maxHeight: '250px'
         }}>
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
