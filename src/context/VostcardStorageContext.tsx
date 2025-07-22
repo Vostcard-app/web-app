@@ -235,6 +235,7 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
         categories: vostcard.categories,
         username: vostcard.username,
         userID: user.uid,
+        userRole: vostcard.userRole || 'user', // 🔧 FIX: Include userRole for Guide_pin logic
         videoURL,
         photoURLs,
         latitude: vostcard.geo?.latitude || null,
@@ -366,6 +367,7 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
             : null,
           username: data.username || '',
           userID: data.userID || '',
+          userRole: data.userRole || 'user', // 🔧 FIX: Include userRole when loading from Firebase
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           isOffer: data.isOffer || false,

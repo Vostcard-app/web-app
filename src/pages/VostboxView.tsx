@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaInbox, FaPaperPlane, FaEnvelope, FaEnvelopeOpen, FaTrash, FaReply, FaPlay, FaImage, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaInbox, FaPaperPlane, FaEnvelope, FaEnvelopeOpen, FaTrash, FaReply, FaPlay, FaImage, FaUser, FaHome } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import { UserFriendService } from '../services/userFriendService';
@@ -475,37 +475,57 @@ const VostboxView: React.FC = () => {
         padding: '16px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px'
+        justifyContent: 'space-between'
       }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              padding: '8px'
+            }}
+          >
+            <FaArrowLeft size={20} />
+          </button>
+          <h1 style={{ margin: 0, fontSize: '24px' }}>Vōstbox</h1>
+          {unreadCount > 0 && (
+            <div style={{
+              backgroundColor: '#ff4444',
+              color: 'white',
+              borderRadius: '50%',
+              width: '24px',
+              height: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '12px',
+              fontWeight: '600'
+            }}>
+              {unreadCount}
+            </div>
+          )}
+        </div>
+        
+        {/* Home Button */}
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/home')}
           style={{
-            backgroundColor: 'transparent',
+            backgroundColor: 'rgba(0,0,0,0.10)',
             border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            padding: '8px'
-          }}
-        >
-          <FaArrowLeft size={20} />
-        </button>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>Vōstbox</h1>
-        {unreadCount > 0 && (
-          <div style={{
-            backgroundColor: '#ff4444',
-            color: 'white',
             borderRadius: '50%',
-            width: '24px',
-            height: '24px',
+            width: 48,
+            height: 48,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '12px',
-            fontWeight: '600'
-          }}>
-            {unreadCount}
-          </div>
-        )}
+            cursor: 'pointer'
+          }}
+        >
+          <FaHome size={40} color="white" />
+        </button>
       </div>
 
       {/* Tab Navigation */}

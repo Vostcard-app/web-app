@@ -130,12 +130,14 @@ const HomeView = () => {
   useEffect(() => {
     const navigationState = location.state as any;
     if (navigationState?.freshLoad) {
-      console.log('🔄 Fresh load requested after posting vostcard');
+      console.log('🔄 Fresh load requested after posting quickcard');
       setVostcards([]);
       setLoadingVostcards(true);
       setMapError(null);
-      setRetryCount(0);
+      setRetryCount(prev => prev + 1); // This will trigger the retry useEffect which calls loadVostcards
       setHasInitialLoad(false);
+      
+      // Clear the navigation state immediately to prevent repeated calls
       window.history.replaceState({}, '', location.pathname);
     }
   }, [location.state, location.pathname]);

@@ -587,7 +587,7 @@ const VostcardStudioView: React.FC = () => {
             }} 
             onClick={() => navigate('/home')}
           >
-            <FaHome color="#fff" size={24} />
+            <FaHome color="#fff" size={40} />
           </button>
         </div>
       </div>

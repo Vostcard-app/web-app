@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
-import { FaArrowLeft, FaSpinner } from 'react-icons/fa';
+import { FaArrowLeft, FaSpinner, FaHome } from 'react-icons/fa';
 
 interface Offer {
   id: string;
@@ -192,32 +192,52 @@ const OffersListView: React.FC = () => {
         padding: '16px 20px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px'
+        justifyContent: 'space-between'
       }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <FaArrowLeft size={20} />
+          </button>
+          <h1 style={{
+            color: 'white',
+            margin: 0,
+            fontSize: '24px',
+            fontWeight: 600
+          }}>
+            Available Offers ({offers.length})
+          </h1>
+        </div>
+        
+        {/* Home Button */}
         <button
           onClick={() => navigate('/home')}
           style={{
-            background: 'none',
+            backgroundColor: 'rgba(0,0,0,0.10)',
             border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            padding: '8px',
             borderRadius: '50%',
+            width: 48,
+            height: 48,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            cursor: 'pointer'
           }}
         >
-          <FaArrowLeft size={20} />
+          <FaHome size={40} color="white" />
         </button>
-        <h1 style={{
-          color: 'white',
-          margin: 0,
-          fontSize: '24px',
-          fontWeight: 600
-        }}>
-          Available Offers ({offers.length})
-        </h1>
       </div>
 
       {/* Content */}

@@ -702,31 +702,32 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Save to Firebase Firestore
     const docRef = doc(db, 'vostcards', localVostcard.id);
-    await setDoc(docRef, {
-      id: localVostcard.id,
-      title: localVostcard.title || '',
-      description: localVostcard.description || '',
-      categories: localVostcard.categories || [],
-      username: localVostcard.username,
-      userID: user.uid,
-      videoURL: videoURL,
-      photoURLs: photoURLs,
-      latitude: localVostcard.geo?.latitude || null,
-      longitude: localVostcard.geo?.longitude || null,
-      avatarURL: user.photoURL || '',
-      createdAt: Timestamp.fromDate(new Date(localVostcard.createdAt)),
-      updatedAt: Timestamp.fromDate(new Date(localVostcard.updatedAt)),
-      state: 'private',
-      visibility: 'private',
-      hasVideo: !!localVostcard._videoBase64,
-      hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
-      mediaUploadStatus: 'complete',
-      isOffer: localVostcard.isOffer || false,
-      isQuickcard: localVostcard.isQuickcard || false,
-      offerDetails: localVostcard.offerDetails || null,
-      script: localVostcard.script || null,
-      scriptId: localVostcard.scriptId || null
-    });
+          await setDoc(docRef, {
+        id: localVostcard.id,
+        title: localVostcard.title || '',
+        description: localVostcard.description || '',
+        categories: localVostcard.categories || [],
+        username: localVostcard.username,
+        userID: user.uid,
+        userRole: authContext.userRole || 'user', // 🔧 FIX: Add userRole for consistency
+        videoURL: videoURL,
+        photoURLs: photoURLs,
+        latitude: localVostcard.geo?.latitude || null,
+        longitude: localVostcard.geo?.longitude || null,
+        avatarURL: user.photoURL || '',
+        createdAt: Timestamp.fromDate(new Date(localVostcard.createdAt)),
+        updatedAt: Timestamp.fromDate(new Date(localVostcard.updatedAt)),
+        state: 'private',
+        visibility: 'private',
+        hasVideo: !!localVostcard._videoBase64,
+        hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
+        mediaUploadStatus: 'complete',
+        isOffer: localVostcard.isOffer || false,
+        isQuickcard: localVostcard.isQuickcard || false,
+        offerDetails: localVostcard.offerDetails || null,
+        script: localVostcard.script || null,
+        scriptId: localVostcard.scriptId || null
+      });
   };
 
   // Helper function to download Firebase vostcard to local format
@@ -1194,6 +1195,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         categories: currentVostcard.categories || [],
         username: username,
         userID: userID,
+        userRole: authContext.userRole || 'user', // 🔧 FIX: Add userRole for Guide_pin logic
         videoURL: videoURL,
         photoURLs: photoURLs,
         latitude: currentVostcard.geo?.latitude || null,
@@ -1577,12 +1579,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         );
       }
 
-      // DEBUG: Log username before saving to Firestore
-      console.log('🔍 DEBUG: Final username before Firestore save:', {
+      // DEBUG: Log username and userRole before saving to Firestore
+      console.log('🔍 DEBUG: Final data before Firestore save:', {
         username: username,
         authContextUsername: authContext.username,
         userEmail: authContext.user?.email,
         userID: userID,
+        userRole: authContext.userRole,
         vostcardId: vostcardId
       });
 
@@ -1594,6 +1597,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         categories: vostcard.categories || [],
         username: username,
         userID: userID,
+        userRole: authContext.userRole || 'user', // 🔧 FIX: Add userRole for Guide_pin logic
         videoURL: videoURL,
         photoURLs: photoURLs,
         latitude: vostcard.geo.latitude,
@@ -2547,6 +2551,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       geo,
       username,
       userID: user?.uid || '',
+      userRole: authContext.userRole || 'user', // 🔧 FIX: Include userRole for Guide_pin logic
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isQuickcard: true, // Mark as quickcard
@@ -2555,7 +2560,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     
     setCurrentVostcard(newQuickcard);
-    console.log('✅ Quickcard created:', newQuickcard.id);
+    console.log('✅ Quickcard created with userRole:', newQuickcard.userRole);
   }, [authContext]);
 
   const saveQuickcard = useCallback(async () => {
@@ -2616,11 +2621,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         );
       }
 
-      console.log('🔍 DEBUG: Final quickcard username before Firestore save:', {
+      console.log('🔍 DEBUG: Final quickcard data before Firestore save:', {
         username: username,
         authContextUsername: authContext.username,
         userEmail: authContext.user?.email,
         userID: userID,
+        userRole: authContext.userRole,
         vostcardId: vostcardId,
         isQuickcard: true
       });
@@ -2633,6 +2639,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         categories: currentVostcard.categories || [],
         username: username,
         userID: userID,
+        userRole: authContext.userRole || 'user', // 🔧 FIX: Add userRole for Guide_pin logic
         videoURL: '', // Quickcards don't have videos
         photoURLs: photoURLs,
         latitude: currentVostcard.geo.latitude,
