@@ -681,6 +681,9 @@ const VostcardStudioView: React.FC = () => {
       console.log('🚀 QUICKCARD POST DEBUG: Setting current vostcard...');
       setCurrentVostcard(quickcard);
       
+      // Add a small delay to ensure state is set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       console.log('🚀 QUICKCARD POST DEBUG: Calling postQuickcard...');
       await postQuickcard();
       
@@ -688,6 +691,9 @@ const VostcardStudioView: React.FC = () => {
       
       // Show success message
       alert('🎉 Quickcard posted to map successfully!');
+      
+      // Clear form after successful post
+      resetQuickcardForm();
       
       // ✅ NEW: Navigate to home with refresh to show the new quickcard on map
       console.log('🏠 Navigating to home to display posted quickcard...');
@@ -703,7 +709,19 @@ const VostcardStudioView: React.FC = () => {
       
     } catch (error) {
       console.error('❌ QUICKCARD POST DEBUG: Error posting quickcard:', error);
-      alert('Failed to post quickcard. Please try again.');
+      
+      // Enhanced error reporting
+      if (error instanceof Error) {
+        console.error('❌ Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack
+        });
+        alert(`Failed to post quickcard: ${error.message}`);
+      } else {
+        console.error('❌ Unknown error:', error);
+        alert('Failed to post quickcard. Please check console for details.');
+      }
     } finally {
       setIsLoading(false);
     }

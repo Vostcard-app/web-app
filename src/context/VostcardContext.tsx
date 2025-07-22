@@ -2583,26 +2583,48 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const postQuickcard = useCallback(async () => {
     console.log('📱 Posting quickcard to map...');
-    if (!currentVostcard || !currentVostcard.isQuickcard) {
-      console.error('❌ No quickcard to post');
-      return;
+    
+    if (!currentVostcard) {
+      console.error('❌ No currentVostcard found');
+      throw new Error('No quickcard to post');
+    }
+    
+    if (!currentVostcard.isQuickcard) {
+      console.error('❌ Current vostcard is not a quickcard:', currentVostcard);
+      throw new Error('Current vostcard is not a quickcard');
     }
 
     const user = auth.currentUser;
     if (!user) {
-      alert('User not authenticated. Please log in first.');
-      return;
+      console.error('❌ No authenticated user');
+      throw new Error('User not authenticated. Please log in first.');
     }
 
+    console.log('📱 Current quickcard validation:', {
+      id: currentVostcard.id,
+      title: currentVostcard.title,
+      description: currentVostcard.description,
+      categories: currentVostcard.categories,
+      categoriesLength: currentVostcard.categories?.length || 0,
+      hasGeo: !!currentVostcard.geo,
+      geoDetails: currentVostcard.geo
+    });
+
     // Check if Quickcard has required data for posting
-    if (!currentVostcard.title || !currentVostcard.description || (currentVostcard.categories?.length || 0) === 0) {
-      alert('Please fill in title, description, and select at least one category before posting.');
-      return;
+    if (!currentVostcard.title || !currentVostcard.title.trim()) {
+      throw new Error('Title is required to post a quickcard');
+    }
+    
+    if (!currentVostcard.description || !currentVostcard.description.trim()) {
+      throw new Error('Description is required to post a quickcard');
+    }
+    
+    if (!currentVostcard.categories || currentVostcard.categories.length === 0) {
+      throw new Error('At least one category is required to post a quickcard');
     }
 
     if (!currentVostcard.geo) {
-      alert('Location is required to post a Quickcard to the map. Please try again.');
-      return;
+      throw new Error('Location is required to post a Quickcard to the map');
     }
 
     try {
@@ -2611,35 +2633,52 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const userID = user.uid;
       const username = getCorrectUsername(authContext, currentVostcard.username);
 
+      console.log('📥 Prepared Firebase data:', {
+        vostcardId,
+        userID,
+        username,
+        authContextUsername: authContext.username,
+        userRole: authContext.userRole
+      });
+
       // --- Upload photos to Firebase Storage (quickcards don't have videos) ---
       let photoURLs: string[] = [];
       if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+        console.log('📸 Uploading photos to Firebase Storage...');
         photoURLs = await Promise.all(
-          currentVostcard.photos.map((photo, idx) =>
-            photo instanceof Blob ? uploadPhoto(userID, vostcardId, idx, photo) : Promise.resolve('')
-          )
+          currentVostcard.photos.map(async (photo, idx) => {
+            if (photo instanceof Blob) {
+              const url = await uploadPhoto(userID, vostcardId, idx, photo);
+              console.log(`✅ Photo ${idx + 1} uploaded:`, url);
+              return url;
+            }
+            return '';
+          })
         );
       }
 
       console.log('🔍 DEBUG: Final quickcard data before Firestore save:', {
+        id: vostcardId,
+        title: currentVostcard.title,
+        description: currentVostcard.description,
+        categories: currentVostcard.categories,
         username: username,
-        authContextUsername: authContext.username,
-        userEmail: authContext.user?.email,
         userID: userID,
         userRole: authContext.userRole,
-        vostcardId: vostcardId,
-        isQuickcard: true
+        latitude: currentVostcard.geo.latitude,
+        longitude: currentVostcard.geo.longitude,
+        isQuickcard: true,
+        photoURLsCount: photoURLs.length
       });
 
-      const docRef = doc(db, 'vostcards', vostcardId);
-      await setDoc(docRef, {
+      const firebaseData = {
         id: vostcardId,
         title: currentVostcard.title || '',
         description: currentVostcard.description || '',
         categories: currentVostcard.categories || [],
         username: username,
         userID: userID,
-        userRole: authContext.userRole || 'user', // 🔧 FIX: Add userRole for Guide_pin logic
+        userRole: authContext.userRole || 'user',
         videoURL: '', // Quickcards don't have videos
         photoURLs: photoURLs,
         latitude: currentVostcard.geo.latitude,
@@ -2655,9 +2694,35 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isQuickcard: true, // Mark as quickcard
         offerDetails: null,
         visibility: 'public'
-      });
+      };
+
+      console.log('☁️ Saving to Firestore with data:', firebaseData);
+
+      const docRef = doc(db, 'vostcards', vostcardId);
+      await setDoc(docRef, firebaseData);
 
       console.log('✅ Quickcard posted successfully to Firebase!');
+
+      // Verify the save by reading it back
+      try {
+        const verifyDoc = await getDoc(docRef);
+        if (verifyDoc.exists()) {
+          const savedData = verifyDoc.data();
+          console.log('✅ Verification: Quickcard exists in Firebase:', {
+            id: savedData.id,
+            title: savedData.title,
+            state: savedData.state,
+            isQuickcard: savedData.isQuickcard,
+            visibility: savedData.visibility
+          });
+        } else {
+          console.error('❌ Verification failed: Quickcard not found after save');
+          throw new Error('Quickcard was not saved properly to Firebase');
+        }
+      } catch (verifyError) {
+        console.error('❌ Verification check failed:', verifyError);
+        // Don't throw here, the save might have worked
+      }
 
       // Update the IndexedDB entry to mark it as posted
       try {
@@ -2685,6 +2750,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Continue anyway - Firebase post was successful
       }
 
+      // Update last sync timestamp and refresh lists
+      setLastSyncTimestamp(new Date());
+      loadAllLocalVostcards(); // Refresh local list
+      loadPostedVostcards();   // Refresh posted list
+
       // Clear the current vostcard since it's now posted
       clearVostcard();
       
@@ -2692,7 +2762,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error posting quickcard:', error);
       throw error;
     }
-  }, [currentVostcard, authContext]);
+  }, [currentVostcard, authContext, loadAllLocalVostcards, loadPostedVostcards, clearVostcard, setLastSyncTimestamp]);
 
   return (
     <VostcardContext.Provider

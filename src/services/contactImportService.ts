@@ -12,6 +12,14 @@ export class ContactImportService {
   // Google Contacts API integration
   static async importFromGoogle(): Promise<ImportedContact[]> {
     try {
+      // Check if credentials are available
+      const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      
+      if (!apiKey || !clientId) {
+        throw new Error('Google API credentials not configured. Please set VITE_GOOGLE_API_KEY and VITE_GOOGLE_CLIENT_ID in your .env file.');
+      }
+      
       // Initialize Google API if not already done
       await this.initializeGoogleAPI();
       
@@ -37,7 +45,7 @@ export class ContactImportService {
       
     } catch (error) {
       console.error('Google contacts import failed:', error);
-      throw new Error('Failed to import Google contacts');
+      throw error;
     }
   }
   
@@ -55,7 +63,7 @@ export class ContactImportService {
           source: 'native' as const
         })).filter((contact: ImportedContact) => contact.email || contact.phone);
       } else {
-        throw new Error('Contact Picker not supported');
+        throw new Error('Contact Picker not supported in this browser');
       }
     } catch (error) {
       console.error('Native contact picker failed:', error);
@@ -65,7 +73,7 @@ export class ContactImportService {
   
   // Google API initialization
   private static async initializeGoogleAPI(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (window.gapi && gapi.client) {
         resolve();
         return;
@@ -73,14 +81,23 @@ export class ContactImportService {
       
       const script = document.createElement('script');
       script.src = 'https://apis.google.com/js/api.js';
+      script.onerror = () => reject(new Error('Failed to load Google API script'));
       script.onload = async () => {
-        gapi.load('client', async () => {
-          await gapi.client.init({
-            apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
-            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/people/v1/rest']
+        try {
+          gapi.load('client', async () => {
+            try {
+              await gapi.client.init({
+                apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/people/v1/rest']
+              });
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
           });
-          resolve();
-        });
+        } catch (error) {
+          reject(error);
+        }
       };
       document.head.appendChild(script);
     });
@@ -88,23 +105,35 @@ export class ContactImportService {
   
   private static async requestGoogleAuth(): Promise<string> {
     return new Promise((resolve, reject) => {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      
+      if (!clientId) {
+        reject(new Error('Google Client ID not configured'));
+        return;
+      }
+      
       // Load Google Identity Services
       const script = document.createElement('script');
       script.src = 'https://accounts.google.com/gsi/client';
+      script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
       script.onload = () => {
-        const tokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID!,
-          scope: 'https://www.googleapis.com/auth/contacts.readonly',
-          callback: (response: any) => {
-            if (response.error) {
-              reject(response.error);
-            } else {
-              resolve(response.access_token);
+        try {
+          const tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: 'https://www.googleapis.com/auth/contacts.readonly',
+            callback: (response: any) => {
+              if (response.error) {
+                reject(new Error(`Google auth failed: ${response.error}`));
+              } else {
+                resolve(response.access_token);
+              }
             }
-          }
-        });
-        
-        tokenClient.requestAccessToken({ prompt: 'consent' });
+          });
+          
+          tokenClient.requestAccessToken({ prompt: 'consent' });
+        } catch (error) {
+          reject(error);
+        }
       };
       document.head.appendChild(script);
     });
