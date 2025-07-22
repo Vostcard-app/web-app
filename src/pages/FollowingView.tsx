@@ -102,7 +102,7 @@ const FollowingView: React.FC = () => {
             cursor: 'pointer'
           }}
         >
-          <FaHome size={48} color="white" />
+          <FaHome size={40} color="white" />
         </button>
       </div>
 

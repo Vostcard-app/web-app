@@ -498,6 +498,11 @@ ${privateUrl}`);
         height: 30,
         display: 'flex',
         alignItems: 'center',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
       }}>
         <span 
           onClick={() => navigate('/home')}
@@ -510,7 +515,8 @@ ${privateUrl}`);
         width: '100%',
         paddingTop: '20%', // 20% height
         background: '#f8f9fa',
-        borderBottom: '1px solid #e0e0e0'
+        borderBottom: '1px solid #e0e0e0',
+        marginTop: '69px', // Account for fixed header height
       }}>
         <div style={{
           position: 'absolute',

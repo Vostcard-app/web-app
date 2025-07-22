@@ -161,23 +161,39 @@ const CreateVostcardStep1: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '0 16px',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
         }}
       >
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
           Vōstcard
         </div>
-        <FaHome
-          size={50}
-          color="white"
-          style={{ cursor: 'pointer' }}
+        <button
           onClick={() => navigate('/home')}
-        />
+          style={{
+            backgroundColor: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          <FaHome size={40} color="white" />
+        </button>
       </div>
 
       {/* 🎥 Thumbnail */}
       <div
         style={{
           flex: 1,
+          marginTop: '80px', // Account for fixed header
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',

@@ -209,7 +209,12 @@ const QuickcardListView = () => {
         padding: '20px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
       }}>
         <h1 style={{ margin: 0, fontSize: '24px' }}>My Quickcards ({quickcards.length})</h1>
         <button
@@ -226,12 +231,12 @@ const QuickcardListView = () => {
             cursor: 'pointer'
           }}
         >
-          <FaHome color="white" size={24} />
+          <FaHome color="white" size={40} />
         </button>
       </div>
 
       {/* Content */}
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '20px', marginTop: '88px' }}>
         {quickcards.length === 0 ? (
           <div style={{
             backgroundColor: 'white',

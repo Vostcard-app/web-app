@@ -180,7 +180,10 @@ const QuickcardStep3: React.FC = () => {
         padding: '0 16px',
         flexShrink: 0,
         touchAction: 'manipulation',
-        position: 'relative',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
         zIndex: 1000
       }}>
         <div 
@@ -207,7 +210,8 @@ const QuickcardStep3: React.FC = () => {
         flex: 1, 
         overflowY: 'auto',
         paddingBottom: 180, // Increased space for two buttons
-        touchAction: 'manipulation'
+        touchAction: 'manipulation',
+        marginTop: '80px', // Account for fixed header
       }}>
         <div>
           <label style={labelStyle}>

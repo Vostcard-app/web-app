@@ -217,12 +217,12 @@ const OfferView: React.FC = () => {
         
         {/* Home Icon - Positioned absolutely like MyVostcardListView */}
         <FaHome
-          size={48} // Changed from 24 to 48 to match
+          size={40}
           style={{
             cursor: 'pointer',
             position: 'absolute',
-            right: 29, // Match exact positioning
-            top: 15,   // Match exact positioning
+            right: 29,
+            top: 15,
             background: 'rgba(0,0,0,0.10)',
             border: 'none',
             borderRadius: '50%',

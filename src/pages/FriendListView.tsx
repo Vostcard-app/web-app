@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaUserFriends, FaUserPlus, FaSearch, FaUsers, FaEnvelope, FaCheck, FaTimes, FaEllipsisV, FaSms, FaWhatsapp, FaPaperPlane, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaUserFriends, FaUserPlus, FaSearch, FaUsers, FaEnvelope, FaCheck, FaTimes, FaEllipsisV, FaSms, FaWhatsapp, FaPaperPlane, FaUser, FaHome } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { FriendService } from '../services/friendService';
 import { UserFriendService } from '../services/userFriendService';
@@ -574,7 +574,12 @@ const FriendListView: React.FC = () => {
         padding: '16px',
         display: 'flex',
         alignItems: 'center',
-        gap: '16px'
+        gap: '16px',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
       }}>
         <button
           onClick={() => navigate('/')}
@@ -588,14 +593,33 @@ const FriendListView: React.FC = () => {
         >
           <FaArrowLeft size={20} />
         </button>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>Friends</h1>
+        <h1 style={{ margin: 0, fontSize: '24px', flex: 1 }}>Friends</h1>
+        
+        {/* Home Button */}
+        <button
+          onClick={() => navigate('/home')}
+          style={{
+            backgroundColor: 'rgba(0,0,0,0.10)',
+            border: 'none',
+            borderRadius: '50%',
+            width: 48,
+            height: 48,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          <FaHome size={40} color="white" />
+        </button>
       </div>
 
       {/* Tab Navigation */}
       <div style={{
         backgroundColor: 'white',
         borderBottom: '1px solid #eee',
-        display: 'flex'
+        display: 'flex',
+        marginTop: '80px', // Account for fixed header
       }}>
         <button
           onClick={() => setActiveTab('friends')}

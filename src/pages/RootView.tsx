@@ -93,7 +93,10 @@ const RootView: React.FC = () => {
         textAlign: 'center',
         fontSize: '24px',
         fontWeight: 700,
-        position: 'relative',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
         zIndex: 1000,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
@@ -103,7 +106,7 @@ const RootView: React.FC = () => {
       {/* Map Container - Leave space for bottom button */}
       <div style={{
         position: 'absolute',
-        top: '64px',
+        top: '64px', // Account for fixed header
         left: 0,
         right: 0,
         bottom: '90px', // Space for single bottom button
@@ -120,8 +123,6 @@ const RootView: React.FC = () => {
             doubleClickZoom={true}
             scrollWheelZoom={false}
             attributionControl={false}
-            tap={true}
-            touchExtend={1}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

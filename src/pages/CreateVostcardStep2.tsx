@@ -130,7 +130,11 @@ export default function CreateVostcardStep2() {
         justifyContent: 'space-between',
         padding: '0 24px',
         boxSizing: 'border-box',
-        position: 'relative'
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
       }}>
         <span 
           onClick={() => navigate('/home')}
@@ -163,7 +167,8 @@ export default function CreateVostcardStep2() {
         padding: '45px 20px 0 20px',
         boxSizing: 'border-box',
         maxHeight: 'calc(100vh - 120px)',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        marginTop: '80px', // Account for fixed header
       }}>
         {[0, 1].map(idx => (
           <button

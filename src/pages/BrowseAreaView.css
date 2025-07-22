@@ -43,7 +43,7 @@
 .search-section {
   padding: 24px 16px;
   max-width: 600px;
-  margin: 0 auto;
+  margin: 69px auto 0; /* Account for fixed header */
   background: white;
   position: relative;
 }

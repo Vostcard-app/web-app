@@ -495,7 +495,11 @@ const AllPostedVostcardsView: React.FC = () => {
         justifyContent: 'space-between',
         padding: '0 20px',
         flexShrink: 0,
-        zIndex: 10
+        zIndex: 1000,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
       }}>
         <div 
           onClick={() => navigate('/home')}
@@ -510,7 +514,7 @@ const AllPostedVostcardsView: React.FC = () => {
             }}
             onClick={() => navigate('/home')}
           >
-            <FaHome size={48} />
+            <FaHome size={40} />
           </button>
         </div>
       </div>
@@ -632,7 +636,8 @@ const AllPostedVostcardsView: React.FC = () => {
         padding: '16px 20px 8px 20px',
         borderBottom: '1px solid #e0e0e0',
         flexShrink: 0,
-        zIndex: 9
+        zIndex: 9,
+        marginTop: '80px', // Account for fixed header
       }}>
         <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>Nearby Vōstcards</div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>

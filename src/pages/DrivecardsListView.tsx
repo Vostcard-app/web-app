@@ -257,7 +257,7 @@ const DrivecardsListView: React.FC = () => {
           
           {/* Home Button */}
           <FaHome
-            size={48}
+            size={40}
             style={{
               cursor: 'pointer',
               position: 'absolute',

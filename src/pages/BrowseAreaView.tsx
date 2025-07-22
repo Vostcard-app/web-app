@@ -175,13 +175,17 @@ const BrowseAreaView: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          position: 'relative',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
           color: 'white'
         }}
       >
         <h1 style={{ fontSize: '30px', margin: 0 }}>Browse Area</h1>
         <FaHome
-          size={48}
+          size={40}
           color="white"
           style={{
             position: 'absolute',

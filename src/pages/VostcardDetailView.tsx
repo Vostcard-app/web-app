@@ -502,7 +502,11 @@ ${privateUrl}`;
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 24px 16px', 
-        position: 'relative', 
+        position: 'fixed', 
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -544,7 +548,7 @@ ${privateUrl}`;
             }} 
             onClick={() => navigate('/home')}
           >
-            <FaHome color="#fff" size={48} />
+            <FaHome color="#fff" size={40} />
           </button>
         </div>
       </div>
@@ -601,7 +605,8 @@ ${privateUrl}`;
       <div style={{ 
         padding: '5px', 
         display: 'flex', 
-        alignItems: 'center'
+        alignItems: 'center',
+        marginTop: '78px', // Account for fixed header
       }}>
         <div style={{ 
           width: 50, 

@@ -57,7 +57,7 @@ const SuggestionBoxView: React.FC = () => {
           onClick={() => navigate('/home')}
           style={{ color: 'white', fontWeight: 700, fontSize: '30px', margin: 0, cursor: 'pointer' }}>Vōstcard</span>
         <FaHome
-          size={48}
+          size={40}
           color="white"
           style={{
             position: 'absolute',

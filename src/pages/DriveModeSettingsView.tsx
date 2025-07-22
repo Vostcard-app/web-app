@@ -110,11 +110,11 @@ const DriveModeSettingsView: React.FC = () => {
           <button
             onClick={() => navigate('/home')}
             style={{
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(0,0,0,0.10)',
               border: 'none',
               borderRadius: '50%',
-              width: 56,
-              height: 56,
+              width: 48,
+              height: 48,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -122,7 +122,7 @@ const DriveModeSettingsView: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            <FaHome style={{ color: 'white', fontSize: 24 }} />
+            <FaHome size={40} color="white" />
           </button>
         </div>
 

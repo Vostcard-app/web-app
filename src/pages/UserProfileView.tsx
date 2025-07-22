@@ -190,7 +190,7 @@ const UserProfileView: React.FC = () => {
             cursor: 'pointer',
           }}
         >
-          <FaHome style={{ color: 'white', fontSize: 28 }} />
+                      <FaHome size={40} color="white" />
         </button>
       </div>
 
