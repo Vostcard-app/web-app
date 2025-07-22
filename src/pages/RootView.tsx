@@ -167,20 +167,18 @@ const RootView: React.FC = () => {
       {/* Centered Vostcard Pin */}
       <div style={{
         position: 'absolute',
-        top: '50%',
+        top: '40%',
         left: '50%',
         zIndex: 100,
-        pointerEvents: 'none',
-        transform: 'translate(-50%, -50%)',
-        marginTop: '-45px'
+        pointerEvents: 'none'
       }}>
         <img 
           src="/Vostcard_pin.png"
           alt="Vostcard Pin"
           className="bobbing-pin"
           style={{
-            width: '60px',
-            height: '60px',
+            width: '120px',
+            height: '120px',
             filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
           }}
           onError={(e) => {
@@ -196,7 +194,7 @@ const RootView: React.FC = () => {
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        marginTop: '80px', // Below the pin
+        marginTop: '50px', // Raised by 30px (was 80px, now 50px)
         zIndex: 2000,
         width: 'calc(100% - 32px)',
         maxWidth: '400px'
