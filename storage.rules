@@ -16,13 +16,13 @@ service firebase.storage {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Allow authenticated users to upload/manage their own Vostcard media
+    // Allow authenticated users to upload/manage their own Vostcard media (including audio)
     match /vostcards/{userId}/{allPaths=**} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Allow authenticated users to upload/manage their own Drivecard media
+    // Allow authenticated users to upload/manage their own Drivecard media (including audio)
     match /drivecards/{userId}/{allPaths=**} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;

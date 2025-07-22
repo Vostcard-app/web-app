@@ -213,6 +213,31 @@ async function uploadPhoto(userId: string, vostcardId: string, idx: number, file
   });
 }
 
+// Helper for audio upload
+async function uploadAudio(userId: string, vostcardId: string, file: Blob): Promise<string> {
+  console.log('🎵 Uploading audio to Firebase Storage...');
+  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/audio.webm`);
+  const uploadTask = uploadBytesResumable(storageRef, file);
+  return new Promise((resolve, reject) => {
+    uploadTask.on(
+      'state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log(`Audio upload is ${progress}% done`);
+      },
+      (error) => {
+        console.error('Audio upload failed:', error);
+        reject(error);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        console.log('✅ Audio file available at', downloadURL);
+        resolve(downloadURL);
+      }
+    );
+  });
+}
+
 // Add interface for deletion markers
 interface DeletionMarker {
   vostcardId: string;
@@ -2660,6 +2685,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         );
       }
 
+      // --- Upload audio to Firebase Storage if exists ---
+      let audioURL = '';
+      if (quickcard.audio && quickcard.audio instanceof Blob) {
+        console.log('🎵 Uploading audio to Firebase Storage...');
+        audioURL = await uploadAudio(userID, vostcardId, quickcard.audio);
+        console.log('✅ Audio uploaded:', audioURL);
+      }
+
       console.log('🔍 DEBUG: Final quickcard data before Firestore save:', {
         id: vostcardId,
         title: quickcard.title,
@@ -2671,7 +2704,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         latitude: quickcard.geo.latitude,
         longitude: quickcard.geo.longitude,
         isQuickcard: true,
-        photoURLsCount: photoURLs.length
+        photoURLsCount: photoURLs.length,
+        hasAudio: !!audioURL
       });
 
       const firebaseData = {
@@ -2684,6 +2718,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         userRole: authContext.userRole || 'user',
         videoURL: '', // Quickcards don't have videos
         photoURLs: photoURLs,
+        audioURL: audioURL,
         latitude: quickcard.geo.latitude,
         longitude: quickcard.geo.longitude,
         avatarURL: user.photoURL || '',
@@ -2692,6 +2727,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: 'posted', // Mark as posted to appear on public map
         hasVideo: false, // Quickcards never have videos
         hasPhotos: (quickcard.photos?.length || 0) > 0,
+        hasAudio: !!audioURL,
         mediaUploadStatus: 'complete',
         isOffer: false, // Quickcards are not offers
         isQuickcard: true, // Mark as quickcard

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -38,6 +38,13 @@ const QuickcardDetailView: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showSharedOptions, setShowSharedOptions] = useState(false);
+
+  // Audio player state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -121,6 +128,44 @@ const QuickcardDetailView: React.FC = () => {
     }
   }, [quickcard?.userID]);
 
+  // Audio player effects
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateTime = () => {
+      setCurrentTime(audio.currentTime);
+      setAudioProgress((audio.currentTime / audio.duration) * 100);
+    };
+
+    const handleLoadedMetadata = () => {
+      setAudioDuration(audio.duration);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setAudioProgress(0);
+      setCurrentTime(0);
+    };
+
+    const handleError = () => {
+      console.error('Audio failed to load');
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+    };
+  }, [quickcard?.audioURL]);
+
   const handleShareClick = () => {
     setShowSharedOptions(true);
   };
@@ -129,7 +174,70 @@ const QuickcardDetailView: React.FC = () => {
     setIsLiked(!isLiked);
   };
 
+  const handleMapClick = () => {
+    if (quickcard?.latitude && quickcard?.longitude) {
+      console.log('📍 Opening quickcard location on public map for all users');
+      navigate('/public-map', {
+        state: {
+          singleVostcard: {
+            id: quickcard.id,
+            title: quickcard.title,
+            description: quickcard.description,
+            latitude: quickcard.latitude,
+            longitude: quickcard.longitude,
+            photoURLs: quickcard.photoURLs,
+            username: quickcard.username,
+            isOffer: false,
+            isQuickcard: true,
+            categories: quickcard.categories,
+            createdAt: quickcard.createdAt,
+            visibility: 'public',
+            state: 'posted'
+          }
+        }
+      });
+    } else {
+      alert('No location data available for this quickcard');
+    }
+  };
 
+  const handlePlayPause = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      audio.play()
+        .then(() => setIsPlaying(true))
+        .catch(error => {
+          console.error('Audio play failed:', error);
+          alert('Failed to play audio. Please try again.');
+        });
+    }
+  };
+
+  const handleAudioSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !audioDuration) return;
+
+    const progressBar = e.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const clickPosition = e.clientX - rect.left;
+    const progressWidth = rect.width;
+    const clickPercentage = clickPosition / progressWidth;
+    const newTime = clickPercentage * audioDuration;
+
+    audio.currentTime = newTime;
+  };
+
+  const formatTime = (time: number): string => {
+    if (!time || isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   const handleRefresh = () => {
     window.location.reload();
@@ -139,7 +247,24 @@ const QuickcardDetailView: React.FC = () => {
     alert('Flag functionality not implemented yet');
   };
 
+  // Check if quickcard has audio - updated to include Firebase audioURL
+  const hasAudio = quickcard?.audioURL || quickcard?.audioURLs?.length > 0;
 
+  // Add debug logging for audio detection
+  useEffect(() => {
+    if (quickcard) {
+      console.log('🎵 AUDIO DEBUG - Quickcard data:', {
+        id: quickcard.id,
+        title: quickcard.title,
+        hasAudioURL: !!quickcard.audioURL,
+        hasAudioURLs: !!quickcard.audioURLs,
+        audioURL: quickcard.audioURL,
+        audioURLs: quickcard.audioURLs,
+        hasAudioCalculated: hasAudio,
+        allKeys: Object.keys(quickcard)
+      });
+    }
+  }, [quickcard, hasAudio]);
 
   if (loading) {
     return (
@@ -212,10 +337,10 @@ const QuickcardDetailView: React.FC = () => {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Header */}
+      {/* Header - Reduced height by 15px */}
       <div style={{ 
         background: '#07345c', 
-        padding: '15px 16px 24px 16px', 
+        padding: '15px 16px 9px 16px', // ✅ Reduced bottom padding from 24px to 9px (15px reduction)
         position: 'fixed', 
         top: 0,
         left: 0,
@@ -265,13 +390,13 @@ const QuickcardDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* User Info */}
+      {/* User Info - Increased top padding by 10px */}
       <div style={{ 
-        padding: '5px 20px', 
+        padding: '15px 20px 5px 20px', // ✅ Changed from '5px 20px' to '15px 20px 5px 20px' (10px more top padding)
         display: 'flex', 
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: '78px', // Account for fixed header
+        marginTop: '63px', // Kept the same after banner height reduction
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ 
@@ -300,47 +425,6 @@ const QuickcardDetailView: React.FC = () => {
             {quickcard.username || 'Anonymous'}
           </div>
         </div>
-        <button
-          onClick={() => {
-            // Navigate all users to public map view regardless of authentication status
-            if (quickcard?.latitude && quickcard?.longitude) {
-              console.log('📍 Opening quickcard location on public map for all users');
-              navigate('/public-map', {
-                state: {
-                  singleVostcard: {
-                    id: quickcard.id,
-                    title: quickcard.title,
-                    description: quickcard.description,
-                    latitude: quickcard.latitude,
-                    longitude: quickcard.longitude,
-                    photoURLs: quickcard.photoURLs,
-                    username: quickcard.username,
-                    isOffer: false,
-                    isQuickcard: true,
-                    categories: quickcard.categories,
-                    createdAt: quickcard.createdAt,
-                    visibility: 'public',
-                    state: 'posted'
-                  }
-                }
-              });
-            } else {
-              alert('No location data available for this quickcard');
-            }
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#666',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '8px'
-          }}
-        >
-          <FaMap size={24} />
-        </button>
       </div>
 
       {/* Title */}
@@ -399,6 +483,16 @@ const QuickcardDetailView: React.FC = () => {
         )}
       </div>
 
+      {/* Hidden Audio Element */}
+      {hasAudio && (
+        <audio
+          ref={audioRef}
+          src={quickcard.audioURL || quickcard.audioURLs?.[0]}
+          preload="metadata"
+          style={{ display: 'none' }}
+        />
+      )}
+
       {/* Action Icons Row */}
       <div style={{
         display: 'flex',
@@ -407,6 +501,24 @@ const QuickcardDetailView: React.FC = () => {
         padding: '20px 40px',
         borderBottom: '1px solid #eee'
       }}>
+        {/* Play Button - Only show if audio exists */}
+        {hasAudio && (
+          <button
+            onClick={handlePlayPause}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: isPlaying ? '#007aff' : '#666'
+            }}
+          >
+            {isPlaying ? <FaPause size={30} /> : <FaPlay size={30} />}
+          </button>
+        )}
+
         <button
           onClick={handleLikeClick}
           style={{
@@ -436,6 +548,7 @@ const QuickcardDetailView: React.FC = () => {
         >
           <FaRegComment size={30} />
         </button>
+
         <button
           onClick={handleShareClick}
           style={{
@@ -450,9 +563,24 @@ const QuickcardDetailView: React.FC = () => {
         >
           <FaShare size={30} />
         </button>
+
+        <button
+          onClick={handleMapClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaMap size={30} />
+        </button>
       </div>
 
-      {/* Counts Row */}
+      {/* Counts Row - Adjust for dynamic number of buttons */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -461,11 +589,12 @@ const QuickcardDetailView: React.FC = () => {
         fontSize: '18px',
         color: '#666'
       }}>
+        {hasAudio && <span></span>}
         <span>0</span>
         <span></span>
+        <span></span>
+        <span></span>
       </div>
-
-
 
       {/* Description Link, Flag Icon, and Refresh Button */}
       <div style={{ 
