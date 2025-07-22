@@ -685,7 +685,7 @@ const VostcardStudioView: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       console.log('🚀 QUICKCARD POST DEBUG: Calling postQuickcard...');
-      await postQuickcard();
+      await postQuickcard(quickcard);
       
       console.log('✅ QUICKCARD POST DEBUG: Post completed successfully!');
       

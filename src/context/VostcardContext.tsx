@@ -101,7 +101,7 @@ interface VostcardContextProps {
   quickcards: Vostcard[];
   createQuickcard: (photo: Blob, geo: { latitude: number; longitude: number }) => void;
   saveQuickcard: () => Promise<void>;
-  postQuickcard: () => Promise<void>; // Add this line
+  postQuickcard: (quickcardToPost?: Vostcard) => Promise<void>; // Add this line
 }
 
 // IndexedDB configuration
@@ -2581,17 +2581,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard, saveLocalVostcard]);
 
-  const postQuickcard = useCallback(async () => {
+  const postQuickcard = useCallback(async (quickcardToPost?: Vostcard) => {
     console.log('📱 Posting quickcard to map...');
     
-    if (!currentVostcard) {
-      console.error('❌ No currentVostcard found');
+    // Use passed quickcard or current vostcard
+    const quickcard = quickcardToPost || currentVostcard;
+    
+    if (!quickcard) {
+      console.error('❌ No quickcard found to post');
       throw new Error('No quickcard to post');
     }
     
-    if (!currentVostcard.isQuickcard) {
-      console.error('❌ Current vostcard is not a quickcard:', currentVostcard);
-      throw new Error('Current vostcard is not a quickcard');
+    if (!quickcard.isQuickcard) {
+      console.error('❌ Vostcard is not a quickcard:', quickcard);
+      throw new Error('Vostcard is not a quickcard');
     }
 
     const user = auth.currentUser;
@@ -2600,38 +2603,38 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       throw new Error('User not authenticated. Please log in first.');
     }
 
-    console.log('📱 Current quickcard validation:', {
-      id: currentVostcard.id,
-      title: currentVostcard.title,
-      description: currentVostcard.description,
-      categories: currentVostcard.categories,
-      categoriesLength: currentVostcard.categories?.length || 0,
-      hasGeo: !!currentVostcard.geo,
-      geoDetails: currentVostcard.geo
+    console.log('📱 Quickcard validation:', {
+      id: quickcard.id,
+      title: quickcard.title,
+      description: quickcard.description,
+      categories: quickcard.categories,
+      categoriesLength: quickcard.categories?.length || 0,
+      hasGeo: !!quickcard.geo,
+      geoDetails: quickcard.geo
     });
 
     // Check if Quickcard has required data for posting
-    if (!currentVostcard.title || !currentVostcard.title.trim()) {
+    if (!quickcard.title || !quickcard.title.trim()) {
       throw new Error('Title is required to post a quickcard');
     }
     
-    if (!currentVostcard.description || !currentVostcard.description.trim()) {
+    if (!quickcard.description || !quickcard.description.trim()) {
       throw new Error('Description is required to post a quickcard');
     }
     
-    if (!currentVostcard.categories || currentVostcard.categories.length === 0) {
+    if (!quickcard.categories || quickcard.categories.length === 0) {
       throw new Error('At least one category is required to post a quickcard');
     }
 
-    if (!currentVostcard.geo) {
+    if (!quickcard.geo) {
       throw new Error('Location is required to post a Quickcard to the map');
     }
 
     try {
       console.log('📥 Starting quickcard post to Firebase (public map)...');
-      const vostcardId = currentVostcard.id;
+      const vostcardId = quickcard.id;
       const userID = user.uid;
-      const username = getCorrectUsername(authContext, currentVostcard.username);
+      const username = getCorrectUsername(authContext, quickcard.username);
 
       console.log('📥 Prepared Firebase data:', {
         vostcardId,
@@ -2643,10 +2646,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // --- Upload photos to Firebase Storage (quickcards don't have videos) ---
       let photoURLs: string[] = [];
-      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+      if (quickcard.photos && quickcard.photos.length > 0) {
         console.log('📸 Uploading photos to Firebase Storage...');
         photoURLs = await Promise.all(
-          currentVostcard.photos.map(async (photo, idx) => {
+          quickcard.photos.map(async (photo, idx) => {
             if (photo instanceof Blob) {
               const url = await uploadPhoto(userID, vostcardId, idx, photo);
               console.log(`✅ Photo ${idx + 1} uploaded:`, url);
@@ -2659,36 +2662,36 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       console.log('🔍 DEBUG: Final quickcard data before Firestore save:', {
         id: vostcardId,
-        title: currentVostcard.title,
-        description: currentVostcard.description,
-        categories: currentVostcard.categories,
+        title: quickcard.title,
+        description: quickcard.description,
+        categories: quickcard.categories,
         username: username,
         userID: userID,
         userRole: authContext.userRole,
-        latitude: currentVostcard.geo.latitude,
-        longitude: currentVostcard.geo.longitude,
+        latitude: quickcard.geo.latitude,
+        longitude: quickcard.geo.longitude,
         isQuickcard: true,
         photoURLsCount: photoURLs.length
       });
 
       const firebaseData = {
         id: vostcardId,
-        title: currentVostcard.title || '',
-        description: currentVostcard.description || '',
-        categories: currentVostcard.categories || [],
+        title: quickcard.title || '',
+        description: quickcard.description || '',
+        categories: quickcard.categories || [],
         username: username,
         userID: userID,
         userRole: authContext.userRole || 'user',
         videoURL: '', // Quickcards don't have videos
         photoURLs: photoURLs,
-        latitude: currentVostcard.geo.latitude,
-        longitude: currentVostcard.geo.longitude,
+        latitude: quickcard.geo.latitude,
+        longitude: quickcard.geo.longitude,
         avatarURL: user.photoURL || '',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
         state: 'posted', // Mark as posted to appear on public map
         hasVideo: false, // Quickcards never have videos
-        hasPhotos: (currentVostcard.photos?.length || 0) > 0,
+        hasPhotos: (quickcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'complete',
         isOffer: false, // Quickcards are not offers
         isQuickcard: true, // Mark as quickcard
@@ -2732,7 +2735,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         // Update the local copy to mark as posted
         const updatedVostcard = {
-          ...currentVostcard,
+          ...quickcard,
           state: 'posted' as const,
           updatedAt: new Date().toISOString()
         };
@@ -2755,8 +2758,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       loadAllLocalVostcards(); // Refresh local list
       loadPostedVostcards();   // Refresh posted list
 
-      // Clear the current vostcard since it's now posted
-      clearVostcard();
+      // Only clear current vostcard if we used it (not passed parameter)
+      if (!quickcardToPost) {
+        clearVostcard();
+      }
       
     } catch (error) {
       console.error('❌ Error posting quickcard:', error);
