@@ -532,16 +532,20 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handleQuickcardPinPlacer = () => {
-    // ✅ NEW: Store photo and audio as base64 in sessionStorage
-    const storePhotoAsBase64 = async (file: File): Promise<string> => {
+    console.log('🗺️ Pin placer button clicked!'); // Debug log
+    
+    // ✅ Fixed: Store photo and audio as base64 in sessionStorage
+    const storeFileAsBase64 = async (file: Blob | File): Promise<string> => {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(file);
-    });
-  };
+      });
+    };
 
     const prepareStateForStorage = async () => {
+      console.log('📦 Preparing state for storage...'); // Debug log
+      
       const state: any = {
         title: quickcardTitle,
         categories: quickcardCategories,
@@ -549,13 +553,14 @@ const VostcardStudioView: React.FC = () => {
         audioFileName: quickcardAudioFileName
       };
 
-      // ✅ Convert photo to base64 if exists
+      // ✅ Convert photos to base64 if they exist
       if (quickcardPhotos.length > 0) {
         try {
-          const base64Photos: string[] = await Promise.all(quickcardPhotos.map(storePhotoAsBase64));
+          console.log('📸 Converting photos to base64...', quickcardPhotos.length); // Debug log
+          const base64Photos: string[] = await Promise.all(quickcardPhotos.map(storeFileAsBase64));
           state.photoBase64 = JSON.stringify(base64Photos);
-          state.photoType = 'image/jpeg'; // Default type, can be more specific if needed
-          console.log('📸 Photos converted to base64 for storage');
+          state.photoTypes = quickcardPhotos.map(photo => photo.type || 'image/jpeg');
+          console.log('✅ Photos converted to base64 for storage');
         } catch (error) {
           console.error('❌ Failed to convert photos to base64:', error);
         }
@@ -564,9 +569,10 @@ const VostcardStudioView: React.FC = () => {
       // ✅ Convert audio to base64 if exists
       if (quickcardAudio) {
         try {
-          state.audioBase64 = await storePhotoAsBase64(quickcardAudio);
+          console.log('🎵 Converting audio to base64...'); // Debug log
+          state.audioBase64 = await storeFileAsBase64(quickcardAudio);
           state.audioType = quickcardAudio.type;
-          console.log('🎵 Audio converted to base64 for storage');
+          console.log('✅ Audio converted to base64 for storage');
         } catch (error) {
           console.error('❌ Failed to convert audio to base64:', error);
         }
@@ -574,8 +580,10 @@ const VostcardStudioView: React.FC = () => {
 
       // Store in sessionStorage
       sessionStorage.setItem('quickcardCreatorState', JSON.stringify(state));
+      console.log('💾 State stored in sessionStorage'); // Debug log
       
       // Navigate to pin placer
+      console.log('🗺️ Navigating to pin placer...'); // Debug log
       navigate('/pin-placer', {
         state: {
           returnTo: '/studio',
@@ -594,7 +602,11 @@ const VostcardStudioView: React.FC = () => {
       });
     };
 
-    prepareStateForStorage();
+    // Call the async function
+    prepareStateForStorage().catch(error => {
+      console.error('❌ Error in pin placer preparation:', error);
+      alert('Error preparing for pin placement. Please try again.');
+    });
   };
 
   // Update creation functions to use multiple photos
