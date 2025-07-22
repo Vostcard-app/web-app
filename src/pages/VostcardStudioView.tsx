@@ -716,10 +716,15 @@ const VostcardStudioView: React.FC = () => {
 
   return (
     <div style={{
-      backgroundColor: 'white', 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column'
+      minHeight: '100vh',
+      backgroundColor: '#f5f5f5',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      paddingTop: '20px',
+      paddingBottom: '20px',
+      overflowY: 'auto', // ✅ Make scrollable
+      maxHeight: '100vh' // ✅ Limit height to enable scrolling
     }}>
       
       {/* Header */}
@@ -897,7 +902,9 @@ const VostcardStudioView: React.FC = () => {
             width: '100%',
             maxWidth: '350px',
             backgroundColor: '#f9f9f9',
-            border: '1px solid #ddd'
+            border: '1px solid #ddd',
+            maxHeight: 'none', // ✅ Remove height limit
+            overflowY: 'visible' // ✅ Allow content to flow
           }}>
             <h3 style={{ marginTop: 0 }}>
               📷 Quickcard Creator
@@ -1138,6 +1145,108 @@ const VostcardStudioView: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* ✅ Two Action Buttons */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+              {/* Save as Draft Button */}
+              <button 
+                onClick={handleSaveQuickcardAsDraft}
+                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto || quickcardCategories.length === 0}
+                style={{
+                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto || quickcardCategories.length === 0) ? '#ccc' : '#666',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaSave size={12} />
+                Save Draft
+              </button>
+
+              {/* Post to Map Button */}
+              <button 
+                onClick={handlePostQuickcardToMap}
+                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto || quickcardCategories.length === 0}
+                style={{
+                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaGlobe size={12} />
+                Post to Map
+              </button>
+            </div>
+
+            {/* Clear Photo Button */}
+            {quickcardPhoto && (
+              <button
+                onClick={() => {
+                  setQuickcardPhoto(null);
+                  setQuickcardPhotoPreview(null);
+                }}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: '#ff9800',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  opacity: isLoading ? 0.6 : 1,
+                  marginBottom: '10px'
+                }}
+              >
+                Clear Photo
+              </button>
+            )}
+
+            {/* Clear Audio Button */}
+            {quickcardAudio && (
+              <button
+                onClick={() => {
+                  setQuickcardAudio(null);
+                  setQuickcardAudioSource(null);
+                  setQuickcardAudioFileName(null);
+                }}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: '#ff5722',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  opacity: isLoading ? 0.6 : 1,
+                  marginBottom: '10px'
+                }}
+              >
+                Clear Audio
+              </button>
+            )}
 
             {/* Save/Update Button */}
             <button 
