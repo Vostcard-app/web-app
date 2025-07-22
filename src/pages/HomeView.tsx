@@ -126,13 +126,15 @@ const HomeView = () => {
     }
   }, [browseLocationState, navigate, location.pathname]);
 
-  // Handle fresh load state from navigation
-  const processedFreshLoadRef = useRef<boolean>(false);
+  // Handle fresh load state from navigation - FIXED to prevent infinite loop
+  const processedLocationKeysRef = useRef<Set<string>>(new Set());
   
   useEffect(() => {
     const navigationState = location.state as any;
-    if (navigationState?.freshLoad && !processedFreshLoadRef.current) {
-      processedFreshLoadRef.current = true;
+    const locationKey = location.key || 'default';
+    
+    if (navigationState?.freshLoad && !processedLocationKeysRef.current.has(locationKey)) {
+      processedLocationKeysRef.current.add(locationKey);
       
       console.log('🔄 Fresh load requested after posting quickcard');
       setVostcards([]);
@@ -140,15 +142,12 @@ const HomeView = () => {
       setMapError(null);
       setRetryCount(prev => prev + 1); // This will trigger the retry useEffect which calls loadVostcards
       setHasInitialLoad(false);
-      
-      // Clear the navigation state using navigate to prevent repeated calls
-      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, location.pathname, navigate]);
+  }, [location.key]); // FIXED: Removed location.state from deps to prevent infinite loop
   
   // Reset the processed flag when location pathname changes
   useEffect(() => {
-    processedFreshLoadRef.current = false;
+    processedLocationKeysRef.current.clear(); // Clear processed keys on pathname change
   }, [location.pathname]);
 
   // Handle target quickcard from navigation - center map but show all content
