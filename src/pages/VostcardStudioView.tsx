@@ -1,25 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
-import { drivecardService } from '../services/drivecardService';
-import { QuickcardImporter } from '../components/studio/QuickcardImporter';
-import { useVostcardEdit } from '../context/VostcardEditContext';
-import type { Drivecard, Vostcard } from '../types/VostcardTypes';
-
-const VostcardStudioView: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { user, userRole } = useAuth();
-  const { loadQuickcard } = useVostcardEdit();
-  
-  // Categories from step 3
-  const availableCategories = [
-    'None',
-    'Landmark',
-    'Fun Fact',
-    'Macabre',
-    'Architecture',
     'Historical',
     'Museum',
     'Gallery',
@@ -465,7 +443,7 @@ const VostcardStudioView: React.FC = () => {
     });
   };
 
-  const handleSaveQuickcard = async () => {
+  const handleSaveQuickcardAsDraft = async () => {
     if (!quickcardTitle.trim()) {
       alert('Please enter a title for your quickcard.');
       return;
@@ -484,7 +462,7 @@ const VostcardStudioView: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Create quickcard using VostcardEditContext
+      // Create quickcard as private draft
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
         title: quickcardTitle.trim(),
@@ -495,7 +473,8 @@ const VostcardStudioView: React.FC = () => {
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
-        state: 'private',
+        userRole: userRole || 'user',
+        state: 'private', // Save as private draft
         video: null,
         isQuickcard: true,
         hasVideo: false,
@@ -505,26 +484,96 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
-      // Load the quickcard into the editor for further editing
-      loadQuickcard(quickcard);
+      // Save locally and set as current
+      await saveLocalVostcard(quickcard);
+      setCurrentVostcard(quickcard);
       
-      // Navigate to advanced editor
-      navigate('/studio', { 
-        state: { 
-          editingQuickcard: quickcard.id,
-          activeTab: 'quickcard',
-          fromCreator: true
-        }
-      });
+      alert('✅ Quickcard saved as private draft!');
       
-      console.log('✅ Quickcard created and loaded into editor');
+      // Clear form
+      resetQuickcardForm();
+      
+      console.log('✅ Quickcard saved as private draft');
       
     } catch (error) {
-      console.error('❌ Error creating quickcard:', error);
-      alert('Failed to create quickcard. Please try again.');
+      console.error('❌ Error saving quickcard draft:', error);
+      alert('Failed to save quickcard draft. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePostQuickcardToMap = async () => {
+    if (!quickcardTitle.trim()) {
+      alert('Please enter a title for your quickcard.');
+      return;
+    }
+
+    if (!quickcardPhoto) {
+      alert('Please add a photo for your quickcard.');
+      return;
+    }
+
+    if (!quickcardLocation) {
+      alert('Please set a location for your quickcard.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Create quickcard ready for posting
+      const quickcard: Vostcard = {
+        id: `quickcard_${Date.now()}`,
+        title: quickcardTitle.trim(),
+        description: quickcardCategory, // Use category as description for now
+        photos: [quickcardPhoto],
+        audio: quickcardAudio,
+        categories: [quickcardCategory],
+        geo: quickcardLocation,
+        username: user?.displayName || user?.email || 'Unknown User',
+        userID: user?.uid || '',
+        userRole: userRole || 'user',
+        state: 'private', // Start as private, postQuickcard will change to posted
+        video: null,
+        isQuickcard: true,
+        hasVideo: false,
+        hasPhotos: true,
+        hasAudio: !!quickcardAudio,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // Set as current vostcard and post immediately
+      setCurrentVostcard(quickcard);
+      await postQuickcard();
+      
+      alert('🎉 Quickcard posted to map successfully!');
+      alert('Your Quickcard will appear on the map in a minute or two.');
+      
+      // Clear form
+      resetQuickcardForm();
+      
+      console.log('✅ Quickcard posted to map successfully');
+      
+    } catch (error) {
+      console.error('❌ Error posting quickcard:', error);
+      alert('Failed to post quickcard. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Helper function to reset form
+  const resetQuickcardForm = () => {
+    setQuickcardTitle('');
+    setQuickcardPhoto(null);
+    setQuickcardPhotoPreview(null);
+    setQuickcardAudio(null);
+    setQuickcardAudioSource('');
+    setQuickcardAudioFileName('');
+    setQuickcardLocation(null);
+    setQuickcardCategory('Landmark');
   };
 
   return (
@@ -930,30 +979,56 @@ const VostcardStudioView: React.FC = () => {
               </select>
             </div>
 
-            {/* Save/Update Button */}
-            <button 
-              onClick={handleSaveQuickcard}
-              disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto}
-              style={{
-                backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? '#ccc' : '#002B4D',
-                color: 'white',
-                border: 'none',
-                padding: '12px 8px',
-                borderRadius: '4px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? 'not-allowed' : 'pointer',
-                width: '100%',
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px'
-              }}
-            >
-              <FaSave size={14} />
-              Save Quickcard
-            </button>
+            {/* Two Action Buttons */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+              {/* Save as Draft Button */}
+              <button 
+                onClick={handleSaveQuickcardAsDraft}
+                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto}
+                style={{
+                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? '#ccc' : '#666',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? 'not-allowed' : 'pointer',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaSave size={12} />
+                Save Draft
+              </button>
+
+              {/* Post to Map Button */}
+              <button 
+                onClick={handlePostQuickcardToMap}
+                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto}
+                style={{
+                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? '#ccc' : '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || !quickcardPhoto) ? 'not-allowed' : 'pointer',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaGlobe size={12} />
+                Post to Map
+              </button>
+            </div>
 
             {/* Clear Photo Button */}
             {quickcardPhoto && (
