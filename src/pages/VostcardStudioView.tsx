@@ -1,3 +1,27 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { drivecardService } from '../services/drivecardService';
+import { QuickcardImporter } from '../components/studio/QuickcardImporter';
+import { useVostcard } from '../context/VostcardContext';
+import { useVostcardEdit } from '../context/VostcardEditContext';
+import type { Drivecard, Vostcard } from '../types/VostcardTypes';
+
+const VostcardStudioView: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, userRole } = useAuth();
+  const { loadQuickcard } = useVostcardEdit();
+  const { saveLocalVostcard, setCurrentVostcard, postQuickcard } = useVostcard();
+  
+  // Categories from step 3
+  const availableCategories = [
+    'None',
+    'Landmark',
+    'Fun Fact',
+    'Macabre',
+    'Architecture',
     'Historical',
     'Museum',
     'Gallery',
