@@ -71,6 +71,77 @@ const MapUpdater = ({ userLocation }: { userLocation: [number, number] | null })
   return null;
 };
 
+const ZoomControls = () => {
+  const map = useMap();
+
+  const handleZoomIn = () => {
+    console.log('🔍 Zoom In clicked');
+    map.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    console.log('🔍 Zoom Out clicked'); 
+    map.zoomOut();
+  };
+
+  return (
+    <>
+      {/* Zoom controls */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        right: 20,
+        transform: 'translateY(-50%)',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}>
+        <button 
+          onClick={handleZoomIn} // ✅ Fixed: Added proper zoom in handler
+          style={{
+            background: '#fff',
+            color: '#002B4D',
+            border: '1px solid #ddd',
+            borderRadius: 8,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <FaPlus />
+        </button>
+        <button 
+          onClick={handleZoomOut} // ✅ Fixed: Added proper zoom out handler
+          style={{
+            background: '#fff',
+            color: '#002B4D',
+            border: '1px solid #ddd',
+            borderRadius: 8,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <FaMinus />
+        </button>
+      </div>
+    </>
+  );
+};
+
 const HomeView = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -797,6 +868,9 @@ const HomeView = () => {
                   >
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     
+                    {/* ✅ Add ZoomControls component inside MapContainer */}
+                    <ZoomControls />
+                    
                     {actualUserLocation && (
                       <Marker position={actualUserLocation} icon={userIcon}>
                         <Popup>Your Location</Popup>
@@ -1093,59 +1167,6 @@ const HomeView = () => {
             </button>
           </div>
         )}
-
-        {/* Zoom controls */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          right: 20,
-          transform: 'translateY(-50%)',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 8,
-        }}>
-          <button 
-            onClick={() => {}}
-            style={{
-              background: '#fff',
-              color: '#002B4D',
-              border: '1px solid #ddd',
-              borderRadius: 8,
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 20,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <FaPlus />
-          </button>
-          <button 
-            onClick={() => {}}
-            style={{
-              background: '#fff',
-              color: '#002B4D',
-              border: '1px solid #ddd',
-              borderRadius: 8,
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 20,
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <FaMinus />
-          </button>
-        </div>
 
         {/* Recenter control */}
         <div style={{
