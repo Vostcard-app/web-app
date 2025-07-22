@@ -143,8 +143,8 @@ const QuickcardStep3: React.FC = () => {
     // Show second message about timing
     alert('Your Quickcard will appear on the map in a minute or two.');
     
-    // Navigate to home to see it on the map
-    navigate('/home', { state: { freshLoad: true } });
+    // Navigate to home normally - let the regular data loading handle refreshes
+    navigate('/home');
     
     try {
       console.log('📍 Starting quickcard post to map...');

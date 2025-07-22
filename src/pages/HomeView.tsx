@@ -18,7 +18,6 @@ import DriveModePlayer from '../components/DriveModePlayer';
 import InfoButton from '../assets/Info_button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
-import GuidePin from '../assets/Guide_pin.svg';
 import QuickcardPin from '../assets/quickcard_pin.png';
 
 
@@ -38,7 +37,7 @@ const offerIcon = new L.Icon({
 });
 
 const guideIcon = new L.Icon({
-  iconUrl: GuidePin,
+  iconUrl: '/Guide_pin.png', // ✅ Use the working PNG from public directory  
   iconSize: [75, 75],
   iconAnchor: [37.5, 75],
   popupAnchor: [0, -75],
@@ -126,30 +125,6 @@ const HomeView = () => {
     }
   }, [browseLocationState, navigate, location.pathname]);
 
-  // Handle fresh load state from navigation - FIXED to prevent infinite loop
-  const processedLocationKeysRef = useRef<Set<string>>(new Set());
-  
-  useEffect(() => {
-    const navigationState = location.state as any;
-    const locationKey = location.key || 'default';
-    
-    if (navigationState?.freshLoad && !processedLocationKeysRef.current.has(locationKey)) {
-      processedLocationKeysRef.current.add(locationKey);
-      
-      console.log('🔄 Fresh load requested after posting quickcard');
-      setVostcards([]);
-      setLoadingVostcards(true);
-      setMapError(null);
-      setRetryCount(prev => prev + 1); // This will trigger the retry useEffect which calls loadVostcards
-      setHasInitialLoad(false);
-    }
-  }, [location.key]); // FIXED: Removed location.state from deps to prevent infinite loop
-  
-  // Reset the processed flag when location pathname changes
-  useEffect(() => {
-    processedLocationKeysRef.current.clear(); // Clear processed keys on pathname change
-  }, [location.pathname]);
-
   // Handle target quickcard from navigation - center map but show all content
   useEffect(() => {
     if (singleVostcardState) {
@@ -226,6 +201,18 @@ const HomeView = () => {
       console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
         regular: allContent.filter(v => !v.isQuickcard).length,
         quickcards: allContent.filter(v => v.isQuickcard).length
+      });
+
+      // 🔍 DEBUG: Log userRole values for all quickcards
+      allContent.filter(v => v.isQuickcard).forEach(qc => {
+        console.log('🔍 DEBUG: Loaded quickcard:', {
+          id: qc.id,
+          title: qc.title,
+          userRole: qc.userRole,
+          username: qc.username,
+          isQuickcard: qc.isQuickcard,
+          isOffer: qc.isOffer || false
+        });
       });
       
       setVostcards(allContent);
@@ -820,7 +807,26 @@ const HomeView = () => {
                       if (!vostcard.latitude || !vostcard.longitude) return null;
                       
                       const position: [number, number] = [vostcard.latitude, vostcard.longitude];
+                      
+                      // 🔍 DEBUG: Log icon selection for quickcards
+                      if (vostcard.isQuickcard) {
+                        console.log('🔍 DEBUG: Rendering quickcard marker:', {
+                          title: vostcard.title,
+                          userRole: vostcard.userRole,
+                          isOffer: vostcard.isOffer,
+                          isQuickcard: vostcard.isQuickcard
+                        });
+                      }
+                      
                       const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
+                      
+                      // 🔍 DEBUG: Log which icon was selected
+                      if (vostcard.isQuickcard) {
+                        const iconName = icon === guideIcon ? 'GuideIcon' : 
+                                         icon === vostcardIcon ? 'VostcardIcon' : 
+                                         icon === offerIcon ? 'OfferIcon' : 'Unknown';
+                        console.log('🔍 DEBUG: Selected icon for quickcard:', iconName, 'for userRole:', vostcard.userRole);
+                      }
                       
                       return (
                         <Marker
