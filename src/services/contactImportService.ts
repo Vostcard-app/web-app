@@ -76,7 +76,7 @@ export class ContactImportService {
       script.onload = async () => {
         gapi.load('client', async () => {
           await gapi.client.init({
-            apiKey: process.env.REACT_APP_GOOGLE_API_KEY,
+            apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
             discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/people/v1/rest']
           });
           resolve();
@@ -93,7 +93,7 @@ export class ContactImportService {
       script.src = 'https://accounts.google.com/gsi/client';
       script.onload = () => {
         const tokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID!,
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID!,
           scope: 'https://www.googleapis.com/auth/contacts.readonly',
           callback: (response: any) => {
             if (response.error) {
