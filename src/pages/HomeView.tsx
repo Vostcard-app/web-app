@@ -327,6 +327,20 @@ const HomeView = () => {
     }
   }, [loading, hasInitialLoad, loadVostcards]);
 
+  // Handle fresh load after posting
+  useEffect(() => {
+    const navigationState = location.state as any;
+    if (navigationState?.freshLoad || navigationState?.justPosted) {
+      console.log('🔄 Fresh load requested after posting:', navigationState.justPosted);
+      
+      // Force refresh the vostcards to show newly posted content
+      loadVostcards(true);
+      
+      // Clear the navigation state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname, loadVostcards]);
+
   // Retry mechanism
   useEffect(() => {
     if (retryCount > 0) {

@@ -686,13 +686,20 @@ const VostcardStudioView: React.FC = () => {
       
       console.log('✅ QUICKCARD POST DEBUG: Post completed successfully!');
       
+      // Show success message
       alert('🎉 Quickcard posted to map successfully!');
-      alert(`Your ${userRole === 'guide' ? 'Guide' : 'Quickcard'} will appear on the map in a minute or two.`);
       
-      // Clear form
-      resetQuickcardForm();
+      // ✅ NEW: Navigate to home with refresh to show the new quickcard on map
+      console.log('🏠 Navigating to home to display posted quickcard...');
+      navigate('/home', { 
+        state: { 
+          freshLoad: true,
+          timestamp: Date.now(),
+          justPosted: 'quickcard'
+        }
+      });
       
-      console.log('✅ Quickcard posted to map successfully');
+      console.log('✅ Quickcard posted and navigation completed');
       
     } catch (error) {
       console.error('❌ QUICKCARD POST DEBUG: Error posting quickcard:', error);
