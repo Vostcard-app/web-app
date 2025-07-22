@@ -99,6 +99,7 @@ function App() {
                   <Route path="/offers-list" element={<OffersListView />} />
     
                   <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
+                  <Route path="/my-vostcards" element={<MyVostcardListView />} />
                   <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
                   <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
                   <Route path="/following" element={<FollowingView />} />

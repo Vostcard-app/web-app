@@ -136,11 +136,15 @@ const MyVostcardListView = () => {
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('🗑️ Delete icon clicked! vostcardId:', vostcardId);
+    console.log('🗑️ Event details:', { type: e.type, target: e.target, currentTarget: e.currentTarget });
+    
     if (!window.confirm('Are you sure you want to delete this post permanently? This action cannot be undone.')) {
+      console.log('🗑️ User cancelled deletion');
       return;
     }
 
-    console.log('🗑️ Delete clicked for private post:', vostcardId);
+    console.log('🗑️ Delete confirmed for private post:', vostcardId);
     console.log('🗑️ Current savedVostcards count before deletion:', savedVostcards.length);
     console.log('🗑️ Vostcard to delete exists in list:', savedVostcards.some(v => v.id === vostcardId));
     
@@ -589,7 +593,7 @@ const MyVostcardListView = () => {
                         {/* Delete Icon */}
                         <div
                           style={{
-                            cursor: 'pointer',
+                            cursor: (isDeleting || isPosting) ? 'not-allowed' : 'pointer',
                             transition: 'transform 0.1s',
                             display: 'flex',
                             alignItems: 'center',
@@ -597,13 +601,24 @@ const MyVostcardListView = () => {
                             padding: '10px',
                             borderRadius: '8px',
                             backgroundColor: '#f8f9fa',
-                            border: '1px solid #dee2e6'
+                            border: '1px solid #dee2e6',
+                            opacity: (isDeleting || isPosting) ? 0.5 : 1,
+                            pointerEvents: 'auto', // Ensure pointer events are enabled
+                            zIndex: 10 // Ensure it's above other elements
                           }}
-                          onClick={(e) => handleDelete(e, vostcard.id)}
-                          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-                          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                          title="Delete Vostcard"
+                          onClick={(e) => {
+                            console.log('🗑️ Delete icon div clicked!');
+                            console.log('🗑️ isDeleting:', isDeleting, 'isPosting:', isPosting);
+                            if (!(isDeleting || isPosting)) {
+                              handleDelete(e, vostcard.id);
+                            } else {
+                              console.log('🗑️ Delete click ignored - item is processing');
+                            }
+                          }}
+                          onMouseDown={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(0.95)')}
+                          onMouseUp={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(1)')}
+                          onMouseLeave={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(1)')}
+                          title={(isDeleting || isPosting) ? 'Loading...' : 'Delete Vostcard'}
                         >
                           <FaTrash size={20} color="#dc3545" />
                         </div>

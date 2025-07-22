@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaMapPin, FaEye, FaEnvelope, FaTrash } from 'react-icons/fa';
+import { FaHome, FaEdit, FaMapPin, FaEye, FaShare, FaTrash } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -215,37 +215,53 @@ const MyPostedVostcardsListView = () => {
     navigate(`/vostcard/${vostcardId}`);
   };
 
-  const handleEmail = (e: React.MouseEvent, vostcard: any) => {
+  const handleShare = async (e: React.MouseEvent, vostcard: any) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Get user's first name
-    const getUserFirstName = () => {
-      if (username) {
-        return username.split(' ')[0];
-      } else if (user?.displayName) {
-        return user.displayName.split(' ')[0];
-      } else if (user?.email) {
-        return user.email.split('@')[0];
+    try {
+      // Update the vostcard to mark it as privately shared
+      if (vostcard?.id) {
+        const vostcardRef = doc(db, 'vostcards', vostcard.id);
+        await updateDoc(vostcardRef, {
+          isPrivatelyShared: true,
+          sharedAt: new Date()
+        });
       }
-      return 'Anonymous';
-    };
-    
-    const subject = encodeURIComponent(`Check out my Vōstcard: "${vostcard.title}"`);
-    
-    const body = encodeURIComponent(`Hi,
+      
+      // Generate the correct share URL based on content type
+      const isQuickcard = vostcard.isQuickcard === true;
+      const privateUrl = isQuickcard 
+        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
+        : `${window.location.origin}/share/${vostcard.id}`;
+      
+      // Generate share text
+      const itemType = isQuickcard ? 'Quickcard' : 'Vostcard';
+      const shareText = `Check it out I made this with Vōstcard
 
-I made this with an app called Vōstcard
 
-View it here: ${window.location.origin}/email/${vostcard.id}
+"${vostcard.title || `Untitled ${itemType}`}"
 
-${vostcard.description || 'Description'}
 
-Cheers!
+"${vostcard.description || 'No description'}"
 
-${getUserFirstName()}`);
-    
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+
+${privateUrl}`;
+      
+      // Use native sharing if available, otherwise clipboard
+      if (navigator.share) {
+        navigator.share({ text: shareText }).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Private share message copied to clipboard!');
+        }).catch(() => {
+          alert(`Share this message: ${shareText}`);
+        });
+      }
+    } catch (error) {
+      console.error(`Error sharing ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}:`, error);
+      alert(`Failed to share ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}. Please try again.`);
+    }
   };
 
   const handleUnpost = async (e: React.MouseEvent, vostcardId: string) => {
@@ -668,7 +684,7 @@ ${getUserFirstName()}`);
                       <FaEye size={20} color="#6c757d" />
                     </div>
 
-                    {/* Email Icon */}
+                    {/* Share Icon */}
                     <div
                       style={{
                         cursor: 'pointer',
@@ -681,13 +697,13 @@ ${getUserFirstName()}`);
                         backgroundColor: '#f8f9fa',
                         border: '1px solid #dee2e6'
                       }}
-                      onClick={(e) => handleEmail(e, vostcard)}
+                      onClick={(e) => handleShare(e, vostcard)}
                       onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                       onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      title="Email Vostcard"
+                      title="Share Vostcard"
                     >
-                      <FaEnvelope size={20} color="#007bff" />
+                      <FaShare size={20} color="#007bff" />
                     </div>
 
                     {/* Delete Icon */}
