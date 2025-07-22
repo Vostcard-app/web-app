@@ -19,12 +19,18 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [showControls, setShowControls] = useState(true);
+  const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Reset index when modal opens or photos change
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
+      setShowControls(true);
+      // Auto-hide controls after 3 seconds
+      const timeout = setTimeout(() => setShowControls(false), 3000);
+      setControlsTimeout(timeout);
     }
   }, [isOpen, initialIndex]);
 
@@ -63,6 +69,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
 
     return () => {
       document.body.style.overflow = 'unset';
+      if (controlsTimeout) clearTimeout(controlsTimeout);
     };
   }, [isOpen]);
 
@@ -70,10 +77,29 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
 
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % photos.length);
+    showControlsTemporarily();
   };
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    showControlsTemporarily();
+  };
+
+  const showControlsTemporarily = () => {
+    setShowControls(true);
+    if (controlsTimeout) clearTimeout(controlsTimeout);
+    const timeout = setTimeout(() => setShowControls(false), 3000);
+    setControlsTimeout(timeout);
+  };
+
+  const handleImageTap = () => {
+    setShowControls(!showControls);
+    if (controlsTimeout) clearTimeout(controlsTimeout);
+    if (!showControls) {
+      // If showing controls, auto-hide after 3 seconds
+      const timeout = setTimeout(() => setShowControls(false), 3000);
+      setControlsTimeout(timeout);
+    }
   };
 
   // Touch handlers for swipe gestures
@@ -110,51 +136,49 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        backgroundColor: 'black',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 2000,
-        padding: '20px'
-      }}
-      onClick={(e) => {
-        if (e.target === modalRef.current) {
-          onClose();
-        }
+        width: '100vw',
+        height: '100vh'
       }}
     >
-      {/* Close Button */}
-      <button
-        onClick={onClose}
+      {/* Close Button - Only shows when controls are visible */}
+      <div
         style={{
           position: 'absolute',
           top: '20px',
           right: '20px',
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '50%',
-          width: '40px',
-          height: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          fontSize: '18px',
+          opacity: showControls ? 1 : 0,
+          transition: 'opacity 0.3s ease',
           zIndex: 2001,
-          transition: 'background-color 0.2s'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+          pointerEvents: showControls ? 'auto' : 'none'
         }}
       >
-        <FaTimes />
-      </button>
+        <button
+          onClick={onClose}
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '44px',
+            height: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            fontSize: '18px',
+            backdropFilter: 'blur(10px)'
+          }}
+        >
+          <FaTimes />
+        </button>
+      </div>
 
-      {/* Photo Counter & Title */}
+      {/* Photo Counter & Title - Only shows when controls are visible */}
       {(photos.length > 1 || title) && (
         <div
           style={{
@@ -163,10 +187,14 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             left: '20px',
             color: 'white',
             zIndex: 2001,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
             padding: '8px 12px',
             borderRadius: '20px',
-            fontSize: '14px'
+            fontSize: '14px',
+            opacity: showControls ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: showControls ? 'auto' : 'none',
+            backdropFilter: 'blur(10px)'
           }}
         >
           {title && <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{title}</div>}
@@ -174,7 +202,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         </div>
       )}
 
-      {/* Previous Button */}
+      {/* Previous Button - Only shows when controls are visible */}
       {photos.length > 1 && (
         <button
           onClick={goToPrevious}
@@ -183,7 +211,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             left: '20px',
             top: '50%',
             transform: 'translateY(-50%)',
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
             color: 'white',
             border: 'none',
             borderRadius: '50%',
@@ -195,20 +223,17 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             cursor: 'pointer',
             fontSize: '20px',
             zIndex: 2001,
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+            opacity: showControls ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: showControls ? 'auto' : 'none',
+            backdropFilter: 'blur(10px)'
           }}
         >
           <FaChevronLeft />
         </button>
       )}
 
-      {/* Next Button */}
+      {/* Next Button - Only shows when controls are visible */}
       {photos.length > 1 && (
         <button
           onClick={goToNext}
@@ -217,7 +242,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             right: '20px',
             top: '50%',
             transform: 'translateY(-50%)',
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
             color: 'white',
             border: 'none',
             borderRadius: '50%',
@@ -229,106 +254,111 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             cursor: 'pointer',
             fontSize: '20px',
             zIndex: 2001,
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+            opacity: showControls ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: showControls ? 'auto' : 'none',
+            backdropFilter: 'blur(10px)'
           }}
         >
           <FaChevronRight />
         </button>
       )}
 
-      {/* Main Image */}
+      {/* Main Image - Full Screen */}
       <div
         style={{
-          maxWidth: '90vw',
-          maxHeight: '90vh',
+          width: '100vw',
+          height: '100vh',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          cursor: 'pointer'
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={handleImageTap}
       >
         <img
           src={photos[currentIndex]}
           alt={`Photo ${currentIndex + 1}`}
           style={{
-            maxWidth: '100%',
-            maxHeight: '100%',
+            maxWidth: '100vw',
+            maxHeight: '100vh',
             objectFit: 'contain',
-            userSelect: 'none',
-            borderRadius: '8px'
+            userSelect: 'none'
           }}
           draggable={false}
         />
       </div>
 
-      {/* Thumbnail Strip for multiple photos */}
+      {/* Pagination Dots - Only shows when controls are visible */}
       {photos.length > 1 && (
         <div
           style={{
             position: 'absolute',
-            bottom: '20px',
+            bottom: '30px',
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
             gap: '8px',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            padding: '8px',
-            borderRadius: '20px',
-            maxWidth: '80vw',
-            overflowX: 'auto'
+            zIndex: 2001,
+            opacity: showControls ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: showControls ? 'auto' : 'none'
           }}
         >
-          {photos.map((photo, index) => (
+          {photos.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '4px',
-                border: currentIndex === index ? '2px solid white' : '1px solid rgba(255,255,255,0.3)',
-                overflow: 'hidden',
-                padding: 0,
-                cursor: 'pointer',
-                backgroundColor: 'transparent'
+              onClick={() => {
+                setCurrentIndex(index);
+                showControlsTemporarily();
               }}
-            >
-              <img
-                src={photo}
-                alt={`Thumbnail ${index + 1}`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            </button>
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                border: 'none',
+                backgroundColor: index === currentIndex ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease, transform 0.2s ease',
+                transform: index === currentIndex ? 'scale(1.2)' : 'scale(1)'
+              }}
+              onMouseEnter={(e) => {
+                if (index !== currentIndex) {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (index !== currentIndex) {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+                }
+              }}
+            />
           ))}
         </div>
       )}
 
-      {/* Swipe Instructions */}
-      {photos.length > 1 && (
+      {/* Swipe Instructions - Only shows initially */}
+      {photos.length > 1 && showControls && (
         <div
           style={{
             position: 'absolute',
-            bottom: '80px',
+            bottom: '60px',
             left: '50%',
             transform: 'translateX(-50%)',
             color: 'rgba(255, 255, 255, 0.7)',
             fontSize: '12px',
-            textAlign: 'center'
+            textAlign: 'center',
+            zIndex: 2001,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            padding: '4px 8px',
+            borderRadius: '12px',
+            backdropFilter: 'blur(10px)'
           }}
         >
-          Swipe left/right or use arrow keys to navigate
+          Swipe or tap dots to navigate • Tap photo to hide controls
         </div>
       )}
     </div>
