@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
+import MultiPhotoModal from '../components/MultiPhotoModal';
 
 // Custom quickcard icon for the map
 const quickcardIcon = new L.Icon({
@@ -33,6 +34,8 @@ const QuickcardDetailView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(0);
+  const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -227,6 +230,17 @@ const QuickcardDetailView: React.FC = () => {
     }
   }, [quickcard, hasAudio]);
 
+  // Enhanced photo click handler
+  const handlePhotoClick = (photoUrl: string) => {
+    if (quickcard.photoURLs && quickcard.photoURLs.length > 1) {
+      const index = quickcard.photoURLs.indexOf(photoUrl);
+      setSelectedPhotoIndex(index >= 0 ? index : 0);
+      setShowMultiPhotoModal(true);
+    } else {
+      setSelectedPhoto(photoUrl);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -401,7 +415,7 @@ const QuickcardDetailView: React.FC = () => {
         </h1>
       </div>
 
-      {/* Photo Section */}
+      {/* Enhanced Multi-Photo Section */}
       <div style={{ 
         padding: '20px', 
         display: 'flex', 
@@ -411,22 +425,98 @@ const QuickcardDetailView: React.FC = () => {
         {quickcard.photoURLs && quickcard.photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
-            backgroundColor: 'transparent',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            position: 'relative'
+            display: 'flex',
+            gap: '8px',
+            overflow: 'hidden'
           }}>
-            <img
-              src={quickcard.photoURLs[0]}
-              alt="Quickcard"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                cursor: 'pointer'
-              }}
-              onClick={() => setSelectedPhoto(quickcard.photoURLs[0])}
-            />
+            {/* Main Photo */}
+            <div style={{ 
+              flex: quickcard.photoURLs.length === 1 ? 1 : 0.7,
+              backgroundColor: 'transparent',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <img
+                src={quickcard.photoURLs[0]}
+                alt="Quickcard"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  cursor: 'pointer'
+                }}
+                onClick={() => handlePhotoClick(quickcard.photoURLs[0])}
+              />
+              {quickcard.photoURLs.length > 1 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '8px',
+                  right: '8px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}>
+                  1/{quickcard.photoURLs.length}
+                </div>
+              )}
+            </div>
+
+            {/* Additional Photos Thumbnail Strip */}
+            {quickcard.photoURLs.length > 1 && (
+              <div style={{
+                flex: 0.3,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                overflow: 'hidden'
+              }}>
+                {quickcard.photoURLs.slice(1, 4).map((photoUrl, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      flex: 1,
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => handlePhotoClick(photoUrl)}
+                  >
+                    <img
+                      src={photoUrl}
+                      alt={`Photo ${index + 2}`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                    {index === 2 && quickcard.photoURLs.length > 4 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                      }}>
+                        +{quickcard.photoURLs.length - 4}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ 
@@ -439,7 +529,7 @@ const QuickcardDetailView: React.FC = () => {
             color: '#999',
             fontSize: '18px'
           }}>
-            No photo available
+            No photos available
           </div>
         )}
       </div>
@@ -767,6 +857,15 @@ const QuickcardDetailView: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Multi Photo Modal */}
+      <MultiPhotoModal
+        photos={quickcard.photoURLs || []}
+        initialIndex={selectedPhotoIndex}
+        isOpen={showMultiPhotoModal}
+        onClose={() => setShowMultiPhotoModal(false)}
+        title={quickcard.title}
+      />
 
       {/* Share Options Modal */}
       <SharedOptionsModal
