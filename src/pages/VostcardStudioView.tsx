@@ -343,47 +343,87 @@ const VostcardStudioView: React.FC = () => {
 
   // Handle location data from pin placer
   useEffect(() => {
-    const drivecardLocation = sessionStorage.getItem('drivecardLocation');
-    const quickcardLocation = sessionStorage.getItem('quickcardLocation');
-    
-    if (drivecardLocation) {
-      try {
-        const location = JSON.parse(drivecardLocation);
-        setSelectedLocation(location);
-        sessionStorage.removeItem('drivecardLocation');
-        
-        // Restore drivecard creator state
-        const creatorState = sessionStorage.getItem('drivecardCreatorState');
-        if (creatorState) {
-          const state = JSON.parse(creatorState);
-          setTitle(state.title || '');
-          setDrivecardCategory(state.category || 'None');
-          sessionStorage.removeItem('drivecardCreatorState');
+    const restoreState = async () => {
+      const drivecardLocation = sessionStorage.getItem('drivecardLocation');
+      const quickcardLocation = sessionStorage.getItem('quickcardLocation');
+      
+      if (drivecardLocation) {
+        try {
+          const location = JSON.parse(drivecardLocation);
+          setSelectedLocation(location);
+          sessionStorage.removeItem('drivecardLocation');
+          
+          // Restore drivecard creator state
+          const creatorState = sessionStorage.getItem('drivecardCreatorState');
+          if (creatorState) {
+            const state = JSON.parse(creatorState);
+            setTitle(state.title || '');
+            setDrivecardCategory(state.category || 'None');
+            sessionStorage.removeItem('drivecardCreatorState');
+          }
+        } catch (error) {
+          console.error('Error parsing drivecard location:', error);
         }
-      } catch (error) {
-        console.error('Error parsing drivecard location:', error);
       }
-    }
 
-    if (quickcardLocation) {
-      try {
-        const location = JSON.parse(quickcardLocation);
-        setQuickcardLocation(location);
-        sessionStorage.removeItem('quickcardLocation');
-        
-        // Restore quickcard creator state
-        const creatorState = sessionStorage.getItem('quickcardCreatorState');
-        if (creatorState) {
-          const state = JSON.parse(creatorState);
-          setQuickcardTitle(state.title || '');
-          setQuickcardCategory(state.category || 'None');
-          setShowQuickcardCreator(true);
-          sessionStorage.removeItem('quickcardCreatorState');
+      if (quickcardLocation) {
+        try {
+          const location = JSON.parse(quickcardLocation);
+          setQuickcardLocation(location);
+          sessionStorage.removeItem('quickcardLocation');
+          
+          // Restore quickcard creator state
+          const creatorState = sessionStorage.getItem('quickcardCreatorState');
+          if (creatorState) {
+            const state = JSON.parse(creatorState);
+            
+            // Restore basic state
+            setQuickcardTitle(state.title || '');
+            setQuickcardCategory(state.category || 'None');
+            setQuickcardAudioSource(state.audioSource || null);
+            setQuickcardAudioFileName(state.audioFileName || null);
+            
+            // ✅ NEW: Restore photo from base64
+            if (state.photoBase64) {
+              try {
+                // Convert base64 back to File object
+                const response = await fetch(state.photoBase64);
+                const blob = await response.blob();
+                const photoFile = new File([blob], 'quickcard-photo.jpg', { type: state.photoType || 'image/jpeg' });
+                
+                setQuickcardPhoto(photoFile);
+                setQuickcardPhotoPreview(state.photoBase64); // Use base64 as preview
+                console.log('📸 Photo restored from storage');
+              } catch (error) {
+                console.error('❌ Failed to restore photo from base64:', error);
+              }
+            }
+            
+            // ✅ NEW: Restore audio from base64  
+            if (state.audioBase64) {
+              try {
+                // Convert base64 back to File object
+                const response = await fetch(state.audioBase64);
+                const blob = await response.blob();
+                const audioFile = new File([blob], state.audioFileName || 'quickcard-audio.mp3', { type: state.audioType || 'audio/mpeg' });
+                
+                setQuickcardAudio(audioFile);
+                console.log('🎵 Audio restored from storage');
+              } catch (error) {
+                console.error('❌ Failed to restore audio from base64:', error);
+              }
+            }
+            
+            setShowQuickcardCreator(true);
+            sessionStorage.removeItem('quickcardCreatorState');
+          }
+        } catch (error) {
+          console.error('Error parsing quickcard location:', error);
         }
-      } catch (error) {
-        console.error('Error parsing quickcard location:', error);
       }
-    }
+    };
+
+    restoreState();
   }, []);
 
   // Cleanup on unmount
