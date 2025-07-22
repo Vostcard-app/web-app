@@ -8,7 +8,6 @@ export interface DriveModeSettings {
   autoEnableSpeed: number; // mph - automatically enable drive mode at this speed
   triggerDistance: number; // miles - trigger vostcards within this distance
   autoDisableAfterStop: number; // minutes - disable after being stopped this long
-  allowManualOverride: boolean;
   excludedCategories?: string[]; // categories to exclude from Drive Mode playback
   usePredictiveTrigger: boolean; // use speed-based predictive triggering instead of fixed distance
   predictiveLeadTime: number; // seconds - how many seconds before arrival to trigger
@@ -68,7 +67,6 @@ const DEFAULT_SETTINGS: DriveModeSettings = {
   autoEnableSpeed: 25, // mph - enable when driving 25+ mph
   triggerDistance: 0.33, // 1/3 mile
   autoDisableAfterStop: 5, // minutes
-  allowManualOverride: true,
   excludedCategories: [], // no categories excluded by default
   usePredictiveTrigger: false, // use fixed distance by default
   predictiveLeadTime: 30 // 30 seconds lead time when predictive mode is enabled
@@ -163,13 +161,25 @@ export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
   
   // Disable drive mode
-  const disableDriveMode = useCallback(() => {
+  const disableDriveMode = useCallback(async () => {
     setIsDriveModeEnabled(false);
     setIsAutoEnabled(false);
     
     // Stop any current playback
     if (currentPlayback) {
-      stopPlayback();
+      await stopPlayback();
+    }
+    
+    // Clear the queue
+    setPlaybackQueue([]);
+    
+    // Resume other audio when Drive Mode is disabled
+    try {
+      const { AudioPlayerUtils } = await import('../utils/audioPlayerUtils');
+      await AudioPlayerUtils.resumeOtherAudio();
+      console.log('🔊 Drive Mode disabled - resumed other audio');
+    } catch (error) {
+      console.warn('Could not resume other audio:', error);
     }
     
     // Clear stop timer
@@ -186,9 +196,11 @@ export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!isDriveModeEnabled) return;
     
     try {
-      // Stop any current playback
+      // If something is already playing, add to queue instead of interrupting
       if (currentPlayback) {
-        stopPlayback();
+        setPlaybackQueue(prev => [...prev, vostcard]);
+        console.log(`📋 Added "${vostcard.title}" to Drive Mode queue (${playbackQueue.length + 1} items)`);
+        return;
       }
       
       let audioSrc = '';
@@ -240,7 +252,7 @@ export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           totalPlayTime: prev.totalPlayTime + playTime
         }));
         
-        // Auto-play next in queue
+        // Auto-play next in queue (skipToNext handles resuming other audio if queue is empty)
         skipToNext();
       };
       
@@ -264,7 +276,7 @@ export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [currentPlayback]);
   
-  const stopPlayback = useCallback(() => {
+  const stopPlayback = useCallback(async () => {
     if (currentPlayback?.audioElement) {
       currentPlayback.audioElement.pause();
       currentPlayback.audioElement.currentTime = 0;
@@ -277,17 +289,42 @@ export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     
     setCurrentPlayback(null);
     playbackStartTime.current = null;
-  }, [currentPlayback]);
+    
+    // Resume other audio if queue is empty (Drive Mode session ending)
+    if (playbackQueue.length === 0) {
+      try {
+        // Import AudioPlayerUtils dynamically to avoid circular imports
+        const { AudioPlayerUtils } = await import('../utils/audioPlayerUtils');
+        await AudioPlayerUtils.resumeOtherAudio();
+        console.log('🔊 Drive Mode session ended - resumed other audio');
+      } catch (error) {
+        console.warn('Could not resume other audio:', error);
+      }
+    }
+  }, [currentPlayback, playbackQueue.length]);
   
-  const skipToNext = useCallback(() => {
+  const skipToNext = useCallback(async () => {
     if (playbackQueue.length > 0) {
       const nextVostcard = playbackQueue[0];
       setPlaybackQueue(prev => prev.slice(1));
+      
+      // Stop current playback without resuming other audio (next item will play)
+      if (currentPlayback?.audioElement) {
+        currentPlayback.audioElement.pause();
+        currentPlayback.audioElement.currentTime = 0;
+        if (currentPlayback.audioElement.src.startsWith('blob:')) {
+          URL.revokeObjectURL(currentPlayback.audioElement.src);
+        }
+      }
+      setCurrentPlayback(null);
+      
+      // Start next drivecard
       playVostcardAudio(nextVostcard, false);
     } else {
-      stopPlayback();
+      // No more items in queue - stop and resume other audio
+      await stopPlayback();
     }
-  }, [playbackQueue, playVostcardAudio, stopPlayback]);
+  }, [playbackQueue, playVostcardAudio, stopPlayback, currentPlayback]);
   
   // Check for nearby vostcards with Drive Mode category
   const checkNearbyVostcards = useCallback(async (userLocation: { latitude: number; longitude: number }): Promise<Vostcard[]> => {
@@ -302,16 +339,11 @@ export const DriveModeProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return [];
   }, []);
   
-  // Trigger a nearby vostcard
+  // Trigger a nearby vostcard  
   const triggerNearbyVostcard = useCallback((vostcard: Vostcard) => {
-    // Add to queue if something is already playing
-    if (currentPlayback) {
-      setPlaybackQueue(prev => [...prev, vostcard]);
-      console.log(`📋 Added "${vostcard.title}" to Drive Mode queue`);
-    } else {
-      playVostcardAudio(vostcard, true);
-    }
-  }, [currentPlayback, playVostcardAudio]);
+    // The playVostcardAudio function now handles queuing automatically
+    playVostcardAudio(vostcard, true);
+  }, [playVostcardAudio]);
   
   // Calculate average speed for stats
   const averageSpeed = speedHistory.current.length > 0 

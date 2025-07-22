@@ -34,6 +34,7 @@ export interface AudioPlaybackEvents {
 export class AudioPlayerUtils {
   private static activeAudioElements: Map<string, HTMLAudioElement> = new Map();
   private static globalVolume: number = 0.8; // Default volume for driving safety
+  private static otherAudioPaused: boolean = false; // Track if we paused external audio
 
   /**
    * Extract and play audio from a vostcard
@@ -50,6 +51,9 @@ export class AudioPlayerUtils {
         throw new Error('No audio source available for playback');
       }
 
+      // Pause all other audio sources (Spotify, podcasts, etc.)
+      await this.pauseAllOtherAudio();
+
       // Stop any existing audio for this vostcard
       await this.stopVostcardAudio(vostcard.id);
 
@@ -60,10 +64,13 @@ export class AudioPlayerUtils {
       // Store reference for management
       this.activeAudioElements.set(vostcard.id, audioElement);
 
+      // Set up Media Session API for system integration
+      this.setupMediaSession(vostcard, audioElement);
+
       // Attempt to play
       await audioElement.play();
 
-      console.log(`🔊 Started audio playback for vostcard: "${vostcard.title}"`);
+      console.log(`🔊 Started audio playback for vostcard: "${vostcard.title}" (paused other audio)`);
       return audioElement;
 
     } catch (error) {
@@ -184,12 +191,123 @@ export class AudioPlayerUtils {
   }
 
   /**
+   * Pause all other audio sources (Spotify, podcasts, etc.) using Media Session API
+   */
+  static async pauseAllOtherAudio(): Promise<void> {
+    try {
+      // Use Media Session API to request audio focus
+      if ('mediaSession' in navigator) {
+        // Set minimal metadata to claim audio focus
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: 'Drive Mode',
+          artist: 'Vostcard',
+          album: 'Navigation Audio'
+        });
+
+        // Set playback state to playing to claim audio focus
+        navigator.mediaSession.playbackState = 'playing';
+        
+        this.otherAudioPaused = true;
+        console.log('🔇 Paused other audio sources for Drive Mode');
+      }
+
+      // Additional fallback: Try to pause all audio elements on the page
+      const allAudioElements = document.querySelectorAll('audio, video');
+      allAudioElements.forEach((element) => {
+        if (element instanceof HTMLAudioElement || element instanceof HTMLVideoElement) {
+          // Only pause if it's not one of our Drive Mode audio elements
+          const isOurElement = Array.from(this.activeAudioElements.values()).includes(element as HTMLAudioElement);
+          if (!isOurElement && !element.paused) {
+            element.pause();
+            console.log('🔇 Paused external audio/video element');
+          }
+        }
+      });
+
+    } catch (error) {
+      console.warn('Could not pause other audio sources:', error);
+    }
+  }
+
+  /**
+   * Resume other audio sources when Drive Mode finishes
+   */
+  static async resumeOtherAudio(): Promise<void> {
+    try {
+      if ('mediaSession' in navigator && this.otherAudioPaused) {
+        // Release audio focus
+        navigator.mediaSession.playbackState = 'none';
+        
+        this.otherAudioPaused = false;
+        console.log('🔊 Released audio focus - other apps can resume');
+      }
+    } catch (error) {
+      console.warn('Could not resume other audio sources:', error);
+    }
+  }
+
+  /**
+   * Set up Media Session API for system integration
+   */
+  static setupMediaSession(vostcard: Vostcard, audioElement: HTMLAudioElement): void {
+    if ('mediaSession' in navigator) {
+      try {
+        // Set metadata for system media controls
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: vostcard.title || 'Drivecard',
+          artist: vostcard.username || 'Unknown',
+          album: 'Drive Mode',
+          artwork: [
+            {
+              src: '/icons/android-chrome-192x192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            }
+          ]
+        });
+
+        // Set playback state
+        navigator.mediaSession.playbackState = 'playing';
+
+        // Handle system media controls
+        navigator.mediaSession.setActionHandler('play', () => {
+          audioElement.play();
+        });
+
+        navigator.mediaSession.setActionHandler('pause', () => {
+          audioElement.pause();
+        });
+
+        navigator.mediaSession.setActionHandler('stop', () => {
+          audioElement.pause();
+          audioElement.currentTime = 0;
+        });
+
+        // Handle seeking (if supported)
+        navigator.mediaSession.setActionHandler('seekto', (details) => {
+          if (details.seekTime !== undefined) {
+            audioElement.currentTime = details.seekTime;
+          }
+        });
+
+        console.log('🎛️ Media Session configured for Drive Mode');
+      } catch (error) {
+        console.warn('Could not set up Media Session:', error);
+      }
+    }
+  }
+
+  /**
    * Stop all active audio playback
    */
   static async stopAllAudio(): Promise<void> {
     const promises = Array.from(this.activeAudioElements.keys()).map(id => this.stopVostcardAudio(id));
     await Promise.all(promises);
-    console.log('🔊 Stopped all audio playback');
+    
+    // Resume other audio when stopping all our audio
+    await this.resumeOtherAudio();
+    
+    console.log('🔊 Stopped all audio playback and resumed other apps');
   }
 
   /**

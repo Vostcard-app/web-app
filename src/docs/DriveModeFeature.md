@@ -132,7 +132,6 @@ interface DriveModeSettings {
   autoEnableSpeed: number;      // Auto-enable speed (15-45 mph)
   triggerDistance: number;      // Trigger distance (0.1-1.0 miles)
   autoDisableAfterStop: number; // Auto-disable delay (minutes)
-  allowManualOverride: boolean; // Allow manual control
 }
 ```
 

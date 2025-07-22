@@ -174,6 +174,22 @@ const DriveModeSettingsView: React.FC = () => {
           {/* Settings Section */}
           {activeSection === 'settings' && (
             <div style={{ padding: '20px' }}>
+              {/* Settings Overview */}
+              <div style={{
+                backgroundColor: '#e8f4fd',
+                padding: '16px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                border: '1px solid #bee5eb'
+              }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#0c5460', fontSize: '16px' }}>
+                  🚗 Drive Mode Settings
+                </h4>
+                <p style={{ margin: 0, fontSize: '13px', color: '#0c5460', lineHeight: '1.4' }}>
+                  <strong>System Activation</strong> controls when Drive Mode turns on/off automatically.<br/>
+                  <strong>Content Triggering</strong> controls when individual drivecards play during Drive Mode.
+                </p>
+              </div>
               {/* Main Drive Mode Toggle */}
               <div style={{
                 backgroundColor: isDriveModeEnabled ? '#4CAF50' : '#f8f9fa',
@@ -241,14 +257,17 @@ const DriveModeSettingsView: React.FC = () => {
                 )}
               </div>
 
-              {/* Auto-Enable Settings */}
+              {/* System Activation Settings */}
               <div style={{
                 backgroundColor: '#f8f9fa',
                 padding: '20px',
                 borderRadius: '12px',
                 marginBottom: '20px'
               }}>
-                <h4 style={{ margin: '0 0 15px 0', color: '#002B4D' }}>⚡ Auto-Enable Settings</h4>
+                <h4 style={{ margin: '0 0 15px 0', color: '#002B4D' }}>⚡ Drive Mode Activation</h4>
+                <p style={{ fontSize: '14px', color: '#666', margin: '0 0 15px 0' }}>
+                  Controls when Drive Mode automatically turns on and off
+                </p>
                 
                 <label style={{ 
                   display: 'flex', 
@@ -329,7 +348,7 @@ const DriveModeSettingsView: React.FC = () => {
                 )}
               </div>
 
-              {/* Trigger Mode Settings */}
+              {/* Content Triggering Settings */}
               <div style={{
                 backgroundColor: '#f8f9fa',
                 padding: '20px',
@@ -338,10 +357,13 @@ const DriveModeSettingsView: React.FC = () => {
               }}>
                 <h4 style={{ margin: '0 0 15px 0', color: '#002B4D' }}>
                   <FaMapMarkerAlt style={{ marginRight: '8px' }} />
-                  Trigger Mode
+                  Content Triggering
                 </h4>
+                <p style={{ fontSize: '14px', color: '#666', margin: '0 0 15px 0' }}>
+                  Controls when individual drivecards play during Drive Mode
+                </p>
                 
-                {/* Trigger Mode Toggle */}
+                {/* Content Triggering Method */}
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ 
                     display: 'flex', 
@@ -352,14 +374,17 @@ const DriveModeSettingsView: React.FC = () => {
                   }}>
                     <input
                       type="radio"
-                      name="triggerMode"
+                      name="triggerMethod"
                       checked={!settings.usePredictiveTrigger}
                       onChange={() => updateSettings({ usePredictiveTrigger: false })}
                     />
                     <span style={{ fontSize: '16px', fontWeight: '500' }}>
-                      📏 Fixed Distance Mode
+                      📏 Fixed Distance
                     </span>
                   </label>
+                  <p style={{ fontSize: '12px', color: '#666', margin: '0 0 10px 30px' }}>
+                    Always triggers drivecards when you're within a set distance
+                  </p>
                   
                   <label style={{ 
                     display: 'flex', 
@@ -369,14 +394,17 @@ const DriveModeSettingsView: React.FC = () => {
                   }}>
                     <input
                       type="radio"
-                      name="triggerMode"
+                      name="triggerMethod"
                       checked={settings.usePredictiveTrigger}
                       onChange={() => updateSettings({ usePredictiveTrigger: true })}
                     />
                     <span style={{ fontSize: '16px', fontWeight: '500' }}>
-                      🚗 Predictive Mode (Speed-Based)
+                      🚗 Predictive Timing
                     </span>
                   </label>
+                  <p style={{ fontSize: '12px', color: '#666', margin: '0 0 15px 30px' }}>
+                    Calculates your speed and triggers content ahead of time for perfect timing
+                  </p>
                 </div>
 
                 {/* Fixed Distance Settings */}
@@ -552,36 +580,7 @@ const DriveModeSettingsView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Override Settings */}
-              <div style={{
-                backgroundColor: '#f8f9fa',
-                padding: '20px',
-                borderRadius: '12px',
-                marginBottom: '20px'
-              }}>
-                <h4 style={{ margin: '0 0 15px 0', color: '#002B4D' }}>🛡️ Safety Settings</h4>
-                
-                <label style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '10px',
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={settings.allowManualOverride}
-                    onChange={(e) => updateSettings({ allowManualOverride: e.target.checked })}
-                    style={{ transform: 'scale(1.2)' }}
-                  />
-                  <span style={{ fontSize: '16px', fontWeight: '500' }}>
-                    Allow manual override while driving
-                  </span>
-                </label>
-                
-                <div style={{ fontSize: '12px', color: '#666', marginTop: '8px', paddingLeft: '20px' }}>
-                  Enables manual control of Drive Mode during active sessions
-                </div>
-              </div>
+
 
 
             </div>
@@ -762,18 +761,18 @@ const DriveModeSettingsView: React.FC = () => {
                 <h4 style={{ margin: '0 0 15px 0', color: '#002B4D' }}>🚗 How Drive Mode Works</h4>
                 
                 <ol style={{ paddingLeft: '20px', fontSize: '14px', color: '#333', lineHeight: '1.6' }}>
-                  <li><strong>Speed Detection:</strong> Automatically enables at your set speed threshold (default 25+ mph)</li>
-                  <li><strong>Location Monitoring:</strong> Continuously tracks GPS location while active</li>
-                  <li><strong>Smart Triggering:</strong> 
+                  <li><strong>System Activation:</strong> Automatically turns on at your set speed threshold (default 25+ mph) and turns off after stopping</li>
+                  <li><strong>Location Monitoring:</strong> Continuously tracks GPS location while Drive Mode is active</li>
+                  <li><strong>Content Triggering:</strong> 
                     <ul style={{ marginTop: '4px', paddingLeft: '16px' }}>
-                      <li><strong>Fixed Distance:</strong> Triggers when within set radius of drivecards</li>
-                      <li><strong>Predictive Mode:</strong> Calculates your speed and triggers content ahead of time (15-60 seconds before arrival)</li>
+                      <li><strong>Fixed Distance:</strong> Plays drivecards when you're within a set radius</li>
+                      <li><strong>Predictive Timing:</strong> Calculates your speed and starts content ahead of time for perfect timing</li>
                     </ul>
                   </li>
-                  <li><strong>Category Filtering:</strong> Only triggers content marked with "Drive Mode" category</li>
-                  <li><strong>Audio-only Playback:</strong> Extracts audio from video for safe driving</li>
-                  <li><strong>Queue Management:</strong> Multiple nearby vostcards are queued automatically</li>
-                  <li><strong>Safety Features:</strong> Auto-stops when parked for the set duration</li>
+                  <li><strong>Category Filtering:</strong> Excludes unwanted content categories from playback</li>
+                  <li><strong>Audio-only Playback:</strong> Extracts audio from video for safe hands-free driving</li>
+                  <li><strong>Queue Management:</strong> Handles multiple nearby drivecards automatically</li>
+                  <li><strong>Safety Features:</strong> Auto-disables when you stop driving for extended periods</li>
                 </ol>
               </div>
 

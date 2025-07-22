@@ -79,7 +79,8 @@ const HomeView = () => {
     clearVostcard, 
     loadLocalVostcard, 
     savedVostcards, 
-    loadAllLocalVostcardsImmediate 
+    loadAllLocalVostcardsImmediate,
+    createQuickcard
   } = useVostcard();
   const { user, username, userID, userRole, loading } = useAuth();
   const { isDesktop } = useResponsive();
@@ -367,7 +368,7 @@ const HomeView = () => {
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
     fileInput.capture = 'environment';
-    fileInput.onchange = (event) => {
+    fileInput.onchange = async (event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       
       if (!file) {
@@ -375,18 +376,57 @@ const HomeView = () => {
         return;
       }
       
-      if (file.type.startsWith('image/')) {
-        console.log('📸 Valid image file selected:', {
-          name: file.name,
-          type: file.type,
-          size: file.size
-        });
-        
-        navigate('/camera?mode=quickcard', {
-          state: { photoFile: file }
-        });
-      } else {
+      if (!file.type.startsWith('image/')) {
         alert('Please select a valid image file');
+        return;
+      }
+
+      console.log('📸 Valid image file selected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
+      // Get user location
+      try {
+        console.log('📍 Getting user location for quickcard...');
+        
+        if (!navigator.geolocation) {
+          alert('Geolocation is not supported by this browser');
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLocation = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+
+            console.log('📍 Location obtained:', userLocation);
+
+            // Convert File to Blob for compatibility
+            const photoBlob = new Blob([file], { type: file.type });
+            
+            // Create quickcard with photo and location
+            createQuickcard(photoBlob, userLocation);
+            
+            // Navigate directly to step 3
+            navigate('/quickcard-step3');
+          },
+          (error) => {
+            console.error('❌ Geolocation error:', error);
+            alert('Unable to get your location. Please enable location services and try again.');
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          }
+        );
+      } catch (error) {
+        console.error('❌ Error getting location:', error);
+        alert('Failed to get location. Please try again.');
       }
     };
     

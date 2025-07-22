@@ -13,6 +13,23 @@ const VostcardStudioView: React.FC = () => {
   const { user, userRole } = useAuth();
   const { loadQuickcard } = useVostcardEdit();
   
+  // Categories from step 3
+  const availableCategories = [
+    'None',
+    'Landmark',
+    'Fun Fact',
+    'Macabre',
+    'Architecture',
+    'Historical',
+    'Museum',
+    'Gallery',
+    'Restaurant',
+    'Nature',
+    'Drive Mode Event',
+    'Wish you were here',
+    'Made for kids',
+  ];
+  
   const canAccessDrivecard = userRole === 'guide' || userRole === 'admin';
   
   // Check if we're editing a drivecard from the library
@@ -39,6 +56,7 @@ const VostcardStudioView: React.FC = () => {
   const [quickcardAudio, setQuickcardAudio] = useState<Blob | null>(null);
   const [quickcardAudioSource, setQuickcardAudioSource] = useState<'recording' | 'file' | null>(null);
   const [quickcardAudioFileName, setQuickcardAudioFileName] = useState<string | null>(null);
+  const [quickcardCategory, setQuickcardCategory] = useState('None');
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -51,6 +69,7 @@ const VostcardStudioView: React.FC = () => {
     longitude: number;
     address?: string;
   } | null>(null);
+  const [drivecardCategory, setDrivecardCategory] = useState('None');
 
   // Audio recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -92,6 +111,7 @@ const VostcardStudioView: React.FC = () => {
             
             // Pre-populate form fields
             setTitle(drivecard.title);
+            setDrivecardCategory(drivecard.category || 'None');
             
             if (drivecard.geo) {
               setSelectedLocation({
@@ -233,6 +253,7 @@ const VostcardStudioView: React.FC = () => {
         const updatedDrivecard: Drivecard = {
           ...editingDrivecard,
           title: title.trim(),
+          category: drivecardCategory,
           geo: { 
             latitude: selectedLocation.latitude, 
             longitude: selectedLocation.longitude,
@@ -267,7 +288,7 @@ const VostcardStudioView: React.FC = () => {
             longitude: selectedLocation.longitude,
             address: selectedLocation.address 
           },
-          category: 'Drive mode',
+          category: drivecardCategory,
           userID: user.uid,
           username: user.displayName || user.email?.split('@')[0] || 'Anonymous',
           createdAt: new Date().toISOString(),
@@ -280,6 +301,7 @@ const VostcardStudioView: React.FC = () => {
         // Clear form for creating another
         setTitle('');
         setSelectedLocation(null);
+        setDrivecardCategory('None');
         clearRecording();
       }
       
@@ -295,7 +317,8 @@ const VostcardStudioView: React.FC = () => {
       title: title,
       audio: audioBlob ? 'hasAudio' : null,
       audioSource: audioSource,
-      audioFileName: audioFileName
+      audioFileName: audioFileName,
+      category: drivecardCategory
     }));
 
     navigate('/pin-placer', {
@@ -332,6 +355,7 @@ const VostcardStudioView: React.FC = () => {
         if (creatorState) {
           const state = JSON.parse(creatorState);
           setTitle(state.title || '');
+          setDrivecardCategory(state.category || 'None');
           sessionStorage.removeItem('drivecardCreatorState');
         }
       } catch (error) {
@@ -350,6 +374,7 @@ const VostcardStudioView: React.FC = () => {
         if (creatorState) {
           const state = JSON.parse(creatorState);
           setQuickcardTitle(state.title || '');
+          setQuickcardCategory(state.category || 'None');
           setShowQuickcardCreator(true);
           sessionStorage.removeItem('quickcardCreatorState');
         }
@@ -390,6 +415,7 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardAudio(null);
     setQuickcardAudioSource(null);
     setQuickcardAudioFileName(null);
+    setQuickcardCategory('None');
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -417,7 +443,8 @@ const VostcardStudioView: React.FC = () => {
       photo: quickcardPhoto ? 'hasPhoto' : null,
       audio: quickcardAudio ? 'hasAudio' : null,
       audioSource: quickcardAudioSource,
-      audioFileName: quickcardAudioFileName
+      audioFileName: quickcardAudioFileName,
+      category: quickcardCategory
     }));
     
     navigate('/pin-placer', {
@@ -464,7 +491,7 @@ const VostcardStudioView: React.FC = () => {
         description: '', // Can be added later in advanced editor
         photos: [quickcardPhoto],
         audio: quickcardAudio,
-        categories: [],
+        categories: [quickcardCategory],
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
@@ -869,6 +896,40 @@ const VostcardStudioView: React.FC = () => {
               </div>
             )}
 
+            {/* Category Selection */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ 
+                display: 'block',
+                marginBottom: '5px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: '#333'
+              }}>
+                Category
+              </label>
+              <select
+                value={quickcardCategory}
+                onChange={(e) => setQuickcardCategory(e.target.value)}
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '18px',
+                  backgroundColor: 'white',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                {availableCategories.map(category => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Save/Update Button */}
             <button 
               onClick={handleSaveQuickcard}
@@ -1169,6 +1230,40 @@ const VostcardStudioView: React.FC = () => {
                 </div>
               </div>
             )}
+
+            {/* Category Selection */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ 
+                display: 'block',
+                marginBottom: '5px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: '#333'
+              }}>
+                Category
+              </label>
+              <select
+                value={drivecardCategory}
+                onChange={(e) => setDrivecardCategory(e.target.value)}
+                disabled={isLoading || isRecording}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '18px',
+                  backgroundColor: 'white',
+                  cursor: (isLoading || isRecording) ? 'not-allowed' : 'pointer',
+                  opacity: (isLoading || isRecording) ? 0.6 : 1
+                }}
+              >
+                {availableCategories.map(category => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Save/Update Button */}
             <button 
