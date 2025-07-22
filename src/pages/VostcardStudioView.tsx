@@ -1258,6 +1258,23 @@ const VostcardStudioView: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Hidden File Inputs for Quickcard Creator */}
+        <input
+          id="quickcard-photo-input"
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoUpload}
+          style={{ display: 'none' }}
+        />
+        
+        <input
+          id="quickcard-audio-input"
+          type="file"
+          accept="audio/*"
+          onChange={handleQuickcardAudioUpload}
+          style={{ display: 'none' }}
+        />
       </div>
     </div>
   );
