@@ -532,80 +532,13 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handleQuickcardPinPlacer = () => {
-    console.log('🗺️ Pin placer button clicked!'); // Debug log
-    
-    // ✅ Fixed: Store photo and audio as base64 in sessionStorage
-    const storeFileAsBase64 = async (file: Blob | File): Promise<string> => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-    };
-
-    const prepareStateForStorage = async () => {
-      console.log('📦 Preparing state for storage...'); // Debug log
-      
-      const state: any = {
-        title: quickcardTitle,
-        categories: quickcardCategories,
-        audioSource: quickcardAudioSource,
-        audioFileName: quickcardAudioFileName
-      };
-
-      // ✅ Convert photos to base64 if they exist
-      if (quickcardPhotos.length > 0) {
-        try {
-          console.log('📸 Converting photos to base64...', quickcardPhotos.length); // Debug log
-          const base64Photos: string[] = await Promise.all(quickcardPhotos.map(storeFileAsBase64));
-          state.photoBase64 = JSON.stringify(base64Photos);
-          state.photoTypes = quickcardPhotos.map(photo => photo.type || 'image/jpeg');
-          console.log('✅ Photos converted to base64 for storage');
-        } catch (error) {
-          console.error('❌ Failed to convert photos to base64:', error);
-        }
+    // Very simple - just navigate without complex state storage
+    navigate('/pin-placer', {
+      state: {
+        returnTo: '/studio',
+        quickcardCreation: true,
+        title: quickcardTitle || 'New Quickcard'
       }
-
-      // ✅ Convert audio to base64 if exists
-      if (quickcardAudio) {
-        try {
-          console.log('🎵 Converting audio to base64...'); // Debug log
-          state.audioBase64 = await storeFileAsBase64(quickcardAudio);
-          state.audioType = quickcardAudio.type;
-          console.log('✅ Audio converted to base64 for storage');
-        } catch (error) {
-          console.error('❌ Failed to convert audio to base64:', error);
-        }
-      }
-
-      // Store in sessionStorage
-      sessionStorage.setItem('quickcardCreatorState', JSON.stringify(state));
-      console.log('💾 State stored in sessionStorage'); // Debug log
-      
-      // Navigate to pin placer
-      console.log('🗺️ Navigating to pin placer...'); // Debug log
-      navigate('/pin-placer', {
-        state: {
-          returnTo: '/studio',
-          quickcardCreation: true,
-          title: quickcardTitle || 'New Quickcard',
-          pinData: {
-            id: 'temp_quickcard',
-            title: quickcardTitle || 'New Quickcard',
-            description: 'Quickcard location',
-            latitude: quickcardLocation?.latitude || 40.7128,
-            longitude: quickcardLocation?.longitude || -74.0060,
-            isOffer: false,
-            isQuickcard: true
-          }
-        }
-      });
-    };
-
-    // Call the async function
-    prepareStateForStorage().catch(error => {
-      console.error('❌ Error in pin placer preparation:', error);
-      alert('Error preparing for pin placement. Please try again.');
     });
   };
 
