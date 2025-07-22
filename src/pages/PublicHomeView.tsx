@@ -7,7 +7,8 @@ import { FaHome, FaPlus, FaMinus, FaLocationArrow, FaArrowLeft, FaInfoCircle } f
 import { useAuth } from '../context/AuthContext';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
-import QuickcardPin from '../assets/quickcard_pin.png'; // Add quickcard pin import
+import QuickcardPin from '../assets/quickcard_pin.png';
+import GuidePin from '../assets/Guide_pin.svg';
 
 // Custom icons for the map
 const vostcardIcon = new L.Icon({
@@ -27,6 +28,14 @@ const offerIcon = new L.Icon({
 // Add quickcard icon
 const quickcardIcon = new L.Icon({
   iconUrl: QuickcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+// Add guide icon
+const guideIcon = new L.Icon({
+  iconUrl: GuidePin,
   iconSize: [75, 75],
   iconAnchor: [37.5, 75],
   popupAnchor: [0, -75],
@@ -154,8 +163,18 @@ const PublicHomeView: React.FC = () => {
 
   // Function to get the correct icon
   const getIcon = () => {
-    if (isQuickcard) return quickcardIcon;
     if (isOffer) return offerIcon;
+    // For quickcards, check user role to determine correct pin
+    if (isQuickcard) {
+      // If the quickcard is posted by a guide or admin, use Guide_pin
+      if (singleVostcard.userRole === 'guide' || singleVostcard.userRole === 'admin') {
+        return guideIcon;
+      }
+      // Otherwise, use regular Vostcard_pin for user quickcards
+      return vostcardIcon;
+    }
+    // For regular vostcards, check if posted by guide
+    if (singleVostcard.userRole === 'guide') return guideIcon;
     return vostcardIcon;
   };
 

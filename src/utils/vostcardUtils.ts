@@ -96,7 +96,13 @@ export const formatTimeAgo = (timestamp: number): string => {
  */
 export const getVostcardIconType = (vostcard: Partial<Vostcard | FirebaseVostcard>): string => {
   if (vostcard.isOffer) return 'offer';
-  if (vostcard.isQuickcard) return 'quickcard';
+  // For quickcards, check user role first to determine correct pin
+  if (vostcard.isQuickcard) {
+    // If the quickcard is posted by a guide or admin, use guide pin
+    if (vostcard.userRole === 'guide' || vostcard.userRole === 'admin') return 'guide';
+    // Otherwise, use regular vostcard pin for user quickcards
+    return 'vostcard';
+  }
   if (vostcard.userRole === 'guide') return 'guide';
   return 'vostcard';
 };

@@ -20,7 +20,7 @@ import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.svg';
 import QuickcardPin from '../assets/quickcard_pin.png';
-import InfoPin from '../assets/Info_pin.png';
+
 
 // FIXED: Import pin images from assets folder for better Leaflet compatibility
 const vostcardIcon = new L.Icon({
@@ -51,12 +51,12 @@ const quickcardIcon = new L.Icon({
   popupAnchor: [0, -75],
 });
 
-// FIXED: Import user location icon from assets folder
+// Blue dot icon for user location
 const userIcon = new L.Icon({
-  iconUrl: InfoPin,
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
-  popupAnchor: [0, -50],
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiLz4KPC9zdmc+',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
 });
 
 // MapUpdater component
@@ -336,7 +336,13 @@ const HomeView = () => {
 
   const getVostcardIcon = (isOffer: boolean, userRole?: string, isQuickcard?: boolean) => {
     if (isOffer) return offerIcon;
-    if (isQuickcard) return quickcardIcon;
+    // For quickcards, check user role first to determine correct pin
+    if (isQuickcard) {
+      // If the quickcard is posted by a guide or admin, use Guide_pin
+      if (userRole === 'guide' || userRole === 'admin') return guideIcon;
+      // Otherwise, use regular Vostcard_pin for user quickcards
+      return vostcardIcon;
+    }
     if (userRole === 'guide') return guideIcon;
     return vostcardIcon;
   };
@@ -387,46 +393,49 @@ const HomeView = () => {
         size: file.size
       });
 
-      // Get user location
-      try {
-        console.log('📍 Getting user location for quickcard...');
-        
-        if (!navigator.geolocation) {
-          alert('Geolocation is not supported by this browser');
-          return;
-        }
+      // Convert File to Blob for compatibility
+      const photoBlob = new Blob([file], { type: file.type });
 
+      // Helper function to create quickcard and navigate
+      const createAndNavigate = (location?: { latitude: number; longitude: number }) => {
+        if (location) {
+          createQuickcard(photoBlob, location);
+          console.log('✅ Quickcard created with location, navigating to step 3');
+        } else {
+          // Create quickcard without location - user can set it later in step 3
+          createQuickcard(photoBlob, { latitude: 0, longitude: 0 });
+          console.log('✅ Quickcard created without location, navigating to step 3');
+        }
+        navigate('/quickcard-step3');
+      };
+
+      // Try to get user location, but don't block navigation if it fails
+      if (navigator.geolocation) {
+        console.log('📍 Attempting to get user location for quickcard...');
+        
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const userLocation = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude
             };
-
             console.log('📍 Location obtained:', userLocation);
-
-            // Convert File to Blob for compatibility
-            const photoBlob = new Blob([file], { type: file.type });
-            
-            // Create quickcard with photo and location
-            createQuickcard(photoBlob, userLocation);
-            
-            // Navigate directly to step 3
-            navigate('/quickcard-step3');
+            createAndNavigate(userLocation);
           },
           (error) => {
-            console.error('❌ Geolocation error:', error);
-            alert('Unable to get your location. Please enable location services and try again.');
+            console.warn('⚠️ Geolocation failed, proceeding without location:', error);
+            // Don't show error alert - just proceed to step 3 where user can set location
+            createAndNavigate();
           },
           {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000
+            enableHighAccuracy: false, // Use less accurate but faster location
+            timeout: 5000, // Shorter timeout
+            maximumAge: 300000 // 5 minutes cache
           }
         );
-      } catch (error) {
-        console.error('❌ Error getting location:', error);
-        alert('Failed to get location. Please try again.');
+      } else {
+        console.log('📍 Geolocation not supported, proceeding without location');
+        createAndNavigate();
       }
     };
     
