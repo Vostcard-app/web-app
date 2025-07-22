@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -39,11 +39,8 @@ const QuickcardDetailView: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [showSharedOptions, setShowSharedOptions] = useState(false);
 
-  // Audio player state
+  // Simplified audio player state - just play/pause
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(0);
-  const [audioDuration, setAudioDuration] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -128,24 +125,13 @@ const QuickcardDetailView: React.FC = () => {
     }
   }, [quickcard?.userID]);
 
-  // Audio player effects
+  // Simplified audio player effects
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const updateTime = () => {
-      setCurrentTime(audio.currentTime);
-      setAudioProgress((audio.currentTime / audio.duration) * 100);
-    };
-
-    const handleLoadedMetadata = () => {
-      setAudioDuration(audio.duration);
-    };
-
     const handleEnded = () => {
       setIsPlaying(false);
-      setAudioProgress(0);
-      setCurrentTime(0);
     };
 
     const handleError = () => {
@@ -153,14 +139,10 @@ const QuickcardDetailView: React.FC = () => {
       setIsPlaying(false);
     };
 
-    audio.addEventListener('timeupdate', updateTime);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
     return () => {
-      audio.removeEventListener('timeupdate', updateTime);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
@@ -218,27 +200,6 @@ const QuickcardDetailView: React.FC = () => {
     }
   };
 
-  const handleAudioSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current;
-    if (!audio || !audioDuration) return;
-
-    const progressBar = e.currentTarget;
-    const rect = progressBar.getBoundingClientRect();
-    const clickPosition = e.clientX - rect.left;
-    const progressWidth = rect.width;
-    const clickPercentage = clickPosition / progressWidth;
-    const newTime = clickPercentage * audioDuration;
-
-    audio.currentTime = newTime;
-  };
-
-  const formatTime = (time: number): string => {
-    if (!time || isNaN(time)) return '0:00';
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
   const handleRefresh = () => {
     window.location.reload();
   };
@@ -247,10 +208,10 @@ const QuickcardDetailView: React.FC = () => {
     alert('Flag functionality not implemented yet');
   };
 
-  // Check if quickcard has audio - updated to include Firebase audioURL
+  // Check if quickcard has audio
   const hasAudio = quickcard?.audioURL || quickcard?.audioURLs?.length > 0;
 
-  // Add debug logging for audio detection
+  // Debug logging for audio detection
   useEffect(() => {
     if (quickcard) {
       console.log('🎵 AUDIO DEBUG - Quickcard data:', {
@@ -337,10 +298,10 @@ const QuickcardDetailView: React.FC = () => {
         WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Header - Reduced height by 15px */}
+      {/* Header */}
       <div style={{ 
         background: '#07345c', 
-        padding: '15px 16px 9px 16px', // ✅ Reduced bottom padding from 24px to 9px (15px reduction)
+        padding: '15px 16px 9px 16px',
         position: 'fixed', 
         top: 0,
         left: 0,
@@ -390,13 +351,13 @@ const QuickcardDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* User Info - Increased top padding by 10px */}
+      {/* User Info */}
       <div style={{ 
-        padding: '15px 20px 5px 20px', // ✅ Changed from '5px 20px' to '15px 20px 5px 20px' (10px more top padding)
+        padding: '15px 20px 5px 20px',
         display: 'flex', 
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: '63px', // Kept the same after banner height reduction
+        marginTop: '63px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{ 
@@ -580,7 +541,7 @@ const QuickcardDetailView: React.FC = () => {
         </button>
       </div>
 
-      {/* Counts Row - Adjust for dynamic number of buttons */}
+      {/* Counts Row */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -604,7 +565,6 @@ const QuickcardDetailView: React.FC = () => {
         justifyContent: 'center',
         alignItems: 'center'
       }}>
-        {/* Flag Icon - px from left */}
         <button
           onClick={handleFlag}
           style={{
@@ -619,7 +579,6 @@ const QuickcardDetailView: React.FC = () => {
           <FaFlag size={24} />
         </button>
         
-        {/* Description Link - Centered */}
         <div
           onClick={() => setShowDescriptionModal(true)}
           style={{
@@ -637,7 +596,6 @@ const QuickcardDetailView: React.FC = () => {
           Description
         </div>
 
-        {/* Refresh Button - 20px from right */}
         <button
           onClick={handleRefresh}
           style={{
@@ -689,7 +647,6 @@ const QuickcardDetailView: React.FC = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Map Header */}
             <div style={{
               background: '#07345c',
               color: 'white',
@@ -713,7 +670,6 @@ const QuickcardDetailView: React.FC = () => {
               </button>
             </div>
 
-            {/* Map Container */}
             <div style={{ height: 'calc(100% - 68px)', width: '100%' }}>
               <MapContainer
                 center={[quickcard.latitude, quickcard.longitude]}
