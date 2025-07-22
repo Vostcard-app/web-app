@@ -756,128 +756,184 @@ ${privateUrl}`);
           {title || 'Untitled'}
         </div>
 
-        {/* Video/Photo Display */}
+        {/* Video/Photo Display - Check if this is actually a quickcard */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: '16px' }}>
-          <div 
-            style={{ 
-              width: 180, 
-              height: 240, 
-              background: '#111', 
-              borderRadius: 16, 
-              overflow: 'hidden', 
-              cursor: videoURL ? 'pointer' : 'default',
-              position: 'relative'
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (videoURL) setShowVideoModal(true);
-            }}
-          >
-            {videoURL ? (
-              <>
-                <video 
-                  src={videoURL} 
+          {vostcard.isQuickcard ? (
+            /* Single Photo Display for Quickcards */
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              width: 180,
+              height: 240
+            }}>
+              {photoURLs.length > 0 ? (
+                <div 
+                  key={0}
                   style={{ 
+                    background: '#f0f0f0', 
+                    borderRadius: 16, 
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     width: '100%',
                     height: '100%',
-                    objectFit: 'cover',
-                    pointerEvents: 'none',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0
+                    cursor: 'pointer'
                   }}
-                  onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
-                  muted
-                  loop
-                  playsInline
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  background: 'rgba(0,0,0,0.7)',
-                  borderRadius: '50%',
-                  width: 48,
-                  height: 48,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <div style={{
-                    width: 0,
-                    height: 0,
-                    borderLeft: '12px solid white',
-                    borderTop: '8px solid transparent',
-                    borderBottom: '8px solid transparent',
-                    marginLeft: 4
-                  }} />
+                  onClick={() => setSelectedPhoto(photoURLs[0])}
+                >
+                  <img 
+                    src={photoURLs[0]} 
+                    alt="Quickcard Photo" 
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover' 
+                    }}
+                  />
                 </div>
-              </>
-            ) : (
+              ) : (
+                <div 
+                  style={{ 
+                    background: '#f0f0f0', 
+                    borderRadius: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#ccc',
+                    width: '100%',
+                    height: '100%'
+                  }}
+                >
+                  <FaMap size={20} />
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Regular Vostcard Layout with Video + Photos */
+            <>
+              <div 
+                style={{ 
+                  width: 180, 
+                  height: 240, 
+                  background: '#111', 
+                  borderRadius: 16, 
+                  overflow: 'hidden', 
+                  cursor: videoURL ? 'pointer' : 'default',
+                  position: 'relative'
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (videoURL) setShowVideoModal(true);
+                }}
+              >
+                {videoURL ? (
+                  <>
+                    <video 
+                      src={videoURL} 
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        pointerEvents: 'none',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0
+                      }}
+                      onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
+                      muted
+                      loop
+                      playsInline
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: 'rgba(0,0,0,0.7)',
+                      borderRadius: '50%',
+                      width: 48,
+                      height: 48,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <div style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '12px solid white',
+                        borderTop: '8px solid transparent',
+                        borderBottom: '8px solid transparent',
+                        marginLeft: 4
+                      }} />
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    height: '100%',
+                    color: '#666'
+                  }}>
+                    No Video
+                  </div>
+                )}
+              </div>
+
+              {/* Photos Grid */}
               <div style={{ 
                 display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                height: '100%',
-                color: '#666'
+                flexDirection: 'column',
+                gap: 8,
+                width: 180,
+                height: 240
               }}>
-                No Video
+                {photoURLs.slice(0, 2).map((url: string, index: number) => (
+                  <div 
+                    key={index}
+                    style={{ 
+                      background: '#f0f0f0', 
+                      borderRadius: 8, 
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '116px',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => setSelectedPhoto(url)}
+                  >
+                    <img 
+                      src={url} 
+                      alt={`Photo ${index + 1}`} 
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover' 
+                      }}
+                    />
+                  </div>
+                ))}
+                {photoURLs.length < 2 && Array.from({ length: 2 - photoURLs.length }).map((_, index) => (
+                  <div 
+                    key={`empty-${index}`}
+                    style={{ 
+                      background: '#f0f0f0', 
+                      borderRadius: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ccc',
+                      height: '116px'
+                    }}
+                  >
+                    <FaMap size={20} />
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-
-          {/* Photos Grid */}
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column',
-            gap: 8,
-            width: 180,
-            height: 240
-          }}>
-            {photoURLs.slice(0, 2).map((url: string, index: number) => (
-              <div 
-                key={index}
-                style={{ 
-                  background: '#f0f0f0', 
-                  borderRadius: 8, 
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '116px',
-                  cursor: 'pointer'
-                }}
-                onClick={() => setSelectedPhoto(url)}
-              >
-                <img 
-                  src={url} 
-                  alt={`Photo ${index + 1}`} 
-                  style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    objectFit: 'cover' 
-                  }}
-                />
-              </div>
-            ))}
-            {photoURLs.length < 2 && Array.from({ length: 2 - photoURLs.length }).map((_, index) => (
-              <div 
-                key={`empty-${index}`}
-                style={{ 
-                  background: '#f0f0f0', 
-                  borderRadius: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#ccc',
-                  height: '116px'
-                }}
-              >
-                <FaMap size={20} />
-              </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
 
         {/* Description */}
