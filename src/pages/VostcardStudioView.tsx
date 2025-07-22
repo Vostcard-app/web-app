@@ -439,32 +439,68 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handleQuickcardPinPlacer = () => {
-    // Store current quickcard state in sessionStorage
-    sessionStorage.setItem('quickcardCreatorState', JSON.stringify({
-      title: quickcardTitle,
-      photo: quickcardPhoto ? 'hasPhoto' : null,
-      audio: quickcardAudio ? 'hasAudio' : null,
-      audioSource: quickcardAudioSource,
-      audioFileName: quickcardAudioFileName,
-      category: quickcardCategory
-    }));
-    
-    navigate('/pin-placer', {
-      state: {
-        returnTo: '/studio',
-        quickcardCreation: true,
-        title: quickcardTitle || 'New Quickcard',
-        pinData: {
-          id: 'temp_quickcard',
-          title: quickcardTitle || 'New Quickcard',
-          description: 'Quickcard location',
-          latitude: quickcardLocation?.latitude || 40.7128,
-          longitude: quickcardLocation?.longitude || -74.0060,
-          isOffer: false,
-          isQuickcard: true
+    // ✅ NEW: Store photo and audio as base64 in sessionStorage
+    const storePhotoAsBase64 = async (file: File): Promise<string> => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+    });
+  };
+
+    const prepareStateForStorage = async () => {
+      const state: any = {
+        title: quickcardTitle,
+        category: quickcardCategory,
+        audioSource: quickcardAudioSource,
+        audioFileName: quickcardAudioFileName
+      };
+
+      // ✅ Convert photo to base64 if exists
+      if (quickcardPhoto) {
+        try {
+          state.photoBase64 = await storePhotoAsBase64(quickcardPhoto);
+          state.photoType = quickcardPhoto.type;
+          console.log('📸 Photo converted to base64 for storage');
+        } catch (error) {
+          console.error('❌ Failed to convert photo to base64:', error);
         }
       }
-    });
+
+      // ✅ Convert audio to base64 if exists
+      if (quickcardAudio) {
+        try {
+          state.audioBase64 = await storePhotoAsBase64(quickcardAudio);
+          state.audioType = quickcardAudio.type;
+          console.log('�� Audio converted to base64 for storage');
+        } catch (error) {
+          console.error('❌ Failed to convert audio to base64:', error);
+        }
+      }
+
+      // Store in sessionStorage
+      sessionStorage.setItem('quickcardCreatorState', JSON.stringify(state));
+      
+      // Navigate to pin placer
+      navigate('/pin-placer', {
+        state: {
+          returnTo: '/studio',
+          quickcardCreation: true,
+          title: quickcardTitle || 'New Quickcard',
+          pinData: {
+            id: 'temp_quickcard',
+            title: quickcardTitle || 'New Quickcard',
+            description: 'Quickcard location',
+            latitude: quickcardLocation?.latitude || 40.7128,
+            longitude: quickcardLocation?.longitude || -74.0060,
+            isOffer: false,
+            isQuickcard: true
+          }
+        }
+      });
+    };
+
+    prepareStateForStorage();
   };
 
   const handleSaveQuickcardAsDraft = async () => {
