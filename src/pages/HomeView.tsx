@@ -950,11 +950,11 @@ const HomeView = () => {
                           eventHandlers={{
                             click: () => {
                               console.log('📍 Vostcard pin clicked:', vostcard.title);
-                              if (vostcard.isQuickcard) {
-                                navigate(`/quickcard/${vostcard.id}`);
-                              } else if (vostcard.isOffer) {
+                              // ✅ UNIFIED EXPERIENCE: Use VostcardDetailView for both quickcards and regular vostcards
+                              if (vostcard.isOffer) {
                                 navigate(`/offer/${vostcard.id}`);
                               } else {
+                                // Both quickcards and regular vostcards use the same detail view
                                 navigate(`/vostcard/${vostcard.id}`);
                               }
                             }
@@ -976,11 +976,11 @@ const HomeView = () => {
                               )}
                               <button
                                 onClick={() => {
-                                  if (vostcard.isQuickcard) {
-                                    navigate(`/quickcard/${vostcard.id}`);
-                                  } else if (vostcard.isOffer) {
+                                  // ✅ UNIFIED EXPERIENCE: Use VostcardDetailView for both quickcards and regular vostcards
+                                  if (vostcard.isOffer) {
                                     navigate(`/offer/${vostcard.id}`);
                                   } else {
+                                    // Both quickcards and regular vostcards use the same detail view
                                     navigate(`/vostcard/${vostcard.id}`);
                                   }
                                 }}

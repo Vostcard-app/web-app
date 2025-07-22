@@ -264,15 +264,19 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         </button>
       )}
 
-      {/* Main Image - Full Screen */}
+      {/* Main Image - ENHANCED HIGH QUALITY FULL SCREEN */}
       <div
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
           width: '100vw',
           height: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          backgroundColor: 'black'
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -283,12 +287,37 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
           src={photos[currentIndex]}
           alt={`Photo ${currentIndex + 1}`}
           style={{
-            maxWidth: '100vw',
-            maxHeight: '100vh',
-            objectFit: 'contain',
-            userSelect: 'none'
-          }}
+            width: '100vw',
+            height: '100vh',
+            objectFit: 'cover',
+            userSelect: 'none',
+            // Enhanced quality settings
+            imageRendering: 'high-quality',
+            WebkitBackfaceVisibility: 'hidden',
+            backfaceVisibility: 'hidden',
+            transform: 'translateZ(0)', // Hardware acceleration
+            // Prevent image smoothing/compression
+            imageRendering: '-webkit-optimize-contrast'
+          } as React.CSSProperties}
           draggable={false}
+          loading="eager"
+          // Ensure highest quality loading
+          fetchpriority="high"
+          // Add error handling for better loading
+          onError={(e) => {
+            console.error('Failed to load image:', photos[currentIndex]);
+            // Try reloading the image
+            (e.target as HTMLImageElement).src = photos[currentIndex] + '?retry=' + Date.now();
+          }}
+          onLoad={(e) => {
+            console.log('✅ Image loaded successfully:', {
+              src: photos[currentIndex],
+              naturalWidth: (e.target as HTMLImageElement).naturalWidth,
+              naturalHeight: (e.target as HTMLImageElement).naturalHeight,
+              displayWidth: (e.target as HTMLImageElement).width,
+              displayHeight: (e.target as HTMLImageElement).height
+            });
+          }}
         />
       </div>
 

@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment,
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
+import MultiPhotoModal from '../components/MultiPhotoModal';
 import { VostboxService } from '../services/vostboxService';
 import { type Friend } from '../types/FriendModels';
 import FriendPickerModal from '../components/FriendPickerModal';
@@ -32,6 +33,10 @@ const VostcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  
+  // Multi-Photo Modal state - ENHANCED FOR SWIPE FUNCTIONALITY
+  const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [userRating, setUserRating] = useState(0);
@@ -144,19 +149,40 @@ const VostcardDetailView: React.FC = () => {
     }
   }, [vostcard?.userID]);
 
-  // Detect and analyze audio when vostcard loads
+  // ENHANCED AUDIO DETECTION - Support both regular vostcards and quickcards
   useEffect(() => {
     const detectAudio = async () => {
       const vostcardWithAudio = vostcard as any;
-      if (vostcardWithAudio?.audio || vostcardWithAudio?._firebaseAudioURL) {
+      
+      // Check for audio in different formats:
+      // - Regular vostcards: .audio, ._firebaseAudioURL
+      // - Quickcards: .audioURL, .audioURLs
+      const audioSource = vostcardWithAudio?.audio || 
+                         vostcardWithAudio?._firebaseAudioURL || 
+                         vostcardWithAudio?.audioURL || 
+                         vostcardWithAudio?.audioURLs?.[0];
+                         
+      console.log('🎵 Audio detection:', {
+        hasAudio: !!audioSource,
+        isQuickcard: vostcardWithAudio?.isQuickcard,
+        audioSource: audioSource ? 'found' : 'none',
+        audioFields: {
+          audio: !!vostcardWithAudio?.audio,
+          _firebaseAudioURL: !!vostcardWithAudio?._firebaseAudioURL,
+          audioURL: !!vostcardWithAudio?.audioURL,
+          audioURLs: !!vostcardWithAudio?.audioURLs
+        }
+      });
+      
+      if (audioSource) {
         try {
           // Create temporary audio element to get duration
           const audio = new Audio();
           
           if (vostcardWithAudio.audio instanceof Blob) {
             audio.src = URL.createObjectURL(vostcardWithAudio.audio);
-          } else if (vostcardWithAudio._firebaseAudioURL) {
-            audio.src = vostcardWithAudio._firebaseAudioURL;
+          } else if (audioSource) {
+            audio.src = audioSource;
           }
           
           audio.onloadedmetadata = () => {
@@ -227,26 +253,20 @@ const VostcardDetailView: React.FC = () => {
     setIsLiked(!isLiked);
   };
 
-  const handleAudioClick = () => {
-    const vostcardWithAudio = vostcard as any;
-    if (vostcardWithAudio?.audio || vostcardWithAudio?._firebaseAudioURL) {
-      if (isPlayingAudio) {
-        // Stop audio
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-        }
-        setIsPlayingAudio(false);
-      } else {
-        // Play audio
-        playAudio();
-      }
-    }
-  };
-
+  // ENHANCED AUDIO PLAY FUNCTION - Support both formats
   const playAudio = async () => {
     const vostcardWithAudio = vostcard as any;
-    if (!vostcardWithAudio?.audio && !vostcardWithAudio?._firebaseAudioURL) return;
+    
+    // Check for audio in different formats
+    const audioSource = vostcardWithAudio?.audio || 
+                       vostcardWithAudio?._firebaseAudioURL || 
+                       vostcardWithAudio?.audioURL || 
+                       vostcardWithAudio?.audioURLs?.[0];
+                       
+    if (!audioSource) {
+      console.error('No audio source available');
+      return;
+    }
     
     try {
       // Stop any existing audio
@@ -262,11 +282,8 @@ const VostcardDetailView: React.FC = () => {
       // Set audio source
       if (vostcardWithAudio.audio instanceof Blob) {
         audio.src = URL.createObjectURL(vostcardWithAudio.audio);
-      } else if (vostcardWithAudio._firebaseAudioURL) {
-        audio.src = vostcardWithAudio._firebaseAudioURL;
       } else {
-        console.error('No audio source available');
-        return;
+        audio.src = audioSource;
       }
 
       // Set up event listeners
@@ -293,6 +310,43 @@ const VostcardDetailView: React.FC = () => {
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlayingAudio(false);
+    }
+  };
+
+  const handleAudioClick = () => {
+    const vostcardWithAudio = vostcard as any;
+    
+    // Check for audio in different formats
+    const hasAudio = vostcardWithAudio?.audio || 
+                    vostcardWithAudio?._firebaseAudioURL || 
+                    vostcardWithAudio?.audioURL || 
+                    vostcardWithAudio?.audioURLs?.[0];
+                    
+    if (hasAudio) {
+      if (isPlayingAudio) {
+        // Stop audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setIsPlayingAudio(false);
+      } else {
+        // Play audio
+        playAudio();
+      }
+    }
+  };
+
+  // ENHANCED PHOTO CLICK HANDLER - Use MultiPhotoModal for swipe functionality
+  const handlePhotoClick = (photoUrl: string) => {
+    if (vostcard.photoURLs && vostcard.photoURLs.length > 1) {
+      // Multiple photos - use MultiPhotoModal with swipe
+      const index = vostcard.photoURLs.indexOf(photoUrl);
+      setSelectedPhotoIndex(index >= 0 ? index : 0);
+      setShowMultiPhotoModal(true);
+    } else {
+      // Single photo - use simple modal
+      setSelectedPhoto(photoUrl);
     }
   };
 
@@ -619,7 +673,7 @@ const VostcardDetailView: React.FC = () => {
                   objectFit: 'cover',
                   cursor: 'pointer'
                 }}
-                onClick={() => setSelectedPhoto(vostcard.photoURLs[0])}
+                onClick={() => handlePhotoClick(vostcard.photoURLs[0])}
               />
             </div>
           ) : (
@@ -737,7 +791,7 @@ const VostcardDetailView: React.FC = () => {
                     objectFit: 'cover',
                     cursor: 'pointer'
                   }}
-                  onClick={() => setSelectedPhoto(vostcard.photoURLs[0])}
+                  onClick={() => handlePhotoClick(vostcard.photoURLs[0])}
                 />
               </div>
             ) : (
@@ -771,7 +825,7 @@ const VostcardDetailView: React.FC = () => {
                     objectFit: 'cover',
                     cursor: 'pointer'
                   }}
-                  onClick={() => setSelectedPhoto(vostcard.photoURLs[1])}
+                  onClick={() => handlePhotoClick(vostcard.photoURLs[1])}
                 />
               </div>
             ) : (
@@ -870,8 +924,8 @@ const VostcardDetailView: React.FC = () => {
         >
           <FaMap size={30} />
         </button>
-        {/* Audio button - only show if vostcard has audio */}
-        {((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL) && (
+        {/* Audio button - ENHANCED for both vostcard types */}
+        {(((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL || (vostcard as any)?.audioURL || (vostcard as any)?.audioURLs?.[0]) && (
           <button
             onClick={handleAudioClick}
             style={{
@@ -886,7 +940,7 @@ const VostcardDetailView: React.FC = () => {
           >
             <FaVolumeUp size={30} />
           </button>
-        )}
+        ))}
       </div>
 
       {/* Counts Row */}
@@ -902,10 +956,10 @@ const VostcardDetailView: React.FC = () => {
         <span>0.0</span>
         <span>0</span>
         <span></span>
-        {/* Audio duration - only show if vostcard has audio */}
-        {((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL) && (
+        {/* Audio duration - ENHANCED for both vostcard types */}
+        {(((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL || (vostcard as any)?.audioURL || (vostcard as any)?.audioURLs?.[0]) && (
           <span>{audioDuration ? formatAudioDuration(audioDuration) : '...'}</span>
-        )}
+        ))}
       </div>
 
       {/* Worth Seeing Rating */}
@@ -1051,31 +1105,39 @@ const VostcardDetailView: React.FC = () => {
         </div>
       )}
 
-      {/* Photo Modal */}
+      {/* Enhanced Multi-Photo Modal with Swipe */}
+      {showMultiPhotoModal && vostcard.photoURLs && (
+        <MultiPhotoModal
+          photos={vostcard.photoURLs}
+          initialIndex={selectedPhotoIndex}
+          isOpen={showMultiPhotoModal}
+          onClose={() => setShowMultiPhotoModal(false)}
+          title={vostcard.title}
+        />
+      )}
+
+      {/* Single Photo Modal (fallback) */}
       {selectedPhoto && (
         <div
           style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.95)',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
-            cursor: 'zoom-out',
+            zIndex: 1001
           }}
           onClick={() => setSelectedPhoto(null)}
         >
           <img
             src={selectedPhoto}
             alt="Full size"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              userSelect: 'none',
-            }}
-            draggable={false}
+            style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
@@ -1125,6 +1187,7 @@ const VostcardDetailView: React.FC = () => {
         </div>
       )}
 
+      {/* Multi Photo Modal */}
       {/* Share Options Modal */}
       <SharedOptionsModal
         isOpen={showSharedOptions}
