@@ -62,7 +62,6 @@ import VostcardStudioView from "./pages/VostcardStudioView";
 import ExampleView from "./pages/ExampleView";
 import PublicVostcardView from "./pages/PublicVostcardView";
 import PublicQuickcardView from "./pages/PublicQuickcardView";
-import SharedQuickcardView from "./pages/SharedQuickcardView";
 import EmailVostcardView from "./pages/EmailVostcardView";
 import AuthRedirect from "./components/AuthRedirect";
 
@@ -88,7 +87,7 @@ function App() {
 
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
-                  <Route path="/share-quickcard/:id" element={<SharedQuickcardView />} />
+                  <Route path="/share-quickcard/:id" element={<PublicQuickcardView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
                   <Route path="/public-map" element={<PublicHomeView />} />
 
