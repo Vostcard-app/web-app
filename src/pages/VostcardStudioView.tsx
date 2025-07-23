@@ -711,15 +711,10 @@ const VostcardStudioView: React.FC = () => {
       minHeight: '100vh',
       backgroundColor: '#f5f5f5',
       display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      paddingTop: '20px',
-      paddingBottom: '20px',
-      overflowY: 'auto', // ✅ Make scrollable
-      maxHeight: '100vh' // ✅ Limit height to enable scrolling
+      flexDirection: 'column'
     }}>
       
-      {/* Header */}
+      {/* Standard Banner - Fixed to reach both sides */}
       <div style={{
         backgroundColor: '#002B4D',
         height: 80,
@@ -727,6 +722,12 @@ const VostcardStudioView: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         flexShrink: 0
       }}>
         <div 
@@ -735,7 +736,8 @@ const VostcardStudioView: React.FC = () => {
             color: 'white', 
             fontSize: 28, 
             fontWeight: 'bold', 
-            cursor: 'pointer' 
+            cursor: 'pointer',
+            userSelect: 'none'
           }}
         >
           Vōstcard
@@ -785,13 +787,16 @@ const VostcardStudioView: React.FC = () => {
         onChange={handleFileChange}
       />
 
-      {/* Content */}
+      {/* Content - Adjusted for fixed header */}
       <div style={{ 
         flex: 1,
         padding: '20px',
+        paddingTop: '100px', // Account for fixed header height + spacing
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        overflowY: 'auto',
+        maxHeight: '100vh'
       }}>
         <h1 style={{
           fontSize: '24px',

@@ -6,6 +6,7 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
+import InfoPin from '../assets/Info_pin.png';
 
 // Helper function to clean Firebase Timestamps from data
 const cleanFirebaseTimestamps = (data: any): any => {

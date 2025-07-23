@@ -98,12 +98,31 @@ const MyVostcardListView = () => {
     navigate(`/vostcard/${vostcardId}`);
   };
 
-  const handleShare = (e: React.MouseEvent, vostcard: Vostcard) => {
+  const handleShare = async (e: React.MouseEvent, vostcard: Vostcard) => {
     e.preventDefault();
     e.stopPropagation();
     
-    setSelectedVostcard(vostcard);
-    setShowSharedOptions(true);
+    try {
+      // Generate public share URL
+      const isQuickcard = vostcard.isQuickcard === true;
+      const shareUrl = isQuickcard 
+        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
+        : `${window.location.origin}/share/${vostcard.id}`;
+      
+      // Generate share text using utility
+      const shareText = generateShareText(vostcard, shareUrl);
+      
+      // Use native sharing or clipboard
+      if (navigator.share) {
+        await navigator.share({ text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert('Share link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      alert('Failed to share. Please try again.');
+    }
   };
 
   const handleDelete = async (e: React.MouseEvent, vostcardId: string) => {
@@ -263,7 +282,7 @@ const MyVostcardListView = () => {
           borderRadius: isDesktop ? '16px 16px 0 0' : '0',
           flexShrink: 0
         }}>
-          <h1 style={{ fontSize: '30px', margin: 0 }}>Private Posts</h1>
+          <h1 style={{ fontSize: '30px', margin: 0 }}>Personal Posts</h1>
           
           {/* Home Button */}
           <FaHome

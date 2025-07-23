@@ -6,6 +6,7 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
+import InfoPin from '../assets/Info_pin.png';
 
 const PublicVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +26,7 @@ const PublicVostcardView: React.FC = () => {
   });
   const [isPrivateShared, setIsPrivateShared] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showLikeMessage, setShowLikeMessage] = useState(false);
@@ -492,12 +494,11 @@ ${privateUrl}`);
       {/* Banner */}
       <div style={{
         background: '#07345c',
-        padding: '15px 0 24px 0',
-        textAlign: 'left',
-        paddingLeft: '16px',
+        padding: '15px 16px 24px 16px',
         height: 30,
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         position: 'fixed',
         top: 0,
         left: 0,
@@ -506,7 +507,37 @@ ${privateUrl}`);
       }}>
         <span 
           onClick={() => navigate('/home')}
-          style={{ color: 'white', fontWeight: 700, fontSize: '30px', marginLeft: 0, cursor: 'pointer' }}>Vōstcard</span>
+          style={{ color: 'white', fontWeight: 700, fontSize: '30px', cursor: 'pointer' }}>
+          Vōstcard
+        </span>
+        
+        <div 
+          onClick={() => setShowTutorialModal(true)}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <img 
+            src={InfoPin} 
+            alt="Info Pin" 
+            style={{
+              width: '40px',
+              height: '40px',
+              marginBottom: '2px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            What is Vōstcard?
+          </span>
+        </div>
       </div>
 
       {/* 20% Container with User Info */}
@@ -1126,33 +1157,103 @@ ${privateUrl}`);
         </div>
       )}
 
+      {/* Tutorial Video Modal */}
+      <AnimatePresence>
+        {showTutorialModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.9)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setShowTutorialModal(false)}
+          >
+            <button
+              onClick={() => setShowTutorialModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10001,
+                fontSize: '18px',
+                color: 'white',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            <div style={{ 
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <iframe
+                src="https://www.youtube.com/embed/wI1WtLqXs6g?autoplay=1&rel=0&modestbranding=1&playsinline=1"
+                width="100%"
+                height="100%"
+                style={{
+                  minHeight: '315px',
+                  maxWidth: '560px',
+                  aspectRatio: '16/9',
+                  borderRadius: 8,
+                  border: 'none'
+                }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '14px',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              Tap outside video or ✕ to close
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* CSS Animation */}
       <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
-        
-        /* Prevent bounce scrolling on body when this page is active */
-        body {
-          overscroll-behavior: contain;
-          -webkit-overflow-scrolling: touch;
-          touch-action: pan-y;
-        }
-        
-        /* Ensure smooth scrolling on iOS */
-        * {
-          -webkit-overflow-scrolling: touch;
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </div>
   );
 };
 
-export default PublicVostcardView; 
+export default PublicVostcardView;

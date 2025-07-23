@@ -14,6 +14,7 @@ import { VostboxService } from '../services/vostboxService';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
 import MultiPhotoModal from '../components/MultiPhotoModal';
+import { generateShareText } from '../utils/vostcardUtils';
 
 // Custom quickcard icon for the map
 const quickcardIcon = new L.Icon({
@@ -154,8 +155,27 @@ const QuickcardDetailView: React.FC = () => {
     };
   }, [quickcard?.audioURL]);
 
-  const handleShareClick = () => {
-    setShowSharedOptions(true);
+  const handleShareClick = async () => {
+    if (!quickcard) return;
+    
+    try {
+      // Generate public share URL (always quickcard)
+      const shareUrl = `${window.location.origin}/share-quickcard/${quickcard.id}`;
+      
+      // Generate share text using utility
+      const shareText = generateShareText({ ...quickcard, isQuickcard: true }, shareUrl);
+      
+      // Use native sharing or clipboard
+      if (navigator.share) {
+        await navigator.share({ text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert('Share link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      alert('Failed to share. Please try again.');
+    }
   };
 
   const handleLikeClick = () => {

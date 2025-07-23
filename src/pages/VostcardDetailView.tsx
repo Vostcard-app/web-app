@@ -11,6 +11,7 @@ import { VostboxService } from '../services/vostboxService';
 import { type Friend } from '../types/FriendModels';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
+import { generateShareText } from '../utils/vostcardUtils';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -218,8 +219,30 @@ const VostcardDetailView: React.FC = () => {
 
 
 
-  const handleShareClick = () => {
-    setShowSharedOptions(true);
+  const handleShareClick = async () => {
+    if (!vostcard) return;
+    
+    try {
+      // Generate public share URL
+      const isQuickcard = vostcard.isQuickcard === true;
+      const shareUrl = isQuickcard 
+        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
+        : `${window.location.origin}/share/${vostcard.id}`;
+      
+      // Generate share text using utility
+      const shareText = generateShareText(vostcard, shareUrl);
+      
+      // Use native sharing or clipboard
+      if (navigator.share) {
+        await navigator.share({ text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert('Share link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      alert('Failed to share. Please try again.');
+    }
   };
 
   const handleMapClick = () => {
@@ -1239,7 +1262,7 @@ const VostcardDetailView: React.FC = () => {
 
       {/* Multi Photo Modal */}
       {/* Share Options Modal */}
-      <SharedOptionsModal
+      {/* <SharedOptionsModal
         isOpen={showSharedOptions}
         onClose={() => setShowSharedOptions(false)}
         item={{
@@ -1248,7 +1271,7 @@ const VostcardDetailView: React.FC = () => {
           description: vostcard?.description,
           isQuickcard: vostcard?.isQuickcard
         }}
-      />
+      /> */}
     </div>
   );
 };
