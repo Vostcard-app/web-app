@@ -7,11 +7,42 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
 
+// Helper function to clean Firebase Timestamps from data
+const cleanFirebaseTimestamps = (data: any): any => {
+  const cleaned = { ...data };
+  
+  // Remove common timestamp fields that might contain Firebase Timestamps
+  const timeStampFields = ['createdAt', 'updatedAt', 'lastModified', 'timestamp', 'dateCreated', 'dateUpdated'];
+  
+  timeStampFields.forEach(field => {
+    delete cleaned[field];
+  });
+  
+  // Also check for any remaining Firebase Timestamp objects
+  Object.keys(cleaned).forEach(key => {
+    const value = cleaned[key];
+    if (value && typeof value === 'object' && 
+        value.hasOwnProperty && 
+        value.hasOwnProperty('seconds') && 
+        value.hasOwnProperty('nanoseconds')) {
+      delete cleaned[key];
+      console.warn(`🚨 Removed Firebase Timestamp from field: ${key}`);
+    }
+  });
+  
+  return cleaned;
+};
+
 const PublicQuickcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, username } = useAuth();
   const { fixBrokenSharedVostcard } = useVostcard();
+  
+  // Debug logging
+  console.log('🔍 PublicQuickcardView Debug - Rendering with ID:', id);
+  console.log('🔍 PublicQuickcardView Debug - User:', user?.uid);
+  console.log('🔍 PublicQuickcardView Debug - Window location:', window.location.href);
   
   const [quickcard, setQuickcard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -67,14 +98,18 @@ const PublicQuickcardView: React.FC = () => {
             return;
           }
 
-          setQuickcard({ id: docSnap.id, ...data });
-          setIsPrivateShared(data.isPrivatelyShared || false);
-          
           // Format createdAt if available
+          let formattedDate = 'Unknown date';
           if (data.createdAt) {
             const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-            data.formattedDate = date.toLocaleDateString();
+            formattedDate = date.toLocaleDateString();
           }
+          
+          // Clean all Firebase Timestamps to prevent rendering errors
+          const cleanData = cleanFirebaseTimestamps(data);
+          
+          setQuickcard({ id: docSnap.id, ...cleanData, formattedDate });
+          setIsPrivateShared(data.isPrivatelyShared || false);
           
           clearTimeout(timeoutId);
           setLoading(false);
@@ -90,7 +125,18 @@ const PublicQuickcardView: React.FC = () => {
               if (retryDocSnap.exists()) {
                 const retryData = retryDocSnap.data();
                 if (retryData.isQuickcard) {
-                  setQuickcard({ id: retryDocSnap.id, ...retryData });
+                  // Format createdAt if available
+                  let retryFormattedDate = 'Unknown date';
+                  if (retryData.createdAt) {
+                    const date = retryData.createdAt.toDate ? retryData.createdAt.toDate() : new Date(retryData.createdAt);
+                    retryFormattedDate = date.toLocaleDateString();
+                  }
+                  
+                  // Remove any raw Firebase Timestamps to prevent rendering errors
+                  const cleanRetryData = { ...retryData };
+                  delete cleanRetryData.createdAt; // Remove raw timestamp
+                  
+                  setQuickcard({ id: retryDocSnap.id, ...cleanRetryData, formattedDate: retryFormattedDate });
                   setIsPrivateShared(retryData.isPrivatelyShared || false);
                   clearTimeout(timeoutId);
                   setLoading(false);
@@ -198,6 +244,7 @@ const PublicQuickcardView: React.FC = () => {
   };
 
   if (loading) {
+    console.log('🔍 PublicQuickcardView Debug - Still loading, showing loading screen');
     return (
       <div style={{
         display: 'flex',
@@ -215,6 +262,7 @@ const PublicQuickcardView: React.FC = () => {
   }
 
   if (error) {
+    console.log('🔍 PublicQuickcardView Debug - Error state:', error);
     return (
       <div style={{
         display: 'flex',
@@ -246,6 +294,7 @@ const PublicQuickcardView: React.FC = () => {
   }
 
   if (!quickcard) {
+    console.log('🔍 PublicQuickcardView Debug - No quickcard data available');
     return (
       <div style={{
         display: 'flex',
@@ -259,7 +308,22 @@ const PublicQuickcardView: React.FC = () => {
     );
   }
 
-  const { title, description, photoURLs, createdAt, username: quickcardUsername } = quickcard;
+  const { title, description, photoURLs, formattedDate, username: quickcardUsername } = quickcard;
+  
+  console.log('🔍 PublicQuickcardView Debug - Successfully rendering quickcard:', {
+    id: quickcard.id,
+    title: quickcard.title,
+    hasPhotos: !!photoURLs?.length,
+    username: quickcardUsername
+  });
+  
+  // Debug: Check for any remaining Firebase Timestamp objects
+  console.log('🔍 PublicQuickcardView Debug - Full quickcard object keys:', Object.keys(quickcard));
+  Object.entries(quickcard).forEach(([key, value]) => {
+    if (value && typeof value === 'object' && value.hasOwnProperty && value.hasOwnProperty('seconds') && value.hasOwnProperty('nanoseconds')) {
+      console.error('🚨 Found raw Firebase Timestamp in quickcard:', key, value);
+    }
+  });
   
   return (
     <div style={{
@@ -373,7 +437,7 @@ const PublicQuickcardView: React.FC = () => {
                       isOffer: false,
                       isQuickcard: true,
                       categories: quickcard.categories,
-                      createdAt: quickcard.createdAt,
+                      createdAt: quickcard.formattedDate,
                       visibility: 'public',
                       state: 'posted'
                     }
@@ -522,7 +586,7 @@ const PublicQuickcardView: React.FC = () => {
         </div>
 
         <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginBottom: '24px' }}>
-          Posted: {createdAt}
+          Posted: {formattedDate}
         </div>
 
         {/* Bottom message and link */}
