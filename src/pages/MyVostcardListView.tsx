@@ -114,25 +114,78 @@ Tap OK to continue.`;
     }
     
     try {
+      console.log('🔄 Starting share process for:', vostcard.id);
+      
+      // Validate vostcard data
+      if (!vostcard || !vostcard.id) {
+        throw new Error('Invalid vostcard data');
+      }
+      
       // Generate public share URL
       const isQuickcard = vostcard.isQuickcard === true;
       const shareUrl = isQuickcard 
         ? `${window.location.origin}/share-quickcard/${vostcard.id}`
         : `${window.location.origin}/share/${vostcard.id}`;
       
+      console.log('📍 Generated share URL:', shareUrl);
+      
       // Generate share text using utility
       const shareText = generateShareText(vostcard, shareUrl);
+      console.log('📝 Generated share text:', shareText);
       
-      // Use native sharing or clipboard
-      if (navigator.share) {
-        await navigator.share({ text: shareText });
+      // Try native sharing first
+      if (navigator.share && typeof navigator.share === 'function') {
+        console.log('📱 Using native share API');
+        try {
+          await navigator.share({ text: shareText });
+          console.log('✅ Native share completed successfully');
+          return;
+        } catch (shareError: any) {
+          console.warn('⚠️ Native share failed, falling back to clipboard:', shareError.message);
+          // Fall through to clipboard method
+        }
       } else {
+        console.log('📋 Native share not available, using clipboard');
+      }
+      
+      // Fallback to clipboard
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
         await navigator.clipboard.writeText(shareText);
+        console.log('✅ Clipboard copy successful');
+        alert('Public share link copied to clipboard!');
+      } else {
+        // Final fallback - show the text for manual copying
+        console.log('📋 Clipboard API not available, showing text');
+        const textArea = document.createElement('textarea');
+        textArea.value = shareText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
         alert('Public share link copied to clipboard!');
       }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      alert('Failed to share. Please try again.');
+      
+    } catch (error: any) {
+      console.error('❌ Share error details:', {
+        error: error.message,
+        stack: error.stack,
+        vostcard: vostcard?.id,
+        title: vostcard?.title
+      });
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to share. ';
+      if (error.message.includes('Invalid vostcard')) {
+        errorMessage += 'Invalid post data.';
+      } else if (error.message.includes('clipboard')) {
+        errorMessage += 'Unable to copy to clipboard.';
+      } else if (error.message.includes('share')) {
+        errorMessage += 'Sharing not supported on this device.';
+      } else {
+        errorMessage += 'Please try again.';
+      }
+      
+      alert(errorMessage);
     }
   };
 
