@@ -97,6 +97,17 @@ const QuickcardListView = () => {
   };
 
   const handleShare = async (quickcardId: string) => {
+    // Show public sharing warning
+    const confirmMessage = `⚠️ PUBLIC SHARING WARNING
+
+This will create a public link for your Quickcard. Anyone with this link will be able to view your content, even if they don't have a Vōstcard account.
+
+Are you sure you want to share this Quickcard publicly?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return; // User cancelled
+    }
+    
     try {
       const quickcard = quickcards.find(q => q.id === quickcardId);
       if (!quickcard) return;
@@ -104,7 +115,7 @@ const QuickcardListView = () => {
       if (quickcard.visibility === 'public') {
         const shareUrl = `${window.location.origin}/share-quickcard/${quickcardId}`;
         await navigator.clipboard.writeText(shareUrl);
-        alert('Share link copied to clipboard!');
+        alert('Public share link copied to clipboard!');
       } else {
         await updateDoc(doc(db, 'quickcards', quickcardId), {
           visibility: 'public',

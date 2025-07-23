@@ -219,6 +219,18 @@ const MyPostedVostcardsListView = () => {
     e.preventDefault();
     e.stopPropagation();
     
+    // Show public sharing warning
+    const itemType = vostcard.isQuickcard ? 'Quickcard' : 'Vostcard';
+    const confirmMessage = `⚠️ PUBLIC SHARING WARNING
+
+This will create a public link for your ${itemType}. Anyone with this link will be able to view your content, even if they don't have a Vōstcard account.
+
+Are you sure you want to share this ${itemType} publicly?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return; // User cancelled
+    }
+    
     try {
       // Update the vostcard to mark it as privately shared
       if (vostcard?.id) {
@@ -230,13 +242,11 @@ const MyPostedVostcardsListView = () => {
       }
       
       // Generate the correct share URL based on content type
-      const isQuickcard = vostcard.isQuickcard === true;
-      const privateUrl = isQuickcard 
+      const privateUrl = vostcard.isQuickcard 
         ? `${window.location.origin}/share-quickcard/${vostcard.id}`
         : `${window.location.origin}/share/${vostcard.id}`;
       
       // Generate share text
-      const itemType = isQuickcard ? 'Quickcard' : 'Vostcard';
       const shareText = `Check it out I made this with Vōstcard
 
 
@@ -253,14 +263,14 @@ ${privateUrl}`;
         navigator.share({ text: shareText }).catch(console.error);
       } else {
         navigator.clipboard.writeText(shareText).then(() => {
-          alert('Private share message copied to clipboard!');
+          alert('Public share link copied to clipboard!');
         }).catch(() => {
           alert(`Share this message: ${shareText}`);
         });
       }
     } catch (error) {
-      console.error(`Error sharing ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}:`, error);
-      alert(`Failed to share ${vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}. Please try again.`);
+      console.error(`Error sharing ${itemType}:`, error);
+      alert(`Failed to share ${itemType}. Please try again.`);
     }
   };
 

@@ -102,6 +102,18 @@ const MyVostcardListView = () => {
     e.preventDefault();
     e.stopPropagation();
     
+    // Show public sharing warning
+    const itemType = vostcard.isQuickcard ? 'Quickcard' : 'Vostcard';
+    const confirmMessage = `⚠️ PUBLIC SHARING WARNING
+
+This will create a public link for your ${itemType}. Anyone with this link will be able to view your content, even if they don't have a Vōstcard account.
+
+Are you sure you want to share this ${itemType} publicly?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return; // User cancelled
+    }
+    
     try {
       // Generate public share URL
       const isQuickcard = vostcard.isQuickcard === true;
@@ -117,7 +129,7 @@ const MyVostcardListView = () => {
         await navigator.share({ text: shareText });
       } else {
         await navigator.clipboard.writeText(shareText);
-        alert('Share link copied to clipboard!');
+        alert('Public share link copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing:', error);
