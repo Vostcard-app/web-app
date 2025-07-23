@@ -220,12 +220,11 @@ const MyPostedVostcardsListView = () => {
     e.stopPropagation();
     
     // Show public sharing warning
-    const itemType = vostcard.isQuickcard ? 'Quickcard' : 'Vostcard';
-    const confirmMessage = `⚠️ PUBLIC SHARING WARNING
+    const confirmMessage = `⚠️ Attention:
 
-This will create a public link for your ${itemType}. Anyone with this link will be able to view your content, even if they don't have a Vōstcard account.
+This will create a public link for your post. Anyone with the link can see it.
 
-Are you sure you want to share this ${itemType} publicly?`;
+Tap OK to continue.`;
     
     if (!window.confirm(confirmMessage)) {
       return; // User cancelled
@@ -247,6 +246,7 @@ Are you sure you want to share this ${itemType} publicly?`;
         : `${window.location.origin}/share/${vostcard.id}`;
       
       // Generate share text
+      const itemType = vostcard.isQuickcard ? 'Quickcard' : 'Vostcard';
       const shareText = `Check it out I made this with Vōstcard
 
 

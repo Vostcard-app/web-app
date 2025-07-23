@@ -98,11 +98,11 @@ const QuickcardListView = () => {
 
   const handleShare = async (quickcardId: string) => {
     // Show public sharing warning
-    const confirmMessage = `⚠️ PUBLIC SHARING WARNING
+    const confirmMessage = `⚠️ Attention:
 
-This will create a public link for your Quickcard. Anyone with this link will be able to view your content, even if they don't have a Vōstcard account.
+This will create a public link for your post. Anyone with the link can see it.
 
-Are you sure you want to share this Quickcard publicly?`;
+Tap OK to continue.`;
     
     if (!window.confirm(confirmMessage)) {
       return; // User cancelled
