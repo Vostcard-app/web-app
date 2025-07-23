@@ -660,13 +660,15 @@ const UserSettingsView: React.FC = () => {
               <a href="https://www.buymeacoffee.com" target="_blank" rel="noopener noreferrer" style={{ color: '#007aff', textDecoration: 'underline' }}>
                 buymeacoffee.com
               </a>.
+              <br /><br />
+              <strong>Format:</strong> https://www.buymeacoffee.com/yourname (don't include @ symbol)
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input
                 type="url"
                 value={profile?.buyMeACoffeeURL || ''}
                 onChange={(e) => setProfile(prev => prev ? { ...prev, buyMeACoffeeURL: e.target.value } : prev)}
-                placeholder="https://www.buymeacoffee.com/yourname"
+                placeholder="https://www.buymeacoffee.com/vostcard"
                 style={{
                   padding: '12px',
                   borderRadius: '8px',
@@ -680,8 +682,8 @@ const UserSettingsView: React.FC = () => {
                 onClick={async () => {
                   if (!profile || !user) return;
                   const url = profile.buyMeACoffeeURL?.trim();
-                  if (!url || !url.startsWith('https://www.buymeacoffee.com/')) {
-                    alert('Please enter a valid Buy Me a Coffee URL starting with https://www.buymeacoffee.com/');
+                  if (!url || (!url.startsWith('https://www.buymeacoffee.com/') && !url.startsWith('https://buymeacoffee.com/'))) {
+                    alert('Please enter a valid Buy Me a Coffee URL starting with https://www.buymeacoffee.com/ or https://buymeacoffee.com/');
                     return;
                   }
                   try {

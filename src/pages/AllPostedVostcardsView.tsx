@@ -28,10 +28,10 @@ const AllPostedVostcardsView: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
-  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom'>('nearby');
-  const [customDistance, setCustomDistance] = useState(2);
+  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom'>('custom');
+  const [customDistance, setCustomDistance] = useState(10);
   const [showAreaSelector, setShowAreaSelector] = useState(false);
-  const [showDistanceSlider, setShowDistanceSlider] = useState(false);
+  const [showDistanceSlider, setShowDistanceSlider] = useState(true);
   
   // Type filtering state (Offers are never filtered out)
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -394,14 +394,14 @@ const AllPostedVostcardsView: React.FC = () => {
         });
       
       case 'custom':
-        // Show vostcards within the custom distance of user location
+        // Show vostcards within the custom distance (in miles) of user location
         return vostcards.filter(v => {
           const lat = v.latitude || v.geo?.latitude;
           const lng = v.longitude || v.geo?.longitude;
           if (!lat || !lng) return false;
           
           const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
-          return distance <= customDistance;
+          return distance <= (customDistance * 1.6); // Convert miles to km (1 mile = 1.6km)
         });
       
       default:
@@ -639,7 +639,7 @@ const AllPostedVostcardsView: React.FC = () => {
         zIndex: 9,
         marginTop: '80px', // Account for fixed header
       }}>
-        <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>Nearby Vōstcards</div>
+        <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>Local Vōstcards</div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
           <span style={{ fontWeight: 600 }}>
             {(() => {

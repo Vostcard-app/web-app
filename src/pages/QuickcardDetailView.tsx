@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -116,7 +116,10 @@ const QuickcardDetailView: React.FC = () => {
         const userRef = doc(db, 'users', quickcard.userID);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          setUserProfile(userSnap.data());
+          const userData = userSnap.data();
+          console.log('🔍 QuickcardDetailView Debug - Creator userRole:', userData.userRole);
+          console.log('🔍 QuickcardDetailView Debug - Creator buyMeACoffeeURL:', userData.buyMeACoffeeURL);
+          setUserProfile(userData);
         }
       } catch (err) {
         console.error('Failed to load user profile:', err);
@@ -367,10 +370,10 @@ const QuickcardDetailView: React.FC = () => {
 
       {/* User Info */}
       <div style={{ 
-        padding: '15px 20px 5px 20px',
+        padding: '25px 20px 5px 20px', // 10px extra padding on top
         display: 'flex', 
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         marginTop: '63px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -401,6 +404,50 @@ const QuickcardDetailView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ☕ Tip Button for Guides - Under Avatar */}
+      {userProfile?.userRole === 'guide' && 
+       userProfile?.buyMeACoffeeURL && 
+       user?.uid !== quickcard.userID && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          marginTop: '10px',
+          marginBottom: '10px'
+        }}>
+          <button
+            onClick={() => {
+              window.open(userProfile.buyMeACoffeeURL, '_blank', 'noopener,noreferrer');
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: '#FFDD00',
+              color: '#333',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '10px 20px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFE55C';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFDD00';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <FaCoffee size={18} />
+            ☕ Tip Guide
+          </button>
+        </div>
+      )}
 
       {/* Title */}
       <div style={{ padding: '0 20px' }}>

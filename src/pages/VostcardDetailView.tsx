@@ -605,10 +605,10 @@ const VostcardDetailView: React.FC = () => {
 
       {/* User Info */}
       <div style={{ 
-        padding: '5px', 
+        padding: '15px 5px 5px 5px', // 10px extra padding on top
         display: 'flex', 
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         marginTop: '78px', // Account for fixed header
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -638,11 +638,18 @@ const VostcardDetailView: React.FC = () => {
             {vostcard.username || 'Anonymous'}
           </div>
         </div>
-        
-        {/* ☕ Tip Button for Guides */}
-        {userProfile?.userRole === 'guide' && 
-         userProfile?.buyMeACoffeeURL && 
-         user?.uid !== vostcard.userID && (
+      </div>
+
+      {/* ☕ Tip Button for Guides - Under Avatar */}
+      {userProfile?.userRole === 'guide' && 
+       userProfile?.buyMeACoffeeURL && 
+       user?.uid !== vostcard.userID && (
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          marginTop: '10px',
+          marginBottom: '10px'
+        }}>
           <button
             onClick={() => {
               window.open(userProfile.buyMeACoffeeURL, '_blank', 'noopener,noreferrer');
@@ -655,8 +662,8 @@ const VostcardDetailView: React.FC = () => {
               color: '#333',
               border: 'none',
               borderRadius: '20px',
-              padding: '8px 16px',
-              fontSize: '14px',
+              padding: '10px 20px',
+              fontSize: '16px',
               fontWeight: 'bold',
               cursor: 'pointer',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -671,11 +678,11 @@ const VostcardDetailView: React.FC = () => {
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            <FaCoffee size={16} />
-            Tip Guide
+            <FaCoffee size={18} />
+            ☕ Tip Guide
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Title */}
       <div style={{ padding: '0 20px' }}>
