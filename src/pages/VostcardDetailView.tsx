@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp, FaMap } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp, FaMap, FaCoffee } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -137,7 +137,10 @@ const VostcardDetailView: React.FC = () => {
         const userRef = doc(db, 'users', vostcard.userID);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          setUserProfile(userSnap.data());
+          const userData = userSnap.data();
+          console.log('🔍 VostcardDetailView Debug - Creator userRole:', userData.userRole);
+          console.log('🔍 VostcardDetailView Debug - Creator buyMeACoffeeURL:', userData.buyMeACoffeeURL);
+          setUserProfile(userData);
         }
       } catch (err) {
         console.error('Failed to load user profile:', err);
@@ -605,33 +608,73 @@ const VostcardDetailView: React.FC = () => {
         padding: '5px', 
         display: 'flex', 
         alignItems: 'center',
+        justifyContent: 'space-between',
         marginTop: '78px', // Account for fixed header
       }}>
-        <div style={{ 
-          width: 50, 
-          height: 50, 
-          borderRadius: '50%', 
-          overflow: 'hidden', 
-          marginRight: 16,
-          background: '#f0f0f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          {userProfile?.avatarURL ? (
-            <img 
-              src={userProfile.avatarURL} 
-              alt="User Avatar" 
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-            />
-          ) : (
-            <FaUserCircle size={50} color="#ccc" />
-          )}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ 
+            width: 50, 
+            height: 50, 
+            borderRadius: '50%', 
+            overflow: 'hidden', 
+            marginRight: 16,
+            background: '#f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {userProfile?.avatarURL ? (
+              <img 
+                src={userProfile.avatarURL} 
+                alt="User Avatar" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+              />
+            ) : (
+              <FaUserCircle size={50} color="#ccc" />
+            )}
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+            {vostcard.username || 'Anonymous'}
+          </div>
         </div>
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
-          {vostcard.username || 'Anonymous'}
-        </div>
+        
+        {/* ☕ Tip Button for Guides */}
+        {userProfile?.userRole === 'guide' && 
+         userProfile?.buyMeACoffeeURL && 
+         user?.uid !== vostcard.userID && (
+          <button
+            onClick={() => {
+              window.open(userProfile.buyMeACoffeeURL, '_blank', 'noopener,noreferrer');
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: '#FFDD00',
+              color: '#333',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFE55C';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFDD00';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <FaCoffee size={16} />
+            Tip Guide
+          </button>
+        )}
       </div>
 
       {/* Title */}

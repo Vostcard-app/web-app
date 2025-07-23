@@ -691,7 +691,7 @@ const HomeView = () => {
             <div
               onClick={() => {
                 if (user?.uid) {
-                  navigate(`/profile/${user.uid}`);
+                  navigate(`/user-profile/${user.uid}`);
                 }
               }}
               style={{ cursor: 'pointer' }}

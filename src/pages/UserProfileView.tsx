@@ -7,7 +7,7 @@ import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, whe
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaUserEdit, FaHome, FaHeart } from 'react-icons/fa';
+import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee } from 'react-icons/fa';
 
 interface UserProfile {
   id: string;
@@ -17,6 +17,8 @@ interface UserProfile {
   followingCount: number;
   message?: string;
   postedCount?: number;
+  buyMeACoffeeURL?: string;
+  userRole?: string;
 }
 
 interface PostedVostcard {
@@ -90,6 +92,8 @@ const UserProfileView: React.FC = () => {
             followingCount: data.followingCount || 0,
             message: data.message || '',
             postedCount: vostcardsData.length,
+            buyMeACoffeeURL: data.buyMeACoffeeURL || '',
+            userRole: data.userRole || 'user',
           });
 
           if (user && user.uid !== userId) {
@@ -248,6 +252,8 @@ const UserProfileView: React.FC = () => {
             Edit Profile
           </button>
         )}
+
+
         
         {profile.message && (
           <p style={{ color: '#666', fontStyle: 'italic' }}>
@@ -282,19 +288,56 @@ const UserProfileView: React.FC = () => {
       {/* ✏️ Follow Button for other users */}
       {!isCurrentUser && (
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <button
-            onClick={handleFollowToggle}
-            style={{
-              background: isFollowing ? '#888' : '#007aff',
-              color: 'white',
-              border: 'none',
-              borderRadius: 6,
-              padding: '10px 16px',
-              cursor: 'pointer',
-            }}
-          >
-            {isFollowing ? 'Unfollow' : 'Follow'}
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <button
+              onClick={handleFollowToggle}
+              style={{
+                background: isFollowing ? '#888' : '#007aff',
+                color: 'white',
+                border: 'none',
+                borderRadius: 6,
+                padding: '10px 16px',
+                cursor: 'pointer',
+              }}
+            >
+              {isFollowing ? 'Unfollow' : 'Follow'}
+            </button>
+            
+            {/* ☕ Tip Button for Guides */}
+            {profile?.userRole === 'guide' && profile?.buyMeACoffeeURL && (
+              <button
+                onClick={() => {
+                  window.open(profile.buyMeACoffeeURL, '_blank', 'noopener,noreferrer');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  backgroundColor: '#FFDD00',
+                  color: '#333',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FFE55C';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FFDD00';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <FaCoffee size={16} />
+                Tip Guide
+              </button>
+            )}
+          </div>
         </div>
       )}
 

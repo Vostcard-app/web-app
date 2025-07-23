@@ -12,17 +12,28 @@ interface UserProfile {
   name: string;
   message: string;
   avatarURL?: string;
+  buyMeACoffeeURL?: string;
+  isGuideAccount?: boolean;
 }
 
 const UserSettingsView: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
+  
+  // Debug: Log user role for troubleshooting
+  useEffect(() => {
+    console.log('🔍 UserSettingsView Debug - userRole:', userRole);
+    console.log('🔍 UserSettingsView Debug - user:', user?.uid);
+  }, [userRole, user]);
+  
   const [profile, setProfile] = useState<UserProfile>({
     username: '',
     email: '',
     name: '',
     message: '',
-    avatarURL: ''
+    avatarURL: '',
+    buyMeACoffeeURL: '',
+    isGuideAccount: false
   });
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState('');
@@ -51,7 +62,9 @@ const UserSettingsView: React.FC = () => {
             email: data.email || user.email || '',
             name: data.name || '',
             message: data.message || '',
-            avatarURL: data.avatarURL || ''
+            avatarURL: data.avatarURL || '',
+            buyMeACoffeeURL: data.buyMeACoffeeURL || '',
+            isGuideAccount: data.isGuideAccount || false
           });
           
           // Check if user needs to separate their name
@@ -628,6 +641,77 @@ const UserSettingsView: React.FC = () => {
             placeholder="Enter your public message..."
           />
         </div>
+
+        {/* ☕ Support Me Section for Guides */}
+        {userRole === 'guide' && (
+          <div style={{ 
+            marginBottom: 30,
+            padding: '20px', 
+            border: '1px solid #ddd', 
+            borderRadius: '12px',
+            background: '#f9f9f9'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#333', fontSize: '20px' }}>
+              ☕ Support Link (Buy Me a Coffee)
+            </h3>
+            <p style={{ margin: '0 0 15px 0', color: '#666', fontSize: '16px', lineHeight: 1.5 }}>
+              Add your Buy Me a Coffee URL so visitors can leave you a tip on your Vōstcards.
+              You can create a free account at{' '}
+              <a href="https://www.buymeacoffee.com" target="_blank" rel="noopener noreferrer" style={{ color: '#007aff', textDecoration: 'underline' }}>
+                buymeacoffee.com
+              </a>.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input
+                type="url"
+                value={profile?.buyMeACoffeeURL || ''}
+                onChange={(e) => setProfile(prev => prev ? { ...prev, buyMeACoffeeURL: e.target.value } : prev)}
+                placeholder="https://www.buymeacoffee.com/yourname"
+                style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid #ccc',
+                  fontSize: '16px',
+                  width: '100%',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <button
+                onClick={async () => {
+                  if (!profile || !user) return;
+                  const url = profile.buyMeACoffeeURL?.trim();
+                  if (!url || !url.startsWith('https://www.buymeacoffee.com/')) {
+                    alert('Please enter a valid Buy Me a Coffee URL starting with https://www.buymeacoffee.com/');
+                    return;
+                  }
+                  try {
+                    const userRef = doc(db, 'users', user.uid);
+                    await updateDoc(userRef, {
+                      buyMeACoffeeURL: url
+                    });
+                    alert('Buy Me a Coffee URL saved!');
+                  } catch (err) {
+                    console.error('Failed to save URL:', err);
+                    alert('Error saving URL. Please try again.');
+                  }
+                }}
+                style={{
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 20px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  alignSelf: 'flex-start'
+                }}
+              >
+                Save Support Link
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Hidden File Inputs */}
         <input

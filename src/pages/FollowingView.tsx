@@ -58,7 +58,7 @@ const FollowingView: React.FC = () => {
   }, [user]);
 
   const handleViewProfile = (userId: string) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/user-profile/${userId}`);
   };
 
   return (
