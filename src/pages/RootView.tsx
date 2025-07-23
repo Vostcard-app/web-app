@@ -17,40 +17,147 @@ const RootView: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLocationLoading, setIsLocationLoading] = useState(true);
+  const [locationSource, setLocationSource] = useState<'user' | 'fallback'>('fallback');
 
-  // Mobile-optimized geolocation
+  // Dublin coordinates as fallback
+  const DUBLIN_COORDS: [number, number] = [53.3498, -6.2603];
+
+  // Enhanced geolocation for newer iPhones
   useEffect(() => {
-    const getLocation = () => {
+    let isMounted = true;
+    let watchId: number | null = null;
+
+    const getLocation = async () => {
       if (!navigator.geolocation) {
-        setLocationError('Geolocation not supported');
-        setUserLocation([40.7128, -74.0060]);
+        console.warn('📍 Geolocation not supported by this browser');
+        setLocationError('Location services not available');
+        setUserLocation(DUBLIN_COORDS);
+        setLocationSource('fallback');
         setIsLocationLoading(false);
         return;
       }
 
-      setUserLocation([40.7128, -74.0060]);
+      // Start with Dublin fallback
+      setUserLocation(DUBLIN_COORDS);
+      setLocationSource('fallback');
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log('📍 Location found:', position.coords);
+      // Enhanced options for newer iPhones
+      const options = {
+        enableHighAccuracy: true, // Try GPS first
+        timeout: 15000, // Longer timeout for newer iPhones
+        maximumAge: 300000 // 5 minutes cache
+      };
+
+      try {
+        // First attempt with high accuracy
+        console.log('📍 Requesting user location...');
+        
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, options);
+        });
+
+        if (isMounted) {
+          console.log('📍 User location found:', {
+            lat: position.coords.latitude.toFixed(6),
+            lng: position.coords.longitude.toFixed(6),
+            accuracy: `${position.coords.accuracy}m`
+          });
+          
           setUserLocation([position.coords.latitude, position.coords.longitude]);
+          setLocationSource('user');
           setLocationError(null);
           setIsLocationLoading(false);
-        },
-        (error) => {
-          console.warn('📍 Location error:', error.message);
-          setLocationError(`Location: ${error.message}`);
-          setIsLocationLoading(false);
-        },
-        {
-          enableHighAccuracy: false,
-          timeout: 8000,
-          maximumAge: 300000
+
+          // Start watching position for updates
+          watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+              if (isMounted) {
+                setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+                setLocationSource('user');
+              }
+            },
+            (error) => {
+              console.warn('📍 Watch position error:', error.message);
+            },
+            {
+              enableHighAccuracy: false, // Less battery intensive for watching
+              timeout: 10000,
+              maximumAge: 600000 // 10 minutes for watch
+            }
+          );
         }
-      );
+
+      } catch (error: any) {
+        if (!isMounted) return;
+
+        console.warn('📍 High accuracy failed, trying fallback options:', error.message);
+        
+        // Fallback attempt with lower accuracy
+        try {
+          const fallbackOptions = {
+            enableHighAccuracy: false,
+            timeout: 10000,
+            maximumAge: 600000
+          };
+
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, fallbackOptions);
+          });
+
+          if (isMounted) {
+            console.log('📍 Fallback location found:', {
+              lat: position.coords.latitude.toFixed(6),
+              lng: position.coords.longitude.toFixed(6),
+              accuracy: `${position.coords.accuracy}m`
+            });
+            
+            setUserLocation([position.coords.latitude, position.coords.longitude]);
+            setLocationSource('user');
+            setLocationError(null);
+          }
+
+        } catch (fallbackError: any) {
+          console.warn('📍 All location attempts failed:', fallbackError.message);
+          
+          if (isMounted) {
+            // Provide user-friendly error messages
+            let errorMessage = '';
+            switch (fallbackError.code) {
+              case 1: // PERMISSION_DENIED
+                errorMessage = 'Location access denied. Showing Dublin, Ireland.';
+                break;
+              case 2: // POSITION_UNAVAILABLE
+                errorMessage = 'Location unavailable. Showing Dublin, Ireland.';
+                break;
+              case 3: // TIMEOUT
+                errorMessage = 'Location request timed out. Showing Dublin, Ireland.';
+                break;
+              default:
+                errorMessage = 'Unable to get location. Showing Dublin, Ireland.';
+            }
+            
+            setLocationError(errorMessage);
+            setUserLocation(DUBLIN_COORDS);
+            setLocationSource('fallback');
+          }
+        }
+
+        if (isMounted) {
+          setIsLocationLoading(false);
+        }
+      }
     };
 
-    setTimeout(getLocation, 100);
+    // Small delay to ensure DOM is ready, especially important for newer iPhones
+    const timer = setTimeout(getLocation, 200);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
   }, []);
 
   return (
@@ -115,7 +222,7 @@ const RootView: React.FC = () => {
         {userLocation ? (
           <MapContainer
             center={userLocation}
-            zoom={13}
+            zoom={locationSource === 'user' ? 15 : 13} // Closer zoom for user location
             style={{ height: '100%', width: '100%' }}
             zoomControl={true}
             dragging={true}
@@ -133,9 +240,16 @@ const RootView: React.FC = () => {
             <Marker position={userLocation} icon={userLocationIcon}>
               <Popup>
                 <div style={{ textAlign: 'center' }}>
-                  <strong>Your Location</strong>
+                  <strong>
+                    {locationSource === 'user' ? 'Your Location' : 'Dublin, Ireland'}
+                  </strong>
                   <br />
-                  <small>Welcome to Vōstcard!</small>
+                  <small>
+                    {locationSource === 'user' 
+                      ? 'Welcome to Vōstcard!' 
+                      : 'Default location - Enable location for your area'
+                    }
+                  </small>
                 </div>
               </Popup>
             </Marker>
@@ -255,21 +369,28 @@ const RootView: React.FC = () => {
         </button>
       </div>
 
-      {/* Debug info */}
-      {locationError && (
+      {/* Enhanced Status Info */}
+      {(locationError || isLocationLoading) && (
         <div style={{
           position: 'absolute',
           top: '80px',
           left: '10px',
           right: '10px',
-          background: 'rgba(255,165,0,0.9)',
+          background: isLocationLoading ? 'rgba(0,122,255,0.9)' : 'rgba(255,165,0,0.9)',
           color: 'white',
           padding: '8px 12px',
           borderRadius: '6px',
           fontSize: '12px',
-          zIndex: 200
+          zIndex: 200,
+          textAlign: 'center'
         }}>
-          📍 {isLocationLoading ? 'Getting your location...' : 'Using default location (NYC)'}
+          {isLocationLoading ? (
+            '📍 Finding your location...'
+          ) : (
+            locationSource === 'fallback' ? 
+            '📍 Using Dublin, Ireland - Enable location for your area' : 
+            locationError
+          )}
         </div>
       )}
     </div>
