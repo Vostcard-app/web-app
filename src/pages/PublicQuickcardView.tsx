@@ -54,6 +54,7 @@ const PublicQuickcardView: React.FC = () => {
   const [isPrivateShared, setIsPrivateShared] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [showLikeMessage, setShowLikeMessage] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
 
   // ✅ Audio functionality
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -342,11 +343,39 @@ const PublicQuickcardView: React.FC = () => {
         zIndex: 1000,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'space-between'
       }}>
         <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
           Vōstcard
         </span>
+        
+        <div 
+          onClick={() => setShowTutorialModal(true)}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <img 
+            src={InfoPin} 
+            alt="Info Pin" 
+            style={{
+              width: '40px',
+              height: '40px',
+              marginBottom: '2px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            What is Vōstcard?
+          </span>
+        </div>
       </div>
 
       {/* Like Message */}
@@ -659,6 +688,94 @@ const PublicQuickcardView: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Tutorial Video Modal */}
+      <AnimatePresence>
+        {showTutorialModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.9)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setShowTutorialModal(false)}
+          >
+            <button
+              onClick={() => setShowTutorialModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10001,
+                fontSize: '18px',
+                color: 'white',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            <div style={{ 
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <iframe
+                src="https://www.youtube.com/embed/wI1WtLqXs6g?autoplay=1&rel=0&modestbranding=1&playsinline=1"
+                width="100%"
+                height="100%"
+                style={{
+                  minHeight: '315px',
+                  maxWidth: '560px',
+                  aspectRatio: '16/9',
+                  borderRadius: 8,
+                  border: 'none'
+                }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '14px',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              Tap outside video or ✕ to close
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* CSS Animation */}
       <style>{`
