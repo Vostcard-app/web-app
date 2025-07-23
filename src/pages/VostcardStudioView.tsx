@@ -20,6 +20,7 @@ const VostcardStudioView: React.FC = () => {
   // Categories from step 3
   const availableCategories = [
     'None',
+    'View',
     'Landmark',
     'Fun Fact',
     'Macabre',
@@ -50,6 +51,7 @@ const VostcardStudioView: React.FC = () => {
   
   // Quickcard creation state - ENHANCED FOR MULTIPLE PHOTOS
   const [quickcardTitle, setQuickcardTitle] = useState('');
+  const [quickcardDescription, setQuickcardDescription] = useState('');
   const [quickcardPhotos, setQuickcardPhotos] = useState<(Blob | File)[]>([]); // Array of photos
   const [quickcardPhotoPreviews, setQuickcardPhotoPreviews] = useState<string[]>([]); // Array of previews
   const [quickcardLocation, setQuickcardLocation] = useState<{
@@ -277,7 +279,7 @@ const VostcardStudioView: React.FC = () => {
           console.log('🎵 Keeping existing audio');
         }
 
-        await drivecardService.update(editingDrivecard.id, updatedDrivecard);
+        await drivecardService.save(updatedDrivecard);
         alert('Drivecard updated successfully!');
         
         // Navigate back to library
@@ -384,6 +386,7 @@ const VostcardStudioView: React.FC = () => {
             
             // Restore basic state
             setQuickcardTitle(state.title || '');
+            setQuickcardDescription(state.description || '');
             setQuickcardCategories(state.categories || []);
             setQuickcardAudioSource(state.audioSource || null);
             setQuickcardAudioFileName(state.audioFileName || null);
@@ -396,8 +399,8 @@ const VostcardStudioView: React.FC = () => {
                 const blob = await response.blob();
                 const photoFile = new File([blob], 'quickcard-photo.jpg', { type: state.photoType || 'image/jpeg' });
                 
-                setQuickcardPhoto(photoFile);
-                setQuickcardPhotoPreview(state.photoBase64); // Use base64 as preview
+                setQuickcardPhotos([photoFile]);
+                setQuickcardPhotoPreviews([state.photoBase64]); // Use base64 as preview
                 console.log('📸 Photo restored from storage');
               } catch (error) {
                 console.error('❌ Failed to restore photo from base64:', error);
@@ -577,7 +580,7 @@ const VostcardStudioView: React.FC = () => {
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
         title: quickcardTitle.trim(),
-        description: '', 
+        description: quickcardDescription.trim() || '', 
         photos: quickcardPhotos, // Multiple photos
         audio: quickcardAudio,
         categories: quickcardCategories,
@@ -595,8 +598,8 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
-      await saveLocalVostcard(quickcard);
       setCurrentVostcard(quickcard);
+      await saveLocalVostcard();
       
       alert(`✅ Quickcard saved as private draft with ${quickcardPhotos.length} photo(s)!`);
       resetQuickcardForm();
@@ -637,7 +640,7 @@ const VostcardStudioView: React.FC = () => {
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
         title: quickcardTitle.trim(),
-        description: quickcardCategories.join(', ') || 'Quickcard',
+        description: quickcardDescription.trim() || 'Quickcard',
         photos: quickcardPhotos, // Multiple photos
         audio: quickcardAudio,
         categories: quickcardCategories,
@@ -681,6 +684,7 @@ const VostcardStudioView: React.FC = () => {
   // Helper function to reset form - UPDATED for multiple photos
   const resetQuickcardForm = () => {
     setQuickcardTitle('');
+    setQuickcardDescription('');
     
     // Clean up photo blob URLs
     quickcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
@@ -927,6 +931,38 @@ const VostcardStudioView: React.FC = () => {
               />
             </div>
 
+            {/* Description Input */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                Description
+              </label>
+              <textarea
+                value={quickcardDescription}
+                onChange={(e) => setQuickcardDescription(e.target.value)}
+                disabled={isLoading}
+                placeholder="Add a description for your quickcard..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '2px solid #333',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                  opacity: isLoading ? 0.6 : 1,
+                  resize: 'vertical',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
             {/* Photo Gallery Preview */}
             {quickcardPhotoPreviews.length > 0 && (
               <div style={{ marginBottom: '15px' }}>
@@ -1145,8 +1181,7 @@ const VostcardStudioView: React.FC = () => {
               </label>
               
               <div
-                onClick={() => setShowQuickcardCategoryModal(true)}
-                disabled={isLoading}
+                onClick={isLoading ? undefined : () => setShowQuickcardCategoryModal(true)}
                 style={{
                   backgroundColor: '#f5f5f5',
                   padding: '10px 12px',
@@ -1290,6 +1325,219 @@ const VostcardStudioView: React.FC = () => {
                 Clear Audio
               </button>
             )}
+          </div>
+        )}
+
+        {/* Drivecard Section */}
+        {activeSection === 'drivecard' && (
+          <div style={{
+            borderRadius: '8px',
+            padding: '15px',
+            width: '100%',
+            maxWidth: '350px',
+            backgroundColor: '#f9f9f9',
+            border: '1px solid #ddd',
+            maxHeight: 'none',
+            overflowY: 'visible'
+          }}>
+            <h3 style={{ marginTop: 0 }}>
+              🚗 Drivecard Creator
+            </h3>
+
+            {/* Title Input */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                Title
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={isLoading}
+                placeholder="Enter drivecard title..."
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '2px solid #333',
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              />
+            </div>
+
+            {/* Audio Recording Section */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                Audio {audioBlob && <span style={{color: 'green'}}>✅</span>}
+              </label>
+              
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                {/* Record Button */}
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isLoading}
+                  style={{
+                    backgroundColor: isRecording ? '#f44336' : '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    flex: 1,
+                    opacity: isLoading ? 0.6 : 1
+                  }}
+                >
+                  {isRecording ? `🔴 Stop (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})` : '🎙️ Record'}
+                </button>
+
+                {/* Upload Button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || isRecording}
+                  style={{
+                    backgroundColor: '#2196F3',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    cursor: (isLoading || isRecording) ? 'not-allowed' : 'pointer',
+                    flex: 1,
+                    opacity: (isLoading || isRecording) ? 0.6 : 1
+                  }}
+                >
+                  📁 Upload
+                </button>
+              </div>
+
+              {/* Audio Preview */}
+              {audioBlob && (
+                <div style={{
+                  padding: '8px',
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  color: '#666'
+                }}>
+                  {audioSource === 'recording' ? 
+                    `🎙️ Recorded audio (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})` : 
+                    `📁 ${audioFileName || 'Uploaded audio'}`
+                  }
+                </div>
+              )}
+
+              {/* Recording Error */}
+              {recordingError && (
+                <div style={{
+                  padding: '8px',
+                  backgroundColor: '#ffebee',
+                  border: '1px solid #ffcdd2',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  color: '#d32f2f',
+                  marginTop: '8px'
+                }}>
+                  {recordingError}
+                </div>
+              )}
+            </div>
+
+            {/* Location Section */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                Location {selectedLocation && <span style={{color: 'green'}}>✅</span>}
+              </label>
+              
+              <button
+                onClick={handlePinPlacer}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: selectedLocation ? '#4CAF50' : '#2196F3',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 12px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                {selectedLocation ? '📍 Location Set' : '📍 Set Location'}
+              </button>
+
+              {selectedLocation && (
+                <div style={{
+                  padding: '8px',
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  color: '#666',
+                  marginTop: '8px'
+                }}>
+                  📍 {selectedLocation.address || `${selectedLocation.latitude.toFixed(6)}, ${selectedLocation.longitude.toFixed(6)}`}
+                </div>
+              )}
+            </div>
+
+            {/* Category Section */}
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#333',
+                marginBottom: '8px'
+              }}>
+                Category
+              </label>
+              
+              <select
+                value={drivecardCategory}
+                onChange={(e) => setDrivecardCategory(e.target.value)}
+                disabled={isLoading}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '2px solid #333',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  backgroundColor: 'white',
+                  boxSizing: 'border-box',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                {availableCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Save/Update Button */}
             <button 

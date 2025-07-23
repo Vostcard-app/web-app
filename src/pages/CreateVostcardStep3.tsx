@@ -25,6 +25,7 @@ const CreateVostcardStep3: React.FC = () => {
   
   const availableCategories = [
     'None',
+    'View',
     'Landmark',
     'Fun Fact',
     'Macabre',
@@ -35,8 +36,9 @@ const CreateVostcardStep3: React.FC = () => {
     'Restaurant',
     'Nature',
     'Drive Mode Event',
-  'Wish you were here',
-  'Made for kids',]
+    'Wish you were here',
+    'Made for kids',
+  ]
   
   // Debug validation state
   const isQuickcard = currentVostcard?.isQuickcard || false;

@@ -22,6 +22,7 @@ const QuickcardStep3: React.FC = () => {
   
   const availableCategories = [
     'None',
+    'View',
     'Landmark',
     'Fun Fact',
     'Macabre',

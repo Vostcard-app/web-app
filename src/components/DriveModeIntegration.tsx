@@ -8,6 +8,7 @@ import type { LocationResult } from '../utils/locationService';
 
 // Enhanced category list with Drive Mode
 export const VOSTCARD_CATEGORIES = [
+  'View',
   'Entertainment',
   'Food & Dining',
   'Shopping',

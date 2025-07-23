@@ -515,6 +515,7 @@ const DriveModeSettingsView: React.FC = () => {
                   gap: '8px'
                 }}>
                   {[
+                    'View',
                     'Landmark',
                     'Fun Fact', 
                     'Macabre',

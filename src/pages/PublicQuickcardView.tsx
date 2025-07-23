@@ -132,9 +132,8 @@ const PublicQuickcardView: React.FC = () => {
                     retryFormattedDate = date.toLocaleDateString();
                   }
                   
-                  // Remove any raw Firebase Timestamps to prevent rendering errors
-                  const cleanRetryData = { ...retryData };
-                  delete cleanRetryData.createdAt; // Remove raw timestamp
+                  // Clean all Firebase Timestamps to prevent rendering errors
+                  const cleanRetryData = cleanFirebaseTimestamps(retryData);
                   
                   setQuickcard({ id: retryDocSnap.id, ...cleanRetryData, formattedDate: retryFormattedDate });
                   setIsPrivateShared(retryData.isPrivatelyShared || false);

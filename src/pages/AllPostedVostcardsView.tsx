@@ -41,6 +41,7 @@ const AllPostedVostcardsView: React.FC = () => {
   // Category filtering state (same as HomeView)
   const availableCategories = [
     'None',
+    'View',
     'Landmark',
     'Fun Fact',
     'Macabre',

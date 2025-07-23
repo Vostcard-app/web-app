@@ -19,6 +19,7 @@ import InfoButton from '../assets/Info_button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
+import { AVAILABLE_CATEGORIES, AVAILABLE_TYPES } from '../types/VostcardTypes';
 
 
 // FIXED: Import pin images from assets folder for better Leaflet compatibility
@@ -1474,6 +1475,194 @@ const HomeView = () => {
           Create Quickcard
         </button>
       </div>
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 2000
+            }}
+            onClick={() => setShowFilterModal(false)}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '10%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            maxWidth: '300px',
+            width: '90%',
+            height: '80vh',
+            zIndex: 2001,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header */}
+            <div style={{
+              padding: '20px 24px 16px 24px',
+              borderBottom: '1px solid #eee',
+              backgroundColor: 'white',
+              borderRadius: '12px 12px 0 0'
+            }}>
+              <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#333' }}>
+                Filter Content
+              </h3>
+            </div>
+            
+            {/* Scrollable Content */}
+            <div style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '16px 24px'
+            }}>
+              {/* Content Type Filtering */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Content Type</h4>
+                {AVAILABLE_TYPES.map((type) => (
+                  <label key={type} style={{ 
+                    display: 'block', 
+                    marginBottom: '10px', 
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    padding: '6px',
+                    borderRadius: '4px',
+                    backgroundColor: selectedTypes.includes(type) ? '#e8f4fd' : 'transparent'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedTypes.includes(type)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTypes(prev => [...prev, type]);
+                        } else {
+                          setSelectedTypes(prev => prev.filter(t => t !== type));
+                        }
+                      }}
+                      style={{ marginRight: '8px' }}
+                    />
+                    {type === 'Vostcard' && '📹'} 
+                    {type === 'Quickcard' && '📸'} 
+                    {type === 'Guide' && '📚'} 
+                    {type}
+                  </label>
+                ))}
+              </div>
+              
+              {/* Category Filtering */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Category</h4>
+                {AVAILABLE_CATEGORIES.map((category) => (
+                  <label key={category} style={{ 
+                    display: 'block', 
+                    marginBottom: '10px', 
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    padding: '6px',
+                    borderRadius: '4px',
+                    backgroundColor: selectedCategories.includes(category) ? '#f0f8ff' : 'transparent'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(category)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          if (category === 'None') {
+                            setSelectedCategories(['None']);
+                          } else {
+                            setSelectedCategories(prev => prev.filter(c => c !== 'None').concat(category));
+                          }
+                        } else {
+                          setSelectedCategories(prev => prev.filter(c => c !== category));
+                        }
+                      }}
+                      style={{ marginRight: '8px' }}
+                    />
+                    {category}
+                  </label>
+                ))}
+              </div>
+
+              {/* Friends Only Filter */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#333' }}>Friends</h4>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  borderRadius: '4px',
+                  backgroundColor: showFriendsOnly ? '#f0f8ff' : 'transparent'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={showFriendsOnly}
+                    onChange={(e) => setShowFriendsOnly(e.target.checked)}
+                    style={{ marginRight: '8px' }}
+                  />
+                  👥 Show friends only
+                </label>
+              </div>
+            </div>
+             
+            {/* Fixed Button Area */}
+            <div style={{
+              borderTop: '1px solid #eee',
+              padding: '16px 24px',
+              display: 'flex',
+              gap: '8px',
+              backgroundColor: 'white',
+              borderRadius: '0 0 12px 12px'
+            }}>
+              <button
+                onClick={() => {
+                  setSelectedTypes([]);
+                  setSelectedCategories([]);
+                  setShowFriendsOnly(false);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  color: '#666',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Clear
+              </button>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
