@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp, FaMap, FaCoffee } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp, FaMap, FaCoffee, FaChevronDown } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,7 @@ import { type Friend } from '../types/FriendModels';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
 import { generateShareText } from '../utils/vostcardUtils';
+import TipDropdownMenu from '../components/TipDropdownMenu';
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,8 +49,13 @@ const VostcardDetailView: React.FC = () => {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   
+  // Tip dropdown state
+  const [showTipDropdown, setShowTipDropdown] = useState(false);
+  const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const tipButtonRef = useRef<HTMLButtonElement>(null);
 
   // Fetch available vostcards for navigation
   const fetchAvailableVostcards = async () => {
@@ -409,6 +415,17 @@ Tap OK to continue.`;
     alert('Flag functionality not implemented yet');
   };
 
+  const handleTipButtonClick = () => {
+    if (tipButtonRef.current) {
+      const rect = tipButtonRef.current.getBoundingClientRect();
+      setTipDropdownPosition({
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2
+      });
+      setShowTipDropdown(!showTipDropdown);
+    }
+  };
+
 
 
   // Navigation functions
@@ -696,7 +713,6 @@ Tap OK to continue.`;
 
       {/* ☕ Tip Button for Guides - Under Avatar */}
       {userProfile?.userRole === 'guide' && 
-       userProfile?.buyMeACoffeeURL && 
        user?.uid !== vostcard.userID && (
         <div style={{ 
           display: 'flex', 
@@ -705,9 +721,8 @@ Tap OK to continue.`;
           marginBottom: '10px'
         }}>
           <button
-            onClick={() => {
-              window.open(userProfile.buyMeACoffeeURL, '_blank', 'noopener,noreferrer');
-            }}
+            ref={tipButtonRef}
+            onClick={handleTipButtonClick}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -734,6 +749,7 @@ Tap OK to continue.`;
           >
             <FaCoffee size={18} />
             ☕ Tip Guide
+            <FaChevronDown size={12} style={{ marginLeft: '4px' }} />
           </button>
         </div>
       )}
@@ -1303,6 +1319,14 @@ Tap OK to continue.`;
           isQuickcard: vostcard?.isQuickcard
         }}
       /> */}
+
+      {/* Tip Dropdown Menu */}
+      <TipDropdownMenu
+        userProfile={userProfile}
+        isVisible={showTipDropdown}
+        onClose={() => setShowTipDropdown(false)}
+        position={tipDropdownPosition}
+      />
     </div>
   );
 };

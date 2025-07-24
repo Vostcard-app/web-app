@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -15,6 +15,7 @@ import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import { generateShareText } from '../utils/vostcardUtils';
+import TipDropdownMenu from '../components/TipDropdownMenu';
 
 // Custom quickcard icon for the map
 const quickcardIcon = new L.Icon({
@@ -46,6 +47,11 @@ const QuickcardDetailView: React.FC = () => {
   // Simplified audio player state - just play/pause
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Tip dropdown state
+  const [showTipDropdown, setShowTipDropdown] = useState(false);
+  const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
+  const tipButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -243,6 +249,17 @@ Tap OK to continue.`;
 
   const handleFlag = () => {
     alert('Flag functionality not implemented yet');
+  };
+
+  const handleTipButtonClick = () => {
+    if (tipButtonRef.current) {
+      const rect = tipButtonRef.current.getBoundingClientRect();
+      setTipDropdownPosition({
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2
+      });
+      setShowTipDropdown(!showTipDropdown);
+    }
   };
 
   // Check if quickcard has audio
@@ -458,7 +475,6 @@ Tap OK to continue.`;
 
       {/* ☕ Tip Button for Guides - Under Avatar */}
       {userProfile?.userRole === 'guide' && 
-       userProfile?.buyMeACoffeeURL && 
        user?.uid !== quickcard.userID && (
         <div style={{ 
           display: 'flex', 
@@ -467,9 +483,8 @@ Tap OK to continue.`;
           marginBottom: '10px'
         }}>
           <button
-            onClick={() => {
-              window.open(userProfile.buyMeACoffeeURL, '_blank', 'noopener,noreferrer');
-            }}
+            ref={tipButtonRef}
+            onClick={handleTipButtonClick}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -496,6 +511,7 @@ Tap OK to continue.`;
           >
             <FaCoffee size={18} />
             ☕ Tip Guide
+            <FaChevronDown size={12} style={{ marginLeft: '4px' }} />
           </button>
         </div>
       )}
@@ -975,6 +991,14 @@ Tap OK to continue.`;
           description: quickcard?.description,
           isQuickcard: true
         }}
+      />
+
+      {/* Tip Dropdown Menu */}
+      <TipDropdownMenu
+        userProfile={userProfile}
+        isVisible={showTipDropdown}
+        onClose={() => setShowTipDropdown(false)}
+        position={tipDropdownPosition}
       />
     </div>
   );
