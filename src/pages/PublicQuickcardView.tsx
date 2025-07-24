@@ -172,7 +172,7 @@ const PublicQuickcardView: React.FC = () => {
     fetchQuickcard();
   }, [id, fixBrokenSharedVostcard]);
 
-  // ✅ Enhanced photo click handler
+  // ✅ Enhanced photo click handler for thumbnails (not main photo)
   const handlePhotoClick = (photoUrl: string) => {
     if (quickcard.photoURLs && quickcard.photoURLs.length > 1) {
       const index = quickcard.photoURLs.indexOf(photoUrl);
@@ -180,6 +180,21 @@ const PublicQuickcardView: React.FC = () => {
       setShowMultiPhotoModal(true);
     } else {
       setSelectedPhoto(photoUrl);
+    }
+  };
+
+  // ✅ NEW: Main photo click handler - triggers audio if available, otherwise shows photo
+  const handleMainPhotoClick = () => {
+    const hasAudio = !!(quickcard.audioURL || quickcard.audio || quickcard._firebaseAudioURL);
+    
+    if (hasAudio) {
+      // If audio exists, play/pause audio instead of showing photo
+      console.log('🎵 Main photo clicked - triggering audio playback');
+      handleAudioClick();
+    } else {
+      // No audio, fall back to photo viewing
+      console.log('📸 Main photo clicked - no audio, showing photo');
+      handlePhotoClick(quickcard.photoURLs[0]);
     }
   };
 
@@ -578,7 +593,7 @@ const PublicQuickcardView: React.FC = () => {
           {title || 'Untitled Quickcard'}
         </h1>
 
-        {/* ✅ Enhanced High-Resolution Multi-Photo Display */}
+        {/* ✅ Enhanced High-Resolution Multi-Photo Display with Audio-Triggered Main Photo */}
         <div style={{ 
           marginBottom: '20px',
           display: 'flex',
@@ -595,7 +610,7 @@ const PublicQuickcardView: React.FC = () => {
               gap: '12px', // Increased gap for better separation
               overflow: 'hidden'
             }}>
-              {/* Main Photo - Higher Resolution */}
+              {/* ✅ Main Photo - Now triggers audio if available */}
               <div style={{ 
                 flex: photoURLs.length === 1 ? 1 : 0.75, // Increased main photo ratio
                 backgroundColor: 'transparent',
@@ -632,7 +647,7 @@ const PublicQuickcardView: React.FC = () => {
                       // Additional quality settings
                       filter: 'contrast(1.02) saturate(1.05)', // Slight enhancement
                     } as React.CSSProperties}
-                    onClick={() => handlePhotoClick(photoURLs[0])}
+                    onClick={handleMainPhotoClick} // ✅ NEW: Use main photo click handler
                     loading="eager" // Prioritize loading
                     fetchpriority="high" // Ensure high priority loading
                     // Add error handling for better loading
@@ -640,23 +655,45 @@ const PublicQuickcardView: React.FC = () => {
                       console.error('Failed to load main image:', photoURLs[0]);
                     }}
                   />
-                  {photoURLs.length > 1 && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '12px', // Increased from 8px
-                      right: '12px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.8)', // Increased opacity
-                      color: 'white',
-                      padding: '6px 12px', // Increased padding
-                      borderRadius: '16px', // Increased border radius
-                      fontSize: '14px', // Increased font size
-                      fontWeight: 'bold',
-                      backdropFilter: 'blur(8px)', // Added blur effect
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // Added shadow
-                    }}>
-                      1/{photoURLs.length}
-                    </div>
-                  )}
+                  
+                  {/* ✅ Enhanced visual indicators */}
+                  <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    {/* ✅ Audio indicator on main photo */}
+                    {hasAudio && (
+                      <div style={{
+                        backgroundColor: 'rgba(0, 122, 255, 0.9)', // Blue background for audio
+                        color: 'white',
+                        padding: '6px 12px',
+                        borderRadius: '16px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        backdropFilter: 'blur(8px)',
+                        boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        {isPlayingAudio ? <FaPause size={12} /> : <FaPlay size={12} />}
+                        {isPlayingAudio ? 'Playing' : 'Tap to play'}
+                      </div>
+                    )}
+                    
+                    {/* Photo counter - moved to right side */}
+                    {photoURLs.length > 1 && (
+                      <div style={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Increased opacity
+                        color: 'white',
+                        padding: '6px 12px', // Increased padding
+                        borderRadius: '16px', // Increased border radius
+                        fontSize: '14px', // Increased font size
+                        fontWeight: 'bold',
+                        backdropFilter: 'blur(8px)', // Added blur effect
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // Added shadow
+                      }}>
+                        1/{photoURLs.length}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -683,7 +720,7 @@ const PublicQuickcardView: React.FC = () => {
                         boxShadow: '0 4px 16px rgba(0,0,0,0.1)', // Enhanced shadow
                         transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                       }}
-                      onClick={() => handlePhotoClick(photoUrl)}
+                      onClick={() => handlePhotoClick(photoUrl)} // ✅ Thumbnails still show photos
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = 'scale(1.02)';
                         e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
