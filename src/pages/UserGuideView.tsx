@@ -11,7 +11,7 @@ const UserGuideView: React.FC = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   
   // YouTube video ID extracted from the provided URL
-  const youtubeVideoId = 'CCOErz2RxwI';
+  const youtubeVideoId = 'J-ix67eZ7J4';
   const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   return (

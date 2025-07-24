@@ -176,7 +176,7 @@ const HomeView = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showInfoMenu, setShowInfoMenu] = useState(false);
-  const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('wI1WtLqXs6g'); // Default "What is Vōstcard"
+  const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
@@ -1173,7 +1173,7 @@ const HomeView = () => {
             </div>
             
             <button
-              onClick={() => handleTutorialVideo('wI1WtLqXs6g', 'What is Vōstcard')}
+              onClick={() => handleTutorialVideo('J-ix67eZ7J4', 'What is Vōstcard')}
               style={menuItemStyle}
             >
               📍 What is Vōstcard
