@@ -205,7 +205,7 @@ const RootView: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        fontSize: '24px',
+        fontSize: '32px',
         fontWeight: 700,
         position: 'fixed',
         top: 0,
@@ -228,6 +228,7 @@ const RootView: React.FC = () => {
           <img 
             src={RoundInfoButton} 
             alt="Round Info Button" 
+            className="bobbing-pin"
             style={{
               width: '60px',
               height: '60px'
