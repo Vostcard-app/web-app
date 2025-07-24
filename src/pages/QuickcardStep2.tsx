@@ -117,7 +117,7 @@ export default function QuickcardStep2() {
     color: 'white',
     border: 'none',
     borderRadius: 8,
-    padding: '16px 32px',
+    padding: '3px',
     fontSize: 18,
     fontWeight: 600,
     cursor: 'pointer',
@@ -199,7 +199,7 @@ export default function QuickcardStep2() {
         flex: 1,
         width: '100%',
         maxWidth: 400,
-        padding: '100px 24px 24px',
+        padding: '70px 24px 24px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center'
@@ -211,7 +211,8 @@ export default function QuickcardStep2() {
           color: '#002B4D',
           textAlign: 'center',
           marginBottom: 8,
-          letterSpacing: '0.01em'
+          letterSpacing: '0.01em',
+          paddingTop: '5px'
         }}>
           Add Photos
         </h1>
@@ -220,7 +221,7 @@ export default function QuickcardStep2() {
           fontSize: 16,
           color: '#666',
           textAlign: 'center',
-          marginBottom: 32,
+          marginBottom: 5,
           lineHeight: 1.4
         }}>
           Add up to 4 photos for your Quickcard
@@ -231,10 +232,11 @@ export default function QuickcardStep2() {
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '16px',
-          marginBottom: 24,
+          marginBottom: 5,
           width: '100%',
           maxWidth: 300,
-          justifyItems: 'center'
+          justifyItems: 'center',
+          paddingTop: '5px'
         }}>
           {selectedPhotos.map((photo, idx) => (
             <button
@@ -297,7 +299,8 @@ export default function QuickcardStep2() {
           fontSize: 14,
           color: '#666',
           textAlign: 'center',
-          marginBottom: 24
+          marginBottom: 0,
+          paddingTop: '2px'
         }}>
           {photoCount} of 4 photos added
         </div>
