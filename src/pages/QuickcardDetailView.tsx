@@ -262,7 +262,22 @@ Tap OK to continue.`;
     }
   }, [photoURLs]);
 
-  // ✅ NEW: Main photo click handler - triggers audio if available, otherwise shows photo
+  // ✅ NEW: Thumbnail click handler - launches audio and shows first photo
+  const handleThumbnailClick = useCallback(() => {
+    console.log('🖼️ Thumbnail clicked - launching audio and showing first photo');
+    
+    // Start audio if available
+    if (hasAudio) {
+      handlePlayPause();
+    }
+    
+    // Show first photo in full screen
+    if (photoURLs && photoURLs.length > 0) {
+      setSelectedPhoto(photoURLs[0]); // Always show first photo
+    }
+  }, [hasAudio, photoURLs, handlePlayPause]);
+
+  // ✅ Main photo click handler - triggers audio if available, otherwise shows photo
   const handleMainPhotoClick = useCallback(() => {
     if (hasAudio) {
       // If audio exists, play/pause audio instead of showing photo
@@ -653,7 +668,7 @@ Tap OK to continue.`;
                     // ✅ Additional quality settings
                     filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
                   } as React.CSSProperties}
-                  onClick={handleMainPhotoClick} // ✅ NEW: Use main photo click handler
+                  onClick={handleMainPhotoClick} // ✅ Main photo click handler
                   loading="eager" // ✅ Prioritize loading
                   fetchpriority="high" // ✅ Ensure high priority loading
                 />
@@ -699,7 +714,7 @@ Tap OK to continue.`;
               </div>
             </div>
 
-            {/* Additional Photos Thumbnail Strip - Higher Resolution */}
+            {/* ✅ Thumbnails - NOW trigger audio + show first photo */}
             {photoURLs.length > 1 && (
               <div style={{
                 flex: 0.25,
@@ -722,7 +737,7 @@ Tap OK to continue.`;
                       boxShadow: '0 4px 16px rgba(0,0,0,0.1)', // ✅ Enhanced shadow
                       transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                     }}
-                    onClick={() => handlePhotoClick(photoUrl)} // ✅ Thumbnails still show photos
+                    onClick={handleThumbnailClick} // ✅ NEW: Use thumbnail click handler
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'scale(1.02)';
                       e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
@@ -1084,7 +1099,7 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* Photo Modal */}
+      {/* ✅ Photo Modal - Shows first photo when thumbnails are clicked */}
       {selectedPhoto && (
         <div
           style={{
