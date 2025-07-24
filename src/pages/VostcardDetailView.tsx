@@ -1210,7 +1210,10 @@ Tap OK to continue.`;
           {/* Intro Button - Always show if there's any audio */}
           <button
             onClick={() => {
-              console.log('🎵 Intro button clicked - showing main photo');
+              console.log('🎵 Intro button clicked - playing audio and showing main photo');
+              // Play audio
+              handleAudioPlayback();
+              // Show main photo in full screen
               if (vostcard.photoURLs && vostcard.photoURLs[0]) {
                 setSelectedPhoto(vostcard.photoURLs[0]);
               }
@@ -1238,7 +1241,10 @@ Tap OK to continue.`;
           {vostcard.audioURLs && vostcard.audioURLs.length >= 2 && (
             <button
               onClick={() => {
-                console.log('🎵 Detail button clicked - showing main photo');
+                console.log('🎵 Detail button clicked - playing audio and showing main photo');
+                // Play audio (for now using the same audio - you can modify this later for separate detail audio)
+                handleAudioPlayback();
+                // Show main photo in full screen
                 if (vostcard.photoURLs && vostcard.photoURLs[0]) {
                   setSelectedPhoto(vostcard.photoURLs[0]);
                 }
