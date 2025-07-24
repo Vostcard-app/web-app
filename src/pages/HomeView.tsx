@@ -1139,27 +1139,6 @@ const HomeView = () => {
             >
               🏠 Home Screen
             </button>
-            
-            <button
-              onClick={() => handleTutorialVideo('CREATE_VOSTCARD_VIDEO_ID', 'How to create a Vostcard')}
-              style={menuItemStyle}
-            >
-              🎬 How to create a Vostcard
-            </button>
-            
-            <button
-              onClick={() => handleTutorialVideo('QUICKCARD_VIDEO_ID', 'Quick Card')}
-              style={menuItemStyle}
-            >
-              📸 Quick Card
-            </button>
-            
-            <button
-              onClick={() => handleTutorialVideo('FILTERS_VIDEO_ID', 'Filters')}
-              style={menuItemStyle}
-            >
-              🔍 Filters
-            </button>
           </div>
         )}
 
