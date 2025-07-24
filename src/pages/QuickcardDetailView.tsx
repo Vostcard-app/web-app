@@ -404,7 +404,7 @@ Tap OK to continue.`;
         padding: '25px 20px 5px 20px', // 10px extra padding on top
         display: 'flex', 
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         marginTop: '63px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>

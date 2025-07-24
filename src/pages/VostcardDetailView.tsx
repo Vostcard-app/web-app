@@ -639,10 +639,10 @@ Tap OK to continue.`;
 
       {/* User Info */}
       <div style={{ 
-        padding: '15px 5px 5px 5px', // 10px extra padding on top
+        padding: '15px 20px 5px 20px', // 10px extra padding on top
         display: 'flex', 
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         marginTop: '78px', // Account for fixed header
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
