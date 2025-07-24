@@ -47,7 +47,7 @@ const QuickcardDetailView: React.FC = () => {
   // ✅ Enhanced audio player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
@@ -251,6 +251,59 @@ Tap OK to continue.`;
     }
   }, [quickcard, navigate]);
 
+  // ✅ Enhanced audio playback function - MOVED FIRST
+  const handlePlayPause = useCallback(async () => {
+    if (!hasAudio) return;
+
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      if (isPlaying) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create new audio element
+      const audio = new Audio();
+      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
+
+      // Get audio source - check multiple possible fields
+      const audioSource = quickcard?.audioURL || 
+                         quickcard?.audioURLs?.[0] || 
+                         quickcard?.audio || 
+                         quickcard?._firebaseAudioURL;
+
+      if (!audioSource) {
+        console.error('No audio source available');
+        return;
+      }
+
+      // Set audio source
+      if (audioSource instanceof Blob) {
+        audio.src = URL.createObjectURL(audioSource);
+      } else if (typeof audioSource === 'string') {
+        audio.src = audioSource;
+      } else {
+        console.error('Invalid audio source type:', typeof audioSource);
+        return;
+      }
+
+      // Play audio
+      await audio.play();
+      
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
+      }
+      alert('Failed to play audio. Please try again.');
+    }
+  }, [hasAudio, isPlaying, quickcard]);
+
   // ✅ Enhanced photo click handler for thumbnails (not main photo)
   const handlePhotoClick = useCallback((photoUrl: string) => {
     if (photoURLs && photoURLs.length > 1) {
@@ -290,61 +343,9 @@ Tap OK to continue.`;
         handlePhotoClick(photoURLs[0]);
       }
     }
-  }, [hasAudio, photoURLs, handlePhotoClick]);
+  }, [hasAudio, photoURLs, handlePhotoClick, handlePlayPause]);
 
-  // ✅ Enhanced audio playback function
-  const handlePlayPause = useCallback(async () => {
-    if (!hasAudio) return;
 
-    try {
-      // Stop any existing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-
-      if (isPlaying) {
-        setIsPlaying(false);
-        return;
-      }
-
-      // Create new audio element
-      const audio = new Audio();
-      audioRef.current = audio;
-
-      // Get audio source - check multiple possible fields
-      const audioSource = quickcard?.audioURL || 
-                         quickcard?.audioURLs?.[0] || 
-                         quickcard?.audio || 
-                         quickcard?._firebaseAudioURL;
-
-      if (!audioSource) {
-        console.error('No audio source available');
-        return;
-      }
-
-      // Set audio source
-      if (audioSource instanceof Blob) {
-        audio.src = URL.createObjectURL(audioSource);
-      } else if (typeof audioSource === 'string') {
-        audio.src = audioSource;
-      } else {
-        console.error('Invalid audio source type:', typeof audioSource);
-        return;
-      }
-
-      // Play audio
-      await audio.play();
-      
-    } catch (error) {
-      console.error('Error playing audio:', error);
-      setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current = null;
-      }
-      alert('Failed to play audio. Please try again.');
-    }
-  }, [hasAudio, isPlaying, quickcard]);
 
   const handleRefresh = () => {
     window.location.reload();
@@ -660,7 +661,6 @@ Tap OK to continue.`;
                     objectPosition: 'center',
                     cursor: 'pointer',
                     // ✅ High-quality image rendering hints
-                    imageRendering: 'high-quality',
                     imageRendering: 'crisp-edges' as any,
                     WebkitBackfaceVisibility: 'hidden',
                     backfaceVisibility: 'hidden',
@@ -670,7 +670,7 @@ Tap OK to continue.`;
                   } as React.CSSProperties}
                   onClick={handleMainPhotoClick} // ✅ Main photo click handler
                   loading="eager" // ✅ Prioritize loading
-                  fetchpriority="high" // ✅ Ensure high priority loading
+                  fetchPriority="high" // ✅ Ensure high priority loading
                 />
                 
                 {/* ✅ Enhanced visual indicators */}
@@ -756,7 +756,7 @@ Tap OK to continue.`;
                         objectFit: 'cover',
                         objectPosition: 'center',
                         // ✅ High-quality image rendering
-                        imageRendering: 'high-quality',
+    
                         WebkitBackfaceVisibility: 'hidden',
                         backfaceVisibility: 'hidden',
                         transform: 'translateZ(0)',
