@@ -166,30 +166,35 @@ const RootView: React.FC = () => {
     };
   }, []);
 
-  // Auto fullscreen for video modal
-  useEffect(() => {
-    if (showVideoModal && iframeRef.current) {
-      const requestFullscreen = () => {
-        if (iframeRef.current) {
-          // Try different fullscreen methods for cross-browser compatibility
-          if (iframeRef.current.requestFullscreen) {
-            iframeRef.current.requestFullscreen();
-          } else if ((iframeRef.current as any).webkitRequestFullscreen) {
-            (iframeRef.current as any).webkitRequestFullscreen();
-          } else if ((iframeRef.current as any).mozRequestFullScreen) {
-            (iframeRef.current as any).mozRequestFullScreen();
-          } else if ((iframeRef.current as any).msRequestFullscreen) {
-            (iframeRef.current as any).msRequestFullscreen();
+  // Auto fullscreen handler for mobile
+  const handleVideoModalOpen = () => {
+    // Check if on mobile device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    if (isIOS) {
+      // For iOS, open YouTube directly in a new window to bypass restrictions
+      window.open('https://youtube.com/shorts/J-ix67eZ7J4?feature=share', '_blank');
+    } else {
+      setShowVideoModal(true);
+      
+      // For non-iOS mobile and desktop, try fullscreen
+      if (isMobile) {
+        setTimeout(() => {
+          if (iframeRef.current) {
+            // Try different fullscreen methods for cross-browser compatibility
+            if (iframeRef.current.requestFullscreen) {
+              iframeRef.current.requestFullscreen().catch(e => console.log('Fullscreen failed:', e));
+            } else if ((iframeRef.current as any).webkitRequestFullscreen) {
+              (iframeRef.current as any).webkitRequestFullscreen();
+            } else if ((iframeRef.current as any).mozRequestFullScreen) {
+              (iframeRef.current as any).mozRequestFullScreen();
+            }
           }
-        }
-      };
-      
-      // Small delay to ensure iframe is fully loaded
-      const timer = setTimeout(requestFullscreen, 500);
-      
-      return () => clearTimeout(timer);
+        }, 100);
+      }
     }
-  }, [showVideoModal]);
+  };
 
   return (
     <div style={{ 
@@ -363,14 +368,14 @@ const RootView: React.FC = () => {
             cursor: 'pointer',
             pointerEvents: 'auto'
           }}
-          onClick={() => setShowVideoModal(true)}
+          onClick={handleVideoModalOpen}
           onError={(e) => {
             console.warn('Info_pin.png failed to load');
             e.currentTarget.style.display = 'none';
           }}
         />
         <button
-          onClick={() => setShowVideoModal(true)}
+          onClick={handleVideoModalOpen}
           style={{
             backgroundColor: '#002B4D',
             color: 'white',
