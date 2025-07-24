@@ -202,67 +202,9 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         </div>
       )}
 
-      {/* Previous Button - Only shows when controls are visible */}
-      {photos.length > 1 && (
-        <button
-          onClick={goToPrevious}
-          style={{
-            position: 'absolute',
-            left: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '50px',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: '20px',
-            zIndex: 2001,
-            opacity: showControls ? 1 : 0,
-            transition: 'opacity 0.3s ease',
-            pointerEvents: showControls ? 'auto' : 'none',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          <FaChevronLeft />
-        </button>
-      )}
+      {/* Previous Button - HIDDEN per user request - navigation via swipe and dots only */}
 
-      {/* Next Button - Only shows when controls are visible */}
-      {photos.length > 1 && (
-        <button
-          onClick={goToNext}
-          style={{
-            position: 'absolute',
-            right: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '50px',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: '20px',
-            zIndex: 2001,
-            opacity: showControls ? 1 : 0,
-            transition: 'opacity 0.3s ease',
-            pointerEvents: showControls ? 'auto' : 'none',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          <FaChevronRight />
-        </button>
-      )}
+      {/* Next Button - HIDDEN per user request - navigation via swipe and dots only */}
 
       {/* Main Image - ENHANCED HIGH QUALITY FULL SCREEN */}
       <div
@@ -292,17 +234,15 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             objectFit: 'cover',
             userSelect: 'none',
             // Enhanced quality settings
-            imageRendering: 'high-quality',
+            imageRendering: '-webkit-optimize-contrast',
             WebkitBackfaceVisibility: 'hidden',
             backfaceVisibility: 'hidden',
             transform: 'translateZ(0)', // Hardware acceleration
-            // Prevent image smoothing/compression
-            imageRendering: '-webkit-optimize-contrast'
           } as React.CSSProperties}
           draggable={false}
           loading="eager"
           // Ensure highest quality loading
-          fetchpriority="high"
+          fetchPriority="high"
           // Add error handling for better loading
           onError={(e) => {
             console.error('Failed to load image:', photos[currentIndex]);
