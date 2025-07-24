@@ -830,6 +830,73 @@ Tap OK to continue.`;
         />
       )}
 
+      {/* Intro/Detail Buttons - Only show if there are recordings */}
+      {hasAudio && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px',
+          gap: '16px'
+        }}>
+          {/* Intro Button - Always show if there's any audio */}
+          <button
+            onClick={() => {
+              console.log('🎵 Intro button clicked - showing main photo');
+              if (photoURLs[0]) {
+                setSelectedPhoto(photoURLs[0]);
+              }
+            }}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              minWidth: '100px',
+              boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+          >
+            Intro
+          </button>
+
+          {/* Detail Button - Only show if there's a second recording */}
+          {quickcard?.audioURLs && quickcard.audioURLs.length >= 2 && (
+            <button
+              onClick={() => {
+                console.log('🎵 Detail button clicked - showing main photo');
+                if (photoURLs[0]) {
+                  setSelectedPhoto(photoURLs[0]);
+                }
+              }}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '100px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              Detail
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Action Icons Row */}
       <div style={{
         display: 'flex',
