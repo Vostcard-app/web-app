@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +23,7 @@ const RootView: React.FC = () => {
   const [isLocationLoading, setIsLocationLoading] = useState(true);
   const [locationSource, setLocationSource] = useState<'user' | 'fallback'>('fallback');
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Dublin coordinates as fallback
   const DUBLIN_COORDS: [number, number] = [53.3498, -6.2603];
@@ -164,6 +165,31 @@ const RootView: React.FC = () => {
       }
     };
   }, []);
+
+  // Auto fullscreen for video modal
+  useEffect(() => {
+    if (showVideoModal && iframeRef.current) {
+      const requestFullscreen = () => {
+        if (iframeRef.current) {
+          // Try different fullscreen methods for cross-browser compatibility
+          if (iframeRef.current.requestFullscreen) {
+            iframeRef.current.requestFullscreen();
+          } else if ((iframeRef.current as any).webkitRequestFullscreen) {
+            (iframeRef.current as any).webkitRequestFullscreen();
+          } else if ((iframeRef.current as any).mozRequestFullScreen) {
+            (iframeRef.current as any).mozRequestFullScreen();
+          } else if ((iframeRef.current as any).msRequestFullscreen) {
+            (iframeRef.current as any).msRequestFullscreen();
+          }
+        }
+      };
+      
+      // Small delay to ensure iframe is fully loaded
+      const timer = setTimeout(requestFullscreen, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showVideoModal]);
 
   return (
     <div style={{ 
@@ -482,6 +508,7 @@ const RootView: React.FC = () => {
               justifyContent: 'center'
             }}>
               <iframe
+                ref={iframeRef}
                 src="https://www.youtube.com/embed/J-ix67eZ7J4?autoplay=1&rel=0&modestbranding=1&playsinline=1"
                 width="100%"
                 height="100%"
