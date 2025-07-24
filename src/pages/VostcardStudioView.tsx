@@ -59,9 +59,13 @@ const VostcardStudioView: React.FC = () => {
     longitude: number;
     address?: string;
   } | null>(null);
-  const [quickcardAudio, setQuickcardAudio] = useState<Blob | null>(null);
-  const [quickcardAudioSource, setQuickcardAudioSource] = useState<'recording' | 'file' | null>(null);
-  const [quickcardAudioFileName, setQuickcardAudioFileName] = useState<string | null>(null);
+  // Separate audio states for Intro and Detail
+  const [quickcardIntroAudio, setQuickcardIntroAudio] = useState<Blob | null>(null);
+  const [quickcardIntroAudioSource, setQuickcardIntroAudioSource] = useState<'recording' | 'file' | null>(null);
+  const [quickcardIntroAudioFileName, setQuickcardIntroAudioFileName] = useState<string | null>(null);
+  const [quickcardDetailAudio, setQuickcardDetailAudio] = useState<Blob | null>(null);
+  const [quickcardDetailAudioSource, setQuickcardDetailAudioSource] = useState<'recording' | 'file' | null>(null);
+  const [quickcardDetailAudioFileName, setQuickcardDetailAudioFileName] = useState<string | null>(null);
   const [quickcardCategories, setQuickcardCategories] = useState<string[]>([]);
   const [showQuickcardCategoryModal, setShowQuickcardCategoryModal] = useState(false);
 
@@ -388,8 +392,8 @@ const VostcardStudioView: React.FC = () => {
             setQuickcardTitle(state.title || '');
             setQuickcardDescription(state.description || '');
             setQuickcardCategories(state.categories || []);
-            setQuickcardAudioSource(state.audioSource || null);
-            setQuickcardAudioFileName(state.audioFileName || null);
+            setQuickcardIntroAudioSource(state.audioSource || null);
+            setQuickcardIntroAudioFileName(state.audioFileName || null);
             
             // ✅ NEW: Restore photo from base64
             if (state.photoBase64) {
@@ -415,7 +419,7 @@ const VostcardStudioView: React.FC = () => {
                 const blob = await response.blob();
                 const audioFile = new File([blob], state.audioFileName || 'quickcard-audio.mp3', { type: state.audioType || 'audio/mpeg' });
                 
-                setQuickcardAudio(audioFile);
+                setQuickcardIntroAudio(audioFile);
                 console.log('🎵 Audio restored from storage');
               } catch (error) {
                 console.error('❌ Failed to restore audio from base64:', error);
@@ -463,9 +467,12 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
     setQuickcardLocation(null);
-    setQuickcardAudio(null);
-    setQuickcardAudioSource(null);
-    setQuickcardAudioFileName(null);
+    setQuickcardIntroAudio(null);
+    setQuickcardIntroAudioSource(null);
+    setQuickcardIntroAudioFileName(null);
+    setQuickcardDetailAudio(null);
+    setQuickcardDetailAudioSource(null);
+    setQuickcardDetailAudioFileName(null);
     setQuickcardCategories([]);
   };
 
@@ -517,12 +524,18 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardPhotoPreviews(newPreviews);
   };
 
-  const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('audio/')) {
-      setQuickcardAudio(file);
-      setQuickcardAudioSource('file');
-      setQuickcardAudioFileName(file.name);
+      if (audioType === 'intro') {
+        setQuickcardIntroAudio(file);
+        setQuickcardIntroAudioSource('file');
+        setQuickcardIntroAudioFileName(file.name);
+      } else if (audioType === 'detail') {
+        setQuickcardDetailAudio(file);
+        setQuickcardDetailAudioSource('file');
+        setQuickcardDetailAudioFileName(file.name);
+      }
     }
   };
 
@@ -582,7 +595,7 @@ const VostcardStudioView: React.FC = () => {
         title: quickcardTitle.trim(),
         description: quickcardDescription.trim() || '', 
         photos: quickcardPhotos, // Multiple photos
-        audio: quickcardAudio,
+        audio: quickcardIntroAudio, // Use intro audio as primary
         categories: quickcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
@@ -593,7 +606,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: quickcardPhotos.length > 0,
-        hasAudio: !!quickcardAudio,
+        hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1115,8 +1128,17 @@ const VostcardStudioView: React.FC = () => {
                 📍 Set Location
               </button>
               
+            </div>
+
+            {/* Intro and Detail Audio Buttons */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '10px',
+              marginBottom: '15px'
+            }}>
               <button 
-                onClick={() => document.getElementById('quickcard-audio-input')?.click()}
+                onClick={() => document.getElementById('quickcard-intro-audio-input')?.click()}
                 disabled={isLoading}
                 style={{
                   backgroundColor: isLoading ? '#ccc' : '#9c27b0',
@@ -1134,7 +1156,29 @@ const VostcardStudioView: React.FC = () => {
                 }}
               >
                 <FaUpload size={14} />
-                🎵 Add Audio
+                🎵 Intro
+              </button>
+              
+              <button 
+                onClick={() => document.getElementById('quickcard-detail-audio-input')?.click()}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: isLoading ? '#ccc' : '#e91e63',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaUpload size={14} />
+                🎵 Detail
               </button>
             </div>
 
@@ -1694,10 +1738,18 @@ const VostcardStudioView: React.FC = () => {
         />
         
         <input
-          id="quickcard-audio-input"
+          id="quickcard-intro-audio-input"
           type="file"
           accept="audio/*"
-          onChange={handleQuickcardAudioUpload}
+          onChange={(e) => handleQuickcardAudioUpload(e, 'intro')}
+          style={{ display: 'none' }}
+        />
+        
+        <input
+          id="quickcard-detail-audio-input"
+          type="file"
+          accept="audio/*"
+          onChange={(e) => handleQuickcardAudioUpload(e, 'detail')}
           style={{ display: 'none' }}
         />
       </div>
