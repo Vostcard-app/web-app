@@ -477,79 +477,11 @@ const HomeView = () => {
 
   const handleCreateQuickcard = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('📱 Opening native camera for Quickcard');
+    console.log('📱 Starting Quickcard creation - navigating to photo selection');
     clearVostcard();
     
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.capture = 'environment';
-    fileInput.onchange = async (event) => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      
-      if (!file) {
-        console.log('📱 User cancelled photo selection');
-        return;
-      }
-      
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file');
-        return;
-      }
-
-      console.log('📸 Valid image file selected:', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-      });
-
-      // Convert File to Blob for compatibility
-      const photoBlob = new Blob([file], { type: file.type });
-
-      // Helper function to create quickcard and navigate
-      const createAndNavigate = (location?: { latitude: number; longitude: number }) => {
-        if (location) {
-          createQuickcard(photoBlob, location);
-          console.log('✅ Quickcard created with location, navigating to step 3');
-        } else {
-          // Create quickcard without location - user can set it later in step 3
-          createQuickcard(photoBlob, { latitude: 0, longitude: 0 });
-          console.log('✅ Quickcard created without location, navigating to step 3');
-        }
-        navigate('/quickcard-step3');
-      };
-
-      // Try to get user location, but don't block navigation if it fails
-      if (navigator.geolocation) {
-        console.log('📍 Attempting to get user location for quickcard...');
-        
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const userLocation = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude
-            };
-            console.log('📍 Location obtained:', userLocation);
-            createAndNavigate(userLocation);
-          },
-          (error) => {
-            console.warn('⚠️ Geolocation failed, proceeding without location:', error);
-            // Don't show error alert - just proceed to step 3 where user can set location
-            createAndNavigate();
-          },
-          {
-            enableHighAccuracy: false, // Use less accurate but faster location
-            timeout: 5000, // Shorter timeout
-            maximumAge: 300000 // 5 minutes cache
-          }
-        );
-      } else {
-        console.log('📍 Geolocation not supported, proceeding without location');
-        createAndNavigate();
-      }
-    };
-    
-    fileInput.click();
+    // Navigate directly to photo selection step
+    navigate('/quickcard-step2');
   };
 
   const handleCreateTouchStart = () => setIsCreatePressed(true);

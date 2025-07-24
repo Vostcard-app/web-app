@@ -12,9 +12,28 @@ export default function QuickcardStep2() {
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
 
-  // Load saved photos when component mounts
+  // Initialize empty quickcard or load saved photos when component mounts
   useEffect(() => {
-    if (currentVostcard?.photos) {
+    if (!currentVostcard) {
+      // Create empty quickcard when arriving at this step
+      console.log('📱 Initializing empty quickcard for photo selection');
+      updateVostcard({
+        id: `quickcard_${Date.now()}`,
+        title: '',
+        description: '',
+        photos: [],
+        categories: [],
+        geo: { latitude: 0, longitude: 0 }, // Default location, user can set later
+        isQuickcard: true,
+        hasVideo: false,
+        hasPhotos: false,
+        video: null,
+        state: 'private',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    } else if (currentVostcard?.photos) {
+      // Load existing photos if quickcard already exists
       const photos = currentVostcard.photos;
       setSelectedPhotos(prevPhotos => {
         const newPhotos = [...prevPhotos];
@@ -26,7 +45,7 @@ export default function QuickcardStep2() {
         return newPhotos;
       });
     }
-  }, [currentVostcard]);
+  }, [currentVostcard, updateVostcard]);
 
   // Handler for when a thumbnail is tapped - opens native camera/file picker
   const handleAddPhoto = (index: number) => {
