@@ -5,6 +5,7 @@ import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db, storage } from '../firebase/firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FaArrowLeft, FaCamera, FaImage, FaTimes } from 'react-icons/fa';
+import TipSettingsSection from '../components/TipSettingsSection';
 
 interface UserProfile {
   username: string;
@@ -13,6 +14,16 @@ interface UserProfile {
   message: string;
   avatarURL?: string;
   buyMeACoffeeURL?: string;
+  kofiURL?: string;
+  paypalURL?: string;
+  venmoURL?: string;
+  cashappURL?: string;
+  zelleURL?: string;
+  applePayURL?: string;
+  googlePayURL?: string;
+  patreonURL?: string;
+  bitcoinURL?: string;
+  ethereumURL?: string;
   isGuideAccount?: boolean;
 }
 
@@ -33,6 +44,16 @@ const UserSettingsView: React.FC = () => {
     message: '',
     avatarURL: '',
     buyMeACoffeeURL: '',
+    kofiURL: '',
+    paypalURL: '',
+    venmoURL: '',
+    cashappURL: '',
+    zelleURL: '',
+    applePayURL: '',
+    googlePayURL: '',
+    patreonURL: '',
+    bitcoinURL: '',
+    ethereumURL: '',
     isGuideAccount: false
   });
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -64,6 +85,16 @@ const UserSettingsView: React.FC = () => {
             message: data.message || '',
             avatarURL: data.avatarURL || '',
             buyMeACoffeeURL: data.buyMeACoffeeURL || '',
+            kofiURL: data.kofiURL || '',
+            paypalURL: data.paypalURL || '',
+            venmoURL: data.venmoURL || '',
+            cashappURL: data.cashappURL || '',
+            zelleURL: data.zelleURL || '',
+            applePayURL: data.applePayURL || '',
+            googlePayURL: data.googlePayURL || '',
+            patreonURL: data.patreonURL || '',
+            bitcoinURL: data.bitcoinURL || '',
+            ethereumURL: data.ethereumURL || '',
             isGuideAccount: data.isGuideAccount || false
           });
           
@@ -642,77 +673,9 @@ const UserSettingsView: React.FC = () => {
           />
         </div>
 
-        {/* ☕ Support Me Section for Guides */}
+        {/* 💰 Tip Settings Section for Guides */}
         {userRole === 'guide' && (
-          <div style={{ 
-            marginBottom: 30,
-            padding: '20px', 
-            border: '1px solid #ddd', 
-            borderRadius: '12px',
-            background: '#f9f9f9'
-          }}>
-            <h3 style={{ margin: '0 0 15px 0', color: '#333', fontSize: '20px' }}>
-              ☕ Support Link (Buy Me a Coffee)
-            </h3>
-            <p style={{ margin: '0 0 15px 0', color: '#666', fontSize: '16px', lineHeight: 1.5 }}>
-              Add your Buy Me a Coffee URL so visitors can leave you a tip on your Vōstcards.
-              You can create a free account at{' '}
-              <a href="https://www.buymeacoffee.com" target="_blank" rel="noopener noreferrer" style={{ color: '#007aff', textDecoration: 'underline' }}>
-                buymeacoffee.com
-              </a>.
-              <br /><br />
-              <strong>Format:</strong> https://www.buymeacoffee.com/yourname (don't include @ symbol)
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input
-                type="url"
-                value={profile?.buyMeACoffeeURL || ''}
-                onChange={(e) => setProfile(prev => prev ? { ...prev, buyMeACoffeeURL: e.target.value } : prev)}
-                placeholder="https://www.buymeacoffee.com/vostcard"
-                style={{
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid #ccc',
-                  fontSize: '16px',
-                  width: '100%',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <button
-                onClick={async () => {
-                  if (!profile || !user) return;
-                  const url = profile.buyMeACoffeeURL?.trim();
-                  if (!url || (!url.startsWith('https://www.buymeacoffee.com/') && !url.startsWith('https://buymeacoffee.com/'))) {
-                    alert('Please enter a valid Buy Me a Coffee URL starting with https://www.buymeacoffee.com/ or https://buymeacoffee.com/');
-                    return;
-                  }
-                  try {
-                    const userRef = doc(db, 'users', user.uid);
-                    await updateDoc(userRef, {
-                      buyMeACoffeeURL: url
-                    });
-                    alert('Buy Me a Coffee URL saved!');
-                  } catch (err) {
-                    console.error('Failed to save URL:', err);
-                    alert('Error saving URL. Please try again.');
-                  }
-                }}
-                style={{
-                  backgroundColor: '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 20px',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  alignSelf: 'flex-start'
-                }}
-              >
-                Save Support Link
-              </button>
-            </div>
-          </div>
+          <TipSettingsSection profile={profile} setProfile={setProfile} user={user} />
         )}
 
         {/* Hidden File Inputs */}
