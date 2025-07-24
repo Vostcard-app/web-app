@@ -1561,7 +1561,12 @@ Tap OK to continue.`;
           <img
             src={selectedPhoto}
             alt="Full size"
-            style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }}
+            style={{ 
+              width: '100vw', 
+              height: '100vh', 
+              objectFit: 'contain',
+              cursor: 'pointer'
+            }}
             onClick={(e) => e.stopPropagation()}
           />
         </div>
