@@ -316,7 +316,7 @@ export default function QuickcardStep2() {
           onClick={handleSaveAndContinue}
           disabled={photoCount === 0}
         >
-          Continue to Details
+          Save & Continue
         </button>
 
         {/* Instructions */}
