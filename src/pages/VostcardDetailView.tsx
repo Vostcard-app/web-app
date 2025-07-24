@@ -646,17 +646,25 @@ Tap OK to continue.`;
         marginTop: '78px', // Account for fixed header
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ 
-            width: 50, 
-            height: 50, 
-            borderRadius: '50%', 
-            overflow: 'hidden', 
-            marginRight: 16,
-            background: '#f0f0f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <div 
+            style={{ 
+              width: 50, 
+              height: 50, 
+              borderRadius: '50%', 
+              overflow: 'hidden', 
+              marginRight: 16,
+              background: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              if (vostcard?.userID) {
+                navigate(`/user-profile/${vostcard.userID}`);
+              }
+            }}
+          >
             {userProfile?.avatarURL ? (
               <img 
                 src={userProfile.avatarURL} 
@@ -668,7 +676,19 @@ Tap OK to continue.`;
               <FaUserCircle size={50} color="#ccc" />
             )}
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+          <div 
+            style={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#333',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              if (vostcard?.userID) {
+                navigate(`/user-profile/${vostcard.userID}`);
+              }
+            }}
+          >
             {vostcard.username || 'Anonymous'}
           </div>
         </div>

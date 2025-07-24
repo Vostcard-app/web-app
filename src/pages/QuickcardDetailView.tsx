@@ -408,17 +408,25 @@ Tap OK to continue.`;
         marginTop: '63px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{ 
-            width: 50, 
-            height: 50, 
-            borderRadius: '50%', 
-            overflow: 'hidden', 
-            marginRight: 16,
-            background: '#f0f0f0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <div 
+            style={{ 
+              width: 50, 
+              height: 50, 
+              borderRadius: '50%', 
+              overflow: 'hidden', 
+              marginRight: 16,
+              background: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              if (quickcard?.userID) {
+                navigate(`/user-profile/${quickcard.userID}`);
+              }
+            }}
+          >
             {userProfile?.avatarURL ? (
               <img 
                 src={userProfile.avatarURL} 
@@ -430,7 +438,19 @@ Tap OK to continue.`;
               <FaUserCircle size={50} color="#ccc" />
             )}
           </div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#333' }}>
+          <div 
+            style={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#333',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              if (quickcard?.userID) {
+                navigate(`/user-profile/${quickcard.userID}`);
+              }
+            }}
+          >
             {quickcard.username || 'Anonymous'}
           </div>
         </div>

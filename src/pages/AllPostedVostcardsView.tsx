@@ -548,7 +548,14 @@ const AllPostedVostcardsView: React.FC = () => {
                           height: 32, 
                           borderRadius: '50%', 
                           objectFit: 'cover',
-                          border: '2px solid #e0e0e0'
+                          border: '2px solid #e0e0e0',
+                          cursor: 'pointer'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (v.userID) {
+                            navigate(`/user-profile/${v.userID}`);
+                          }
                         }}
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
@@ -569,16 +576,32 @@ const AllPostedVostcardsView: React.FC = () => {
                         color: '#666',
                         fontSize: 14,
                         fontWeight: 600,
-                        border: '2px solid #e0e0e0'
+                        border: '2px solid #e0e0e0',
+                        cursor: 'pointer'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (v.userID) {
+                          navigate(`/user-profile/${v.userID}`);
+                        }
                       }}
                     >
                       <FaUser />
                     </div>
-                    <div style={{ 
-                      color: '#444', 
-                      fontSize: 14, 
-                      fontWeight: 500 
-                    }}>
+                    <div 
+                      style={{ 
+                        color: '#444', 
+                        fontSize: 14, 
+                        fontWeight: 500,
+                        cursor: 'pointer'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (v.userID) {
+                          navigate(`/user-profile/${v.userID}`);
+                        }
+                      }}
+                    >
                       {v.username || 'Unknown'}
                     </div>
                   </div>

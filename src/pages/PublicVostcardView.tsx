@@ -566,16 +566,24 @@ ${privateUrl}`);
             alignItems: 'center',
             gap: 12
           }}>
-            <div style={{ 
-              width: 60, 
-              height: 60, 
-              borderRadius: '50%', 
-              overflow: 'hidden',
-              background: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            <div 
+              style={{ 
+                width: 60, 
+                height: 60, 
+                borderRadius: '50%', 
+                overflow: 'hidden',
+                background: '#f0f0f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (vostcard?.userID) {
+                  navigate(`/user-profile/${vostcard.userID}`);
+                }
+              }}
+            >
               {avatarUrl ? (
                 <img 
                   src={avatarUrl} 
@@ -587,11 +595,19 @@ ${privateUrl}`);
                 <FaUserCircle size={60} color="#ccc" />
               )}
             </div>
-            <div style={{ 
-              fontWeight: 600, 
-              fontSize: 18,
-              color: '#333'
-            }}>
+            <div 
+              style={{ 
+                fontWeight: 600, 
+                fontSize: 18,
+                color: '#333',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (vostcard?.userID) {
+                  navigate(`/user-profile/${vostcard.userID}`);
+                }
+              }}
+            >
               {vostcardUsername || 'Unknown User'}
             </div>
           </div>
