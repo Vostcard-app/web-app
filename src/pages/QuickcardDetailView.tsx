@@ -343,32 +343,21 @@ Tap OK to continue.`;
     setSelectedPhoto(photoUrl);
   }, [hasAudio, handlePlayPause]);
 
-  // ✅ Main photo click handler - triggers audio if available AND shows photo
+  // ✅ Main photo click handler - triggers audio and shows main photo (same as thumbnails)
   const handleMainPhotoClick = useCallback(() => {
     console.log('🚨 CLICK DETECTED ON MAIN PHOTO! 🚨');
-    console.log('🖼️ Main photo clicked!', {
-      hasAudio,
-      quickcard: quickcard ? {
-        audioURL: quickcard.audioURL,
-        audioURLs: quickcard.audioURLs,
-        audio: quickcard.audio,
-        _firebaseAudioURL: quickcard._firebaseAudioURL
-      } : null,
-      isPlaying
-    });
+    console.log('🖼️ Main photo clicked - launching audio and showing main photo');
     
+    // Start audio if available
     if (hasAudio) {
-      // If audio exists, play audio AND show photo
-      console.log('🎵 Main photo clicked - triggering audio playback AND showing photo');
       handlePlayPause();
     }
     
-    // Always show photo in full screen
-    console.log('📸 Showing photo in full screen');
+    // Show main photo in full screen (same behavior as thumbnails)
     if (photoURLs[0]) {
-      handlePhotoClick(photoURLs[0]);
+      setSelectedPhoto(photoURLs[0]);
     }
-  }, [hasAudio, photoURLs, handlePhotoClick, handlePlayPause, quickcard, isPlaying]);
+  }, [hasAudio, photoURLs, handlePlayPause]);
 
 
 
@@ -472,10 +461,12 @@ Tap OK to continue.`;
     <div
       style={{
         background: '#fff',
-        minHeight: '100%',
+        minHeight: '100vh',
         overflowY: 'auto',
+        overflowX: 'hidden',
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
+        position: 'relative',
       }}
     >
       {/* Header */}
