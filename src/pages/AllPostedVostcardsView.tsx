@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaLocationArrow, FaEye, FaCameraRetro, FaVideo } from 'react-icons/fa';
+import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaEye, FaCameraRetro, FaVideo } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
@@ -28,10 +28,6 @@ const AllPostedVostcardsView: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
-  const [mapAreaPreference, setMapAreaPreference] = useState<'nearby' | '1-mile' | '5-miles' | 'custom'>('custom');
-  const [customDistance, setCustomDistance] = useState(10);
-  const [showAreaSelector, setShowAreaSelector] = useState(false);
-  const [showDistanceSlider, setShowDistanceSlider] = useState(true);
   
   // Type filtering state (Offers are never filtered out)
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -63,7 +59,7 @@ const AllPostedVostcardsView: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+    const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -100,6 +96,20 @@ const AllPostedVostcardsView: React.FC = () => {
       return `${distance.toFixed(1)} km / ${miles.toFixed(1)} mi away`;
     }
   }, [userLocation, calculateDistance]);
+
+  // Get distance in km for sorting (returns large number if no location data)
+  const getDistanceForSorting = useCallback((vostcard: Vostcard): number => {
+    if (!userLocation) return 999999; // Put items without user location at end
+    
+    const lat = vostcard.latitude || vostcard.geo?.latitude;
+    const lng = vostcard.longitude || vostcard.geo?.longitude;
+    
+    if (!lat || !lng) return 999999; // Put items without coordinates at end
+    
+    return calculateDistance(userLocation[0], userLocation[1], lat, lng);
+  }, [userLocation, calculateDistance]);
+
+  
 
   // Load like and rating data for each vostcard
   const loadData = useCallback(async (vostcardIds: string[], vostcardsList: Vostcard[]) => {
@@ -291,15 +301,15 @@ const AllPostedVostcardsView: React.FC = () => {
     } catch (error) {
       console.error('Error toggling like:', error);
     }
-  }, [toggleLike]);
+      }, [toggleLike]);
 
-  // Get user location
+  // Get user location for distance calculations
   const getUserLocation = useCallback(async () => {
     setLocationLoading(true);
     setLocationError(null);
     
     try {
-      console.log('📍 Getting user location for distance calculations...');
+      console.log('📍 Getting user location for distance sorting...');
       const location = await LocationService.getCurrentLocation();
       
       const locationCoords: [number, number] = [location.latitude, location.longitude];
@@ -313,7 +323,7 @@ const AllPostedVostcardsView: React.FC = () => {
       const locationError = error as LocationError;
       setLocationError(locationError.userFriendlyMessage);
       
-      // Use fallback location
+      // Use fallback location for sorting
       const fallback = LocationService.getFallbackLocation();
       const fallbackCoords: [number, number] = [fallback.latitude, fallback.longitude];
       setUserLocation(fallbackCoords);
@@ -327,88 +337,7 @@ const AllPostedVostcardsView: React.FC = () => {
     getUserLocation();
   }, [getUserLocation]);
 
-  // Close area selector when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      if (showAreaSelector && !target.closest('[data-area-selector]')) {
-        setShowAreaSelector(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showAreaSelector]);
-
-  // Handle area preference change
-  const handleAreaPreferenceChange = (area: 'nearby' | '1-mile' | '5-miles' | 'custom') => {
-    setMapAreaPreference(area);
-    setShowAreaSelector(false);
-    if (area === 'custom') {
-      setShowDistanceSlider(true);
-    } else {
-      setShowDistanceSlider(false);
-    }
-  };
-
-  // Handle custom distance change
-  const handleCustomDistanceChange = (distance: number) => {
-    setCustomDistance(distance);
-  };
-
-  // Filter vostcards based on area preference
-  const filterVostcardsByArea = (vostcards: Vostcard[]): Vostcard[] => {
-    if (!userLocation) return vostcards;
-
-    switch (mapAreaPreference) {
-      case 'nearby':
-        // Show vostcards within 800m of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
-          return distance <= 0.8; // 800m = 0.8km radius
-        });
-      
-      case '1-mile':
-        // Show vostcards within 1 mile (1.6km) of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
-          return distance <= 1.6; // 1 mile = 1.6km radius
-        });
-      
-      case '5-miles':
-        // Show vostcards within 5 miles (8km) of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
-          return distance <= 8; // 5 miles = 8km radius
-        });
-      
-      case 'custom':
-        // Show vostcards within the custom distance (in miles) of user location
-        return vostcards.filter(v => {
-          const lat = v.latitude || v.geo?.latitude;
-          const lng = v.longitude || v.geo?.longitude;
-          if (!lat || !lng) return false;
-          
-          const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
-          return distance <= (customDistance * 1.6); // Convert miles to km (1 mile = 1.6km)
-        });
-      
-      default:
-        return vostcards;
-    }
-  };
+  
 
   // Type filtering function (Offers are never filtered out)
   const filterVostcardsByType = (vostcards: Vostcard[]): Vostcard[] => {
@@ -428,14 +357,11 @@ const AllPostedVostcardsView: React.FC = () => {
     });
   };
 
-  // Combined filtering function
+  // Combined filtering and sorting function
   const filterVostcards = (vostcards: Vostcard[]): Vostcard[] => {
     let filtered = vostcards;
     
-    // Apply area filtering first
-    filtered = filterVostcardsByArea(filtered);
-    
-    // Then apply type filtering
+    // Apply type filtering
     filtered = filterVostcardsByType(filtered);
     
     // Apply category filtering (same logic as HomeView)
@@ -449,7 +375,7 @@ const AllPostedVostcardsView: React.FC = () => {
       });
     }
     
-    // Finally apply friends filtering
+    // Apply friends filtering
     if (showFriendsOnly) {
       filtered = filtered.filter(v => {
         // Always include offers regardless of friends filter
@@ -457,6 +383,15 @@ const AllPostedVostcardsView: React.FC = () => {
         
         // Include posts by friends (check if author is in user's friends list)
         return userFriends.includes(v.userID || '');
+      });
+    }
+    
+    // Sort by distance (closest first)
+    if (userLocation) {
+      filtered = filtered.sort((a, b) => {
+        const distanceA = getDistanceForSorting(a);
+        const distanceB = getDistanceForSorting(b);
+        return distanceA - distanceB;
       });
     }
     
@@ -520,116 +455,7 @@ const AllPostedVostcardsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Area Selector Dropdown and Custom Distance Slider */}
-      {(showAreaSelector || showDistanceSlider) && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '90px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100
-          }}
-          data-area-selector
-        >
-          {/* Custom Distance Slider */}
-          {showDistanceSlider && (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              padding: '16px',
-              minWidth: '200px',
-            }}>
-              <div style={{ marginBottom: '12px', textAlign: 'center' }}>
-                <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
-                  Custom Distance
-                </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>
-                  {customDistance} mile{customDistance !== 1 ? 's' : ''}
-                </div>
-              </div>
-              <input
-                type="range"
-                min="0.5"
-                max="10"
-                step="0.5"
-                value={customDistance}
-                onChange={(e) => handleCustomDistanceChange(parseFloat(e.target.value))}
-                style={{
-                  width: '100%',
-                  height: '6px',
-                  borderRadius: '3px',
-                  background: '#e0e0e0',
-                  outline: 'none',
-                  WebkitAppearance: 'none',
-                  appearance: 'none'
-                }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                <span>0.5</span>
-                <span>10</span>
-              </div>
-              <button
-                onClick={() => setShowDistanceSlider(false)}
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '8px 16px',
-                  marginTop: '12px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  width: '100%'
-                }}
-              >
-                Done
-              </button>
-            </div>
-          )}
 
-          {/* Area Selector */}
-          {showAreaSelector && !showDistanceSlider && (
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              padding: '8px 0',
-              minWidth: '140px',
-            }}>
-              {[
-                { key: 'nearby', label: '🚶 Near', description: 'Within 800m / .5 miles' },
-                { key: '1-mile', label: '🏃 Medium', description: 'Within 1 mile /1.6k' },
-                { key: '5-miles', label: '🏃 Far', description: 'Within 5 miles/ 8k' },
-                { key: 'custom', label: '📍 Custom', description: 'Custom distance' }
-              ].map((option) => (
-                <button
-                  key={option.key}
-                  onClick={() => handleAreaPreferenceChange(option.key as any)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: 'none',
-                    background: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    color: mapAreaPreference === option.key ? '#002B4D' : '#333',
-                    fontWeight: mapAreaPreference === option.key ? '600' : '400',
-                    borderBottom: '1px solid #f0f0f0'
-                  }}
-                >
-                  <div style={{ fontWeight: '600' }}>{option.label}</div>
-                  <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                    {option.description}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Summary Bar */}
       <div style={{
@@ -650,37 +476,7 @@ const AllPostedVostcardsView: React.FC = () => {
                 : `Showing: ${filtered.length} of ${vostcards.length}`;
             })()}
           </span>
-          {/* Area Preference Button with Range Label */}
-          <div style={{ 
-            marginLeft: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <button
-              style={{ 
-                background: '#f0f0f0', 
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                color: '#333', 
-                fontSize: 14,
-                padding: '6px 10px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s ease'
-              }}
-              onClick={() => setShowAreaSelector(!showAreaSelector)}
-            >
-              {mapAreaPreference === 'nearby' && <><span>🚶</span>Near</>}
-              {mapAreaPreference === '1-mile' && <><span>🏃</span>Medium</>}
-              {mapAreaPreference === '5-miles' && <><span>🏃</span>Far</>}
-              {mapAreaPreference === 'custom' && <><span>📍</span>Custom</>}
-            </button>
-            <div style={{ fontSize: 12, color: '#666', textAlign: 'center' }}>Range</div>
-          </div>
+
         </div>
       </div>
 
