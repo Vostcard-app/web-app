@@ -345,7 +345,7 @@ Tap OK to continue.`;
     }
   }, [hasAudio, photoURLs, handlePlayPause]);
 
-  // ✅ Main photo click handler - triggers audio if available, otherwise shows photo
+  // ✅ Main photo click handler - triggers audio if available AND shows photo
   const handleMainPhotoClick = useCallback(() => {
     console.log('🚨 CLICK DETECTED ON MAIN PHOTO! 🚨');
     console.log('🖼️ Main photo clicked!', {
@@ -360,15 +360,15 @@ Tap OK to continue.`;
     });
     
     if (hasAudio) {
-      // If audio exists, play/pause audio instead of showing photo
-      console.log('🎵 Main photo clicked - triggering audio playback');
+      // If audio exists, play audio AND show photo
+      console.log('🎵 Main photo clicked - triggering audio playback AND showing photo');
       handlePlayPause();
-    } else {
-      // No audio, fall back to photo viewing
-      console.log('📸 Main photo clicked - no audio, showing photo');
-      if (photoURLs[0]) {
-        handlePhotoClick(photoURLs[0]);
-      }
+    }
+    
+    // Always show photo in full screen
+    console.log('📸 Showing photo in full screen');
+    if (photoURLs[0]) {
+      handlePhotoClick(photoURLs[0]);
     }
   }, [hasAudio, photoURLs, handlePhotoClick, handlePlayPause, quickcard, isPlaying]);
 
@@ -1150,7 +1150,6 @@ Tap OK to continue.`;
               objectFit: 'contain',
               userSelect: 'none',
               // ✅ High-quality full-screen rendering
-              imageRendering: 'high-quality',
               WebkitBackfaceVisibility: 'hidden',
               backfaceVisibility: 'hidden',
               transform: 'translateZ(0)',
