@@ -608,10 +608,12 @@ Tap OK to continue.`;
     <div
       style={{
         background: '#fff',
-        minHeight: '100%',
+        minHeight: '100vh', // ✅ Use viewport height instead of percentage
         overflowY: 'auto',
+        overflowX: 'hidden', // ✅ Prevent horizontal scrolling
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
+        position: 'relative', // ✅ Ensure proper positioning
       }}
     >
       {/* Header */}

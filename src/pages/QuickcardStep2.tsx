@@ -287,7 +287,7 @@ export default function QuickcardStep2() {
                 }}>
                   <FaRegImages size={32} style={{ marginBottom: 8 }} />
                   <span style={{ fontSize: 12, fontWeight: 600 }}>
-                    Photo {idx + 1}
+                    Add Photo
                   </span>
                 </div>
               )}
@@ -336,7 +336,6 @@ export default function QuickcardStep2() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
