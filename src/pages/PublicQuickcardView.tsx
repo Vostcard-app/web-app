@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHome, FaHeart, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaSync, FaFlag, FaArrowLeft, FaVolumeUp, FaPlay, FaPause } from 'react-icons/fa';
@@ -66,127 +66,181 @@ const PublicQuickcardView: React.FC = () => {
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Load quickcard data
-  useEffect(() => {
-    const fetchQuickcard = async () => {
-      if (!id) {
-        setError('No quickcard ID provided');
-        setLoading(false);
-        return;
-      }
+  // ✅ Enhanced loading states
+  const [loadingProgress, setLoadingProgress] = useState('Connecting...');
+  const [retryCount, setRetryCount] = useState(0);
+  const [showRetryButton, setShowRetryButton] = useState(false);
 
-      setLoading(true);
-      setError(null);
+  // ✅ Performance optimization - memoize photo URLs
+  const photoURLs = useMemo(() => quickcard?.photoURLs || [], [quickcard?.photoURLs]);
+  const hasAudio = useMemo(() => !!(quickcard?.audioURL || quickcard?.audio || quickcard?._firebaseAudioURL), [quickcard?.audioURL, quickcard?.audio, quickcard?._firebaseAudioURL]);
+
+  // ✅ Enhanced load quickcard data with better timeout and retry logic
+  const fetchQuickcard = useCallback(async (attempt: number = 1) => {
+    if (!id) {
+      setError('No quickcard ID provided');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setShowRetryButton(false);
+    setRetryCount(attempt - 1);
+    
+    // ✅ Increased timeout and added progress indicators
+    const TIMEOUT_DURATION = 45000; // Increased from 30s to 45s for better loading
+    const timeoutId = setTimeout(() => {
+      setLoadingProgress('Connection timeout...');
+      setError('Loading timed out. The quickcard may be in a remote location or the connection is slow.');
+      setLoading(false);
+      setShowRetryButton(true);
+    }, TIMEOUT_DURATION);
+
+    try {
+      setLoadingProgress(attempt > 1 ? `Retrying... (Attempt ${attempt})` : 'Loading quickcard...');
       
-      // Add timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        setError('Loading timed out. Please try again.');
-        setLoading(false);
-      }, 15000); // 15 second timeout
+      console.log(`📱 Loading quickcard for sharing (attempt ${attempt}):`, id);
+      const docRef = doc(db, 'vostcards', id);
+      
+      // ✅ Add progress indicator for Firebase call
+      setLoadingProgress('Connecting to database...');
+      const docSnap = await getDoc(docRef);
 
-      try {
-        console.log('📱 Loading quickcard for sharing:', id);
-        const docRef = doc(db, 'vostcards', id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          console.log('📱 Quickcard found:', {
-            id: data.id,
-            state: data.state,
-            isPrivatelyShared: data.isPrivatelyShared,
-            title: data.title,
-            isQuickcard: data.isQuickcard,
-            hasAudio: !!data.audioURL,
-            audioURL: data.audioURL,
-            photoCount: data.photoURLs?.length || 0
-          });
-          
-          if (!data.isQuickcard) {
-            setError('This is not a quickcard.');
-            setLoading(false);
-            return;
-          }
-
-          // Format createdAt if available
-          let formattedDate = 'Unknown date';
-          if (data.createdAt) {
-            const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-            formattedDate = date.toLocaleDateString();
-          }
-          
-          // Clean all Firebase Timestamps to prevent rendering errors
-          const cleanData = cleanFirebaseTimestamps(data);
-          
-          setQuickcard({ id: docSnap.id, ...cleanData, formattedDate });
-          setIsPrivateShared(data.isPrivatelyShared || false);
-          
-          clearTimeout(timeoutId);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log('📱 Quickcard found:', {
+          id: data.id,
+          state: data.state,
+          isPrivatelyShared: data.isPrivatelyShared,
+          title: data.title,
+          isQuickcard: data.isQuickcard,
+          hasAudio: !!data.audioURL,
+          audioURL: data.audioURL,
+          photoCount: data.photoURLs?.length || 0
+        });
+        
+        if (!data.isQuickcard) {
+          setError('This is not a quickcard.');
           setLoading(false);
-        } else {
-          console.log('📱 Quickcard not found, trying to fix...');
-          
-          try {
-            const fixed = await fixBrokenSharedVostcard(id);
-            if (fixed) {
-              console.log('📱 Quickcard fixed, retrying load...');
-              
-              const retryDocSnap = await getDoc(docRef);
-              if (retryDocSnap.exists()) {
-                const retryData = retryDocSnap.data();
-                if (retryData.isQuickcard) {
-                  // Format createdAt if available
-                  let retryFormattedDate = 'Unknown date';
-                  if (retryData.createdAt) {
-                    const date = retryData.createdAt.toDate ? retryData.createdAt.toDate() : new Date(retryData.createdAt);
-                    retryFormattedDate = date.toLocaleDateString();
-                  }
-                  
-                  // Clean all Firebase Timestamps to prevent rendering errors
-                  const cleanRetryData = cleanFirebaseTimestamps(retryData);
-                  
-                  setQuickcard({ id: retryDocSnap.id, ...cleanRetryData, formattedDate: retryFormattedDate });
-                  setIsPrivateShared(retryData.isPrivatelyShared || false);
-                  clearTimeout(timeoutId);
-                  setLoading(false);
-                  return;
-                }
-              }
-            }
-          } catch (fixError) {
-            console.error('📱 Failed to fix quickcard:', fixError);
-          }
-          
-          setError('Quickcard not found. It may have been deleted or the link is invalid.');
           clearTimeout(timeoutId);
-          setLoading(false);
+          return;
         }
-      } catch (err) {
-        console.error('📱 Error loading quickcard:', err);
-        setError('Failed to load Quickcard. Please check your internet connection and try again.');
+
+        // Format createdAt if available
+        let formattedDate = 'Unknown date';
+        if (data.createdAt) {
+          const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+          formattedDate = date.toLocaleDateString();
+        }
+        
+        setLoadingProgress('Processing quickcard data...');
+        
+        // Clean all Firebase Timestamps to prevent rendering errors
+        const cleanData = cleanFirebaseTimestamps(data);
+        
+        setQuickcard({ id: docSnap.id, ...cleanData, formattedDate });
+        setIsPrivateShared(data.isPrivatelyShared || false);
+        
         clearTimeout(timeoutId);
         setLoading(false);
+        setLoadingProgress('');
+      } else {
+        console.log('📱 Quickcard not found, trying to fix...');
+        setLoadingProgress('Quickcard not found, attempting recovery...');
+        
+        try {
+          const fixed = await fixBrokenSharedVostcard(id);
+          if (fixed) {
+            console.log('📱 Quickcard fixed, retrying load...');
+            setLoadingProgress('Recovery successful, loading quickcard...');
+            
+            const retryDocSnap = await getDoc(docRef);
+            if (retryDocSnap.exists()) {
+              const retryData = retryDocSnap.data();
+              if (retryData.isQuickcard) {
+                // Format createdAt if available
+                let retryFormattedDate = 'Unknown date';
+                if (retryData.createdAt) {
+                  const date = retryData.createdAt.toDate ? retryData.createdAt.toDate() : new Date(retryData.createdAt);
+                  retryFormattedDate = date.toLocaleDateString();
+                }
+                
+                // Clean all Firebase Timestamps to prevent rendering errors
+                const cleanRetryData = cleanFirebaseTimestamps(retryData);
+                
+                setQuickcard({ id: retryDocSnap.id, ...cleanRetryData, formattedDate: retryFormattedDate });
+                setIsPrivateShared(retryData.isPrivatelyShared || false);
+                clearTimeout(timeoutId);
+                setLoading(false);
+                setLoadingProgress('');
+                return;
+              }
+            }
+          }
+        } catch (fixError) {
+          console.error('📱 Failed to fix quickcard:', fixError);
+          setLoadingProgress('Recovery failed...');
+        }
+        
+        setError('Quickcard not found. It may have been deleted, moved, or the link is invalid.');
+        setShowRetryButton(true);
+        clearTimeout(timeoutId);
+        setLoading(false);
+        setLoadingProgress('');
       }
-    };
-
-    fetchQuickcard();
+    } catch (err: any) {
+      console.error('📱 Error loading quickcard:', err);
+      
+      // ✅ Better error messages based on error type
+      let errorMessage = 'Failed to load Quickcard. ';
+      if (err.code === 'permission-denied') {
+        errorMessage += 'Access denied. The quickcard may be private or restricted.';
+      } else if (err.code === 'unavailable') {
+        errorMessage += 'Service temporarily unavailable. Please try again.';
+      } else if (err.message?.includes('network')) {
+        errorMessage += 'Network connection issue. Please check your internet connection.';
+      } else {
+        errorMessage += 'Please check your internet connection and try again.';
+      }
+      
+      setError(errorMessage);
+      setShowRetryButton(true);
+      clearTimeout(timeoutId);
+      setLoading(false);
+      setLoadingProgress('');
+    }
   }, [id, fixBrokenSharedVostcard]);
 
+  useEffect(() => {
+    fetchQuickcard();
+  }, [fetchQuickcard]);
+
+  // ✅ Retry function
+  const handleRetry = useCallback(async () => {
+    const newAttempt = retryCount + 2; // Next attempt number
+    if (newAttempt <= 3) { // Allow up to 3 attempts
+      console.log(`🔄 Retrying quickcard load (attempt ${newAttempt})`);
+      await fetchQuickcard(newAttempt);
+    } else {
+      setError('Maximum retry attempts reached. Please try again later or check if the link is correct.');
+      setShowRetryButton(false);
+    }
+  }, [retryCount, fetchQuickcard]);
+
   // ✅ Enhanced photo click handler for thumbnails (not main photo)
-  const handlePhotoClick = (photoUrl: string) => {
-    if (quickcard.photoURLs && quickcard.photoURLs.length > 1) {
-      const index = quickcard.photoURLs.indexOf(photoUrl);
+  const handlePhotoClick = useCallback((photoUrl: string) => {
+    if (photoURLs && photoURLs.length > 1) {
+      const index = photoURLs.indexOf(photoUrl);
       setSelectedPhotoIndex(index >= 0 ? index : 0);
       setShowMultiPhotoModal(true);
     } else {
       setSelectedPhoto(photoUrl);
     }
-  };
+  }, [photoURLs]);
 
   // ✅ NEW: Main photo click handler - triggers audio if available, otherwise shows photo
-  const handleMainPhotoClick = () => {
-    const hasAudio = !!(quickcard.audioURL || quickcard.audio || quickcard._firebaseAudioURL);
-    
+  const handleMainPhotoClick = useCallback(() => {
     if (hasAudio) {
       // If audio exists, play/pause audio instead of showing photo
       console.log('🎵 Main photo clicked - triggering audio playback');
@@ -194,15 +248,15 @@ const PublicQuickcardView: React.FC = () => {
     } else {
       // No audio, fall back to photo viewing
       console.log('📸 Main photo clicked - no audio, showing photo');
-      handlePhotoClick(quickcard.photoURLs[0]);
+      if (photoURLs[0]) {
+        handlePhotoClick(photoURLs[0]);
+      }
     }
-  };
+  }, [hasAudio, photoURLs, handlePhotoClick]);
 
   // ✅ Fixed audio click handler - check for audioURL (Firebase field)
-  const handleAudioClick = () => {
-    const quickcardWithAudio = quickcard as any;
-    // Check for Firebase audioURL field (most common) and fallback fields
-    if (quickcardWithAudio?.audioURL || quickcardWithAudio?.audio || quickcardWithAudio?._firebaseAudioURL) {
+  const handleAudioClick = useCallback(() => {
+    if (hasAudio) {
       if (isPlayingAudio) {
         // Stop audio
         if (audioRef.current) {
@@ -215,15 +269,14 @@ const PublicQuickcardView: React.FC = () => {
         playAudio();
       }
     }
-  };
+  }, [hasAudio, isPlayingAudio]);
 
   // ✅ Enhanced audio playing function
-  const playAudio = async () => {
-    const quickcardWithAudio = quickcard as any;
+  const playAudio = useCallback(async () => {
     // Check for all possible audio field names
-    const audioSource = quickcardWithAudio?.audioURL || 
-                       quickcardWithAudio?.audio || 
-                       quickcardWithAudio?._firebaseAudioURL;
+    const audioSource = quickcard?.audioURL || 
+                       quickcard?.audio || 
+                       quickcard?._firebaseAudioURL;
     
     if (!audioSource) {
       console.error('No audio source available');
@@ -285,13 +338,13 @@ const PublicQuickcardView: React.FC = () => {
         audioRef.current = null;
       }
     }
-  };
+  }, [quickcard]);
 
-  const handleLikeClick = () => {
+  const handleLikeClick = useCallback(() => {
     setIsLiked(!isLiked);
     setShowLikeMessage(true);
     setTimeout(() => setShowLikeMessage(false), 3000);
-  };
+  }, [isLiked]);
 
   if (loading) {
     console.log('🔍 PublicQuickcardView Debug - Still loading, showing loading screen');
@@ -302,11 +355,62 @@ const PublicQuickcardView: React.FC = () => {
         alignItems: 'center',
         height: '100vh',
         backgroundColor: 'white',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        padding: '20px'
       }}>
-        <div style={{ fontSize: '18px', color: '#666', marginBottom: '16px' }}>
-          Loading Quickcard...
+        {/* ✅ Enhanced loading screen with progress indicator */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center'
+        }}>
+          {/* Loading spinner */}
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #f3f3f3',
+            borderTop: '4px solid #007aff',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '20px'
+          }} />
+          
+          <div style={{ 
+            fontSize: '18px', 
+            color: '#333', 
+            marginBottom: '8px',
+            fontWeight: '600'
+          }}>
+            Loading Quickcard...
+          </div>
+          
+          <div style={{ 
+            fontSize: '14px', 
+            color: '#666',
+            marginBottom: '16px'
+          }}>
+            {loadingProgress}
+          </div>
+
+          {retryCount > 0 && (
+            <div style={{ 
+              fontSize: '12px', 
+              color: '#888',
+              fontStyle: 'italic'
+            }}>
+              Attempt {retryCount + 1} of 3
+            </div>
+          )}
         </div>
+
+        {/* CSS for loading spinner */}
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -323,22 +427,105 @@ const PublicQuickcardView: React.FC = () => {
         flexDirection: 'column',
         padding: '20px'
       }}>
-        <div style={{ fontSize: '18px', color: 'red', marginBottom: '16px', textAlign: 'center' }}>
-          {error}
+        {/* ✅ Enhanced error screen with retry options */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          maxWidth: '400px'
+        }}>
+          <div style={{ 
+            fontSize: '48px', 
+            marginBottom: '16px',
+            opacity: 0.5 
+          }}>
+            📱
+          </div>
+          
+          <div style={{ 
+            fontSize: '20px', 
+            color: '#333', 
+            marginBottom: '12px',
+            fontWeight: '600'
+          }}>
+            Couldn't Load Quickcard
+          </div>
+          
+          <div style={{ 
+            fontSize: '16px', 
+            color: '#666', 
+            marginBottom: '24px',
+            lineHeight: 1.5
+          }}>
+            {error}
+          </div>
+
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            flexWrap: 'wrap',
+            justifyContent: 'center'
+          }}>
+            {showRetryButton && (
+              <button 
+                onClick={handleRetry}
+                style={{
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FaSync size={14} />
+                Retry {retryCount < 2 ? `(${3 - retryCount - 1} left)` : ''}
+              </button>
+            )}
+            
+            <button 
+              onClick={() => navigate('/')}
+              style={{
+                backgroundColor: '#f5f5f5',
+                color: '#333',
+                border: '1px solid #ddd',
+                padding: '12px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}
+            >
+              Go Home
+            </button>
+          </div>
+
+          {retryCount >= 2 && (
+            <div style={{
+              marginTop: '20px',
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              fontSize: '14px',
+              color: '#666',
+              textAlign: 'left'
+            }}>
+              <strong>Troubleshooting tips:</strong>
+              <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
+                <li>Check your internet connection</li>
+                <li>Try refreshing the page</li>
+                <li>Verify the shared link is correct</li>
+                <li>The quickcard may have been deleted</li>
+              </ul>
+            </div>
+          )}
         </div>
-        <button 
-          onClick={() => navigate('/')}
-          style={{
-            backgroundColor: '#002B4D',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          Go Home
-        </button>
       </div>
     );
   }
@@ -358,10 +545,7 @@ const PublicQuickcardView: React.FC = () => {
     );
   }
 
-  const { title, description, photoURLs, formattedDate, username: quickcardUsername } = quickcard;
-  
-  // ✅ Check if quickcard has audio - improved detection
-  const hasAudio = !!(quickcard.audioURL || quickcard.audio || quickcard._firebaseAudioURL);
+  const { title, description, formattedDate, username: quickcardUsername } = quickcard;
   
   console.log('🔍 PublicQuickcardView Debug - Successfully rendering quickcard:', {
     id: quickcard.id,
@@ -599,35 +783,35 @@ const PublicQuickcardView: React.FC = () => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '400px', // Increased minimum height for better resolution
-          maxHeight: '70vh' // Increased max height for larger displays
+          minHeight: '450px', // ✅ Increased minimum height for better resolution
+          maxHeight: '75vh' // ✅ Increased max height for larger displays
         }}>
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
               width: '100%',
-              maxWidth: '800px', // Increased max width for better resolution
+              maxWidth: '900px', // ✅ Increased max width for better resolution
               display: 'flex',
-              gap: '12px', // Increased gap for better separation
+              gap: '16px', // ✅ Increased gap for better separation
               overflow: 'hidden'
             }}>
               {/* ✅ Main Photo - Now triggers audio if available */}
               <div style={{ 
-                flex: photoURLs.length === 1 ? 1 : 0.75, // Increased main photo ratio
+                flex: photoURLs.length === 1 ? 1 : 0.75, // ✅ Increased main photo ratio
                 backgroundColor: 'transparent',
-                borderRadius: '16px',
+                borderRadius: '20px', // ✅ Increased border radius
                 overflow: 'hidden',
                 position: 'relative',
                 cursor: 'pointer',
-                minHeight: '400px', // Ensure minimum height for quality
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)' // Enhanced shadow
+                minHeight: '450px', // ✅ Ensure minimum height for quality
+                boxShadow: '0 12px 48px rgba(0,0,0,0.15)' // ✅ Enhanced shadow
               }}>
                 <div style={{
                   position: 'relative',
                   width: '100%',
                   height: '100%',
-                  minHeight: '400px',
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: '16px',
+                  minHeight: '450px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '20px',
                   overflow: 'hidden'
                 }}>
                   <img
@@ -636,44 +820,44 @@ const PublicQuickcardView: React.FC = () => {
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'contain', // Changed from 'cover' to 'contain' to show full image
+                      objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
                       objectPosition: 'center',
                       // ✅ High-quality image rendering hints
                       imageRendering: 'high-quality',
-                      imageRendering: '-webkit-optimize-contrast' as any,
+                      imageRendering: 'crisp-edges' as any,
                       WebkitBackfaceVisibility: 'hidden',
                       backfaceVisibility: 'hidden',
-                      transform: 'translateZ(0)', // Hardware acceleration
-                      // Additional quality settings
-                      filter: 'contrast(1.02) saturate(1.05)', // Slight enhancement
+                      transform: 'translateZ(0)', // ✅ Hardware acceleration
+                      // ✅ Additional quality settings
+                      filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
                     } as React.CSSProperties}
                     onClick={handleMainPhotoClick} // ✅ NEW: Use main photo click handler
-                    loading="eager" // Prioritize loading
-                    fetchpriority="high" // Ensure high priority loading
-                    // Add error handling for better loading
+                    loading="eager" // ✅ Prioritize loading
+                    fetchPriority="high" // ✅ Ensure high priority loading
+                    // ✅ Add error handling for better loading
                     onError={(e) => {
                       console.error('Failed to load main image:', photoURLs[0]);
                     }}
                   />
                   
                   {/* ✅ Enhanced visual indicators */}
-                  <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     {/* ✅ Audio indicator on main photo */}
                     {hasAudio && (
                       <div style={{
-                        backgroundColor: 'rgba(0, 122, 255, 0.9)', // Blue background for audio
+                        backgroundColor: 'rgba(0, 122, 255, 0.92)', // ✅ Enhanced blue background for audio
                         color: 'white',
-                        padding: '6px 12px',
-                        borderRadius: '16px',
-                        fontSize: '12px',
+                        padding: '8px 16px', // ✅ Increased padding
+                        borderRadius: '20px', // ✅ Increased border radius
+                        fontSize: '14px', // ✅ Increased font size
                         fontWeight: 'bold',
-                        backdropFilter: 'blur(8px)',
-                        boxShadow: '0 2px 8px rgba(0,122,255,0.3)',
+                        backdropFilter: 'blur(12px)', // ✅ Enhanced blur
+                        boxShadow: '0 4px 16px rgba(0,122,255,0.4)', // ✅ Enhanced shadow
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '6px' // ✅ Increased gap
                       }}>
-                        {isPlayingAudio ? <FaPause size={12} /> : <FaPlay size={12} />}
+                        {isPlayingAudio ? <FaPause size={14} /> : <FaPlay size={14} />}
                         {isPlayingAudio ? 'Playing' : 'Tap to play'}
                       </div>
                     )}
@@ -681,14 +865,14 @@ const PublicQuickcardView: React.FC = () => {
                     {/* Photo counter - moved to right side */}
                     {photoURLs.length > 1 && (
                       <div style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Increased opacity
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)', // ✅ Increased opacity
                         color: 'white',
-                        padding: '6px 12px', // Increased padding
-                        borderRadius: '16px', // Increased border radius
-                        fontSize: '14px', // Increased font size
+                        padding: '8px 16px', // ✅ Increased padding
+                        borderRadius: '20px', // ✅ Increased border radius
+                        fontSize: '15px', // ✅ Increased font size
                         fontWeight: 'bold',
-                        backdropFilter: 'blur(8px)', // Added blur effect
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // Added shadow
+                        backdropFilter: 'blur(12px)', // ✅ Enhanced blur effect
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)' // ✅ Enhanced shadow
                       }}>
                         1/{photoURLs.length}
                       </div>
@@ -703,31 +887,31 @@ const PublicQuickcardView: React.FC = () => {
                   flex: 0.25,
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '8px', // Increased gap
+                  gap: '12px', // ✅ Increased gap
                   overflow: 'hidden',
-                  minHeight: '400px'
+                  minHeight: '450px'
                 }}>
                   {photoURLs.slice(1, 4).map((photoUrl: string, index: number) => (
                     <div
                       key={index}
                       style={{
                         flex: 1,
-                        borderRadius: '12px', // Increased border radius
+                        borderRadius: '16px', // ✅ Increased border radius
                         overflow: 'hidden',
                         position: 'relative',
                         cursor: 'pointer',
-                        minHeight: '120px', // Increased minimum height
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.1)', // Enhanced shadow
+                        minHeight: '140px', // ✅ Increased minimum height
+                        boxShadow: '0 6px 24px rgba(0,0,0,0.12)', // ✅ Enhanced shadow
                         transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                       }}
                       onClick={() => handlePhotoClick(photoUrl)} // ✅ Thumbnails still show photos
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)';
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
+                        e.currentTarget.style.transform = 'scale(1.03)'; // ✅ Slightly increased scale
+                        e.currentTarget.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)';
+                        e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.12)';
                       }}
                     >
                       <img
@@ -743,9 +927,9 @@ const PublicQuickcardView: React.FC = () => {
                           WebkitBackfaceVisibility: 'hidden',
                           backfaceVisibility: 'hidden',
                           transform: 'translateZ(0)',
-                          filter: 'contrast(1.02) saturate(1.05)',
+                          filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced quality
                         } as React.CSSProperties}
-                        loading="lazy" // Lazy load thumbnails
+                        loading="lazy" // ✅ Lazy load thumbnails
                         onError={(e) => {
                           console.error(`Failed to load thumbnail ${index + 2}:`, photoUrl);
                         }}
@@ -757,14 +941,14 @@ const PublicQuickcardView: React.FC = () => {
                           left: 0,
                           right: 0,
                           bottom: 0,
-                          backgroundColor: 'rgba(0, 0, 0, 0.7)', // Increased opacity
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: 'white',
-                          fontSize: '16px', // Increased font size
+                          fontSize: '18px', // ✅ Increased font size
                           fontWeight: 'bold',
-                          backdropFilter: 'blur(4px)' // Added blur effect
+                          backdropFilter: 'blur(6px)' // ✅ Enhanced blur effect
                         }}>
                           +{photoURLs.length - 4}
                         </div>
@@ -804,12 +988,12 @@ const PublicQuickcardView: React.FC = () => {
         {/* Description */}
         <div style={{ 
           color: '#333',
-          lineHeight: 1.6, // Improved line height
-          fontSize: '17px', // Slightly larger font
-          marginBottom: '20px', // Increased margin
-          maxWidth: '800px', // Match photo max width
-          margin: '0 auto 20px auto', // Center align with photos
-          padding: '0 8px' // Small padding for mobile
+          lineHeight: 1.6, // ✅ Improved line height
+          fontSize: '18px', // ✅ Increased font size
+          marginBottom: '24px', // ✅ Increased margin
+          maxWidth: '900px', // ✅ Match photo max width
+          margin: '0 auto 24px auto', // ✅ Center align with photos
+          padding: '0 12px' // ✅ Increased padding for mobile
         }}>
           {description || 'No description available.'}
         </div>
@@ -817,8 +1001,8 @@ const PublicQuickcardView: React.FC = () => {
         <div style={{ 
           textAlign: 'center', 
           color: '#888', 
-          fontSize: '15px', // Slightly larger
-          marginBottom: '32px', // Increased margin
+          fontSize: '16px', // ✅ Increased size
+          marginBottom: '40px', // ✅ Increased margin
           fontWeight: '500'
         }}>
           Posted: {formattedDate}
@@ -828,14 +1012,14 @@ const PublicQuickcardView: React.FC = () => {
         <div style={{ 
           textAlign: 'center', 
           borderTop: '1px solid #eee',
-          paddingTop: '32px', // Increased padding
-          marginTop: '32px'
+          paddingTop: '40px', // ✅ Increased padding
+          marginTop: '40px'
         }}>
           <div style={{ 
             color: '#666', 
-            fontSize: '15px', // Slightly larger
+            fontSize: '16px', // ✅ Increased size
             lineHeight: 1.4, 
-            marginBottom: '16px' // Increased margin
+            marginBottom: '20px' // ✅ Increased margin
           }}>
             Made with Vōstcard
           </div>
@@ -845,14 +1029,14 @@ const PublicQuickcardView: React.FC = () => {
               backgroundColor: '#007aff',
               color: 'white',
               border: 'none',
-              borderRadius: '12px', // Increased border radius
-              padding: '14px 28px', // Increased padding
-              fontSize: '17px', // Increased font size
+              borderRadius: '14px', // ✅ Increased border radius
+              padding: '16px 32px', // ✅ Increased padding
+              fontSize: '18px', // ✅ Increased font size
               fontWeight: 'bold',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              boxShadow: '0 4px 16px rgba(0,122,255,0.3)', // Added shadow
-              minHeight: '52px' // Ensure consistent height
+              boxShadow: '0 6px 24px rgba(0,122,255,0.35)', // ✅ Enhanced shadow
+              minHeight: '56px' // ✅ Increased minimum height
             }}
             onMouseDown={(e) => e.currentTarget.style.backgroundColor = '#0056d3'}
             onMouseUp={(e) => e.currentTarget.style.backgroundColor = '#007aff'}
@@ -881,7 +1065,7 @@ const PublicQuickcardView: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.95)', // Darker background
+            backgroundColor: 'rgba(0, 0, 0, 0.95)', // ✅ Darker background
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -904,6 +1088,7 @@ const PublicQuickcardView: React.FC = () => {
               WebkitBackfaceVisibility: 'hidden',
               backfaceVisibility: 'hidden',
               transform: 'translateZ(0)',
+              filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced quality
             } as React.CSSProperties}
             draggable={false}
             onContextMenu={e => e.preventDefault()}
@@ -1012,6 +1197,11 @@ const PublicQuickcardView: React.FC = () => {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
           }
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
         
         /* Prevent bounce scrolling on body when this page is active */

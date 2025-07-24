@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
@@ -44,14 +44,19 @@ const QuickcardDetailView: React.FC = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [showSharedOptions, setShowSharedOptions] = useState(false);
 
-  // Simplified audio player state - just play/pause
+  // ✅ Enhanced audio player state
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
   const tipButtonRef = useRef<HTMLButtonElement>(null);
+
+  // ✅ Performance optimization - memoize photo URLs and audio detection
+  const photoURLs = useMemo(() => quickcard?.photoURLs || [], [quickcard?.photoURLs]);
+  const hasAudio = useMemo(() => !!(quickcard?.audioURL || quickcard?.audioURLs?.length > 0 || quickcard?.audio || quickcard?._firebaseAudioURL), [quickcard?.audioURL, quickcard?.audioURLs, quickcard?.audio, quickcard?._firebaseAudioURL]);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -138,28 +143,48 @@ const QuickcardDetailView: React.FC = () => {
     }
   }, [quickcard?.userID]);
 
-  // Simplified audio player effects
+  // ✅ Enhanced audio player effects
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    const handleLoadedMetadata = () => {
+      setAudioDuration(audio.duration);
+    };
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
     const handleEnded = () => {
       setIsPlaying(false);
+      audioRef.current = null;
     };
 
     const handleError = () => {
       console.error('Audio failed to load');
       setIsPlaying(false);
+      audioRef.current = null;
     };
 
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
     return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
     };
-  }, [quickcard?.audioURL]);
+  }, [quickcard?.audioURL, quickcard?.audioURLs]);
 
   const handleShareClick = async () => {
     if (!quickcard) return;
@@ -195,11 +220,11 @@ Tap OK to continue.`;
     }
   };
 
-  const handleLikeClick = () => {
+  const handleLikeClick = useCallback(() => {
     setIsLiked(!isLiked);
-  };
+  }, [isLiked]);
 
-  const handleMapClick = () => {
+  const handleMapClick = useCallback(() => {
     if (quickcard?.latitude && quickcard?.longitude) {
       console.log('📍 Opening quickcard location on public map for all users');
       navigate('/public-map', {
@@ -224,24 +249,87 @@ Tap OK to continue.`;
     } else {
       alert('No location data available for this quickcard');
     }
-  };
+  }, [quickcard, navigate]);
 
-  const handlePlayPause = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
+  // ✅ Enhanced photo click handler for thumbnails (not main photo)
+  const handlePhotoClick = useCallback((photoUrl: string) => {
+    if (photoURLs && photoURLs.length > 1) {
+      const index = photoURLs.indexOf(photoUrl);
+      setSelectedPhotoIndex(index >= 0 ? index : 0);
+      setShowMultiPhotoModal(true);
     } else {
-      audio.play()
-        .then(() => setIsPlaying(true))
-        .catch(error => {
-          console.error('Audio play failed:', error);
-          alert('Failed to play audio. Please try again.');
-        });
+      setSelectedPhoto(photoUrl);
     }
-  };
+  }, [photoURLs]);
+
+  // ✅ NEW: Main photo click handler - triggers audio if available, otherwise shows photo
+  const handleMainPhotoClick = useCallback(() => {
+    if (hasAudio) {
+      // If audio exists, play/pause audio instead of showing photo
+      console.log('🎵 Main photo clicked - triggering audio playback');
+      handlePlayPause();
+    } else {
+      // No audio, fall back to photo viewing
+      console.log('📸 Main photo clicked - no audio, showing photo');
+      if (photoURLs[0]) {
+        handlePhotoClick(photoURLs[0]);
+      }
+    }
+  }, [hasAudio, photoURLs, handlePhotoClick]);
+
+  // ✅ Enhanced audio playback function
+  const handlePlayPause = useCallback(async () => {
+    if (!hasAudio) return;
+
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      if (isPlaying) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create new audio element
+      const audio = new Audio();
+      audioRef.current = audio;
+
+      // Get audio source - check multiple possible fields
+      const audioSource = quickcard?.audioURL || 
+                         quickcard?.audioURLs?.[0] || 
+                         quickcard?.audio || 
+                         quickcard?._firebaseAudioURL;
+
+      if (!audioSource) {
+        console.error('No audio source available');
+        return;
+      }
+
+      // Set audio source
+      if (audioSource instanceof Blob) {
+        audio.src = URL.createObjectURL(audioSource);
+      } else if (typeof audioSource === 'string') {
+        audio.src = audioSource;
+      } else {
+        console.error('Invalid audio source type:', typeof audioSource);
+        return;
+      }
+
+      // Play audio
+      await audio.play();
+      
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
+      }
+      alert('Failed to play audio. Please try again.');
+    }
+  }, [hasAudio, isPlaying, quickcard]);
 
   const handleRefresh = () => {
     window.location.reload();
@@ -262,9 +350,6 @@ Tap OK to continue.`;
     }
   };
 
-  // Check if quickcard has audio
-  const hasAudio = quickcard?.audioURL || quickcard?.audioURLs?.length > 0;
-
   // Debug logging for audio detection
   useEffect(() => {
     if (quickcard) {
@@ -280,17 +365,6 @@ Tap OK to continue.`;
       });
     }
   }, [quickcard, hasAudio]);
-
-  // Enhanced photo click handler
-  const handlePhotoClick = (photoUrl: string) => {
-    if (quickcard.photoURLs && quickcard.photoURLs.length > 1) {
-      const index = quickcard.photoURLs.indexOf(photoUrl);
-      setSelectedPhotoIndex(index >= 0 ? index : 0);
-      setShowMultiPhotoModal(true);
-    } else {
-      setSelectedPhoto(photoUrl);
-    }
-  };
 
   if (loading) {
     return (
@@ -525,76 +599,138 @@ Tap OK to continue.`;
         </h1>
       </div>
 
-      {/* Enhanced Multi-Photo Section */}
+      {/* ✅ Enhanced High-Resolution Multi-Photo Display with Audio-Triggered Main Photo */}
       <div style={{ 
         padding: '20px', 
         display: 'flex', 
         justifyContent: 'center',
-        height: '300px'
+        minHeight: '350px', // ✅ Increased minimum height for better resolution
+        maxHeight: '65vh' // ✅ Increased max height for larger displays
       }}>
-        {quickcard.photoURLs && quickcard.photoURLs.length > 0 ? (
+        {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
+            maxWidth: '800px', // ✅ Increased max width for better resolution
             display: 'flex',
-            gap: '8px',
+            gap: '12px', // ✅ Increased gap for better separation
             overflow: 'hidden'
           }}>
-            {/* Main Photo */}
+            {/* ✅ Main Photo - Now triggers audio if available */}
             <div style={{ 
-              flex: quickcard.photoURLs.length === 1 ? 1 : 0.7,
+              flex: photoURLs.length === 1 ? 1 : 0.75, // ✅ Increased main photo ratio
               backgroundColor: 'transparent',
-              borderRadius: '12px',
+              borderRadius: '16px', // ✅ Increased border radius
               overflow: 'hidden',
-              position: 'relative'
+              position: 'relative',
+              cursor: 'pointer',
+              minHeight: '350px', // ✅ Ensure minimum height for quality
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)' // ✅ Enhanced shadow
             }}>
-              <img
-                src={quickcard.photoURLs[0]}
-                alt="Quickcard"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  cursor: 'pointer'
-                }}
-                onClick={() => handlePhotoClick(quickcard.photoURLs[0])}
-              />
-              {quickcard.photoURLs.length > 1 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '8px',
-                  right: '8px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                  color: 'white',
-                  padding: '4px 8px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: 'bold'
-                }}>
-                  1/{quickcard.photoURLs.length}
-                </div>
-              )}
-            </div>
-
-            {/* Additional Photos Thumbnail Strip */}
-            {quickcard.photoURLs.length > 1 && (
               <div style={{
-                flex: 0.3,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                minHeight: '350px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '16px',
                 overflow: 'hidden'
               }}>
-                {quickcard.photoURLs.slice(1, 4).map((photoUrl: string, index: number) => (
+                <img
+                  src={photoURLs[0]}
+                  alt="Quickcard"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
+                    objectPosition: 'center',
+                    cursor: 'pointer',
+                    // ✅ High-quality image rendering hints
+                    imageRendering: 'high-quality',
+                    imageRendering: 'crisp-edges' as any,
+                    WebkitBackfaceVisibility: 'hidden',
+                    backfaceVisibility: 'hidden',
+                    transform: 'translateZ(0)', // ✅ Hardware acceleration
+                    // ✅ Additional quality settings
+                    filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
+                  } as React.CSSProperties}
+                  onClick={handleMainPhotoClick} // ✅ NEW: Use main photo click handler
+                  loading="eager" // ✅ Prioritize loading
+                  fetchpriority="high" // ✅ Ensure high priority loading
+                />
+                
+                {/* ✅ Enhanced visual indicators */}
+                <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  {/* ✅ Audio indicator on main photo */}
+                  {hasAudio && (
+                    <div style={{
+                      backgroundColor: 'rgba(0, 122, 255, 0.92)', // ✅ Enhanced blue background for audio
+                      color: 'white',
+                      padding: '6px 12px', // ✅ Increased padding
+                      borderRadius: '16px', // ✅ Increased border radius
+                      fontSize: '12px', // ✅ Font size
+                      fontWeight: 'bold',
+                      backdropFilter: 'blur(8px)', // ✅ Enhanced blur
+                      boxShadow: '0 2px 8px rgba(0,122,255,0.3)', // ✅ Enhanced shadow
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      {isPlaying ? <FaPause size={12} /> : <FaPlay size={12} />}
+                      {isPlaying ? 'Playing' : 'Tap to play'}
+                    </div>
+                  )}
+                  
+                  {/* Photo counter - moved to right side */}
+                  {photoURLs.length > 1 && (
+                    <div style={{
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
+                      color: 'white',
+                      padding: '6px 12px', // ✅ Increased padding
+                      borderRadius: '16px', // ✅ Increased border radius
+                      fontSize: '14px', // ✅ Increased font size
+                      fontWeight: 'bold',
+                      backdropFilter: 'blur(8px)', // ✅ Added blur effect
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // ✅ Added shadow
+                    }}>
+                      1/{photoURLs.length}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Additional Photos Thumbnail Strip - Higher Resolution */}
+            {photoURLs.length > 1 && (
+              <div style={{
+                flex: 0.25,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px', // ✅ Increased gap
+                overflow: 'hidden',
+                minHeight: '350px'
+              }}>
+                {photoURLs.slice(1, 4).map((photoUrl: string, index: number) => (
                   <div
                     key={index}
                     style={{
                       flex: 1,
-                      borderRadius: '8px',
+                      borderRadius: '12px', // ✅ Increased border radius
                       overflow: 'hidden',
                       position: 'relative',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      minHeight: '110px', // ✅ Increased minimum height
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.1)', // ✅ Enhanced shadow
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                     }}
-                    onClick={() => handlePhotoClick(photoUrl)}
+                    onClick={() => handlePhotoClick(photoUrl)} // ✅ Thumbnails still show photos
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.02)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)';
+                    }}
                   >
                     <img
                       src={photoUrl}
@@ -602,25 +738,34 @@ Tap OK to continue.`;
                       style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'cover'
-                      }}
+                        objectFit: 'cover',
+                        objectPosition: 'center',
+                        // ✅ High-quality image rendering
+                        imageRendering: 'high-quality',
+                        WebkitBackfaceVisibility: 'hidden',
+                        backfaceVisibility: 'hidden',
+                        transform: 'translateZ(0)',
+                        filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced quality
+                      } as React.CSSProperties}
+                      loading="lazy" // ✅ Lazy load thumbnails
                     />
-                    {index === 2 && quickcard.photoURLs.length > 4 && (
+                    {index === 2 && photoURLs.length > 4 && (
                       <div style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)', // ✅ Increased opacity
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: 'white',
-                        fontSize: '14px',
-                        fontWeight: 'bold'
+                        fontSize: '16px', // ✅ Increased font size
+                        fontWeight: 'bold',
+                        backdropFilter: 'blur(4px)' // ✅ Added blur effect
                       }}>
-                        +{quickcard.photoURLs.length - 4}
+                        +{photoURLs.length - 4}
                       </div>
                     )}
                   </div>
@@ -962,7 +1107,13 @@ Tap OK to continue.`;
               height: '100%',
               objectFit: 'contain',
               userSelect: 'none',
-            }}
+              // ✅ High-quality full-screen rendering
+              imageRendering: 'high-quality',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+              filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced quality
+            } as React.CSSProperties}
             draggable={false}
           />
         </div>
@@ -970,7 +1121,7 @@ Tap OK to continue.`;
 
       {/* Multi Photo Modal */}
       <MultiPhotoModal
-        photos={quickcard.photoURLs || []}
+        photos={photoURLs || []}
         initialIndex={selectedPhotoIndex}
         isOpen={showMultiPhotoModal}
         onClose={() => setShowMultiPhotoModal(false)}
