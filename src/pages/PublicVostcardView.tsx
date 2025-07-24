@@ -6,7 +6,7 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import InfoPin from '../assets/Info_pin.png';
+import RoundInfoButton from '../assets/RoundInfo_Button.png';
 
 const PublicVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -521,8 +521,8 @@ ${privateUrl}`);
           }}
         >
           <img 
-            src={InfoPin} 
-            alt="Info Pin" 
+            src={RoundInfoButton} 
+            alt="Round Info Button" 
             style={{
               width: '40px',
               height: '40px',
@@ -535,7 +535,7 @@ ${privateUrl}`);
             color: 'white',
             textAlign: 'center'
           }}>
-            What is Vōstcard?
+            User Guide
           </span>
         </div>
       </div>

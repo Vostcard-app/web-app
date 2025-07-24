@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaTimes } from 'react-icons/fa';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import InfoPin from '../assets/Info_pin.png';
+import RoundInfoButton from '../assets/RoundInfo_Button.png';
 
 // Create a custom user location icon
 const userLocationIcon = new L.Icon({
@@ -18,6 +22,7 @@ const RootView: React.FC = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLocationLoading, setIsLocationLoading] = useState(true);
   const [locationSource, setLocationSource] = useState<'user' | 'fallback'>('fallback');
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   // Dublin coordinates as fallback
   const DUBLIN_COORDS: [number, number] = [53.3498, -6.2603];
@@ -75,8 +80,8 @@ const RootView: React.FC = () => {
                 setUserLocation([pos.coords.latitude, pos.coords.longitude]);
                 setLocationSource('user');
               }
-            },
-            (error) => {
+        },
+        (error) => {
               console.warn('📍 Watch position error:', error.message);
             },
             {
@@ -177,8 +182,8 @@ const RootView: React.FC = () => {
       {/* CSS */}
       <style>{`
         @keyframes bobbing {
-          0%, 100% { transform: translate(-50%, -50%) translateY(0px); }
-          50% { transform: translate(-50%, -50%) translateY(-15px); }
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-15px); }
         }
         
         .bobbing-pin {
@@ -197,7 +202,9 @@ const RootView: React.FC = () => {
         background: '#07345c',
         color: 'white',
         padding: '16px 20px',
-        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         fontSize: '24px',
         fontWeight: 700,
         position: 'fixed',
@@ -207,7 +214,34 @@ const RootView: React.FC = () => {
         zIndex: 1000,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
-        Vōstcard
+        <span>Vōstcard</span>
+        
+        <div 
+          onClick={() => navigate('/user-guide')}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <img 
+            src={RoundInfoButton} 
+            alt="Round Info Button" 
+            style={{
+              width: '60px',
+              height: '60px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            User Guide
+          </span>
+        </div>
       </div>
 
       {/* Map Container - Leave space for bottom button */}
@@ -279,60 +313,57 @@ const RootView: React.FC = () => {
         )}
       </div>
 
-      {/* Centered Vostcard Pin */}
-      <div style={{
-        position: 'absolute',
-        top: '40%',
-        left: '50%',
-        zIndex: 100,
-        pointerEvents: 'none'
-      }}>
-        <img 
-          src="/Vostcard_pin.png"
-          alt="Vostcard Pin"
-          className="bobbing-pin"
-          style={{
-            width: '120px',
-            height: '120px',
-            filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))'
-          }}
-          onError={(e) => {
-            console.warn('Vostcard_pin.png failed to load');
-            e.currentTarget.style.display = 'none';
-          }}
-        />
-      </div>
-
-      {/* User Guide Button - Centered in map area */}
+      {/* Centered Info Pin with Button */}
       <div style={{
         position: 'absolute',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        marginTop: '50px', // Raised by 30px (was 80px, now 50px)
-        zIndex: 2000,
-        width: 'calc(100% - 32px)',
-        maxWidth: '400px'
+        zIndex: 100,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px'
       }}>
-        <button
-          onClick={() => navigate('/user-guide')}
+        <img 
+          src={InfoPin}
+          alt="Info Pin"
+          className="bobbing-pin"
           style={{
-            background: '#E62A2E',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '20px',
-            fontWeight: 600,
-            padding: '16px',
-            width: '100%',
-            boxShadow: '0 4px 12px rgba(230, 42, 46, 0.3)',
+            width: '120px',
+            height: '120px',
+            filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))',
             cursor: 'pointer',
-            touchAction: 'manipulation'
+            pointerEvents: 'auto'
+          }}
+          onClick={() => setShowVideoModal(true)}
+          onError={(e) => {
+            console.warn('Info_pin.png failed to load');
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+        <button
+          onClick={() => setShowVideoModal(true)}
+          style={{
+            backgroundColor: '#002B4D',
+            color: 'white',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            fontSize: '14px',
+            fontWeight: '600',
+            textAlign: 'center',
+            whiteSpace: 'nowrap',
+            border: 'none',
+            cursor: 'pointer',
+            pointerEvents: 'auto',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
           }}
         >
-          User Guide
+          What is Vōstcard? (video link)
         </button>
       </div>
+
+
 
       {/* Single Log In / Register Button - Same width as User Guide */}
       <div style={{
@@ -393,6 +424,94 @@ const RootView: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {showVideoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.9)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setShowVideoModal(false)}
+          >
+            <button
+              onClick={() => setShowVideoModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10001,
+                fontSize: '18px',
+                color: 'white',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            <div style={{ 
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <iframe
+                src="https://www.youtube.com/embed/J-ix67eZ7J4?autoplay=1&rel=0&modestbranding=1&playsinline=1"
+                width="100%"
+                height="100%"
+                style={{
+                  minHeight: '315px',
+                  maxWidth: '560px',
+                  aspectRatio: '16/9',
+                  borderRadius: 8,
+                  border: 'none'
+                }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '14px',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              Tap outside video or ✕ to close
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

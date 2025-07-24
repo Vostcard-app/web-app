@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
+import RoundInfoButton from '../assets/RoundInfo_Button.png';
 
 // Custom icons for the map
 const vostcardIcon = new L.Icon({
@@ -238,26 +239,36 @@ const PublicHomeView: React.FC = () => {
           Register/Login
         </button>
         
-        {/* What is Vostcard Button */}
-        <button
+        {/* User Guide Button */}
+        <div 
           onClick={() => {
-            // You can add video modal logic here if needed
             navigate('/user-guide');
           }}
           style={{
-            backgroundColor: 'rgba(255,255,255,0.15)',
-            border: 'none',
-            borderRadius: '50%',
-            padding: '8px',
-            color: 'white',
             cursor: 'pointer',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
+            flexDirection: 'column',
+            alignItems: 'center'
           }}
         >
-          <FaInfoCircle size={20} />
-        </button>
+          <img 
+            src={RoundInfoButton} 
+            alt="Round Info Button" 
+            style={{
+              width: '40px',
+              height: '40px',
+              marginBottom: '2px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            User Guide
+          </span>
+        </div>
       </div>
 
       {/* Map Container */}

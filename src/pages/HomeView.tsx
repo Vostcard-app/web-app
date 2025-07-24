@@ -16,6 +16,7 @@ import './HomeView.css';
 import LocationDebugger from '../components/LocationDebugger';
 import DriveModePlayer from '../components/DriveModePlayer';
 import InfoButton from '../assets/Info_button.png';
+import RoundInfoButton from '../assets/RoundInfo_Button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
@@ -826,25 +827,46 @@ const HomeView = () => {
                     Offers
                   </button>
                   
-                  <button
-                    onClick={() => setShowInfoMenu(!showInfoMenu)}
-                    style={{
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <button
+                      onClick={() => setShowInfoMenu(!showInfoMenu)}
+                      style={{
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        padding: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <img 
+                        src={RoundInfoButton} 
+                        alt="Round Info Button" 
+                        style={{
+                          width: '60px',
+                          height: '60px'
+                        }}
+                      />
+                    </button>
+                    <div style={{
                       backgroundColor: '#002B4D',
                       color: 'white',
-                      border: 'none',
-                      padding: '8px',
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                    }}
-                  >
-                    <FaInfo size={20} color="white" />
-                  </button>
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      Video Guides
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1180,7 +1202,7 @@ const HomeView = () => {
             </button>
             
             <button
-              onClick={() => handleTutorialVideo('HOME_SCREEN_VIDEO_ID', 'Home Screen')}
+              onClick={() => handleTutorialVideo('VTfeDwSUy-o', 'Home Screen')}
               style={menuItemStyle}
             >
               🏠 Home Screen
