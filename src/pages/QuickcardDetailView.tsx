@@ -330,20 +330,18 @@ Tap OK to continue.`;
     }
   }, [photoURLs]);
 
-  // ✅ NEW: Thumbnail click handler - launches audio and shows first photo
-  const handleThumbnailClick = useCallback(() => {
-    console.log('🖼️ Thumbnail clicked - launching audio and showing first photo');
+  // ✅ NEW: Thumbnail click handler - launches audio and shows clicked photo
+  const handleThumbnailClick = useCallback((photoUrl: string) => {
+    console.log('🖼️ Thumbnail clicked - launching audio and showing clicked photo:', photoUrl);
     
     // Start audio if available
     if (hasAudio) {
       handlePlayPause();
     }
     
-    // Show first photo in full screen
-    if (photoURLs && photoURLs.length > 0) {
-      setSelectedPhoto(photoURLs[0]); // Always show first photo
-    }
-  }, [hasAudio, photoURLs, handlePlayPause]);
+    // Show the specific photo that was clicked
+    setSelectedPhoto(photoUrl);
+  }, [hasAudio, handlePlayPause]);
 
   // ✅ Main photo click handler - triggers audio if available AND shows photo
   const handleMainPhotoClick = useCallback(() => {
@@ -764,7 +762,7 @@ Tap OK to continue.`;
                       boxShadow: '0 4px 16px rgba(0,0,0,0.1)', // ✅ Enhanced shadow
                       transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                     }}
-                    onClick={handleThumbnailClick} // ✅ NEW: Use thumbnail click handler
+                    onClick={() => handleThumbnailClick(photoUrl)} // ✅ NEW: Use thumbnail click handler with specific photo
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'scale(1.02)';
                       e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
