@@ -655,7 +655,7 @@ const VostcardStudioView: React.FC = () => {
         title: quickcardTitle.trim(),
         description: quickcardDescription.trim() || 'Quickcard',
         photos: quickcardPhotos, // Multiple photos
-        audio: quickcardAudio,
+        audio: quickcardIntroAudio, // Use intro audio as primary
         categories: quickcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
@@ -666,7 +666,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: quickcardPhotos.length > 0,
-        hasAudio: !!quickcardAudio,
+        hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -704,9 +704,12 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
     
-    setQuickcardAudio(null);
-    setQuickcardAudioSource(null);
-    setQuickcardAudioFileName(null);
+    setQuickcardIntroAudio(null);
+    setQuickcardIntroAudioSource(null);
+    setQuickcardIntroAudioFileName(null);
+    setQuickcardDetailAudio(null);
+    setQuickcardDetailAudioSource(null);
+    setQuickcardDetailAudioFileName(null);
     setQuickcardLocation(null);
     setQuickcardCategories([]);
   };
@@ -1183,37 +1186,71 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Audio Status Display */}
-            {quickcardAudio && (
+            {(quickcardIntroAudio || quickcardDetailAudio) && (
               <div style={{ marginBottom: '15px' }}>
-                <div style={{
-                  backgroundColor: '#f3e5f5',
-                  padding: '8px 12px',
-                  borderRadius: '4px',
-                  border: '1px solid #9c27b0',
-                  fontSize: '14px',
-                  color: '#6a1b9a'
-                }}>
-                  🎵 {quickcardAudioFileName || 'Audio file ready'}
-                  <button
-                    onClick={() => {
-                      setQuickcardAudio(null);
-                      setQuickcardAudioSource(null);
-                      setQuickcardAudioFileName(null);
-                    }}
-                    disabled={isLoading}
-                    style={{
-                      marginLeft: '8px',
-                      background: 'none',
-                      border: 'none',
-                      color: '#d32f2f',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      fontSize: '12px',
-                      opacity: isLoading ? 0.6 : 1
-                    }}
-                  >
-                    ✕ Remove
-                  </button>
-                </div>
+                {quickcardIntroAudio && (
+                  <div style={{
+                    backgroundColor: '#f3e5f5',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid #9c27b0',
+                    fontSize: '14px',
+                    color: '#6a1b9a',
+                    marginBottom: '8px'
+                  }}>
+                    🎵 Intro: {quickcardIntroAudioFileName || 'Audio file ready'}
+                    <button
+                      onClick={() => {
+                        setQuickcardIntroAudio(null);
+                        setQuickcardIntroAudioSource(null);
+                        setQuickcardIntroAudioFileName(null);
+                      }}
+                      disabled={isLoading}
+                      style={{
+                        marginLeft: '8px',
+                        background: 'none',
+                        border: 'none',
+                        color: '#d32f2f',
+                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '12px',
+                        opacity: isLoading ? 0.6 : 1
+                      }}
+                    >
+                      ✕ Remove
+                    </button>
+                  </div>
+                )}
+                {quickcardDetailAudio && (
+                  <div style={{
+                    backgroundColor: '#fce4ec',
+                    padding: '8px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid #e91e63',
+                    fontSize: '14px',
+                    color: '#ad1457'
+                  }}>
+                    🎵 Detail: {quickcardDetailAudioFileName || 'Audio file ready'}
+                    <button
+                      onClick={() => {
+                        setQuickcardDetailAudio(null);
+                        setQuickcardDetailAudioSource(null);
+                        setQuickcardDetailAudioFileName(null);
+                      }}
+                      disabled={isLoading}
+                      style={{
+                        marginLeft: '8px',
+                        background: 'none',
+                        border: 'none',
+                        color: '#d32f2f',
+                        cursor: isLoading ? 'not-allowed' : 'pointer',
+                        fontSize: '12px',
+                        opacity: isLoading ? 0.6 : 1
+                      }}
+                    >
+                      ✕ Remove
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1349,30 +1386,56 @@ const VostcardStudioView: React.FC = () => {
               </button>
             )}
 
-            {/* Clear Audio Button */}
-            {quickcardAudio && (
-              <button
-                onClick={() => {
-                  setQuickcardAudio(null);
-                  setQuickcardAudioSource(null);
-                  setQuickcardAudioFileName(null);
-                }}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: '#ff5722',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  width: '100%',
-                  opacity: isLoading ? 0.6 : 1,
-                  marginBottom: '10px'
-                }}
-              >
-                Clear Audio
-              </button>
+            {/* Clear Audio Buttons */}
+            {(quickcardIntroAudio || quickcardDetailAudio) && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                {quickcardIntroAudio && (
+                  <button
+                    onClick={() => {
+                      setQuickcardIntroAudio(null);
+                      setQuickcardIntroAudioSource(null);
+                      setQuickcardIntroAudioFileName(null);
+                    }}
+                    disabled={isLoading}
+                    style={{
+                      backgroundColor: '#9c27b0',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      flex: 1,
+                      opacity: isLoading ? 0.6 : 1
+                    }}
+                  >
+                    Clear Intro
+                  </button>
+                )}
+                {quickcardDetailAudio && (
+                  <button
+                    onClick={() => {
+                      setQuickcardDetailAudio(null);
+                      setQuickcardDetailAudioSource(null);
+                      setQuickcardDetailAudioFileName(null);
+                    }}
+                    disabled={isLoading}
+                    style={{
+                      backgroundColor: '#e91e63',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      flex: 1,
+                      opacity: isLoading ? 0.6 : 1
+                    }}
+                  >
+                    Clear Detail
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}
