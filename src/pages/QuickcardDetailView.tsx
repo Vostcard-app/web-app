@@ -486,32 +486,28 @@ Tap OK to continue.`;
             ref={tipButtonRef}
             onClick={handleTipButtonClick}
             style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0px 20px',
+              fontSize: '16px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+              pointerEvents: 'auto',
+              transition: 'transform 0.1s ease',
+              height: '40px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              backgroundColor: '#FFDD00',
-              color: '#333',
-              border: 'none',
-              borderRadius: '20px',
-              padding: '10px 20px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#FFE55C';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = '#FFDD00';
-              e.currentTarget.style.transform = 'scale(1)';
+              justifyContent: 'center',
+              textAlign: 'center',
+              lineHeight: '1',
+              gap: '8px'
             }}
           >
-            <FaCoffee size={18} />
-            ☕ Tip Guide
-            <FaChevronDown size={12} style={{ marginLeft: '4px' }} />
+            Leave a Tip
+            <FaChevronDown size={12} />
           </button>
         </div>
       )}
@@ -588,7 +584,7 @@ Tap OK to continue.`;
                 gap: '4px',
                 overflow: 'hidden'
               }}>
-                {quickcard.photoURLs.slice(1, 4).map((photoUrl, index) => (
+                {quickcard.photoURLs.slice(1, 4).map((photoUrl: string, index: number) => (
                   <div
                     key={index}
                     style={{
