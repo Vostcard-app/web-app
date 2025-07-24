@@ -56,7 +56,17 @@ const QuickcardDetailView: React.FC = () => {
 
   // ✅ Performance optimization - memoize photo URLs and audio detection
   const photoURLs = useMemo(() => quickcard?.photoURLs || [], [quickcard?.photoURLs]);
-  const hasAudio = useMemo(() => !!(quickcard?.audioURL || quickcard?.audioURLs?.length > 0 || quickcard?.audio || quickcard?._firebaseAudioURL), [quickcard?.audioURL, quickcard?.audioURLs, quickcard?.audio, quickcard?._firebaseAudioURL]);
+  const hasAudio = useMemo(() => {
+    const audioExists = !!(quickcard?.audioURL || quickcard?.audioURLs?.length > 0 || quickcard?.audio || quickcard?._firebaseAudioURL);
+    console.log('🔍 Audio detection:', {
+      audioExists,
+      audioURL: quickcard?.audioURL,
+      audioURLs: quickcard?.audioURLs,
+      audio: quickcard?.audio,
+      _firebaseAudioURL: quickcard?._firebaseAudioURL
+    });
+    return audioExists;
+  }, [quickcard?.audioURL, quickcard?.audioURLs, quickcard?.audio, quickcard?._firebaseAudioURL]);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -253,7 +263,12 @@ Tap OK to continue.`;
 
   // ✅ Enhanced audio playback function - MOVED FIRST
   const handlePlayPause = useCallback(async () => {
-    if (!hasAudio) return;
+    console.log('🎵 handlePlayPause called!', { hasAudio, isPlaying });
+    
+    if (!hasAudio) {
+      console.log('❌ No audio detected, returning early');
+      return;
+    }
 
     try {
       // Stop any existing audio
@@ -332,6 +347,18 @@ Tap OK to continue.`;
 
   // ✅ Main photo click handler - triggers audio if available, otherwise shows photo
   const handleMainPhotoClick = useCallback(() => {
+    console.log('🚨 CLICK DETECTED ON MAIN PHOTO! 🚨');
+    console.log('🖼️ Main photo clicked!', {
+      hasAudio,
+      quickcard: quickcard ? {
+        audioURL: quickcard.audioURL,
+        audioURLs: quickcard.audioURLs,
+        audio: quickcard.audio,
+        _firebaseAudioURL: quickcard._firebaseAudioURL
+      } : null,
+      isPlaying
+    });
+    
     if (hasAudio) {
       // If audio exists, play/pause audio instead of showing photo
       console.log('🎵 Main photo clicked - triggering audio playback');
@@ -343,7 +370,7 @@ Tap OK to continue.`;
         handlePhotoClick(photoURLs[0]);
       }
     }
-  }, [hasAudio, photoURLs, handlePhotoClick, handlePlayPause]);
+  }, [hasAudio, photoURLs, handlePhotoClick, handlePlayPause, quickcard, isPlaying]);
 
 
 
