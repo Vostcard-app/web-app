@@ -310,7 +310,7 @@ export default function QuickcardStep2() {
         <button
           style={{
             ...buttonStyle,
-            opacity: photoCount === 0 ? 0.6 : 1,
+            backgroundColor: photoCount === 0 ? '#cccccc' : '#002B4D',
             cursor: photoCount === 0 ? 'not-allowed' : 'pointer'
           }}
           onClick={handleSaveAndContinue}
