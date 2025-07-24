@@ -117,8 +117,8 @@ export default function QuickcardStep2() {
     color: 'white',
     border: 'none',
     borderRadius: 8,
-    padding: '3px',
-    fontSize: 18,
+    padding: '16px',
+    fontSize: 20,
     fontWeight: 600,
     cursor: 'pointer',
     width: '100%',
@@ -126,6 +126,7 @@ export default function QuickcardStep2() {
     marginTop: 24,
     boxShadow: '0 4px 12px rgba(0,43,77,0.12)',
     letterSpacing: '0.01em',
+    minHeight: '54px'
   };
 
   // Save and continue handler
