@@ -608,12 +608,13 @@ Tap OK to continue.`;
     <div
       style={{
         background: '#fff',
-        minHeight: '100vh', // ✅ Use viewport height instead of percentage
-        overflowY: 'auto',
+        height: '100vh', // ✅ Fixed height instead of minHeight
+        overflowY: 'scroll', // ✅ Force scroll instead of auto
         overflowX: 'hidden', // ✅ Prevent horizontal scrolling
         fontFamily: 'system-ui, sans-serif',
-        WebkitOverflowScrolling: 'touch',
+        WebkitOverflowScrolling: 'touch', // ✅ iOS momentum scrolling
         position: 'relative', // ✅ Ensure proper positioning
+        touchAction: 'pan-y', // ✅ Allow vertical panning only
       }}
     >
       {/* Header */}
