@@ -1342,7 +1342,14 @@ Tap OK to continue.`;
           photos={photoURLs}
           initialIndex={selectedPhotoIndex}
           isOpen={showMultiPhotoModal}
-          onClose={() => setShowMultiPhotoModal(false)}
+          onClose={() => {
+            setShowMultiPhotoModal(false);
+            // Stop audio when slideshow is closed
+            if (audioRef.current) {
+              audioRef.current.pause();
+              setIsPlaying(false);
+            }
+          }}
           title={quickcard?.title}
           autoPlay={true}
           autoPlayInterval={10000}
