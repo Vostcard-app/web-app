@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -43,6 +43,7 @@ const QuickcardDetailView: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showSharedOptions, setShowSharedOptions] = useState(false);
+  const [userRating, setUserRating] = useState(0);
 
   // ✅ Enhanced audio player state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -1140,6 +1141,47 @@ Tap OK to continue.`;
         >
           <FaSync size={24} />
         </button>
+      </div>
+
+      {/* Worth Seeing Rating Widget */}
+      <div style={{
+        textAlign: 'center',
+        padding: '20px',
+        borderBottom: '1px solid #eee',
+        maxWidth: '900px',
+        margin: '0 auto'
+      }}>
+        <div style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          color: '#333',
+          marginBottom: '15px'
+        }}>
+          Worth seeing?
+        </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              onClick={() => setUserRating(userRating === star ? 0 : star)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: star <= userRating ? '#ffd700' : '#ccc',
+                padding: '4px',
+                transition: 'color 0.2s ease'
+              }}
+            >
+              <FaStar size={28} />
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Modals */}
