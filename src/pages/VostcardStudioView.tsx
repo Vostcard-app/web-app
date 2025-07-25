@@ -998,28 +998,9 @@ const VostcardStudioView: React.FC = () => {
             maxHeight: 'none', // ✅ Remove height limit
             overflowY: 'visible' // ✅ Allow content to flow
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-              <h3 style={{ marginTop: 0, marginBottom: 0 }}>
-                📷 Quickcard Creator
-              </h3>
-              <button
-                onClick={() => setShowQuickcardLoader(true)}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '8px 12px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                📂 Load Card
-              </button>
-            </div>
+            <h3 style={{ marginTop: 0, marginBottom: '15px' }}>
+              📷 Quickcard Creator
+            </h3>
 
             {/* Title Input */}
             <div style={{ marginBottom: '15px' }}>
@@ -1148,13 +1129,35 @@ const VostcardStudioView: React.FC = () => {
               </div>
             )}
 
-            {/* Enhanced Button Grid - Photos, Location, and Audio */}
+            {/* Enhanced Button Grid - Load Card, Photos, Location, and Audio */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: '10px',
               marginBottom: '15px'
             }}>
+              <button
+                onClick={() => setShowQuickcardLoader(true)}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: isLoading ? '#ccc' : '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaEdit size={14} />
+                📂 Load Card
+              </button>
+
               <button 
                 onClick={() => document.getElementById('quickcard-camera-input')?.click()}
                 disabled={isLoading || quickcardPhotos.length >= 4}
@@ -1176,7 +1179,15 @@ const VostcardStudioView: React.FC = () => {
                 <FaCamera size={14} />
                 📸 Take Photo
               </button>
+            </div>
 
+            {/* From Library Button */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: '10px',
+              marginBottom: '15px'
+            }}>
               <button 
                 onClick={() => document.getElementById('quickcard-gallery-input')?.click()}
                 disabled={isLoading || quickcardPhotos.length >= 4}
