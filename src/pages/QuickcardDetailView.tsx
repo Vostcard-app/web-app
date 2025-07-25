@@ -39,12 +39,7 @@ const QuickcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
-  console.log('🔍 QuickcardDetailView received navigation state:', {
-    navigationState,
-    vostcardList: vostcardList.length,
-    currentIndex,
-    id
-  });
+  // Moved debug logging to useEffect to prevent re-render loops
   
   const [quickcard, setQuickcard] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -97,6 +92,17 @@ const QuickcardDetailView: React.FC = () => {
     });
     return audioExists;
   }, [quickcard?.audioURL, quickcard?.audioURLs, quickcard?.audio, quickcard?._firebaseAudioURL, quickcard?._firebaseAudioURLs, quickcard?.audioFiles]);
+
+  // Debug navigation state only when it changes
+  useEffect(() => {
+    console.log('🔍 QuickcardDetailView navigation state changed:', {
+      vostcardList: vostcardList.length,
+      currentIndex,
+      id,
+      canGoToPrevious: vostcardList.length > 0 && currentIndex > 0,
+      canGoToNext: vostcardList.length > 0 && currentIndex < vostcardList.length - 1
+    });
+  }, [vostcardList.length, currentIndex, id]);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -649,6 +655,7 @@ Tap OK to continue.`;
   // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
+    console.log('🔍 Touch START detected:', { y: touch.clientY, x: touch.clientX });
     setTouchStart({
       y: touch.clientY,
       x: touch.clientX,
@@ -677,6 +684,7 @@ Tap OK to continue.`;
     
     // If the vertical movement is significantly more than horizontal, it's a scroll
     if (yDiff > 20 && yDiff > xDiff * 2) {
+      console.log('🔍 Touch MOVE - Setting isScrolling=true:', { yDiff, xDiff });
       setIsScrolling(true);
     }
   };
@@ -695,13 +703,13 @@ Tap OK to continue.`;
     const timeDiff = touchEnd.time - touchStart.time;
     
     // Only trigger navigation if:
-    // 1. Vertical swipe is significant (>60px)
-    // 2. Horizontal movement is minimal (<30px) 
-    // 3. Gesture is quick (<400ms)
+    // 1. Vertical swipe is significant (>30px) - REDUCED from 60px
+    // 2. Horizontal movement is minimal (<50px) - INCREASED from 30px
+    // 3. Gesture is quick (<1000ms) - INCREASED from 400ms  
     // 4. User wasn't scrolling
-    const isValidSwipe = Math.abs(distance) > 60 && 
-                        horizontalDistance < 30 && 
-                        timeDiff < 400 && 
+    const isValidSwipe = Math.abs(distance) > 30 && 
+                        horizontalDistance < 50 && 
+                        timeDiff < 1000 && 
                         !isScrolling;
     
     console.log('🔍 QuickcardDetailView Swipe Debug:', {

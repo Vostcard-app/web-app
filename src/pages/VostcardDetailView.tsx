@@ -28,12 +28,7 @@ const VostcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
-  console.log('🔍 VostcardDetailView received navigation state:', {
-    navigationState,
-    vostcardList: vostcardList.length,
-    currentIndex,
-    id
-  });
+  // Moved debug logging to useEffect to prevent re-render loops
   
   const [vostcard, setVostcard] = useState<any>(null);
   const [availableVostcards, setAvailableVostcards] = useState<string[]>([]);
@@ -654,6 +649,7 @@ Tap OK to continue.`;
   // ✅ NEW: Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
+    console.log('🔍 VostcardDetailView Touch START detected:', { y: touch.clientY, x: touch.clientX });
     setTouchStart({
       y: touch.clientY,
       x: touch.clientX,
@@ -700,13 +696,13 @@ Tap OK to continue.`;
     const timeDiff = touchEnd.time - touchStart.time;
     
     // Only trigger navigation if:
-    // 1. Vertical swipe is significant (>60px)
-    // 2. Horizontal movement is minimal (<30px) 
-    // 3. Gesture is quick (<400ms)
+    // 1. Vertical swipe is significant (>30px) - REDUCED from 60px
+    // 2. Horizontal movement is minimal (<50px) - INCREASED from 30px
+    // 3. Gesture is quick (<1000ms) - INCREASED from 400ms
     // 4. User wasn't scrolling
-    const isValidSwipe = Math.abs(distance) > 60 && 
-                        horizontalDistance < 30 && 
-                        timeDiff < 400 && 
+    const isValidSwipe = Math.abs(distance) > 30 && 
+                        horizontalDistance < 50 && 
+                        timeDiff < 1000 && 
                         !isScrolling;
     
     if (isValidSwipe) {
