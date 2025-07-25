@@ -74,12 +74,22 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     }
   }, [isOpen, initialIndex]);
 
-  // Handle keyboard navigation (arrows disabled, only Escape and Space allowed)
+  // Handle keyboard navigation
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          pauseAutoPlay();
+          goToPrevious();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          pauseAutoPlay();
+          goToNext();
+          break;
         case 'Escape':
           e.preventDefault();
           onClose();
