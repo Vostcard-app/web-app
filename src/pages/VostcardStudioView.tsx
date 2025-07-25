@@ -384,19 +384,19 @@ const VostcardStudioView: React.FC = () => {
           setQuickcardLocation(location);
           sessionStorage.removeItem('quickcardLocation');
           
-          // Restore quickcard creator state
+          // Restore quickcard creator state ONLY if it exists and has actual data
           const creatorState = sessionStorage.getItem('quickcardCreatorState');
           if (creatorState) {
             const state = JSON.parse(creatorState);
             
-            // Restore basic state
-            setQuickcardTitle(state.title || '');
-            setQuickcardDescription(state.description || '');
-            setQuickcardCategories(state.categories || []);
-            setQuickcardIntroAudioSource(state.audioSource || null);
-            setQuickcardIntroAudioFileName(state.audioFileName || null);
+            // Only restore fields that have actual values (don't overwrite existing data with empty values)
+            if (state.title) setQuickcardTitle(state.title);
+            if (state.description) setQuickcardDescription(state.description);
+            if (state.categories && state.categories.length > 0) setQuickcardCategories(state.categories);
+            if (state.audioSource) setQuickcardIntroAudioSource(state.audioSource);
+            if (state.audioFileName) setQuickcardIntroAudioFileName(state.audioFileName);
             
-            // ✅ NEW: Restore photo from base64
+            // ✅ NEW: Restore photo from base64 (only if exists)
             if (state.photoBase64) {
               try {
                 // Convert base64 back to File object
@@ -427,9 +427,14 @@ const VostcardStudioView: React.FC = () => {
               }
             }
             
-            setShowQuickcardCreator(true);
+            // Clear the creator state after restoration
             sessionStorage.removeItem('quickcardCreatorState');
+            console.log('✅ Quickcard location set and state restored');
+          } else {
+            console.log('✅ Quickcard location set (no stored state to restore)');
           }
+          
+          setShowQuickcardCreator(true);
         } catch (error) {
           console.error('Error parsing quickcard location:', error);
         }

@@ -90,7 +90,15 @@ const MyVostcardListView = () => {
     const vostcard = savedVostcards.find((v: Vostcard) => v.id === vostcardId);
     if (vostcard) {
       setCurrentVostcard(vostcard);
-      navigate('/create-step2');
+      
+      // Route to appropriate editing interface based on content type
+      if (vostcard.isQuickcard) {
+        console.log('🔄 Editing quickcard:', vostcard.id);
+        navigate('/quickcard-step3');
+      } else {
+        console.log('🔄 Editing regular vostcard:', vostcard.id);
+        navigate('/create-step2');
+      }
     }
   };
 
