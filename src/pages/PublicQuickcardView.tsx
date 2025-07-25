@@ -1089,7 +1089,7 @@ const PublicQuickcardView: React.FC = () => {
               background: 'none',
               border: 'none',
               color: '#007aff',
-              fontSize: '28px',
+              fontSize: '22px',
               fontWeight: 'bold',
               textDecoration: 'underline',
               cursor: 'pointer',
