@@ -39,7 +39,16 @@ const QuickcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
-  // Moved debug logging to useEffect to prevent re-render loops
+  // Debug navigation state on load only
+  useEffect(() => {
+    console.log('🔍 QuickcardDetailView loaded:', {
+      vostcardList: vostcardList.length,
+      currentIndex,
+      id,
+      canGoToPrevious: vostcardList.length > 0 && currentIndex > 0,
+      canGoToNext: vostcardList.length > 0 && currentIndex < vostcardList.length - 1
+    });
+  }, [id]); // Only log when ID changes, not on every render
   
   const [quickcard, setQuickcard] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -93,16 +102,7 @@ const QuickcardDetailView: React.FC = () => {
     return audioExists;
   }, [quickcard?.audioURL, quickcard?.audioURLs, quickcard?.audio, quickcard?._firebaseAudioURL, quickcard?._firebaseAudioURLs, quickcard?.audioFiles]);
 
-  // Debug navigation state only when it changes
-  useEffect(() => {
-    console.log('🔍 QuickcardDetailView navigation state changed:', {
-      vostcardList: vostcardList.length,
-      currentIndex,
-      id,
-      canGoToPrevious: vostcardList.length > 0 && currentIndex > 0,
-      canGoToNext: vostcardList.length > 0 && currentIndex < vostcardList.length - 1
-    });
-  }, [vostcardList.length, currentIndex, id]);
+  // Removed redundant navigation state logging
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -698,14 +698,15 @@ Tap OK to continue.`;
     const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
     const timeDiff = touchEnd.time - touchStart.time;
     
-    // Only trigger navigation if:
-    // 1. Vertical swipe is significant (>30px)
-    // 2. Horizontal movement is reasonable (<150px) - INCREASED for laptop users
-    // 3. Gesture is reasonable time (<1500ms)
-    // 4. User wasn't scrolling
-    const isValidSwipe = Math.abs(distance) > 30 && 
-                        horizontalDistance < 150 && 
-                        timeDiff < 1500 && 
+    // Device-adaptive thresholds for better mobile experience
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const verticalThreshold = 30;
+    const horizontalThreshold = isMobile ? 80 : 150; // Mobile: tighter, Laptop: looser
+    const timeThreshold = isMobile ? 800 : 1500; // Mobile: faster, Laptop: slower
+    
+    const isValidSwipe = Math.abs(distance) > verticalThreshold && 
+                        horizontalDistance < horizontalThreshold && 
+                        timeDiff < timeThreshold && 
                         !isScrolling;
     
     console.log('🔍 QuickcardDetailView Swipe Debug:', {
@@ -717,7 +718,9 @@ Tap OK to continue.`;
       canGoToNext,
       canGoToPrevious,
       vostcardList: vostcardList.length,
-      currentIndex
+      currentIndex,
+      deviceType: isMobile ? 'mobile' : 'desktop',
+      thresholds: { vertical: verticalThreshold, horizontal: horizontalThreshold, time: timeThreshold }
     });
     
     if (isValidSwipe) {

@@ -28,7 +28,16 @@ const VostcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
-  // Moved debug logging to useEffect to prevent re-render loops
+  // Debug navigation state on load only
+  useEffect(() => {
+    console.log('🔍 VostcardDetailView loaded:', {
+      vostcardList: vostcardList.length,
+      currentIndex,
+      id,
+      canGoToPrevious: vostcardList.length > 0 && currentIndex > 0,
+      canGoToNext: vostcardList.length > 0 && currentIndex < vostcardList.length - 1
+    });
+  }, [id]); // Only log when ID changes
   
   const [vostcard, setVostcard] = useState<any>(null);
   const [availableVostcards, setAvailableVostcards] = useState<string[]>([]);
@@ -692,15 +701,30 @@ Tap OK to continue.`;
     const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
     const timeDiff = touchEnd.time - touchStart.time;
     
-    // Only trigger navigation if:
-    // 1. Vertical swipe is significant (>30px)
-    // 2. Horizontal movement is reasonable (<150px) - INCREASED for laptop users
-    // 3. Gesture is reasonable time (<1500ms)
-    // 4. User wasn't scrolling
-    const isValidSwipe = Math.abs(distance) > 30 && 
-                        horizontalDistance < 150 && 
-                        timeDiff < 1500 && 
+    // Device-adaptive thresholds for better mobile experience
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const verticalThreshold = 30;
+    const horizontalThreshold = isMobile ? 80 : 150; // Mobile: tighter, Laptop: looser
+    const timeThreshold = isMobile ? 800 : 1500; // Mobile: faster, Laptop: slower
+    
+    const isValidSwipe = Math.abs(distance) > verticalThreshold && 
+                        horizontalDistance < horizontalThreshold && 
+                        timeDiff < timeThreshold && 
                         !isScrolling;
+    
+    console.log('🔍 VostcardDetailView Swipe Debug:', {
+      distance,
+      horizontalDistance,
+      timeDiff,
+      isValidSwipe,
+      isScrolling,
+      canGoToNext,
+      canGoToPrevious,
+      vostcardList: vostcardList.length,
+      currentIndex,
+      deviceType: isMobile ? 'mobile' : 'desktop',
+      thresholds: { vertical: verticalThreshold, horizontal: horizontalThreshold, time: timeThreshold }
+    });
     
     if (isValidSwipe) {
       if (distance > 0) {
