@@ -376,6 +376,150 @@ Tap OK to continue.`;
     }
   }, [hasAudio, photoURLs, handlePlayPause]);
 
+  // ✅ NEW: Enhanced audio playback functions for Intro and Detail
+  const handleIntroAudioPlayback = useCallback(async () => {
+    console.log('🎵 Playing intro audio');
+    
+    if (!hasAudio) {
+      console.log('❌ No audio detected');
+      return;
+    }
+
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      if (isPlaying) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create new audio element
+      const audio = new Audio();
+      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
+
+      // Get intro audio source - prioritize intro-specific fields
+      const introAudioSource = quickcard?.introAudioURL || 
+                              quickcard?.audioURL || 
+                              quickcard?.audioURLs?.[0] || 
+                              quickcard?.audio || 
+                              quickcard?._firebaseAudioURL;
+
+      if (!introAudioSource) {
+        console.error('No intro audio source available');
+        return;
+      }
+
+      // Set audio source
+      if (introAudioSource instanceof Blob) {
+        audio.src = URL.createObjectURL(introAudioSource);
+      } else if (typeof introAudioSource === 'string') {
+        audio.src = introAudioSource;
+      } else {
+        console.error('Invalid audio source type:', typeof introAudioSource);
+        return;
+      }
+
+      // Audio event listeners
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        console.log('🎵 Intro audio playback ended');
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('🎵 Intro audio playback error:', e);
+        setIsPlaying(false);
+      });
+
+      // Play audio
+      await audio.play();
+      setIsPlaying(true);
+      
+    } catch (error) {
+      console.error('Error playing intro audio:', error);
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
+      }
+    }
+  }, [hasAudio, isPlaying, quickcard]);
+
+  const handleDetailAudioPlayback = useCallback(async () => {
+    console.log('🎵 Playing detail audio');
+    
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      if (isPlaying) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create new audio element
+      const audio = new Audio();
+      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
+
+      // Get detail audio source
+      const detailAudioSource = 
+        // Check for explicit detail audio
+        quickcard?.detailAudioURL ||
+        // Check for labeled audio
+        (quickcard?.audioLabels && quickcard.audioFiles && 
+         quickcard.audioLabels.includes('detail')) ? 
+         quickcard.audioFiles[quickcard.audioLabels.indexOf('detail')] :
+        // Check for second audio in arrays
+        quickcard?.audioURLs?.[1] || 
+        quickcard?._firebaseAudioURLs?.[1] || 
+        quickcard?.audioFiles?.[1] ||
+        // Fallback to first audio
+        quickcard?.audioURL ||
+        quickcard?.audioURLs?.[0] ||
+        quickcard?.audio ||
+        quickcard?._firebaseAudioURL;
+
+      if (!detailAudioSource) {
+        console.error('No detail audio source available');
+        return;
+      }
+
+      // Set audio source
+      if (detailAudioSource instanceof Blob) {
+        audio.src = URL.createObjectURL(detailAudioSource);
+      } else if (typeof detailAudioSource === 'string') {
+        audio.src = detailAudioSource;
+      } else {
+        console.error('Invalid audio source type:', typeof detailAudioSource);
+        return;
+      }
+
+      // Audio event listeners
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        console.log('🎵 Detail audio playback ended');
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('🎵 Detail audio playback error:', e);
+        setIsPlaying(false);
+      });
+
+      // Play audio
+      await audio.play();
+      setIsPlaying(true);
+      
+    } catch (error) {
+      console.error('Error playing detail audio:', error);
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
+      }
+    }
+  }, [isPlaying, quickcard]);
 
 
   const handleRefresh = () => {
@@ -773,9 +917,13 @@ Tap OK to continue.`;
           {/* Intro Button - Always show if there's any audio */}
           <button
             onClick={() => {
-              console.log('🎵 Intro button clicked - showing main photo');
-              if (photoURLs[0]) {
-                setSelectedPhoto(photoURLs[0]);
+              console.log('🎵 Intro button clicked - playing intro audio and showing slideshow');
+              // Play intro audio
+              handleIntroAudioPlayback();
+              // Show photo slideshow starting with first photo WITH AUTO-PLAY
+              if (photoURLs && photoURLs.length > 0) {
+                setSelectedPhotoIndex(0);
+                setShowMultiPhotoModal(true);
               }
             }}
             style={{
@@ -829,9 +977,13 @@ Tap OK to continue.`;
           })() && (
             <button
               onClick={() => {
-                console.log('🎵 Detail button clicked - showing main photo');
-                if (photoURLs[0]) {
-                  setSelectedPhoto(photoURLs[0]);
+                console.log('🎵 Detail button clicked - playing detail audio and showing slideshow');
+                // Play detail audio
+                handleDetailAudioPlayback();
+                // Show photo slideshow starting with first photo WITH AUTO-PLAY
+                if (photoURLs && photoURLs.length > 0) {
+                  setSelectedPhotoIndex(0);
+                  setShowMultiPhotoModal(true);
                 }
               }}
               style={{
@@ -1172,14 +1324,19 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* Multi Photo Modal */}
-      <MultiPhotoModal
-        photos={photoURLs || []}
-        initialIndex={selectedPhotoIndex}
-        isOpen={showMultiPhotoModal}
-        onClose={() => setShowMultiPhotoModal(false)}
-        title={quickcard.title}
-      />
+      {/* MultiPhotoModal with AUTO-PLAY - 10 SECOND INTERVALS */}
+      {showMultiPhotoModal && (
+        <MultiPhotoModal
+          photos={photoURLs}
+          initialIndex={selectedPhotoIndex}
+          isOpen={showMultiPhotoModal}
+          onClose={() => setShowMultiPhotoModal(false)}
+          title={quickcard?.title}
+          autoPlay={true}
+          autoPlayInterval={10000}
+          audioDuration={quickcard?.audioDuration}
+        />
+      )}
 
       {/* Share Options Modal */}
       <SharedOptionsModal

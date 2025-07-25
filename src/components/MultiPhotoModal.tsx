@@ -7,6 +7,9 @@ interface MultiPhotoModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  autoPlay?: boolean;
+  autoPlayInterval?: number;
+  audioDuration?: number;
 }
 
 const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
@@ -14,20 +17,57 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   initialIndex = 0,
   isOpen,
   onClose,
-  title
+  title,
+  autoPlay = false,
+  autoPlayInterval = 3000,
+  audioDuration
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showControls, setShowControls] = useState(true);
   const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [autoPlayTimer, setAutoPlayTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Calculate optimal interval based on audio duration if provided
+  const getAutoPlayInterval = () => {
+    if (audioDuration && photos.length > 1) {
+      // Divide audio duration by number of photos for even distribution
+      return Math.max((audioDuration * 1000) / photos.length, 2000); // Minimum 2 seconds per photo
+    }
+    return autoPlayInterval;
+  };
+
+  // Auto-advance functionality
+  useEffect(() => {
+    if (!isOpen || !autoPlay || photos.length <= 1 || isPaused) {
+      if (autoPlayTimer) {
+        clearTimeout(autoPlayTimer);
+        setAutoPlayTimer(null);
+      }
+      return;
+    }
+
+    const interval = getAutoPlayInterval();
+    const timer = setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % photos.length);
+    }, interval);
+
+    setAutoPlayTimer(timer);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isOpen, autoPlay, currentIndex, photos.length, isPaused, audioDuration, autoPlayInterval]);
 
   // Reset index when modal opens or photos change
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
       setShowControls(true);
+      setIsPaused(false);
       // Auto-hide controls after 3 seconds
       const timeout = setTimeout(() => setShowControls(false), 3000);
       setControlsTimeout(timeout);
@@ -42,15 +82,21 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
       switch (e.key) {
         case 'ArrowLeft':
           e.preventDefault();
+          pauseAutoPlay();
           goToPrevious();
           break;
         case 'ArrowRight':
           e.preventDefault();
+          pauseAutoPlay();
           goToNext();
           break;
         case 'Escape':
           e.preventDefault();
           onClose();
+          break;
+        case ' ':
+          e.preventDefault();
+          toggleAutoPlay();
           break;
       }
     };
@@ -70,6 +116,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     return () => {
       document.body.style.overflow = 'unset';
       if (controlsTimeout) clearTimeout(controlsTimeout);
+      if (autoPlayTimer) clearTimeout(autoPlayTimer);
     };
   }, [isOpen]);
 
@@ -82,6 +129,17 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    showControlsTemporarily();
+  };
+
+  const pauseAutoPlay = () => {
+    setIsPaused(true);
+    // Resume after 5 seconds of no interaction
+    setTimeout(() => setIsPaused(false), 5000);
+  };
+
+  const toggleAutoPlay = () => {
+    setIsPaused(!isPaused);
     showControlsTemporarily();
   };
 
@@ -106,6 +164,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
+    pauseAutoPlay(); // Pause auto-advance when user starts swiping
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -134,79 +193,134 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'black',
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'rgba(0, 0, 0, 0.95)',
+        zIndex: 2000,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
-        width: '100vw',
-        height: '100vh'
+        justifyContent: 'center'
       }}
     >
-      {/* Close Button - Only shows when controls are visible */}
-      <div
+      {/* Close Button */}
+      <button
+        onClick={onClose}
         style={{
           position: 'absolute',
           top: '20px',
           right: '20px',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          border: 'none',
+          borderRadius: '50%',
+          width: '44px',
+          height: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 2001,
           opacity: showControls ? 1 : 0,
           transition: 'opacity 0.3s ease',
-          zIndex: 2001,
           pointerEvents: showControls ? 'auto' : 'none'
         }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
       >
-        <button
-          onClick={onClose}
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '44px',
-            height: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            fontSize: '18px',
-            backdropFilter: 'blur(10px)'
-          }}
-        >
-          <FaTimes />
-        </button>
-      </div>
+        <FaTimes color="white" size={20} />
+      </button>
 
-      {/* Photo Counter & Title - Only shows when controls are visible */}
-      {(photos.length > 1 || title) && (
+      {/* Auto-play indicator */}
+      {autoPlay && (
         <div
           style={{
             position: 'absolute',
             top: '20px',
             left: '20px',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             color: 'white',
-            zIndex: 2001,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
             padding: '8px 12px',
             borderRadius: '20px',
-            fontSize: '14px',
+            fontSize: '12px',
+            zIndex: 2001,
             opacity: showControls ? 1 : 0,
             transition: 'opacity 0.3s ease',
             pointerEvents: showControls ? 'auto' : 'none',
-            backdropFilter: 'blur(10px)'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
           }}
         >
-          {title && <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{title}</div>}
-          {photos.length > 1 && <div>{currentIndex + 1} of {photos.length}</div>}
+          {isPaused ? '⏸️' : '▶️'} Slideshow {isPaused ? 'Paused' : 'Playing'}
         </div>
       )}
 
-      {/* Previous Button - HIDDEN per user request - navigation via swipe and dots only */}
+      {/* Left Arrow */}
+      {photos.length > 1 && (
+        <button
+          onClick={() => {
+            pauseAutoPlay();
+            goToPrevious();
+          }}
+          style={{
+            position: 'absolute',
+            left: '20px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 2001,
+            opacity: showControls ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: showControls ? 'auto' : 'none'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
+        >
+          <FaChevronLeft color="white" size={20} />
+        </button>
+      )}
 
-      {/* Next Button - HIDDEN per user request - navigation via swipe and dots only */}
+      {/* Right Arrow */}
+      {photos.length > 1 && (
+        <button
+          onClick={() => {
+            pauseAutoPlay();
+            goToNext();
+          }}
+          style={{
+            position: 'absolute',
+            right: '20px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 2001,
+            opacity: showControls ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: showControls ? 'auto' : 'none'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
+        >
+          <FaChevronRight color="white" size={20} />
+        </button>
+      )}
 
-      {/* Main Image - ENHANCED HIGH QUALITY FULL SCREEN */}
+      {/* Main Image */}
       <div
         style={{
           position: 'absolute',
@@ -233,20 +347,16 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             height: '100vh',
             objectFit: 'cover',
             userSelect: 'none',
-            // Enhanced quality settings
             imageRendering: '-webkit-optimize-contrast',
             WebkitBackfaceVisibility: 'hidden',
             backfaceVisibility: 'hidden',
-            transform: 'translateZ(0)', // Hardware acceleration
+            transform: 'translateZ(0)',
           } as React.CSSProperties}
           draggable={false}
           loading="eager"
-          // Ensure highest quality loading
           fetchPriority="high"
-          // Add error handling for better loading
           onError={(e) => {
             console.error('Failed to load image:', photos[currentIndex]);
-            // Try reloading the image
             (e.target as HTMLImageElement).src = photos[currentIndex] + '?retry=' + Date.now();
           }}
           onLoad={(e) => {
@@ -261,7 +371,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         />
       </div>
 
-      {/* Pagination Dots - Only shows when controls are visible */}
+      {/* Pagination Dots */}
       {photos.length > 1 && (
         <div
           style={{
@@ -281,6 +391,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             <button
               key={index}
               onClick={() => {
+                pauseAutoPlay();
                 setCurrentIndex(index);
                 showControlsTemporarily();
               }}
@@ -309,27 +420,41 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         </div>
       )}
 
-      {/* Swipe Instructions - Only shows initially */}
-      {photos.length > 1 && showControls && (
+      {/* Progress Bar for Auto-play */}
+      {autoPlay && !isPaused && photos.length > 1 && (
         <div
           style={{
             position: 'absolute',
-            bottom: '60px',
+            bottom: '10px',
             left: '50%',
             transform: 'translateX(-50%)',
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '12px',
-            textAlign: 'center',
+            width: '200px',
+            height: '2px',
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+            borderRadius: '1px',
             zIndex: 2001,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            padding: '4px 8px',
-            borderRadius: '12px',
-            backdropFilter: 'blur(10px)'
+            opacity: showControls ? 0.7 : 0.3,
+            transition: 'opacity 0.3s ease'
           }}
         >
-          Swipe or tap dots to navigate • Tap photo to hide controls
+          <div
+            style={{
+              height: '100%',
+              backgroundColor: 'white',
+              borderRadius: '1px',
+              animation: `slideshow-progress ${getAutoPlayInterval()}ms linear infinite`,
+              transformOrigin: 'left'
+            }}
+          />
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes slideshow-progress {
+          0% { transform: scaleX(0); }
+          100% { transform: scaleX(1); }
+        }
+      `}</style>
     </div>
   );
 };
