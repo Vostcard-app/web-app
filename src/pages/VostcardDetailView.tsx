@@ -54,9 +54,10 @@ const VostcardDetailView: React.FC = () => {
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
   
   // ✅ NEW: Swipe gesture state
-  const [touchStart, setTouchStart] = useState<{ y: number; time: number } | null>(null);
-  const [touchEnd, setTouchEnd] = useState<{ y: number; time: number } | null>(null);
-  
+  const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ y: number; x: number; time: number } | null>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const tipButtonRef = useRef<HTMLButtonElement>(null);
@@ -557,28 +558,60 @@ Tap OK to continue.`;
     const touch = e.touches[0];
     setTouchStart({
       y: touch.clientY,
+      x: touch.clientX,
       time: Date.now()
     });
     setTouchEnd(null);
+    setIsScrolling(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
     const touch = e.touches[0];
+    const currentY = touch.clientY;
+    const currentX = touch.clientX;
+    
     setTouchEnd({
-      y: touch.clientY,
+      y: currentY,
+      x: currentX,
       time: Date.now()
     });
+
+    // Detect if user is scrolling vertically (rather than swiping for navigation)
+    const yDiff = Math.abs(currentY - touchStart.y);
+    const xDiff = Math.abs(currentX - touchStart.x);
+    
+    // If the vertical movement is significantly more than horizontal, it's a scroll
+    if (yDiff > 20 && yDiff > xDiff * 2) {
+      setIsScrolling(true);
+    }
   };
 
   const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
+    if (!touchStart || !touchEnd || isScrolling) {
+      // Reset and allow normal scrolling
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsScrolling(false);
+      return;
+    }
 
     const distance = touchStart.y - touchEnd.y;
+    const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
     const timeDiff = touchEnd.time - touchStart.time;
-    const isSwipe = Math.abs(distance) > 50; // Minimum swipe distance
-    const isQuickSwipe = timeDiff < 300; // Maximum swipe time for quick gesture
     
-    if (isSwipe && isQuickSwipe) {
+    // Only trigger navigation if:
+    // 1. Vertical swipe is significant (>60px)
+    // 2. Horizontal movement is minimal (<30px) 
+    // 3. Gesture is quick (<400ms)
+    // 4. User wasn't scrolling
+    const isValidSwipe = Math.abs(distance) > 60 && 
+                        horizontalDistance < 30 && 
+                        timeDiff < 400 && 
+                        !isScrolling;
+    
+    if (isValidSwipe) {
       if (distance > 0) {
         // Swipe up - go to next vostcard
         if (canGoToNext) {
@@ -595,6 +628,7 @@ Tap OK to continue.`;
     // Reset touch state
     setTouchStart(null);
     setTouchEnd(null);
+    setIsScrolling(false);
   };
 
   if (loading) {
@@ -663,13 +697,16 @@ Tap OK to continue.`;
       style={{
         background: '#fff',
         minHeight: '100vh',
-        overflowY: 'auto',
+        overflowY: 'auto', // ✅ Ensure scrollability
         overflowX: 'hidden',
         fontFamily: 'system-ui, sans-serif',
-        WebkitOverflowScrolling: 'touch',
+        WebkitOverflowScrolling: 'touch', // ✅ Smooth scrolling on iOS
         position: 'relative',
+        // ✅ Prevent bounce scrolling but allow normal scroll
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y' // ✅ Allow vertical panning (scrolling)
       }}
-      // ✅ NEW: Add swipe gesture event handlers
+      // ✅ Swipe gesture event handlers
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -729,9 +766,7 @@ Tap OK to continue.`;
         </div>
       </div>
 
-      {/* ✅ REMOVED: Navigation arrows - replaced with swipe gestures */}
-      
-      {/* ✅ NEW: Swipe indicator (optional visual hint) */}
+      {/* ✅ Enhanced swipe indicator with navigation info */}
       {(canGoToPrevious || canGoToNext) && (
         <div style={{
           position: 'fixed',
@@ -743,7 +778,7 @@ Tap OK to continue.`;
           alignItems: 'center',
           gap: '4px',
           zIndex: 10,
-          opacity: 0.3,
+          opacity: 0.4,
           pointerEvents: 'none'
         }}>
           {canGoToPrevious && (
@@ -771,440 +806,399 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* User Info */}
-      <div style={{ 
-        padding: '15px 20px 5px 20px', // 10px extra padding on top
-        display: 'flex', 
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        marginTop: '78px', // Account for fixed header
+      {/* ✅ Scrollable content area */}
+      <div style={{
+        paddingTop: '80px', // Account for fixed header
+        paddingBottom: '40px', // Extra space at bottom
+        minHeight: 'calc(100vh - 80px)' // Ensure full height minus header
       }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div 
-            style={{ 
-              width: 50, 
-              height: 50, 
-              borderRadius: '50%', 
-              overflow: 'hidden', 
-              marginRight: 16,
-              background: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              if (vostcard?.userID) {
-                navigate(`/user-profile/${vostcard.userID}`);
-              }
-            }}
-          >
-            {userProfile?.avatarURL ? (
-              <img 
-                src={userProfile.avatarURL} 
-                alt="User Avatar" 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-              />
+        {/* User Info */}
+        <div style={{ 
+          padding: '15px 20px 5px 20px', // 10px extra padding on top
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          marginTop: '78px', // Account for fixed header
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div 
+              style={{ 
+                width: 50, 
+                height: 50, 
+                borderRadius: '50%', 
+                overflow: 'hidden', 
+                marginRight: 16,
+                background: '#f0f0f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (vostcard?.userID) {
+                  navigate(`/user-profile/${vostcard.userID}`);
+                }
+              }}
+            >
+              {userProfile?.avatarURL ? (
+                <img 
+                  src={userProfile.avatarURL} 
+                  alt="User Avatar" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+                />
+              ) : (
+                <FaUserCircle size={50} color="#ccc" />
+              )}
+            </div>
+            <div 
+              style={{ 
+                fontSize: '20px', 
+                fontWeight: 'bold', 
+                color: '#333',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (vostcard?.userID) {
+                  navigate(`/user-profile/${vostcard.userID}`);
+                }
+              }}
+            >
+              {vostcard.username || 'Anonymous'}
+            </div>
+          </div>
+        </div>
+
+        {/* ☕ Tip Button for Guides - Under Avatar */}
+        {userProfile?.userRole === 'guide' && 
+         user?.uid !== vostcard.userID && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            marginTop: '10px',
+            marginBottom: '10px'
+          }}>
+            <button
+              ref={tipButtonRef}
+              onClick={handleTipButtonClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0px 20px',
+                fontSize: '16px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '8px'
+              }}
+            >
+              Leave a Tip
+              <FaChevronDown size={12} />
+            </button>
+          </div>
+        )}
+
+        {/* Title */}
+        <div style={{ padding: '0 20px' }}>
+          <h1 style={{ 
+            margin: 0, 
+            fontSize: '32px', 
+            fontWeight: 'bold', 
+            color: '#333',
+            textAlign: 'center'
+          }}>
+            {vostcard.title || 'Untitled Vostcard'}
+          </h1>
+        </div>
+
+        {/* Media Section */}
+        {vostcard.isQuickcard ? (
+          // ✅ Enhanced Single Photo Quickcard layout with Photo Counter
+          <div style={{ 
+            padding: '20px', 
+            display: 'flex', 
+            justifyContent: 'center',
+            minHeight: '350px', // ✅ Increased minimum height for better resolution
+            maxHeight: '65vh' // ✅ Increased max height for larger displays
+          }}>
+            {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
+              <div style={{ 
+                width: '100%',
+                maxWidth: '800px', // ✅ Increased max width for better resolution
+                display: 'flex',
+                overflow: 'hidden'
+              }}>
+                {/* ✅ Single Main Photo - Full Width */}
+                <div style={{ 
+                  flex: 1, // ✅ Full width for single photo
+                  backgroundColor: 'transparent',
+                  borderRadius: '16px', // ✅ Increased border radius
+                  overflow: 'hidden',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  minHeight: '350px', // ✅ Ensure minimum height for quality
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)' // ✅ Enhanced shadow
+                }}>
+                  <div style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    minHeight: '350px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '16px',
+                    overflow: 'hidden'
+                  }}>
+                    <img
+                      src={vostcard.photoURLs[0]}
+                      alt="Quickcard"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
+                        objectPosition: 'center',
+                        cursor: 'pointer',
+                        // ✅ High-quality image rendering hints
+                        WebkitBackfaceVisibility: 'hidden',
+                        backfaceVisibility: 'hidden',
+                        transform: 'translateZ(0)', // ✅ Hardware acceleration
+                        // ✅ Additional quality settings
+                        filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
+                      } as React.CSSProperties}
+                      onClick={() => {
+                        // ✅ Enhanced click functionality
+                        console.log('🖼️ Main photo clicked in VostcardDetailView!');
+                        const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
+                        
+                        if (hasAudio) {
+                          console.log('🎵 Audio detected, triggering playback');
+                          handleAudioPlayback();
+                        } else if (vostcard.photoURLs.length > 1) {
+                          console.log('📸 Multiple photos, opening multi-photo modal');
+                          setSelectedPhotoIndex(0);
+                          setShowMultiPhotoModal(true);
+                        } else {
+                          console.log('📸 Single photo, showing full screen');
+                          handlePhotoClick(vostcard.photoURLs[0]);
+                        }
+                      }}
+                      loading="eager" // ✅ Prioritize loading
+                      fetchPriority="high" // ✅ Ensure high priority loading
+                    />
+                    
+                    {/* ✅ Photo Counter - Always show if multiple photos */}
+                    <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+                      {vostcard.photoURLs.length > 1 && (
+                        <div style={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
+                          color: 'white',
+                          padding: '6px 12px', // ✅ Increased padding
+                          borderRadius: '16px', // ✅ Increased border radius
+                          fontSize: '14px', // ✅ Increased font size
+                          fontWeight: 'bold',
+                          backdropFilter: 'blur(8px)', // ✅ Added blur effect
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // ✅ Added shadow
+                        }}>
+                          1/{vostcard.photoURLs.length}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <FaUserCircle size={50} color="#ccc" />
+              <div style={{ 
+                width: '100%',
+                backgroundColor: '#f0f0f0',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#999',
+                fontSize: '18px'
+              }}>
+                No photos available
+              </div>
             )}
           </div>
-          <div 
-            style={{ 
-              fontSize: '20px', 
-              fontWeight: 'bold', 
-              color: '#333',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              if (vostcard?.userID) {
-                navigate(`/user-profile/${vostcard.userID}`);
-              }
-            }}
-          >
-            {vostcard.username || 'Anonymous'}
-          </div>
-        </div>
-      </div>
-
-      {/* ☕ Tip Button for Guides - Under Avatar */}
-      {userProfile?.userRole === 'guide' && 
-       user?.uid !== vostcard.userID && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          marginTop: '10px',
-          marginBottom: '10px'
-        }}>
-          <button
-            ref={tipButtonRef}
-            onClick={handleTipButtonClick}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '0px 20px',
-              fontSize: '16px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-              pointerEvents: 'auto',
-              transition: 'transform 0.1s ease',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              lineHeight: '1',
-              gap: '8px'
-            }}
-          >
-            Leave a Tip
-            <FaChevronDown size={12} />
-          </button>
-        </div>
-      )}
-
-      {/* Title */}
-      <div style={{ padding: '0 20px' }}>
-        <h1 style={{ 
-          margin: 0, 
-          fontSize: '32px', 
-          fontWeight: 'bold', 
-          color: '#333',
-          textAlign: 'center'
-        }}>
-          {vostcard.title || 'Untitled Vostcard'}
-        </h1>
-      </div>
-
-      {/* Media Section */}
-      {vostcard.isQuickcard ? (
-        // ✅ Enhanced Single Photo Quickcard layout with Photo Counter
-        <div style={{ 
-          padding: '20px', 
-          display: 'flex', 
-          justifyContent: 'center',
-          minHeight: '350px', // ✅ Increased minimum height for better resolution
-          maxHeight: '65vh' // ✅ Increased max height for larger displays
-        }}>
-          {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
+        ) : (
+          // Regular vostcard layout - video thumbnail on left, 2 photos stacked on right
+          <div style={{ 
+            padding: '20px', 
+            display: 'flex', 
+            gap: '10px',
+            height: '300px'
+          }}>
+            {/* Video Thumbnail Section */}
             <div style={{ 
-              width: '100%',
-              maxWidth: '800px', // ✅ Increased max width for better resolution
-              display: 'flex',
-              overflow: 'hidden'
+              flex: 1,
+              backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              position: 'relative'
             }}>
-              {/* ✅ Single Main Photo - Full Width */}
-              <div style={{ 
-                flex: 1, // ✅ Full width for single photo
-                backgroundColor: 'transparent',
-                borderRadius: '16px', // ✅ Increased border radius
-                overflow: 'hidden',
-                position: 'relative',
-                cursor: 'pointer',
-                minHeight: '350px', // ✅ Ensure minimum height for quality
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)' // ✅ Enhanced shadow
-              }}>
-                <div style={{
-                  position: 'relative',
+              {vostcard.videoURL ? (
+                <>
+                <video
+                  ref={videoRef}
+                  src={vostcard.videoURL}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    cursor: 'pointer'
+                  }}
+                  playsInline
+                    muted
+                  onClick={() => setShowVideoModal(true)}
+                />
+                  {/* Play Button Overlay */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '60px',
+                      height: '60px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      zIndex: 2
+                    }}
+                    onClick={() => setShowVideoModal(true)}
+                  >
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '20px solid white',
+                        borderTop: '12px solid transparent',
+                        borderBottom: '12px solid transparent',
+                        marginLeft: '4px'
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div style={{ 
                   width: '100%',
                   height: '100%',
-                  minHeight: '350px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '16px',
+                  backgroundColor: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#999'
+                }}>
+                  No video
+                </div>
+              )}
+            </div>
+
+            {/* Photos Section - 2 photos stacked vertically */}
+            <div style={{ 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px'
+            }}>
+              {/* First Photo */}
+              {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
+                <div style={{ 
+                  flex: 1,
+                  borderRadius: '8px', 
                   overflow: 'hidden'
                 }}>
                   <img
                     src={vostcard.photoURLs[0]}
-                    alt="Quickcard"
+                    alt="Photo 1"
                     style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
-                      objectPosition: 'center',
-                      cursor: 'pointer',
-                      // ✅ High-quality image rendering hints
-                      WebkitBackfaceVisibility: 'hidden',
-                      backfaceVisibility: 'hidden',
-                      transform: 'translateZ(0)', // ✅ Hardware acceleration
-                      // ✅ Additional quality settings
-                      filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
-                    } as React.CSSProperties}
-                    onClick={() => {
-                      // ✅ Enhanced click functionality
-                      console.log('🖼️ Main photo clicked in VostcardDetailView!');
-                      const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
-                      
-                      if (hasAudio) {
-                        console.log('🎵 Audio detected, triggering playback');
-                        handleAudioPlayback();
-                      } else if (vostcard.photoURLs.length > 1) {
-                        console.log('📸 Multiple photos, opening multi-photo modal');
-                        setSelectedPhotoIndex(0);
-                        setShowMultiPhotoModal(true);
-                      } else {
-                        console.log('📸 Single photo, showing full screen');
-                        handlePhotoClick(vostcard.photoURLs[0]);
-                      }
+                      objectFit: 'cover',
+                      cursor: 'pointer'
                     }}
-                    loading="eager" // ✅ Prioritize loading
-                    fetchPriority="high" // ✅ Ensure high priority loading
+                    onClick={() => handlePhotoClick(vostcard.photoURLs[0])}
                   />
-                  
-                  {/* ✅ Photo Counter - Always show if multiple photos */}
-                  <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-                    {vostcard.photoURLs.length > 1 && (
-                      <div style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
-                        color: 'white',
-                        padding: '6px 12px', // ✅ Increased padding
-                        borderRadius: '16px', // ✅ Increased border radius
-                        fontSize: '14px', // ✅ Increased font size
-                        fontWeight: 'bold',
-                        backdropFilter: 'blur(8px)', // ✅ Added blur effect
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // ✅ Added shadow
-                      }}>
-                        1/{vostcard.photoURLs.length}
-                      </div>
-                    )}
-                  </div>
                 </div>
-              </div>
-            </div>
-          ) : (
-            <div style={{ 
-              width: '100%',
-              backgroundColor: '#f0f0f0',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#999',
-              fontSize: '18px'
-            }}>
-              No photos available
-            </div>
-          )}
-        </div>
-      ) : (
-        // Regular vostcard layout - video thumbnail on left, 2 photos stacked on right
-        <div style={{ 
-          padding: '20px', 
-          display: 'flex', 
-          gap: '10px',
-          height: '300px'
-        }}>
-          {/* Video Thumbnail Section */}
-          <div style={{ 
-            flex: 1,
-            backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            position: 'relative'
-          }}>
-            {vostcard.videoURL ? (
-              <>
-              <video
-                ref={videoRef}
-                src={vostcard.videoURL}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  cursor: 'pointer'
-                }}
-                playsInline
-                  muted
-                onClick={() => setShowVideoModal(true)}
-              />
-                {/* Play Button Overlay */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: '60px',
-                    height: '60px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    zIndex: 2
-                  }}
-                  onClick={() => setShowVideoModal(true)}
-                >
-                  <div
+              ) : (
+                <div style={{ 
+                  flex: 1,
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#999',
+                  fontSize: '14px'
+                }}>
+                  No photo
+                </div>
+              )}
+              
+              {/* Second Photo */}
+              {vostcard.photoURLs && vostcard.photoURLs.length > 1 ? (
+                <div style={{ 
+                  flex: 1,
+                  borderRadius: '8px', 
+                  overflow: 'hidden'
+                }}>
+                  <img
+                    src={vostcard.photoURLs[1]}
+                    alt="Photo 2"
                     style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '20px solid white',
-                      borderTop: '12px solid transparent',
-                      borderBottom: '12px solid transparent',
-                      marginLeft: '4px'
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      cursor: 'pointer'
                     }}
+                    onClick={() => handlePhotoClick(vostcard.photoURLs[1])}
                   />
                 </div>
-              </>
-            ) : (
-              <div style={{ 
-                width: '100%',
-                height: '100%',
-                backgroundColor: '#f0f0f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#999'
-              }}>
-                No video
-              </div>
-            )}
+              ) : (
+                <div style={{ 
+                  flex: 1,
+                  backgroundColor: '#f0f0f0',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#999',
+                  fontSize: '14px'
+                }}>
+                  No photo
+                </div>
+              )}
+            </div>
           </div>
+        )}
 
-          {/* Photos Section - 2 photos stacked vertically */}
-          <div style={{ 
-            flex: 1,
+        {/* Intro/Detail/Map Buttons - Show if there are recordings OR location data */}
+        {vostcard.isQuickcard && (!!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) || !!(vostcard?.geo?.latitude && vostcard?.geo?.longitude)) && (
+          <div style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: '5px'
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '20px',
+            gap: '16px'
           }}>
-            {/* First Photo */}
-            {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
-              <div style={{ 
-                flex: 1,
-                borderRadius: '8px', 
-                overflow: 'hidden'
-              }}>
-                <img
-                  src={vostcard.photoURLs[0]}
-                  alt="Photo 1"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => handlePhotoClick(vostcard.photoURLs[0])}
-                />
-              </div>
-            ) : (
-              <div style={{ 
-                flex: 1,
-                backgroundColor: '#f0f0f0',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#999',
-                fontSize: '14px'
-              }}>
-                No photo
-              </div>
-            )}
-            
-            {/* Second Photo */}
-            {vostcard.photoURLs && vostcard.photoURLs.length > 1 ? (
-              <div style={{ 
-                flex: 1,
-                borderRadius: '8px', 
-                overflow: 'hidden'
-              }}>
-                <img
-                  src={vostcard.photoURLs[1]}
-                  alt="Photo 2"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => handlePhotoClick(vostcard.photoURLs[1])}
-                />
-              </div>
-            ) : (
-              <div style={{ 
-                flex: 1,
-                backgroundColor: '#f0f0f0',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#999',
-                fontSize: '14px'
-              }}>
-                No photo
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Intro/Detail/Map Buttons - Show if there are recordings OR location data */}
-      {vostcard.isQuickcard && (!!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) || !!(vostcard?.geo?.latitude && vostcard?.geo?.longitude)) && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '20px',
-          gap: '16px'
-        }}>
-          {/* Intro Button - Always show if there's any audio */}
-          <button
-            onClick={() => {
-              console.log('🎵 Intro button clicked - playing audio and showing swipeable photo gallery');
-              // Play audio
-              handleAudioPlayback();
-              // Show swipeable photo gallery starting with first photo
-              if (vostcard.photoURLs && vostcard.photoURLs.length > 0) {
-                setSelectedPhotoIndex(0);
-                setShowMultiPhotoModal(true);
-              }
-            }}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              minWidth: '100px',
-              boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-          >
-            <FaPlay size={14} style={{ marginRight: '8px' }} />
-            Intro
-          </button>
-
-          {/* Detail Button - Show if there's a second recording in any format */}
-          {(() => {
-            const hasDetailAudio = (
-              // Multiple audio files exist
-              (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
-              (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
-              (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
-              (vostcard?.audioLabels && vostcard.audioLabels.includes('detail')) ||
-              // TEMPORARY: Show detail button for all quickcards with any audio (both play same audio)
-              (vostcard?.isQuickcard && !!(vostcard?.audioURL || vostcard?.audio || vostcard?._firebaseAudioURL))
-            );
-            
-            // Debug logs removed - issue identified
-            
-            return hasDetailAudio;
-          })() && (
+            {/* Intro Button - Always show if there's any audio */}
             <button
               onClick={() => {
-                console.log('🎵 Detail button clicked - playing audio and showing swipeable photo gallery');
-                // Play audio (for now using the same audio - you can modify this later for separate detail audio)
+                console.log('🎵 Intro button clicked - playing audio and showing swipeable photo gallery');
+                // Play audio
                 handleAudioPlayback();
                 // Show swipeable photo gallery starting with first photo
                 if (vostcard.photoURLs && vostcard.photoURLs.length > 0) {
@@ -1229,374 +1223,422 @@ Tap OK to continue.`;
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
               <FaPlay size={14} style={{ marginRight: '8px' }} />
-              Detail
+              Intro
             </button>
-          )}
 
-          {/* View on Map Button - Always show if location data exists */}
-          {vostcard?.latitude && vostcard?.longitude && (
-            <button
-              onClick={handleMapClick}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                minWidth: '120px',
-                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-            >
-              <FaMap size={14} style={{ marginRight: '8px' }} />
-              View on Map
-            </button>
-          )}
-        </div>
-      )}
+            {/* Detail Button - Show if there's a second recording in any format */}
+            {(() => {
+              const hasDetailAudio = (
+                // Multiple audio files exist
+                (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
+                (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
+                (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
+                (vostcard?.audioLabels && vostcard.audioLabels.includes('detail')) ||
+                // TEMPORARY: Show detail button for all quickcards with any audio (both play same audio)
+                (vostcard?.isQuickcard && !!(vostcard?.audioURL || vostcard?.audio || vostcard?._firebaseAudioURL))
+              );
+              
+              // Debug logs removed - issue identified
+              
+              return hasDetailAudio;
+            })() && (
+              <button
+                onClick={() => {
+                  console.log('🎵 Detail button clicked - playing audio and showing swipeable photo gallery');
+                  // Play audio (for now using the same audio - you can modify this later for separate detail audio)
+                  handleAudioPlayback();
+                  // Show swipeable photo gallery starting with first photo
+                  if (vostcard.photoURLs && vostcard.photoURLs.length > 0) {
+                    setSelectedPhotoIndex(0);
+                    setShowMultiPhotoModal(true);
+                  }
+                }}
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minWidth: '100px',
+                  boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+              >
+                <FaPlay size={14} style={{ marginRight: '8px' }} />
+                Detail
+              </button>
+            )}
 
-      {/* Action Icons Row */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        padding: '20px 40px',
-        borderBottom: '1px solid #eee'
-      }}>
-        <button
-          onClick={handleLikeClick}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: isLiked ? '#ff3b30' : '#666'
-          }}
-        >
-          <FaHeart size={30} />
-        </button>
-        <button
-          onClick={() => {/* Handle star action */}}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#ffd700'
-          }}
-        >
-          <FaStar size={30} />
-        </button>
-        <button
-          onClick={() => setShowCommentsModal(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#666'
-          }}
-        >
-          <FaRegComment size={30} />
-        </button>
-        <button
-          onClick={handleShareClick}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#666'
-          }}
-        >
-          <FaShare size={30} />
-        </button>
-        {/* REMOVED: Map Button - map icon */}
-        {/* REMOVED: Audio Button - speaker icon */}
-      </div>
+            {/* View on Map Button - Always show if location data exists */}
+            {vostcard?.latitude && vostcard?.longitude && (
+              <button
+                onClick={handleMapClick}
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minWidth: '120px',
+                  boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+              >
+                <FaMap size={14} style={{ marginRight: '8px' }} />
+                View on Map
+              </button>
+            )}
+          </div>
+        )}
 
-      {/* Counts Row */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        padding: '10px 40px',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        <span>0</span>
-        <span>0.0</span>
-        <span>0</span>
-        <span></span>
-        {/* Audio duration - ENHANCED for both vostcard types */}
-        {(((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL || (vostcard as any)?.audioURL || (vostcard as any)?.audioURLs?.[0]) && (
-          <span>{audioDuration ? formatAudioDuration(audioDuration) : '...'}</span>
-        ))}
-      </div>
-
-      {/* Worth Seeing Rating */}
-      <div style={{
-        padding: '0',
-        textAlign: 'center'
-      }}>
-        <div style={{ 
-          fontSize: '18px', 
-          fontWeight: 'bold', 
-          marginBottom: '10px',
-          color: '#333'
+        {/* Action Icons Row */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          padding: '20px 40px',
+          borderBottom: '1px solid #eee'
         }}>
-          Worth Seeing?
+          <button
+            onClick={handleLikeClick}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: isLiked ? '#ff3b30' : '#666'
+            }}
+          >
+            <FaHeart size={30} />
+          </button>
+          <button
+            onClick={() => {/* Handle star action */}}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ffd700'
+            }}
+          >
+            <FaStar size={30} />
+          </button>
+          <button
+            onClick={() => setShowCommentsModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666'
+            }}
+          >
+            <FaRegComment size={30} />
+          </button>
+          <button
+            onClick={handleShareClick}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666'
+            }}
+          >
+            <FaShare size={30} />
+          </button>
+          {/* REMOVED: Map Button - map icon */}
+          {/* REMOVED: Audio Button - speaker icon */}
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              onClick={() => handleRatingClick(star)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: star <= userRating ? '#ffd700' : '#ddd'
-              }}
-            >
-              <FaStar size={24} />
-            </button>
+
+        {/* Counts Row */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          padding: '10px 40px',
+          fontSize: '18px',
+          color: '#666'
+        }}>
+          <span>0</span>
+          <span>0.0</span>
+          <span>0</span>
+          <span></span>
+          {/* Audio duration - ENHANCED for both vostcard types */}
+          {(((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL || (vostcard as any)?.audioURL || (vostcard as any)?.audioURLs?.[0]) && (
+            <span>{audioDuration ? formatAudioDuration(audioDuration) : '...'}</span>
           ))}
         </div>
-      </div>
 
-      {/* Description Link, Flag Icon, and Refresh Button */}
-      <div style={{ 
-        padding: '20px',
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        {/* Flag Icon - px from left */}
-        <button
-          onClick={handleFlag}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#ff3b30',
-            position: 'absolute',
-            left: '15px'
-          }}
-        >
-          <FaFlag size={24} />
-        </button>
-        
-        {/* Description Link - Centered */}
-        <div
-          onClick={() => setShowDescriptionModal(true)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#007aff',
-            fontSize: '28px',
-            fontWeight: 'bold',
-            textDecoration: 'underline',
-            cursor: 'pointer',
-            fontFamily: 'system-ui, sans-serif',
-            display: 'inline-block'
-          }}
-        >
-          Description
-        </div>
-
-        {/* Refresh Button - 20px from right */}
-        <button
-          onClick={handleRefresh}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#007aff',
-            position: 'absolute',
-            right: '20px'
-          }}
-        >
-          <FaSync size={24} />
-        </button>
-      </div>
-
-      {/* Modals */}
-      <CommentsModal
-        isOpen={showCommentsModal}
-        onClose={() => setShowCommentsModal(false)}
-        vostcardID={id!}
-        vostcardTitle={vostcard?.title}
-      />
-
-      {/* Description Modal */}
-      {showDescriptionModal && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setShowDescriptionModal(false)}
-        >
-          <div
-            style={{
-              background: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              maxWidth: '90vw',
-              maxHeight: '80vh',
-              overflow: 'auto',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
+        {/* Worth Seeing Rating */}
+        <div style={{
+          padding: '0',
+          textAlign: 'center'
+        }}>
+          <div style={{ 
+            fontSize: '18px', 
+            fontWeight: 'bold', 
+            marginBottom: '10px',
+            color: '#333'
+          }}>
+            Worth Seeing?
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
+            {[1, 2, 3, 4, 5].map((star) => (
               <button
-                onClick={() => setShowDescriptionModal(false)}
+                key={star}
+                onClick={() => handleRatingClick(star)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#666'
+                  color: star <= userRating ? '#ffd700' : '#ddd'
                 }}
               >
-                <FaTimes />
+                <FaStar size={24} />
               </button>
-            </div>
-            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
-              {vostcard.description || 'No description available.'}
-            </div>
+            ))}
           </div>
         </div>
-      )}
 
-      {/* Enhanced Multi-Photo Modal with Swipe */}
-      {showMultiPhotoModal && vostcard.photoURLs && (
-        <MultiPhotoModal
-          photos={vostcard.photoURLs}
-          initialIndex={selectedPhotoIndex}
-          isOpen={showMultiPhotoModal}
-          onClose={() => setShowMultiPhotoModal(false)}
-          title={vostcard.title}
-        />
-      )}
-
-      {/* Single Photo Modal (fallback) */}
-      {selectedPhoto && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.9)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1001
-          }}
-          onClick={() => setSelectedPhoto(null)}
-        >
-          <img
-            src={selectedPhoto}
-            alt="Full size"
-            style={{ 
-              width: '100vw', 
-              height: '100vh', 
-              objectFit: 'contain',
-              cursor: 'pointer'
+        {/* Description Link, Flag Icon, and Refresh Button */}
+        <div style={{ 
+          padding: '20px',
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          {/* Flag Icon - px from left */}
+          <button
+            onClick={handleFlag}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#ff3b30',
+              position: 'absolute',
+              left: '15px'
             }}
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+          >
+            <FaFlag size={24} />
+          </button>
+          
+          {/* Description Link - Centered */}
+          <div
+            onClick={() => setShowDescriptionModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#007aff',
+              fontSize: '28px',
+              fontWeight: 'bold',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontFamily: 'system-ui, sans-serif',
+              display: 'inline-block'
+            }}
+          >
+            Description
+          </div>
 
-      {/* Video Modal */}
-      {showVideoModal && vostcard.videoURL && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.9)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
-          }}
-          onClick={() => setShowVideoModal(false)}
-        >
+          {/* Refresh Button - 20px from right */}
+          <button
+            onClick={handleRefresh}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#007aff',
+              position: 'absolute',
+              right: '20px'
+            }}
+          >
+            <FaSync size={24} />
+          </button>
+        </div>
+
+        {/* Modals */}
+        <CommentsModal
+          isOpen={showCommentsModal}
+          onClose={() => setShowCommentsModal(false)}
+          vostcardID={id!}
+          vostcardTitle={vostcard?.title}
+        />
+
+        {/* Description Modal */}
+        {showDescriptionModal && (
           <div
             style={{
-              position: 'relative',
-              maxWidth: '90vw',
-              maxHeight: '90vh',
-              width: '100%',
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              zIndex: 1000,
             }}
-            onClick={e => e.stopPropagation()}
+            onClick={() => setShowDescriptionModal(false)}
           >
-            <video
-              src={vostcard.videoURL}
+            <div
               style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
-                objectFit: 'contain',
-                borderRadius: 8,
-                backgroundColor: '#000'
+                background: 'white',
+                padding: '24px',
+                borderRadius: '12px',
+                maxWidth: '90vw',
+                maxHeight: '80vh',
+                overflow: 'auto',
               }}
-              controls
-              autoPlay
-              playsInline
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
+                <button
+                  onClick={() => setShowDescriptionModal(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#666'
+                  }}
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
+                {vostcard.description || 'No description available.'}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Multi-Photo Modal with Swipe */}
+        {showMultiPhotoModal && vostcard.photoURLs && (
+          <MultiPhotoModal
+            photos={vostcard.photoURLs}
+            initialIndex={selectedPhotoIndex}
+            isOpen={showMultiPhotoModal}
+            onClose={() => setShowMultiPhotoModal(false)}
+            title={vostcard.title}
+          />
+        )}
+
+        {/* Single Photo Modal (fallback) */}
+        {selectedPhoto && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1001
+            }}
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <img
+              src={selectedPhoto}
+              alt="Full size"
+              style={{ 
+                width: '100vw', 
+                height: '100vh', 
+                objectFit: 'contain',
+                cursor: 'pointer'
+              }}
               onClick={(e) => e.stopPropagation()}
             />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Multi Photo Modal */}
-      {/* Share Options Modal */}
-      {/* <SharedOptionsModal
-        isOpen={showSharedOptions}
-        onClose={() => setShowSharedOptions(false)}
-        item={{
-          id: id || '',
-          title: vostcard?.title,
-          description: vostcard?.description,
-          isQuickcard: vostcard?.isQuickcard
-        }}
-      /> */}
+        {/* Video Modal */}
+        {showVideoModal && vostcard.videoURL && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.9)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              padding: '20px'
+            }}
+            onClick={() => setShowVideoModal(false)}
+          >
+            <div
+              style={{
+                position: 'relative',
+                maxWidth: '90vw',
+                maxHeight: '90vh',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <video
+                src={vostcard.videoURL}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: 8,
+                  backgroundColor: '#000'
+                }}
+                controls
+                autoPlay
+                playsInline
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        )}
 
-      {/* Tip Dropdown Menu */}
-      <TipDropdownMenu
-        userProfile={userProfile}
-        isVisible={showTipDropdown}
-        onClose={() => setShowTipDropdown(false)}
-        position={tipDropdownPosition}
-      />
+        {/* Multi Photo Modal */}
+        {/* Share Options Modal */}
+        {/* <SharedOptionsModal
+          isOpen={showSharedOptions}
+          onClose={() => setShowSharedOptions(false)}
+          item={{
+            id: id || '',
+            title: vostcard?.title,
+            description: vostcard?.description,
+            isQuickcard: vostcard?.isQuickcard
+          }}
+        /> */}
+
+        {/* Tip Dropdown Menu */}
+        <TipDropdownMenu
+          userProfile={userProfile}
+          isVisible={showTipDropdown}
+          onClose={() => setShowTipDropdown(false)}
+          position={tipDropdownPosition}
+        />
+      </div>
     </div>
   );
 };
