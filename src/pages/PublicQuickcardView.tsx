@@ -1028,29 +1028,6 @@ const PublicQuickcardView: React.FC = () => {
             <FaHeart size={30} />
           </button>
 
-          {/* Star Rating */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => setUserRating(userRating === star ? 0 : star)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: star <= userRating ? '#ffd700' : '#ccc',
-                  padding: '2px'
-                }}
-              >
-                <FaStar size={24} />
-              </button>
-            ))}
-          </div>
-
           {/* Comment Button - Shows login prompt */}
           <button
             onClick={() => setShowLoginModal(true)}
@@ -1093,35 +1070,6 @@ const PublicQuickcardView: React.FC = () => {
           >
             <FaShare size={30} />
           </button>
-        </div>
-
-        {/* Worth Seeing Rating */}
-        <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          borderBottom: '1px solid #eee',
-          maxWidth: '900px',
-          margin: '0 auto'
-        }}>
-          <div style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            color: '#333',
-            marginBottom: '10px'
-          }}>
-            Worth Seeing
-          </div>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#007aff' }}>
-              {userRating > 0 ? userRating.toFixed(1) : '0.0'}
-            </span>
-            <span style={{ color: '#666' }}>/ 5.0</span>
-          </div>
         </div>
 
         {/* Description Link Section */}
