@@ -57,16 +57,25 @@ const QuickcardDetailView: React.FC = () => {
   // ✅ Performance optimization - memoize photo URLs and audio detection
   const photoURLs = useMemo(() => quickcard?.photoURLs || [], [quickcard?.photoURLs]);
   const hasAudio = useMemo(() => {
-    const audioExists = !!(quickcard?.audioURL || quickcard?.audioURLs?.length > 0 || quickcard?.audio || quickcard?._firebaseAudioURL);
+    const audioExists = !!(
+      quickcard?.audioURL || 
+      quickcard?.audioURLs?.length > 0 || 
+      quickcard?.audio || 
+      quickcard?._firebaseAudioURL ||
+      quickcard?._firebaseAudioURLs?.length > 0 ||
+      quickcard?.audioFiles?.length > 0
+    );
     console.log('🔍 Audio detection:', {
       audioExists,
       audioURL: quickcard?.audioURL,
       audioURLs: quickcard?.audioURLs,
       audio: quickcard?.audio,
-      _firebaseAudioURL: quickcard?._firebaseAudioURL
+      _firebaseAudioURL: quickcard?._firebaseAudioURL,
+      _firebaseAudioURLs: quickcard?._firebaseAudioURLs,
+      audioFiles: quickcard?.audioFiles
     });
     return audioExists;
-  }, [quickcard?.audioURL, quickcard?.audioURLs, quickcard?.audio, quickcard?._firebaseAudioURL]);
+  }, [quickcard?.audioURL, quickcard?.audioURLs, quickcard?.audio, quickcard?._firebaseAudioURL, quickcard?._firebaseAudioURLs, quickcard?.audioFiles]);
 
   useEffect(() => {
     const fetchQuickcard = async () => {
@@ -866,8 +875,13 @@ Tap OK to continue.`;
             Intro
           </button>
 
-          {/* Detail Button - Only show if there's a second recording */}
-          {quickcard?.audioURLs && quickcard.audioURLs.length >= 2 && (
+          {/* Detail Button - Show if there's a second recording in any format */}
+          {(
+            (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) ||
+            (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
+            (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
+            (quickcard?.audioLabels && quickcard.audioLabels.includes('detail'))
+          ) && (
             <button
               onClick={() => {
                 console.log('🎵 Detail button clicked - showing main photo');

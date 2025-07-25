@@ -590,13 +590,29 @@ const VostcardStudioView: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Create quickcard as private draft with multiple photos
+      // Prepare audio files and labels
+      const audioFiles: Blob[] = [];
+      const audioLabels: string[] = [];
+      
+      if (quickcardIntroAudio) {
+        audioFiles.push(quickcardIntroAudio);
+        audioLabels.push('intro');
+      }
+      
+      if (quickcardDetailAudio) {
+        audioFiles.push(quickcardDetailAudio);
+        audioLabels.push('detail');
+      }
+      
+      // Create quickcard as private draft with multiple photos and audio files
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
         title: quickcardTitle.trim(),
         description: quickcardDescription.trim() || '', 
         photos: quickcardPhotos, // Multiple photos
-        audio: quickcardIntroAudio, // Use intro audio as primary
+        audio: quickcardIntroAudio, // LEGACY: Keep for backward compatibility
+        audioFiles: audioFiles, // NEW: Multiple audio files
+        audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: quickcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
@@ -650,6 +666,20 @@ const VostcardStudioView: React.FC = () => {
     try {
       setIsLoading(true);
       
+      // Prepare audio files and labels
+      const audioFiles: Blob[] = [];
+      const audioLabels: string[] = [];
+      
+      if (quickcardIntroAudio) {
+        audioFiles.push(quickcardIntroAudio);
+        audioLabels.push('intro');
+      }
+      
+      if (quickcardDetailAudio) {
+        audioFiles.push(quickcardDetailAudio);
+        audioLabels.push('detail');
+      }
+      
       // Create quickcard ready for posting with multiple photos
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
@@ -657,6 +687,8 @@ const VostcardStudioView: React.FC = () => {
         description: quickcardDescription.trim() || 'Quickcard',
         photos: quickcardPhotos, // Multiple photos
         audio: quickcardIntroAudio, // Use intro audio as primary
+        audioFiles: audioFiles, // NEW: Multiple audio files
+        audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: quickcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',

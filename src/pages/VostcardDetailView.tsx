@@ -540,7 +540,6 @@ Tap OK to continue.`;
     : currentVostcardIndex > 0 && availableVostcards.length > 0;
   
   const canGoToNext = vostcardList.length > 0 
-    ? currentIndex < vostcardList.length - 1 
     : currentVostcardIndex < availableVostcards.length - 1 && availableVostcards.length > 0;
 
   if (loading) {
@@ -886,7 +885,7 @@ Tap OK to continue.`;
                                          onClick={() => {
                        // ✅ NEW: Audio-on-click functionality
                        console.log('🖼️ Main photo clicked in VostcardDetailView!');
-                       const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL);
+                       const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
                        
                        if (hasAudio) {
                          console.log('🎵 Audio detected, triggering playback');
@@ -903,7 +902,7 @@ Tap OK to continue.`;
                   {/* ✅ Enhanced visual indicators */}
                   <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     {/* ✅ Audio indicator on main photo */}
-                    {(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL) && (
+                    {(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) && (
                       <div style={{
                         backgroundColor: 'rgba(0, 122, 255, 0.92)', // ✅ Enhanced blue background for audio
                         color: 'white',
@@ -968,7 +967,7 @@ Tap OK to continue.`;
                          // ✅ NEW: Thumbnail click handler - launches audio and shows first photo
                          console.log('🖼️ Thumbnail clicked - launching audio and showing first photo');
                          
-                         const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL);
+                         const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
                          
                          if (hasAudio) {
                            console.log('🎵 Starting audio playback');
@@ -1199,8 +1198,8 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* Intro/Detail Buttons - Only show for quickcards with recordings */}
-      {vostcard.isQuickcard && !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL) && (
+      {/* Intro/Detail Buttons - Only show if there are recordings */}
+      {vostcard.isQuickcard && !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -1239,8 +1238,13 @@ Tap OK to continue.`;
             Intro
           </button>
 
-          {/* Detail Button - Only show if there's a second recording */}
-          {vostcard.audioURLs && vostcard.audioURLs.length >= 2 && (
+          {/* Detail Button - Show if there's a second recording in any format */}
+          {(
+            (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
+            (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
+            (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
+            (vostcard?.audioLabels && vostcard.audioLabels.includes('detail'))
+          ) && (
             <button
               onClick={() => {
                 console.log('🎵 Detail button clicked - playing audio and showing swipeable photo gallery');
