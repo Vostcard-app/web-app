@@ -831,7 +831,7 @@ Tap OK to continue.`;
 
       {/* Media Section */}
       {vostcard.isQuickcard ? (
-        // ✅ Enhanced Quickcard layout with multi-photo support and audio-on-click
+        // ✅ Enhanced Single Photo Quickcard layout with Photo Counter
         <div style={{ 
           padding: '20px', 
           display: 'flex', 
@@ -844,12 +844,11 @@ Tap OK to continue.`;
               width: '100%',
               maxWidth: '800px', // ✅ Increased max width for better resolution
               display: 'flex',
-              gap: '12px', // ✅ Increased gap for better separation
               overflow: 'hidden'
             }}>
-              {/* ✅ Main Photo - Now triggers audio if available */}
+              {/* ✅ Single Main Photo - Full Width */}
               <div style={{ 
-                flex: vostcard.photoURLs.length === 1 ? 1 : 0.75, // ✅ Increased main photo ratio
+                flex: 1, // ✅ Full width for single photo
                 backgroundColor: 'transparent',
                 borderRadius: '16px', // ✅ Increased border radius
                 overflow: 'hidden',
@@ -883,28 +882,29 @@ Tap OK to continue.`;
                       // ✅ Additional quality settings
                       filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
                     } as React.CSSProperties}
-                                         onClick={() => {
-                       // ✅ NEW: Audio-on-click functionality
-                       console.log('🖼️ Main photo clicked in VostcardDetailView!');
-                       const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
-                       
-                       if (hasAudio) {
-                         console.log('🎵 Audio detected, triggering playback');
-                         handleAudioPlayback();
-                       } else {
-                         console.log('📸 No audio, showing photo');
-                         handlePhotoClick(vostcard.photoURLs[0]);
-                       }
-                     }}
+                    onClick={() => {
+                      // ✅ Enhanced click functionality
+                      console.log('🖼️ Main photo clicked in VostcardDetailView!');
+                      const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
+                      
+                      if (hasAudio) {
+                        console.log('🎵 Audio detected, triggering playback');
+                        handleAudioPlayback();
+                      } else if (vostcard.photoURLs.length > 1) {
+                        console.log('📸 Multiple photos, opening multi-photo modal');
+                        setSelectedPhotoIndex(0);
+                        setShowMultiPhotoModal(true);
+                      } else {
+                        console.log('📸 Single photo, showing full screen');
+                        handlePhotoClick(vostcard.photoURLs[0]);
+                      }
+                    }}
                     loading="eager" // ✅ Prioritize loading
                     fetchPriority="high" // ✅ Ensure high priority loading
                   />
                   
-                  {/* ✅ Enhanced visual indicators */}
-                  <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    {/* REMOVED: Audio indicator on main photo - "Tap to play" button */}
-                    
-                    {/* Photo counter - moved to right side */}
+                  {/* ✅ Photo Counter - Always show if multiple photos */}
+                  <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
                     {vostcard.photoURLs.length > 1 && (
                       <div style={{
                         backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
@@ -922,94 +922,6 @@ Tap OK to continue.`;
                   </div>
                 </div>
               </div>
-
-              {/* ✅ Thumbnails - NOW trigger audio + show first photo */}
-              {vostcard.photoURLs.length > 1 && (
-                <div style={{
-                  flex: 0.25,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '8px', // ✅ Increased gap
-                  overflow: 'hidden',
-                  minHeight: '350px'
-                }}>
-                  {vostcard.photoURLs.slice(1, 4).map((photoUrl: string, index: number) => (
-                    <div
-                      key={index}
-                      style={{
-                        flex: 1,
-                        borderRadius: '12px', // ✅ Increased border radius
-                        overflow: 'hidden',
-                        position: 'relative',
-                        cursor: 'pointer',
-                        minHeight: '110px', // ✅ Increased minimum height
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.1)', // ✅ Enhanced shadow
-                        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                      }}
-                                             onClick={() => {
-                         // ✅ NEW: Thumbnail click handler - launches audio and shows first photo
-                         console.log('🖼️ Thumbnail clicked - launching audio and showing first photo');
-                         
-                         const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
-                         
-                         if (hasAudio) {
-                           console.log('🎵 Starting audio playback');
-                           handleAudioPlayback();
-                         }
-                         
-                         // Show first photo in full screen
-                         if (vostcard.photoURLs && vostcard.photoURLs.length > 0) {
-                           handlePhotoClick(vostcard.photoURLs[0]); // Always show first photo
-                         }
-                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)';
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.15)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)';
-                      }}
-                    >
-                      <img
-                        src={photoUrl}
-                        alt={`Photo ${index + 2}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          objectPosition: 'center',
-                          // ✅ High-quality image rendering
-                          WebkitBackfaceVisibility: 'hidden',
-                          backfaceVisibility: 'hidden',
-                          transform: 'translateZ(0)',
-                          filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced quality
-                        } as React.CSSProperties}
-                        loading="lazy" // ✅ Lazy load thumbnails
-                      />
-                      {index === 2 && vostcard.photoURLs.length > 4 && (
-                        <div style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          backgroundColor: 'rgba(0, 0, 0, 0.7)', // ✅ Increased opacity
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: '16px', // ✅ Increased font size
-                          fontWeight: 'bold',
-                          backdropFilter: 'blur(4px)' // ✅ Added blur effect
-                        }}>
-                          +{vostcard.photoURLs.length - 4}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           ) : (
             <div style={{ 
