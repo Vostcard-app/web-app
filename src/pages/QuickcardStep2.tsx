@@ -11,7 +11,10 @@ export default function QuickcardStep2() {
   // Track selected photos (4 thumbnails for quickcards)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
-  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+  
+  // Track title and description inputs
+  const [title, setTitle] = useState(currentVostcard?.title || '');
+  const [description, setDescription] = useState(currentVostcard?.description || '');
 
   // Initialize empty quickcard or load saved photos when component mounts
   useEffect(() => {
@@ -132,6 +135,17 @@ export default function QuickcardStep2() {
 
   // Save and continue handler
   const handleSaveAndContinue = () => {
+    // Validate required fields
+    if (!title.trim()) {
+      alert('Please enter a title for your Quickcard.');
+      return;
+    }
+    
+    if (!description.trim()) {
+      alert('Please enter a description for your Quickcard.');
+      return;
+    }
+    
     // Filter out null photos - quickcards need at least 1 photo
     const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
     
@@ -140,11 +154,24 @@ export default function QuickcardStep2() {
       return;
     }
     
-    updateVostcard({ photos: validPhotos });
+    // Save all the data to context
+    updateVostcard({ 
+      title: title.trim(),
+      description: description.trim(),
+      photos: validPhotos 
+    });
+    
+    console.log('📱 Quickcard data saved:', {
+      title: title.trim(),
+      description: description.trim(),
+      photoCount: validPhotos.length
+    });
+    
     navigate('/quickcard-step3');
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
+  const isFormComplete = title.trim() && description.trim() && photoCount > 0;
 
   return (
     <div style={{
@@ -212,39 +239,72 @@ export default function QuickcardStep2() {
           fontWeight: 700,
           color: '#002B4D',
           textAlign: 'center',
-          marginBottom: 8,
+          marginBottom: 20,
           letterSpacing: '0.01em',
           paddingTop: '5px'
         }}>
-          Add Photos
+          Create Quickcard
         </h1>
         
-        {/* Description Link - Only show if description exists */}
-        {currentVostcard?.description && currentVostcard.description.trim() && (
-          <div style={{ 
-            marginBottom: 5,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
+        {/* Title Input */}
+        <div style={{ width: '100%', marginBottom: 16 }}>
+          <label style={{
+            display: 'block',
+            fontSize: 16,
+            fontWeight: 600,
+            color: '#002B4D',
+            marginBottom: 8
           }}>
-            <div
-              onClick={() => setShowDescriptionModal(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#007aff',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontFamily: 'system-ui, sans-serif',
-                display: 'inline-block'
-              }}
-            >
-              Description
-            </div>
-          </div>
-        )}
+            Title *
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter quickcard title..."
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: title.trim() ? '2px solid #002B4D' : '2px solid #ccc',
+              fontSize: '16px',
+              boxSizing: 'border-box',
+              outline: 'none'
+            }}
+          />
+        </div>
+        
+        {/* Description Input */}
+        <div style={{ width: '100%', marginBottom: 20 }}>
+          <label style={{
+            display: 'block',
+            fontSize: 16,
+            fontWeight: 600,
+            color: '#002B4D',
+            marginBottom: 8
+          }}>
+            Description *
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe your quickcard..."
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: description.trim() ? '2px solid #002B4D' : '2px solid #ccc',
+              fontSize: '16px',
+              boxSizing: 'border-box',
+              outline: 'none',
+              resize: 'vertical',
+              fontFamily: 'system-ui, sans-serif'
+            }}
+          />
+        </div>
+        
+
 
         {/* Photo Grid - 3 across layout for smaller buttons */}
         <div style={{
@@ -393,7 +453,7 @@ export default function QuickcardStep2() {
           </button>
         </div>
 
-        {/* Photo count indicator */}
+        {/* Progress indicator */}
         <div style={{
           fontSize: 14,
           color: '#666',
@@ -401,18 +461,20 @@ export default function QuickcardStep2() {
           marginBottom: 0,
           paddingTop: '2px'
         }}>
-          {photoCount} of 4 photos added
+          {photoCount} photo{photoCount !== 1 ? 's' : ''} • 
+          {title.trim() ? ' ✅' : ' ❌'} Title • 
+          {description.trim() ? ' ✅' : ' ❌'} Description
         </div>
 
         {/* Continue button */}
         <button
           style={{
             ...buttonStyle,
-            backgroundColor: photoCount === 0 ? '#cccccc' : '#002B4D',
-            cursor: photoCount === 0 ? 'not-allowed' : 'pointer'
+            backgroundColor: isFormComplete ? '#002B4D' : '#cccccc',
+            cursor: isFormComplete ? 'pointer' : 'not-allowed'
           }}
           onClick={handleSaveAndContinue}
-          disabled={photoCount === 0}
+          disabled={!isFormComplete}
         >
           Save & Continue
         </button>
@@ -438,52 +500,7 @@ export default function QuickcardStep2() {
         onChange={handleFileChange}
       />
 
-      {/* Description Modal */}
-      {showDescriptionModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={() => setShowDescriptionModal(false)}
-        >
-          <div
-            style={{
-              background: 'white',
-              padding: '24px',
-              borderRadius: '12px',
-              maxWidth: '90vw',
-              maxHeight: '80vh',
-              overflow: 'auto',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
-              <button
-                onClick={() => setShowDescriptionModal(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#666'
-                }}
-              >
-                <FaTimes />
-              </button>
-            </div>
-            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
-              {currentVostcard?.description || 'No description available.'}
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 } 
