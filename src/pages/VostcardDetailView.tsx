@@ -1224,33 +1224,16 @@ Tap OK to continue.`;
           {/* Detail Button - Show if there's a second recording in any format */}
           {(() => {
             const hasDetailAudio = (
+              // Multiple audio files exist
               (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
               (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
               (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
-              (vostcard?.audioLabels && vostcard.audioLabels.includes('detail'))
+              (vostcard?.audioLabels && vostcard.audioLabels.includes('detail')) ||
+              // TEMPORARY: Show detail button for all quickcards with any audio (both play same audio)
+              (vostcard?.isQuickcard && !!(vostcard?.audioURL || vostcard?.audio || vostcard?._firebaseAudioURL))
             );
             
-            console.log('🔍 VostcardDetailView Detail Audio Detection:', {
-              hasDetailAudio,
-              // Current fields being checked:
-              audioURLs: vostcard?.audioURLs,
-              audioURLsLength: vostcard?.audioURLs?.length,
-              _firebaseAudioURLs: vostcard?._firebaseAudioURLs,
-              _firebaseAudioURLsLength: vostcard?._firebaseAudioURLs?.length,
-              audioFiles: vostcard?.audioFiles,
-              audioFilesLength: vostcard?.audioFiles?.length,
-              audioLabels: vostcard?.audioLabels,
-              // What actually exists:
-              audioURL: vostcard?.audioURL,
-              audio: vostcard?.audio,
-              _firebaseAudioURL: vostcard?._firebaseAudioURL,
-              allAudioKeys: vostcard ? Object.keys(vostcard).filter(k => k.toLowerCase().includes('audio')) : 'no vostcard'
-            });
-            
-            // Log ALL properties to see what we're missing
-            if (vostcard) {
-              console.log('🔍 All Vostcard Properties:', Object.keys(vostcard).sort());
-            }
+            // Debug logs removed - issue identified
             
             return hasDetailAudio;
           })() && (

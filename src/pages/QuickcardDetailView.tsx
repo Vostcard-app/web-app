@@ -860,23 +860,16 @@ Tap OK to continue.`;
           {/* Detail Button - Show if there's a second recording in any format */}
           {(() => {
             const hasDetailAudio = (
+              // Multiple audio files exist
               (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) ||
               (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
               (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
-              (quickcard?.audioLabels && quickcard.audioLabels.includes('detail'))
+              (quickcard?.audioLabels && quickcard.audioLabels.includes('detail')) ||
+              // TEMPORARY: Show detail button for all quickcards with any audio (both play same audio)
+              (quickcard?.isQuickcard && !!(quickcard?.audioURL || quickcard?.audio || quickcard?._firebaseAudioURL))
             );
             
-            console.log('🔍 Detail Audio Detection:', {
-              hasDetailAudio,
-              audioURLs: quickcard?.audioURLs,
-              audioURLsLength: quickcard?.audioURLs?.length,
-              _firebaseAudioURLs: quickcard?._firebaseAudioURLs,
-              _firebaseAudioURLsLength: quickcard?._firebaseAudioURLs?.length,
-              audioFiles: quickcard?.audioFiles,
-              audioFilesLength: quickcard?.audioFiles?.length,
-              audioLabels: quickcard?.audioLabels,
-              allQuickcardKeys: quickcard ? Object.keys(quickcard) : 'no quickcard'
-            });
+            // Debug logs removed - issue identified
             
             return hasDetailAudio;
           })() && (
