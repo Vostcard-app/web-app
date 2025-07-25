@@ -437,6 +437,9 @@ const VostcardStudioView: React.FC = () => {
     };
 
     restoreState();
+    
+    // Check for transferred quickcard data from QuickcardStep3
+    loadTransferredQuickcardData();
   }, []);
 
   // Cleanup on unmount
@@ -458,6 +461,54 @@ const VostcardStudioView: React.FC = () => {
 
   const handleCancelImport = () => {
     setShowQuickcardImporter(false);
+  };
+
+  // Load transferred quickcard data from QuickcardStep3
+  const loadTransferredQuickcardData = () => {
+    try {
+      const transferData = sessionStorage.getItem('quickcardTransferData');
+      if (transferData) {
+        const data = JSON.parse(transferData);
+        console.log('📱 Loading transferred quickcard data:', data);
+        
+        // Populate VostcardStudio fields with transferred data
+        setQuickcardTitle(data.title || '');
+        setQuickcardDescription(data.description || '');
+        setQuickcardCategories(data.categories || []);
+        
+        // Handle photos
+        if (data.photos && data.photos.length > 0) {
+          setQuickcardPhotos(data.photos);
+          // Create preview URLs for the photos
+          const previews = data.photos.map((photo: any) => {
+            if (photo && (photo instanceof File || photo instanceof Blob)) {
+              return URL.createObjectURL(photo);
+            }
+            return '';
+          });
+          setQuickcardPhotoPreviews(previews);
+        }
+        
+        // Handle location
+        if (data.location) {
+          setQuickcardLocation({
+            latitude: data.location.latitude,
+            longitude: data.location.longitude,
+            address: data.location.address
+          });
+        }
+        
+        // Show the quickcard creator
+        setShowQuickcardCreator(true);
+        
+        // Clear the transfer data
+        sessionStorage.removeItem('quickcardTransferData');
+        
+        console.log('✅ Quickcard data transferred successfully');
+      }
+    } catch (error) {
+      console.error('❌ Error loading transferred quickcard data:', error);
+    }
   };
 
   const handleCancelCreator = () => {
