@@ -717,19 +717,17 @@ const HomeView = () => {
             </div>
           ) : (
             <>
-              {/* Navigation buttons */}
+              {/* ListView and Offers buttons - moved up */}
               {!singleVostcard && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: '16px',
-                    left: 0,
-                    right: 0,
+                    top: '8px',
+                    left: '20px',
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    zIndex: 1002,
-                    padding: '0 20px'
+                    gap: '30px', // 30px spacing between buttons
+                    zIndex: 1002
                   }}
                 >
                   <button 
@@ -787,7 +785,19 @@ const HomeView = () => {
                     <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
                     Offers
                   </button>
-                  
+                </div>
+              )}
+
+              {/* Video Guide button - stays in original position */}
+              {!singleVostcard && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '20px',
+                    zIndex: 1002
+                  }}
+                >
                   <div style={{
                     display: 'flex',
                     flexDirection: 'column',
