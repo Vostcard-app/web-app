@@ -858,12 +858,28 @@ Tap OK to continue.`;
           </button>
 
           {/* Detail Button - Show if there's a second recording in any format */}
-          {(
-            (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) ||
-            (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
-            (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
-            (quickcard?.audioLabels && quickcard.audioLabels.includes('detail'))
-          ) && (
+          {(() => {
+            const hasDetailAudio = (
+              (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) ||
+              (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
+              (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
+              (quickcard?.audioLabels && quickcard.audioLabels.includes('detail'))
+            );
+            
+            console.log('🔍 Detail Audio Detection:', {
+              hasDetailAudio,
+              audioURLs: quickcard?.audioURLs,
+              audioURLsLength: quickcard?.audioURLs?.length,
+              _firebaseAudioURLs: quickcard?._firebaseAudioURLs,
+              _firebaseAudioURLsLength: quickcard?._firebaseAudioURLs?.length,
+              audioFiles: quickcard?.audioFiles,
+              audioFilesLength: quickcard?.audioFiles?.length,
+              audioLabels: quickcard?.audioLabels,
+              allQuickcardKeys: quickcard ? Object.keys(quickcard) : 'no quickcard'
+            });
+            
+            return hasDetailAudio;
+          })() && (
             <button
               onClick={() => {
                 console.log('🎵 Detail button clicked - showing main photo');
