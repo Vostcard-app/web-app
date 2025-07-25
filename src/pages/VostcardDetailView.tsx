@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaVolumeUp, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -902,25 +902,7 @@ Tap OK to continue.`;
                   
                   {/* ✅ Enhanced visual indicators */}
                   <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    {/* ✅ Audio indicator on main photo */}
-                    {(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) && (
-                      <div style={{
-                        backgroundColor: 'rgba(0, 122, 255, 0.92)', // ✅ Enhanced blue background for audio
-                        color: 'white',
-                        padding: '6px 12px', // ✅ Increased padding
-                        borderRadius: '16px', // ✅ Increased border radius
-                        fontSize: '12px', // ✅ Font size
-                        fontWeight: 'bold',
-                        backdropFilter: 'blur(8px)', // ✅ Enhanced blur
-                        boxShadow: '0 2px 8px rgba(0,122,255,0.3)', // ✅ Enhanced shadow
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                                                 {isPlayingAudio ? <FaPause size={12} /> : <FaPlay size={12} />}
-                         {isPlayingAudio ? 'Playing' : 'Tap to play'}
-                      </div>
-                    )}
+                    {/* REMOVED: Audio indicator on main photo - "Tap to play" button */}
                     
                     {/* Photo counter - moved to right side */}
                     {vostcard.photoURLs.length > 1 && (
@@ -1199,8 +1181,8 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* Intro/Detail Buttons - Only show if there are recordings */}
-      {vostcard.isQuickcard && !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) && (
+      {/* Intro/Detail/Map Buttons - Show if there are recordings OR location data */}
+      {vostcard.isQuickcard && (!!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) || !!(vostcard?.geo?.latitude && vostcard?.geo?.longitude)) && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -1276,6 +1258,30 @@ Tap OK to continue.`;
               Detail
             </button>
           )}
+
+          {/* View on Map Button - Always show if location data exists */}
+          {vostcard?.geo?.latitude && vostcard?.geo?.longitude && (
+            <button
+              onClick={handleMapClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '120px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              View on Map
+            </button>
+          )}
         </div>
       )}
 
@@ -1343,37 +1349,8 @@ Tap OK to continue.`;
         >
           <FaShare size={30} />
         </button>
-        <button
-          onClick={handleMapClick}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#666'
-          }}
-        >
-          <FaMap size={30} />
-        </button>
-        {/* Audio button - ENHANCED for both vostcard types */}
-        {(((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL || (vostcard as any)?.audioURL || (vostcard as any)?.audioURLs?.[0]) && (
-          <button
-            onClick={handleAudioClick}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isPlayingAudio ? '#007aff' : '#666'
-            }}
-          >
-            <FaVolumeUp size={30} />
-          </button>
-        ))}
+        {/* REMOVED: Map Button - map icon */}
+        {/* REMOVED: Audio Button - speaker icon */}
       </div>
 
       {/* Counts Row */}
