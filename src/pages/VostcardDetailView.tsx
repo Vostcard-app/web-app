@@ -8,6 +8,8 @@ import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import { VostboxService } from '../services/vostboxService';
+import { LikeService } from '../services/likeService';
+import { RatingService } from '../services/ratingService';
 import { type Friend } from '../types/FriendModels';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
@@ -238,6 +240,38 @@ const VostcardDetailView: React.FC = () => {
     }
   }, [vostcard?.userID]);
 
+  // Load existing like status
+  useEffect(() => {
+    const loadLikeStatus = async () => {
+      if (!user || !vostcard?.id) return;
+      
+      try {
+        const isLiked = await LikeService.isLiked(vostcard.id);
+        setIsLiked(isLiked);
+      } catch (error) {
+        console.error('Failed to load like status:', error);
+      }
+    };
+    
+    loadLikeStatus();
+  }, [user, vostcard?.id]);
+
+  // Load existing rating
+  useEffect(() => {
+    const loadUserRating = async () => {
+      if (!user || !vostcard?.id) return;
+      
+      try {
+        const rating = await RatingService.getCurrentUserRating(vostcard.id);
+        setUserRating(rating);
+      } catch (error) {
+        console.error('Failed to load user rating:', error);
+      }
+    };
+    
+    loadUserRating();
+  }, [user, vostcard?.id]);
+
   // ENHANCED AUDIO DETECTION - Support both regular vostcards and quickcards
   useEffect(() => {
     const detectAudio = async () => {
@@ -376,8 +410,24 @@ Tap OK to continue.`;
     }
   };
 
-  const handleLikeClick = () => {
-    setIsLiked(!isLiked);
+  const handleLikeClick = async () => {
+    if (!user) {
+      alert('Please log in to like this vostcard');
+      return;
+    }
+    
+    if (!vostcard?.id) {
+      alert('Unable to like this vostcard');
+      return;
+    }
+
+    try {
+      const newLikedState = await LikeService.toggleLike(vostcard.id);
+      setIsLiked(newLikedState);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Failed to update like status. Please try again.');
+    }
   };
 
   // ENHANCED AUDIO PLAY FUNCTION - Support both formats
@@ -487,8 +537,26 @@ Tap OK to continue.`;
     }
   };
 
-  const handleRatingClick = (rating: number) => {
-    setUserRating(rating);
+  const handleRatingClick = async (rating: number) => {
+    if (!user) {
+      alert('Please log in to rate this vostcard');
+      return;
+    }
+    
+    if (!vostcard?.id) {
+      alert('Unable to rate this vostcard');
+      return;
+    }
+
+    try {
+      if (rating > 0) {
+        await RatingService.submitRating(vostcard.id, rating);
+      }
+      setUserRating(rating);
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      alert('Failed to submit rating. Please try again.');
+    }
   };
 
   const handleRefresh = () => {

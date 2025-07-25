@@ -11,6 +11,8 @@ import CommentsModal from '../components/CommentsModal';
 import QuickcardPin from '../assets/quickcard_pin.png';
 import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
+import { LikeService } from '../services/likeService';
+import { RatingService } from '../services/ratingService';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
 import MultiPhotoModal from '../components/MultiPhotoModal';
@@ -174,6 +176,38 @@ const QuickcardDetailView: React.FC = () => {
     }
   }, [quickcard?.userID]);
 
+  // Load existing like status
+  useEffect(() => {
+    const loadLikeStatus = async () => {
+      if (!user || !quickcard?.id) return;
+      
+      try {
+        const isLiked = await LikeService.isLiked(quickcard.id);
+        setIsLiked(isLiked);
+      } catch (error) {
+        console.error('Failed to load like status:', error);
+      }
+    };
+    
+    loadLikeStatus();
+  }, [user, quickcard?.id]);
+
+  // Load existing rating
+  useEffect(() => {
+    const loadUserRating = async () => {
+      if (!user || !quickcard?.id) return;
+      
+      try {
+        const rating = await RatingService.getCurrentUserRating(quickcard.id);
+        setUserRating(rating);
+      } catch (error) {
+        console.error('Failed to load user rating:', error);
+      }
+    };
+    
+    loadUserRating();
+  }, [user, quickcard?.id]);
+
   // ✅ Enhanced audio player effects
   useEffect(() => {
     const audio = audioRef.current;
@@ -259,9 +293,25 @@ Tap OK to continue.`;
     }
   };
 
-  const handleLikeClick = useCallback(() => {
-    setIsLiked(!isLiked);
-  }, [isLiked]);
+  const handleLikeClick = useCallback(async () => {
+    if (!user) {
+      alert('Please log in to like this quickcard');
+      return;
+    }
+    
+    if (!quickcard?.id) {
+      alert('Unable to like this quickcard');
+      return;
+    }
+
+    try {
+      const newLikedState = await LikeService.toggleLike(quickcard.id);
+      setIsLiked(newLikedState);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Failed to update like status. Please try again.');
+    }
+  }, [user, quickcard?.id]);
 
   const handleMapClick = useCallback(() => {
     if (quickcard?.latitude && quickcard?.longitude) {
@@ -1318,7 +1368,29 @@ Tap OK to continue.`;
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
-              onClick={() => setUserRating(userRating === star ? 0 : star)}
+              onClick={async () => {
+                if (!user) {
+                  alert('Please log in to rate this quickcard');
+                  return;
+                }
+                
+                if (!quickcard?.id) {
+                  alert('Unable to rate this quickcard');
+                  return;
+                }
+
+                const newRating = userRating === star ? 0 : star;
+                
+                try {
+                  if (newRating > 0) {
+                    await RatingService.submitRating(quickcard.id, newRating);
+                  }
+                  setUserRating(newRating);
+                } catch (error) {
+                  console.error('Error submitting rating:', error);
+                  alert('Failed to submit rating. Please try again.');
+                }
+              }}
               style={{
                 background: 'none',
                 border: 'none',
