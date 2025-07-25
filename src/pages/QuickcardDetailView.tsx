@@ -1075,7 +1075,7 @@ Tap OK to continue.`;
 
       {/* Description Link, Flag Icon, and Refresh Button */}
       <div style={{ 
-        padding: '2px 20px 20px 20px',
+        padding: '2px 20px 5px 20px',
         position: 'relative',
         display: 'flex',
         justifyContent: 'center',
@@ -1130,7 +1130,7 @@ Tap OK to continue.`;
       {/* Worth Seeing Rating Widget */}
       <div style={{
         textAlign: 'center',
-        padding: '20px',
+        padding: '0px 20px 20px 20px',
         borderBottom: '1px solid #eee',
         maxWidth: '900px',
         margin: '0 auto'
