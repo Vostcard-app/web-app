@@ -1384,6 +1384,9 @@ Tap OK to continue.`;
                 try {
                   if (newRating > 0) {
                     await RatingService.submitRating(quickcard.id, newRating);
+                  } else {
+                    // Remove rating when user clicks same star
+                    await RatingService.removeRating(quickcard.id);
                   }
                   setUserRating(newRating);
                 } catch (error) {

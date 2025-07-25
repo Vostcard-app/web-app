@@ -548,11 +548,16 @@ Tap OK to continue.`;
       return;
     }
 
+    const newRating = userRating === rating ? 0 : rating;
+
     try {
-      if (rating > 0) {
-        await RatingService.submitRating(vostcard.id, rating);
+      if (newRating > 0) {
+        await RatingService.submitRating(vostcard.id, newRating);
+      } else {
+        // Remove rating when user clicks same star
+        await RatingService.removeRating(vostcard.id);
       }
-      setUserRating(rating);
+      setUserRating(newRating);
     } catch (error) {
       console.error('Error submitting rating:', error);
       alert('Failed to submit rating. Please try again.');

@@ -1,5 +1,5 @@
 import { db } from '../firebase/firebaseConfig';
-import { doc, setDoc, getDoc, collection, getDocs, query, updateDoc, increment, onSnapshot, runTransaction } from 'firebase/firestore';
+import { doc, setDoc, getDoc, collection, getDocs, query, updateDoc, increment, onSnapshot, runTransaction, deleteDoc } from 'firebase/firestore';
 import { auth } from '../firebase/firebaseConfig';
 
 export interface Rating {
@@ -93,6 +93,67 @@ export const RatingService = {
       console.log(`✅ Rating submitted: ${rating} stars for Vostcard ${vostcardID}`);
     } catch (error) {
       console.error('❌ Error submitting rating:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Remove a user's rating for a Vostcard
+   * @param vostcardID - The ID of the Vostcard to remove rating from
+   * @returns Promise<void>
+   */
+  async removeRating(vostcardID: string): Promise<void> {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      const userID = user.uid;
+      
+      // Use a transaction to ensure consistency
+      await runTransaction(db, async (transaction) => {
+        const ratingDocRef = doc(db, 'vostcards', vostcardID, 'ratings', userID);
+        const statsDocRef = doc(db, 'vostcards', vostcardID, 'ratingStats', 'summary');
+        
+        // Get current rating and stats
+        const currentRatingDoc = await transaction.get(ratingDocRef);
+        const currentStatsDoc = await transaction.get(statsDocRef);
+        
+        if (!currentRatingDoc.exists()) {
+          // No rating to remove
+          return;
+        }
+        
+        const oldRating = currentRatingDoc.data()?.rating || 0;
+        
+        // Delete the rating document
+        transaction.delete(ratingDocRef);
+        
+        // Update stats
+        const currentStats = currentStatsDoc.exists() ? currentStatsDoc.data() : {
+          averageRating: 0,
+          ratingCount: 0,
+          lastUpdated: new Date().toISOString()
+        };
+        
+        let newRatingCount = Math.max(0, currentStats.ratingCount - 1);
+        let newTotalRating = (currentStats.averageRating * currentStats.ratingCount) - oldRating;
+        
+        const newAverageRating = newRatingCount > 0 ? newTotalRating / newRatingCount : 0;
+        
+        const newStats = {
+          averageRating: newAverageRating,
+          ratingCount: newRatingCount,
+          lastUpdated: new Date().toISOString()
+        };
+        
+        transaction.set(statsDocRef, newStats);
+      });
+      
+      console.log(`✅ Rating removed for Vostcard ${vostcardID}`);
+    } catch (error) {
+      console.error('❌ Error removing rating:', error);
       throw error;
     }
   },
