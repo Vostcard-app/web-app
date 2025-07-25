@@ -219,38 +219,65 @@ export default function QuickcardStep2() {
           Add Photos
         </h1>
         
-        <p style={{
-          fontSize: 16,
-          color: '#666',
-          textAlign: 'center',
-          marginBottom: 5,
-          lineHeight: 1.4
-        }}>
-          Add up to 4 photos for your Quickcard
-        </p>
+        {/* Description Link - Only show if description exists */}
+        {currentVostcard?.description && currentVostcard.description.trim() && (
+          <div style={{ 
+            marginBottom: 5,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <div
+              onClick={() => setShowDescriptionModal(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#007aff',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontFamily: 'system-ui, sans-serif',
+                display: 'inline-block'
+              }}
+            >
+              Description
+            </div>
+          </div>
+        )}
 
-        {/* Photo Grid - 2x2 layout */}
+        {/* Photo Grid - 3 across layout for smaller buttons */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '16px',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '12px',
           marginBottom: 5,
           width: '100%',
           maxWidth: 300,
           justifyItems: 'center',
           paddingTop: '5px'
         }}>
-          {selectedPhotos.map((photo, idx) => (
+          {selectedPhotos.slice(0, 3).map((photo, idx) => (
             <button
               key={idx}
               onClick={() => handleAddPhoto(idx)}
               style={{
-                ...thumbnailStyle,
+                width: 90,
+                height: 90,
+                borderRadius: 8,
+                border: '2px solid #002B4D',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                marginBottom: 8,
+                overflow: 'hidden',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.1)',
                 backgroundImage: photo ? `url(${URL.createObjectURL(photo)})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundColor: photo ? 'transparent' : '#f8f9fa',
-                border: photo ? '3px solid #28a745' : '3px dashed #002B4D',
               }}
             >
               {photo ? (
@@ -259,20 +286,20 @@ export default function QuickcardStep2() {
                   onClick={(e) => handleRemovePhoto(idx, e)}
                   style={{
                     position: 'absolute',
-                    top: 8,
-                    right: 8,
+                    top: 4,
+                    right: 4,
                     background: 'rgba(255,255,255,0.9)',
                     border: 'none',
                     borderRadius: '50%',
-                    width: 28,
-                    height: 28,
+                    width: 20,
+                    height: 20,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    fontSize: 12,
+                    fontSize: 10,
                     color: '#dc3545',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                   }}
                 >
                   <FaTimes />
@@ -286,14 +313,84 @@ export default function QuickcardStep2() {
                   color: '#002B4D',
                   opacity: 0.7
                 }}>
-                  <FaRegImages size={32} style={{ marginBottom: 8 }} />
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>
+                  <FaRegImages size={20} style={{ marginBottom: 4 }} />
+                  <span style={{ fontSize: 10, fontWeight: 600 }}>
                     Add Photo
                   </span>
                 </div>
               )}
             </button>
           ))}
+        </div>
+
+        {/* Fourth photo button - centered below */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: 5,
+          width: '100%'
+        }}>
+          <button
+            onClick={() => handleAddPhoto(3)}
+            style={{
+              width: 90,
+              height: 90,
+              borderRadius: 8,
+              border: '2px solid #002B4D',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              marginBottom: 8,
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(0,43,77,0.1)',
+              backgroundImage: selectedPhotos[3] ? `url(${URL.createObjectURL(selectedPhotos[3])})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundColor: selectedPhotos[3] ? 'transparent' : '#f8f9fa',
+            }}
+          >
+            {selectedPhotos[3] ? (
+              // Remove button for filled thumbnail
+              <button
+                onClick={(e) => handleRemovePhoto(3, e)}
+                style={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  background: 'rgba(255,255,255,0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 20,
+                  height: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: 10,
+                  color: '#dc3545',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                }}
+              >
+                <FaTimes />
+              </button>
+            ) : (
+              // Add photo prompt for empty thumbnail
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                color: '#002B4D',
+                opacity: 0.7
+              }}>
+                <FaRegImages size={20} style={{ marginBottom: 4 }} />
+                <span style={{ fontSize: 10, fontWeight: 600 }}>
+                  Add Photo
+                </span>
+              </div>
+            )}
+          </button>
         </div>
 
         {/* Photo count indicator */}
@@ -320,36 +417,9 @@ export default function QuickcardStep2() {
           Save & Continue
         </button>
 
-        {/* Description Link - Only show if description exists */}
-        {currentVostcard?.description && currentVostcard.description.trim() && (
-          <div style={{ 
-            marginTop: 20,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            <div
-              onClick={() => setShowDescriptionModal(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#007aff',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-                fontFamily: 'system-ui, sans-serif',
-                display: 'inline-block'
-              }}
-            >
-              Description
-            </div>
-          </div>
-        )}
-
         {/* Instructions */}
         <div style={{
-          marginTop: currentVostcard?.description && currentVostcard.description.trim() ? 10 : 20,
+          marginTop: 20,
           fontSize: 12,
           color: '#999',
           textAlign: 'center',
