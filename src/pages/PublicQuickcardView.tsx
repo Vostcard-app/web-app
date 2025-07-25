@@ -1073,7 +1073,7 @@ const PublicQuickcardView: React.FC = () => {
           </button>
         </div>
 
-        {/* Description Link Section */}
+        {/* Description Link Section - Updated styling */}
         <div style={{ 
           padding: '2px 20px 20px 20px',
           textAlign: 'center',
