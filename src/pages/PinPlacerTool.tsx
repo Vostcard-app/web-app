@@ -89,8 +89,8 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   
-  // Search functionality
-  const [searchQuery, setSearchQuery] = useState('');
+  // Search functionality - initialize with title if available
+  const [searchQuery, setSearchQuery] = useState(location.state?.title || '');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<{
     latitude: number;
