@@ -1205,7 +1205,14 @@ const PublicQuickcardView: React.FC = () => {
         photos={photoURLs || []}
         initialIndex={selectedPhotoIndex}
         isOpen={showMultiPhotoModal}
-        onClose={() => setShowMultiPhotoModal(false)}
+        onClose={() => {
+          setShowMultiPhotoModal(false);
+          // Stop audio when slideshow is closed
+          if (audioRef.current) {
+            audioRef.current.pause();
+            setIsPlayingAudio(false);
+          }
+        }}
         title={title || 'Quickcard Photos'}
         autoPlay={true}
         autoPlayInterval={5000}
