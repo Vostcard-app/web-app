@@ -45,13 +45,21 @@ const QuickcardStep3: React.FC = () => {
     hasPhotos: (photos?.length || 0) >= 1,  // Should already have photos from step 2
   };
 
-  // Check if quickcard is ready for posting (only title required)
-  const isReadyForPosting = validationState.hasTitle && validationState.hasPhotos;
+  // Check if quickcard is ready for posting (title, description, category required)
+  const isReadyForMapPosting = validationState.hasTitle && 
+    validationState.hasDescription && 
+    validationState.hasCategories && 
+    validationState.hasPhotos;
+  
+  // Personal posts only need title
+  const isReadyForPersonalSave = validationState.hasTitle && validationState.hasPhotos;
 
-  // Create specific missing items list (only title required)
-  const missingItems: string[] = [];
-  if (!validationState.hasTitle) missingItems.push('Title');
-  if (!validationState.hasPhotos) missingItems.push('Photos (need at least 1)');
+  // Create specific missing items list for map posting
+  const missingMapItems: string[] = [];
+  if (!validationState.hasTitle) missingMapItems.push('Title');
+  if (!validationState.hasDescription) missingMapItems.push('Description'); 
+  if (!validationState.hasCategories) missingMapItems.push('Categories');
+  if (!validationState.hasPhotos) missingMapItems.push('Photos (need at least 1)');
 
   console.log('🔍 Quickcard Step 3 Validation State:', {
     title: title,
@@ -63,7 +71,7 @@ const QuickcardStep3: React.FC = () => {
     photosCount: photos.length,
     photosValid: validationState.hasPhotos,
     isQuickcard: true,
-    isReadyForPosting
+    isReadyForMapPosting
   });
 
   // Check Firebase Auth
@@ -128,8 +136,8 @@ const QuickcardStep3: React.FC = () => {
       return;
     }
     
-    if (!isReadyForPosting) {
-      alert(`Please complete the following before posting: ${missingItems.join(', ')}`);
+    if (!isReadyForMapPosting) {
+      alert(`Please complete the following before posting: ${missingMapItems.join(', ')}`);
       return;
     }
     
@@ -232,25 +240,26 @@ const QuickcardStep3: React.FC = () => {
 
         <div>
           <label style={labelStyle}>
-            Description (Optional) {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
+            Description* (Required for Map) {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
           </label>
           <textarea
             value={description}
             onChange={(e) => updateVostcard({ description: e.target.value })}
-            placeholder="Enter Description (Optional)"
+            placeholder="Enter Description (Required for Map posting)"
             rows={4}
             style={{
               ...textareaStyle,
               touchAction: 'manipulation',
               fontSize: '18px',
-              WebkitTextSizeAdjust: '100%'
+              WebkitTextSizeAdjust: '100%',
+              borderColor: validationState.hasDescription ? '#002B4D' : '#ff6b6b'
             }}
           />
         </div>
 
         <div>
           <label style={labelStyle}>
-            Categories (Optional) {validationState.hasCategories && <span style={{color: 'green'}}>✅</span>}
+            Categories* (Required for Map) {validationState.hasCategories && <span style={{color: 'green'}}>✅</span>}
           </label>
           <div
             onClick={() => setIsCategoryModalOpen(true)}
@@ -298,54 +307,22 @@ const QuickcardStep3: React.FC = () => {
         zIndex: 100,
         touchAction: 'manipulation'
       }}>
-        {!isReadyForPosting && (
+        {!isReadyForMapPosting && (
           <div style={missingTextStyle}>
-            Missing: {missingItems.join(', ')}
+            Missing for map posting: {missingMapItems.join(', ')}
           </div>
         )}
 
-        {/* Enhanced Creator Button */}
-        <button
-          onClick={() => {
-            // Transfer current quickcard data to VostcardStudio
-            const quickcardData = {
-              title: currentVostcard?.title || '',
-              description: currentVostcard?.description || '',
-              photos: currentVostcard?.photos || [],
-              categories: currentVostcard?.categories || [],
-              location: currentVostcard?.geo || null
-            };
-            
-            console.log('📱 Transferring to enhanced creator:', quickcardData);
-            
-            // Store the data for VostcardStudio to read
-            sessionStorage.setItem('quickcardTransferData', JSON.stringify(quickcardData));
-            
-            navigate('/studio', { 
-              state: { 
-                importQuickcard: true,
-                quickcardData: quickcardData
-              } 
-            });
-          }}
-          style={{
-            ...saveButtonStyle,
-            backgroundColor: '#007aff',
-            marginBottom: 10,
-            touchAction: 'manipulation'
-          }}
-        >
-          🎤 Add Audio & Advanced Features
-        </button>
+
 
         {/* Save to Personal Posts Button */}
         <button
           onClick={handleSavePrivately}
-          disabled={!isReadyForPosting}
+          disabled={!isReadyForPersonalSave}
           style={{
             ...saveButtonStyle,
-            backgroundColor: isReadyForPosting ? '#002B4D' : '#aaa',
-            cursor: isReadyForPosting ? 'pointer' : 'not-allowed',
+            backgroundColor: isReadyForPersonalSave ? '#002B4D' : '#aaa',
+            cursor: isReadyForPersonalSave ? 'pointer' : 'not-allowed',
             touchAction: 'manipulation'
           }}
         >
@@ -355,11 +332,11 @@ const QuickcardStep3: React.FC = () => {
         {/* Post to Map (Public Posts) Button */}
         <button
           onClick={handlePostToMap}
-          disabled={!isReadyForPosting}
+          disabled={!isReadyForMapPosting}
           style={{
             ...postButtonStyle,
-            backgroundColor: isReadyForPosting ? '#28a745' : '#aaa', // Green when ready
-            cursor: isReadyForPosting ? 'pointer' : 'not-allowed',
+            backgroundColor: isReadyForMapPosting ? '#28a745' : '#aaa', // Green when ready
+            cursor: isReadyForMapPosting ? 'pointer' : 'not-allowed',
             touchAction: 'manipulation'
           }}
         >

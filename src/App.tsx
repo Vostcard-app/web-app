@@ -25,7 +25,7 @@ import QuickAudio from "./pages/QuickAudio";
 import ListView from "./pages/ListView";
 import ScrollingCameraView from "./pages/ScrollingCameraView";
 import CameraView from "./pages/CameraView";
-import QuickcardCameraView from "./pages/QuickcardCameraView";
+
 import Step2CameraView from "./pages/Step2CameraView";
 import SavedVostcardsListView from "./components/SavedVostcardsListView";
 import SettingsView from "./pages/SettingsView";
@@ -119,7 +119,7 @@ function App() {
                   {/* 📹 Recording */}
                   <Route path="/camera" element={<CameraView />} />
                   <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
-                  <Route path="/quickcard-camera" element={<QuickcardCameraView />} />
+      
 
                   {/* 🛠️ Creation Flow */}
                   <Route path="/create-step1" element={<CreateVostcardStep1 />} />

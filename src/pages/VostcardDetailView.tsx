@@ -868,12 +868,12 @@ Tap OK to continue.`;
               }}
             >
               {vostcard.username || 'Anonymous'}
-            </div>
           </div>
+        </div>
 
           {/* ☕ Tip Button for Guides - Right aligned with avatar */}
-          {userProfile?.userRole === 'guide' && 
-           user?.uid !== vostcard.userID && (
+        {userProfile?.userRole === 'guide' && 
+         user?.uid !== vostcard.userID && (
             <button
               ref={tipButtonRef}
               onClick={handleTipButtonClick}
@@ -901,7 +901,7 @@ Tap OK to continue.`;
               Leave a Tip
               <FaChevronDown size={10} />
             </button>
-          )}
+        )}
         </div>
 
 
