@@ -652,8 +652,50 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
-  const handleQuickcardPinPlacer = () => {
+  const handleQuickcardPinPlacer = async () => {
     console.log('🗺️ Pin placer button clicked!'); // Debug log
+    
+    // ✅ SAVE CURRENT QUICKCARD STATE BEFORE NAVIGATING
+    const stateToSave: any = {
+      title: quickcardTitle,
+      description: quickcardDescription,
+      categories: quickcardCategories,
+      audioSource: quickcardIntroAudioSource,
+      audioFileName: quickcardIntroAudioFileName,
+    };
+
+    // Convert photos to base64 for storage
+    if (quickcardPhotos.length > 0) {
+      try {
+        const photoBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(quickcardPhotos[0]);
+        });
+        stateToSave.photoBase64 = photoBase64;
+        stateToSave.photoType = quickcardPhotos[0].type;
+      } catch (error) {
+        console.error('❌ Failed to convert photo to base64:', error);
+      }
+    }
+
+    // Convert audio to base64 for storage
+    if (quickcardIntroAudio) {
+      try {
+        const audioBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(quickcardIntroAudio);
+        });
+        stateToSave.audioBase64 = audioBase64;
+        stateToSave.audioType = quickcardIntroAudio.type;
+      } catch (error) {
+        console.error('❌ Failed to convert audio to base64:', error);
+      }
+    }
+
+    // Store the state
+    sessionStorage.setItem('quickcardCreatorState', JSON.stringify(stateToSave));
     
     // Navigate to pin placer with required pinData
     navigate('/pin-placer', {

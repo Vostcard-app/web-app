@@ -794,102 +794,89 @@ Tap OK to continue.`;
         </h1>
       </div>
 
-      {/* ✅ Enhanced High-Resolution Single Photo Display with Photo Counter */}
+      {/* ✅ UPDATED: Auto-Height Single Photo Display */}
       <div style={{ 
         padding: '20px', 
         display: 'flex', 
-        justifyContent: 'center',
-        minHeight: '350px', // ✅ Increased minimum height for better resolution
-        maxHeight: '65vh' // ✅ Increased max height for larger displays
+        justifyContent: 'center'
       }}>
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
-            maxWidth: '800px', // ✅ Increased max width for better resolution
-            display: 'flex',
-            overflow: 'hidden'
+            maxWidth: '800px',
+            borderRadius: '16px',
+            overflow: 'hidden',
+            backgroundColor: '#f8f9fa',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            position: 'relative',
+            cursor: 'pointer'
           }}>
-            {/* ✅ Single Main Photo - Full Width */}
-            <div style={{ 
-              flex: 1, // ✅ Full width for single photo
-              backgroundColor: 'transparent',
-              borderRadius: '16px', // ✅ Increased border radius
-              overflow: 'hidden',
-              position: 'relative',
-              cursor: 'pointer',
-              minHeight: '350px', // ✅ Ensure minimum height for quality
-              boxShadow: '0 8px 32px rgba(0,0,0,0.12)' // ✅ Enhanced shadow
-            }}>
-              <div style={{
-                position: 'relative',
+            <img
+              src={photoURLs[0]}
+              alt="Quickcard"
+              style={{
                 width: '100%',
-                height: '100%',
-                minHeight: '350px',
-                backgroundColor: '#f8f9fa',
+                height: 'auto',
+                display: 'block',
+                cursor: 'pointer',
+                imageRendering: 'crisp-edges' as any,
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
+                transform: 'translateZ(0)',
+                filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
+              } as React.CSSProperties}
+              onClick={() => {
+                if (photoURLs.length > 1) {
+                  setSelectedPhotoIndex(0);
+                  setShowMultiPhotoModal(true);
+                } else {
+                  handleMainPhotoClick();
+                }
+              }}
+              loading="eager"
+              fetchPriority="high"
+            />
+            
+            {photoURLs.length > 1 && (
+              <div style={{
+                position: 'absolute',
+                top: '12px',
+                right: '12px',
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                color: 'white',
+                padding: '6px 12px',
                 borderRadius: '16px',
-                overflow: 'hidden'
+                fontSize: '14px',
+                fontWeight: 'bold',
+                backdropFilter: 'blur(4px)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
               }}>
-                <img
-                  src={photoURLs[0]}
-                  alt="Quickcard"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
-                    objectPosition: 'center',
-                    cursor: 'pointer',
-                    // ✅ High-quality image rendering hints
-                    imageRendering: 'crisp-edges' as any,
-                    WebkitBackfaceVisibility: 'hidden',
-                    backfaceVisibility: 'hidden',
-                    transform: 'translateZ(0)', // ✅ Hardware acceleration
-                    // ✅ Additional quality settings
-                    filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
-                  } as React.CSSProperties}
-                  onClick={() => {
-                    if (photoURLs.length > 1) {
-                      setSelectedPhotoIndex(0);
-                      setShowMultiPhotoModal(true);
-                    } else {
-                      handleMainPhotoClick();
-                    }
-                  }} // ✅ Click handler for single or multiple photos
-                  loading="eager" // ✅ Prioritize loading
-                  fetchPriority="high" // ✅ Ensure high priority loading
-                />
-                
-                {/* ✅ Photo Counter - Always show if multiple photos */}
-                <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-                  {photoURLs.length > 1 && (
-                    <div style={{
-                      backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
-                      color: 'white',
-                      padding: '6px 12px', // ✅ Increased padding
-                      borderRadius: '16px', // ✅ Increased border radius
-                      fontSize: '14px', // ✅ Increased font size
-                      fontWeight: 'bold',
-                      backdropFilter: 'blur(4px)', // ✅ Subtle blur effect
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.4)', // ✅ Enhanced shadow
-                    }}>
-                      1/{photoURLs.length}
-                    </div>
-                  )}
-                </div>
+                1/{photoURLs.length}
               </div>
-            </div>
+            )}
           </div>
         ) : (
           <div style={{ 
             width: '100%',
-            backgroundColor: '#f0f0f0',
-            borderRadius: '12px',
+            maxWidth: '800px',
+            height: '200px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#999',
-            fontSize: '18px'
+            border: '2px dashed #dee2e6'
           }}>
-            No photos available
+            <div style={{
+              textAlign: 'center',
+              color: '#6c757d',
+              fontSize: '18px'
+            }}>
+              <FaMap size={48} style={{ marginBottom: '12px', opacity: 0.5 }} />
+              <div style={{ fontSize: '16px', fontWeight: '500' }}>
+                No photos available
+              </div>
+            </div>
           </div>
         )}
       </div>

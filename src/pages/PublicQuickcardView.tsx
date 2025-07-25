@@ -1114,7 +1114,6 @@ const PublicQuickcardView: React.FC = () => {
         }}>
           <button
             onClick={() => {
-              // Navigate to a detailed description page or show modal
               alert('Description details would be shown here');
             }}
             style={{
