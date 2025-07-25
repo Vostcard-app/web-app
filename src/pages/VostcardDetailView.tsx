@@ -658,7 +658,13 @@ Tap OK to continue.`;
   // ✅ NEW: Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    console.log('🔍 VostcardDetailView Touch START detected:', { y: touch.clientY, x: touch.clientX });
+    console.log('🔍 VostcardDetailView Touch START detected:', { 
+      y: touch.clientY, 
+      x: touch.clientX,
+      currentIndex,
+      vostcardList: vostcardList.length,
+      id
+    });
     setTouchStart({
       y: touch.clientY,
       x: touch.clientX,
@@ -686,16 +692,29 @@ Tap OK to continue.`;
   };
 
   const handleTouchEnd = () => {
-    console.log('🔍 VostcardDetailView Touch END detected:', { touchStart: !!touchStart, touchEnd: !!touchEnd, isScrolling });
+    console.log('🔍 VostcardDetailView Touch END detected:', { 
+      touchStart: !!touchStart, 
+      touchEnd: !!touchEnd, 
+      isScrolling,
+      currentIndex,
+      vostcardList: vostcardList.length,
+      id
+    });
     
-    if (!touchStart || !touchEnd || isScrolling) {
-      // Reset and allow normal scrolling
-      console.log('🔍 VostcardDetailView Touch END - Early return:', { touchStart: !!touchStart, touchEnd: !!touchEnd, isScrolling });
-      setTouchStart(null);
-      setTouchEnd(null);
-      setIsScrolling(false);
-      return;
-    }
+    try {
+      if (!touchStart || !touchEnd || isScrolling) {
+        // Reset and allow normal scrolling
+        console.log('🔍 VostcardDetailView Touch END - Early return:', { 
+          touchStart: !!touchStart, 
+          touchEnd: !!touchEnd, 
+          isScrolling,
+          reason: !touchStart ? 'no touchStart' : !touchEnd ? 'no touchEnd' : 'isScrolling'
+        });
+        setTouchStart(null);
+        setTouchEnd(null);
+        setIsScrolling(false);
+        return;
+      }
 
     const distance = touchStart.y - touchEnd.y;
     const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
@@ -750,6 +769,14 @@ Tap OK to continue.`;
     setTouchStart(null);
     setTouchEnd(null);
     setIsScrolling(false);
+    
+    } catch (error) {
+      console.error('🚨 ERROR in VostcardDetailView handleTouchEnd:', error);
+      console.log('🔧 VostcardDetailView resetting touch state after error');
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsScrolling(false);
+    }
   };
 
   if (loading) {

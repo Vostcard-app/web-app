@@ -627,35 +627,57 @@ Tap OK to continue.`;
   const canGoToNext = vostcardList.length > 0 && currentIndex < vostcardList.length - 1;
 
   const handlePreviousQuickcard = () => {
+    console.log('🔄 handlePreviousQuickcard called:', { canGoToPrevious, currentIndex, vostcardList: vostcardList.length });
     if (canGoToPrevious) {
       const previousId = vostcardList[currentIndex - 1];
       console.log('📱 Navigating to previous:', previousId, 'index:', currentIndex - 1);
-      navigate(`/vostcard/${previousId}`, {
-        state: {
-          vostcardList,
-          currentIndex: currentIndex - 1
-        }
-      });
+      try {
+        navigate(`/vostcard/${previousId}`, {
+          state: {
+            vostcardList,
+            currentIndex: currentIndex - 1
+          }
+        });
+        console.log('✅ Navigation to previous completed successfully');
+      } catch (error) {
+        console.error('🚨 ERROR during navigation to previous:', error);
+      }
+    } else {
+      console.log('❌ Cannot navigate to previous:', { canGoToPrevious, currentIndex });
     }
   };
 
   const handleNextQuickcard = () => {
+    console.log('🔄 handleNextQuickcard called:', { canGoToNext, currentIndex, vostcardList: vostcardList.length });
     if (canGoToNext) {
       const nextId = vostcardList[currentIndex + 1];
       console.log('📱 Navigating to next:', nextId, 'index:', currentIndex + 1);
-      navigate(`/vostcard/${nextId}`, {
-        state: {
-          vostcardList,
-          currentIndex: currentIndex + 1
-        }
-      });
+      try {
+        navigate(`/vostcard/${nextId}`, {
+          state: {
+            vostcardList,
+            currentIndex: currentIndex + 1
+          }
+        });
+        console.log('✅ Navigation to next completed successfully');
+      } catch (error) {
+        console.error('🚨 ERROR during navigation to next:', error);
+      }
+    } else {
+      console.log('❌ Cannot navigate to next:', { canGoToNext, currentIndex, listLength: vostcardList.length });
     }
   };
 
   // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    console.log('🔍 Touch START detected:', { y: touch.clientY, x: touch.clientX });
+    console.log('🔍 Touch START detected:', { 
+      y: touch.clientY, 
+      x: touch.clientX,
+      currentIndex,
+      vostcardList: vostcardList.length,
+      id
+    });
     setTouchStart({
       y: touch.clientY,
       x: touch.clientX,
@@ -683,16 +705,29 @@ Tap OK to continue.`;
   };
 
   const handleTouchEnd = () => {
-    console.log('🔍 Touch END detected:', { touchStart: !!touchStart, touchEnd: !!touchEnd, isScrolling });
+    console.log('🔍 Touch END detected:', { 
+      touchStart: !!touchStart, 
+      touchEnd: !!touchEnd, 
+      isScrolling,
+      currentIndex,
+      vostcardList: vostcardList.length,
+      id
+    });
     
-    if (!touchStart || !touchEnd || isScrolling) {
-      // Reset and allow normal scrolling
-      console.log('🔍 Touch END - Early return:', { touchStart: !!touchStart, touchEnd: !!touchEnd, isScrolling });
-      setTouchStart(null);
-      setTouchEnd(null);
-      setIsScrolling(false);
-      return;
-    }
+    try {
+      if (!touchStart || !touchEnd || isScrolling) {
+        // Reset and allow normal scrolling
+        console.log('🔍 Touch END - Early return:', { 
+          touchStart: !!touchStart, 
+          touchEnd: !!touchEnd, 
+          isScrolling,
+          reason: !touchStart ? 'no touchStart' : !touchEnd ? 'no touchEnd' : 'isScrolling'
+        });
+        setTouchStart(null);
+        setTouchEnd(null);
+        setIsScrolling(false);
+        return;
+      }
 
     const distance = touchStart.y - touchEnd.y;
     const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
@@ -749,6 +784,14 @@ Tap OK to continue.`;
     setTouchStart(null);
     setTouchEnd(null);
     setIsScrolling(false);
+    
+    } catch (error) {
+      console.error('🚨 ERROR in handleTouchEnd:', error);
+      console.log('🔧 Resetting touch state after error');
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsScrolling(false);
+    }
   };
 
   // Debug logging for audio detection
