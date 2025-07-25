@@ -697,19 +697,14 @@ Tap OK to continue.`;
       style={{
         background: '#fff',
         minHeight: '100vh',
-        overflowY: 'auto', // ✅ Ensure scrollability
+        height: 'auto',
+        overflowY: 'auto',
         overflowX: 'hidden',
         fontFamily: 'system-ui, sans-serif',
-        WebkitOverflowScrolling: 'touch', // ✅ Smooth scrolling on iOS
+        WebkitOverflowScrolling: 'touch',
         position: 'relative',
-        // ✅ Prevent bounce scrolling but allow normal scroll
-        overscrollBehavior: 'contain',
-        touchAction: 'pan-y' // ✅ Allow vertical panning (scrolling)
+        touchAction: 'pan-y'
       }}
-      // ✅ Swipe gesture event handlers
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       {/* Header */}
       <div style={{ 
@@ -808,17 +803,17 @@ Tap OK to continue.`;
 
       {/* ✅ Scrollable content area */}
       <div style={{
-        paddingTop: '80px', // Account for fixed header
+        paddingTop: '20px', // Minimal top spacing
         paddingBottom: '40px', // Extra space at bottom
-        minHeight: 'calc(100vh - 80px)' // Ensure full height minus header
+        minHeight: 'calc(100vh + 100px)' // Ensure content is taller than viewport for scrolling
       }}>
         {/* User Info */}
         <div style={{ 
-          padding: '15px 20px 5px 20px', // 10px extra padding on top
+          padding: '15px 20px 5px 20px', 
           display: 'flex', 
           alignItems: 'center',
-          justifyContent: 'flex-start',
-          marginTop: '78px', // Account for fixed header
+          justifyContent: 'space-between', // Changed to space-between for tip button
+          marginTop: '60px', // Proper spacing to clear fixed header
         }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div 
@@ -867,17 +862,10 @@ Tap OK to continue.`;
               {vostcard.username || 'Anonymous'}
             </div>
           </div>
-        </div>
 
-        {/* ☕ Tip Button for Guides - Under Avatar */}
-        {userProfile?.userRole === 'guide' && 
-         user?.uid !== vostcard.userID && (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            marginTop: '10px',
-            marginBottom: '10px'
-          }}>
+          {/* ☕ Tip Button for Guides - Right aligned with avatar */}
+          {userProfile?.userRole === 'guide' && 
+           user?.uid !== vostcard.userID && (
             <button
               ref={tipButtonRef}
               onClick={handleTipButtonClick}
@@ -886,27 +874,29 @@ Tap OK to continue.`;
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '0px 20px',
-                fontSize: '16px',
+                padding: '8px 16px',
+                fontSize: '14px',
                 fontWeight: 500,
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                 pointerEvents: 'auto',
                 transition: 'transform 0.1s ease',
-                height: '40px',
+                height: '32px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '8px'
+                gap: '6px'
               }}
             >
               Leave a Tip
-              <FaChevronDown size={12} />
+              <FaChevronDown size={10} />
             </button>
-          </div>
-        )}
+          )}
+        </div>
+
+
 
         {/* Title */}
         <div style={{ padding: '0 20px' }}>

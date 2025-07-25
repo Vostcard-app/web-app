@@ -485,8 +485,7 @@ Tap OK to continue.`;
         WebkitOverflowScrolling: 'touch',
         position: 'relative',
         overscrollBehavior: 'contain',
-        touchAction: 'pan-y',
-        paddingTop: '70px' // Account for fixed header
+        touchAction: 'pan-y'
       }}
     >
       {/* Header */}
@@ -548,7 +547,7 @@ Tap OK to continue.`;
         display: 'flex', 
         alignItems: 'center',
         justifyContent: 'flex-start',
-        marginTop: '0px', // No extra margin needed - container has paddingTop
+        marginTop: '60px', // Minimal spacing to clear fixed header
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div 

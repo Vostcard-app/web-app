@@ -40,8 +40,8 @@ const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
     return (
       <div style={{ 
         width: '100%', 
-        height: '100vh',
-        overflow: 'hidden' 
+        minHeight: '100vh',
+        overflow: 'auto' 
       }}>
         {children}
       </div>
