@@ -71,7 +71,13 @@ const QuickcardListView = () => {
   };
 
   const handleView = (quickcardId: string) => {
-    navigate(`/quickcard/${quickcardId}`);
+    const currentIndex = quickcards.findIndex(q => q.id === quickcardId);
+    navigate(`/quickcard/${quickcardId}`, {
+      state: {
+        vostcardList: quickcards.map(q => q.id),
+        currentIndex: currentIndex
+      }
+    });
   };
 
   const handleDelete = async (quickcardId: string) => {

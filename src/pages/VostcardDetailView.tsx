@@ -790,6 +790,9 @@ Tap OK to continue.`;
         position: 'relative',
         touchAction: 'pan-y'
       }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Header */}
       <div style={{ 
