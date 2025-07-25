@@ -739,96 +739,77 @@ const PublicQuickcardView: React.FC = () => {
           {title || 'Untitled Quickcard'}
         </h1>
 
-        {/* ✅ Enhanced High-Resolution Single Photo Display with Photo Counter */}
+        {/* ✅ UPDATED: Auto-Height Single Photo Display - No Wasted Space */}
         <div style={{ 
-          marginBottom: '20px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '450px', // ✅ Increased minimum height for better resolution
-          maxHeight: '75vh' // ✅ Increased max height for larger displays
+          padding: '20px', 
+          display: 'flex', 
+          justifyContent: 'center'
+          // ✅ REMOVED: minHeight and maxHeight constraints
         }}>
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
               width: '100%',
-              maxWidth: '900px', // ✅ Increased max width for better resolution
-              display: 'flex',
-              overflow: 'hidden'
+              maxWidth: '900px',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              backgroundColor: '#f8f9fa',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+              position: 'relative',
+              cursor: 'pointer'
+              // ✅ SIMPLIFIED: Single container, no nested divs with fixed heights
             }}>
-              {/* ✅ Single Main Photo - Full Width */}
-              <div style={{ 
-                flex: 1, // ✅ Full width for single photo
-                backgroundColor: 'transparent',
-                borderRadius: '16px', // ✅ Increased border radius
-                overflow: 'hidden',
-                position: 'relative',
-                cursor: 'pointer',
-                minHeight: '450px', // ✅ Ensure minimum height for quality
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)' // ✅ Enhanced shadow
-              }}>
-                <div style={{
-                  position: 'relative',
+              <img
+                src={photoURLs[0]}
+                alt="Quickcard"
+                style={{
                   width: '100%',
-                  height: '100%',
-                  minHeight: '450px',
-                  backgroundColor: '#f8f9fa',
+                  height: 'auto', // ✅ CHANGED: Auto height for natural sizing
+                  display: 'block', // ✅ ADDED: Prevents inline spacing issues
+                  cursor: 'pointer',
+                  // ✅ High-quality image rendering
+                  imageRendering: 'crisp-edges' as any,
+                  WebkitBackfaceVisibility: 'hidden',
+                  backfaceVisibility: 'hidden',
+                  transform: 'translateZ(0)',
+                  filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
+                } as React.CSSProperties}
+                onClick={() => {
+                  if (photoURLs.length > 1) {
+                    setSelectedPhotoIndex(0);
+                    setShowMultiPhotoModal(true);
+                  } else {
+                    handleMainPhotoClick();
+                  }
+                }}
+                loading="eager"
+                fetchPriority="high"
+              />
+              
+              {/* ✅ Photo Counter - Positioned over image */}
+              {photoURLs.length > 1 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  padding: '6px 12px',
                   borderRadius: '16px',
-                  overflow: 'hidden'
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  backdropFilter: 'blur(4px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
                 }}>
-                  <img
-                    src={photoURLs[0]}
-                    alt="Quickcard"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
-                      objectPosition: 'center',
-                      cursor: 'pointer',
-                      // ✅ High-quality image rendering hints
-                      imageRendering: 'crisp-edges' as any,
-                      WebkitBackfaceVisibility: 'hidden',
-                      backfaceVisibility: 'hidden',
-                      transform: 'translateZ(0)', // ✅ Hardware acceleration
-                      // ✅ Additional quality settings
-                      filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
-                    } as React.CSSProperties}
-                    onClick={() => {
-                      if (photoURLs.length > 1) {
-                        setSelectedPhotoIndex(0);
-                        setShowMultiPhotoModal(true);
-                      } else {
-                        handleMainPhotoClick();
-                      }
-                    }} // ✅ Click handler for single or multiple photos
-                    loading="eager" // ✅ Prioritize loading
-                    fetchPriority="high" // ✅ Ensure high priority loading
-                  />
-                  
-                  {/* ✅ Photo Counter - Always show if multiple photos */}
-                  <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-                    {photoURLs.length > 1 && (
-                      <div style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
-                        color: 'white',
-                        padding: '6px 12px', // ✅ Increased padding
-                        borderRadius: '16px', // ✅ Increased border radius
-                        fontSize: '14px', // ✅ Increased font size
-                        fontWeight: 'bold',
-                        backdropFilter: 'blur(4px)', // ✅ Subtle blur effect
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.4)', // ✅ Enhanced shadow
-                      }}>
-                        1/{photoURLs.length}
-                      </div>
-                    )}
-                  </div>
+                  1/{photoURLs.length}
                 </div>
-              </div>
+              )}
             </div>
           ) : (
+            // ✅ No photos fallback - also auto-sized
             <div style={{ 
               width: '100%',
-              maxWidth: '600px',
-              height: '400px',
+              maxWidth: '800px',
+              height: '200px', // ✅ Minimal height for "no photos" message
               position: 'relative',
               backgroundColor: '#f8f9fa',
               borderRadius: '16px',
@@ -851,21 +832,21 @@ const PublicQuickcardView: React.FC = () => {
           )}
         </div>
 
-        {/* Three Buttons: Intro, Detail, View on Map - Smaller for better mobile fit */}
+        {/* Three Buttons: Intro, Detail, View on Map - REDUCED PADDING TO 5PX */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '16px 20px',
+          padding: '5px 20px',
           gap: '12px',
           flexWrap: 'wrap'
         }}>
-          {/* Intro Button - Always show if there's any audio */}
+          {/* Intro Button - UPDATED TO TRIGGER AUDIO + SLIDESHOW */}
           {hasAudio && (
             <button
               onClick={() => {
-                console.log('🎵 Intro button clicked');
-                // Play audio functionality (reuse existing)
+                console.log('🎵 Intro button clicked - playing audio and starting slideshow');
+                // Play audio functionality
                 if (audioRef.current) {
                   if (isPlayingAudio) {
                     audioRef.current.pause();
@@ -874,6 +855,11 @@ const PublicQuickcardView: React.FC = () => {
                     audioRef.current.play();
                     setIsPlayingAudio(true);
                   }
+                }
+                // Start slideshow with first photo
+                if (photoURLs && photoURLs.length > 0) {
+                  setSelectedPhotoIndex(0);
+                  setShowMultiPhotoModal(true);
                 }
               }}
               style={{
@@ -899,12 +885,12 @@ const PublicQuickcardView: React.FC = () => {
             </button>
           )}
 
-          {/* Detail Button - Show for all quickcards with audio */}
+          {/* Detail Button - UPDATED TO TRIGGER AUDIO + SLIDESHOW */}
           {hasAudio && (
             <button
               onClick={() => {
-                console.log('🎵 Detail button clicked');
-                // Play same audio for now (since this is temporary solution)
+                console.log('🎵 Detail button clicked - playing audio and starting slideshow');
+                // Play audio functionality (same for now)
                 if (audioRef.current) {
                   if (isPlayingAudio) {
                     audioRef.current.pause();
@@ -913,6 +899,11 @@ const PublicQuickcardView: React.FC = () => {
                     audioRef.current.play();
                     setIsPlayingAudio(true);
                   }
+                }
+                // Start slideshow with first photo
+                if (photoURLs && photoURLs.length > 0) {
+                  setSelectedPhotoIndex(0);
+                  setShowMultiPhotoModal(true);
                 }
               }}
               style={{
@@ -938,7 +929,7 @@ const PublicQuickcardView: React.FC = () => {
             </button>
           )}
 
-          {/* View on Map Button - Always show if location data exists */}
+          {/* View on Map Button - unchanged */}
           {quickcard?.latitude && quickcard?.longitude && (
             <button
               onClick={() => {
@@ -985,19 +976,6 @@ const PublicQuickcardView: React.FC = () => {
               View on Map
             </button>
           )}
-        </div>
-
-        {/* Description */}
-        <div style={{ 
-          color: '#333',
-          lineHeight: 1.6, // ✅ Improved line height
-          fontSize: '18px', // ✅ Increased font size
-          marginBottom: '24px', // ✅ Increased margin
-          maxWidth: '900px', // ✅ Match photo max width
-          margin: '0 auto 24px auto', // ✅ Center align with photos
-          padding: '0 12px' // ✅ Increased padding for mobile
-        }}>
-          {description || 'No description available.'}
         </div>
 
         {/* Action Icons Row: Like, Star, Comment, Share */}
@@ -1203,13 +1181,16 @@ const PublicQuickcardView: React.FC = () => {
         </div>
       </div>
 
-      {/* ✅ Multi Photo Modal */}
+      {/* ✅ Multi Photo Modal WITH AUTO-PLAY */}
       <MultiPhotoModal
         photos={photoURLs || []}
         initialIndex={selectedPhotoIndex}
         isOpen={showMultiPhotoModal}
         onClose={() => setShowMultiPhotoModal(false)}
         title={title || 'Quickcard Photos'}
+        autoPlay={true}
+        autoPlayInterval={10000}
+        audioDuration={quickcard?.audioDuration}
       />
 
       {/* Single Photo Modal (fallback) */}
