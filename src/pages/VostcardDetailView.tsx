@@ -1232,6 +1232,7 @@ Tap OK to continue.`;
             
             console.log('🔍 VostcardDetailView Detail Audio Detection:', {
               hasDetailAudio,
+              // Current fields being checked:
               audioURLs: vostcard?.audioURLs,
               audioURLsLength: vostcard?.audioURLs?.length,
               _firebaseAudioURLs: vostcard?._firebaseAudioURLs,
@@ -1239,9 +1240,17 @@ Tap OK to continue.`;
               audioFiles: vostcard?.audioFiles,
               audioFilesLength: vostcard?.audioFiles?.length,
               audioLabels: vostcard?.audioLabels,
-              allVostcardKeys: vostcard ? Object.keys(vostcard).filter(k => k.includes('audio') || k.includes('Audio')) : 'no vostcard',
-              fullVostcard: vostcard
+              // What actually exists:
+              audioURL: vostcard?.audioURL,
+              audio: vostcard?.audio,
+              _firebaseAudioURL: vostcard?._firebaseAudioURL,
+              allAudioKeys: vostcard ? Object.keys(vostcard).filter(k => k.toLowerCase().includes('audio')) : 'no vostcard'
             });
+            
+            // Log ALL properties to see what we're missing
+            if (vostcard) {
+              console.log('🔍 All Vostcard Properties:', Object.keys(vostcard).sort());
+            }
             
             return hasDetailAudio;
           })() && (
