@@ -924,7 +924,7 @@ Tap OK to continue.`;
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
           >
             <FaPlay size={14} style={{ marginRight: '8px' }} />
-            Intro
+            Short
           </button>
 
           {/* Detail Button - Show ONLY if there's a second recording */}
