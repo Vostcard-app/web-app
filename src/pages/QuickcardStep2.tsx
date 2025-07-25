@@ -11,6 +11,7 @@ export default function QuickcardStep2() {
   // Track selected photos (4 thumbnails for quickcards)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
+  const [showDescriptionModal, setShowDescriptionModal] = useState(false);
 
   // Initialize empty quickcard or load saved photos when component mounts
   useEffect(() => {
@@ -319,9 +320,36 @@ export default function QuickcardStep2() {
           Save & Continue
         </button>
 
+        {/* Description Link - Only show if description exists */}
+        {currentVostcard?.description && currentVostcard.description.trim() && (
+          <div style={{ 
+            marginTop: 20,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <div
+              onClick={() => setShowDescriptionModal(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#007aff',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                fontFamily: 'system-ui, sans-serif',
+                display: 'inline-block'
+              }}
+            >
+              Description
+            </div>
+          </div>
+        )}
+
         {/* Instructions */}
         <div style={{
-          marginTop: 20,
+          marginTop: currentVostcard?.description && currentVostcard.description.trim() ? 10 : 20,
           fontSize: 12,
           color: '#999',
           textAlign: 'center',
@@ -339,6 +367,53 @@ export default function QuickcardStep2() {
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
+
+      {/* Description Modal */}
+      {showDescriptionModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowDescriptionModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '24px',
+              borderRadius: '12px',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              overflow: 'auto',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
+              <button
+                onClick={() => setShowDescriptionModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
+              {currentVostcard?.description || 'No description available.'}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
