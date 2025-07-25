@@ -901,7 +901,7 @@ const PublicQuickcardView: React.FC = () => {
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
               {isPlayingAudio ? <FaPause size={12} style={{ marginRight: '6px' }} /> : <FaPlay size={12} style={{ marginRight: '6px' }} />}
-              {isPlayingAudio ? 'Pause' : 'Intro'}
+              {isPlayingAudio ? 'Pause' : 'Short'}
             </button>
           )}
 
