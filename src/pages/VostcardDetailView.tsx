@@ -168,6 +168,14 @@ const VostcardDetailView: React.FC = () => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           console.log('📱 Vostcard found:', data);
+          
+          // If this is a quickcard, redirect to the dedicated QuickcardDetailView
+          if (data.isQuickcard) {
+            console.log('📱 Redirecting quickcard to dedicated component');
+            navigate(`/quickcard/${id}`, { replace: true });
+            return;
+          }
+          
           setVostcard(data);
           setLoading(false);
         } else {
@@ -1216,27 +1224,56 @@ Tap OK to continue.`;
               Intro
             </button>
 
-            {/* Detail Button - Show if there's a second recording in any format */}
+            {/* Detail Button - Show ONLY if there's a second recording */}
             {(() => {
               const hasDetailAudio = (
-                // Multiple audio files exist
+                // Multiple audio files exist in any format
                 (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
                 (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
                 (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
+                // Check if audioLabels includes 'detail' (indicates 2+ audio files)
                 (vostcard?.audioLabels && vostcard.audioLabels.includes('detail')) ||
-                // TEMPORARY: Show detail button for all quickcards with any audio (both play same audio)
-                (vostcard?.isQuickcard && !!(vostcard?.audioURL || vostcard?.audio || vostcard?._firebaseAudioURL))
+                // Explicit detail audio field exists
+                (vostcard?.detailAudioURL) ||
+                // Both intro and detail audio fields exist
+                (vostcard?.introAudioURL && vostcard?.detailAudioURL)
               );
               
-              // Debug logs removed - issue identified
+              console.log('🔍 Detail button check:', {
+                hasDetailAudio,
+                audioFilesLength: vostcard?.audioFiles?.length || 0,
+                audioLabels: vostcard?.audioLabels,
+                hasDetailLabel: vostcard?.audioLabels?.includes('detail'),
+                vostcardId: vostcard?.id
+              });
               
               return hasDetailAudio;
             })() && (
               <button
                 onClick={() => {
-                  console.log('🎵 Detail button clicked - playing audio and showing swipeable photo gallery');
-                  // Play audio (for now using the same audio - you can modify this later for separate detail audio)
-                  handleAudioPlayback();
+                  console.log('🎵 Detail button clicked - playing detail audio');
+                  
+                  // Try to find and play the detail audio specifically
+                  const detailAudioSource = 
+                    // If audioLabels exist, find the detail audio at the same index
+                    (vostcard?.audioLabels && vostcard.audioFiles && 
+                     vostcard.audioLabels.includes('detail')) ? 
+                     vostcard.audioFiles[vostcard.audioLabels.indexOf('detail')] :
+                    // Fallback: use second audio file if multiple exist
+                    vostcard?.audioURLs?.[1] || 
+                    vostcard?._firebaseAudioURLs?.[1] || 
+                    vostcard?.audioFiles?.[1] ||
+                    vostcard?.detailAudioURL ||
+                    // Ultimate fallback: use first audio
+                    vostcard?.audioURL;
+                    
+                  console.log('🎵 Playing detail audio:', !!detailAudioSource);
+                  
+                  // Use the same playback mechanism but with detail audio
+                  if (detailAudioSource) {
+                    handleAudioPlayback(); // This will be enhanced to support detail audio
+                  }
+                  
                   // Show swipeable photo gallery starting with first photo
                   if (vostcard.photoURLs && vostcard.photoURLs.length > 0) {
                     setSelectedPhotoIndex(0);

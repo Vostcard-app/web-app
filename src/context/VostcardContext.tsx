@@ -214,9 +214,10 @@ async function uploadPhoto(userId: string, vostcardId: string, idx: number, file
 }
 
 // Helper for audio upload
-async function uploadAudio(userId: string, vostcardId: string, file: Blob): Promise<string> {
+async function uploadAudio(userId: string, vostcardId: string, file: Blob, index?: number): Promise<string> {
   console.log('🎵 Uploading audio to Firebase Storage...');
-  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/audio.webm`);
+  const filename = index !== undefined ? `audio-${index}.webm` : 'audio.webm';
+  const storageRef = ref(storage, `vostcards/${userId}/${vostcardId}/${filename}`);
   const uploadTask = uploadBytesResumable(storageRef, file);
   return new Promise((resolve, reject) => {
     uploadTask.on(
@@ -2687,9 +2688,30 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // --- Upload audio to Firebase Storage if exists ---
       let audioURL = '';
-      if (quickcard.audio && quickcard.audio instanceof Blob) {
-        console.log('🎵 Uploading audio to Firebase Storage...');
-        audioURL = await uploadAudio(userID, vostcardId, quickcard.audio);
+      let audioURLs: string[] = [];
+      let audioLabels: string[] = [];
+      
+      // Handle multiple audio files (new system)
+      if ((quickcard as any).audioFiles && (quickcard as any).audioFiles.length > 0) {
+        console.log(`🎵 Uploading ${(quickcard as any).audioFiles.length} audio files to Firebase Storage...`);
+        audioURLs = await Promise.all(
+          (quickcard as any).audioFiles.map(async (audioFile: Blob, idx: number) => {
+            if (audioFile instanceof Blob) {
+              const url = await uploadAudio(userID, vostcardId, audioFile, idx);
+              console.log(`✅ Audio ${idx + 1} uploaded:`, url);
+              return url;
+            }
+            return '';
+          })
+        );
+        audioLabels = (quickcard as any).audioLabels || [];
+        // Set primary audioURL to first audio for backward compatibility
+        audioURL = audioURLs[0] || '';
+      }
+      // Handle single audio file (legacy system)
+      else if ((quickcard as any).audio && (quickcard as any).audio instanceof Blob) {
+        console.log('🎵 Uploading single audio to Firebase Storage...');
+        audioURL = await uploadAudio(userID, vostcardId, (quickcard as any).audio);
         console.log('✅ Audio uploaded:', audioURL);
       }
 
@@ -2719,6 +2741,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoURL: '', // Quickcards don't have videos
         photoURLs: photoURLs,
         audioURL: audioURL,
+        audioURLs: audioURLs.length > 0 ? audioURLs : undefined,
+        audioLabels: audioLabels.length > 0 ? audioLabels : undefined,
         latitude: quickcard.geo.latitude,
         longitude: quickcard.geo.longitude,
         avatarURL: user.photoURL || '',

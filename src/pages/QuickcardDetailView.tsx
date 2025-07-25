@@ -798,7 +798,7 @@ Tap OK to continue.`;
             Intro
           </button>
 
-          {/* Detail Button - Show if there's a second recording in any format */}
+          {/* Detail Button - Show ONLY if there's a second recording */}
           {(() => {
             const hasDetailAudio = (
               // Multiple audio files exist
@@ -806,11 +806,24 @@ Tap OK to continue.`;
               (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
               (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
               (quickcard?.audioLabels && quickcard.audioLabels.includes('detail')) ||
-              // TEMPORARY: Show detail button for all quickcards with any audio (both play same audio)
-              (quickcard?.isQuickcard && !!(quickcard?.audioURL || quickcard?.audio || quickcard?._firebaseAudioURL))
+              // Explicit detail audio field exists
+              (quickcard?.detailAudioURL) ||
+              // Both intro and detail audio fields exist
+              (quickcard?.introAudioURL && quickcard?.detailAudioURL)
             );
             
-            // Debug logs removed - issue identified
+            console.log('🔍 QuickcardDetailView - Detail button check:', {
+              hasDetailAudio,
+              audioFilesLength: quickcard?.audioFiles?.length || 0,
+              audioLabels: quickcard?.audioLabels,
+              hasDetailLabel: quickcard?.audioLabels?.includes('detail'),
+              quickcardId: quickcard?.id,
+              // Show ALL audio-related fields
+              audioURL: quickcard?.audioURL,
+              audioURLs: quickcard?.audioURLs,
+              _firebaseAudioURLs: quickcard?._firebaseAudioURLs,
+              allAudioKeys: Object.keys(quickcard || {}).filter(key => key.toLowerCase().includes('audio'))
+            });
             
             return hasDetailAudio;
           })() && (
