@@ -208,30 +208,38 @@ const QuickcardDetailView: React.FC = () => {
   const handleShareClick = async () => {
     if (!quickcard) return;
     
-    // Show public sharing warning
-    const confirmMessage = `⚠️ Attention:
+    // Check if this is already a posted/public quickcard
+    const isAlreadyPosted = quickcard.state === 'posted' || quickcard.visibility === 'public';
+    
+    // Only show warning for private/personal posts
+    if (!isAlreadyPosted) {
+      const confirmMessage = `⚠️ Attention:
 
 This will create a public link for your post. Anyone with the link can see it.
 
 Tap OK to continue.`;
-    
-    if (!window.confirm(confirmMessage)) {
-      return; // User cancelled
+      
+      if (!window.confirm(confirmMessage)) {
+        return; // User cancelled
+      }
     }
     
     try {
-      // Generate public share URL (always quickcard)
-      const shareUrl = `${window.location.origin}/share-quickcard/${quickcard.id}`;
+      // Generate public share URL
+      const isQuickcard = quickcard.isQuickcard === true;
+      const shareUrl = isQuickcard 
+        ? `${window.location.origin}/share-quickcard/${quickcard.id}`
+        : `${window.location.origin}/share/${quickcard.id}`;
       
       // Generate share text using utility
-      const shareText = generateShareText({ ...quickcard, isQuickcard: true }, shareUrl);
+      const shareText = generateShareText(quickcard, shareUrl);
       
       // Use native sharing or clipboard
       if (navigator.share) {
         await navigator.share({ text: shareText });
       } else {
         await navigator.clipboard.writeText(shareText);
-        alert('Public share link copied to clipboard!');
+        alert('Share link copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing:', error);

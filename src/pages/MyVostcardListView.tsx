@@ -102,7 +102,7 @@ const MyVostcardListView = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Show public sharing warning
+    // Show public sharing warning only for private/personal posts
     const confirmMessage = `⚠️ Attention:
 
 This will create a public link for your post. Anyone with the link can see it.

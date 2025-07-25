@@ -219,17 +219,7 @@ const MyPostedVostcardsListView = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Show public sharing warning
-    const confirmMessage = `⚠️ Attention:
-
-This will create a public link for your post. Anyone with the link can see it.
-
-Tap OK to continue.`;
-    
-    if (!window.confirm(confirmMessage)) {
-      return; // User cancelled
-    }
-    
+    // NO WARNING for posted vostcards - they're already public
     try {
       // Update the vostcard to mark it as privately shared
       if (vostcard?.id) {
@@ -263,7 +253,7 @@ ${privateUrl}`;
         navigator.share({ text: shareText }).catch(console.error);
       } else {
         navigator.clipboard.writeText(shareText).then(() => {
-          alert('Public share link copied to clipboard!');
+          alert('Share link copied to clipboard!');
         }).catch(() => {
           alert(`Share this message: ${shareText}`);
         });

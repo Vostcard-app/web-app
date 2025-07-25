@@ -291,15 +291,20 @@ const VostcardDetailView: React.FC = () => {
   const handleShareClick = async () => {
     if (!vostcard) return;
     
-    // Show public sharing warning
-    const confirmMessage = `⚠️ Attention:
+    // Check if this is already a posted/public vostcard
+    const isAlreadyPosted = vostcard.state === 'posted' || vostcard.visibility === 'public';
+    
+    // Only show warning for private/personal posts
+    if (!isAlreadyPosted) {
+      const confirmMessage = `⚠️ Attention:
 
 This will create a public link for your post. Anyone with the link can see it.
 
 Tap OK to continue.`;
-    
-    if (!window.confirm(confirmMessage)) {
-      return; // User cancelled
+      
+      if (!window.confirm(confirmMessage)) {
+        return; // User cancelled
+      }
     }
     
     try {
@@ -317,7 +322,7 @@ Tap OK to continue.`;
         await navigator.share({ text: shareText });
       } else {
         await navigator.clipboard.writeText(shareText);
-        alert('Public share link copied to clipboard!');
+        alert('Share link copied to clipboard!');
       }
     } catch (error) {
       console.error('Error sharing:', error);
