@@ -484,6 +484,9 @@ Tap OK to continue.`;
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
         position: 'relative',
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y',
+        paddingTop: '70px' // Account for fixed header
       }}
     >
       {/* Header */}
@@ -541,11 +544,11 @@ Tap OK to continue.`;
 
       {/* User Info */}
       <div style={{ 
-        padding: '25px 20px 5px 20px', // 10px extra padding on top
+        padding: '15px 20px 5px 20px', 
         display: 'flex', 
         alignItems: 'center',
         justifyContent: 'flex-start',
-        marginTop: '63px',
+        marginTop: '0px', // No extra margin needed - container has paddingTop
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div 
