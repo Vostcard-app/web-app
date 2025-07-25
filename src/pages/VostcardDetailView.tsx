@@ -1222,12 +1222,29 @@ Tap OK to continue.`;
           </button>
 
           {/* Detail Button - Show if there's a second recording in any format */}
-          {(
-            (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
-            (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
-            (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
-            (vostcard?.audioLabels && vostcard.audioLabels.includes('detail'))
-          ) && (
+          {(() => {
+            const hasDetailAudio = (
+              (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
+              (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
+              (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
+              (vostcard?.audioLabels && vostcard.audioLabels.includes('detail'))
+            );
+            
+            console.log('🔍 VostcardDetailView Detail Audio Detection:', {
+              hasDetailAudio,
+              audioURLs: vostcard?.audioURLs,
+              audioURLsLength: vostcard?.audioURLs?.length,
+              _firebaseAudioURLs: vostcard?._firebaseAudioURLs,
+              _firebaseAudioURLsLength: vostcard?._firebaseAudioURLs?.length,
+              audioFiles: vostcard?.audioFiles,
+              audioFilesLength: vostcard?.audioFiles?.length,
+              audioLabels: vostcard?.audioLabels,
+              allVostcardKeys: vostcard ? Object.keys(vostcard).filter(k => k.includes('audio') || k.includes('Audio')) : 'no vostcard',
+              fullVostcard: vostcard
+            });
+            
+            return hasDetailAudio;
+          })() && (
             <button
               onClick={() => {
                 console.log('🎵 Detail button clicked - playing audio and showing swipeable photo gallery');
