@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaSync, FaFlag, FaArrowLeft, FaVolumeUp, FaPlay, FaPause } from 'react-icons/fa';
+import { FaHome, FaHeart, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaSync, FaFlag, FaArrowLeft, FaVolumeUp, FaPlay, FaPause, FaStar, FaInfo } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -70,6 +70,10 @@ const PublicQuickcardView: React.FC = () => {
   const [loadingProgress, setLoadingProgress] = useState('Connecting...');
   const [retryCount, setRetryCount] = useState(0);
   const [showRetryButton, setShowRetryButton] = useState(false);
+  
+  // New states for enhanced shared view
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [userRating, setUserRating] = useState(0);
 
   // ✅ Performance optimization - memoize photo URLs
   const photoURLs = useMemo(() => quickcard?.photoURLs || [], [quickcard?.photoURLs]);
@@ -609,6 +613,71 @@ const PublicQuickcardView: React.FC = () => {
         </div>
       </div>
 
+      {/* Creator Info and Login Section */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 20px',
+        borderBottom: '1px solid #eee',
+        backgroundColor: '#fff'
+      }}>
+        {/* Creator Avatar and Username */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            backgroundColor: '#007aff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '18px',
+            fontWeight: 'bold'
+          }}>
+            {quickcardUsername?.charAt(0)?.toUpperCase() || 'U'}
+          </div>
+          <div>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#333'
+            }}>
+              {quickcardUsername || 'Anonymous User'}
+            </div>
+            <div style={{
+              fontSize: '12px',
+              color: '#666'
+            }}>
+              Creator
+            </div>
+          </div>
+        </div>
+
+        {/* Login/Register Button */}
+        <button
+          onClick={() => navigate('/user-guide')}
+          style={{
+            backgroundColor: '#007aff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '10px 20px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Login / Register
+        </button>
+      </div>
+
       {/* Like Message */}
       {showLikeMessage && (
         <div style={{
@@ -656,114 +725,7 @@ const PublicQuickcardView: React.FC = () => {
         minHeight: 'calc(100vh - 200px)',
         boxSizing: 'border-box'
       }}>
-        {/* Map Icon, Heart Icon, Audio Button, and Free Account Button - All on same line */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          gap: 16,
-          marginBottom: '16px',
-          marginTop: '25px',
-          flexWrap: 'wrap'
-        }}>
-          {/* Map Icon */}
-          <div 
-            style={{
-              cursor: 'pointer',
-              padding: '12px',
-              borderRadius: '12px',
-              background: '#f5f5f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid #e0e0e0'
-            }}
-            onClick={() => {
-              // Navigate all users to public map view regardless of authentication status
-              if (quickcard.latitude && quickcard.longitude) {
-                console.log('📍 Opening quickcard location on public map for all users');
-                navigate('/public-map', {
-                  state: {
-                    singleVostcard: {
-                      id: quickcard.id,
-                      title: quickcard.title,
-                      description: quickcard.description,
-                      latitude: quickcard.latitude,
-                      longitude: quickcard.longitude,
-                      photoURLs: quickcard.photoURLs,
-                      username: quickcard.username,
-                      isOffer: false,
-                      isQuickcard: true,
-                      categories: quickcard.categories,
-                      createdAt: quickcard.formattedDate,
-                      visibility: 'public',
-                      state: 'posted'
-                    }
-                  }
-                });
-              } else {
-                alert('No location data available for this quickcard');
-              }
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <FaMap size={28} color="#333" />
-          </div>
-
-          {/* ✅ Enhanced Audio Button - shows if quickcard has audio */}
-          {hasAudio && (
-            <div 
-              style={{
-                cursor: 'pointer',
-                padding: '12px',
-                borderRadius: '12px',
-                background: isPlayingAudio ? '#e6f3ff' : '#f5f5f5',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                border: `1px solid ${isPlayingAudio ? '#007aff' : '#e0e0e0'}`
-              }}
-              onClick={handleAudioClick}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
-              {isPlayingAudio ? (
-                <FaPause size={28} color="#007aff" />
-              ) : (
-                <FaPlay size={28} color="#333" />
-              )}
-            </div>
-          )}
-
-          {/* Heart Icon */}
-          <div 
-            style={{ 
-              cursor: 'pointer',
-              padding: '12px',
-              borderRadius: '12px',
-              background: isLiked ? '#ffe6e6' : '#f5f5f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: isLiked ? '1px solid #ff6b6b' : '1px solid #e0e0e0'
-            }}
-            onClick={handleLikeClick}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            <FaHeart size={28} color={isLiked ? '#ff6b6b' : '#333'} />
-          </div>
-        </div>
+        {/* REMOVED: Old action icons section - moved to below description */}
 
         {/* Title */}
         <h1 style={{ 
@@ -823,7 +785,6 @@ const PublicQuickcardView: React.FC = () => {
                       objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
                       objectPosition: 'center',
                       // ✅ High-quality image rendering hints
-                      imageRendering: 'high-quality',
                       imageRendering: 'crisp-edges' as any,
                       WebkitBackfaceVisibility: 'hidden',
                       backfaceVisibility: 'hidden',
@@ -842,25 +803,7 @@ const PublicQuickcardView: React.FC = () => {
                   
                   {/* ✅ Enhanced visual indicators */}
                   <div style={{ position: 'absolute', top: '16px', left: '16px', right: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    {/* ✅ Audio indicator on main photo */}
-                    {hasAudio && (
-                      <div style={{
-                        backgroundColor: 'rgba(0, 122, 255, 0.92)', // ✅ Enhanced blue background for audio
-                        color: 'white',
-                        padding: '8px 16px', // ✅ Increased padding
-                        borderRadius: '20px', // ✅ Increased border radius
-                        fontSize: '14px', // ✅ Increased font size
-                        fontWeight: 'bold',
-                        backdropFilter: 'blur(12px)', // ✅ Enhanced blur
-                        boxShadow: '0 4px 16px rgba(0,122,255,0.4)', // ✅ Enhanced shadow
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px' // ✅ Increased gap
-                      }}>
-                        {isPlayingAudio ? <FaPause size={14} /> : <FaPlay size={14} />}
-                        {isPlayingAudio ? 'Playing' : 'Tap to play'}
-                      </div>
-                    )}
+                    {/* REMOVED: Audio indicator on main photo - "Tap to play" button */}
                     
                     {/* Photo counter - moved to right side */}
                     {photoURLs.length > 1 && (
@@ -923,7 +866,7 @@ const PublicQuickcardView: React.FC = () => {
                           objectFit: 'cover',
                           objectPosition: 'center',
                           // ✅ High-quality image rendering
-                          imageRendering: 'high-quality',
+                          imageRendering: 'crisp-edges' as any,
                           WebkitBackfaceVisibility: 'hidden',
                           backfaceVisibility: 'hidden',
                           transform: 'translateZ(0)',
@@ -985,6 +928,136 @@ const PublicQuickcardView: React.FC = () => {
           )}
         </div>
 
+        {/* Three Buttons: Intro, Detail, View on Map */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px',
+          gap: '16px',
+          flexWrap: 'wrap'
+        }}>
+          {/* Intro Button - Always show if there's any audio */}
+          {hasAudio && (
+            <button
+              onClick={() => {
+                console.log('🎵 Intro button clicked');
+                // Play audio functionality (reuse existing)
+                if (audioRef.current) {
+                  if (isPlayingAudio) {
+                    audioRef.current.pause();
+                    setIsPlayingAudio(false);
+                  } else {
+                    audioRef.current.play();
+                    setIsPlayingAudio(true);
+                  }
+                }
+              }}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '100px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              <FaPlay size={14} style={{ marginRight: '8px' }} />
+              Intro
+            </button>
+          )}
+
+          {/* Detail Button - Show for all quickcards with audio */}
+          {hasAudio && (
+            <button
+              onClick={() => {
+                console.log('🎵 Detail button clicked');
+                // Play same audio for now (since this is temporary solution)
+                if (audioRef.current) {
+                  if (isPlayingAudio) {
+                    audioRef.current.pause();
+                    setIsPlayingAudio(false);
+                  } else {
+                    audioRef.current.play();
+                    setIsPlayingAudio(true);
+                  }
+                }
+              }}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '100px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              <FaPlay size={14} style={{ marginRight: '8px' }} />
+              Detail
+            </button>
+          )}
+
+          {/* View on Map Button - Always show if location data exists */}
+          {quickcard?.latitude && quickcard?.longitude && (
+            <button
+              onClick={() => {
+                console.log('📍 Opening quickcard location on public map');
+                navigate('/public-map', {
+                  state: {
+                    singleVostcard: {
+                      id: quickcard.id,
+                      title: quickcard.title,
+                      description: quickcard.description,
+                      latitude: quickcard.latitude,
+                      longitude: quickcard.longitude,
+                      photoURLs: quickcard.photoURLs,
+                      username: quickcard.username,
+                      isOffer: false,
+                      isQuickcard: true,
+                      categories: quickcard.categories,
+                      createdAt: quickcard.formattedDate,
+                      visibility: 'public',
+                      state: 'posted'
+                    }
+                  }
+                });
+              }}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '120px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              <FaMap size={14} style={{ marginRight: '8px' }} />
+              View on Map
+            </button>
+          )}
+        </div>
+
         {/* Description */}
         <div style={{ 
           color: '#333',
@@ -996,6 +1069,160 @@ const PublicQuickcardView: React.FC = () => {
           padding: '0 12px' // ✅ Increased padding for mobile
         }}>
           {description || 'No description available.'}
+        </div>
+
+        {/* Action Icons Row: Like, Star, Comment, Share */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          padding: '20px 40px',
+          borderBottom: '1px solid #eee',
+          maxWidth: '900px',
+          margin: '0 auto'
+        }}>
+          {/* Like Button */}
+          <button
+            onClick={() => {
+              setIsLiked(!isLiked);
+              setShowLikeMessage(true);
+              setTimeout(() => setShowLikeMessage(false), 3000);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: isLiked ? '#ff3b30' : '#666'
+            }}
+          >
+            <FaHeart size={30} />
+          </button>
+
+          {/* Star Rating */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setUserRating(userRating === star ? 0 : star)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: star <= userRating ? '#ffd700' : '#ccc',
+                  padding: '2px'
+                }}
+              >
+                <FaStar size={24} />
+              </button>
+            ))}
+          </div>
+
+          {/* Comment Button - Shows login prompt */}
+          <button
+            onClick={() => setShowLoginModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666'
+            }}
+          >
+            <FaRegComment size={30} />
+          </button>
+
+          {/* Share Button */}
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: title || 'Quickcard',
+                  text: description || 'Check out this quickcard!',
+                  url: window.location.href
+                });
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copied to clipboard!');
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666'
+            }}
+          >
+            <FaShare size={30} />
+          </button>
+        </div>
+
+        {/* Worth Seeing Rating */}
+        <div style={{
+          textAlign: 'center',
+          padding: '20px',
+          borderBottom: '1px solid #eee',
+          maxWidth: '900px',
+          margin: '0 auto'
+        }}>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#333',
+            marginBottom: '10px'
+          }}>
+            Worth Seeing
+          </div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#007aff' }}>
+              {userRating > 0 ? userRating.toFixed(1) : '0.0'}
+            </span>
+            <span style={{ color: '#666' }}>/ 5.0</span>
+          </div>
+        </div>
+
+        {/* Description Link Section */}
+        <div style={{ 
+          padding: '20px',
+          textAlign: 'center',
+          borderBottom: '1px solid #eee',
+          maxWidth: '900px',
+          margin: '0 auto'
+        }}>
+          <button
+            onClick={() => {
+              // Navigate to a detailed description page or show modal
+              alert('Description details would be shown here');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#007aff',
+              fontSize: '28px',
+              fontWeight: 'bold',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontFamily: 'system-ui, sans-serif'
+            }}
+          >
+            Description
+          </button>
         </div>
 
         <div style={{ 
@@ -1084,7 +1311,7 @@ const PublicQuickcardView: React.FC = () => {
               userSelect: 'none',
               pointerEvents: 'auto',
               // ✅ High-quality full-screen rendering
-              imageRendering: 'high-quality',
+                                    imageRendering: 'crisp-edges' as any,
               WebkitBackfaceVisibility: 'hidden',
               backfaceVisibility: 'hidden',
               transform: 'translateZ(0)',
@@ -1093,7 +1320,7 @@ const PublicQuickcardView: React.FC = () => {
             draggable={false}
             onContextMenu={e => e.preventDefault()}
             loading="eager"
-            fetchpriority="high"
+                          fetchPriority="high"
           />
         </div>
       )}
@@ -1216,6 +1443,92 @@ const PublicQuickcardView: React.FC = () => {
           -webkit-overflow-scrolling: touch;
         }
       `}</style>
+
+      {/* Login Modal for Comments */}
+      {showLoginModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '400px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            <FaRegComment size={48} color="#007aff" style={{ marginBottom: '20px' }} />
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: '#333',
+              marginBottom: '16px'
+            }}>
+              Join the Conversation
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: '#666',
+              marginBottom: '24px',
+              lineHeight: 1.5
+            }}>
+              To comment on this quickcard, please login or register for a free Vōstcard account.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => {
+                  setShowLoginModal(false);
+                  navigate('/user-guide');
+                }}
+                style={{
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  flex: 1
+                }}
+              >
+                Login / Register
+              </button>
+              <button
+                onClick={() => setShowLoginModal(false)}
+                style={{
+                  backgroundColor: '#f8f9fa',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  flex: 1
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
