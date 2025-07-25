@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaArrowUp, FaArrowDown, FaUserPlus, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaUserPlus, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -52,6 +52,10 @@ const VostcardDetailView: React.FC = () => {
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
+  
+  // ✅ NEW: Swipe gesture state
+  const [touchStart, setTouchStart] = useState<{ y: number; time: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ y: number; time: number } | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -545,8 +549,53 @@ Tap OK to continue.`;
     : currentVostcardIndex > 0 && availableVostcards.length > 0;
   
   const canGoToNext = vostcardList.length > 0 
-    ? currentIndex < vostcardList.length - 1
+    ? currentIndex < vostcardList.length - 1 
     : currentVostcardIndex < availableVostcards.length - 1 && availableVostcards.length > 0;
+
+  // ✅ NEW: Swipe gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({
+      y: touch.clientY,
+      time: Date.now()
+    });
+    setTouchEnd(null);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchEnd({
+      y: touch.clientY,
+      time: Date.now()
+    });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart.y - touchEnd.y;
+    const timeDiff = touchEnd.time - touchStart.time;
+    const isSwipe = Math.abs(distance) > 50; // Minimum swipe distance
+    const isQuickSwipe = timeDiff < 300; // Maximum swipe time for quick gesture
+    
+    if (isSwipe && isQuickSwipe) {
+      if (distance > 0) {
+        // Swipe up - go to next vostcard
+        if (canGoToNext) {
+          handleNextVostcard();
+        }
+      } else {
+        // Swipe down - go to previous vostcard
+        if (canGoToPrevious) {
+          handlePreviousVostcard();
+        }
+      }
+    }
+    
+    // Reset touch state
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   if (loading) {
     return (
@@ -613,19 +662,22 @@ Tap OK to continue.`;
     <div
       style={{
         background: '#fff',
-        height: '100vh', // ✅ Fixed height instead of minHeight
-        overflowY: 'scroll', // ✅ Force scroll instead of auto
-        overflowX: 'hidden', // ✅ Prevent horizontal scrolling
+        minHeight: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         fontFamily: 'system-ui, sans-serif',
-        WebkitOverflowScrolling: 'touch', // ✅ iOS momentum scrolling
-        position: 'relative', // ✅ Ensure proper positioning
-        touchAction: 'pan-y', // ✅ Allow vertical panning only
+        WebkitOverflowScrolling: 'touch',
+        position: 'relative',
       }}
+      // ✅ NEW: Add swipe gesture event handlers
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Header */}
       <div style={{ 
         background: '#07345c', 
-        padding: '15px 16px 24px 16px', 
+        padding: '15px 16px 9px 16px',
         position: 'fixed', 
         top: 0,
         left: 0,
@@ -677,53 +729,47 @@ Tap OK to continue.`;
         </div>
       </div>
 
-      {/* Navigation arrows - upper right below banner */}
-      <div style={{
-        position: 'absolute',
-        top: '88px', // Below the header
-        right: '16px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        zIndex: 10
-      }}>
-        <button
-          onClick={handlePreviousVostcard}
-          disabled={!canGoToPrevious}
-          style={{
-            background: canGoToPrevious ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.3)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: canGoToPrevious ? 'pointer' : 'not-allowed',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-          }}
-        >
-          <FaArrowUp color="#fff" size={16} />
-        </button>
-        <button
-          onClick={handleNextVostcard}
-          disabled={!canGoToNext}
-          style={{
-            background: canGoToNext ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.3)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: canGoToNext ? 'pointer' : 'not-allowed',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-          }}
-        >
-          <FaArrowDown color="#fff" size={16} />
-        </button>
-      </div>
+      {/* ✅ REMOVED: Navigation arrows - replaced with swipe gestures */}
+      
+      {/* ✅ NEW: Swipe indicator (optional visual hint) */}
+      {(canGoToPrevious || canGoToNext) && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          right: '8px',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '4px',
+          zIndex: 10,
+          opacity: 0.3,
+          pointerEvents: 'none'
+        }}>
+          {canGoToPrevious && (
+            <div style={{
+              width: '2px',
+              height: '20px',
+              backgroundColor: '#333',
+              borderRadius: '1px'
+            }} />
+          )}
+          <div style={{
+            width: '4px',
+            height: '4px',
+            backgroundColor: '#333',
+            borderRadius: '50%'
+          }} />
+          {canGoToNext && (
+            <div style={{
+              width: '2px',
+              height: '20px',
+              backgroundColor: '#333',
+              borderRadius: '1px'
+            }} />
+          )}
+        </div>
+      )}
 
       {/* User Info */}
       <div style={{ 
