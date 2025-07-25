@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaInfo } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -897,7 +897,7 @@ Tap OK to continue.`;
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              <FaInfo size={14} style={{ marginRight: '8px' }} />
+              <FaPlay size={14} style={{ marginRight: '8px' }} />
               Detail
             </button>
           )}
