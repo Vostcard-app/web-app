@@ -921,7 +921,6 @@ Tap OK to continue.`;
 
         {/* Media Section */}
         {vostcard.isQuickcard ? (
-          // ✅ Enhanced Single Photo Quickcard layout with Photo Counter
           <div style={{ 
             padding: '20px', 
             display: 'flex', 
@@ -938,58 +937,52 @@ Tap OK to continue.`;
                 position: 'relative',
                 cursor: 'pointer'
               }}>
-                    <img
-                      src={vostcard.photoURLs[0]}
-                      alt="Quickcard"
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        display: 'block',
-                        cursor: 'pointer',
-                        // ✅ High-quality image rendering hints
-                        WebkitBackfaceVisibility: 'hidden',
-                        backfaceVisibility: 'hidden',
-                        transform: 'translateZ(0)', // ✅ Hardware acceleration
-                        // ✅ Additional quality settings
-                        filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced image quality
-                      } as React.CSSProperties}
-                      onClick={() => {
-                        // ✅ Enhanced click functionality
-                        console.log('🖼️ Main photo clicked in VostcardDetailView!');
-                        const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
-                        
-                        if (hasAudio) {
-                          console.log('🎵 Audio detected, triggering playback');
-                          handleAudioPlayback();
-                        } else if (vostcard.photoURLs.length > 1) {
-                          console.log('📸 Multiple photos, opening multi-photo modal');
-                          setSelectedPhotoIndex(0);
-                          setShowMultiPhotoModal(true);
-                        } else {
-                          console.log('📸 Single photo, showing full screen');
-                          handlePhotoClick(vostcard.photoURLs[0]);
-                        }
-                      }}
-                      loading="eager" // ✅ Prioritize loading
-                      fetchPriority="high" // ✅ Ensure high priority loading
-                    />
+                <img
+                  src={vostcard.photoURLs[0]}
+                  alt="Quickcard"
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    cursor: 'pointer',
+                    WebkitBackfaceVisibility: 'hidden',
+                    backfaceVisibility: 'hidden',
+                    transform: 'translateZ(0)',
+                    filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
+                  } as React.CSSProperties}
+                  onClick={() => {
+                    const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
                     
-                    {/* ✅ Photo Counter - Always show if multiple photos */}
-                    <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-                      {vostcard.photoURLs.length > 1 && (
-                        <div style={{
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)', // ✅ Increased opacity
-                          color: 'white',
-                          padding: '6px 12px', // ✅ Increased padding
-                          borderRadius: '16px', // ✅ Increased border radius
-                          fontSize: '14px', // ✅ Increased font size
-                          fontWeight: 'bold',
-                          backdropFilter: 'blur(8px)', // ✅ Added blur effect
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // ✅ Added shadow
-                        }}>
-                          1/{vostcard.photoURLs.length}
-                        </div>
-                      )}
+                    if (hasAudio) {
+                      handleAudioPlayback();
+                    } else if (vostcard.photoURLs.length > 1) {
+                      setSelectedPhotoIndex(0);
+                      setShowMultiPhotoModal(true);
+                    } else {
+                      handlePhotoClick(vostcard.photoURLs[0]);
+                    }
+                  }}
+                  loading="eager"
+                  fetchPriority="high"
+                />
+                
+                {vostcard.photoURLs.length > 1 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: '6px 12px',
+                    borderRadius: '16px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    backdropFilter: 'blur(8px)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}>
+                    1/{vostcard.photoURLs.length}
+                  </div>
+                )}
               </div>
             ) : (
               <div style={{ 
