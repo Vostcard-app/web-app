@@ -1353,14 +1353,6 @@ Tap OK to continue.`;
                 (vostcard?.introAudioURL && vostcard?.detailAudioURL)
               );
               
-              console.log('🔍 Detail button check:', {
-                hasDetailAudio,
-                audioFilesLength: vostcard?.audioFiles?.length || 0,
-                audioLabels: vostcard?.audioLabels,
-                hasDetailLabel: vostcard?.audioLabels?.includes('detail'),
-                vostcardId: vostcard?.id
-              });
-              
               return hasDetailAudio;
             })() && (
               <button
