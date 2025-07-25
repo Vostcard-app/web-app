@@ -1093,7 +1093,10 @@ const PublicQuickcardView: React.FC = () => {
               fontWeight: 'bold',
               textDecoration: 'underline',
               cursor: 'pointer',
-              fontFamily: 'system-ui, sans-serif'
+              fontFamily: 'system-ui, sans-serif',
+              display: 'block',
+              margin: '0 auto',
+              textAlign: 'center'
             }}
           >
             Description
