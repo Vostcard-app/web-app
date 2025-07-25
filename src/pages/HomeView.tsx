@@ -793,7 +793,7 @@ const HomeView = () => {
                 <div
                   style={{
                     position: 'absolute',
-                    top: '11px',
+                    top: '8px',
                     right: '20px',
                     zIndex: 1002
                   }}
