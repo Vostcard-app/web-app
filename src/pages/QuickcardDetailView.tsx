@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
@@ -28,8 +28,14 @@ const quickcardIcon = new L.Icon({
 const QuickcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { fixBrokenSharedVostcard } = useVostcard();
   const { user } = useAuth();
+  
+  // Navigation state from previous view
+  const navigationState = location.state as any;
+  const vostcardList = navigationState?.vostcardList || [];
+  const currentIndex = navigationState?.currentIndex || 0;
   
   const [quickcard, setQuickcard] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -54,6 +60,11 @@ const QuickcardDetailView: React.FC = () => {
   const [showTipDropdown, setShowTipDropdown] = useState(false);
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
   const tipButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Swipe gesture state for navigation
+  const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
+  const [touchEnd, setTouchEnd] = useState<{ y: number; x: number; time: number } | null>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   // ✅ Performance optimization - memoize photo URLs and audio detection
   const photoURLs = useMemo(() => quickcard?.photoURLs || [], [quickcard?.photoURLs]);
@@ -548,6 +559,112 @@ Tap OK to continue.`;
     }
   };
 
+  // Navigation functions for swipe gestures
+  const canGoToPrevious = vostcardList.length > 0 && currentIndex > 0;
+  const canGoToNext = vostcardList.length > 0 && currentIndex < vostcardList.length - 1;
+
+  const handlePreviousQuickcard = () => {
+    if (canGoToPrevious) {
+      const previousId = vostcardList[currentIndex - 1];
+      navigate(`/vostcard/${previousId}`, {
+        state: {
+          vostcardList,
+          currentIndex: currentIndex - 1
+        }
+      });
+    }
+  };
+
+  const handleNextQuickcard = () => {
+    if (canGoToNext) {
+      const nextId = vostcardList[currentIndex + 1];
+      navigate(`/vostcard/${nextId}`, {
+        state: {
+          vostcardList,
+          currentIndex: currentIndex + 1
+        }
+      });
+    }
+  };
+
+  // Swipe gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({
+      y: touch.clientY,
+      x: touch.clientX,
+      time: Date.now()
+    });
+    setTouchEnd(null);
+    setIsScrolling(false);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    
+    const touch = e.touches[0];
+    const currentY = touch.clientY;
+    const currentX = touch.clientX;
+    
+    setTouchEnd({
+      y: currentY,
+      x: currentX,
+      time: Date.now()
+    });
+
+    // Detect if user is scrolling vertically (rather than swiping for navigation)
+    const yDiff = Math.abs(currentY - touchStart.y);
+    const xDiff = Math.abs(currentX - touchStart.x);
+    
+    // If the vertical movement is significantly more than horizontal, it's a scroll
+    if (yDiff > 20 && yDiff > xDiff * 2) {
+      setIsScrolling(true);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd || isScrolling) {
+      // Reset and allow normal scrolling
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsScrolling(false);
+      return;
+    }
+
+    const distance = touchStart.y - touchEnd.y;
+    const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
+    const timeDiff = touchEnd.time - touchStart.time;
+    
+    // Only trigger navigation if:
+    // 1. Vertical swipe is significant (>60px)
+    // 2. Horizontal movement is minimal (<30px) 
+    // 3. Gesture is quick (<400ms)
+    // 4. User wasn't scrolling
+    const isValidSwipe = Math.abs(distance) > 60 && 
+                        horizontalDistance < 30 && 
+                        timeDiff < 400 && 
+                        !isScrolling;
+    
+    if (isValidSwipe) {
+      if (distance > 0) {
+        // Swipe up - go to next quickcard
+        if (canGoToNext) {
+          handleNextQuickcard();
+        }
+      } else {
+        // Swipe down - go to previous quickcard
+        if (canGoToPrevious) {
+          handlePreviousQuickcard();
+        }
+      }
+    }
+    
+    // Reset touch state
+    setTouchStart(null);
+    setTouchEnd(null);
+    setIsScrolling(false);
+  };
+
   // Debug logging for audio detection
   useEffect(() => {
     if (quickcard) {
@@ -638,6 +755,9 @@ Tap OK to continue.`;
         overscrollBehavior: 'contain',
         touchAction: 'pan-y'
       }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Header */}
       <div style={{ 
@@ -691,6 +811,46 @@ Tap OK to continue.`;
           </button>
         </div>
       </div>
+
+      {/* Swipe navigation indicators */}
+      {(canGoToPrevious || canGoToNext) && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          right: '8px',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '4px',
+          zIndex: 10,
+          opacity: 0.4,
+          pointerEvents: 'none'
+        }}>
+          {canGoToPrevious && (
+            <div style={{
+              width: '2px',
+              height: '20px',
+              backgroundColor: '#333',
+              borderRadius: '1px'
+            }} />
+          )}
+          <div style={{
+            width: '4px',
+            height: '4px',
+            backgroundColor: '#333',
+            borderRadius: '50%'
+          }} />
+          {canGoToNext && (
+            <div style={{
+              width: '2px',
+              height: '20px',
+              backgroundColor: '#333',
+              borderRadius: '1px'
+            }} />
+          )}
+        </div>
+      )}
 
       {/* User Info */}
       <div style={{ 
