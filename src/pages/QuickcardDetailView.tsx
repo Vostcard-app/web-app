@@ -39,6 +39,13 @@ const QuickcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
+  console.log('🔍 QuickcardDetailView received navigation state:', {
+    navigationState,
+    vostcardList: vostcardList.length,
+    currentIndex,
+    id
+  });
+  
   const [quickcard, setQuickcard] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -616,6 +623,7 @@ Tap OK to continue.`;
   const handlePreviousQuickcard = () => {
     if (canGoToPrevious) {
       const previousId = vostcardList[currentIndex - 1];
+      console.log('📱 Navigating to previous:', previousId, 'index:', currentIndex - 1);
       navigate(`/vostcard/${previousId}`, {
         state: {
           vostcardList,
@@ -628,6 +636,7 @@ Tap OK to continue.`;
   const handleNextQuickcard = () => {
     if (canGoToNext) {
       const nextId = vostcardList[currentIndex + 1];
+      console.log('📱 Navigating to next:', nextId, 'index:', currentIndex + 1);
       navigate(`/vostcard/${nextId}`, {
         state: {
           vostcardList,
@@ -695,18 +704,38 @@ Tap OK to continue.`;
                         timeDiff < 400 && 
                         !isScrolling;
     
+    console.log('🔍 QuickcardDetailView Swipe Debug:', {
+      distance,
+      horizontalDistance,
+      timeDiff,
+      isValidSwipe,
+      isScrolling,
+      canGoToNext,
+      canGoToPrevious,
+      vostcardList: vostcardList.length,
+      currentIndex
+    });
+    
     if (isValidSwipe) {
       if (distance > 0) {
         // Swipe up - go to next quickcard
+        console.log('📱 Swiping up to next item...');
         if (canGoToNext) {
           handleNextQuickcard();
+        } else {
+          console.log('❌ Cannot go to next - at end of list');
         }
       } else {
         // Swipe down - go to previous quickcard
+        console.log('📱 Swiping down to previous item...');
         if (canGoToPrevious) {
           handlePreviousQuickcard();
+        } else {
+          console.log('❌ Cannot go to previous - at start of list');
         }
       }
+    } else {
+      console.log('❌ Invalid swipe gesture');
     }
     
     // Reset touch state

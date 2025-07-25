@@ -28,6 +28,13 @@ const VostcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
+  console.log('🔍 VostcardDetailView received navigation state:', {
+    navigationState,
+    vostcardList: vostcardList.length,
+    currentIndex,
+    id
+  });
+  
   const [vostcard, setVostcard] = useState<any>(null);
   const [availableVostcards, setAvailableVostcards] = useState<string[]>([]);
   const [currentVostcardIndex, setCurrentVostcardIndex] = useState(0);
@@ -174,6 +181,7 @@ const VostcardDetailView: React.FC = () => {
           // If this is a quickcard, redirect to the dedicated QuickcardDetailView
           if (data.isQuickcard) {
             console.log('📱 Redirecting quickcard to dedicated component');
+            console.log('🔍 VostcardDetailView navigation state:', navigationState);
             navigate(`/quickcard/${id}`, { 
               replace: true,
               state: navigationState // Pass along the navigation state
