@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe, FaImages } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe, FaImages, FaEdit } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { drivecardService } from '../services/drivecardService';
 import { QuickcardImporter } from '../components/studio/QuickcardImporter';
@@ -15,7 +15,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { loadQuickcard } = useVostcardEdit();
-  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard } = useVostcard();
+  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -48,6 +48,7 @@ const VostcardStudioView: React.FC = () => {
   // Quickcard import state
   const [showQuickcardImporter, setShowQuickcardImporter] = useState(false);
   const [showQuickcardCreator, setShowQuickcardCreator] = useState(false);
+  const [showQuickcardLoader, setShowQuickcardLoader] = useState(false);
   
   // Quickcard creation state - ENHANCED FOR MULTIPLE PHOTOS
   const [quickcardTitle, setQuickcardTitle] = useState('');
@@ -714,6 +715,84 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardCategories([]);
   };
 
+  // Function to load a quickcard for editing
+  const loadQuickcardForEditing = async (quickcard: Vostcard) => {
+    console.log('🔄 Loading quickcard for editing:', quickcard);
+    
+    try {
+      setIsLoading(true);
+      
+      // Load basic information
+      setQuickcardTitle(quickcard.title || '');
+      setQuickcardDescription(quickcard.description || '');
+      setQuickcardCategories(quickcard.categories || []);
+      
+      // Load location
+      if (quickcard.geo) {
+        setQuickcardLocation({
+          latitude: quickcard.geo.latitude,
+          longitude: quickcard.geo.longitude,
+          address: (quickcard.geo as any).address // Address might be in geo object
+        });
+      }
+
+      // Load photos (convert URLs to Blobs)
+      if (quickcard._firebasePhotoURLs && quickcard._firebasePhotoURLs.length > 0) {
+        const photoBlobs: Blob[] = [];
+        const photoPreviews: string[] = [];
+        for (const photoUrl of quickcard._firebasePhotoURLs) {
+          try {
+            const response = await fetch(photoUrl);
+            const blob = await response.blob();
+            photoBlobs.push(blob);
+            photoPreviews.push(URL.createObjectURL(blob));
+          } catch (error) {
+            console.error('Failed to load photo:', photoUrl, error);
+          }
+        }
+        setQuickcardPhotos(photoBlobs);
+        setQuickcardPhotoPreviews(photoPreviews);
+      }
+
+      // Load audio (convert URLs to Blobs)
+      if (quickcard._firebaseAudioURL) {
+        try {
+          const response = await fetch(quickcard._firebaseAudioURL);
+          const blob = await response.blob();
+          setQuickcardIntroAudio(blob);
+          setQuickcardIntroAudioSource('file');
+          setQuickcardIntroAudioFileName('loaded_audio.mp3');
+        } catch (error) {
+          console.error('Failed to load intro audio:', error);
+        }
+      }
+
+      // Load detail audio if available (check for multiple audio support)
+      // Note: Current type doesn't support multiple audio URLs, this is for future enhancement
+      const anyQuickcard = quickcard as any;
+      if (anyQuickcard.audioURLs && anyQuickcard.audioURLs.length > 1) {
+        try {
+          const response = await fetch(anyQuickcard.audioURLs[1]);
+          const blob = await response.blob();
+          setQuickcardDetailAudio(blob);
+          setQuickcardDetailAudioSource('file');
+          setQuickcardDetailAudioFileName('loaded_detail_audio.mp3');
+        } catch (error) {
+          console.error('Failed to load detail audio:', error);
+        }
+      }
+
+      setShowQuickcardLoader(false);
+      alert(`✅ Quickcard "${quickcard.title}" loaded for editing!`);
+      
+    } catch (error) {
+      console.error('Error loading quickcard:', error);
+      alert('❌ Failed to load quickcard. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleTakePhoto = () => {
     document.getElementById('quickcard-camera-input')?.click();
   };
@@ -919,9 +998,28 @@ const VostcardStudioView: React.FC = () => {
             maxHeight: 'none', // ✅ Remove height limit
             overflowY: 'visible' // ✅ Allow content to flow
           }}>
-            <h3 style={{ marginTop: 0 }}>
-              📷 Quickcard Creator
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+              <h3 style={{ marginTop: 0, marginBottom: 0 }}>
+                📷 Quickcard Creator
+              </h3>
+              <button
+                onClick={() => setShowQuickcardLoader(true)}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                📂 Load Card
+              </button>
+            </div>
 
             {/* Title Input */}
             <div style={{ marginBottom: '15px' }}>
@@ -1815,6 +1913,99 @@ const VostcardStudioView: React.FC = () => {
           onChange={(e) => handleQuickcardAudioUpload(e, 'detail')}
           style={{ display: 'none' }}
         />
+
+        {/* Quickcard Loader Modal */}
+        {showQuickcardLoader && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '500px',
+              maxHeight: '70vh',
+              overflow: 'auto',
+              position: 'relative'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
+                  📂 Load Quickcard for Editing
+                </h3>
+                <button
+                  onClick={() => setShowQuickcardLoader(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#666'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+
+                             {/* Quickcard List */}
+               <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                 {savedVostcards.filter(card => card.isQuickcard).length === 0 ? (
+                   <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                     <p>No quickcards found.</p>
+                     <p style={{ fontSize: '14px' }}>Create a quickcard first, then you can load it for editing.</p>
+                   </div>
+                 ) : (
+                   savedVostcards.filter(card => card.isQuickcard).map((quickcard) => (
+                     <div
+                       key={quickcard.id}
+                       onClick={() => loadQuickcardForEditing(quickcard)}
+                       style={{
+                         display: 'flex',
+                         alignItems: 'center',
+                         padding: '12px',
+                         border: '1px solid #ddd',
+                         borderRadius: '8px',
+                         marginBottom: '8px',
+                         cursor: 'pointer',
+                         backgroundColor: '#f9f9f9',
+                         transition: 'background-color 0.2s'
+                       }}
+                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
+                     >
+                       <div style={{ flex: 1 }}>
+                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                           {quickcard.title || 'Untitled Quickcard'}
+                         </div>
+                         <div style={{ fontSize: '12px', color: '#666' }}>
+                           {quickcard.description && quickcard.description.length > 50 
+                             ? quickcard.description.substring(0, 50) + '...'
+                             : quickcard.description || 'No description'
+                           }
+                         </div>
+                         <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                           Created: {new Date(quickcard.createdAt).toLocaleDateString()}
+                         </div>
+                       </div>
+                       <div style={{ marginLeft: '12px', color: '#28a745' }}>
+                         <FaEdit size={16} />
+                       </div>
+                     </div>
+                   ))
+                 )}
+               </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
