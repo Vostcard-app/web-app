@@ -477,17 +477,46 @@ const HomeView = () => {
 
   const handleCreateQuickcard = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('📱 Starting Quickcard creation - opening camera');
+    console.log('📱 Starting Quickcard creation - opening native camera');
     clearVostcard();
     
-    // Navigate to camera for photo capture
-    navigate('/quickcard-camera');
+    // Open native camera app directly
+    const cameraInput = document.getElementById('quickcard-native-camera') as HTMLInputElement;
+    if (cameraInput) {
+      cameraInput.click();
+    }
   };
 
   const handleCreateTouchStart = () => setIsCreatePressed(true);
   const handleCreateTouchEnd = () => setIsCreatePressed(false);
   const handleQuickcardTouchStart = () => setIsQuickcardPressed(true);
   const handleQuickcardTouchEnd = () => setIsQuickcardPressed(false);
+
+  // Handle native camera photo capture
+  const handleNativeCameraPhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && userLocation) {
+      console.log('📸 Photo captured from native camera:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+      
+      // Create quickcard with the captured photo
+      createQuickcard(file, {
+        latitude: userLocation[0],
+        longitude: userLocation[1]
+      });
+      
+      // Navigate to photo thumbnails step
+      navigate('/quickcard-step2');
+    } else if (!userLocation) {
+      alert('Location not available. Please enable location services.');
+    }
+    
+    // Clear the input so same photo can be selected again
+    event.target.value = '';
+  };
 
   const handleRetryLoad = () => {
     setRetryCount(prev => prev + 1);
@@ -1596,6 +1625,16 @@ const HomeView = () => {
           </div>
         </>
       )}
+
+      {/* Hidden Native Camera Input */}
+      <input
+        id="quickcard-native-camera"
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleNativeCameraPhoto}
+        style={{ display: 'none' }}
+      />
     </div>
   );
 };
