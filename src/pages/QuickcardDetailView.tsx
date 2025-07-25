@@ -699,13 +699,13 @@ Tap OK to continue.`;
     const timeDiff = touchEnd.time - touchStart.time;
     
     // Only trigger navigation if:
-    // 1. Vertical swipe is significant (>30px) - REDUCED from 60px
-    // 2. Horizontal movement is minimal (<50px) - INCREASED from 30px
-    // 3. Gesture is quick (<1000ms) - INCREASED from 400ms  
+    // 1. Vertical swipe is significant (>30px)
+    // 2. Horizontal movement is reasonable (<150px) - INCREASED for laptop users
+    // 3. Gesture is reasonable time (<1500ms)
     // 4. User wasn't scrolling
     const isValidSwipe = Math.abs(distance) > 30 && 
-                        horizontalDistance < 50 && 
-                        timeDiff < 1000 && 
+                        horizontalDistance < 150 && 
+                        timeDiff < 1500 && 
                         !isScrolling;
     
     console.log('🔍 QuickcardDetailView Swipe Debug:', {
