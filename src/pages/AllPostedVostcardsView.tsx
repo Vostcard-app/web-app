@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaEye, FaCameraRetro, FaVideo } from 'react-icons/fa';
+import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaCameraRetro, FaVideo } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
@@ -607,22 +607,21 @@ const AllPostedVostcardsView: React.FC = () => {
                   </div>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {/* Play Button - Upper Right */}
+                    {/* View Button - Upper Right */}
                     <button
                       style={{
-                        background: '#fff',
-                        color: '#002B4D',
-                        border: '1px solid #ddd',
+                        background: '#002B4D',
+                        color: 'white',
+                        border: 'none',
                         borderRadius: 8,
-                        width: 40,
-                        height: 40,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 16,
+                        padding: '8px 12px',
+                        fontSize: 14,
+                        fontWeight: 600,
                         cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        transition: 'all 0.2s ease'
+                        boxShadow: '0 2px 8px rgba(0,43,77,0.15)',
+                        transition: 'all 0.2s ease',
+                        minWidth: '60px',
+                        height: 36
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -634,15 +633,15 @@ const AllPostedVostcardsView: React.FC = () => {
                         });
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.opacity = '0.9';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                        e.currentTarget.style.backgroundColor = '#001f35';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,43,77,0.25)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.opacity = '1';
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                        e.currentTarget.style.backgroundColor = '#002B4D';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,43,77,0.15)';
                       }}
                     >
-                      <FaEye />
+                      View
                     </button>
 
                     {/* Follow Button */}
