@@ -15,7 +15,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { loadQuickcard } = useVostcardEdit();
-  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards } = useVostcard();
+  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -438,9 +438,9 @@ const VostcardStudioView: React.FC = () => {
 
     restoreState();
     
-    // Check for transferred quickcard data from QuickcardStep3
-    loadTransferredQuickcardData();
-  }, []);
+    // Check for existing quickcard data from context or transfer
+    loadExistingQuickcardData();
+  }, [currentVostcard, quickcardTitle, quickcardDescription]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -463,9 +463,10 @@ const VostcardStudioView: React.FC = () => {
     setShowQuickcardImporter(false);
   };
 
-  // Load transferred quickcard data from QuickcardStep3
-  const loadTransferredQuickcardData = () => {
+  // Load quickcard data from currentVostcard context or sessionStorage
+  const loadExistingQuickcardData = () => {
     try {
+      // First try sessionStorage (from transfer button)
       const transferData = sessionStorage.getItem('quickcardTransferData');
       if (transferData) {
         const data = JSON.parse(transferData);
@@ -505,9 +506,46 @@ const VostcardStudioView: React.FC = () => {
         sessionStorage.removeItem('quickcardTransferData');
         
         console.log('✅ Quickcard data transferred successfully');
+        return;
+      }
+      
+      // If no sessionStorage data, check currentVostcard context
+      if (currentVostcard?.isQuickcard && quickcardTitle === '' && quickcardDescription === '') {
+        console.log('📱 Loading quickcard data from context:', currentVostcard);
+        
+        // Populate fields from context
+        setQuickcardTitle(currentVostcard.title || '');
+        setQuickcardDescription(currentVostcard.description || '');
+        setQuickcardCategories(currentVostcard.categories || []);
+        
+        // Handle photos
+        if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+          setQuickcardPhotos(currentVostcard.photos);
+          // Create preview URLs for the photos
+          const previews = currentVostcard.photos.map((photo: any) => {
+            if (photo && (photo instanceof File || photo instanceof Blob)) {
+              return URL.createObjectURL(photo);
+            }
+            return '';
+          });
+          setQuickcardPhotoPreviews(previews);
+        }
+        
+        // Handle location
+        if (currentVostcard.geo) {
+          setQuickcardLocation({
+            latitude: currentVostcard.geo.latitude,
+            longitude: currentVostcard.geo.longitude
+          });
+        }
+        
+        // Show the quickcard creator
+        setShowQuickcardCreator(true);
+        
+        console.log('✅ Quickcard data loaded from context');
       }
     } catch (error) {
-      console.error('❌ Error loading transferred quickcard data:', error);
+      console.error('❌ Error loading quickcard data:', error);
     }
   };
 

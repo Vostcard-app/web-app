@@ -116,6 +116,9 @@ const QuickcardStep3: React.FC = () => {
       // Save the quickcard privately
       await saveQuickcard();
       
+      // Clear the current vostcard state
+      clearVostcard();
+      
       // Show success message
       alert('Your Quickcard has been saved privately and is available in your Quickcards list.');
       
@@ -144,14 +147,23 @@ const QuickcardStep3: React.FC = () => {
     // Show success message (matches vostcard posting)
     alert('Your Quickcard will appear on the map in a minute or two.');
     
-    // Navigate to home normally - let the regular data loading handle refreshes
-    navigate('/home');
+    // Navigate to home with proper state (matches vostcard posting pattern)
+    navigate('/home', { 
+      state: { 
+        freshLoad: true,
+        timestamp: Date.now(),
+        justPosted: 'quickcard'
+      }
+    });
     
     try {
       console.log('📍 Starting quickcard post to map...');
       
       // Post the quickcard to the public map in background
       await postQuickcard();
+      
+      // Clear the current vostcard state (matches vostcard posting)
+      clearVostcard();
       
       console.log('✅ Quickcard posted successfully');
       
@@ -313,7 +325,39 @@ const QuickcardStep3: React.FC = () => {
           </div>
         )}
 
-
+        {/* Add Audio Button */}
+        <button
+          onClick={() => {
+            // Transfer current quickcard data to VostcardStudio
+            const quickcardData = {
+              title: currentVostcard?.title || '',
+              description: currentVostcard?.description || '',
+              photos: currentVostcard?.photos || [],
+              categories: currentVostcard?.categories || [],
+              location: currentVostcard?.geo || null
+            };
+            
+            console.log('📱 Transferring to enhanced creator:', quickcardData);
+            
+            // Store the data for VostcardStudio to read
+            sessionStorage.setItem('quickcardTransferData', JSON.stringify(quickcardData));
+            
+            navigate('/studio', { 
+              state: { 
+                importQuickcard: true,
+                quickcardData: quickcardData
+              } 
+            });
+          }}
+          style={{
+            ...saveButtonStyle,
+            backgroundColor: '#007aff',
+            marginBottom: 10,
+            touchAction: 'manipulation'
+          }}
+        >
+          🎤 Add Audio & Advanced Features
+        </button>
 
         {/* Save to Personal Posts Button */}
         <button
