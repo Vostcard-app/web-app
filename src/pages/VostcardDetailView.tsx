@@ -1269,7 +1269,7 @@ Tap OK to continue.`;
           )}
 
           {/* View on Map Button - Always show if location data exists */}
-          {vostcard?.geo?.latitude && vostcard?.geo?.longitude && (
+          {vostcard?.latitude && vostcard?.longitude && (
             <button
               onClick={handleMapClick}
               style={{
