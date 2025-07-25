@@ -832,6 +832,26 @@ const PublicQuickcardView: React.FC = () => {
           )}
         </div>
 
+        {/* Hidden Audio Element */}
+        {hasAudio && (
+          <audio
+            ref={audioRef}
+            src={quickcard?.audioURL || quickcard?.audioURLs?.[0] || quickcard?.audio || quickcard?._firebaseAudioURL}
+            preload="metadata"
+            style={{ display: 'none' }}
+            onLoadedMetadata={() => {
+              if (audioRef.current) {
+                setAudioDuration(audioRef.current.duration);
+              }
+            }}
+            onEnded={() => setIsPlayingAudio(false)}
+            onError={(e) => {
+              console.error('🎵 Audio loading error:', e);
+              setIsPlayingAudio(false);
+            }}
+          />
+        )}
+
         {/* Three Buttons: Intro, Detail, View on Map - REDUCED PADDING TO 5PX */}
         <div style={{
           display: 'flex',
