@@ -690,7 +690,7 @@ Tap OK to continue.`;
         padding: '15px 20px 5px 20px', 
         display: 'flex', 
         alignItems: 'center',
-        justifyContent: 'flex-start',
+        justifyContent: 'space-between',
         marginTop: '60px', // Minimal spacing to clear fixed header
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -740,17 +740,10 @@ Tap OK to continue.`;
             {quickcard.username || 'Anonymous'}
           </div>
         </div>
-      </div>
 
-      {/* ☕ Tip Button for Guides - Under Avatar */}
-      {userProfile?.userRole === 'guide' && 
-       user?.uid !== quickcard.userID && (
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          marginTop: '10px',
-          marginBottom: '10px'
-        }}>
+        {/* ☕ Tip Button for Guides - Right side of avatar row */}
+        {userProfile?.userRole === 'guide' && 
+         user?.uid !== quickcard.userID && (
           <button
             ref={tipButtonRef}
             onClick={handleTipButtonClick}
@@ -778,8 +771,8 @@ Tap OK to continue.`;
             Leave a Tip
             <FaChevronDown size={12} />
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Title */}
       <div style={{ padding: '0 20px' }}>
