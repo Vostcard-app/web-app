@@ -851,13 +851,13 @@ const PublicQuickcardView: React.FC = () => {
           )}
         </div>
 
-        {/* Three Buttons: Intro, Detail, View on Map */}
+        {/* Three Buttons: Intro, Detail, View on Map - Smaller for better mobile fit */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '20px',
-          gap: '16px',
+          padding: '16px 20px',
+          gap: '12px',
           flexWrap: 'wrap'
         }}>
           {/* Intro Button - Always show if there's any audio */}
@@ -880,19 +880,21 @@ const PublicQuickcardView: React.FC = () => {
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
+                borderRadius: '6px',
+                padding: '10px 16px',
+                fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                minWidth: '100px',
-                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease'
+                minWidth: '80px',
+                boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease',
+                flex: '1',
+                maxWidth: '110px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              <FaPlay size={14} style={{ marginRight: '8px' }} />
+              <FaPlay size={12} style={{ marginRight: '6px' }} />
               Intro
             </button>
           )}
@@ -917,19 +919,21 @@ const PublicQuickcardView: React.FC = () => {
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
+                borderRadius: '6px',
+                padding: '10px 16px',
+                fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                minWidth: '100px',
-                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease'
+                minWidth: '80px',
+                boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease',
+                flex: '1',
+                maxWidth: '110px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              <FaPlay size={14} style={{ marginRight: '8px' }} />
+              <FaPlay size={12} style={{ marginRight: '6px' }} />
               Detail
             </button>
           )}
@@ -963,19 +967,21 @@ const PublicQuickcardView: React.FC = () => {
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
+                borderRadius: '6px',
+                padding: '10px 16px',
+                fontSize: '14px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                minWidth: '120px',
-                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease'
+                minWidth: '80px',
+                boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease',
+                flex: '1',
+                maxWidth: '110px'
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              <FaMap size={14} style={{ marginRight: '8px' }} />
+              <FaMap size={12} style={{ marginRight: '6px' }} />
               View on Map
             </button>
           )}
