@@ -925,45 +925,26 @@ Tap OK to continue.`;
           <div style={{ 
             padding: '20px', 
             display: 'flex', 
-            justifyContent: 'center',
-            minHeight: '350px', // ✅ Increased minimum height for better resolution
-            maxHeight: '65vh' // ✅ Increased max height for larger displays
+            justifyContent: 'center'
           }}>
             {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
               <div style={{ 
                 width: '100%',
-                maxWidth: '800px', // ✅ Increased max width for better resolution
-                display: 'flex',
-                overflow: 'hidden'
+                maxWidth: '800px',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                backgroundColor: '#f8f9fa',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+                position: 'relative',
+                cursor: 'pointer'
               }}>
-                {/* ✅ Single Main Photo - Full Width */}
-                <div style={{ 
-                  flex: 1, // ✅ Full width for single photo
-                  backgroundColor: 'transparent',
-                  borderRadius: '16px', // ✅ Increased border radius
-                  overflow: 'hidden',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  minHeight: '350px', // ✅ Ensure minimum height for quality
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)' // ✅ Enhanced shadow
-                }}>
-                  <div style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                    minHeight: '350px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '16px',
-                    overflow: 'hidden'
-                  }}>
                     <img
                       src={vostcard.photoURLs[0]}
                       alt="Quickcard"
                       style={{
                         width: '100%',
-                        height: '100%',
-                        objectFit: 'contain', // ✅ Changed from 'cover' to 'contain' to show full image
-                        objectPosition: 'center',
+                        height: 'auto',
+                        display: 'block',
                         cursor: 'pointer',
                         // ✅ High-quality image rendering hints
                         WebkitBackfaceVisibility: 'hidden',
@@ -1009,9 +990,6 @@ Tap OK to continue.`;
                           1/{vostcard.photoURLs.length}
                         </div>
                       )}
-                    </div>
-                  </div>
-                </div>
               </div>
             ) : (
               <div style={{ 
