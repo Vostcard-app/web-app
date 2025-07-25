@@ -90,7 +90,12 @@ const ListView: React.FC = () => {
                 cursor: 'pointer',
                 transition: 'transform 0.2s'
               }}
-              onClick={() => navigate(`/vostcard/${vostcard.id}`)}
+              onClick={() => navigate(`/vostcard/${vostcard.id}`, {
+                state: {
+                  vostcardList: vostcards.map(vc => vc.id),
+                  currentIndex: vostcards.findIndex(vc => vc.id === vostcard.id)
+                }
+              })}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >

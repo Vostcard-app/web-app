@@ -103,7 +103,15 @@ const MyVostcardListView = () => {
   };
 
   const handleView = (vostcardId: string) => {
-    navigate(`/vostcard/${vostcardId}`);
+    const sortedVostcards = [...savedVostcards].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const currentIndex = sortedVostcards.findIndex(vc => vc.id === vostcardId);
+    
+    navigate(`/vostcard/${vostcardId}`, {
+      state: {
+        vostcardList: sortedVostcards.map(vc => vc.id),
+        currentIndex: currentIndex
+      }
+    });
   };
 
   const handleShare = async (e: React.MouseEvent, vostcard: Vostcard) => {

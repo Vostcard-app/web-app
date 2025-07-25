@@ -212,7 +212,19 @@ const MyPostedVostcardsListView = () => {
   };
 
   const handleView = (vostcardId: string) => {
-    navigate(`/vostcard/${vostcardId}`);
+    const sortedVostcards = [...postedVostcards].sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
+      return dateB.getTime() - dateA.getTime();
+    });
+    const currentIndex = sortedVostcards.findIndex(vc => vc.id === vostcardId);
+    
+    navigate(`/vostcard/${vostcardId}`, {
+      state: {
+        vostcardList: sortedVostcards.map(vc => vc.id),
+        currentIndex: currentIndex
+      }
+    });
   };
 
   const handleShare = async (e: React.MouseEvent, vostcard: any) => {

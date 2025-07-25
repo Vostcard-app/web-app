@@ -516,7 +516,7 @@ const AllPostedVostcardsView: React.FC = () => {
                 }}
                 onClick={() => navigate(`/vostcard/${v.id}`, {
                   state: {
-                    vostcardList: vostcards.map(vc => vc.id),
+                    vostcardList: filterVostcards(vostcards).map(vc => vc.id),
                     currentIndex: idx
                   }
                 })}
@@ -529,7 +529,7 @@ const AllPostedVostcardsView: React.FC = () => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     navigate(`/vostcard/${v.id}`, {
                       state: {
-                        vostcardList: vostcards.map(vc => vc.id),
+                        vostcardList: filterVostcards(vostcards).map(vc => vc.id),
                         currentIndex: idx
                       }
                     });
