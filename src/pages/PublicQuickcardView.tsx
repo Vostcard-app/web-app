@@ -900,8 +900,8 @@ const PublicQuickcardView: React.FC = () => {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              <FaPlay size={12} style={{ marginRight: '6px' }} />
-              Intro
+              {isPlayingAudio ? <FaPause size={12} style={{ marginRight: '6px' }} /> : <FaPlay size={12} style={{ marginRight: '6px' }} />}
+              {isPlayingAudio ? 'Pause' : 'Intro'}
             </button>
           )}
 
@@ -944,8 +944,8 @@ const PublicQuickcardView: React.FC = () => {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              <FaPlay size={12} style={{ marginRight: '6px' }} />
-              Detail
+              {isPlayingAudio ? <FaPause size={12} style={{ marginRight: '6px' }} /> : <FaPlay size={12} style={{ marginRight: '6px' }} />}
+              {isPlayingAudio ? 'Pause' : 'Detail'}
             </button>
           )}
 
@@ -1208,7 +1208,7 @@ const PublicQuickcardView: React.FC = () => {
         onClose={() => setShowMultiPhotoModal(false)}
         title={title || 'Quickcard Photos'}
         autoPlay={true}
-        autoPlayInterval={10000}
+        autoPlayInterval={5000}
         audioDuration={quickcard?.audioDuration}
       />
 
