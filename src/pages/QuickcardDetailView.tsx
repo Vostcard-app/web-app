@@ -832,7 +832,7 @@ Tap OK to continue.`;
         WebkitOverflowScrolling: 'touch',
         position: 'relative',
         overscrollBehavior: 'contain',
-        touchAction: 'pan-y'
+        touchAction: 'manipulation'
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}

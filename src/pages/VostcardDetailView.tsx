@@ -801,7 +801,7 @@ Tap OK to continue.`;
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
         position: 'relative',
-        touchAction: 'pan-y'
+        touchAction: 'manipulation'
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
