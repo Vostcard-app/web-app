@@ -1073,25 +1073,9 @@ Tap OK to continue.`;
         {/* REMOVED: Map Button - map icon */}
       </div>
 
-      {/* Counts Row */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        padding: '10px 40px',
-        fontSize: '18px',
-        color: '#666'
-      }}>
-        {hasAudio && <span></span>}
-        <span>0</span>
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-
       {/* Description Link, Flag Icon, and Refresh Button */}
       <div style={{ 
-        padding: '20px',
+        padding: '2px 20px 20px 20px',
         position: 'relative',
         display: 'flex',
         justifyContent: 'center',
