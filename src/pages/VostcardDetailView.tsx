@@ -493,7 +493,13 @@ Tap OK to continue.`;
   };
 
   const handleFlag = () => {
-    alert('Flag functionality not implemented yet');
+    navigate('/flag-form', {
+      state: {
+        vostcardId: vostcard?.id,
+        vostcardTitle: vostcard?.title || 'Untitled Vostcard',
+        username: vostcard?.username || 'Anonymous'
+      }
+    });
   };
 
   const handleTipButtonClick = () => {

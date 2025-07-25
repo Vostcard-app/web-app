@@ -528,7 +528,13 @@ Tap OK to continue.`;
   };
 
   const handleFlag = () => {
-    alert('Flag functionality not implemented yet');
+    navigate('/flag-form', {
+      state: {
+        vostcardId: quickcard?.id,
+        vostcardTitle: quickcard?.title || 'Untitled Quickcard',
+        username: quickcard?.username || 'Anonymous'
+      }
+    });
   };
 
   const handleTipButtonClick = () => {
