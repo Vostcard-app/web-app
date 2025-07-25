@@ -172,7 +172,10 @@ const VostcardDetailView: React.FC = () => {
           // If this is a quickcard, redirect to the dedicated QuickcardDetailView
           if (data.isQuickcard) {
             console.log('📱 Redirecting quickcard to dedicated component');
-            navigate(`/quickcard/${id}`, { replace: true });
+            navigate(`/quickcard/${id}`, { 
+              replace: true,
+              state: navigationState // Pass along the navigation state
+            });
             return;
           }
           
