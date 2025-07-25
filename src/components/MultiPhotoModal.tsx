@@ -74,22 +74,12 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     }
   }, [isOpen, initialIndex]);
 
-  // Handle keyboard navigation
+  // Handle keyboard navigation (arrows disabled, only Escape and Space allowed)
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault();
-          pauseAutoPlay();
-          goToPrevious();
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          pauseAutoPlay();
-          goToNext();
-          break;
         case 'Escape':
           e.preventDefault();
           onClose();
@@ -254,71 +244,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         </div>
       )}
 
-      {/* Left Arrow */}
-      {photos.length > 1 && (
-        <button
-          onClick={() => {
-            pauseAutoPlay();
-            goToPrevious();
-          }}
-          style={{
-            position: 'absolute',
-            left: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '50px',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 2001,
-            opacity: showControls ? 1 : 0,
-            transition: 'opacity 0.3s ease',
-            pointerEvents: showControls ? 'auto' : 'none'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
-        >
-          <FaChevronLeft color="white" size={20} />
-        </button>
-      )}
 
-      {/* Right Arrow */}
-      {photos.length > 1 && (
-        <button
-          onClick={() => {
-            pauseAutoPlay();
-            goToNext();
-          }}
-          style={{
-            position: 'absolute',
-            right: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '50px',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            zIndex: 2001,
-            opacity: showControls ? 1 : 0,
-            transition: 'opacity 0.3s ease',
-            pointerEvents: showControls ? 'auto' : 'none'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.9)'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.7)'}
-        >
-          <FaChevronRight color="white" size={20} />
-        </button>
-      )}
 
       {/* Main Image */}
       <div
@@ -420,41 +346,9 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         </div>
       )}
 
-      {/* Progress Bar for Auto-play */}
-      {autoPlay && !isPaused && photos.length > 1 && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '10px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '200px',
-            height: '2px',
-            backgroundColor: 'rgba(255, 255, 255, 0.3)',
-            borderRadius: '1px',
-            zIndex: 2001,
-            opacity: showControls ? 0.7 : 0.3,
-            transition: 'opacity 0.3s ease'
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              backgroundColor: 'white',
-              borderRadius: '1px',
-              animation: `slideshow-progress ${getAutoPlayInterval()}ms linear infinite`,
-              transformOrigin: 'left'
-            }}
-          />
-        </div>
-      )}
 
-      <style jsx>{`
-        @keyframes slideshow-progress {
-          0% { transform: scaleX(0); }
-          100% { transform: scaleX(1); }
-        }
-      `}</style>
+
+
     </div>
   );
 };
