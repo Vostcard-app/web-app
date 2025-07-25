@@ -678,20 +678,16 @@ Tap OK to continue.`;
       time: Date.now()
     });
 
-    // Detect if user is scrolling vertically (rather than swiping for navigation)
-    const yDiff = Math.abs(currentY - touchStart.y);
-    const xDiff = Math.abs(currentX - touchStart.x);
-    
-    // If the vertical movement is significantly more than horizontal, it's a scroll
-    if (yDiff > 20 && yDiff > xDiff * 2) {
-      console.log('🔍 Touch MOVE - Setting isScrolling=true:', { yDiff, xDiff });
-      setIsScrolling(true);
-    }
+    // Simplified: Let the swipe validation handle all gesture detection
+    // Removed aggressive scrolling detection that was blocking swipe gestures
   };
 
   const handleTouchEnd = () => {
+    console.log('🔍 Touch END detected:', { touchStart: !!touchStart, touchEnd: !!touchEnd, isScrolling });
+    
     if (!touchStart || !touchEnd || isScrolling) {
       // Reset and allow normal scrolling
+      console.log('🔍 Touch END - Early return:', { touchStart: !!touchStart, touchEnd: !!touchEnd, isScrolling });
       setTouchStart(null);
       setTouchEnd(null);
       setIsScrolling(false);
