@@ -1107,48 +1107,20 @@ const PublicQuickcardView: React.FC = () => {
           textAlign: 'center', 
           color: '#888', 
           fontSize: '16px', // ✅ Increased size
-          marginBottom: '40px', // ✅ Increased margin
+          marginBottom: '2px', // ✅ Reduced to 2px spacing
           fontWeight: '500'
         }}>
           Posted: {formattedDate}
         </div>
 
-        {/* Bottom message and link */}
         <div style={{ 
           textAlign: 'center', 
-          borderTop: '1px solid #eee',
-          paddingTop: '40px', // ✅ Increased padding
-          marginTop: '40px'
+          color: '#666', 
+          fontSize: '16px', // ✅ Increased size
+          lineHeight: 1.4, 
+          marginBottom: '40px' // ✅ Bottom margin for overall spacing
         }}>
-          <div style={{ 
-            color: '#666', 
-            fontSize: '16px', // ✅ Increased size
-            lineHeight: 1.4, 
-            marginBottom: '20px' // ✅ Increased margin
-          }}>
-            Made with Vōstcard
-          </div>
-          <button 
-            onClick={() => navigate('/user-guide')}
-            style={{
-              backgroundColor: '#007aff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '14px', // ✅ Increased border radius
-              padding: '16px 32px', // ✅ Increased padding
-              fontSize: '18px', // ✅ Increased font size
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 6px 24px rgba(0,122,255,0.35)', // ✅ Enhanced shadow
-              minHeight: '56px' // ✅ Increased minimum height
-            }}
-            onMouseDown={(e) => e.currentTarget.style.backgroundColor = '#0056d3'}
-            onMouseUp={(e) => e.currentTarget.style.backgroundColor = '#007aff'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007aff'}
-          >
-            Get Vōstcard Free
-          </button>
+          Made with Vōstcard
         </div>
       </div>
 
