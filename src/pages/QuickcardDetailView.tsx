@@ -700,25 +700,6 @@ Tap OK to continue.`;
                 
                 {/* ✅ Enhanced visual indicators */}
                 <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  {/* ✅ Audio indicator on main photo */}
-                  {hasAudio && (
-                    <div style={{
-                      backgroundColor: 'rgba(0, 122, 255, 0.92)', // ✅ Enhanced blue background for audio
-                      color: 'white',
-                      padding: '6px 12px', // ✅ Increased padding
-                      borderRadius: '16px', // ✅ Increased border radius
-                      fontSize: '12px', // ✅ Font size
-                      fontWeight: 'bold',
-                      backdropFilter: 'blur(8px)', // ✅ Enhanced blur
-                      boxShadow: '0 2px 8px rgba(0,122,255,0.3)', // ✅ Enhanced shadow
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      {isPlaying ? <FaPause size={12} /> : <FaPlay size={12} />}
-                      {isPlaying ? 'Playing' : 'Tap to play'}
-                    </div>
-                  )}
                   
                   {/* Photo counter - moved to right side */}
                   {photoURLs.length > 1 && (
@@ -729,10 +710,10 @@ Tap OK to continue.`;
                       borderRadius: '16px', // ✅ Increased border radius
                       fontSize: '14px', // ✅ Increased font size
                       fontWeight: 'bold',
-                      backdropFilter: 'blur(8px)', // ✅ Added blur effect
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)' // ✅ Added shadow
+                      backdropFilter: 'blur(4px)', // ✅ Subtle blur effect
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.4)', // ✅ Enhanced shadow
                     }}>
-                      1/{photoURLs.length}
+                      {photoURLs.length} photos
                     </div>
                   )}
                 </div>
@@ -839,14 +820,15 @@ Tap OK to continue.`;
         />
       )}
 
-      {/* Intro/Detail Buttons - Only show if there are recordings */}
-      {hasAudio && (
+      {/* Intro/Detail/Map Buttons - Only show if there are recordings */}
+      {(hasAudio || (quickcard?.latitude && quickcard?.longitude)) && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           padding: '20px',
-          gap: '16px'
+          gap: '16px',
+          flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
         }}>
           {/* Intro Button - Always show if there's any audio */}
           <button
@@ -875,13 +857,8 @@ Tap OK to continue.`;
             Intro
           </button>
 
-          {/* Detail Button - Show if there's a second recording in any format */}
-          {(
-            (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) ||
-            (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
-            (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
-            (quickcard?.audioLabels && quickcard.audioLabels.includes('detail'))
-          ) && (
+          {/* Detail Button - Only show if there's a second recording */}
+          {quickcard?.audioURLs && quickcard.audioURLs.length >= 2 && (
             <button
               onClick={() => {
                 console.log('🎵 Detail button clicked - showing main photo');
@@ -908,6 +885,30 @@ Tap OK to continue.`;
               Detail
             </button>
           )}
+
+          {/* View on Map Button - Always show if location data exists */}
+          {quickcard?.latitude && quickcard?.longitude && (
+            <button
+              onClick={handleMapClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '120px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              View on Map
+            </button>
+          )}
         </div>
       )}
 
@@ -919,23 +920,7 @@ Tap OK to continue.`;
         padding: '20px 40px',
         borderBottom: '1px solid #eee'
       }}>
-        {/* Play Button - Only show if audio exists */}
-        {hasAudio && (
-          <button
-            onClick={handlePlayPause}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isPlaying ? '#007aff' : '#666'
-            }}
-          >
-            {isPlaying ? <FaPause size={30} /> : <FaPlay size={30} />}
-          </button>
-        )}
+        {/* REMOVED: Play Button - speaker icon */}
 
         <button
           onClick={handleLikeClick}
@@ -982,20 +967,7 @@ Tap OK to continue.`;
           <FaShare size={30} />
         </button>
 
-        <button
-          onClick={handleMapClick}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#666'
-          }}
-        >
-          <FaMap size={30} />
-        </button>
+        {/* REMOVED: Map Button - map icon */}
       </div>
 
       {/* Counts Row */}
