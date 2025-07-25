@@ -857,8 +857,13 @@ Tap OK to continue.`;
             Intro
           </button>
 
-          {/* Detail Button - Only show if there's a second recording */}
-          {quickcard?.audioURLs && quickcard.audioURLs.length >= 2 && (
+          {/* Detail Button - Show if there's a second recording in any format */}
+          {(
+            (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) ||
+            (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
+            (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
+            (quickcard?.audioLabels && quickcard.audioLabels.includes('detail'))
+          ) && (
             <button
               onClick={() => {
                 console.log('🎵 Detail button clicked - showing main photo');
