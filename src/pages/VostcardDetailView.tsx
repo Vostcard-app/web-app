@@ -540,6 +540,7 @@ Tap OK to continue.`;
     : currentVostcardIndex > 0 && availableVostcards.length > 0;
   
   const canGoToNext = vostcardList.length > 0 
+    ? currentIndex < vostcardList.length - 1
     : currentVostcardIndex < availableVostcards.length - 1 && availableVostcards.length > 0;
 
   if (loading) {
