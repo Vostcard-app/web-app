@@ -442,10 +442,13 @@ const VostcardStudioView: React.FC = () => {
     };
 
     restoreState();
-    
-    // Check for existing quickcard data from context or transfer
+  }, []); // Only run once on mount
+
+  // Separate useEffect for loading existing quickcard data - only runs once
+  useEffect(() => {
+    // Check for existing quickcard data from context or transfer (only on initial load)
     loadExistingQuickcardData();
-  }, [currentVostcard, quickcardTitle, quickcardDescription]);
+  }, []); // Only run once on mount
 
   // Cleanup on unmount
   useEffect(() => {
@@ -471,6 +474,13 @@ const VostcardStudioView: React.FC = () => {
   // Load quickcard data from currentVostcard context or sessionStorage
   const loadExistingQuickcardData = () => {
     try {
+      // Don't overwrite existing form data if user has already entered something
+      const hasExistingData = quickcardTitle.trim() || quickcardDescription.trim() || quickcardPhotos.length > 0;
+      if (hasExistingData) {
+        console.log('📱 Skipping data load - form already has content');
+        return;
+      }
+      
       // First try sessionStorage (from transfer button)
       const transferData = sessionStorage.getItem('quickcardTransferData');
       if (transferData) {
