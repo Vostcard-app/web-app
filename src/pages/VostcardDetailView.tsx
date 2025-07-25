@@ -705,13 +705,19 @@ Tap OK to continue.`;
     if (isValidSwipe) {
       if (distance > 0) {
         // Swipe up - go to next vostcard
+        console.log('📱 VostcardDetailView: Swiping up to next item...', { distance, canGoToNext, currentIndex, listLength: vostcardList.length });
         if (canGoToNext) {
           handleNextVostcard();
+        } else {
+          console.log('❌ Cannot go to next - at end of list');
         }
       } else {
         // Swipe down - go to previous vostcard
+        console.log('📱 VostcardDetailView: Swiping down to previous item...', { distance, canGoToPrevious, currentIndex, listLength: vostcardList.length });
         if (canGoToPrevious) {
           handlePreviousVostcard();
+        } else {
+          console.log('❌ Cannot go to previous - at start of list', { currentIndex, canGoToPrevious });
         }
       }
     }

@@ -723,7 +723,7 @@ Tap OK to continue.`;
     if (isValidSwipe) {
       if (distance > 0) {
         // Swipe up - go to next quickcard
-        console.log('📱 Swiping up to next item...');
+        console.log('📱 Swiping up to next item...', { distance, canGoToNext, currentIndex, listLength: vostcardList.length });
         if (canGoToNext) {
           handleNextQuickcard();
         } else {
@@ -731,11 +731,11 @@ Tap OK to continue.`;
         }
       } else {
         // Swipe down - go to previous quickcard
-        console.log('📱 Swiping down to previous item...');
+        console.log('📱 Swiping down to previous item...', { distance, canGoToPrevious, currentIndex, listLength: vostcardList.length });
         if (canGoToPrevious) {
           handlePreviousQuickcard();
         } else {
-          console.log('❌ Cannot go to previous - at start of list');
+          console.log('❌ Cannot go to previous - at start of list', { currentIndex, canGoToPrevious });
         }
       }
     } else {
