@@ -11,10 +11,6 @@ export default function QuickcardStep2() {
   // Track selected photos (4 thumbnails for quickcards)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
-  
-  // Track title and description inputs
-  const [title, setTitle] = useState(currentVostcard?.title || '');
-  const [description, setDescription] = useState(currentVostcard?.description || '');
 
   // Initialize empty quickcard or load saved photos when component mounts
   useEffect(() => {
@@ -135,17 +131,6 @@ export default function QuickcardStep2() {
 
   // Save and continue handler
   const handleSaveAndContinue = () => {
-    // Validate required fields
-    if (!title.trim()) {
-      alert('Please enter a title for your Quickcard.');
-      return;
-    }
-    
-    if (!description.trim()) {
-      alert('Please enter a description for your Quickcard.');
-      return;
-    }
-    
     // Filter out null photos - quickcards need at least 1 photo
     const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
     
@@ -154,16 +139,10 @@ export default function QuickcardStep2() {
       return;
     }
     
-    // Save all the data to context
-    updateVostcard({ 
-      title: title.trim(),
-      description: description.trim(),
-      photos: validPhotos 
-    });
+    // Save photos to context
+    updateVostcard({ photos: validPhotos });
     
-    console.log('📱 Quickcard data saved:', {
-      title: title.trim(),
-      description: description.trim(),
+    console.log('📱 Quickcard photos saved:', {
       photoCount: validPhotos.length
     });
     
@@ -171,7 +150,7 @@ export default function QuickcardStep2() {
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
-  const isFormComplete = title.trim() && description.trim() && photoCount > 0;
+  const isFormComplete = photoCount > 0;
 
   return (
     <div style={{
@@ -243,66 +222,8 @@ export default function QuickcardStep2() {
           letterSpacing: '0.01em',
           paddingTop: '5px'
         }}>
-          Create Quickcard
+          Add Photos
         </h1>
-        
-        {/* Title Input */}
-        <div style={{ width: '100%', marginBottom: 16 }}>
-          <label style={{
-            display: 'block',
-            fontSize: 16,
-            fontWeight: 600,
-            color: '#002B4D',
-            marginBottom: 8
-          }}>
-            Title *
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter quickcard title..."
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '8px',
-              border: title.trim() ? '2px solid #002B4D' : '2px solid #ccc',
-              fontSize: '16px',
-              boxSizing: 'border-box',
-              outline: 'none'
-            }}
-          />
-        </div>
-        
-        {/* Description Input */}
-        <div style={{ width: '100%', marginBottom: 20 }}>
-          <label style={{
-            display: 'block',
-            fontSize: 16,
-            fontWeight: 600,
-            color: '#002B4D',
-            marginBottom: 8
-          }}>
-            Description *
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe your quickcard..."
-            rows={3}
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '8px',
-              border: description.trim() ? '2px solid #002B4D' : '2px solid #ccc',
-              fontSize: '16px',
-              boxSizing: 'border-box',
-              outline: 'none',
-              resize: 'vertical',
-              fontFamily: 'system-ui, sans-serif'
-            }}
-          />
-        </div>
         
 
 
@@ -453,7 +374,7 @@ export default function QuickcardStep2() {
           </button>
         </div>
 
-        {/* Progress indicator */}
+        {/* Photo count indicator */}
         <div style={{
           fontSize: 14,
           color: '#666',
@@ -461,9 +382,7 @@ export default function QuickcardStep2() {
           marginBottom: 0,
           paddingTop: '2px'
         }}>
-          {photoCount} photo{photoCount !== 1 ? 's' : ''} • 
-          {title.trim() ? ' ✅' : ' ❌'} Title • 
-          {description.trim() ? ' ✅' : ' ❌'} Description
+          {photoCount} of 4 photos added
         </div>
 
         {/* Continue button */}

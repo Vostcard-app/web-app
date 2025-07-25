@@ -464,7 +464,7 @@ const QuickcardCameraView: React.FC = () => {
     // Use the first photo for quickcard
     if (captures.length > 0) {
       createQuickcard(captures[0].blob, userLocation);
-      navigate('/quickcard-step3');
+      navigate('/quickcard-step2');
     }
   };
 
@@ -499,7 +499,7 @@ const QuickcardCameraView: React.FC = () => {
         });
         
         createQuickcard(blob, userLocation);
-        navigate('/quickcard-step3');
+        navigate('/quickcard-step2');
       } else {
         console.error('❌ Failed to capture photo');
         alert('Failed to capture photo. Please try again.');

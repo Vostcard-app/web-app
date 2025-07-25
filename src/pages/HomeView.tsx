@@ -477,11 +477,11 @@ const HomeView = () => {
 
   const handleCreateQuickcard = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('📱 Starting Quickcard creation - navigating to photo selection');
+    console.log('📱 Starting Quickcard creation - opening camera');
     clearVostcard();
     
-    // Navigate directly to photo selection step
-    navigate('/quickcard-step2');
+    // Navigate to camera for photo capture
+    navigate('/quickcard-camera');
   };
 
   const handleCreateTouchStart = () => setIsCreatePressed(true);

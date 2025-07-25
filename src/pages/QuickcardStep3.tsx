@@ -37,25 +37,20 @@ const QuickcardStep3: React.FC = () => {
     'Made for kids',
   ];
   
-  // Quickcard validation (simpler than regular vostcards)
+  // Quickcard validation (only title required now)
   const validationState = {
     hasTitle: title.trim() !== '',
-    hasDescription: description.trim() !== '',
-    hasCategories: (categories?.length || 0) > 0,
-    hasPhotos: (photos?.length || 0) >= 1,  // Quickcards only need 1 photo
+    hasDescription: description.trim() !== '', // Not required but tracked
+    hasCategories: (categories?.length || 0) > 0, // Not required but tracked
+    hasPhotos: (photos?.length || 0) >= 1,  // Should already have photos from step 2
   };
 
-  // Check if quickcard is ready for posting (all validation must pass)
-  const isReadyForPosting = validationState.hasTitle && 
-    validationState.hasDescription && 
-    validationState.hasCategories && 
-    validationState.hasPhotos;
+  // Check if quickcard is ready for posting (only title required)
+  const isReadyForPosting = validationState.hasTitle && validationState.hasPhotos;
 
-  // Create specific missing items list
+  // Create specific missing items list (only title required)
   const missingItems: string[] = [];
   if (!validationState.hasTitle) missingItems.push('Title');
-  if (!validationState.hasDescription) missingItems.push('Description');
-  if (!validationState.hasCategories) missingItems.push('Categories');
   if (!validationState.hasPhotos) missingItems.push('Photos (need at least 1)');
 
   console.log('🔍 Quickcard Step 3 Validation State:', {
@@ -138,10 +133,7 @@ const QuickcardStep3: React.FC = () => {
       return;
     }
     
-    // Show immediate success message
-    alert('🎉 Quickcard posted successfully!');
-    
-    // Show second message about timing
+    // Show success message (matches vostcard posting)
     alert('Your Quickcard will appear on the map in a minute or two.');
     
     // Navigate to home normally - let the regular data loading handle refreshes
@@ -222,29 +214,30 @@ const QuickcardStep3: React.FC = () => {
       }}>
         <div>
           <label style={labelStyle}>
-            Title {validationState.hasTitle && <span style={{color: 'green'}}>✅</span>}
+            Title* {validationState.hasTitle && <span style={{color: 'green'}}>✅</span>}
           </label>
           <input
             value={title}
             onChange={(e) => updateVostcard({ title: e.target.value })}
-            placeholder="Enter Title"
+            placeholder="Enter Title (Required)"
             style={{
               ...inputStyle,
               touchAction: 'manipulation',
               fontSize: '18px',
-              WebkitTextSizeAdjust: '100%'
+              WebkitTextSizeAdjust: '100%',
+              borderColor: validationState.hasTitle ? '#002B4D' : '#ff6b6b'
             }}
           />
         </div>
 
         <div>
           <label style={labelStyle}>
-            Description {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
+            Description (Optional) {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
           </label>
           <textarea
             value={description}
             onChange={(e) => updateVostcard({ description: e.target.value })}
-            placeholder="Enter Description"
+            placeholder="Enter Description (Optional)"
             rows={4}
             style={{
               ...textareaStyle,
@@ -257,7 +250,7 @@ const QuickcardStep3: React.FC = () => {
 
         <div>
           <label style={labelStyle}>
-            Categories {validationState.hasCategories && <span style={{color: 'green'}}>✅</span>}
+            Categories (Optional) {validationState.hasCategories && <span style={{color: 'green'}}>✅</span>}
           </label>
           <div
             onClick={() => setIsCategoryModalOpen(true)}
@@ -345,29 +338,32 @@ const QuickcardStep3: React.FC = () => {
           🎤 Add Audio & Advanced Features
         </button>
 
-        {/* Save Privately Button */}
+        {/* Save to Personal Posts Button */}
         <button
           onClick={handleSavePrivately}
+          disabled={!isReadyForPosting}
           style={{
             ...saveButtonStyle,
-            backgroundColor: '#002B4D', // Always enabled for private save
+            backgroundColor: isReadyForPosting ? '#002B4D' : '#aaa',
+            cursor: isReadyForPosting ? 'pointer' : 'not-allowed',
             touchAction: 'manipulation'
           }}
         >
-          Save Privately
+          Save to Personal Posts
         </button>
 
-        {/* Post to Map Button */}
+        {/* Post to Map (Public Posts) Button */}
         <button
           onClick={handlePostToMap}
           disabled={!isReadyForPosting}
           style={{
             ...postButtonStyle,
             backgroundColor: isReadyForPosting ? '#28a745' : '#aaa', // Green when ready
+            cursor: isReadyForPosting ? 'pointer' : 'not-allowed',
             touchAction: 'manipulation'
           }}
         >
-          Post to Map
+          Post to Map (Public)
         </button>
       </div>
 
