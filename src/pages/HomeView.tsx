@@ -368,12 +368,6 @@ const HomeView = () => {
 
   // Location handling - IMPROVED FOR LAPTOPS
   useEffect(() => {
-    // Don't start geolocation if we have a browse location
-    if (browseLocation) {
-      console.log('📍 Browse location active, skipping geolocation');
-      return;
-    }
-
     let watchId: number | null = null;
 
     const handleLocationSuccess = (position: GeolocationPosition) => {
@@ -385,8 +379,16 @@ const HomeView = () => {
         source: accuracy < 50 ? 'GPS' : 'Network/WiFi'
       });
       
-      setUserLocation([latitude, longitude]);
+      // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
+      
+      // Only update userLocation if we don't have a browse location
+      if (!browseLocation) {
+        console.log('📍 Setting userLocation to actual location');
+        setUserLocation([latitude, longitude]);
+      } else {
+        console.log('📍 Browse location active, keeping userLocation unchanged');
+      }
     };
 
     const handleLocationError = (error: GeolocationPositionError) => {
@@ -447,41 +449,6 @@ const HomeView = () => {
     };
 
     startLocationWatch();
-
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [browseLocation]);
-
-  // Get user's actual location for "recenter" button when browse location is active
-  useEffect(() => {
-    if (!browseLocation) return;
-
-    let watchId: number | null = null;
-
-    const handleLocationSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude } = position.coords;
-      console.log('📍 User location for recenter button:', [latitude, longitude]);
-      setActualUserLocation([latitude, longitude]);
-    };
-
-    const handleLocationError = (error: GeolocationPositionError) => {
-      console.warn('📍 Could not get user location for recenter button:', error.message);
-    };
-
-    if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        handleLocationSuccess,
-        handleLocationError,
-        {
-          enableHighAccuracy: false,
-          timeout: 30000,
-          maximumAge: 600000
-        }
-      );
-    }
 
     return () => {
       if (watchId !== null) {
