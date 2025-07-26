@@ -938,58 +938,9 @@ const PublicQuickcardView: React.FC = () => {
             </button>
           )}
 
-          {/* View on Map Button - Always show if location data exists */}
-          {quickcard?.latitude && quickcard?.longitude && (
-            <button
-              onClick={() => {
-                console.log('📍 Opening quickcard location on public map');
-                navigate('/public-map', {
-                  replace: false, // Ensure we add to history so back button works
-                  state: {
-                    singleVostcard: {
-                      id: quickcard.id,
-                      title: quickcard.title,
-                      description: quickcard.description,
-                      latitude: quickcard.latitude,
-                      longitude: quickcard.longitude,
-                      photoURLs: quickcard.photoURLs,
-                      username: quickcard.username,
-                      userRole: quickcard.userRole, // ✅ ADD: Include userRole for correct pin type
-                      isOffer: false,
-                      isQuickcard: true,
-                      categories: quickcard.categories,
-                      createdAt: quickcard.formattedDate,
-                      visibility: 'public',
-                      state: 'posted'
-                    }
-                  }
-                });
-              }}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                minWidth: '80px',
-                boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease',
-                flex: '1',
-                maxWidth: '110px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-            >
-              <FaMap size={12} style={{ marginRight: '6px' }} />
-              View on Map
-            </button>
-          )}
         </div>
 
-        {/* Action Icons Row: Like, Star, Comment, Share */}
+        {/* Action Icons Row: Like, Comment, Share, Map View */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-around',
@@ -1061,6 +1012,54 @@ const PublicQuickcardView: React.FC = () => {
           >
             <FaShare size={22} />
           </button>
+
+          {/* Map View Button - Always show if location data exists */}
+          {quickcard?.latitude && quickcard?.longitude && (
+            <button
+              onClick={() => {
+                console.log('📍 Opening quickcard location on public map');
+                navigate('/public-map', {
+                  replace: false, // Ensure we add to history so back button works
+                  state: {
+                    singleVostcard: {
+                      id: quickcard.id,
+                      title: quickcard.title,
+                      description: quickcard.description,
+                      latitude: quickcard.latitude,
+                      longitude: quickcard.longitude,
+                      photoURLs: quickcard.photoURLs,
+                      username: quickcard.username,
+                      userRole: quickcard.userRole, // ✅ ADD: Include userRole for correct pin type
+                      isOffer: false,
+                      isQuickcard: true,
+                      categories: quickcard.categories,
+                      createdAt: quickcard.formattedDate,
+                      visibility: 'public',
+                      state: 'posted'
+                    }
+                  }
+                });
+              }}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '60px',
+                boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              <FaMap size={12} style={{ marginRight: '4px' }} />
+              Map View
+            </button>
+          )}
         </div>
 
         {/* Description Link Section - Updated styling */}

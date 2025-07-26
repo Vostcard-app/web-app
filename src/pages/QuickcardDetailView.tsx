@@ -1249,30 +1249,6 @@ Tap OK to continue.`;
             </button>
           )}
 
-          {/* View on Map Button - Always show if location data exists */}
-          {quickcard?.latitude && quickcard?.longitude && (
-            <button
-              onClick={handleMapClick}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                minWidth: '100px',
-                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-            >
-              <FaMap size={14} style={{ marginRight: '8px' }} />
-              View on Map
-            </button>
-          )}
         </div>
       )}
 
@@ -1284,8 +1260,6 @@ Tap OK to continue.`;
         padding: '20px 40px',
         borderBottom: '1px solid #eee'
       }}>
-        {/* REMOVED: Play Button - speaker icon */}
-
         <button
           onClick={handleLikeClick}
           style={{
@@ -1331,7 +1305,30 @@ Tap OK to continue.`;
           <FaShare size={22} />
         </button>
 
-        {/* REMOVED: Map Button - map icon */}
+        {/* Map View Button - Always show if location data exists */}
+        {quickcard?.latitude && quickcard?.longitude && (
+          <button
+            onClick={handleMapClick}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              minWidth: '60px',
+              boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+          >
+            <FaMap size={12} style={{ marginRight: '4px' }} />
+            Map View
+          </button>
+        )}
       </div>
 
       {/* Description Link, Flag Icon, and Refresh Button */}
