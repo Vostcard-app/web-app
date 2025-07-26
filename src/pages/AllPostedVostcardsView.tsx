@@ -57,9 +57,107 @@ const AllPostedVostcardsView: React.FC = () => {
   const [showFriendsOnly, setShowFriendsOnly] = useState(false);
   const [userFriends, setUserFriends] = useState<string[]>([]);
   
+  // Browse modal state
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+
+  // Real-time location search with debouncing
+  useEffect(() => {
+    if (!searchQuery.trim() || !showBrowseModal) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      setHighlightedIndex(-1);
+      return;
+    }
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        setSearchError(null);
+        console.log('🔍 Searching for location:', searchQuery);
+
+        const response = await fetch('/.netlify/functions/geocode', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'search',
+            searchQuery: searchQuery.trim()
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            console.log('🔍 No results found for:', searchQuery);
+            setSearchResults([]);
+            setShowDropdown(false);
+          } else {
+            console.error('🔍 Search error:', data.error);
+            setSearchError(data.error || 'Search failed');
+          }
+          return;
+        }
+
+        const results = data.results || [];
+        console.log('🔍 Found results:', results.length);
+        
+        // Format results to match expected structure
+        const formattedResults = results.map((result: any) => ({
+          name: result.name,
+          coordinates: [Number(result.latitude), Number(result.longitude)],
+          type: result.type,
+          displayAddress: result.displayAddress,
+          latitude: Number(result.latitude),
+          longitude: Number(result.longitude)
+        }));
+
+        setSearchResults(formattedResults);
+        setShowDropdown(formattedResults.length > 0);
+        setHighlightedIndex(-1);
+
+      } catch (error) {
+        console.error('🔍 Search failed:', error);
+        setSearchError('Search failed. Please try again.');
+        setSearchResults([]);
+        setShowDropdown(false);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, showBrowseModal]);
+
+  const handleLocationSelect = (location: any) => {
+    console.log('🗺️ Location selected for browse:', location);
+    setSearchQuery(location.name);
+    setShowDropdown(false);
+    
+    // Navigate to home with browse location
+    navigate('/home', {
+      state: {
+        browseLocation: {
+          coordinates: location.coordinates,
+          name: location.name,
+          id: location.id,
+          type: location.type,
+          place: location.place,
+        },
+      },
+    });
+  };
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -778,7 +876,7 @@ const AllPostedVostcardsView: React.FC = () => {
         </button>
         
         <button 
-          onClick={() => navigate('/browse-area')}
+          onClick={() => setShowBrowseModal(true)}
           style={{ 
             background: '#002B4D', 
             color: 'white', 
@@ -1000,6 +1098,140 @@ const AllPostedVostcardsView: React.FC = () => {
                 Apply
               </button>
             </div>
+          </div>
+        </>
+      )}
+
+      {/* Browse Modal */}
+      {showBrowseModal && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 2000
+            }}
+            onClick={() => setShowBrowseModal(false)}
+          />
+          <div style={{
+            position: 'fixed',
+            top: '10%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            zIndex: 2001
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold' }}>
+              Browse Area
+            </h3>
+            
+            {/* Search Input */}
+            <div style={{ position: 'relative', marginBottom: '20px' }}>
+              <div style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                backgroundColor: 'white'
+              }}>
+                <FaMapPin style={{ color: '#666', marginRight: '12px' }} />
+                <input
+                  type="text"
+                  placeholder="Search for any location worldwide..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: 'none',
+                    outline: 'none',
+                    flex: 1,
+                    fontSize: '16px',
+                    backgroundColor: 'transparent'
+                  }}
+                />
+                {isSearching && (
+                  <div style={{ color: '#666', fontSize: '14px' }}>
+                    Searching...
+                  </div>
+                )}
+              </div>
+              
+              {/* Search Results Dropdown */}
+              {showDropdown && searchResults.length > 0 && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  marginTop: '4px',
+                  maxHeight: '200px',
+                  overflow: 'auto',
+                  zIndex: 2002,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }}>
+                  {searchResults.map((result, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleLocationSelect(result)}
+                      style={{
+                        padding: '12px 16px',
+                        cursor: 'pointer',
+                        borderBottom: index < searchResults.length - 1 ? '1px solid #f0f0f0' : 'none',
+                        backgroundColor: index === highlightedIndex ? '#f5f5f5' : 'transparent',
+                        fontSize: '14px'
+                      }}
+                    >
+                      <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                        {result.name}
+                      </div>
+                      {result.displayAddress && (
+                        <div style={{ color: '#666', fontSize: '12px' }}>
+                          {result.displayAddress}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {searchError && (
+                <div style={{ color: '#d32f2f', fontSize: '14px', marginTop: '8px' }}>
+                  {searchError}
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => setShowBrowseModal(false)}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'center'
+              }}
+            >
+              Close
+            </button>
           </div>
         </>
       )}
