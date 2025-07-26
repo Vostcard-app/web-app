@@ -895,6 +895,25 @@ const AllPostedVostcardsView: React.FC = () => {
         </button>
         
         <button 
+          onClick={() => setShowBrowseModal(true)}
+          style={{ 
+            background: '#002B4D', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '12px 24px', 
+            fontSize: 16, 
+            fontWeight: 500, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          Browse
+        </button>
+        
+        <button 
           onClick={() => setShowFilterModal(true)}
           style={{ 
             background: (
