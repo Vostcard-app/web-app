@@ -1026,25 +1026,25 @@ Tap OK to continue.`;
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                 pointerEvents: 'auto',
                 transition: 'transform 0.1s ease',
-                height: '32px',
+                height: '28px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '6px'
+                gap: '4px'
               }}
             >
               Leave a Tip
-              <FaChevronDown size={10} />
+              <FaChevronDown size={8} />
             </button>
         )}
         </div>

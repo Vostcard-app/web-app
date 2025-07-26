@@ -750,7 +750,7 @@ const PublicQuickcardView: React.FC = () => {
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
               width: '100%',
-              maxWidth: '900px',
+              maxWidth: '450px', // ✅ REDUCED: Half the size (was 900px)
               borderRadius: '16px',
               overflow: 'hidden',
               backgroundColor: '#f8f9fa',
@@ -775,11 +775,25 @@ const PublicQuickcardView: React.FC = () => {
                   filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
                 } as React.CSSProperties}
                 onClick={() => {
-                  if (photoURLs.length > 1) {
+                  console.log('🖼️ Main photo clicked - launching audio and showing slideshow');
+                  // Play audio if available
+                  if (hasAudio) {
+                    if (isPlayingAudio) {
+                      if (audioRef.current) {
+                        audioRef.current.pause();
+                        setIsPlayingAudio(false);
+                      }
+                    } else {
+                      if (audioRef.current) {
+                        audioRef.current.play();
+                        setIsPlayingAudio(true);
+                      }
+                    }
+                  }
+                  // Show photo slideshow starting with first photo
+                  if (photoURLs && photoURLs.length > 0) {
                     setSelectedPhotoIndex(0);
                     setShowMultiPhotoModal(true);
-                  } else {
-                    handleMainPhotoClick();
                   }
                 }}
                 loading="eager"
