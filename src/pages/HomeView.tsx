@@ -1238,7 +1238,6 @@ const HomeView = () => {
               right: 0,
               bottom: 0,
               backgroundColor: 'rgba(0,0,0,0.5)',
-              zIndex: 2000
             }}
             onClick={() => setShowFilterModal(false)}
           />
@@ -1261,4 +1260,239 @@ const HomeView = () => {
             </h3>
             
             {/* Categories */}
-            <div st 
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              marginBottom: '20px'
+            }}>
+              <label style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                Categories
+              </label>
+              {AVAILABLE_CATEGORIES.map(category => (
+                <div key={category} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id={`category-${category}`}
+                    checked={selectedCategories.includes(category)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedCategories(prev => [...prev, category]);
+                      } else {
+                        setSelectedCategories(prev => prev.filter(c => c !== category));
+                      }
+                    }}
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  <label htmlFor={`category-${category}`} style={{ fontSize: '14px', color: '#333' }}>
+                    {category}
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            {/* Types */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              marginBottom: '20px'
+            }}>
+              <label style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                Types
+              </label>
+              {AVAILABLE_TYPES.map(type => (
+                <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id={`type-${type}`}
+                    checked={selectedTypes.includes(type)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedTypes(prev => [...prev, type]);
+                      } else {
+                        setSelectedTypes(prev => prev.filter(t => t !== type));
+                      }
+                    }}
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  <label htmlFor={`type-${type}`} style={{ fontSize: '14px', color: '#333' }}>
+                    {type}
+                  </label>
+                </div>
+              ))}
+            </div>
+
+            {/* Friends Only */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '20px'
+            }}>
+              <input
+                type="checkbox"
+                id="friends-only"
+                checked={showFriendsOnly}
+                onChange={(e) => setShowFriendsOnly(e.target.checked)}
+                style={{ width: '16px', height: '16px' }}
+              />
+              <label htmlFor="friends-only" style={{ fontSize: '14px', color: '#333' }}>
+                Show only friends' posts
+              </label>
+            </div>
+
+            <button
+              onClick={() => setShowFilterModal(false)}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 20px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'center'
+              }}
+            >
+              Apply Filters
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Video Modal */}
+      {showVideoModal && (
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.8)',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 2002
+            }}
+            onClick={() => setShowVideoModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                width: '90%',
+                maxWidth: '600px',
+                maxHeight: '80vh',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <div style={{
+                position: 'relative',
+                paddingTop: '56.25%', // 16:9 Aspect Ratio
+                height: 0,
+                overflow: 'hidden'
+              }}>
+                <iframe
+                  src={youtubeEmbedUrl}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '12px 12px 0 0'
+                  }}
+                />
+              </div>
+              <div style={{
+                padding: '16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#f0f0f0',
+                borderBottom: '1px solid #ddd'
+              }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>{currentTutorialVideo.replace('J-', '').replace('-', ' ')}</h3>
+                <button
+                  onClick={() => setShowVideoModal(false)}
+                  style={{
+                    backgroundColor: '#002B4D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <FaTimes size={18} />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>
+      )}
+
+      {/* Auth Loading Overlay */}
+      {showAuthLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '20px',
+            borderRadius: '12px',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '20px', fontWeight: 'bold' }}>Loading...</h3>
+            <p style={{ fontSize: '14px', color: '#666' }}>Please wait while we authenticate your session.</p>
+            <div style={{ marginTop: '15px' }}>
+              <img src={InfoButton} alt="Info" style={{ width: '40px', height: '40px', marginBottom: '10px' }} />
+              <p style={{ fontSize: '12px', color: '#999' }}>Vōstcard</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Location Debugger */}
+      {userLocation && (
+        <LocationDebugger
+          userLocation={userLocation}
+          actualUserLocation={actualUserLocation}
+          handleRecenter={handleRecenter}
+        />
+      )}
+    </div>
+  );
+};
+
+export default HomeView; 
