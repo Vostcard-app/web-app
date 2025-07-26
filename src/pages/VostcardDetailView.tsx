@@ -704,19 +704,19 @@ Tap OK to continue.`;
     });
     
     try {
-      if (!touchStart || !touchEnd || isScrolling) {
-        // Reset and allow normal scrolling
+    if (!touchStart || !touchEnd || isScrolling) {
+      // Reset and allow normal scrolling
         console.log('🔍 VostcardDetailView Touch END - Early return:', { 
           touchStart: !!touchStart, 
           touchEnd: !!touchEnd, 
           isScrolling,
           reason: !touchStart ? 'no touchStart' : !touchEnd ? 'no touchEnd' : 'isScrolling'
         });
-        setTouchStart(null);
-        setTouchEnd(null);
-        setIsScrolling(false);
-        return;
-      }
+      setTouchStart(null);
+      setTouchEnd(null);
+      setIsScrolling(false);
+      return;
+    }
 
     const distance = touchStart.y - touchEnd.y;
     const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
@@ -1076,58 +1076,58 @@ Tap OK to continue.`;
                 width: '100%',
                 maxWidth: '800px',
                 borderRadius: '16px',
-                overflow: 'hidden',
+                  overflow: 'hidden',
                 backgroundColor: '#f8f9fa',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                position: 'relative',
+                  position: 'relative',
                 cursor: 'pointer'
-              }}>
-                <img
-                  src={vostcard.photoURLs[0]}
-                  alt="Quickcard"
-                  style={{
-                    width: '100%',
+                  }}>
+                    <img
+                      src={vostcard.photoURLs[0]}
+                      alt="Quickcard"
+                      style={{
+                        width: '100%',
                     height: 'auto',
                     display: 'block',
-                    cursor: 'pointer',
-                    WebkitBackfaceVisibility: 'hidden',
-                    backfaceVisibility: 'hidden',
+                        cursor: 'pointer',
+                        WebkitBackfaceVisibility: 'hidden',
+                        backfaceVisibility: 'hidden',
                     transform: 'translateZ(0)',
                     filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
-                  } as React.CSSProperties}
-                  onClick={() => {
-                    const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
-                    
-                    if (hasAudio) {
-                      handleAudioPlayback();
-                    } else if (vostcard.photoURLs.length > 1) {
-                      setSelectedPhotoIndex(0);
-                      setShowMultiPhotoModal(true);
-                    } else {
-                      handlePhotoClick(vostcard.photoURLs[0]);
-                    }
-                  }}
+                      } as React.CSSProperties}
+                      onClick={() => {
+                        const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
+                        
+                        if (hasAudio) {
+                          handleAudioPlayback();
+                        } else if (vostcard.photoURLs.length > 1) {
+                          setSelectedPhotoIndex(0);
+                          setShowMultiPhotoModal(true);
+                        } else {
+                          handlePhotoClick(vostcard.photoURLs[0]);
+                        }
+                      }}
                   loading="eager"
                   fetchPriority="high"
-                />
-                
-                {vostcard.photoURLs.length > 1 && (
-                  <div style={{
+                    />
+                    
+                      {vostcard.photoURLs.length > 1 && (
+                        <div style={{
                     position: 'absolute',
                     top: '12px',
                     right: '12px',
                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    color: 'white',
+                          color: 'white',
                     padding: '6px 12px',
                     borderRadius: '16px',
                     fontSize: '14px',
-                    fontWeight: 'bold',
+                          fontWeight: 'bold',
                     backdropFilter: 'blur(8px)',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                  }}>
-                    1/{vostcard.photoURLs.length}
-                  </div>
-                )}
+                        }}>
+                          1/{vostcard.photoURLs.length}
+                        </div>
+                      )}
               </div>
             ) : (
               <div style={{ 

@@ -765,7 +765,8 @@ const PublicQuickcardView: React.FC = () => {
                 alt="Quickcard"
                 style={{
                   width: '100%',
-                  height: 'auto', // ✅ CHANGED: Auto height for natural sizing
+                  height: '150px', // ✅ CHANGED: Fixed height for square thumbnail
+                  objectFit: 'cover', // ✅ ADDED: Maintains aspect ratio
                   display: 'block', // ✅ ADDED: Prevents inline spacing issues
                   cursor: 'pointer',
                   // ✅ High-quality image rendering
@@ -839,14 +840,14 @@ const PublicQuickcardView: React.FC = () => {
           )}
           
           {/* ✅ ADDED: "Tap to view" text */}
-          <div style={{
+              <div style={{
             fontSize: '14px',
             color: '#666',
-            textAlign: 'center',
+                textAlign: 'center',
             fontStyle: 'italic'
-          }}>
+              }}>
             Tap to view
-          </div>
+                </div>
         </div>
 
         {/* Hidden Audio Element */}

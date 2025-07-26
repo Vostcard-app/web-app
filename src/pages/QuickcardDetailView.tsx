@@ -985,7 +985,7 @@ Tap OK to continue.`;
 
       {/* User Info */}
       <div style={{ 
-        padding: '15px 20px 5px 20px', 
+        padding: '15px 20px 5px 20px',
         display: 'flex', 
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -1036,12 +1036,12 @@ Tap OK to continue.`;
             }}
           >
             {quickcard.username || 'Anonymous'}
-          </div>
         </div>
+      </div>
 
         {/* ☕ Tip Button for Guides - Right side of avatar row */}
-        {userProfile?.userRole === 'guide' && 
-         user?.uid !== quickcard.userID && (
+      {userProfile?.userRole === 'guide' && 
+       user?.uid !== quickcard.userID && (
           <button
             ref={tipButtonRef}
             onClick={handleTipButtonClick}
@@ -1069,7 +1069,7 @@ Tap OK to continue.`;
             Leave a Tip
             <FaChevronDown size={8} />
           </button>
-        )}
+      )}
       </div>
 
       {/* Title */}
@@ -1098,27 +1098,28 @@ Tap OK to continue.`;
             width: '100%',
             maxWidth: '150px',
             borderRadius: '16px',
-            overflow: 'hidden',
+              overflow: 'hidden',
             backgroundColor: '#f8f9fa',
             boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-            position: 'relative',
+              position: 'relative',
             cursor: 'pointer'
-          }}>
-            <img
-              src={photoURLs[0]}
-              alt="Quickcard"
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block',
-                cursor: 'pointer',
-                imageRendering: 'crisp-edges' as any,
-                WebkitBackfaceVisibility: 'hidden',
-                backfaceVisibility: 'hidden',
-                transform: 'translateZ(0)',
-                filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
-              } as React.CSSProperties}
-              onClick={() => {
+              }}>
+                <img
+                  src={photoURLs[0]}
+                  alt="Quickcard"
+                  style={{
+                    width: '100%',
+                    height: '150px',
+                    objectFit: 'cover',
+                    display: 'block',
+                    cursor: 'pointer',
+                    imageRendering: 'crisp-edges' as any,
+                    WebkitBackfaceVisibility: 'hidden',
+                    backfaceVisibility: 'hidden',
+                    transform: 'translateZ(0)',
+                    filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
+                  } as React.CSSProperties}
+                  onClick={() => {
                 console.log('🖼️ Main photo clicked - launching audio and showing slideshow');
                 // Play intro audio if available
                 if (hasAudio) {
@@ -1126,31 +1127,31 @@ Tap OK to continue.`;
                 }
                 // Show photo slideshow starting with first photo WITH AUTO-PLAY
                 if (photoURLs && photoURLs.length > 0) {
-                  setSelectedPhotoIndex(0);
-                  setShowMultiPhotoModal(true);
-                }
+                      setSelectedPhotoIndex(0);
+                      setShowMultiPhotoModal(true);
+                    }
               }}
               loading="eager"
               fetchPriority="high"
-            />
-            
-            {photoURLs.length > 1 && (
-              <div style={{
+                />
+                
+                  {photoURLs.length > 1 && (
+                    <div style={{
                 position: 'absolute',
                 top: '12px',
                 right: '12px',
                 backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                color: 'white',
+                      color: 'white',
                 padding: '6px 12px',
                 borderRadius: '16px',
                 fontSize: '14px',
-                fontWeight: 'bold',
+                      fontWeight: 'bold',
                 backdropFilter: 'blur(4px)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
-              }}>
-                1/{photoURLs.length}
-              </div>
-            )}
+                    }}>
+                      1/{photoURLs.length}
+                    </div>
+                  )}
           </div>
         ) : (
           <div style={{ 
@@ -1616,10 +1617,10 @@ Tap OK to continue.`;
 
       {/* MultiPhotoModal with AUTO-PLAY - 7 SECOND INTERVALS */}
       {showMultiPhotoModal && (
-        <MultiPhotoModal
+      <MultiPhotoModal
           photos={photoURLs}
-          initialIndex={selectedPhotoIndex}
-          isOpen={showMultiPhotoModal}
+        initialIndex={selectedPhotoIndex}
+        isOpen={showMultiPhotoModal}
           onClose={() => {
             setShowMultiPhotoModal(false);
             // Stop audio when slideshow is closed
@@ -1632,7 +1633,7 @@ Tap OK to continue.`;
           autoPlay={true}
           autoPlayInterval={7000}
           audioDuration={quickcard?.audioDuration}
-        />
+      />
       )}
 
       {/* Share Options Modal */}
