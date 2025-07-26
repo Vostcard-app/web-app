@@ -409,11 +409,11 @@ const AllPostedVostcardsView: React.FC = () => {
       key={`all-posted-${Date.now()}`}
       style={{ 
         background: '#f5f5f5', 
-        height: '100vh',
+        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'auto'
       }}
     >
       {/* Add CSS animation for spinning icon */}
