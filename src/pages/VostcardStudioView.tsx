@@ -766,7 +766,7 @@ const VostcardStudioView: React.FC = () => {
   };
 
   // Update creation functions to use multiple photos
-  const handleSaveQuickcardAsDraft = async () => {
+  const handleSaveQuickcardToPersonalPosts = async () => {
     if (!quickcardTitle.trim()) {
       alert('Please enter a title for your quickcard.');
       return;
@@ -774,11 +774,6 @@ const VostcardStudioView: React.FC = () => {
 
     if (quickcardPhotos.length === 0) {
       alert('Please add at least one photo for your quickcard.');
-      return;
-    }
-
-    if (!quickcardLocation) {
-      alert('Please set a location for your quickcard.');
       return;
     }
 
@@ -826,12 +821,12 @@ const VostcardStudioView: React.FC = () => {
       setCurrentVostcard(quickcard);
       await saveLocalVostcard();
       
-      alert(`✅ Quickcard saved as private draft with ${quickcardPhotos.length} photo(s)!`);
+      alert(`✅ Quickcard saved to Personal Posts with ${quickcardPhotos.length} photo(s)!`);
       resetQuickcardForm();
       
     } catch (error) {
       console.error('❌ Error saving quickcard draft:', error);
-      alert('Failed to save quickcard draft. Please try again.');
+      alert('Failed to save quickcard to Personal Posts. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -1463,27 +1458,7 @@ const VostcardStudioView: React.FC = () => {
                 📂 Load Card
               </button>
 
-              <button 
-                onClick={() => document.getElementById('quickcard-camera-input')?.click()}
-                disabled={isLoading || quickcardPhotos.length >= 4}
-                style={{
-                  backgroundColor: (isLoading || quickcardPhotos.length >= 4) ? '#ccc' : '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: (isLoading || quickcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaCamera size={14} />
-                📸 Take Photo
-              </button>
+
             </div>
 
             {/* From Library Button */}
@@ -1497,7 +1472,7 @@ const VostcardStudioView: React.FC = () => {
                 onClick={() => document.getElementById('quickcard-gallery-input')?.click()}
                 disabled={isLoading}
                 style={{
-                  backgroundColor: isLoading ? '#ccc' : '#28a745',
+                  backgroundColor: isLoading ? '#ccc' : '#007aff',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
@@ -1516,7 +1491,7 @@ const VostcardStudioView: React.FC = () => {
               </button>
             </div>
 
-            {/* Location and Audio Buttons */}
+            {/* Location and Take Photo Buttons */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -1545,6 +1520,27 @@ const VostcardStudioView: React.FC = () => {
                 📍 Set Location
               </button>
               
+              <button 
+                onClick={() => document.getElementById('quickcard-camera-input')?.click()}
+                disabled={isLoading || quickcardPhotos.length >= 4}
+                style={{
+                  backgroundColor: (isLoading || quickcardPhotos.length >= 4) ? '#ccc' : '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: (isLoading || quickcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaCamera size={14} />
+                📸 Take Photo
+              </button>
             </div>
 
             {/* Intro and Detail Audio Buttons */}
@@ -1725,19 +1721,19 @@ const VostcardStudioView: React.FC = () => {
 
             {/* ✅ Two Action Buttons */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
-              {/* Save as Draft Button */}
+              {/* Save to Personal Posts Button */}
               <button 
-                onClick={handleSaveQuickcardAsDraft}
-                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
+                onClick={handleSaveQuickcardToPersonalPosts}
+                disabled={!quickcardTitle.trim() || isLoading || quickcardPhotos.length === 0}
                 style={{
-                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#666',
+                  backgroundColor: (!quickcardTitle.trim() || isLoading || quickcardPhotos.length === 0) ? '#ccc' : '#28a745',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                  cursor: (!quickcardTitle.trim() || isLoading || quickcardPhotos.length === 0) ? 'not-allowed' : 'pointer',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -1746,7 +1742,7 @@ const VostcardStudioView: React.FC = () => {
                 }}
               >
                 <FaSave size={12} />
-                Save Draft
+                Save
               </button>
 
               {/* Post to Map Button */}
