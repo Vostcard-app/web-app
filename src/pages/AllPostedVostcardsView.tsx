@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaCameraRetro, FaVideo } from 'react-icons/fa';
+import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaCameraRetro, FaVideo, FaMapPin } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
@@ -770,11 +770,30 @@ const AllPostedVostcardsView: React.FC = () => {
             fontWeight: 500, 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 8,
+            justifyContent: 'center',
             cursor: 'pointer'
           }}
         >
-          <FaTimes /> Clear
+          Clear
+        </button>
+        
+        <button 
+          onClick={() => navigate('/browse-area')}
+          style={{ 
+            background: '#002B4D', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '12px 24px', 
+            fontSize: 16, 
+            fontWeight: 500, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          Browse
         </button>
         
         <button 
@@ -793,11 +812,11 @@ const AllPostedVostcardsView: React.FC = () => {
             fontWeight: 500, 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 8,
+            justifyContent: 'center',
             cursor: 'pointer'
           }}
         >
-          <FaFilter /> Filter {(
+          Filter {(
             selectedTypes.length > 0 || 
             showFriendsOnly ||
             (selectedCategories.length > 0 && !selectedCategories.includes('None'))
