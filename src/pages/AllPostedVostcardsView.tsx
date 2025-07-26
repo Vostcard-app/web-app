@@ -59,7 +59,10 @@ const AllPostedVostcardsView: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
-    const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+  const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+  
+  // ✅ Desktop detection for responsive banner positioning
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -233,6 +236,16 @@ const AllPostedVostcardsView: React.FC = () => {
     if (vostcards.length === 0) return;
 
     const unsubscribers: (() => void)[] = [];
+    
+  // ✅ Handle window resize for responsive banner positioning
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
     vostcards.forEach(vostcard => {
       // Like listeners
@@ -432,7 +445,7 @@ const AllPostedVostcardsView: React.FC = () => {
         padding: '0 20px',
         flexShrink: 0,
         zIndex: 1000,
-        position: 'fixed',
+        position: isDesktop ? 'absolute' : 'fixed',
         top: 0,
         left: 0,
         right: 0,
