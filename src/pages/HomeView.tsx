@@ -195,6 +195,8 @@ const HomeView = () => {
   
   // Use ref to track browse location for geolocation closure
   const browseLocationRef = useRef<any>(null);
+  // Use ref to track singleVostcard for geolocation closure
+  const singleVostcardRef = useRef<any>(null);
 
   // Navigation state from previous view
   const navigationState = location.state as any;
@@ -228,11 +230,17 @@ const HomeView = () => {
     browseLocationRef.current = browseLocation;
   }, [browseLocation]);
 
+  // Update ref when singleVostcard changes
+  useEffect(() => {
+    singleVostcardRef.current = singleVostcard;
+  }, [singleVostcard]);
+
   // Handle target quickcard from navigation - center map but show all content
   useEffect(() => {
     if (singleVostcardState) {
       console.log('📍 Centering map on target quickcard:', singleVostcardState.title);
       setSingleVostcard(singleVostcardState);
+      singleVostcardRef.current = singleVostcardState;
       if (singleVostcardState.latitude && singleVostcardState.longitude) {
         const vostcardLocation: [number, number] = [singleVostcardState.latitude, singleVostcardState.longitude];
         setUserLocation(vostcardLocation);
@@ -271,9 +279,8 @@ const HomeView = () => {
 
   // Load vostcards function
   const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
-    if (singleVostcard) {
-      return;
-    }
+    // Remove the early return - we want to load all vostcards even when singleVostcard is set
+    // This allows the private map to show all posts nearby while centering on the specific quickcard
     
     if (loadingVostcards && !forceRefresh) {
       return;
@@ -397,7 +404,7 @@ const HomeView = () => {
       setActualUserLocation([latitude, longitude]);
       
       // Only update userLocation if we don't have a browse location or singleVostcard
-      if (!browseLocationRef.current && !singleVostcard) {
+      if (!browseLocationRef.current && !singleVostcardRef.current) {
         console.log('📍 Setting userLocation to actual location');
         setUserLocation([latitude, longitude]);
       } else {
@@ -469,7 +476,7 @@ const HomeView = () => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [singleVostcard]);
+  }, []);
 
   // Event handlers
   const handleLogout = async () => {
