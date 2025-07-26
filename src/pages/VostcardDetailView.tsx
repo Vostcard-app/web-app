@@ -1469,7 +1469,7 @@ Tap OK to continue.`;
               color: isLiked ? '#ff3b30' : '#666'
             }}
           >
-            <FaHeart size={30} />
+            <FaHeart size={22} />
           </button>
           <button
             onClick={() => {/* Handle star action */}}
@@ -1483,7 +1483,7 @@ Tap OK to continue.`;
               color: '#ffd700'
             }}
           >
-            <FaStar size={30} />
+            <FaStar size={22} />
           </button>
           <button
             onClick={() => setShowCommentsModal(true)}
@@ -1497,7 +1497,7 @@ Tap OK to continue.`;
               color: '#666'
             }}
           >
-            <FaRegComment size={30} />
+            <FaRegComment size={22} />
           </button>
           <button
             onClick={handleShareClick}
@@ -1511,7 +1511,7 @@ Tap OK to continue.`;
               color: '#666'
             }}
           >
-            <FaShare size={30} />
+            <FaShare size={22} />
           </button>
           {/* REMOVED: Map Button - map icon */}
           {/* REMOVED: Audio Button - speaker icon */}
@@ -1597,7 +1597,7 @@ Tap OK to continue.`;
               background: 'none',
               border: 'none',
               color: '#007aff',
-              fontSize: '28px',
+              fontSize: '22px',
               fontWeight: 'bold',
               textDecoration: 'underline',
               cursor: 'pointer',

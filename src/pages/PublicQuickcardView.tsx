@@ -731,7 +731,7 @@ const PublicQuickcardView: React.FC = () => {
         {/* Title */}
         <h1 style={{ 
           margin: '0 0 16px 0', 
-          fontSize: '28px', 
+                        fontSize: '22px', 
           fontWeight: 'bold', 
           color: '#333',
           textAlign: 'center',
@@ -1015,7 +1015,7 @@ const PublicQuickcardView: React.FC = () => {
               color: isLiked ? '#ff3b30' : '#666'
             }}
           >
-            <FaHeart size={30} />
+            <FaHeart size={22} />
           </button>
 
           {/* Comment Button - Shows login prompt */}
@@ -1031,7 +1031,7 @@ const PublicQuickcardView: React.FC = () => {
               color: '#666'
             }}
           >
-            <FaRegComment size={30} />
+            <FaRegComment size={22} />
           </button>
 
           {/* Share Button */}
@@ -1058,7 +1058,7 @@ const PublicQuickcardView: React.FC = () => {
               color: '#666'
             }}
           >
-            <FaShare size={30} />
+            <FaShare size={22} />
           </button>
         </div>
 

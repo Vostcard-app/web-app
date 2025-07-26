@@ -1196,7 +1196,7 @@ Tap OK to continue.`;
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '20px',
+          padding: '5px',
           gap: '5px',
           flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
         }}>
@@ -1297,7 +1297,7 @@ Tap OK to continue.`;
             color: isLiked ? '#ff3b30' : '#666'
           }}
         >
-          <FaHeart size={30} />
+          <FaHeart size={22} />
         </button>
 
         <button
@@ -1312,7 +1312,7 @@ Tap OK to continue.`;
             color: '#666'
           }}
         >
-          <FaRegComment size={30} />
+          <FaRegComment size={22} />
         </button>
 
         <button
@@ -1327,7 +1327,7 @@ Tap OK to continue.`;
             color: '#666'
           }}
         >
-          <FaShare size={30} />
+          <FaShare size={22} />
         </button>
 
         {/* REMOVED: Map Button - map icon */}
@@ -1361,7 +1361,7 @@ Tap OK to continue.`;
             background: 'none',
             border: 'none',
             color: '#007aff',
-            fontSize: '28px',
+                          fontSize: '22px',
             fontWeight: 'bold',
             textDecoration: 'underline',
             cursor: 'pointer',
@@ -1447,7 +1447,7 @@ Tap OK to continue.`;
                 transition: 'color 0.2s ease'
               }}
             >
-              <FaStar size={28} />
+              <FaStar size={24} />
             </button>
           ))}
         </div>
