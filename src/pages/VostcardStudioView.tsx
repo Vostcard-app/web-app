@@ -1461,7 +1461,7 @@ const VostcardStudioView: React.FC = () => {
 
             </div>
 
-            {/* From Library Button */}
+            {/* Load Photos Button */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr',
