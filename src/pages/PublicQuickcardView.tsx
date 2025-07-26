@@ -751,7 +751,6 @@ const PublicQuickcardView: React.FC = () => {
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
               width: '100%',
-              maxWidth: '120px', // ✅ MATCHED: Same size as QuickcardDetailView
               borderRadius: '16px',
               overflow: 'hidden',
               backgroundColor: '#f8f9fa',
@@ -763,11 +762,12 @@ const PublicQuickcardView: React.FC = () => {
               <img
                 src={photoURLs[0]}
                 alt="Quickcard"
-                style={{
-                  width: '100%',
-                  height: '120px', // ✅ CHANGED: Fixed height for square thumbnail
-                  objectFit: 'cover', // ✅ ADDED: Maintains aspect ratio
-                  display: 'block', // ✅ ADDED: Prevents inline spacing issues
+                                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    aspectRatio: '1',
+                    objectFit: 'cover', // ✅ ADDED: Maintains aspect ratio
+                    display: 'block', // ✅ ADDED: Prevents inline spacing issues
                   cursor: 'pointer',
                   // ✅ High-quality image rendering
                   imageRendering: 'crisp-edges' as any,
@@ -825,8 +825,7 @@ const PublicQuickcardView: React.FC = () => {
             // ✅ No photos fallback - also auto-sized
             <div style={{ 
               width: '100%',
-              maxWidth: '120px',
-              height: '120px',
+              aspectRatio: '1',
               position: 'relative',
               backgroundColor: '#f8f9fa',
               borderRadius: '16px',

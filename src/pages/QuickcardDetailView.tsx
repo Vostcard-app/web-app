@@ -1096,7 +1096,6 @@ Tap OK to continue.`;
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
-            maxWidth: '120px',
             borderRadius: '16px',
               overflow: 'hidden',
             backgroundColor: '#f8f9fa',
@@ -1109,7 +1108,8 @@ Tap OK to continue.`;
                   alt="Quickcard"
                   style={{
                     width: '100%',
-                    height: '120px',
+                    height: 'auto',
+                    aspectRatio: '1',
                     objectFit: 'cover',
                     display: 'block',
                     cursor: 'pointer',
@@ -1156,8 +1156,7 @@ Tap OK to continue.`;
         ) : (
           <div style={{ 
             width: '100%',
-            maxWidth: '120px',
-            height: '120px',
+            aspectRatio: '1',
             backgroundColor: '#f8f9fa',
             borderRadius: '16px',
             display: 'flex',
