@@ -1425,7 +1425,37 @@ const PublicQuickcardView: React.FC = () => {
               </button>
             </div>
             <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
-              {quickcard?.description || 'No description available.'}
+              {(() => {
+                const description = quickcard?.description || 'No description available.';
+                // Auto-detect URLs and make them clickable
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const parts = description.split(urlRegex);
+                
+                return parts.map((part: string, index: number) => {
+                  if (urlRegex.test(part)) {
+                    return (
+                      <a
+                        key={index}
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#007aff',
+                          textDecoration: 'underline',
+                          wordBreak: 'break-all'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(part, '_blank');
+                        }}
+                      >
+                        {part}
+                      </a>
+                    );
+                  }
+                  return part;
+                });
+              })()}
             </div>
           </div>
         </div>
