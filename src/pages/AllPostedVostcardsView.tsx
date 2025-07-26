@@ -477,7 +477,7 @@ const AllPostedVostcardsView: React.FC = () => {
         borderBottom: '1px solid #e0e0e0',
         flexShrink: 0,
         zIndex: 9,
-        marginTop: '80px', // Account for fixed header
+        marginTop: isDesktop ? '0px' : '80px', // Account for fixed header only on mobile
       }}>
         <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>Local Vōstcards</div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
