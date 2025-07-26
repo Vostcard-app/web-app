@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 import { useResponsive } from "../hooks/useResponsive";
@@ -12,6 +12,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const navigate = useNavigate();
 
   // Helper function to check if input is an email
@@ -138,6 +142,72 @@ export default function LoginPage() {
     }
   };
 
+  const handleForgotPassword = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (!forgotPasswordEmail.trim()) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    setForgotPasswordLoading(true);
+    setError("");
+
+    try {
+      const trimmedEmail = forgotPasswordEmail.trim();
+      let emailToUse = trimmedEmail;
+      
+      // If input is not an email, try to look up the email by username
+      if (!isEmail(trimmedEmail)) {
+        console.log('🔍 Input appears to be a username, looking up email for password reset...');
+        const foundEmail = await getEmailFromUsername(trimmedEmail);
+        
+        if (!foundEmail) {
+          setError("No account found with this username.");
+          setForgotPasswordLoading(false);
+          return;
+        }
+        
+        emailToUse = foundEmail;
+        console.log('✅ Found email for username:', emailToUse);
+      }
+
+      await sendPasswordResetEmail(auth, emailToUse);
+      console.log('✅ Password reset email sent successfully');
+      setForgotPasswordSuccess(true);
+      setForgotPasswordEmail("");
+    } catch (err: any) {
+      console.error("Password reset error:", err);
+      
+      let errorMessage = "Failed to send password reset email. Please try again.";
+      
+      if (err.code) {
+        switch (err.code) {
+          case 'auth/user-not-found':
+            errorMessage = "No account found with this email address or username.";
+            break;
+          case 'auth/invalid-email':
+            errorMessage = "Invalid email address format.";
+            break;
+          case 'auth/too-many-requests':
+            errorMessage = "Too many password reset attempts. Please try again later.";
+            break;
+          case 'auth/network-request-failed':
+            errorMessage = "Network error. Please check your internet connection.";
+            break;
+          default:
+            errorMessage = `Password reset error: ${err.message || err.code}`;
+        }
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setForgotPasswordLoading(false);
+    }
+  };
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -249,7 +319,7 @@ export default function LoginPage() {
           width: '90%',
           maxWidth: 400,
           position: 'relative',
-          marginBottom: 40
+          marginBottom: 20
         }}>
           <input
             type={showPassword ? "text" : "password"}
@@ -288,6 +358,25 @@ export default function LoginPage() {
             <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 18, color: '#666' }}></i>
           </button>
         </div>
+
+        {/* Forgot Password Link */}
+        <button
+          type="button"
+          onClick={() => setShowForgotPassword(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#07345c',
+            fontSize: 16,
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            marginBottom: 40,
+            alignSelf: 'flex-end',
+            marginRight: '5%'
+          }}
+        >
+          Forgot Password?
+        </button>
 
         {/* Log In Button */}
         <button
@@ -344,6 +433,185 @@ export default function LoginPage() {
         </button>
       </div>
     </form>
+
+    {/* Forgot Password Modal */}
+    {showForgotPassword && (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}
+        onClick={() => {
+          setShowForgotPassword(false);
+          setForgotPasswordSuccess(false);
+          setError("");
+        }}
+      >
+        <div
+          style={{
+            background: 'white',
+            padding: '30px',
+            borderRadius: '12px',
+            maxWidth: '400px',
+            width: '100%',
+            textAlign: 'center'
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          {!forgotPasswordSuccess ? (
+            <>
+              <h2 style={{
+                margin: '0 0 20px 0',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#333'
+              }}>
+                Reset Password
+              </h2>
+              
+              <p style={{
+                margin: '0 0 20px 0',
+                fontSize: '16px',
+                color: '#666',
+                lineHeight: 1.5
+              }}>
+                Enter your email address or username and we'll send you a link to reset your password.
+              </p>
+
+              {error && (
+                <div style={{
+                  color: 'red',
+                  marginBottom: '20px',
+                  fontSize: '14px'
+                }}>
+                  {error}
+                </div>
+              )}
+
+              <input
+                type="text"
+                placeholder="Email or Username"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  fontSize: 16,
+                  padding: '12px 16px',
+                  borderRadius: 8,
+                  border: '1px solid #ddd',
+                  marginBottom: 20,
+                  backgroundColor: 'white',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setForgotPasswordEmail("");
+                    setError("");
+                  }}
+                  style={{
+                    backgroundColor: '#f8f9fa',
+                    color: '#666',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    flex: 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleForgotPassword}
+                  disabled={forgotPasswordLoading}
+                  style={{
+                    backgroundColor: '#07345c',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: forgotPasswordLoading ? 'not-allowed' : 'pointer',
+                    flex: 1,
+                    opacity: forgotPasswordLoading ? 0.7 : 1
+                  }}
+                >
+                  {forgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{
+                fontSize: '48px',
+                marginBottom: '20px',
+                color: '#28a745'
+              }}>
+                ✓
+              </div>
+              <h2 style={{
+                margin: '0 0 20px 0',
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#333'
+              }}>
+                Check Your Email
+              </h2>
+              
+              <p style={{
+                margin: '0 0 20px 0',
+                fontSize: '16px',
+                color: '#666',
+                lineHeight: 1.5
+              }}>
+                We've sent a password reset link to your email address. Please check your inbox and follow the instructions to reset your password.
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setForgotPasswordSuccess(false);
+                  setError("");
+                }}
+                style={{
+                  backgroundColor: '#07345c',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  width: '100%'
+                }}
+              >
+                Close
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    )}
     </div>
   );
 }

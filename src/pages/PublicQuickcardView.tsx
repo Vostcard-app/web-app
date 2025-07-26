@@ -840,7 +840,7 @@ const PublicQuickcardView: React.FC = () => {
             </div>
           )}
           
-          {/* ✅ ADDED: "Tap thumbnail to view" text */}
+          {/* ✅ ADDED: "Tap Thumbnail to play" text */}
               <div style={{
             fontSize: '22px',
             color: '#666',
@@ -848,7 +848,7 @@ const PublicQuickcardView: React.FC = () => {
             fontStyle: 'italic',
             fontWeight: 'bold'
               }}>
-            Tap thumbnail to view
+            Tap Thumbnail to play
                 </div>
         </div>
 
