@@ -262,8 +262,9 @@ const HomeView = () => {
       return () => clearTimeout(loadingTimeout);
     }
     
+    // FIXED: When loading is false (auth complete), hide the loading overlay
     if (!loading) {
-      setShowAuthLoading(true);
+      setShowAuthLoading(false);
     }
   }, [user, username, userID, userRole, loading, showAuthLoading]);
 
