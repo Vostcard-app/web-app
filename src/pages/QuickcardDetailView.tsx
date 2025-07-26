@@ -1170,15 +1170,15 @@ Tap OK to continue.`;
           </div>
         )}
         
-        {/* ✅ ADDED: "Tap to view" text */}
+        {/* ✅ ADDED: "Tap thumbnail to view" text */}
         <div style={{
-          fontSize: '14px',
+          fontSize: '22px',
           color: '#666',
           textAlign: 'center',
           fontStyle: 'italic',
           fontWeight: 'bold'
         }}>
-          Tap to view
+          Tap thumbnail to view
         </div>
       </div>
 
