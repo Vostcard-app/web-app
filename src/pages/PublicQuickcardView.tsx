@@ -920,8 +920,22 @@ const PublicQuickcardView: React.FC = () => {
             </button>
           )}
 
-          {/* Detail Button - UPDATED TO TRIGGER AUDIO + SLIDESHOW */}
-          {hasAudio && (
+          {/* Detail Button - Show ONLY if there's a second recording */}
+          {(() => {
+            const hasDetailAudio = (
+              // Multiple audio files exist
+              (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) ||
+              (quickcard?._firebaseAudioURLs && quickcard._firebaseAudioURLs.length >= 2) ||
+              (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) ||
+              (quickcard?.audioLabels && quickcard.audioLabels.includes('detail')) ||
+              // Explicit detail audio field exists
+              (quickcard?.detailAudioURL) ||
+              // Both intro and detail audio fields exist
+              (quickcard?.introAudioURL && quickcard?.detailAudioURL)
+            );
+            
+            return hasDetailAudio;
+          })() && (
             <button
               onClick={() => {
                 console.log('🎵 Detail button clicked - playing audio and starting slideshow');
