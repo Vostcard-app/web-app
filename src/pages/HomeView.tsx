@@ -1065,18 +1065,17 @@ const HomeView = () => {
           {/* Floating Controls Over Map */}
           
           {/* ListView and Offers buttons - moved up */}
-          {!singleVostcard && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '8px',
-                left: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '30px', // 30px spacing between buttons
-                zIndex: 1002
-              }}
-            >
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              left: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '30px', // 30px spacing between buttons
+              zIndex: 1002
+            }}
+          >
               <button 
                 type="button"
                 style={{ 
@@ -1133,18 +1132,16 @@ const HomeView = () => {
                 Offers
               </button>
             </div>
-          )}
 
           {/* Video Guide button - stays in original position */}
-          {!singleVostcard && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '6px',
-                right: '20px',
-                zIndex: 1002
-              }}
-            >
+          <div
+            style={{
+              position: 'absolute',
+              top: '6px',
+              right: '20px',
+              zIndex: 1002
+            }}
+          >
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -1186,7 +1183,6 @@ const HomeView = () => {
                 </div>
               </div>
             </div>
-          )}
 
           {/* Recenter control */}
           <div style={{
