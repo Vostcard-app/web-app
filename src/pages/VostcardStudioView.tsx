@@ -581,7 +581,7 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardCategories([]);
   };
 
-  // Enhanced photo upload handler for multiple photos (up to 4)
+  // Enhanced photo upload handler for multiple photos (unlimited)
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
@@ -590,13 +590,6 @@ const VostcardStudioView: React.FC = () => {
     
     if (imageFiles.length === 0) {
       alert('Please select valid image files.');
-      return;
-    }
-
-    // Check total count (existing + new)
-    const totalPhotos = quickcardPhotos.length + imageFiles.length;
-    if (totalPhotos > 4) {
-      alert(`You can only add up to 4 photos. Currently have ${quickcardPhotos.length}, trying to add ${imageFiles.length}.`);
       return;
     }
 
@@ -612,7 +605,7 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardPhotos(newPhotos);
     setQuickcardPhotoPreviews(newPreviews);
     
-    console.log(`📸 Added ${imageFiles.length} photos. Total: ${newPhotos.length}/4`);
+    console.log(`📸 Added ${imageFiles.length} photos. Total: ${newPhotos.length}`);
   };
 
   // Remove a specific photo
@@ -2065,7 +2058,6 @@ const VostcardStudioView: React.FC = () => {
           onTakePhoto={handleTakePhoto}
           onSelectFromGallery={handleSelectFromGallery}
           currentPhotoCount={quickcardPhotos.length}
-          maxPhotos={4}
         />
 
         {/* Hidden Inputs - NATIVE APP ACCESS */}

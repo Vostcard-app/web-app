@@ -7,7 +7,6 @@ interface PhotoOptionsModalProps {
   onTakePhoto: () => void;
   onSelectFromGallery: () => void;
   currentPhotoCount: number;
-  maxPhotos: number;
 }
 
 const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
@@ -15,13 +14,9 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
   onClose,
   onTakePhoto,
   onSelectFromGallery,
-  currentPhotoCount,
-  maxPhotos
+  currentPhotoCount
 }) => {
   if (!isOpen) return null;
-
-  const canAddMore = currentPhotoCount < maxPhotos;
-  const remainingPhotos = maxPhotos - currentPhotoCount;
 
   return (
     <div
@@ -86,83 +81,25 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
           color: '#666',
           textAlign: 'center'
         }}>
-          {canAddMore 
-            ? `You can add ${remainingPhotos} more photo${remainingPhotos !== 1 ? 's' : ''}`
-            : `Maximum ${maxPhotos} photos reached`
+          {currentPhotoCount > 0 
+            ? `Current photos: ${currentPhotoCount}. Add more as needed.`
+            : 'Add photos to your quickcard'
           }
         </p>
 
-        {canAddMore ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {/* Take Photo Option */}
-            <button
-              onClick={() => {
-                onTakePhoto();
-                onClose();
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                backgroundColor: '#007aff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#0056b3';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#007aff';
-              }}
-            >
-              <FaCamera size={20} />
-              Take Photo with Camera
-            </button>
-
-            {/* Select from Gallery Option */}
-            <button
-              onClick={() => {
-                onSelectFromGallery();
-                onClose();
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '12px',
-                padding: '16px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1e7e34';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#28a745';
-              }}
-            >
-              <FaImages size={20} />
-              Select from Gallery
-            </button>
-          </div>
-        ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* Take Photo Option */}
           <button
-            onClick={onClose}
+            onClick={() => {
+              onTakePhoto();
+              onClose();
+            }}
             style={{
-              backgroundColor: '#6c757d',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              backgroundColor: '#007aff',
               color: 'white',
               border: 'none',
               borderRadius: '12px',
@@ -170,12 +107,51 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
               fontSize: '16px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              width: '100%'
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#0056b3';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#007aff';
             }}
           >
-            OK
+            <FaCamera size={20} />
+            Take Photo with Camera
           </button>
-        )}
+
+          {/* Select from Gallery Option */}
+          <button
+            onClick={() => {
+              onSelectFromGallery();
+              onClose();
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '12px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '16px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#1e7e34';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#28a745';
+            }}
+          >
+            <FaImages size={20} />
+            Select from Gallery
+          </button>
+        </div>
       </div>
     </div>
   );
