@@ -96,7 +96,7 @@ const ZoomControls = () => {
   return (
     <div style={{
       position: 'absolute',
-      top: '10px',
+      top: '100px',
       right: '10px',
       zIndex: 1000,
       display: 'flex',
@@ -656,24 +656,24 @@ const HomeView = () => {
           </div>
 
           {/* User Avatar and Menu */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {/* User Avatar */}
             {userAvatar ? (
               <img
                 src={userAvatar}
                 alt="User Avatar"
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '50px',
+                  height: '50px',
                   borderRadius: '50%',
-                  border: '2px solid white',
+                  border: '3px solid white',
                   cursor: 'pointer'
                 }}
                 onClick={() => navigate('/account-settings')}
               />
             ) : (
               <FaUserCircle
-                size={40}
+                size={50}
                 color="white"
                 style={{ cursor: 'pointer' }}
                 onClick={() => navigate('/account-settings')}
@@ -687,9 +687,9 @@ const HomeView = () => {
                 backgroundColor: 'transparent',
                 border: 'none',
                 color: 'white',
-                fontSize: '28px',
+                fontSize: '32px',
                 cursor: 'pointer',
-                padding: '8px',
+                padding: '10px',
                 borderRadius: '4px',
                 display: 'flex',
                 alignItems: 'center',
@@ -1054,7 +1054,7 @@ const HomeView = () => {
           {/* List View and Offers buttons - top left */}
           <div style={{
             position: 'absolute',
-            top: '20px',
+            top: '100px',
             left: '20px',
             zIndex: 1002,
             display: 'flex',
@@ -1119,7 +1119,7 @@ const HomeView = () => {
           {/* Video Guide button - top right */}
           <div style={{
             position: 'absolute',
-            top: '20px',
+            top: '100px',
             right: '20px',
             zIndex: 1002
           }}>
@@ -1150,7 +1150,7 @@ const HomeView = () => {
           {/* Recenter button - bottom right */}
           <div style={{
             position: 'absolute',
-            bottom: '140px',
+            bottom: '200px',
             right: '20px',
             zIndex: 1002
           }}>
