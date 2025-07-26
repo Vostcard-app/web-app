@@ -1487,7 +1487,7 @@ const VostcardStudioView: React.FC = () => {
                 }}
               >
                 <FaImages size={14} />
-                🖼️ From Library
+                🖼️ Load Photos
               </button>
             </div>
 
