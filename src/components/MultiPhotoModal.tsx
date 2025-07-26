@@ -279,14 +279,21 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
           src={photos[currentIndex]}
           alt={`Photo ${currentIndex + 1}`}
           style={{
-            width: '100vw',
-            height: '100vh',
-            objectFit: 'cover',
+            maxWidth: '92vw',
+            maxHeight: '88vh',
+            objectFit: 'contain', // changed from cover
             userSelect: 'none',
             imageRendering: '-webkit-optimize-contrast',
             WebkitBackfaceVisibility: 'hidden',
             backfaceVisibility: 'hidden',
             transform: 'translateZ(0)',
+            borderRadius: '18px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
+            border: '4px solid white',
+            background: '#f8f9fa',
+            opacity: 1,
+            transition: 'opacity 0.7s cubic-bezier(.4,0,.2,1)',
+            animation: 'fadeInPhoto 0.7s cubic-bezier(.4,0,.2,1)'
           } as React.CSSProperties}
           draggable={false}
           loading="eager"
@@ -362,5 +369,14 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     </div>
   );
 };
+
+// Add fade-in animation keyframes for slideshow photos
+// This must be outside the component
+if (typeof window !== 'undefined' && !document.getElementById('fadeInPhoto-keyframes')) {
+  const style = document.createElement('style');
+  style.id = 'fadeInPhoto-keyframes';
+  style.innerHTML = `@keyframes fadeInPhoto { from { opacity: 0; } to { opacity: 1; } }`;
+  document.head.appendChild(style);
+}
 
 export default MultiPhotoModal; 

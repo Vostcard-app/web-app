@@ -50,7 +50,7 @@ const QuickcardStep3: React.FC = () => {
     validationState.hasDescription && 
     validationState.hasCategories && 
     validationState.hasPhotos;
-  
+
   // Personal posts only need title
   const isReadyForPersonalSave = validationState.hasTitle && validationState.hasPhotos;
 

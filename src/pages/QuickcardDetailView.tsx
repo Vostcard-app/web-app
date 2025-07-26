@@ -1115,11 +1115,15 @@ Tap OK to continue.`;
                 filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
               } as React.CSSProperties}
               onClick={() => {
-                if (photoURLs.length > 1) {
+                console.log('🖼️ Main photo clicked - launching audio and showing slideshow');
+                // Play intro audio if available
+                if (hasAudio) {
+                  handleIntroAudioPlayback();
+                }
+                // Show photo slideshow starting with first photo WITH AUTO-PLAY
+                if (photoURLs && photoURLs.length > 0) {
                   setSelectedPhotoIndex(0);
                   setShowMultiPhotoModal(true);
-                } else {
-                  handleMainPhotoClick();
                 }
               }}
               loading="eager"
