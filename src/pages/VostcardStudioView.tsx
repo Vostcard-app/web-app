@@ -976,8 +976,28 @@ const VostcardStudioView: React.FC = () => {
         setQuickcardPhotoPreviews(photoPreviews);
       }
 
-      // Load audio (convert URLs to Blobs)
-      if (quickcard._firebaseAudioURL) {
+      // Load audio from new audioFiles system (preferred)
+      if (quickcard.audioFiles && quickcard.audioFiles.length > 0) {
+        console.log('🎵 Loading audio from audioFiles:', quickcard.audioFiles.length, 'files');
+        
+        // Load intro audio (first file)
+        if (quickcard.audioFiles[0]) {
+          setQuickcardIntroAudio(quickcard.audioFiles[0]);
+          setQuickcardIntroAudioSource('file');
+          const introLabel = quickcard.audioLabels && quickcard.audioLabels[0] ? quickcard.audioLabels[0] : 'Intro Audio';
+          setQuickcardIntroAudioFileName(introLabel);
+        }
+        
+        // Load detail audio (second file)
+        if (quickcard.audioFiles[1]) {
+          setQuickcardDetailAudio(quickcard.audioFiles[1]);
+          setQuickcardDetailAudioSource('file');
+          const detailLabel = quickcard.audioLabels && quickcard.audioLabels[1] ? quickcard.audioLabels[1] : 'Detail Audio';
+          setQuickcardDetailAudioFileName(detailLabel);
+        }
+      }
+      // Fallback to legacy audio system
+      else if (quickcard._firebaseAudioURL) {
         try {
           const response = await fetch(quickcard._firebaseAudioURL);
           const blob = await response.blob();
@@ -989,10 +1009,9 @@ const VostcardStudioView: React.FC = () => {
         }
       }
 
-      // Load detail audio if available (check for multiple audio support)
-      // Note: Current type doesn't support multiple audio URLs, this is for future enhancement
+      // Fallback to audioURLs system
       const anyQuickcard = quickcard as any;
-      if (anyQuickcard.audioURLs && anyQuickcard.audioURLs.length > 1) {
+      if (!quickcard.audioFiles && anyQuickcard.audioURLs && anyQuickcard.audioURLs.length > 1) {
         try {
           const response = await fetch(anyQuickcard.audioURLs[1]);
           const blob = await response.blob();
