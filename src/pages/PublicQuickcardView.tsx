@@ -750,7 +750,7 @@ const PublicQuickcardView: React.FC = () => {
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
               width: '100%',
-              maxWidth: '450px', // ✅ REDUCED: Half the size (was 900px)
+              maxWidth: '150px', // ✅ MATCHED: Same size as QuickcardDetailView
               borderRadius: '16px',
               overflow: 'hidden',
               backgroundColor: '#f8f9fa',
