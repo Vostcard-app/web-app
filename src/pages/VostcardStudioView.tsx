@@ -1728,6 +1728,24 @@ const VostcardStudioView: React.FC = () => {
               )}
             </div>
 
+            {/* Audio Status Indicator */}
+            {(quickcardIntroAudio || quickcardDetailAudio) && (
+              <div style={{
+                backgroundColor: '#e3f2fd',
+                border: '1px solid #2196f3',
+                borderRadius: '4px',
+                padding: '8px 12px',
+                marginBottom: '10px',
+                fontSize: '12px',
+                color: '#1976d2',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                🎵 Audio files present - will be included when posting to map
+              </div>
+            )}
+
             {/* ✅ Two Action Buttons */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
               {/* Save to Personal Posts Button */}
