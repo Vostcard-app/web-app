@@ -61,18 +61,23 @@ const userIcon = new L.Icon({
 });
 
 // MapUpdater component
-const MapUpdater = ({ userLocation }: { userLocation: [number, number] | null }) => {
+const MapUpdater = ({ userLocation, singleVostcard }: { userLocation: [number, number] | null; singleVostcard?: any }) => {
   const map = useMap();
 
   useEffect(() => {
     if (userLocation && map) {
       console.log('🗺️ MapUpdater: Setting map view to:', userLocation);
       console.log('🗺️ MapUpdater: Map instance:', map);
-      map.setView(userLocation, 16);
+      
+      // Use higher zoom level (20) when displaying a single vostcard for "full zoom in"
+      const zoomLevel = singleVostcard ? 20 : 16;
+      console.log('🗺️ MapUpdater: Using zoom level:', zoomLevel, singleVostcard ? '(single vostcard)' : '(normal view)');
+      
+      map.setView(userLocation, zoomLevel);
     } else {
       console.log('🗺️ MapUpdater: Missing userLocation or map:', { userLocation, map: !!map });
     }
-  }, [userLocation, map]);
+  }, [userLocation, map, singleVostcard]);
 
   return null;
 };
@@ -1035,7 +1040,7 @@ const HomeView = () => {
                       );
                     })}
                     
-                    <MapUpdater userLocation={userLocation} />
+                    <MapUpdater userLocation={userLocation} singleVostcard={singleVostcard} />
                   </MapContainer>
                 )}
               </div>

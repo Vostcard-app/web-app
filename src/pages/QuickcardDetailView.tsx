@@ -328,8 +328,8 @@ Tap OK to continue.`;
 
   const handleMapClick = useCallback(() => {
     if (quickcard?.latitude && quickcard?.longitude) {
-      console.log('📍 Opening quickcard location on public map for all users');
-      navigate('/public-map', {
+      console.log('📍 Opening quickcard location on private map at full zoom');
+      navigate('/home', {
         replace: false, // Ensure we add to history so back button works
         state: {
           singleVostcard: {
@@ -340,7 +340,7 @@ Tap OK to continue.`;
             longitude: quickcard.longitude,
             photoURLs: quickcard.photoURLs,
             username: quickcard.username,
-            userRole: quickcard.userRole, // ✅ ADD: Include userRole for correct pin type
+            userRole: quickcard.userRole,
             isOffer: false,
             isQuickcard: true,
             categories: quickcard.categories,
