@@ -1306,8 +1306,7 @@ const VostcardStudioView: React.FC = () => {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: '8px',
-                  marginBottom: '8px',
-                  touchAction: 'none' // Prevent touch scrolling on the grid
+                  marginBottom: '8px'
                 }}>
                   {quickcardPhotoPreviews.map((preview, index) => (
                     <div
@@ -1317,32 +1316,56 @@ const VostcardStudioView: React.FC = () => {
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                       onDragEnd={handleDragEnd}
-                      onTouchStart={(e) => {
-                        // Prevent default touch behavior to avoid scrolling conflicts
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onTouchMove={(e) => {
-                        // Prevent scrolling when dragging
-                        if (draggedIndex !== null) {
-                          e.preventDefault();
-                          e.stopPropagation();
+                      onMouseDown={(e) => {
+                        // Handle mouse drag for desktop
+                        if (e.button === 0) { // Left mouse button only
+                          setDraggedIndex(index);
                         }
                       }}
-                      style={{
-                        position: 'relative',
-                        aspectRatio: '1',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        backgroundColor: '#f0f0f0',
-                        cursor: 'grab',
-                        opacity: draggedIndex === index ? 0.5 : 1,
-                        transform: draggedIndex === index ? 'scale(0.95)' : 'scale(1)',
-                        transition: 'all 0.2s ease',
-                        border: dragOverIndex === index && draggedIndex !== index ? '2px dashed #007aff' : 'none',
-                        boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none',
-                        touchAction: 'none' // Prevent default touch behaviors
+                      onMouseEnter={(e) => {
+                        // Handle drag over for mouse
+                        if (draggedIndex !== null && draggedIndex !== index) {
+                          setDragOverIndex(index);
+                        }
                       }}
+                      onMouseLeave={() => {
+                        setDragOverIndex(null);
+                      }}
+                      onMouseUp={() => {
+                        // Handle drop for mouse
+                        if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+                          // Reorder photos
+                          const newPhotos = [...quickcardPhotos];
+                          const newPreviews = [...quickcardPhotoPreviews];
+                          
+                          const draggedPhoto = newPhotos[draggedIndex];
+                          const draggedPreview = newPreviews[draggedIndex];
+                          
+                          newPhotos.splice(draggedIndex, 1);
+                          newPreviews.splice(draggedIndex, 1);
+                          
+                          newPhotos.splice(dragOverIndex, 0, draggedPhoto);
+                          newPreviews.splice(dragOverIndex, 0, draggedPreview);
+                          
+                          setQuickcardPhotos(newPhotos);
+                          setQuickcardPhotoPreviews(newPreviews);
+                        }
+                        setDraggedIndex(null);
+                        setDragOverIndex(null);
+                      }}
+                                              style={{
+                          position: 'relative',
+                          aspectRatio: '1',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          backgroundColor: '#f0f0f0',
+                          cursor: 'grab',
+                          opacity: draggedIndex === index ? 0.5 : 1,
+                          transform: draggedIndex === index ? 'scale(0.95)' : 'scale(1)',
+                          transition: 'all 0.2s ease',
+                          border: dragOverIndex === index && draggedIndex !== index ? '2px dashed #007aff' : 'none',
+                          boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none'
+                        }}
                     >
                       <img
                         src={preview}
