@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
@@ -65,14 +65,19 @@ const AllPostedVostcardsView: React.FC = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  
+  // Add refs for search input and results
+  const inputRef = useRef<HTMLInputElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
   
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
-  // Real-time location search with debouncing
+  // Real-time location search with debouncing - FIXED: removed showBrowseModal dependency
   useEffect(() => {
-    if (!searchQuery.trim() || !showBrowseModal) {
+    if (!searchQuery.trim()) {
       setSearchResults([]);
       setShowDropdown(false);
       setHighlightedIndex(-1);
@@ -138,25 +143,59 @@ const AllPostedVostcardsView: React.FC = () => {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, showBrowseModal]);
+  }, [searchQuery]); // FIXED: removed showBrowseModal dependency
 
+  // Add keyboard navigation handler
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showDropdown || searchResults.length === 0) return;
+    if (e.key === 'ArrowDown') {
+      setHighlightedIndex(i => Math.min(i + 1, searchResults.length - 1));
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      setHighlightedIndex(i => Math.max(i - 1, 0));
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (highlightedIndex >= 0 && highlightedIndex < searchResults.length) {
+        handleLocationSelect(searchResults[highlightedIndex]);
+        setShowDropdown(false);
+      }
+      e.preventDefault();
+    } else if (e.key === 'Escape') {
+      setShowDropdown(false);
+    }
+  };
+
+  // Add click outside handler
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        resultsRef.current &&
+        !resultsRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // FIXED: Changed behavior to filter list instead of navigating
   const handleLocationSelect = (location: any) => {
     console.log('🗺️ Location selected for browse:', location);
+    setSelectedLocation(location);
     setSearchQuery(location.name);
     setShowDropdown(false);
-    
-    // Navigate to home with browse location
-    navigate('/home', {
-      state: {
-        browseLocation: {
-          coordinates: location.coordinates,
-          name: location.name,
-          id: location.id,
-          type: location.type,
-          place: location.place,
-        },
-      },
-    });
+  };
+
+  // NEW: Handle browse area button click to filter the list
+  const handleBrowseArea = () => {
+    if (selectedLocation) {
+      console.log('🗺️ Browse Area button clicked for location:', selectedLocation);
+      setShowBrowseModal(false);
+      // The filtering will be handled in the filterVostcards function
+    }
   };
 
   // Calculate distance between two points using Haversine formula
@@ -495,6 +534,22 @@ const AllPostedVostcardsView: React.FC = () => {
       });
     }
     
+    // NEW: Apply location filtering when browse location is selected
+    if (selectedLocation) {
+      filtered = filtered.filter(vostcard => {
+        if (!vostcard.latitude || !vostcard.longitude) return false;
+        
+        const distance = calculateDistance(
+          selectedLocation.latitude,
+          selectedLocation.longitude,
+          vostcard.latitude,
+          vostcard.longitude
+        );
+        
+        return distance <= 50; // 50km radius
+      });
+    }
+
     return filtered;
   };
 
@@ -1135,7 +1190,7 @@ const AllPostedVostcardsView: React.FC = () => {
               Browse Area
             </h3>
             
-            {/* Search Input */}
+            {/* FIXED: Search Input with proper refs and handlers */}
             <div style={{ position: 'relative', marginBottom: '20px' }}>
               <div style={{
                 position: 'relative',
@@ -1148,10 +1203,16 @@ const AllPostedVostcardsView: React.FC = () => {
               }}>
                 <FaMapPin style={{ color: '#666', marginRight: '12px' }} />
                 <input
+                  ref={inputRef}
                   type="text"
                   placeholder="Search for any location worldwide..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowDropdown(true);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  autoComplete="off"
                   style={{
                     border: 'none',
                     outline: 'none',
@@ -1167,7 +1228,7 @@ const AllPostedVostcardsView: React.FC = () => {
                 )}
               </div>
               
-              {/* Search Results Dropdown */}
+              {/* FIXED: Search Results Dropdown with proper event handling */}
               {showDropdown && searchResults.length > 0 && (
                 <div style={{
                   position: 'absolute',
@@ -1182,11 +1243,12 @@ const AllPostedVostcardsView: React.FC = () => {
                   overflow: 'auto',
                   zIndex: 2002,
                   boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                }}>
+                }} ref={resultsRef}>
                   {searchResults.map((result, index) => (
                     <div
                       key={index}
-                      onClick={() => handleLocationSelect(result)}
+                      onMouseDown={() => handleLocationSelect(result)}
+                      onMouseEnter={() => setHighlightedIndex(index)}
                       style={{
                         padding: '12px 16px',
                         cursor: 'pointer',
@@ -1214,12 +1276,48 @@ const AllPostedVostcardsView: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* NEW: Browse Area button that appears when location is selected */}
+            {selectedLocation && (
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '8px',
+                  marginBottom: '12px'
+                }}>
+                  <FaMapPin style={{ color: '#002B4D', marginRight: '8px' }} />
+                  <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                    View vostcards near {selectedLocation.name}
+                  </span>
+                </div>
+                <button
+                  onClick={handleBrowseArea}
+                  style={{
+                    backgroundColor: '#002B4D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 20px',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}
+                >
+                  Browse Area
+                </button>
+              </div>
+            )}
             
             <button
               onClick={() => setShowBrowseModal(false)}
               style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
+                backgroundColor: '#e0e0e0',
+                color: '#333',
                 border: 'none',
                 borderRadius: '8px',
                 padding: '10px 20px',
