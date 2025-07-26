@@ -894,7 +894,7 @@ Tap OK to continue.`;
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 9px 16px',
-        position: 'fixed', 
+        position: 'absolute', 
         top: 0,
         left: 0,
         right: 0,
@@ -1096,7 +1096,7 @@ Tap OK to continue.`;
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
-            maxWidth: '160px',
+            maxWidth: '180px',
             borderRadius: '16px',
               overflow: 'hidden',
             backgroundColor: '#f8f9fa',
@@ -1109,7 +1109,7 @@ Tap OK to continue.`;
                   alt="Quickcard"
                   style={{
                     width: '100%',
-                    height: '160px',
+                    height: '180px',
                     objectFit: 'cover',
                     display: 'block',
                     cursor: 'pointer',
@@ -1156,8 +1156,8 @@ Tap OK to continue.`;
         ) : (
           <div style={{ 
             width: '100%',
-            maxWidth: '160px',
-            height: '160px',
+            maxWidth: '180px',
+            height: '180px',
             backgroundColor: '#f8f9fa',
             borderRadius: '16px',
             display: 'flex',
@@ -1196,7 +1196,7 @@ Tap OK to continue.`;
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '5px',
+          padding: '0px',
           gap: '5px',
           flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
         }}>
