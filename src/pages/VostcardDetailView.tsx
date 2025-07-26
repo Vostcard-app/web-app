@@ -39,6 +39,16 @@ const VostcardDetailView: React.FC = () => {
     });
   }, [id]); // Only log when ID changes
   
+  // ✅ Handle window resize for responsive banner positioning
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth > 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   const [vostcard, setVostcard] = useState<any>(null);
   const [availableVostcards, setAvailableVostcards] = useState<string[]>([]);
   const [currentVostcardIndex, setCurrentVostcardIndex] = useState(0);
@@ -70,6 +80,9 @@ const VostcardDetailView: React.FC = () => {
   const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ y: number; x: number; time: number } | null>(null);
   const [isScrolling, setIsScrolling] = useState(false);
+  
+  // ✅ Desktop detection for responsive banner positioning
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -863,7 +876,7 @@ Tap OK to continue.`;
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 9px 16px',
-        position: 'fixed', 
+        position: isDesktop ? 'absolute' : 'fixed', 
         top: 0,
         left: 0,
         right: 0,
