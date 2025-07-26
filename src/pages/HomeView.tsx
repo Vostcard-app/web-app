@@ -396,12 +396,12 @@ const HomeView = () => {
       // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
       
-      // Only update userLocation if we don't have a browse location
-      if (!browseLocationRef.current) {
+      // Only update userLocation if we don't have a browse location or singleVostcard
+      if (!browseLocationRef.current && !singleVostcard) {
         console.log('📍 Setting userLocation to actual location');
         setUserLocation([latitude, longitude]);
       } else {
-        console.log('📍 Browse location active, keeping userLocation unchanged');
+        console.log('📍 Browse location or singleVostcard active, keeping userLocation unchanged');
       }
     };
 
@@ -469,7 +469,7 @@ const HomeView = () => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, []);
+  }, [singleVostcard]);
 
   // Event handlers
   const handleLogout = async () => {
