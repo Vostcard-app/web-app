@@ -2262,6 +2262,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           
           // Log details of loaded vostcards for debugging sync issues
           console.log('📂 Loaded vostcards from IndexedDB:', filteredVostcards.length);
+          
+          // 🔧 DEBUG: Count and log quickcards specifically
+          const quickcardsFound = filteredVostcards.filter(v => v.isQuickcard === true);
+          console.log('🎯 QUICKCARD DEBUG:', {
+            totalVostcards: filteredVostcards.length,
+            quickcardsFound: quickcardsFound.length,
+            quickcardTitles: quickcardsFound.map(q => q.title || 'Untitled')
+          });
+          
           filteredVostcards.forEach((vostcard, index) => {
             console.log(`📂 IndexedDB Vostcard ${index + 1}:`, {
               id: vostcard.id,
@@ -2276,6 +2285,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               hasPhotos: vostcard.photos?.length || 0,
               hasFirebaseVideoURL: !!vostcard._firebaseVideoURL,
               hasFirebasePhotoURLs: (vostcard._firebasePhotoURLs?.length || 0) > 0,
+              isQuickcard: vostcard.isQuickcard, // 🔧 ADD: Debug isQuickcard property
               // 🔧 ADD: Debug geo data
               geo: vostcard.geo,
               geoType: typeof vostcard.geo,

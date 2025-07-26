@@ -15,7 +15,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { loadQuickcard } = useVostcardEdit();
-  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard } = useVostcard();
+  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcardsImmediate } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -2137,12 +2137,74 @@ const VostcardStudioView: React.FC = () => {
                 </button>
               </div>
 
+                             {/* Debug Button */}
+               <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                 <button
+                   onClick={() => {
+                     console.log('🔧 DEBUG: Checking savedVostcards for quickcards');
+                     console.log('🔧 Total savedVostcards:', savedVostcards.length);
+                     console.log('🔧 All savedVostcards:', savedVostcards.map(v => ({
+                       id: v.id,
+                       title: v.title || 'Untitled',
+                       isQuickcard: v.isQuickcard,
+                       state: v.state
+                     })));
+                     const quickcards = savedVostcards.filter(card => card.isQuickcard);
+                     console.log('🔧 Filtered quickcards:', quickcards.length);
+                     console.log('🔧 Quickcard details:', quickcards.map(q => ({
+                       id: q.id,
+                       title: q.title || 'Untitled',
+                       isQuickcard: q.isQuickcard
+                     })));
+                   }}
+                   style={{
+                     backgroundColor: '#17a2b8',
+                     color: 'white',
+                     border: 'none',
+                     borderRadius: '4px',
+                     padding: '8px 16px',
+                     fontSize: '12px',
+                     cursor: 'pointer',
+                     marginRight: '8px'
+                   }}
+                 >
+                   🔧 Debug Quickcards
+                 </button>
+                 
+                 <button
+                   onClick={async () => {
+                     console.log('🔄 Manually reloading quickcards...');
+                     try {
+                       await loadAllLocalVostcardsImmediate();
+                       console.log('✅ Quickcards reloaded successfully');
+                     } catch (error) {
+                       console.error('❌ Failed to reload quickcards:', error);
+                     }
+                   }}
+                   style={{
+                     backgroundColor: '#28a745',
+                     color: 'white',
+                     border: 'none',
+                     borderRadius: '4px',
+                     padding: '8px 16px',
+                     fontSize: '12px',
+                     cursor: 'pointer'
+                   }}
+                 >
+                   🔄 Reload Quickcards
+                 </button>
+               </div>
+
                              {/* Quickcard List */}
                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                  {savedVostcards.filter(card => card.isQuickcard).length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
                      <p>No quickcards found.</p>
                      <p style={{ fontSize: '14px' }}>Create a quickcard first, then you can load it for editing.</p>
+                     <p style={{ fontSize: '12px', color: '#999', marginTop: '16px' }}>
+                       Total saved cards: {savedVostcards.length}<br/>
+                       Cards with isQuickcard=true: {savedVostcards.filter(card => card.isQuickcard === true).length}
+                     </p>
                    </div>
                  ) : (
                    savedVostcards.filter(card => card.isQuickcard).map((quickcard) => (
