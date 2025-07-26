@@ -197,9 +197,17 @@ const HomeView = () => {
       console.log('📍 Coordinates:', browseLocationState.coordinates);
       setBrowseLocation(browseLocationState);
       setUserLocation(browseLocationState.coordinates);
+      // Remove the immediate state clearing - let it persist for this render cycle
+    }
+  }, [browseLocationState]);
+
+  // Separate effect to clear state after location is set
+  useEffect(() => {
+    if (browseLocation && userLocation) {
+      // Clear the navigation state after the location has been set
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [browseLocationState, navigate, location.pathname]);
+  }, [browseLocation, userLocation, navigate, location.pathname]);
 
   // Handle target quickcard from navigation - center map but show all content
   useEffect(() => {

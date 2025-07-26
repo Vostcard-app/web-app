@@ -66,11 +66,11 @@ const BrowseAreaView: React.FC = () => {
         // Format results to match expected structure
         const formattedResults = results.map((result: any) => ({
           name: result.name,
-          coordinates: [result.latitude, result.longitude],
+          coordinates: [Number(result.latitude), Number(result.longitude)],
           type: result.type,
           displayAddress: result.displayAddress,
-          latitude: result.latitude,
-          longitude: result.longitude
+          latitude: Number(result.latitude),
+          longitude: Number(result.longitude)
         }));
 
         setSearchResults(formattedResults);
@@ -131,6 +131,9 @@ const BrowseAreaView: React.FC = () => {
     console.log('📍 Selected location:', selectedLocation);
     
     if (selectedLocation) {
+      console.log('📍 Coordinates being sent:', selectedLocation.coordinates);
+      console.log('📍 Latitude:', selectedLocation.latitude, 'Longitude:', selectedLocation.longitude);
+      
       navigate('/home', {
         state: {
           browseLocation: {
