@@ -1089,7 +1089,9 @@ Tap OK to continue.`;
       <div style={{ 
         padding: '20px', 
         display: 'flex', 
-        justifyContent: 'center'
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '8px'
       }}>
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
@@ -1153,8 +1155,8 @@ Tap OK to continue.`;
         ) : (
           <div style={{ 
             width: '100%',
-            maxWidth: '800px',
-            height: '200px',
+            maxWidth: '150px',
+            height: '150px',
             backgroundColor: '#f8f9fa',
             borderRadius: '16px',
             display: 'flex',
@@ -1162,18 +1164,19 @@ Tap OK to continue.`;
             justifyContent: 'center',
             border: '2px dashed #dee2e6'
           }}>
-            <div style={{
-              textAlign: 'center',
-              color: '#6c757d',
-              fontSize: '18px'
-            }}>
-              <FaMap size={48} style={{ marginBottom: '12px', opacity: 0.5 }} />
-              <div style={{ fontSize: '16px', fontWeight: '500' }}>
-                No photos available
-              </div>
-            </div>
+            <FaMap size={48} color="#ccc" />
           </div>
         )}
+        
+        {/* ✅ ADDED: "Tap to view" text */}
+        <div style={{
+          fontSize: '14px',
+          color: '#666',
+          textAlign: 'center',
+          fontStyle: 'italic'
+        }}>
+          Tap to view
+        </div>
       </div>
 
       {/* Hidden Audio Element */}
@@ -1196,38 +1199,6 @@ Tap OK to continue.`;
           gap: '16px',
           flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
         }}>
-          {/* Intro Button - Always show if there's any audio */}
-          <button
-            onClick={() => {
-              console.log('🎵 Intro button clicked - playing intro audio and showing slideshow');
-              // Play intro audio
-              handleIntroAudioPlayback();
-              // Show photo slideshow starting with first photo WITH AUTO-PLAY
-              if (photoURLs && photoURLs.length > 0) {
-                setSelectedPhotoIndex(0);
-                setShowMultiPhotoModal(true);
-              }
-            }}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              minWidth: '100px',
-              boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-          >
-            <FaPlay size={14} style={{ marginRight: '8px' }} />
-            Short
-          </button>
-
           {/* Detail Button - Show ONLY if there's a second recording */}
           {(() => {
             const hasDetailAudio = (
@@ -1289,7 +1260,7 @@ Tap OK to continue.`;
                 fontSize: '16px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                minWidth: '120px',
+                minWidth: '100px',
                 boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
                 transition: 'all 0.2s ease'
               }}

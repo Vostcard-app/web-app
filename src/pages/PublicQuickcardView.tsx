@@ -740,12 +740,13 @@ const PublicQuickcardView: React.FC = () => {
           {title || 'Untitled Quickcard'}
         </h1>
 
-        {/* ✅ UPDATED: Auto-Height Single Photo Display - No Wasted Space */}
+        {/* ✅ UPDATED: Auto-Height Single Photo Display */}
         <div style={{ 
           padding: '20px', 
           display: 'flex', 
-          justifyContent: 'center'
-          // ✅ REMOVED: minHeight and maxHeight constraints
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px'
         }}>
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
@@ -823,8 +824,8 @@ const PublicQuickcardView: React.FC = () => {
             // ✅ No photos fallback - also auto-sized
             <div style={{ 
               width: '100%',
-              maxWidth: '800px',
-              height: '200px', // ✅ Minimal height for "no photos" message
+              maxWidth: '150px',
+              height: '150px',
               position: 'relative',
               backgroundColor: '#f8f9fa',
               borderRadius: '16px',
@@ -833,18 +834,19 @@ const PublicQuickcardView: React.FC = () => {
               justifyContent: 'center',
               border: '2px dashed #dee2e6'
             }}>
-              <div style={{
-                textAlign: 'center',
-                color: '#6c757d',
-                fontSize: '18px'
-              }}>
-                <FaMap size={48} style={{ marginBottom: '12px', opacity: 0.5 }} />
-                <div style={{ fontSize: '16px', fontWeight: '500' }}>
-                  No photos available
-                </div>
-              </div>
+              <FaMap size={48} color="#ccc" />
             </div>
           )}
+          
+          {/* ✅ ADDED: "Tap to view" text */}
+          <div style={{
+            fontSize: '14px',
+            color: '#666',
+            textAlign: 'center',
+            fontStyle: 'italic'
+          }}>
+            Tap to view
+          </div>
         </div>
 
         {/* Hidden Audio Element */}
@@ -867,7 +869,7 @@ const PublicQuickcardView: React.FC = () => {
           />
         )}
 
-        {/* Three Buttons: Intro, Detail, View on Map - REDUCED PADDING TO 5PX */}
+        {/* Three Buttons: Detail, View on Map - REDUCED PADDING TO 5PX */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -876,50 +878,6 @@ const PublicQuickcardView: React.FC = () => {
           gap: '12px',
           flexWrap: 'wrap'
         }}>
-          {/* Intro Button - UPDATED TO TRIGGER AUDIO + SLIDESHOW */}
-          {hasAudio && (
-            <button
-              onClick={() => {
-                console.log('🎵 Intro button clicked - playing audio and starting slideshow');
-                // Play audio functionality
-                if (audioRef.current) {
-                  if (isPlayingAudio) {
-                    audioRef.current.pause();
-                    setIsPlayingAudio(false);
-                  } else {
-                    audioRef.current.play();
-                    setIsPlayingAudio(true);
-                  }
-                }
-                // Start slideshow with first photo
-                if (photoURLs && photoURLs.length > 0) {
-                  setSelectedPhotoIndex(0);
-                  setShowMultiPhotoModal(true);
-                }
-              }}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                minWidth: '80px',
-                boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease',
-                flex: '1',
-                maxWidth: '110px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-            >
-              {isPlayingAudio ? <FaPause size={12} style={{ marginRight: '6px' }} /> : <FaPlay size={12} style={{ marginRight: '6px' }} />}
-              {isPlayingAudio ? 'Pause' : 'Short'}
-            </button>
-          )}
-
           {/* Detail Button - Show ONLY if there's a second recording */}
           {(() => {
             const hasDetailAudio = (
@@ -978,7 +936,7 @@ const PublicQuickcardView: React.FC = () => {
             </button>
           )}
 
-          {/* View on Map Button - unchanged */}
+          {/* View on Map Button - Always show if location data exists */}
           {quickcard?.latitude && quickcard?.longitude && (
             <button
               onClick={() => {
