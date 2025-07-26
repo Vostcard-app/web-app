@@ -1,614 +1,18 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { useVostcard } from '../context/VostcardContext';
-import { useAuth } from '../context/AuthContext';
-import { useResponsive } from '../hooks/useResponsive';
-import { useDriveMode } from '../context/DriveModeContext';
-import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { signOut } from 'firebase/auth';
-import './HomeView.css';
-import LocationDebugger from '../components/LocationDebugger';
-import DriveModePlayer from '../components/DriveModePlayer';
-import InfoButton from '../assets/Info_button.png';
-import RoundInfoButton from '../assets/RoundInfo_Button.png';
-import VostcardPin from '../assets/Vostcard_pin.png';
-import OfferPin from '../assets/Offer_pin.png';
-import QuickcardPin from '../assets/quickcard_pin.png';
-import { AVAILABLE_CATEGORIES, AVAILABLE_TYPES } from '../types/VostcardTypes';
-
-
-// FIXED: Import pin images from assets folder for better Leaflet compatibility
-const vostcardIcon = new L.Icon({
-  iconUrl: VostcardPin,
-  iconSize: [75, 75],
-  iconAnchor: [37.5, 75],
-  popupAnchor: [0, -75],
-});
-
-const offerIcon = new L.Icon({
-  iconUrl: OfferPin,
-  iconSize: [75, 75],
-  iconAnchor: [37.5, 75],
-  popupAnchor: [0, -75],
-});
-
-const guideIcon = new L.Icon({
-  iconUrl: '/Guide_pin.png', // ✅ Use the working PNG from public directory  
-  iconSize: [75, 75],
-  iconAnchor: [37.5, 75],
-  popupAnchor: [0, -75],
-});
-
-const quickcardIcon = new L.Icon({
-  iconUrl: QuickcardPin,
-  iconSize: [75, 75],
-  iconAnchor: [37.5, 75],
-  popupAnchor: [0, -75],
-});
-
-// Blue dot icon for user location
-const userIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiLz4KPC9zdmc+',
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
-  popupAnchor: [0, -10],
-});
-
-// MapUpdater component
-const MapUpdater = ({ userLocation, singleVostcard }: { userLocation: [number, number] | null; singleVostcard?: any }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (userLocation && map) {
-      console.log('🗺️ MapUpdater: Setting map view to:', userLocation);
-      console.log('🗺️ MapUpdater: Map instance:', map);
-      
-      // Use higher zoom level (20) when displaying a single vostcard for "full zoom in"
-      const zoomLevel = singleVostcard ? 20 : 16;
-      console.log('🗺️ MapUpdater: Using zoom level:', zoomLevel, singleVostcard ? '(single vostcard)' : '(normal view)');
-      
-      map.setView(userLocation, zoomLevel);
-    } else {
-      console.log('🗺️ MapUpdater: Missing userLocation or map:', { userLocation, map: !!map });
-    }
-  }, [userLocation, map, singleVostcard]);
-
-  return null;
-};
-
-const ZoomControls = () => {
-  const map = useMap();
-
-  const handleZoomIn = () => {
-    console.log('🔍 Zoom In clicked');
-    map.zoomIn();
-  };
-
-  const handleZoomOut = () => {
-    console.log('🔍 Zoom Out clicked'); 
-    map.zoomOut();
-  };
-
-  return (
-    <>
-      {/* Zoom controls */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        right: 20,
-        transform: 'translateY(-50%)',
-        zIndex: 1000,
+        transition: 'transform 0.1s ease',
+        height: '40px',
         display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-      }}>
-        <button 
-          onClick={handleZoomIn} // ✅ Fixed: Added proper zoom in handler
-          style={{
-            background: '#fff',
-            color: '#002B4D',
-            border: '1px solid #ddd',
-            borderRadius: 8,
-            width: 40,
-            height: 40,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 20,
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <FaPlus />
-        </button>
-        <button 
-          onClick={handleZoomOut} // ✅ Fixed: Added proper zoom out handler
-          style={{
-            background: '#fff',
-            color: '#002B4D',
-            border: '1px solid #ddd',
-            borderRadius: 8,
-            width: 40,
-            height: 40,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 20,
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <FaMinus />
-        </button>
-      </div>
-    </>
-  );
-};
-
-const HomeView = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { 
-    clearVostcard, 
-    loadLocalVostcard, 
-    savedVostcards, 
-    loadAllLocalVostcardsImmediate,
-    createQuickcard
-  } = useVostcard();
-  const { user, username, userID, userRole, loading } = useAuth();
-  const { isDesktop } = useResponsive();
-  const shouldUseContainer = isDesktop;
-
-  // State variables
-  const [vostcards, setVostcards] = useState<any[]>([]);
-  const [loadingVostcards, setLoadingVostcards] = useState(false);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [actualUserLocation, setActualUserLocation] = useState<[number, number] | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
-  const [showAuthLoading, setShowAuthLoading] = useState(true);
-  const [mapError, setMapError] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-  const [singleVostcard, setSingleVostcard] = useState<any>(null);
-  const [browseLocation, setBrowseLocation] = useState<any>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [showFriendsOnly, setShowFriendsOnly] = useState(false);
-  const [userFriends, setUserFriends] = useState<string[]>([]);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [showInfoMenu, setShowInfoMenu] = useState(false);
-  const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
-  const [isCreatePressed, setIsCreatePressed] = useState(false);
-  const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
-  const [currentSpeed, setCurrentSpeed] = useState<number>(0);
-  const [hasInitialLoad, setHasInitialLoad] = useState(false);
-  const { isDriveModeEnabled } = useDriveMode();
-  
-  // Use ref to track browse location for geolocation closure
-  const browseLocationRef = useRef<any>(null);
-  // Use ref to track singleVostcard for geolocation closure
-  const singleVostcardRef = useRef<any>(null);
-
-  // Navigation state from previous view
-  const navigationState = location.state as any;
-  const browseLocationState = navigationState?.browseLocation;
-  const singleVostcardState = navigationState?.singleVostcard;
-
-  // Handle browse location from navigation
-  useEffect(() => {
-    if (browseLocationState) {
-      console.log('🗺️ Browse location received:', browseLocationState);
-      console.log('📍 Coordinates:', browseLocationState.coordinates);
-      console.log('📍 Setting browse location and user location...');
-      setBrowseLocation(browseLocationState);
-      browseLocationRef.current = browseLocationState;
-      setUserLocation(browseLocationState.coordinates);
-      // Remove the immediate state clearing - let it persist for this render cycle
-    }
-  }, [browseLocationState]);
-
-  // Separate effect to clear state after location is set
-  useEffect(() => {
-    if (browseLocation && userLocation) {
-      console.log('🗺️ Clearing navigation state after browse location set');
-      // Clear the navigation state after the location has been set
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [browseLocation, userLocation, navigate, location.pathname]);
-
-  // Update ref when browse location changes
-  useEffect(() => {
-    browseLocationRef.current = browseLocation;
-  }, [browseLocation]);
-
-  // Update ref when singleVostcard changes
-  useEffect(() => {
-    singleVostcardRef.current = singleVostcard;
-  }, [singleVostcard]);
-
-  // Handle target quickcard from navigation - center map but show all content
-  useEffect(() => {
-    if (singleVostcardState) {
-      console.log('📍 Centering map on target quickcard:', singleVostcardState.title);
-      setSingleVostcard(singleVostcardState);
-      singleVostcardRef.current = singleVostcardState;
-      if (singleVostcardState.latitude && singleVostcardState.longitude) {
-        const vostcardLocation: [number, number] = [singleVostcardState.latitude, singleVostcardState.longitude];
-        setUserLocation(vostcardLocation);
-        setActualUserLocation(vostcardLocation);
-        console.log('📍 Set map center to quickcard location:', vostcardLocation);
-      }
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [singleVostcardState, navigate, location.pathname]);
-
-  // Debug authentication state and manage auth loading overlay
-  useEffect(() => {
-    console.log('🏠 HomeView: Auth state:', {
-      user: !!user,
-      username,
-      userID,
-      userRole,
-      loading,
-      authCurrentUser: !!auth.currentUser
-    });
-    
-    if (loading && showAuthLoading) {
-      console.log('🏠 HomeView: Auth loading detected, will hide overlay after 3 seconds');
-      const loadingTimeout = setTimeout(() => {
-        console.log('⏰ HomeView: Hiding auth loading overlay to prevent UI blocking');
-        setShowAuthLoading(false);
-      }, 3000);
-      
-      return () => clearTimeout(loadingTimeout);
-    }
-    
-    if (!loading) {
-      setShowAuthLoading(true);
-    }
-  }, [user, username, userID, userRole, loading, showAuthLoading]);
-
-  // Load vostcards function
-  const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
-    // Remove the early return - we want to load all vostcards even when singleVostcard is set
-    // This allows the private map to show all posts nearby while centering on the specific quickcard
-    
-    if (loadingVostcards && !forceRefresh) {
-      return;
-    }
-    
-    try {
-      setLoadingVostcards(true);
-      setMapError(null);
-      
-      if (forceRefresh) {
-        console.log('🔄 Force refreshing vostcards after posting');
-      } else {
-        console.log('🔄 Loading posted vostcards and quickcards');
-      }
-      
-      const q1 = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
-      const snapshot1 = await getDocs(q1);
-      const postedVostcards = snapshot1.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
-      
-      const allContent = postedVostcards.filter(v => 
-        !v.isQuickcard || 
-        (v.isQuickcard && v.state === 'posted')
-      );
-      
-      console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
-        regular: allContent.filter(v => !v.isQuickcard).length,
-        quickcards: allContent.filter(v => v.isQuickcard).length
-      });
-
-      // 🔍 DEBUG: Log userRole values for all quickcards
-      allContent.filter(v => v.isQuickcard).forEach(qc => {
-        console.log('🔍 DEBUG: Loaded quickcard:', {
-          id: qc.id,
-          title: qc.title,
-          userRole: qc.userRole,
-          username: qc.username,
-          isQuickcard: qc.isQuickcard,
-          isOffer: qc.isOffer || false
-        });
-      });
-      
-      setVostcards(allContent);
-      setHasInitialLoad(true);
-    } catch (error) {
-      console.error('❌ Error loading vostcards:', error);
-      setMapError('Failed to load content. Please check your connection and try again.');
-    } finally {
-      setLoadingVostcards(false);
-    }
-  }, [singleVostcard, loadingVostcards]);
-
-  // Load user avatar
-  useEffect(() => {
-    const loadUserAvatar = async () => {
-      if (user?.uid) {
-        try {
-          const userRef = doc(db, 'users', user.uid);
-          const userSnap = await getDoc(userRef);
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            if (userData.avatarURL) {
-              setUserAvatar(userData.avatarURL);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to load user avatar:', error);
-        }
-      }
-    };
-
-    if (user?.uid && !userAvatar) {
-      loadUserAvatar();
-    }
-  }, [user?.uid, userAvatar]);
-
-  // Initial load
-  useEffect(() => {
-    if (!loading && !hasInitialLoad) {
-      loadVostcards();
-    }
-  }, [loading, hasInitialLoad, loadVostcards]);
-
-  // Handle fresh load after posting
-  useEffect(() => {
-    const navigationState = location.state as any;
-    if (navigationState?.freshLoad || navigationState?.justPosted) {
-      console.log('🔄 Fresh load requested after posting:', navigationState.justPosted);
-      
-      // Force refresh the vostcards to show newly posted content
-      loadVostcards(true);
-      
-      // Clear the navigation state
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.state, navigate, location.pathname, loadVostcards]);
-
-  // Retry mechanism
-  useEffect(() => {
-    if (retryCount > 0) {
-      loadVostcards(true);
-    }
-  }, [retryCount, loadVostcards]);
-
-  // Location handling - IMPROVED FOR LAPTOPS
-  useEffect(() => {
-    let watchId: number | null = null;
-
-    const handleLocationSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude, accuracy } = position.coords;
-      console.log('✅ Location updated:', { 
-        latitude: latitude.toFixed(6), 
-        longitude: longitude.toFixed(6), 
-        accuracy: `${accuracy}m`,
-        source: accuracy < 50 ? 'GPS' : 'Network/WiFi'
-      });
-      
-      // Always update actualUserLocation for the recenter button
-      setActualUserLocation([latitude, longitude]);
-      
-      // Only update userLocation if we don't have a browse location or singleVostcard
-      if (!browseLocationRef.current && !singleVostcardRef.current) {
-        console.log('📍 Setting userLocation to actual location');
-        setUserLocation([latitude, longitude]);
-      } else {
-        console.log('📍 Browse location or singleVostcard active, keeping userLocation unchanged');
-      }
-    };
-
-    const handleLocationError = (error: GeolocationPositionError) => {
-      console.error('❌ Location error:', {
-        code: error.code,
-        message: error.message,
-        type: error.code === 1 ? 'Permission Denied' : 
-               error.code === 2 ? 'Position Unavailable' : 
-               error.code === 3 ? 'Timeout' : 'Unknown'
-      });
-      
-      // Show user-friendly error in console
-      const errorMsg = error.code === 1 ? 
-        'Location permission denied. Click the location icon in your address bar to allow.' :
-        error.code === 2 ?
-        'Location unavailable. Check your device location settings.' :
-        'Location timeout. Using default location.';
-        
-      console.warn('📍 Location help:', errorMsg);
-      
-      const defaultLocation: [number, number] = [40.7128, -74.0060];
-      setUserLocation(defaultLocation);
-      setActualUserLocation(defaultLocation);
-    };
-
-    const startLocationWatch = () => {
-      if (!navigator.geolocation) {
-        console.error('❌ Geolocation not supported by this browser');
-        const defaultLocation: [number, number] = [40.7128, -74.0060];
-        setUserLocation(defaultLocation);
-        setActualUserLocation(defaultLocation);
-        return;
-      }
-
-      console.log('📍 Requesting location permission...');
-
-      // First try to get current position with laptop-friendly settings
-      navigator.geolocation.getCurrentPosition(
-        handleLocationSuccess,
-        handleLocationError,
-        {
-          enableHighAccuracy: false, // Use network location (faster for laptops)
-          timeout: 30000, // Longer timeout for laptops
-          maximumAge: 600000 // 10 minutes cache (laptops don't move much)
-        }
-      );
-
-      // Then start watching position with different settings
-      watchId = navigator.geolocation.watchPosition(
-        handleLocationSuccess,
-        handleLocationError,
-        {
-          enableHighAccuracy: false, // Network location is fine for laptops
-          timeout: 30000, // Longer timeout
-          maximumAge: 600000 // Longer cache time
-        }
-      );
-    };
-
-    startLocationWatch();
-
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, []);
-
-  // Event handlers
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setIsMenuOpen(false);
-      navigate('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      alert('Logout failed. Please try again.');
-    }
-  };
-
-  const getVostcardIcon = (isOffer: boolean, userRole?: string, isQuickcard?: boolean) => {
-    if (isOffer) return offerIcon;
-    // For quickcards, check user role first to determine correct pin
-    if (isQuickcard) {
-      // If the quickcard is posted by a guide or admin, use Guide_pin
-      if (userRole === 'guide' || userRole === 'admin') return guideIcon;
-      // Otherwise, use regular Vostcard_pin for user quickcards
-      return vostcardIcon;
-    }
-    if (userRole === 'guide') return guideIcon;
-    return vostcardIcon;
-  };
-
-  const handleListViewClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log('📋 Navigating to All Posted Vostcards View');
-    navigate('/all-posted-vostcards');
-  };
-
-  const handleOffersClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log('🎁 Navigating to Offers List');
-    navigate('/offers-list');
-  };
-
-  const handleCreateClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    clearVostcard();
-    navigate('/create-step1');
-  };
-
-  const handleCreateQuickcard = (e: React.MouseEvent) => {
-    e.preventDefault();
-    console.log('📱 Starting Quickcard creation - opening native camera');
-    clearVostcard();
-    
-    // Open native camera app directly
-    const cameraInput = document.getElementById('quickcard-native-camera') as HTMLInputElement;
-    if (cameraInput) {
-      cameraInput.click();
-    }
-  };
-
-  const handleCreateTouchStart = () => setIsCreatePressed(true);
-  const handleCreateTouchEnd = () => setIsCreatePressed(false);
-  const handleQuickcardTouchStart = () => setIsQuickcardPressed(true);
-  const handleQuickcardTouchEnd = () => setIsQuickcardPressed(false);
-
-  // Handle native camera photo capture
-  const handleNativeCameraPhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && userLocation) {
-      console.log('📸 Photo captured from native camera:', {
-        name: file.name,
-        size: file.size,
-        type: file.type
-      });
-      
-      // Create quickcard with the captured photo
-      createQuickcard(file, {
-        latitude: userLocation[0],
-        longitude: userLocation[1]
-      });
-      
-      // Navigate to photo thumbnails step
-      navigate('/quickcard-step2');
-    } else if (!userLocation) {
-      alert('Location not available. Please enable location services.');
-    }
-    
-    // Clear the input so same photo can be selected again
-    event.target.value = '';
-  };
-
-  const handleRetryLoad = () => {
-    setRetryCount(prev => prev + 1);
-  };
-
-  const handleRecenter = () => {
-    if (actualUserLocation) {
-      console.log('🎯 Recentering map to user location:', actualUserLocation);
-      setUserLocation(actualUserLocation);
-      setBrowseLocation(null);
-    }
-  };
-
-  // Enhanced filtering logic for Vostcards by category and type
-  const filterVostcards = (vostcards: any[]) => {
-    let filtered = vostcards;
-    
-    if (selectedCategories.length > 0 && !selectedCategories.includes('None')) {
-      filtered = filtered.filter(v => {
-        if (v.isOffer) return true;
-        if (!v.categories || !Array.isArray(v.categories)) return false;
-        return v.categories.some((cat: string) => selectedCategories.includes(cat));
-      });
-    }
-    
-    if (selectedTypes.length > 0) {
-      filtered = filtered.filter(v => {
-        if (v.isOffer) return true;
-        if (selectedTypes.includes('Vostcard') && !v.isQuickcard && !v.isOffer && v.userRole !== 'guide') return true;
-        if (selectedTypes.includes('Quickcard') && v.isQuickcard) return true;
-        if (selectedTypes.includes('Guide') && v.userRole === 'guide' && !v.isOffer) return true;
-        return false;
-      });
-    }
-    
-    if (showFriendsOnly) {
-      filtered = filtered.filter(v => {
-        if (v.isOffer) return true;
-        return userFriends.includes(v.userID || v.userId);
-      });
-    }
-    
-    return filtered;
-  };
-
-  const filteredVostcards = singleVostcard ? [singleVostcard] : filterVostcards(vostcards);
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        lineHeight: '1',
+        gap: '8px'
+      }} 
+      onClick={handleOffersClick}
+    >
+      <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+      Offers
+    </button>
+  </div>
 
   // Menu style
   const menuStyle = {
@@ -764,75 +168,73 @@ const HomeView = () => {
           ) : (
             <>
               {/* ListView and Offers buttons - moved up */}
-              {!singleVostcard && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    left: '20px',
+              {/* List View and Offers buttons - always show */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '6px',
+                  left: '20px',
+                  zIndex: 1002,
+                  display: 'flex',
+                  gap: '8px'
+                }}
+              >
+                <button 
+                  type="button"
+                  style={{ 
+                    backgroundColor: '#002B4D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0px 20px',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                    pointerEvents: 'auto',
+                    transition: 'transform 0.1s ease',
+                    height: '40px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '30px', // 30px spacing between buttons
-                    zIndex: 1002
-                  }}
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    lineHeight: '1',
+                    gap: '8px'
+                  }} 
+                  onClick={handleListViewClick}
                 >
-                  <button 
-                    type="button"
-                    style={{ 
-                      backgroundColor: '#002B4D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0px 20px',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                      pointerEvents: 'auto',
-                      transition: 'transform 0.1s ease',
-                      height: '40px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                      lineHeight: '1',
-                      gap: '8px'
-                    }} 
-                    onClick={handleListViewClick}
-                  >
-                    <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
-                    List View
-                  </button>
-                  
-                  <button 
-                    type="button"
-                    style={{ 
-                      backgroundColor: '#002B4D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0px 20px',
-                      fontSize: '16px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                      pointerEvents: 'auto',
-                      transition: 'transform 0.1s ease',
-                      height: '40px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      textAlign: 'center',
-                      lineHeight: '1',
-                      gap: '8px'
-                    }} 
-                    onClick={handleOffersClick}
-                  >
-                    <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
-                    Offers
-                  </button>
-                </div>
-              )}
+                  <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                  List View
+                </button>
+                
+                <button 
+                  type="button"
+                  style={{ 
+                    backgroundColor: '#002B4D',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0px 20px',
+                    fontSize: '16px',
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                    pointerEvents: 'auto',
+                    transition: 'transform 0.1s ease',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    lineHeight: '1',
+                    gap: '8px'
+                  }} 
+                  onClick={handleOffersClick}
+                >
+                  <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                  Offers
+                </button>
+              </div>
 
               {/* Video Guide button - stays in original position */}
               {!singleVostcard && (
