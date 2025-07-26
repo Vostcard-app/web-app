@@ -67,7 +67,10 @@ const MapUpdater = ({ userLocation }: { userLocation: [number, number] | null })
   useEffect(() => {
     if (userLocation && map) {
       console.log('🗺️ MapUpdater: Setting map view to:', userLocation);
+      console.log('🗺️ MapUpdater: Map instance:', map);
       map.setView(userLocation, 16);
+    } else {
+      console.log('🗺️ MapUpdater: Missing userLocation or map:', { userLocation, map: !!map });
     }
   }, [userLocation, map]);
 
@@ -195,6 +198,7 @@ const HomeView = () => {
     if (browseLocationState) {
       console.log('🗺️ Browse location received:', browseLocationState);
       console.log('📍 Coordinates:', browseLocationState.coordinates);
+      console.log('📍 Setting browse location and user location...');
       setBrowseLocation(browseLocationState);
       setUserLocation(browseLocationState.coordinates);
       // Remove the immediate state clearing - let it persist for this render cycle
@@ -204,6 +208,7 @@ const HomeView = () => {
   // Separate effect to clear state after location is set
   useEffect(() => {
     if (browseLocation && userLocation) {
+      console.log('🗺️ Clearing navigation state after browse location set');
       // Clear the navigation state after the location has been set
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -373,8 +378,15 @@ const HomeView = () => {
         accuracy: `${accuracy}m`,
         source: accuracy < 50 ? 'GPS' : 'Network/WiFi'
       });
-      setUserLocation([latitude, longitude]);
-      setActualUserLocation([latitude, longitude]);
+      
+      // Only set user location if we don't have a browse location
+      if (!browseLocation) {
+        setUserLocation([latitude, longitude]);
+        setActualUserLocation([latitude, longitude]);
+      } else {
+        // Still update actualUserLocation for the "recenter" button
+        setActualUserLocation([latitude, longitude]);
+      }
     };
 
     const handleLocationError = (error: GeolocationPositionError) => {
@@ -441,7 +453,7 @@ const HomeView = () => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, []);
+  }, [browseLocation]);
 
   // Event handlers
   const handleLogout = async () => {
@@ -910,7 +922,7 @@ const HomeView = () => {
                     }}
                     zoomControl={false}
                     attributionControl={false}
-                    key={userLocation ? `${userLocation[0]}-${userLocation[1]}` : 'default'}
+                    key="map-container"
                   >
                     {(() => {
                       console.log('🗺️ MapContainer rendering with userLocation:', userLocation);
