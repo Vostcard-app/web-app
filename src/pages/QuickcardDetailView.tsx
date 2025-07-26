@@ -1096,6 +1096,7 @@ Tap OK to continue.`;
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
+            maxWidth: '75%',
             borderRadius: '16px',
               overflow: 'hidden',
             backgroundColor: '#f8f9fa',
@@ -1156,6 +1157,7 @@ Tap OK to continue.`;
         ) : (
           <div style={{ 
             width: '100%',
+            maxWidth: '75%',
             aspectRatio: '1',
             backgroundColor: '#f8f9fa',
             borderRadius: '16px',

@@ -751,6 +751,7 @@ const PublicQuickcardView: React.FC = () => {
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
               width: '100%',
+              maxWidth: '75%',
               borderRadius: '16px',
               overflow: 'hidden',
               backgroundColor: '#f8f9fa',
@@ -825,6 +826,7 @@ const PublicQuickcardView: React.FC = () => {
             // ✅ No photos fallback - also auto-sized
             <div style={{ 
               width: '100%',
+              maxWidth: '75%',
               aspectRatio: '1',
               position: 'relative',
               backgroundColor: '#f8f9fa',
