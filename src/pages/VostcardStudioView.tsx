@@ -1429,7 +1429,7 @@ const VostcardStudioView: React.FC = () => {
               </div>
             )}
 
-            {/* Enhanced Button Grid - Load Card, Photos, Location, and Audio */}
+            {/* Enhanced Button Grid - Load Card and Load Photos */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -1458,16 +1458,6 @@ const VostcardStudioView: React.FC = () => {
                 📂 Load Card
               </button>
 
-
-            </div>
-
-            {/* Load Photos Button */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr',
-              gap: '10px',
-              marginBottom: '15px'
-            }}>
               <button 
                 onClick={() => document.getElementById('quickcard-gallery-input')?.click()}
                 disabled={isLoading}
