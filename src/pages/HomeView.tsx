@@ -86,60 +86,70 @@ const ZoomControls = () => {
   const map = useMap();
 
   const handleZoomIn = () => {
+    console.log('🔍 Zoom In clicked');
     map.zoomIn();
   };
 
   const handleZoomOut = () => {
+    console.log('🔍 Zoom Out clicked'); 
     map.zoomOut();
   };
 
   return (
-    <div style={{
-      position: 'absolute',
-      top: '100px',
-      right: '10px',
-      zIndex: 1000,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '5px'
-    }}>
-      <button
-        onClick={handleZoomIn}
-        style={{
-          width: '40px',
-          height: '40px',
-          backgroundColor: 'white',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '18px',
-          fontWeight: 'bold'
-        }}
-      >
-        +
-      </button>
-      <button
-        onClick={handleZoomOut}
-        style={{
-          width: '40px',
-          height: '40px',
-          backgroundColor: 'white',
-          border: '1px solid #ccc',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '18px',
-          fontWeight: 'bold'
-        }}
-      >
-        -
-      </button>
-    </div>
+    <>
+      {/* Zoom controls */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        right: 20,
+        transform: 'translateY(-50%)',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}>
+        <button 
+          onClick={handleZoomIn} // ✅ Fixed: Added proper zoom in handler
+          style={{
+            background: '#fff',
+            color: '#002B4D',
+            border: '1px solid #ddd',
+            borderRadius: 8,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <FaPlus />
+        </button>
+        <button 
+          onClick={handleZoomOut} // ✅ Fixed: Added proper zoom out handler
+          style={{
+            background: '#fff',
+            color: '#002B4D',
+            border: '1px solid #ddd',
+            borderRadius: 8,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <FaMinus />
+        </button>
+      </div>
+    </>
   );
 };
 
@@ -515,11 +525,26 @@ const HomeView = () => {
 
   const handleNativeCameraPhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      console.log('📸 Native camera photo captured:', file.name);
-      createQuickcard(file);
+    if (file && userLocation) {
+      console.log('📸 Photo captured from native camera:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+      
+      // Create quickcard with the captured photo
+      createQuickcard(file, {
+        latitude: userLocation[0],
+        longitude: userLocation[1]
+      });
+      
+      // Navigate to photo thumbnails step
+      navigate('/quickcard-step2');
+    } else if (!userLocation) {
+      alert('Location not available. Please enable location services.');
     }
-    // Reset the input
+    
+    // Clear the input so same photo can be selected again
     event.target.value = '';
   };
 
@@ -655,49 +680,37 @@ const HomeView = () => {
             Vōstcard
           </div>
 
-          {/* User Avatar and Menu */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            {/* User Avatar */}
-            {userAvatar ? (
-              <img
-                src={userAvatar}
-                alt="User Avatar"
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  borderRadius: '50%',
-                  border: '3px solid white',
-                  cursor: 'pointer'
-                }}
-                onClick={() => navigate('/account-settings')}
-              />
-            ) : (
-              <FaUserCircle
-                size={50}
-                color="white"
-                style={{ cursor: 'pointer' }}
-                onClick={() => navigate('/account-settings')}
-              />
-            )}
-            
-            {/* Hamburger Menu Button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: 'white',
-                fontSize: '32px',
-                cursor: 'pointer',
-                padding: '10px',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+            <div
+              onClick={() => {
+                if (user?.uid) {
+                  navigate(`/user-profile/${user.uid}`);
+                }
               }}
+              style={{ cursor: 'pointer' }}
             >
-              <FaBars />
-            </button>
+              {userAvatar ? (
+                <img
+                  src={userAvatar}
+                  alt="User Avatar"
+                  style={{
+                    width: 55,
+                    height: 55,
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                  onError={() => setUserAvatar(null)}
+                />
+              ) : (
+                <FaUserCircle size={55} color="white" />
+              )}
+            </div>
+            <FaBars
+              size={48}
+              color="white"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              style={{ cursor: 'pointer' }}
+            />
           </div>
         </div>
 
@@ -1051,126 +1064,194 @@ const HomeView = () => {
 
           {/* Floating Controls Over Map */}
           
-          {/* List View and Offers buttons - top left */}
+          {/* ListView and Offers buttons - moved up */}
+          {!singleVostcard && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '8px',
+                left: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '30px', // 30px spacing between buttons
+                zIndex: 1002
+              }}
+            >
+              <button 
+                type="button"
+                style={{ 
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0px 20px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  pointerEvents: 'auto',
+                  transition: 'transform 0.1s ease',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  lineHeight: '1',
+                  gap: '8px'
+                }} 
+                onClick={handleListViewClick}
+              >
+                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                List View
+              </button>
+              
+              <button 
+                type="button"
+                style={{ 
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0px 20px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  pointerEvents: 'auto',
+                  transition: 'transform 0.1s ease',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  lineHeight: '1',
+                  gap: '8px'
+                }} 
+                onClick={handleOffersClick}
+              >
+                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+                Offers
+              </button>
+            </div>
+          )}
+
+          {/* Video Guide button - stays in original position */}
+          {!singleVostcard && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '6px',
+                right: '20px',
+                zIndex: 1002
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <button
+                  onClick={() => setShowInfoMenu(!showInfoMenu)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    padding: '4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <img 
+                    src={RoundInfoButton} 
+                    alt="Round Info Button" 
+                    style={{
+                      width: '60px',
+                      height: '60px'
+                    }}
+                  />
+                </button>
+                <div style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap'
+                }}>
+                  Video Guides
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Recenter control */}
           <div style={{
             position: 'absolute',
-            top: '100px',
-            left: '20px',
-            zIndex: 1002,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
+            top: '33%',
+            right: 20,
+            transform: 'translateY(-50%)',
+            zIndex: 1000
           }}>
             <button 
-              type="button"
-              style={{ 
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
+              onClick={handleRecenter} 
+              style={{
+                background: '#fff',
+                color: '#002B4D',
+                border: '1px solid #ddd',
+                borderRadius: 8,
+                width: 40,
+                height: 40,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                textAlign: 'center',
-                lineHeight: '1',
-                gap: '8px'
-              }} 
-              onClick={handleListViewClick}
-            >
-              <span style={{ fontSize: '16px', lineHeight: '1' }}>⋮</span>
-              List View
-            </button>
-            
-            <button 
-              type="button"
-              style={{ 
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
+                fontSize: 20,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                lineHeight: '1',
-                gap: '8px'
-              }} 
-              onClick={handleOffersClick}
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s ease'
+              }}
             >
-              <span style={{ fontSize: '16px', lineHeight: '1' }}>⋮</span>
-              Offers
+              <FaLocationArrow />
             </button>
           </div>
 
-          {/* Video Guide button - top right */}
+          {/* Filter button */}
           <div style={{
             position: 'absolute',
-            top: '100px',
-            right: '20px',
+            top: '66.7%', // 2/3 down the screen
+            right: 20, // Right side
             zIndex: 1002
           }}>
             <button
-              onClick={() => setShowInfoMenu(!showInfoMenu)}
+              onClick={() => setShowFilterModal(!showFilterModal)}
               style={{
-                backgroundColor: '#002B4D',
-                border: 'none',
-                borderRadius: '50%',
-                width: '50px',
-                height: '50px',
+                background: (
+                  (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+                  selectedTypes.length > 0 ||
+                  showFriendsOnly
+                ) ? '#002B4D' : '#fff',
+                color: (
+                  (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+                  selectedTypes.length > 0 ||
+                  showFriendsOnly
+                ) ? 'white' : '#002B4D',
+                border: '1px solid #ddd',
+                borderRadius: 8,
+                width: 40,
+                height: 40,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                fontSize: 20,
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                transition: 'transform 0.2s ease'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s ease'
               }}
             >
-              <img 
-                src={RoundInfoButton} 
-                alt="Video Guide" 
-                style={{ width: '30px', height: '30px' }}
-              />
-            </button>
-          </div>
-
-          {/* Recenter button - bottom right */}
-          <div style={{
-            position: 'absolute',
-            bottom: '200px',
-            right: '20px',
-            zIndex: 1002
-          }}>
-            <button
-              onClick={handleRecenter}
-              style={{
-                backgroundColor: '#002B4D',
-                border: 'none',
-                borderRadius: '50%',
-                width: '50px',
-                height: '50px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                transition: 'transform 0.2s ease'
-              }}
-            >
-              <FaLocationArrow size={20} color="white" />
+              <FaFilter />
             </button>
           </div>
         </div>
@@ -1526,11 +1607,7 @@ const HomeView = () => {
 
       {/* Location Debugger */}
       {userLocation && (
-        <LocationDebugger
-          userLocation={userLocation}
-          actualUserLocation={actualUserLocation}
-          handleRecenter={handleRecenter}
-        />
+        <LocationDebugger />
       )}
     </div>
   );
