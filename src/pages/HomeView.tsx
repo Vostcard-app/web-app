@@ -464,7 +464,7 @@ const HomeView = () => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, []);
+  }, [singleVostcard]); // Add singleVostcard as dependency so location handling knows when it changes
 
   const handleLogout = async () => {
     try {
@@ -590,7 +590,7 @@ const HomeView = () => {
     return filtered;
   };
 
-  // FIXED: Always show all pins, don't filter to just singleVostcard
+  // FIXED: Always show all pins, but center on singleVostcard if present
   const filteredVostcards = filterVostcards(vostcards);
 
   // Menu style

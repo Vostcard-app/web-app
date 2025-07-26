@@ -436,29 +436,29 @@ Tap OK to continue.`;
       } else {
         // For non-logged-in users, navigate to public map view
         console.log('📍 Opening vostcard location on public map for anonymous user');
-        navigate('/public-map', {
-          replace: false, // Ensure we add to history so back button works
-          state: {
-            singleVostcard: {
-              id: vostcard.id,
-              title: vostcard.title,
-              description: vostcard.description,
-              latitude: vostcard.latitude,
-              longitude: vostcard.longitude,
-              videoURL: vostcard.videoURL,
-              photoURLs: vostcard.photoURLs,
-              username: vostcard.username,
+      navigate('/public-map', {
+        replace: false, // Ensure we add to history so back button works
+        state: {
+          singleVostcard: {
+            id: vostcard.id,
+            title: vostcard.title,
+            description: vostcard.description,
+            latitude: vostcard.latitude,
+            longitude: vostcard.longitude,
+            videoURL: vostcard.videoURL,
+            photoURLs: vostcard.photoURLs,
+            username: vostcard.username,
               userRole: vostcard.userRole,
-              isOffer: vostcard.isOffer || false,
-              isQuickcard: vostcard.isQuickcard || false,
-              offerDetails: vostcard.offerDetails,
-              categories: vostcard.categories,
-              createdAt: vostcard.createdAt,
-              visibility: 'public',
-              state: 'posted'
-            }
+            isOffer: vostcard.isOffer || false,
+            isQuickcard: vostcard.isQuickcard || false,
+            offerDetails: vostcard.offerDetails,
+            categories: vostcard.categories,
+            createdAt: vostcard.createdAt,
+            visibility: 'public',
+            state: 'posted'
           }
-        });
+        }
+      });
       }
     } else {
       alert('No location data available for this vostcard');
