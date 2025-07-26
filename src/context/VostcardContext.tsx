@@ -2727,8 +2727,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoURL: '', // Quickcards don't have videos
         photoURLs: photoURLs,
         audioURL: audioURL,
-        audioURLs: audioURLs.length > 0 ? audioURLs : undefined,
-        audioLabels: audioLabels.length > 0 ? audioLabels : undefined,
+        audioURLs: audioURLs.length > 0 ? audioURLs : [],
+        audioLabels: audioLabels.length > 0 ? audioLabels : [],
         latitude: quickcard.geo.latitude,
         longitude: quickcard.geo.longitude,
         avatarURL: user.photoURL || '',
@@ -2748,9 +2748,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('☁️ Saving to Firestore with data:', firebaseData);
 
       const docRef = doc(db, 'vostcards', vostcardId);
-      await setDoc(docRef, firebaseData);
-
-      console.log('✅ Quickcard posted successfully to Firebase!');
+      try {
+        await setDoc(docRef, firebaseData);
+        console.log('✅ Quickcard posted successfully to Firebase!');
+      } catch (firestoreError) {
+        console.error('❌ Firestore save failed:', firestoreError);
+        console.error('❌ Firestore error details:', {
+          code: (firestoreError as any).code,
+          message: (firestoreError as any).message,
+          stack: (firestoreError as any).stack
+        });
+        throw firestoreError;
+      }
 
       // Verify the save by reading it back
       try {
