@@ -1100,7 +1100,7 @@ const HomeView = () => {
             </button>
 
             {/* 9. Vostcard Studio */}
-            {(userRole === 'guide' || userRole === 'admin') && (
+            {userRole === 'guide' && (
               <button
                 onClick={() => {
                   setIsMenuOpen(false);
