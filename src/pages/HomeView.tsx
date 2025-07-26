@@ -655,24 +655,50 @@ const HomeView = () => {
             Vōstcard
           </div>
 
-          {/* Menu button - keep this in header */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'white',
-              fontSize: '24px',
-              cursor: 'pointer',
-              padding: '8px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <FaBars />
-          </button>
+          {/* User Avatar and Menu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* User Avatar */}
+            {userAvatar ? (
+              <img
+                src={userAvatar}
+                alt="User Avatar"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  border: '2px solid white',
+                  cursor: 'pointer'
+                }}
+                onClick={() => navigate('/account-settings')}
+              />
+            ) : (
+              <FaUserCircle
+                size={40}
+                color="white"
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigate('/account-settings')}
+              />
+            )}
+            
+            {/* Hamburger Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontSize: '28px',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <FaBars />
+            </button>
+          </div>
         </div>
 
         {/* Floating ListView and Offers buttons - positioned over map */}
@@ -896,29 +922,30 @@ const HomeView = () => {
 
         {/* Map Container */}
         <div style={{ flex: 1, position: 'relative' }}>
-          {mapError ? (
+          {/* Error Display */}
+          {mapError && (
             <div style={{
               position: 'absolute',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              textAlign: 'center',
-              zIndex: 1000,
               backgroundColor: 'white',
               padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              textAlign: 'center',
+              zIndex: 1001,
               maxWidth: '300px'
             }}>
-              <p style={{ margin: '0 0 16px 0', color: '#666' }}>{mapError}</p>
+              <p style={{ margin: '0 0 15px 0', color: '#666' }}>{mapError}</p>
               <button
                 onClick={handleRetryLoad}
                 style={{
                   backgroundColor: '#002B4D',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '6px',
-                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
                   cursor: 'pointer',
                   fontSize: '14px'
                 }}
@@ -926,71 +953,135 @@ const HomeView = () => {
                 Retry
               </button>
             </div>
-          ) : (
-            <>
-              {userLocation && (
-                <MapContainer
-                  center={userLocation}
-                  zoom={16}
-                  style={{ height: '100%', width: '100%' }}
-                  zoomControl={false}
+          )}
+
+          {/* Map */}
+          {userLocation && (
+            <MapContainer
+              center={userLocation}
+              zoom={16}
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maxZoom={22}
+              />
+
+              {/* User location marker */}
+              {actualUserLocation && (
+                <Marker
+                  position={actualUserLocation}
+                  icon={userIcon}
                 >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    maxZoom={22}
-                  />
+                  <Popup>
+                    <div style={{ textAlign: 'center' }}>
+                      <strong>Your Location</strong>
+                      <br />
+                      <small>Tap to recenter map</small>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
 
-                  {/* User location marker */}
-                  {actualUserLocation && (
-                    <Marker
-                      position={actualUserLocation}
-                      icon={userIcon}
-                    >
-                      <Popup>
-                        <div style={{ textAlign: 'center' }}>
-                          <strong>Your Location</strong>
-                          <br />
-                          <small>Tap to recenter map</small>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  )}
-
-                  {/* Vostcard markers */}
-                  {filteredVostcards.map((vostcard) => {
-                    if (!vostcard.latitude || !vostcard.longitude) return null;
-                    
-                    const position: [number, number] = [vostcard.latitude, vostcard.longitude];
-                    
-                    // 🔍 DEBUG: Log icon selection for quickcards
-                    if (vostcard.isQuickcard) {
-                      console.log('🔍 DEBUG: Rendering quickcard marker:', {
-                        title: vostcard.title,
-                        userRole: vostcard.userRole,
-                        isOffer: vostcard.isOffer,
-                        isQuickcard: vostcard.isQuickcard
-                      });
-                    }
-                    
-                    const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
-                    
-                    // 🔍 DEBUG: Log which icon was selected
-                    if (vostcard.isQuickcard) {
-                      const iconName = icon === guideIcon ? 'GuideIcon' : 
-                                       icon === vostcardIcon ? 'VostcardIcon' : 
-                                       icon === offerIcon ? 'OfferIcon' : 'Unknown';
-                      console.log('🔍 DEBUG: Selected icon for quickcard:', iconName, 'for userRole:', vostcard.userRole);
-                    }
-                    
-                    return (
-                      <Marker
-                        key={vostcard.id}
-                        position={position}
-                        icon={icon}
-                        eventHandlers={{
-                          click: () => {
-                            console.log('📍 Vostcard pin clicked:', vostcard.title);
+              {/* Vostcard markers */}
+              {filteredVostcards.map((vostcard) => {
+                if (!vostcard.latitude || !vostcard.longitude) return null;
+                
+                const position: [number, number] = [vostcard.latitude, vostcard.longitude];
+                
+                // 🔍 DEBUG: Log icon selection for quickcards
+                if (vostcard.isQuickcard) {
+                  console.log('🔍 DEBUG: Rendering quickcard marker:', {
+                    title: vostcard.title,
+                    userRole: vostcard.userRole,
+                    isOffer: vostcard.isOffer,
+                    isQuickcard: vostcard.isQuickcard
+                  });
+                }
+                
+                const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
+                
+                // 🔍 DEBUG: Log which icon was selected
+                if (vostcard.isQuickcard) {
+                  const iconName = icon === guideIcon ? 'GuideIcon' : 
+                                   icon === vostcardIcon ? 'VostcardIcon' : 
+                                   icon === offerIcon ? 'OfferIcon' : 'Unknown';
+                  console.log('🔍 DEBUG: Selected icon for quickcard:', iconName, 'for userRole:', vostcard.userRole);
+                }
+                
+                return (
+                  <Marker
+                    key={vostcard.id}
+                    position={position}
+                    icon={icon}
+                    eventHandlers={{
+                      click: () => {
+                        console.log('📍 Vostcard pin clicked:', vostcard.title);
+                        // ✅ UNIFIED EXPERIENCE: Use VostcardDetailView for both quickcards and regular vostcards
+                        if (vostcard.isOffer) {
+                          navigate(`/offer/${vostcard.id}`);
+                        } else {
+                          // Both quickcards and regular vostcards use the same detail view
+                          navigate(`/vostcard/${vostcard.id}`);
+                        }
+                      }
+                    }}
+                  >
+                    <Popup>
+                      <div style={{ textAlign: 'center', minWidth: '200px' }}>
+                        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
+                          {vostcard.title || (vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
+                        </h3>
+                        <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
+                          {vostcard.description || 'No description'}
+                        </p>
+                        
+                        {/* Show quickcard indicator */}
+                        {vostcard.isQuickcard && (
+                          <div style={{
+                            backgroundColor: '#e8f4ff',
+                            border: '1px solid #b3d9ff',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            marginBottom: '12px'
+                          }}>
+                            <strong style={{ color: '#0066cc' }}>📱 Quickcard</strong>
+                            <br />
+                            <span style={{ fontSize: '12px' }}>Quick photo with location</span>
+                          </div>
+                        )}
+                        
+                        {/* Existing offer details */}
+                        {vostcard.isOffer && vostcard.offerDetails?.discount && (
+                          <div style={{
+                            backgroundColor: '#e8f4ff',
+                            border: '1px solid #b3d9ff',
+                            borderRadius: '6px',
+                            padding: '8px',
+                            marginBottom: '12px'
+                          }}>
+                            <strong style={{ color: '#0066cc' }}>🎁 Special Offer:</strong>
+                            <br />
+                            <span style={{ fontSize: '14px' }}>{vostcard.offerDetails.discount}</span>
+                            {vostcard.offerDetails.validUntil && (
+                              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                                Valid until: {vostcard.offerDetails.validUntil}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Categories */}
+                        {vostcard.categories && Array.isArray(vostcard.categories) && vostcard.categories.length > 0 && (
+                          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#666' }}>
+                            <strong>Categories:</strong> {vostcard.categories.join(', ')}
+                          </p>
+                        )}
+                        
+                        <button
+                          onClick={() => {
                             // ✅ UNIFIED EXPERIENCE: Use VostcardDetailView for both quickcards and regular vostcards
                             if (vostcard.isOffer) {
                               navigate(`/offer/${vostcard.id}`);
@@ -998,93 +1089,155 @@ const HomeView = () => {
                               // Both quickcards and regular vostcards use the same detail view
                               navigate(`/vostcard/${vostcard.id}`);
                             }
-                          }
-                        }}
-                      >
-                        <Popup>
-                          <div style={{ textAlign: 'center', minWidth: '200px' }}>
-                            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
-                              {vostcard.title || (vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
-                            </h3>
-                            <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
-                              {vostcard.description || 'No description'}
-                            </p>
-                            
-                            {/* Show quickcard indicator */}
-                            {vostcard.isQuickcard && (
-                              <div style={{
-                                backgroundColor: '#e8f4ff',
-                                border: '1px solid #b3d9ff',
-                                borderRadius: '6px',
-                                padding: '8px',
-                                marginBottom: '12px'
-                              }}>
-                                <strong style={{ color: '#0066cc' }}>📱 Quickcard</strong>
-                                <br />
-                                <span style={{ fontSize: '12px' }}>Quick photo with location</span>
-                              </div>
-                            )}
-                            
-                            {/* Existing offer details */}
-                            {vostcard.isOffer && vostcard.offerDetails?.discount && (
-                              <div style={{
-                                backgroundColor: '#e8f4ff',
-                                border: '1px solid #b3d9ff',
-                                borderRadius: '6px',
-                                padding: '8px',
-                                marginBottom: '12px'
-                              }}>
-                                <strong style={{ color: '#0066cc' }}>🎁 Special Offer:</strong>
-                                <br />
-                                <span style={{ fontSize: '14px' }}>{vostcard.offerDetails.discount}</span>
-                                {vostcard.offerDetails.validUntil && (
-                                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                    Valid until: {vostcard.offerDetails.validUntil}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            
-                            {/* Categories */}
-                            {vostcard.categories && Array.isArray(vostcard.categories) && vostcard.categories.length > 0 && (
-                              <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#666' }}>
-                                <strong>Categories:</strong> {vostcard.categories.join(', ')}
-                              </p>
-                            )}
-                            
-                            <button
-                              onClick={() => {
-                                // ✅ UNIFIED EXPERIENCE: Use VostcardDetailView for both quickcards and regular vostcards
-                                if (vostcard.isOffer) {
-                                  navigate(`/offer/${vostcard.id}`);
-                                } else {
-                                  // Both quickcards and regular vostcards use the same detail view
-                                  navigate(`/vostcard/${vostcard.id}`);
-                                }
-                              }}
-                              style={{
-                                backgroundColor: '#002B4D',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                padding: '6px 12px',
-                                fontSize: '12px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              View Details
-                            </button>
-                          </div>
-                        </Popup>
-                      </Marker>
-                    );
-                  })}
-                  
-                  <MapUpdater userLocation={userLocation} singleVostcard={singleVostcard} />
-                </MapContainer>
-              )}
-            </>
+                          }}
+                          style={{
+                            backgroundColor: '#002B4D',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+              
+              {/* Map Controls */}
+              <MapUpdater userLocation={userLocation} singleVostcard={singleVostcard} />
+              <ZoomControls />
+            </MapContainer>
           )}
+
+          {/* Floating Controls Over Map */}
+          
+          {/* List View and Offers buttons - top left */}
+          <div style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            zIndex: 1002,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '8px'
+              }} 
+              onClick={handleListViewClick}
+            >
+              <span style={{ fontSize: '16px', lineHeight: '1' }}>⋮</span>
+              List View
+            </button>
+            
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '8px'
+              }} 
+              onClick={handleOffersClick}
+            >
+              <span style={{ fontSize: '16px', lineHeight: '1' }}>⋮</span>
+              Offers
+            </button>
+          </div>
+
+          {/* Video Guide button - top right */}
+          <div style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            zIndex: 1002
+          }}>
+            <button
+              onClick={() => setShowInfoMenu(!showInfoMenu)}
+              style={{
+                backgroundColor: '#002B4D',
+                border: 'none',
+                borderRadius: '50%',
+                width: '50px',
+                height: '50px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                transition: 'transform 0.2s ease'
+              }}
+            >
+              <img 
+                src={RoundInfoButton} 
+                alt="Video Guide" 
+                style={{ width: '30px', height: '30px' }}
+              />
+            </button>
+          </div>
+
+          {/* Recenter button - bottom right */}
+          <div style={{
+            position: 'absolute',
+            bottom: '140px',
+            right: '20px',
+            zIndex: 1002
+          }}>
+            <button
+              onClick={handleRecenter}
+              style={{
+                backgroundColor: '#002B4D',
+                border: 'none',
+                borderRadius: '50%',
+                width: '50px',
+                height: '50px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                transition: 'transform 0.2s ease'
+              }}
+            >
+              <FaLocationArrow size={20} color="white" />
+            </button>
+          </div>
         </div>
 
         {/* Drive Mode Player */}
