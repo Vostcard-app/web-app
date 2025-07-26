@@ -1096,7 +1096,7 @@ Tap OK to continue.`;
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
-            maxWidth: '150px',
+            maxWidth: '160px',
             borderRadius: '16px',
               overflow: 'hidden',
             backgroundColor: '#f8f9fa',
@@ -1109,7 +1109,7 @@ Tap OK to continue.`;
                   alt="Quickcard"
                   style={{
                     width: '100%',
-                    height: '150px',
+                    height: '160px',
                     objectFit: 'cover',
                     display: 'block',
                     cursor: 'pointer',
@@ -1156,8 +1156,8 @@ Tap OK to continue.`;
         ) : (
           <div style={{ 
             width: '100%',
-            maxWidth: '150px',
-            height: '150px',
+            maxWidth: '160px',
+            height: '160px',
             backgroundColor: '#f8f9fa',
             borderRadius: '16px',
             display: 'flex',
@@ -1197,7 +1197,7 @@ Tap OK to continue.`;
           justifyContent: 'center',
           alignItems: 'center',
           padding: '20px',
-          gap: '16px',
+          gap: '5px',
           flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
         }}>
           {/* Detail Button - Show ONLY if there's a second recording */}

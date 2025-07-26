@@ -751,7 +751,7 @@ const PublicQuickcardView: React.FC = () => {
           {photoURLs && photoURLs.length > 0 ? (
             <div style={{ 
               width: '100%',
-              maxWidth: '150px', // ✅ MATCHED: Same size as QuickcardDetailView
+              maxWidth: '160px', // ✅ MATCHED: Same size as QuickcardDetailView
               borderRadius: '16px',
               overflow: 'hidden',
               backgroundColor: '#f8f9fa',
@@ -765,7 +765,7 @@ const PublicQuickcardView: React.FC = () => {
                 alt="Quickcard"
                 style={{
                   width: '100%',
-                  height: '150px', // ✅ CHANGED: Fixed height for square thumbnail
+                  height: '160px', // ✅ CHANGED: Fixed height for square thumbnail
                   objectFit: 'cover', // ✅ ADDED: Maintains aspect ratio
                   display: 'block', // ✅ ADDED: Prevents inline spacing issues
                   cursor: 'pointer',
@@ -825,8 +825,8 @@ const PublicQuickcardView: React.FC = () => {
             // ✅ No photos fallback - also auto-sized
             <div style={{ 
               width: '100%',
-              maxWidth: '150px',
-              height: '150px',
+              maxWidth: '160px',
+              height: '160px',
               position: 'relative',
               backgroundColor: '#f8f9fa',
               borderRadius: '16px',
@@ -876,7 +876,7 @@ const PublicQuickcardView: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
           padding: '5px 20px',
-          gap: '12px',
+          gap: '5px',
           flexWrap: 'wrap'
         }}>
           {/* Detail Button - Show ONLY if there's a second recording */}
