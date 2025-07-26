@@ -70,6 +70,10 @@ const VostcardStudioView: React.FC = () => {
   const [quickcardCategories, setQuickcardCategories] = useState<string[]>([]);
   const [showQuickcardCategoryModal, setShowQuickcardCategoryModal] = useState(false);
 
+  // Drag and drop state for photo reordering
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -620,6 +624,55 @@ const VostcardStudioView: React.FC = () => {
     
     setQuickcardPhotos(newPhotos);
     setQuickcardPhotoPreviews(newPreviews);
+  };
+
+  // Drag and drop handlers for photo reordering
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Reorder photos and previews
+    const newPhotos = [...quickcardPhotos];
+    const newPreviews = [...quickcardPhotoPreviews];
+    
+    const draggedPhoto = newPhotos[draggedIndex];
+    const draggedPreview = newPreviews[draggedIndex];
+    
+    // Remove from original position
+    newPhotos.splice(draggedIndex, 1);
+    newPreviews.splice(draggedIndex, 1);
+    
+    // Insert at new position
+    newPhotos.splice(dropIndex, 0, draggedPhoto);
+    newPreviews.splice(dropIndex, 0, draggedPreview);
+    
+    setQuickcardPhotos(newPhotos);
+    setQuickcardPhotoPreviews(newPreviews);
+    
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
@@ -1255,12 +1308,23 @@ const VostcardStudioView: React.FC = () => {
                   {quickcardPhotoPreviews.map((preview, index) => (
                     <div
                       key={index}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                      onDragEnd={handleDragEnd}
                       style={{
                         position: 'relative',
                         aspectRatio: '1',
                         borderRadius: '8px',
                         overflow: 'hidden',
-                        backgroundColor: '#f0f0f0'
+                        backgroundColor: '#f0f0f0',
+                        cursor: 'grab',
+                        opacity: draggedIndex === index ? 0.5 : 1,
+                        transform: draggedIndex === index ? 'scale(0.95)' : 'scale(1)',
+                        transition: 'all 0.2s ease',
+                        border: dragOverIndex === index && draggedIndex !== index ? '2px dashed #007aff' : 'none',
+                        boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none'
                       }}
                     >
                       <img
@@ -1269,9 +1333,25 @@ const VostcardStudioView: React.FC = () => {
                         style={{
                           width: '100%',
                           height: '100%',
-                          objectFit: 'cover'
+                          objectFit: 'cover',
+                          pointerEvents: 'none' // Prevent image from interfering with drag
                         }}
                       />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          left: '4px',
+                          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                          color: 'white',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {index + 1}
+                      </div>
                       <button
                         onClick={() => removePhoto(index)}
                         disabled={isLoading}
@@ -1289,7 +1369,8 @@ const VostcardStudioView: React.FC = () => {
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          zIndex: 10
                         }}
                       >
                         ✕
@@ -1297,6 +1378,17 @@ const VostcardStudioView: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                {quickcardPhotoPreviews.length > 1 && (
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#666',
+                    textAlign: 'center',
+                    fontStyle: 'italic',
+                    marginTop: '4px'
+                  }}>
+                    💡 Drag photos to reorder them
+                  </div>
+                )}
               </div>
             )}
 

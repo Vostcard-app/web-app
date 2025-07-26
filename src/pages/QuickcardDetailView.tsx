@@ -340,6 +340,7 @@ Tap OK to continue.`;
             longitude: quickcard.longitude,
             photoURLs: quickcard.photoURLs,
             username: quickcard.username,
+            userRole: quickcard.userRole, // ✅ ADD: Include userRole for correct pin type
             isOffer: false,
             isQuickcard: true,
             categories: quickcard.categories,

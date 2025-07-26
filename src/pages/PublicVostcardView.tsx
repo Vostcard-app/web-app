@@ -701,6 +701,7 @@ ${privateUrl}`);
                       videoURL: vostcard.videoURL,
                       photoURLs: vostcard.photoURLs,
                       username: vostcard.username,
+                      userRole: vostcard.userRole, // ✅ ADD: Include userRole for correct pin type
                       isOffer: vostcard.isOffer || false,
                       isQuickcard: vostcard.isQuickcard || false,
                       offerDetails: vostcard.offerDetails,
