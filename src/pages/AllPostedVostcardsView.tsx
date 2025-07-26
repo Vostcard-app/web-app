@@ -434,7 +434,7 @@ const AllPostedVostcardsView: React.FC = () => {
         padding: '0 20px',
         flexShrink: 0,
         zIndex: 1000,
-        position: 'fixed',
+        position: 'absolute', // <-- changed from 'fixed' to 'absolute'
         top: 0,
         left: 0,
         right: 0,
