@@ -1495,16 +1495,16 @@ const VostcardStudioView: React.FC = () => {
             }}>
               <button 
                 onClick={() => document.getElementById('quickcard-gallery-input')?.click()}
-                disabled={isLoading || quickcardPhotos.length >= 4}
+                disabled={isLoading}
                 style={{
-                  backgroundColor: (isLoading || quickcardPhotos.length >= 4) ? '#ccc' : '#28a745',
+                  backgroundColor: isLoading ? '#ccc' : '#28a745',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (isLoading || quickcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
