@@ -1139,7 +1139,7 @@ const PublicQuickcardView: React.FC = () => {
         }}
         title={title || 'Quickcard Photos'}
         autoPlay={true}
-        autoPlayInterval={5000}
+        autoPlayInterval={7000}
         audioDuration={quickcard?.audioDuration}
       />
 

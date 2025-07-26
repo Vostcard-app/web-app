@@ -1637,7 +1637,7 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* MultiPhotoModal with AUTO-PLAY - 10 SECOND INTERVALS */}
+      {/* MultiPhotoModal with AUTO-PLAY - 7 SECOND INTERVALS */}
       {showMultiPhotoModal && (
         <MultiPhotoModal
           photos={photoURLs}
@@ -1653,7 +1653,7 @@ Tap OK to continue.`;
           }}
           title={quickcard?.title}
           autoPlay={true}
-          autoPlayInterval={10000}
+          autoPlayInterval={7000}
           audioDuration={quickcard?.audioDuration}
         />
       )}

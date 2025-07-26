@@ -19,7 +19,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   onClose,
   title,
   autoPlay = false,
-  autoPlayInterval = 3000,
+  autoPlayInterval = 7000,
   audioDuration
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
