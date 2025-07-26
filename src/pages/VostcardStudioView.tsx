@@ -631,6 +631,9 @@ const VostcardStudioView: React.FC = () => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', index.toString());
+    
+    // Prevent default behavior to avoid conflicts with touch events
+    e.preventDefault();
   };
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
@@ -1303,7 +1306,8 @@ const VostcardStudioView: React.FC = () => {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(2, 1fr)',
                   gap: '8px',
-                  marginBottom: '8px'
+                  marginBottom: '8px',
+                  touchAction: 'none' // Prevent touch scrolling on the grid
                 }}>
                   {quickcardPhotoPreviews.map((preview, index) => (
                     <div
@@ -1313,6 +1317,18 @@ const VostcardStudioView: React.FC = () => {
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                       onDragEnd={handleDragEnd}
+                      onTouchStart={(e) => {
+                        // Prevent default touch behavior to avoid scrolling conflicts
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onTouchMove={(e) => {
+                        // Prevent scrolling when dragging
+                        if (draggedIndex !== null) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }
+                      }}
                       style={{
                         position: 'relative',
                         aspectRatio: '1',
@@ -1324,7 +1340,8 @@ const VostcardStudioView: React.FC = () => {
                         transform: draggedIndex === index ? 'scale(0.95)' : 'scale(1)',
                         transition: 'all 0.2s ease',
                         border: dragOverIndex === index && draggedIndex !== index ? '2px dashed #007aff' : 'none',
-                        boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none'
+                        boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none',
+                        touchAction: 'none' // Prevent default touch behaviors
                       }}
                     >
                       <img
@@ -1334,7 +1351,9 @@ const VostcardStudioView: React.FC = () => {
                           width: '100%',
                           height: '100%',
                           objectFit: 'cover',
-                          pointerEvents: 'none' // Prevent image from interfering with drag
+                          pointerEvents: 'none', // Prevent image from interfering with drag
+                          userSelect: 'none', // Prevent text selection
+                          WebkitUserSelect: 'none'
                         }}
                       />
                       <div
