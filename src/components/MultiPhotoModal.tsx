@@ -279,9 +279,9 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
           src={photos[currentIndex]}
           alt={`Photo ${currentIndex + 1}`}
           style={{
-            maxWidth: '98vw',
-            maxHeight: '96vh',
-            objectFit: 'contain', // changed from cover
+            width: '100vw',
+            height: '100vh',
+            objectFit: 'contain',
             userSelect: 'none',
             imageRendering: '-webkit-optimize-contrast',
             WebkitBackfaceVisibility: 'hidden',

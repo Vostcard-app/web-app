@@ -200,22 +200,37 @@ const PublicHomeView: React.FC = () => {
         zIndex: 1001,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
-        {/* Return Icon */}
+        {/* Back Button */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // Try to go back, but if no history, navigate to home
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              // Fallback: navigate to home
+              navigate('/');
+            }
+          }}
           style={{
-            background: 'none',
+            background: 'rgba(255,255,255,0.1)',
             border: 'none',
             color: 'white',
             cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '50%',
+            padding: '8px 12px',
+            borderRadius: '20px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            gap: '6px',
+            fontSize: '14px',
+            fontWeight: '500',
+            transition: 'background-color 0.2s ease'
           }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
         >
-          <FaArrowLeft size={20} />
+          <FaArrowLeft size={16} />
+          Back
         </button>
         
         {/* Register/Login Button - Always the same regardless of auth status */}

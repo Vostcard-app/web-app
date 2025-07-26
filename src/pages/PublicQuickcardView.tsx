@@ -956,6 +956,7 @@ const PublicQuickcardView: React.FC = () => {
               onClick={() => {
                 console.log('📍 Opening quickcard location on public map');
                 navigate('/public-map', {
+                  replace: false, // Ensure we add to history so back button works
                   state: {
                     singleVostcard: {
                       id: quickcard.id,

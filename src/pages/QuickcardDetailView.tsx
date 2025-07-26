@@ -330,6 +330,7 @@ Tap OK to continue.`;
     if (quickcard?.latitude && quickcard?.longitude) {
       console.log('📍 Opening quickcard location on public map for all users');
       navigate('/public-map', {
+        replace: false, // Ensure we add to history so back button works
         state: {
           singleVostcard: {
             id: quickcard.id,
@@ -1092,7 +1093,7 @@ Tap OK to continue.`;
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
-            maxWidth: '300px',
+            maxWidth: '150px',
             borderRadius: '16px',
             overflow: 'hidden',
             backgroundColor: '#f8f9fa',

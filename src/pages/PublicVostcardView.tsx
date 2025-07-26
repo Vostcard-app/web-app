@@ -690,6 +690,7 @@ ${privateUrl}`);
               if (vostcard.latitude && vostcard.longitude) {
                 console.log('📍 Opening vostcard location on public map for all users');
                 navigate('/public-map', {
+                  replace: false, // Ensure we add to history so back button works
                   state: {
                     singleVostcard: {
                       id: vostcard.id,
