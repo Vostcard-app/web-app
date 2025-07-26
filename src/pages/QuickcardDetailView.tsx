@@ -1075,7 +1075,7 @@ Tap OK to continue.`;
       <div style={{ padding: '0 20px' }}>
         <h1 style={{ 
           margin: 0, 
-          fontSize: '32px', 
+          fontSize: '18px', 
           fontWeight: 'bold', 
           color: '#333',
           textAlign: 'center'
