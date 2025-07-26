@@ -1372,27 +1372,21 @@ Tap OK to continue.`;
             })() && (
               <button
                 onClick={() => {
-                  console.log('🎵 Detail button clicked - playing detail audio');
+                  console.log('🎵 More button clicked - playing detail audio and showing slideshow');
                   
-                  // Try to find and play the detail audio specifically
-                  const detailAudioSource = 
-                    // If audioLabels exist, find the detail audio at the same index
-                    (vostcard?.audioLabels && vostcard.audioFiles && 
-                     vostcard.audioLabels.includes('detail')) ? 
-                     vostcard.audioFiles[vostcard.audioLabels.indexOf('detail')] :
-                    // Fallback: use second audio file if multiple exist
-                    vostcard?.audioURLs?.[1] || 
-                    vostcard?._firebaseAudioURLs?.[1] || 
-                    vostcard?.audioFiles?.[1] ||
-                    vostcard?.detailAudioURL ||
-                    // Ultimate fallback: use first audio
-                    vostcard?.audioURL;
-                    
-                  console.log('🎵 Playing detail audio:', !!detailAudioSource);
-                  
-                  // Use the same playback mechanism but with detail audio
-                  if (detailAudioSource) {
-                    handleAudioPlayback(); // This will be enhanced to support detail audio
+                  // Play detail audio if available
+                  if (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) {
+                    // Play second audio file (detail audio)
+                    if (audioRef.current) {
+                      audioRef.current.src = vostcard.audioURLs[1];
+                      audioRef.current.play();
+                    }
+                  } else if (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) {
+                    // Play second audio file from audioFiles
+                    if (audioRef.current) {
+                      audioRef.current.src = URL.createObjectURL(vostcard.audioFiles[1]);
+                      audioRef.current.play();
+                    }
                   }
                   
                   // Show swipeable photo gallery starting with first photo
@@ -1418,7 +1412,7 @@ Tap OK to continue.`;
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
               >
                 <FaPlay size={14} style={{ marginRight: '8px' }} />
-                Detail
+                More
               </button>
             )}
 

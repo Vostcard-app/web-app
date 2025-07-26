@@ -845,7 +845,8 @@ const PublicQuickcardView: React.FC = () => {
             fontSize: '14px',
             color: '#666',
                 textAlign: 'center',
-            fontStyle: 'italic'
+            fontStyle: 'italic',
+            fontWeight: 'bold'
               }}>
             Tap to view
                 </div>
@@ -898,13 +899,17 @@ const PublicQuickcardView: React.FC = () => {
           })() && (
             <button
               onClick={() => {
-                console.log('🎵 Detail button clicked - playing audio and starting slideshow');
-                // Play audio functionality (same for now)
-                if (audioRef.current) {
-                  if (isPlayingAudio) {
-                    audioRef.current.pause();
-                    setIsPlayingAudio(false);
-                  } else {
+                console.log('🎵 More button clicked - playing detail audio and showing slideshow');
+                // Play detail audio if available (second audio file)
+                if (quickcard?.audioURLs && quickcard.audioURLs.length >= 2) {
+                  if (audioRef.current) {
+                    audioRef.current.src = quickcard.audioURLs[1];
+                    audioRef.current.play();
+                    setIsPlayingAudio(true);
+                  }
+                } else if (quickcard?.audioFiles && quickcard.audioFiles.length >= 2) {
+                  if (audioRef.current) {
+                    audioRef.current.src = URL.createObjectURL(quickcard.audioFiles[1]);
                     audioRef.current.play();
                     setIsPlayingAudio(true);
                   }
@@ -933,8 +938,8 @@ const PublicQuickcardView: React.FC = () => {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              {isPlayingAudio ? <FaPause size={12} style={{ marginRight: '6px' }} /> : <FaPlay size={12} style={{ marginRight: '6px' }} />}
-              {isPlayingAudio ? 'Pause' : 'Detail'}
+              <FaPlay size={12} style={{ marginRight: '6px' }} />
+              More
             </button>
           )}
 

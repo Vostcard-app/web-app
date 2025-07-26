@@ -1175,7 +1175,8 @@ Tap OK to continue.`;
           fontSize: '14px',
           color: '#666',
           textAlign: 'center',
-          fontStyle: 'italic'
+          fontStyle: 'italic',
+          fontWeight: 'bold'
         }}>
           Tap to view
         </div>
@@ -1245,7 +1246,7 @@ Tap OK to continue.`;
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
               <FaPlay size={14} style={{ marginRight: '8px' }} />
-              Detail
+              More
             </button>
           )}
 
