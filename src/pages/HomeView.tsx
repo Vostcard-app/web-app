@@ -1261,4 +1261,4 @@ const HomeView = () => {
             </h3>
             
             {/* Categories */}
-            <div style={{ marginBottom: '20px' 
+            <div st 
