@@ -1092,7 +1092,7 @@ Tap OK to continue.`;
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
             width: '100%',
-            maxWidth: '800px',
+            maxWidth: '300px',
             borderRadius: '16px',
             overflow: 'hidden',
             backgroundColor: '#f8f9fa',
