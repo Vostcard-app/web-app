@@ -252,7 +252,8 @@ const HomeView = () => {
       authCurrentUser: !!auth.currentUser
     });
     
-    if (loading && showAuthLoading) {
+    // FIXED: More aggressive loading overlay management
+    if (loading) {
       console.log('🏠 HomeView: Auth loading detected, will hide overlay after 3 seconds');
       const loadingTimeout = setTimeout(() => {
         console.log('⏰ HomeView: Hiding auth loading overlay to prevent UI blocking');
@@ -260,13 +261,12 @@ const HomeView = () => {
       }, 3000);
       
       return () => clearTimeout(loadingTimeout);
-    }
-    
-    // FIXED: When loading is false (auth complete), hide the loading overlay
-    if (!loading) {
+    } else {
+      // Immediately hide loading overlay when auth is complete
+      console.log('✅ HomeView: Auth complete, hiding loading overlay');
       setShowAuthLoading(false);
     }
-  }, [user, username, userID, userRole, loading, showAuthLoading]);
+  }, [user, username, userID, userRole, loading]);
 
   // Load vostcards function
   const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
