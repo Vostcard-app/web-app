@@ -66,6 +66,7 @@ const MapUpdater = ({ userLocation }: { userLocation: [number, number] | null })
 
   useEffect(() => {
     if (userLocation && map) {
+      console.log('🗺️ MapUpdater: Setting map view to:', userLocation);
       map.setView(userLocation, 16);
     }
   }, [userLocation, map]);
@@ -192,6 +193,8 @@ const HomeView = () => {
   // Handle browse location from navigation
   useEffect(() => {
     if (browseLocationState) {
+      console.log('🗺️ Browse location received:', browseLocationState);
+      console.log('📍 Coordinates:', browseLocationState.coordinates);
       setBrowseLocation(browseLocationState);
       setUserLocation(browseLocationState.coordinates);
       navigate(location.pathname, { replace: true, state: {} });
@@ -899,7 +902,12 @@ const HomeView = () => {
                     }}
                     zoomControl={false}
                     attributionControl={false}
+                    key={userLocation ? `${userLocation[0]}-${userLocation[1]}` : 'default'}
                   >
+                    {(() => {
+                      console.log('🗺️ MapContainer rendering with userLocation:', userLocation);
+                      return null;
+                    })()}
                     <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                     
                     {/* ✅ Add ZoomControls component inside MapContainer */}
