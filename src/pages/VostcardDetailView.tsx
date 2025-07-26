@@ -1544,7 +1544,7 @@ Tap OK to continue.`;
           <div style={{ 
             fontSize: '18px', 
             fontWeight: 'bold', 
-            marginBottom: '10px',
+            marginBottom: '5px',
             color: '#333'
           }}>
             Worth Seeing?

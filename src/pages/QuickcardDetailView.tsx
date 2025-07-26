@@ -1399,7 +1399,7 @@ Tap OK to continue.`;
           fontSize: '18px',
           fontWeight: '600',
           color: '#333',
-          marginBottom: '15px'
+          marginBottom: '5px'
         }}>
           Worth seeing?
         </div>
