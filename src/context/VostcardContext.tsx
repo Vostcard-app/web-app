@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Script } from '../types/ScriptModel';
+import type { Vostcard } from '../types/VostcardTypes';
 import { auth, db, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, getDoc, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -9,38 +10,7 @@ import { ScriptService } from '../services/scriptService';
 import { LikeService, type Like } from '../services/likeService';
 import { RatingService, type Rating, type RatingStats } from '../services/ratingService';
 
-export interface Vostcard {
-  id: string;
-  state: 'private' | 'posted';
-  video: Blob | null;
-  title: string;
-  description: string;
-  photos: Blob[];
-  categories: string[];
-  geo: { latitude: number; longitude: number } | null;
-  username: string;
-  userID: string;
-  userRole?: string; // Add userRole field to track user type
-  recipientUserID?: string; // For private sharing - who receives this private Vostcard
-  createdAt: string;
-  updatedAt: string;
-  isOffer?: boolean; // New field for offers
-  isQuickcard?: boolean; // New field for quickcards
-  offerDetails?: {
-    discount?: string;
-    validUntil?: string;
-    terms?: string;
-  };
-  script?: string; // Add script field
-  scriptId?: string; // Add script ID field to track associated script
-  hasVideo?: boolean; // Indicates if vostcard has video content
-  hasPhotos?: boolean; // Indicates if vostcard has photo content
-  _videoBase64?: string | null; // For IndexedDB serialization
-  _photosBase64?: string[]; // For IndexedDB serialization
-  _firebaseVideoURL?: string | null; // Firebase video URL for synced vostcards
-  _firebasePhotoURLs?: string[]; // Firebase photo URLs for synced vostcards
-  _isMetadataOnly?: boolean; // Flag to indicate this is metadata only
-}
+
 
 interface VostcardContextProps {
   currentVostcard: Vostcard | null;
@@ -1468,17 +1438,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error in deletePrivateVostcard:', error);
       
       // Show specific error message based on what failed
-      if (error.code === 'permission-denied') {
-        alert('Permission denied. Check your Firebase rules or try logging in again.');
-      } else if (error.code === 'unavailable') {
-        alert('Network error. Please check your internet connection and try again.');
-      } else if (error.code === 'unauthenticated') {
-        alert('Authentication error. Please log in again.');
+      if (error instanceof Error) {
+        if ((error as any).code === 'permission-denied') {
+          alert('Permission denied. Check your Firebase rules or try logging in again.');
+        } else if ((error as any).code === 'unavailable') {
+          alert('Network error. Please check your internet connection and try again.');
+        } else if ((error as any).code === 'unauthenticated') {
+          alert('Authentication error. Please log in again.');
+        } else {
+          alert(`Failed to delete Vostcard: ${error.message}`);
+        }
       } else {
-        alert(`Failed to delete Vostcard: ${error.message}`);
+        alert('Failed to delete Vostcard: Unknown error occurred');
       }
       
-      throw error;
+      throw error instanceof Error ? error : new Error('Unknown error occurred while deleting vostcard');
     }
   }, [addDeletionMarker, setLastSyncTimestamp]);
 
@@ -1510,6 +1484,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('❌ Error in clearLocalStorage:', error);
       alert('Failed to clear local storage. Please try again.');
+      throw error instanceof Error ? error : new Error('Unknown error occurred while clearing local storage');
     }
   }, []);
 
@@ -1552,6 +1527,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
     } catch (error) {
       console.error('❌ Error deleting Vostcards:', error);
+      throw error instanceof Error ? error : new Error('Unknown error occurred while deleting vostcards');
     }
   }, []);
 
@@ -2835,7 +2811,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
     } catch (error) {
       console.error('❌ Error posting quickcard:', error);
-      throw error;
+      throw error instanceof Error ? error : new Error('Unknown error occurred while posting quickcard');
     }
   }, [currentVostcard, authContext, loadAllLocalVostcards, loadPostedVostcards, clearVostcard, setLastSyncTimestamp]);
 
