@@ -187,6 +187,9 @@ const HomeView = () => {
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const { isDriveModeEnabled } = useDriveMode();
+  
+  // Use ref to track browse location for geolocation closure
+  const browseLocationRef = useRef<any>(null);
 
   // Navigation state from previous view
   const navigationState = location.state as any;
@@ -200,6 +203,7 @@ const HomeView = () => {
       console.log('📍 Coordinates:', browseLocationState.coordinates);
       console.log('📍 Setting browse location and user location...');
       setBrowseLocation(browseLocationState);
+      browseLocationRef.current = browseLocationState;
       setUserLocation(browseLocationState.coordinates);
       // Remove the immediate state clearing - let it persist for this render cycle
     }
@@ -213,6 +217,11 @@ const HomeView = () => {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [browseLocation, userLocation, navigate, location.pathname]);
+
+  // Update ref when browse location changes
+  useEffect(() => {
+    browseLocationRef.current = browseLocation;
+  }, [browseLocation]);
 
   // Handle target quickcard from navigation - center map but show all content
   useEffect(() => {
@@ -383,7 +392,7 @@ const HomeView = () => {
       setActualUserLocation([latitude, longitude]);
       
       // Only update userLocation if we don't have a browse location
-      if (!browseLocation) {
+      if (!browseLocationRef.current) {
         console.log('📍 Setting userLocation to actual location');
         setUserLocation([latitude, longitude]);
       } else {
@@ -455,7 +464,7 @@ const HomeView = () => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [browseLocation]);
+  }, []);
 
   // Event handlers
   const handleLogout = async () => {
