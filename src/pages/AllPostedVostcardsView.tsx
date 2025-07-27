@@ -75,7 +75,7 @@ const AllPostedVostcardsView: React.FC = () => {
   const { user } = useAuth();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
 
-  // Real-time location search with debouncing - FIXED: removed showBrowseModal dependency
+  // Real-time location search with debouncing - using same implementation as BrowseAreaView
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -143,7 +143,7 @@ const AllPostedVostcardsView: React.FC = () => {
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]); // FIXED: removed showBrowseModal dependency
+  }, [searchQuery]);
 
   // Add keyboard navigation handler
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -189,12 +189,26 @@ const AllPostedVostcardsView: React.FC = () => {
     setShowDropdown(false);
   };
 
-  // NEW: Handle browse area button click to filter the list
+  // Handle browse area button click - using same implementation as BrowseAreaView
   const handleBrowseArea = () => {
+    console.log('🗺️ Browse Area button clicked');
+    console.log('📍 Selected location:', selectedLocation);
+    
     if (selectedLocation) {
-      console.log('🗺️ Browse Area button clicked for location:', selectedLocation);
-      setShowBrowseModal(false);
-      // The filtering will be handled in the filterVostcards function
+      console.log('📍 Coordinates being sent:', selectedLocation.coordinates);
+      console.log('📍 Latitude:', selectedLocation.latitude, 'Longitude:', selectedLocation.longitude);
+      
+      navigate('/home', {
+        state: {
+          browseLocation: {
+            coordinates: selectedLocation.coordinates,
+            name: selectedLocation.name,
+            id: selectedLocation.id,
+            type: selectedLocation.type,
+            place: selectedLocation.place,
+          },
+        },
+      });
     }
   };
 
@@ -1242,18 +1256,19 @@ const AllPostedVostcardsView: React.FC = () => {
               Browse Area
             </h3>
             
-            {/* FIXED: Search Input with proper refs and handlers */}
+            {/* Search Input - using same implementation as BrowseAreaView */}
             <div style={{ position: 'relative', marginBottom: '20px' }}>
               <div style={{
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
+                background: 'white',
                 border: '1px solid #ddd',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                backgroundColor: 'white'
+                borderRadius: '12px',
+                padding: '4px',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
               }}>
-                <FaMapPin style={{ color: '#666', marginRight: '12px' }} />
+                <FaMapPin style={{ color: '#666', marginLeft: '12px', marginRight: '8px' }} />
                 <input
                   ref={inputRef}
                   type="text"
@@ -1266,35 +1281,42 @@ const AllPostedVostcardsView: React.FC = () => {
                   onKeyDown={handleKeyDown}
                   autoComplete="off"
                   style={{
+                    flex: 1,
                     border: 'none',
                     outline: 'none',
-                    flex: 1,
+                    padding: '12px 8px',
                     fontSize: '16px',
-                    backgroundColor: 'transparent'
+                    background: 'transparent'
                   }}
                 />
                 {isSearching && (
-                  <div style={{ color: '#666', fontSize: '14px' }}>
-                    Searching...
-                  </div>
+                  <div style={{ 
+                    width: '16px', 
+                    height: '16px', 
+                    border: '2px solid transparent',
+                    borderTop: '2px solid #666',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginRight: '12px'
+                  }} />
                 )}
               </div>
               
-              {/* FIXED: Search Results Dropdown with proper event handling */}
+              {/* Search Results Dropdown - using same implementation as BrowseAreaView */}
               {showDropdown && searchResults.length > 0 && (
                 <div style={{
                   position: 'absolute',
                   top: '100%',
                   left: 0,
                   right: 0,
-                  backgroundColor: 'white',
-                  border: '1px solid #ddd',
+                  background: 'white',
+                  border: '2px solid #002B4D',
                   borderRadius: '8px',
-                  marginTop: '4px',
-                  maxHeight: '200px',
-                  overflow: 'auto',
-                  zIndex: 2002,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  boxShadow: '0 8px 24px rgba(0, 43, 77, 0.2)',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  zIndex: 9999,
+                  marginTop: '4px'
                 }} ref={resultsRef}>
                   {searchResults.map((result, index) => (
                     <div
@@ -1302,21 +1324,30 @@ const AllPostedVostcardsView: React.FC = () => {
                       onMouseDown={() => handleLocationSelect(result)}
                       onMouseEnter={() => setHighlightedIndex(index)}
                       style={{
-                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '14px 16px',
                         cursor: 'pointer',
-                        borderBottom: index < searchResults.length - 1 ? '1px solid #f0f0f0' : 'none',
-                        backgroundColor: index === highlightedIndex ? '#f5f5f5' : 'transparent',
-                        fontSize: '14px'
+                        borderBottom: index < searchResults.length - 1 ? '1px solid #e9ecef' : 'none',
+                        backgroundColor: index === highlightedIndex ? '#f0f8ff' : 'transparent',
+                        borderLeft: index === highlightedIndex ? '4px solid #002B4D' : '4px solid transparent',
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      <div style={{ fontWeight: '500', marginBottom: '4px' }}>
-                        {result.name}
+                      <FaMapPin style={{ marginRight: '12px', color: '#002B4D', fontSize: '14px' }} />
+                      <div style={{ flex: 1 }}>
+                        <span style={{ fontWeight: '600' }}>
+                          {result.name}
+                        </span>
+                        {result.displayAddress && result.displayAddress !== result.name ? (
+                          <span style={{ color: '#666', fontWeight: '400', fontSize: 13, display: 'block' }}>
+                            {result.displayAddress}
+                          </span>
+                        ) : null}
                       </div>
-                      {result.displayAddress && (
-                        <div style={{ color: '#666', fontSize: '12px' }}>
-                          {result.displayAddress}
-                        </div>
-                      )}
+                      <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
+                        Location
+                      </span>
                     </div>
                   ))}
                 </div>
