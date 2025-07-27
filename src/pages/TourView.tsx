@@ -1,0 +1,346 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee } from 'react-icons/fa';
+import { TourService } from '../services/tourService';
+import type { Tour, TourPost } from '../types/TourTypes';
+
+const TourView: React.FC = () => {
+  const { tourId } = useParams<{ tourId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [tour, setTour] = useState<Tour | null>(null);
+  const [tourPosts, setTourPosts] = useState<TourPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [error, setError] = useState<string | null>(null);
+
+  const getTourTerminology = () => {
+    // Try to get user role from tour creator
+    return tour?.creatorId ? 'Tour' : 'Trip'; // Default to Trip, will be refined when we have user data
+  };
+
+  useEffect(() => {
+    const loadTour = async () => {
+      if (!tourId) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Try to get tour from location state first (if navigated from profile)
+        const tourFromState = location.state?.tour as Tour | null;
+        
+        let tourData: Tour | null;
+        if (tourFromState && tourFromState.id === tourId) {
+          tourData = tourFromState;
+        } else {
+          tourData = await TourService.getTour(tourId);
+        }
+
+        if (!tourData) {
+          setError('Tour not found');
+          return;
+        }
+
+        setTour(tourData);
+
+        // Load tour posts
+        const posts = await TourService.getTourPosts(tourData);
+        setTourPosts(posts);
+
+      } catch (error) {
+        console.error('Error loading tour:', error);
+        setError('Failed to load tour');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTour();
+  }, [tourId, location.state]);
+
+  if (loading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <p>Loading tour...</p>
+      </div>
+    );
+  }
+
+  if (error || !tour) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <p style={{ color: '#d32f2f' }}>{error || 'Tour not found'}</p>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            background: '#007aff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            cursor: 'pointer',
+          }}
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#07345c',
+        color: 'white',
+        padding: '32px 24px 24px 24px',
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'white',
+            }}
+          >
+            <FaArrowLeft />
+          </button>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '600' }}>
+              {tour.name}
+            </h1>
+            {tour.description && (
+              <p style={{ margin: '4px 0 0 0', opacity: 0.9, fontSize: '14px' }}>
+                {tour.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Tour/Trip Stats */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '14px' }}>
+          <span>{tour.postIds.length} {tour.postIds.length === 1 ? 'post' : 'posts'}</span>
+          <span>Created {tour.createdAt.toLocaleDateString()}</span>
+          {!tour.isPublic && (
+            <span style={{ opacity: 0.8 }}>Private {getTourTerminology()}</span>
+          )}
+        </div>
+      </div>
+
+      {/* View Mode Toggle */}
+      <div style={{ 
+        padding: '16px 24px',
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '8px'
+      }}>
+        <button
+          onClick={() => setViewMode('map')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            backgroundColor: viewMode === 'map' ? '#007aff' : '#e0e0e0',
+            color: viewMode === 'map' ? 'white' : '#333',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <FaMap size={14} />
+          Map View
+        </button>
+        <button
+          onClick={() => setViewMode('list')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            backgroundColor: viewMode === 'list' ? '#007aff' : '#e0e0e0',
+            color: viewMode === 'list' ? 'white' : '#333',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <FaList size={14} />
+          List View
+        </button>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '0 24px 24px 24px' }}>
+        {tourPosts.length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '60px 20px',
+            color: '#666',
+            fontStyle: 'italic'
+          }}>
+            No posts in this {getTourTerminology().toLowerCase()}
+          </div>
+        ) : viewMode === 'map' ? (
+          /* Map View - Placeholder for now */
+          <div style={{ 
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '40px',
+            textAlign: 'center',
+            color: '#666'
+          }}>
+            <FaMapPin size={48} style={{ color: '#007aff', marginBottom: '16px' }} />
+            <h3>Map View</h3>
+            <p>Map view showing {tourPosts.length} posts will be implemented here.</p>
+            <p>This will show pins for all {getTourTerminology().toLowerCase()} posts and offer posts in the area.</p>
+          </div>
+        ) : (
+          /* List View */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {tourPosts.map((post) => (
+              <div
+                key={post.id}
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  border: '1px solid #e0e0e0',
+                }}
+                onClick={() => navigate(`/vostcard/${post.id}`)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8f9fa';
+                  e.currentTarget.style.borderColor = '#007aff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#e0e0e0';
+                }}
+              >
+                <div style={{ display: 'flex', gap: '16px' }}>
+                  {/* Post Image */}
+                  <div style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    backgroundColor: '#f0f0f0',
+                  }}>
+                    {post.photoURLs && post.photoURLs.length > 0 ? (
+                      <img
+                        src={post.photoURLs[0]}
+                        alt={post.title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#999',
+                        fontSize: '24px',
+                      }}>
+                        📷
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Post Content */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+                        {post.title || 'Untitled'}
+                      </h3>
+                      <span style={{ 
+                        fontSize: '12px', 
+                        color: '#666',
+                        padding: '2px 8px',
+                        backgroundColor: post.isQuickcard ? '#e3f2fd' : '#f3e5f5',
+                        borderRadius: '12px',
+                      }}>
+                        {post.isQuickcard ? '📸 Quickcard' : '📹 Vostcard'}
+                      </span>
+                    </div>
+                    
+                    {post.description && (
+                      <p style={{ 
+                        margin: '0 0 8px 0', 
+                        color: '#666', 
+                        fontSize: '14px',
+                        lineHeight: '1.4'
+                      }}>
+                        {post.description.length > 120 
+                          ? `${post.description.substring(0, 120)}...` 
+                          : post.description}
+                      </p>
+                    )}
+
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '16px',
+                      fontSize: '12px',
+                      color: '#999'
+                    }}>
+                      {post.username && (
+                        <span>by {post.username}</span>
+                      )}
+                      {post.createdAt && (
+                        <span>{post.createdAt.toLocaleDateString()}</span>
+                      )}
+                      {post.latitude && post.longitude && (
+                        <span>📍 Has location</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default TourView; 

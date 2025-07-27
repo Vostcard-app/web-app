@@ -7,7 +7,12 @@ import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, whe
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee } from 'react-icons/fa';
+import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee, FaMapPin, FaPlus } from 'react-icons/fa';
+import { TourService } from '../services/tourService';
+import TourCreationModal from '../components/TourCreationModal';
+import TourList from '../components/TourList';
+import TourDropdown from '../components/TourDropdown';
+import type { Tour, TourPost } from '../types/TourTypes';
 
 interface UserProfile {
   id: string;
@@ -40,7 +45,13 @@ const UserProfileView: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [postedVostcards, setPostedVostcards] = useState<PostedVostcard[]>([]);
+  const [allUserPosts, setAllUserPosts] = useState<PostedVostcard[]>([]);
   const [likeCounts, setLikeCounts] = useState<{ [vostcardId: string]: number }>({});
+  
+  // Tour-related state
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [isTourModalOpen, setIsTourModalOpen] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -71,6 +82,21 @@ const UserProfileView: React.FC = () => {
 
           setPostedVostcards(vostcardsData);
 
+          // For trip creation, also fetch all user's posts (including drafts/saved)
+          let allUserPosts: PostedVostcard[] = [];
+          if (isCurrentUser) {
+            const allPostsQuery = query(
+              collection(db, 'vostcards'),
+              where('userID', '==', userId)
+            );
+            const allPostsSnapshot = await getDocs(allPostsQuery);
+            allUserPosts = allPostsSnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            })) as PostedVostcard[];
+            setAllUserPosts(allUserPosts);
+          }
+
           // Load like counts for each vostcard
           const counts: { [key: string]: number } = {};
           for (const vostcard of vostcardsData) {
@@ -100,6 +126,16 @@ const UserProfileView: React.FC = () => {
             const currentUserDoc = await getDoc(doc(db, 'users', user.uid));
             const following = currentUserDoc.data()?.following || [];
             setIsFollowing(following.includes(userId));
+          }
+
+          // Load tours
+          try {
+            const userTours = isCurrentUser 
+              ? await TourService.getToursByCreator(userId)
+              : await TourService.getPublicToursByCreator(userId);
+            setTours(userTours);
+          } catch (error) {
+            console.error('Error loading tours:', error);
           }
         } else {
           console.warn('❌ User not found');
@@ -147,6 +183,47 @@ const UserProfileView: React.FC = () => {
     } catch (error) {
       console.error('❌ Error toggling follow status:', error);
     }
+  };
+
+  // Tour/Trip-related functions
+  const handleTourCreated = async () => {
+    try {
+      const userTours = await TourService.getToursByCreator(userId!);
+      setTours(userTours);
+    } catch (error) {
+      console.error('Error refreshing tours:', error);
+    }
+  };
+
+  const handleTourClick = (tour: Tour) => {
+    // Navigate to tour view page
+    navigate(`/tour/${tour.id}`, { state: { tour } });
+  };
+
+  const handleTourSelect = (tour: Tour) => {
+    setSelectedTour(tour);
+    handleTourClick(tour);
+  };
+
+  const handleToggleSharing = async (tour: Tour) => {
+    try {
+      if (tour.isShareable) {
+        await TourService.disableSharing(tour.id);
+      } else {
+        await TourService.generateShareableUrl(tour.id);
+      }
+      
+      // Refresh tours list
+      await handleTourCreated();
+    } catch (error) {
+      console.error('Error toggling sharing:', error);
+      alert('Failed to update sharing settings');
+    }
+  };
+
+  // Helper function to get the correct terminology
+  const getTourTerminology = () => {
+    return profile?.userRole === 'guide' ? 'Tour' : 'Trip';
   };
 
   if (loading) return <p>Loading profile...</p>;
@@ -345,6 +422,64 @@ const UserProfileView: React.FC = () => {
         </div>
       )}
 
+      {/* 🗺️ Tours/Trips Section */}
+      <div style={{ marginBottom: 20 }}>
+        {/* Tour/Trip Dropdown for quick access */}
+        {tours.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <TourDropdown
+              tours={tours}
+              onTourSelect={handleTourSelect}
+              placeholder={`Quick access to ${getTourTerminology().toLowerCase()}s...`}
+              style={{ maxWidth: '400px', margin: '0 auto' }}
+              userRole={profile?.userRole}
+            />
+          </div>
+        )}
+
+        {/* Add Tour/Trip Button (only for current user) */}
+        {isCurrentUser && (
+          <div style={{ textAlign: 'center', marginBottom: 16 }}>
+            <button
+              onClick={() => setIsTourModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: '#007aff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 20px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#0056b3';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#007aff';
+              }}
+            >
+              <FaPlus size={16} />
+              <FaMapPin size={16} />
+              Add {getTourTerminology()}
+            </button>
+          </div>
+        )}
+
+        {/* Tour/Trip List */}
+        <TourList
+          tours={tours}
+          isCurrentUser={isCurrentUser}
+          onTourClick={handleTourClick}
+          onToggleSharing={isCurrentUser ? handleToggleSharing : undefined}
+          userRole={profile?.userRole}
+        />
+      </div>
+
       {/* 📷 Posted Vostcards Grid */}
       {postedVostcards.length > 0 && (
         <div style={{ marginTop: 20 }}>
@@ -413,6 +548,16 @@ const UserProfileView: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* Tour Creation Modal */}
+      <TourCreationModal
+        isOpen={isTourModalOpen}
+        onClose={() => setIsTourModalOpen(false)}
+        onTourCreated={handleTourCreated}
+        creatorId={userId!}
+        userPosts={allUserPosts}
+        userRole={profile?.userRole}
+      />
       
       </div>
     </div>
