@@ -128,12 +128,15 @@ const UserProfileView: React.FC = () => {
             setIsFollowing(following.includes(userId));
           }
 
-          // Load tours
+          // Load tours - temporarily disabled due to index issues
           try {
-            const userTours = isCurrentUser 
-              ? await TourService.getToursByCreator(userId)
-              : await TourService.getPublicToursByCreator(userId);
-            setTours(userTours);
+            // Temporarily set empty tours array to avoid index errors
+            setTours([]);
+            // TODO: Re-enable when index is properly created
+            // const userTours = isCurrentUser 
+            //   ? await TourService.getToursByCreator(userId)
+            //   : await TourService.getPublicToursByCreator(userId);
+            // setTours(userTours);
           } catch (error) {
             console.error('Error loading tours:', error);
           }
@@ -188,8 +191,11 @@ const UserProfileView: React.FC = () => {
   // Tour/Trip-related functions
   const handleTourCreated = async () => {
     try {
-      const userTours = await TourService.getToursByCreator(userId!);
-      setTours(userTours);
+      // Temporarily disabled due to index issues
+      console.log('Tour created successfully! (Tour list refresh disabled)');
+      // TODO: Re-enable when index is properly created
+      // const userTours = await TourService.getToursByCreator(userId!);
+      // setTours(userTours);
     } catch (error) {
       console.error('Error refreshing tours:', error);
     }
@@ -218,6 +224,18 @@ const UserProfileView: React.FC = () => {
     } catch (error) {
       console.error('Error toggling sharing:', error);
       alert('Failed to update sharing settings');
+    }
+  };
+
+  const handleDeleteTour = async (tour: Tour) => {
+    try {
+      await TourService.deleteTour(tour.id);
+      
+      // Refresh tours list
+      await handleTourCreated();
+    } catch (error) {
+      console.error('Error deleting tour:', error);
+      alert('Failed to delete tour');
     }
   };
 
@@ -475,6 +493,7 @@ const UserProfileView: React.FC = () => {
           tours={tours}
           isCurrentUser={isCurrentUser}
           onTourClick={handleTourClick}
+          onDeleteTour={isCurrentUser ? handleDeleteTour : undefined}
           onToggleSharing={isCurrentUser ? handleToggleSharing : undefined}
           userRole={profile?.userRole}
         />
