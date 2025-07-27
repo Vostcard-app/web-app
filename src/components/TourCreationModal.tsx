@@ -3,12 +3,28 @@ import { FaTimes, FaMapPin, FaCheck, FaEye, FaEyeSlash, FaShare } from 'react-ic
 import { TourService } from '../services/tourService';
 import type { TourPost } from '../types/TourTypes';
 
+// Type for posts from the database
+interface UserPost {
+  id: string;
+  title: string;
+  description?: string;
+  photoURLs?: string[];
+  videoURL?: string;
+  createdAt?: any;
+  isQuickcard?: boolean;
+  isOffer?: boolean;
+  userRole?: string;
+  username?: string;
+  state?: string;
+  [key: string]: any;
+}
+
 interface TourCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTourCreated: () => void;
   creatorId: string;
-  userPosts: TourPost[];
+  userPosts: UserPost[];
   userRole?: string;
 }
 
@@ -40,10 +56,13 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
       setIsPublic(true);
       setIsShareable(false);
       setError(null);
+      console.log('Modal opened with posts:', userPosts);
+      console.log('First post structure:', userPosts[0]);
     }
-  }, [isOpen]);
+  }, [isOpen, userPosts]);
 
   const handlePostToggle = (postId: string) => {
+    console.log('Toggling post:', postId, 'Current selected:', selectedPostIds);
     setSelectedPostIds(prev => 
       prev.includes(postId) 
         ? prev.filter(id => id !== postId)
@@ -232,7 +251,9 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
                 No posts available to add to tour
               </div>
             ) : (
-              userPosts.map((post) => (
+              userPosts.map((post) => {
+                console.log('Rendering post:', post.id, post.title, 'Selected:', selectedPostIds.includes(post.id));
+                return (
                 <div
                   key={post.id}
                   style={{
@@ -284,8 +305,9 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
                     <FaCheck style={{ color: '#007aff', marginLeft: '8px' }} />
                   )}
                 </div>
-              ))
-            )}
+              );
+            })
+          )}
           </div>
         </div>
 
