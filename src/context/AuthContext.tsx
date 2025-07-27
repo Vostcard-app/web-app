@@ -93,7 +93,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear both timeouts since we got an auth state change
       clearTimeout(loadingTimeout);
       clearTimeout(quickAuthCheck);
-      setLoading(true);
+      
+      // Don't set loading to true if we already have user data
+      if (!currentUser) {
+        setLoading(false);
+        setUser(null);
+        setUsername(null);
+        setUserID(null);
+        setUserRole(null);
+        return;
+      }
       
       try {
         if (currentUser) {
@@ -110,17 +119,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Set basic auth immediately for faster user experience
           setTimeout(() => {
-            if (loading) {
-              console.log('⚡ AuthProvider: Proceeding with basic auth for speed');
-              setLoading(false);
-            }
-          }, 800); // Reduced from 1500 to 800ms
+            console.log('⚡ AuthProvider: Proceeding with basic auth for speed');
+            setLoading(false);
+          }, 400); // Reduced from 800 to 400ms
 
           // Add timeout for Firestore queries specifically
           const firestoreTimeout = setTimeout(() => {
-            console.warn('⏰ AuthProvider: Firestore query timeout after 1.5 seconds, proceeding with basic auth');
+            console.warn('⏰ AuthProvider: Firestore query timeout after 1 second, proceeding with basic auth');
             setLoading(false);
-          }, 1500); // Reduced from 2000 to 1500ms
+          }, 1000); // Reduced from 1500 to 1000ms
 
           // Fetch user data from Firestore - check both collections simultaneously
           try {
@@ -132,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             [userDocSnap, advertiserDocSnap] = await Promise.race([
               Promise.all([getDoc(userDocRef), getDoc(advertiserDocRef)]),
               new Promise<never>((_, reject) => 
-                setTimeout(() => reject(new Error('Firestore query timeout')), 1200)
+                setTimeout(() => reject(new Error('Firestore query timeout')), 800)
               )
             ]);
 
