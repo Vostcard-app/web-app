@@ -5,9 +5,50 @@ import { useScripts } from '../context/ScriptContext';
 import { useResponsive } from '../hooks/useResponsive';
 
 const ScriptLibraryView: React.FC = () => {
+  console.log('🔍 ScriptLibraryView: Component rendering...');
+  
   const { isDesktop } = useResponsive();
   const navigate = useNavigate();
-  const { scripts, loadScripts, deleteScript } = useScripts();
+  
+  let scripts: any[] = [];
+  let loadScripts: any = null;
+  let deleteScript: any = null;
+  
+  try {
+    const scriptContext = useScripts();
+    scripts = scriptContext.scripts;
+    loadScripts = scriptContext.loadScripts;
+    deleteScript = scriptContext.deleteScript;
+    console.log('🔍 ScriptLibraryView: useScripts hook successful');
+  } catch (error) {
+    console.error('❌ ScriptLibraryView: Error in useScripts hook:', error);
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <p style={{ color: '#d32f2f' }}>Error loading Script Library</p>
+        <button
+          onClick={() => navigate('/home')}
+          style={{
+            background: '#007aff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            cursor: 'pointer',
+          }}
+        >
+          Go Home
+        </button>
+      </div>
+    );
+  }
 
   useEffect(() => {
     console.log('📜 Loading scripts in Script Library...');
@@ -58,6 +99,8 @@ const ScriptLibraryView: React.FC = () => {
     }
   };
 
+  console.log('🔍 ScriptLibraryView: About to render component');
+  
   return (
     <div style={{ 
       minHeight: '100vh', 
