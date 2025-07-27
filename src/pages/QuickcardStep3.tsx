@@ -325,39 +325,7 @@ const QuickcardStep3: React.FC = () => {
           </div>
         )}
 
-        {/* Add Audio Button */}
-        <button
-          onClick={() => {
-            // Transfer current quickcard data to VostcardStudio
-            const quickcardData = {
-              title: currentVostcard?.title || '',
-              description: currentVostcard?.description || '',
-              photos: currentVostcard?.photos || [],
-              categories: currentVostcard?.categories || [],
-              location: currentVostcard?.geo || null
-            };
-            
-            console.log('📱 Transferring to enhanced creator:', quickcardData);
-            
-            // Store the data for VostcardStudio to read
-            sessionStorage.setItem('quickcardTransferData', JSON.stringify(quickcardData));
-            
-            navigate('/studio', { 
-              state: { 
-                importQuickcard: true,
-                quickcardData: quickcardData
-              } 
-            });
-          }}
-          style={{
-            ...saveButtonStyle,
-            backgroundColor: '#007aff',
-            marginBottom: 10,
-            touchAction: 'manipulation'
-          }}
-        >
-          🎤 Add Audio & Advanced Features
-        </button>
+
 
         {/* Save to Personal Posts Button */}
         <button
