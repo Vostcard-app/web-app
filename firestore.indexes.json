@@ -1,6 +1,20 @@
 {
   "indexes": [
     {
+      "collectionGroup": "comments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "vostcardID",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateCreated",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "tours",
       "queryScope": "COLLECTION",
       "fields": [
@@ -11,6 +25,10 @@
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ]
     }
