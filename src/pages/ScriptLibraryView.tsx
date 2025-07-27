@@ -20,6 +20,8 @@ const ScriptLibraryView: React.FC = () => {
     loadScripts = scriptContext.loadScripts;
     deleteScript = scriptContext.deleteScript;
     console.log('🔍 ScriptLibraryView: useScripts hook successful');
+    console.log('🔍 ScriptLibraryView: scripts count:', scripts.length);
+    console.log('🔍 ScriptLibraryView: loadScripts function:', !!loadScripts);
   } catch (error) {
     console.error('❌ ScriptLibraryView: Error in useScripts hook:', error);
     return (
@@ -33,6 +35,7 @@ const ScriptLibraryView: React.FC = () => {
         gap: '16px'
       }}>
         <p style={{ color: '#d32f2f' }}>Error loading Script Library</p>
+        <p style={{ color: '#666', fontSize: '14px' }}>{error instanceof Error ? error.message : 'Unknown error'}</p>
         <button
           onClick={() => navigate('/home')}
           style={{
@@ -98,6 +101,37 @@ const ScriptLibraryView: React.FC = () => {
   };
 
   console.log('🔍 ScriptLibraryView: About to render component');
+  
+  // Simple fallback to ensure something always renders
+  if (!scripts || !loadScripts || !deleteScript) {
+    console.error('❌ ScriptLibraryView: Missing required context values');
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#f5f5f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <p style={{ color: '#d32f2f' }}>Script Library not available</p>
+        <button
+          onClick={() => navigate('/home')}
+          style={{
+            background: '#007aff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            cursor: 'pointer',
+          }}
+        >
+          Go Home
+        </button>
+      </div>
+    );
+  }
   
   return (
     <div style={{ 

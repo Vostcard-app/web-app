@@ -114,6 +114,7 @@ function App() {
                   <Route path="/quickcard/:id" element={<QuickcardDetailView />} />
 
                   {/* 📜 Script Management */}
+                  <Route path="/script-library" element={<ScriptLibraryView />} />
                   <Route path="/scripts" element={<ScriptLibraryView />} />
                   <Route path="/script-editor" element={<ScriptEditorView />} />
                   <Route path="/script-tool" element={<ScriptToolView />} />
