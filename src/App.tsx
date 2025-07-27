@@ -65,6 +65,7 @@ import PublicVostcardView from "./pages/PublicVostcardView";
 import PublicQuickcardView from "./pages/PublicQuickcardView";
 import EmailVostcardView from "./pages/EmailVostcardView";
 import TourView from "./pages/TourView";
+import ToursView from "./pages/ToursView";
 import AuthRedirect from "./components/AuthRedirect";
 
 function App() {
@@ -145,6 +146,7 @@ function App() {
                   <Route path="/settings" element={<SettingsView />} />
                   <Route path="/account-settings" element={<AccountSettingsView />} />
                   <Route path="/user-profile/:userId" element={<UserProfileView />} />
+                  <Route path="/user-profile/:userId/tours" element={<ToursView />} />
                   <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />
 
                   {/* 🏢 Business */}

@@ -7,12 +7,9 @@ import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, whe
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee, FaMapPin, FaPlus } from 'react-icons/fa';
+import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee, FaMapPin } from 'react-icons/fa';
 import { TourService } from '../services/tourService';
-import TourCreationModal from '../components/TourCreationModal';
-import TourList from '../components/TourList';
-import TourDropdown from '../components/TourDropdown';
-import type { Tour, TourPost } from '../types/TourTypes';
+import type { Tour } from '../types/TourTypes';
 
 interface UserProfile {
   id: string;
@@ -50,8 +47,6 @@ const UserProfileView: React.FC = () => {
   
   // Tour-related state
   const [tours, setTours] = useState<Tour[]>([]);
-  const [isTourModalOpen, setIsTourModalOpen] = useState(false);
-  const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -186,52 +181,7 @@ const UserProfileView: React.FC = () => {
   };
 
   // Tour/Trip-related functions
-  const handleTourCreated = async () => {
-    try {
-      const userTours = await TourService.getToursByCreator(userId!);
-      setTours(userTours);
-    } catch (error) {
-      console.error('Error refreshing tours:', error);
-    }
-  };
 
-  const handleTourClick = (tour: Tour) => {
-    // Navigate to tour view page
-    navigate(`/tour/${tour.id}`, { state: { tour } });
-  };
-
-  const handleTourSelect = (tour: Tour) => {
-    setSelectedTour(tour);
-    handleTourClick(tour);
-  };
-
-  const handleToggleSharing = async (tour: Tour) => {
-    try {
-      if (tour.isShareable) {
-        await TourService.disableSharing(tour.id);
-      } else {
-        await TourService.generateShareableUrl(tour.id);
-      }
-      
-      // Refresh tours list
-      await handleTourCreated();
-    } catch (error) {
-      console.error('Error toggling sharing:', error);
-      alert('Failed to update sharing settings');
-    }
-  };
-
-  const handleDeleteTour = async (tour: Tour) => {
-    try {
-      await TourService.deleteTour(tour.id);
-      
-      // Refresh tours list
-      await handleTourCreated();
-    } catch (error) {
-      console.error('Error deleting tour:', error);
-      alert('Failed to delete tour');
-    }
-  };
 
   // Helper function to get the correct terminology
   const getTourTerminology = () => {
@@ -437,60 +387,53 @@ const UserProfileView: React.FC = () => {
       {/* 🗺️ Tours/Trips Section */}
       <div style={{ marginBottom: 20 }}>
         {/* Tour/Trip Dropdown for quick access */}
-        {tours.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <TourDropdown
-              tours={tours}
-              onTourSelect={handleTourSelect}
-              placeholder={`Quick access to ${getTourTerminology().toLowerCase()}s...`}
-              style={{ maxWidth: '400px', margin: '0 auto' }}
-              userRole={profile?.userRole}
-            />
-          </div>
-        )}
 
-        {/* Add Tour/Trip Button (only for current user) */}
-        {isCurrentUser && (
-          <div style={{ textAlign: 'center', marginBottom: 16 }}>
-            <button
-              onClick={() => setIsTourModalOpen(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                background: '#007aff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 20px',
-                fontSize: '16px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#0056b3';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#007aff';
-              }}
-            >
-              <FaPlus size={16} />
-              <FaMapPin size={16} />
-              Add {getTourTerminology()}
-            </button>
-          </div>
-        )}
 
-        {/* Tour/Trip List */}
-        <TourList
-          tours={tours}
-          isCurrentUser={isCurrentUser}
-          onTourClick={handleTourClick}
-          onDeleteTour={isCurrentUser ? handleDeleteTour : undefined}
-          onToggleSharing={isCurrentUser ? handleToggleSharing : undefined}
-          userRole={profile?.userRole}
-        />
+        {/* Available Tours/Trips Link */}
+        <div style={{ 
+          marginTop: '20px',
+          padding: '16px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          border: '1px solid #e0e0e0',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+        onClick={() => navigate(`/user-profile/${userId}/tours`)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#f8f9fa';
+          e.currentTarget.style.borderColor = '#007aff';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'white';
+          e.currentTarget.style.borderColor = '#e0e0e0';
+        }}
+        >
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center' 
+          }}>
+            <div>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: '18px', 
+                fontWeight: '600',
+                color: '#333'
+              }}>
+                Available {getTourTerminology()}s
+              </h3>
+              <p style={{ 
+                margin: '4px 0 0 0', 
+                fontSize: '14px', 
+                color: '#666' 
+              }}>
+                {tours.length} {getTourTerminology().toLowerCase()}{tours.length !== 1 ? 's' : ''} available
+              </p>
+            </div>
+            <FaMapPin style={{ color: '#007aff', fontSize: '20px' }} />
+          </div>
+        </div>
       </div>
 
       {/* 📷 Posted Vostcards Grid */}
@@ -562,15 +505,7 @@ const UserProfileView: React.FC = () => {
         </div>
       )}
       
-      {/* Tour Creation Modal */}
-      <TourCreationModal
-        isOpen={isTourModalOpen}
-        onClose={() => setIsTourModalOpen(false)}
-        onTourCreated={handleTourCreated}
-        creatorId={userId!}
-        userPosts={allUserPosts}
-        userRole={profile?.userRole}
-      />
+
       
       </div>
     </div>
