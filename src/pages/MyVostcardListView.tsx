@@ -94,7 +94,7 @@ const MyVostcardListView = () => {
       // Route to appropriate editing interface based on content type
       if (vostcard.isQuickcard) {
         console.log('🔄 Editing quickcard:', vostcard.id);
-        navigate('/quickcard-step3');
+        navigate('/quickcard-step2'); // Start with photo editing, then proceed to step 3
       } else {
         console.log('🔄 Editing regular vostcard:', vostcard.id);
         navigate('/create-step2');
