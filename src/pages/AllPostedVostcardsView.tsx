@@ -66,6 +66,9 @@ const AllPostedVostcardsView: React.FC = () => {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   
+  // Browse location state for filtering
+  const [browseLocation, setBrowseLocation] = useState<any>(null);
+  
   // Add refs for search input and results
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -188,27 +191,25 @@ const AllPostedVostcardsView: React.FC = () => {
     setShowDropdown(false);
   };
 
-  // Handle browse area button click - using same implementation as BrowseAreaView
+  // Handle browse area button click - filter list by location instead of navigating
   const handleBrowseArea = () => {
     console.log('🗺️ Browse Area button clicked');
     console.log('📍 Selected location:', selectedLocation);
     
     if (selectedLocation) {
-      console.log('📍 Coordinates being sent:', selectedLocation.coordinates);
-      console.log('📍 Latitude:', selectedLocation.latitude, 'Longitude:', selectedLocation.longitude);
-      
-      navigate('/home', {
-        state: {
-          browseLocation: {
-            coordinates: selectedLocation.coordinates,
-            name: selectedLocation.name,
-            id: selectedLocation.id,
-            type: selectedLocation.type,
-            place: selectedLocation.place,
-          },
-        },
-      });
+      console.log('📍 Setting browse location for filtering:', selectedLocation);
+      setBrowseLocation(selectedLocation);
+      setSearchQuery('');
+      setShowDropdown(false);
     }
+  };
+
+  // Clear browse location filter
+  const clearBrowseLocation = () => {
+    setBrowseLocation(null);
+    setSelectedLocation(null);
+    setSearchQuery('');
+    setShowDropdown(false);
   };
 
   // Calculate distance between two points using Haversine formula
@@ -530,14 +531,14 @@ const AllPostedVostcardsView: React.FC = () => {
       });
     }
     
-    // NEW: Apply location filtering when browse location is selected
-    if (selectedLocation) {
+    // Apply location filtering when browse location is selected
+    if (browseLocation) {
       filtered = filtered.filter(vostcard => {
         if (!vostcard.latitude || !vostcard.longitude) return false;
         
         const distance = calculateDistance(
-          selectedLocation.latitude,
-          selectedLocation.longitude,
+          browseLocation.latitude,
+          browseLocation.longitude,
           vostcard.latitude,
           vostcard.longitude
         );
@@ -616,7 +617,9 @@ const AllPostedVostcardsView: React.FC = () => {
         zIndex: 9,
         marginTop: '80px', // Account for fixed header
       }}>
-        <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>Local Vōstcards</div>
+        <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>
+          {browseLocation ? `Vōstcards near ${browseLocation.name}` : 'Local Vōstcards'}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
           <span style={{ fontWeight: 600 }}>
             {(() => {
@@ -626,7 +629,11 @@ const AllPostedVostcardsView: React.FC = () => {
                 : `Showing: ${filtered.length} of ${vostcards.length}`;
             })()}
           </span>
-
+          {browseLocation && (
+            <span style={{ marginLeft: '8px', color: '#666', fontSize: '14px' }}>
+              (within 50km)
+            </span>
+          )}
         </div>
       </div>
 
@@ -776,6 +783,46 @@ const AllPostedVostcardsView: React.FC = () => {
             >
               Browse Area
             </button>
+          </div>
+        )}
+
+        {/* Active Browse Location - shows when location filtering is active */}
+        {browseLocation && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px',
+              backgroundColor: '#e8f4fd',
+              borderRadius: '8px',
+              marginBottom: '12px',
+              border: '1px solid #002B4D'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <FaMapPin style={{ color: '#002B4D', marginRight: '8px' }} />
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#002B4D' }}>
+                  Showing vostcards near {browseLocation.name}
+                </span>
+              </div>
+              <button
+                onClick={clearBrowseLocation}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#002B4D',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d1e7ff'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
       </div>
