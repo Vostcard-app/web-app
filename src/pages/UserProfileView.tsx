@@ -128,15 +128,12 @@ const UserProfileView: React.FC = () => {
             setIsFollowing(following.includes(userId));
           }
 
-          // Load tours - temporarily disabled due to index issues
+          // Load tours
           try {
-            // Temporarily set empty tours array to avoid index errors
-            setTours([]);
-            // TODO: Re-enable when index is properly created
-            // const userTours = isCurrentUser 
-            //   ? await TourService.getToursByCreator(userId)
-            //   : await TourService.getPublicToursByCreator(userId);
-            // setTours(userTours);
+            const userTours = isCurrentUser 
+              ? await TourService.getToursByCreator(userId)
+              : await TourService.getPublicToursByCreator(userId);
+            setTours(userTours);
           } catch (error) {
             console.error('Error loading tours:', error);
           }
@@ -191,11 +188,8 @@ const UserProfileView: React.FC = () => {
   // Tour/Trip-related functions
   const handleTourCreated = async () => {
     try {
-      // Temporarily disabled due to index issues
-      console.log('Tour created successfully! (Tour list refresh disabled)');
-      // TODO: Re-enable when index is properly created
-      // const userTours = await TourService.getToursByCreator(userId!);
-      // setTours(userTours);
+      const userTours = await TourService.getToursByCreator(userId!);
+      setTours(userTours);
     } catch (error) {
       console.error('Error refreshing tours:', error);
     }

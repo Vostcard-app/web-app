@@ -73,75 +73,65 @@ export class TourService {
     }
   }
 
-  // Get all tours by a creator - CACHE BUSTING COMMENT - TIMESTAMP: 2025-01-27 14:37
+  // Get all tours by a creator
   static async getToursByCreator(creatorId: string): Promise<Tour[]> {
     try {
-      // TEMPORARILY DISABLED - CACHE BUSTING VERSION WITH TIMESTAMP
-      console.log('TourService: Returning empty tours array (index fix in progress) - CACHE BUSTED - TIMESTAMP: 2025-01-27 14:37');
-      return [];
+      const toursQuery = query(
+        this.toursCollection,
+        where('creatorId', '==', creatorId)
+      );
       
-      // TODO: Re-enable when index is properly created
-      // const toursQuery = query(
-      //   this.toursCollection,
-      //   where('creatorId', '==', creatorId)
-      // );
+      const toursSnapshot = await getDocs(toursQuery);
+      const tours: Tour[] = [];
       
-      // const toursSnapshot = await getDocs(toursQuery);
-      // const tours: Tour[] = [];
+      toursSnapshot.forEach((doc) => {
+        const data = doc.data();
+        tours.push({
+          id: doc.id,
+          creatorId: data.creatorId,
+          name: data.name,
+          description: data.description,
+          postIds: data.postIds || [],
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          isPublic: data.isPublic ?? true,
+        });
+      });
       
-      // toursSnapshot.forEach((doc) => {
-      //   const data = doc.data();
-      //   tours.push({
-      //     id: doc.id,
-      //     creatorId: data.creatorId,
-      //     name: data.name,
-      //     description: data.description,
-      //     postIds: data.postIds || [],
-      //     createdAt: data.createdAt?.toDate() || new Date(),
-      //     updatedAt: data.updatedAt?.toDate() || new Date(),
-      //     isPublic: data.isPublic ?? true,
-      //   });
-      // });
-      
-      // return tours.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return tours.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error) {
       console.error('❌ Error getting tours by creator:', error);
       throw error;
     }
   }
 
-  // Get public tours by a creator (for other users to view) - CACHE BUSTING COMMENT - TIMESTAMP: 2025-01-27 14:37
+  // Get public tours by a creator (for other users to view)
   static async getPublicToursByCreator(creatorId: string): Promise<Tour[]> {
     try {
-      // TEMPORARILY DISABLED - CACHE BUSTING VERSION WITH TIMESTAMP
-      console.log('TourService: Returning empty public tours array (index fix in progress) - CACHE BUSTED - TIMESTAMP: 2025-01-27 14:37');
-      return [];
+      const toursQuery = query(
+        this.toursCollection,
+        where('creatorId', '==', creatorId),
+        where('isPublic', '==', true)
+      );
       
-      // TODO: Re-enable when index is properly created
-      // const toursQuery = query(
-      //   this.toursCollection,
-      //   where('creatorId', '==', creatorId),
-      //   where('isPublic', '==', true)
-      // );
+      const toursSnapshot = await getDocs(toursQuery);
+      const tours: Tour[] = [];
       
-      // const toursSnapshot = await getDocs(toursQuery);
-      // const tours: Tour[] = [];
+      toursSnapshot.forEach((doc) => {
+        const data = doc.data();
+        tours.push({
+          id: doc.id,
+          creatorId: data.creatorId,
+          name: data.name,
+          description: data.description,
+          postIds: data.postIds || [],
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          isPublic: data.isPublic ?? true,
+        });
+      });
       
-      // toursSnapshot.forEach((doc) => {
-      //   const data = doc.data();
-      //   tours.push({
-      //     id: doc.id,
-      //     creatorId: data.creatorId,
-      //     name: data.name,
-      //     description: data.description,
-      //     postIds: data.postIds || [],
-      //     createdAt: data.createdAt?.toDate() || new Date(),
-      //     updatedAt: data.updatedAt?.toDate() || new Date(),
-      //     isPublic: data.isPublic ?? true,
-      //   });
-      // });
-      
-      // return tours.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      return tours.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error) {
       console.error('❌ Error getting public tours by creator:', error);
       throw error;
