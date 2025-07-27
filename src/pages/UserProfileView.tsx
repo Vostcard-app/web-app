@@ -386,7 +386,7 @@ const UserProfileView: React.FC = () => {
               }}
             >
               <FaCoffee size={18} />
-              ☕ Tip Guide
+              Leave a Tip
             </button>
           </div>
         )}
