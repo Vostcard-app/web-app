@@ -11,6 +11,7 @@ import type { Tour, TourPost } from '../types/TourTypes';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
+import GuidePin from '../assets/Guide_pin.png';
 
 // Create icons
 const vostcardIcon = new L.Icon({
@@ -29,6 +30,13 @@ const offerIcon = new L.Icon({
 
 const quickcardIcon = new L.Icon({
   iconUrl: QuickcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+const guideIcon = new L.Icon({
+  iconUrl: GuidePin,
   iconSize: [75, 75],
   iconAnchor: [37.5, 75],
   popupAnchor: [0, -75],
@@ -85,7 +93,13 @@ const TourView: React.FC = () => {
 
   const getPostIcon = (post: TourPost) => {
     if (post.isOffer) return offerIcon;
-    if (post.isQuickcard) return quickcardIcon;
+    if (post.isQuickcard) {
+      // Check if the quickcard was created by a guide
+      if (post.userRole === 'guide') {
+        return guideIcon;
+      }
+      return quickcardIcon;
+    }
     return vostcardIcon;
   };
 
@@ -407,20 +421,21 @@ const TourView: React.FC = () => {
                             
                             {/* Show post type indicator */}
                             <div style={{
-                              backgroundColor: post.isQuickcard ? '#e8f4ff' : post.isOffer ? '#fff3e0' : '#f3e5f5',
-                              border: post.isQuickcard ? '1px solid #b3d9ff' : post.isOffer ? '1px solid #ffcc80' : '1px solid #e1bee7',
+                              backgroundColor: post.isQuickcard && post.userRole === 'guide' ? '#fff8e1' : post.isQuickcard ? '#e8f4ff' : post.isOffer ? '#fff3e0' : '#f3e5f5',
+                              border: post.isQuickcard && post.userRole === 'guide' ? '1px solid #ffcc02' : post.isQuickcard ? '1px solid #b3d9ff' : post.isOffer ? '1px solid #ffcc80' : '1px solid #e1bee7',
                               borderRadius: '6px',
                               padding: '8px',
                               marginBottom: '12px'
                             }}>
                               <strong style={{ 
-                                color: post.isQuickcard ? '#0066cc' : post.isOffer ? '#f57c00' : '#7b1fa2' 
+                                color: post.isQuickcard && post.userRole === 'guide' ? '#f57c00' : post.isQuickcard ? '#0066cc' : post.isOffer ? '#f57c00' : '#7b1fa2' 
                               }}>
-                                {post.isQuickcard ? '📱 Quickcard' : post.isOffer ? '🎁 Offer' : '📹 Vostcard'}
+                                {post.isQuickcard && post.userRole === 'guide' ? '🎯 Guide Quickcard' : post.isQuickcard ? '📱 Quickcard' : post.isOffer ? '🎁 Offer' : '📹 Vostcard'}
                               </strong>
                               <br />
                               <span style={{ fontSize: '12px' }}>
-                                {post.isQuickcard ? 'Quick photo with location' : 
+                                {post.isQuickcard && post.userRole === 'guide' ? 'Guide expertise and insights' : 
+                                 post.isQuickcard ? 'Quick photo with location' : 
                                  post.isOffer ? 'Special offer available' : 'Video content'}
                               </span>
                             </div>
@@ -507,10 +522,10 @@ const TourView: React.FC = () => {
                         fontSize: '12px', 
                         color: '#666',
                         padding: '2px 8px',
-                        backgroundColor: post.isQuickcard ? '#e3f2fd' : '#f3e5f5',
+                        backgroundColor: post.isQuickcard && post.userRole === 'guide' ? '#fff8e1' : post.isQuickcard ? '#e3f2fd' : '#f3e5f5',
                         borderRadius: '12px',
                       }}>
-                        {post.isQuickcard ? '📸 Quickcard' : '📹 Vostcard'}
+                        {post.isQuickcard && post.userRole === 'guide' ? '🎯 Guide' : post.isQuickcard ? '📸 Quickcard' : '📹 Vostcard'}
                       </span>
                     </div>
                     

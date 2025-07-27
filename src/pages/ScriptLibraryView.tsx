@@ -52,8 +52,6 @@ const ScriptLibraryView: React.FC = () => {
 
   useEffect(() => {
     console.log('📜 Loading scripts in Script Library...');
-    console.log('🔍 ScriptLibraryView: scripts state:', scripts);
-    console.log('🔍 ScriptLibraryView: loadScripts function:', !!loadScripts);
     
     if (loadScripts) {
       loadScripts().then(() => {
@@ -64,7 +62,7 @@ const ScriptLibraryView: React.FC = () => {
     } else {
       console.error('❌ loadScripts function is not available');
     }
-  }, [loadScripts, scripts]);
+  }, [loadScripts]);
 
   const handleCreateNew = () => {
     navigate('/script-editor/new'); // Navigate to script editor to create new script

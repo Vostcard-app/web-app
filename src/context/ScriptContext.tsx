@@ -44,12 +44,24 @@ export const ScriptProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(null);
       console.log('📜 Loading scripts for user:', userID);
 
-      const userScripts = await ScriptService.getUserScripts(userID);
+      // Add timeout to prevent hanging
+      const userScripts = await Promise.race([
+        ScriptService.getUserScripts(userID),
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Script loading timeout')), 3000)
+        )
+      ]);
+      
       setScripts(userScripts);
       console.log(`✅ Loaded ${userScripts.length} scripts`);
     } catch (err) {
       console.error('❌ Error loading scripts:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load scripts');
+      if (err instanceof Error && err.message === 'Script loading timeout') {
+        console.warn('⏰ Script loading timed out, proceeding with empty scripts');
+        setScripts([]);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to load scripts');
+      }
     } finally {
       setLoading(false);
     }
