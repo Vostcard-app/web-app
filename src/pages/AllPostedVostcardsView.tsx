@@ -57,8 +57,7 @@ const AllPostedVostcardsView: React.FC = () => {
   const [showFriendsOnly, setShowFriendsOnly] = useState(false);
   const [userFriends, setUserFriends] = useState<string[]>([]);
   
-  // Browse modal state
-  const [showBrowseModal, setShowBrowseModal] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -634,6 +633,156 @@ const AllPostedVostcardsView: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Section - moved outside modal for better mobile keyboard handling */}
+      <div style={{
+        background: 'white',
+        padding: '16px 20px',
+        borderBottom: '1px solid #e0e0e0',
+        flexShrink: 0,
+        zIndex: 9,
+      }}>
+        <div style={{ position: 'relative', marginBottom: '16px' }}>
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            background: 'white',
+            border: '1px solid #ddd',
+            borderRadius: '12px',
+            padding: '4px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+          }}>
+            <FaMapPin style={{ color: '#666', marginLeft: '12px', marginRight: '8px' }} />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search for any location worldwide..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowDropdown(true);
+              }}
+              onKeyDown={handleKeyDown}
+              autoComplete="off"
+              style={{
+                flex: 1,
+                border: 'none',
+                outline: 'none',
+                padding: '12px 8px',
+                fontSize: '16px',
+                background: 'transparent'
+              }}
+            />
+            {isSearching && (
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                border: '2px solid transparent',
+                borderTop: '2px solid #666',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                marginRight: '12px'
+              }} />
+            )}
+          </div>
+          
+          {/* Search Results Dropdown */}
+          {showDropdown && searchResults.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              background: 'white',
+              border: '2px solid #002B4D',
+              borderRadius: '8px',
+              boxShadow: '0 8px 24px rgba(0, 43, 77, 0.2)',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              zIndex: 9999,
+              marginTop: '4px'
+            }} ref={resultsRef}>
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  onMouseDown={() => handleLocationSelect(result)}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '14px 16px',
+                    cursor: 'pointer',
+                    borderBottom: index < searchResults.length - 1 ? '1px solid #e9ecef' : 'none',
+                    backgroundColor: index === highlightedIndex ? '#f0f8ff' : 'transparent',
+                    borderLeft: index === highlightedIndex ? '4px solid #002B4D' : '4px solid transparent',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <FaMapPin style={{ marginRight: '12px', color: '#002B4D', fontSize: '14px' }} />
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontWeight: '600' }}>
+                      {result.name}
+                    </span>
+                    {result.displayAddress && result.displayAddress !== result.name ? (
+                      <span style={{ color: '#666', fontWeight: '400', fontSize: 13, display: 'block' }}>
+                        {result.displayAddress}
+                      </span>
+                    ) : null}
+                  </div>
+                  <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
+                    Location
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {searchError && (
+            <div style={{ color: '#d32f2f', fontSize: '14px', marginTop: '8px' }}>
+              {searchError}
+            </div>
+          )}
+        </div>
+
+        {/* Browse Area Button - appears when location is selected */}
+        {selectedLocation && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '12px',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '8px',
+              marginBottom: '12px'
+            }}>
+              <FaMapPin style={{ color: '#002B4D', marginRight: '8px' }} />
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                View vostcards near {selectedLocation.name}
+              </span>
+            </div>
+            <button
+              onClick={handleBrowseArea}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                width: '100%',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001a33'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              Browse Area
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Scrollable List */}
       <div style={{ 
         flex: 1,
@@ -929,24 +1078,7 @@ const AllPostedVostcardsView: React.FC = () => {
           Clear
         </button>
         
-        <button 
-          onClick={() => setShowBrowseModal(true)}
-          style={{ 
-            background: '#002B4D', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: 8, 
-            padding: '12px 24px', 
-            fontSize: 16, 
-            fontWeight: 500, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          Browse
-        </button>
+
         
         <button 
           onClick={() => setShowFilterModal(true)}
@@ -1156,199 +1288,7 @@ const AllPostedVostcardsView: React.FC = () => {
         </>
       )}
 
-      {/* Browse Modal */}
-      {showBrowseModal && (
-        <>
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.5)',
-              zIndex: 2000
-            }}
-            onClick={() => setShowBrowseModal(false)}
-          />
-          <div style={{
-            position: 'fixed',
-            top: '10%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            maxWidth: '400px',
-            width: '90%',
-            maxHeight: '80vh',
-            overflow: 'auto',
-            zIndex: 2001
-          }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold' }}>
-              Browse Area
-            </h3>
-            
-            {/* Search Input - using same implementation as BrowseAreaView */}
-            <div style={{ position: 'relative', marginBottom: '20px' }}>
-              <div style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                background: 'white',
-                border: '1px solid #ddd',
-                borderRadius: '12px',
-                padding: '4px',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-              }}>
-                <FaMapPin style={{ color: '#666', marginLeft: '12px', marginRight: '8px' }} />
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="Search for any location worldwide..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowDropdown(true);
-                  }}
-                  onKeyDown={handleKeyDown}
-                  autoComplete="off"
-                  style={{
-                    flex: 1,
-                    border: 'none',
-                    outline: 'none',
-                    padding: '12px 8px',
-                    fontSize: '16px',
-                    background: 'transparent'
-                  }}
-                />
-                {isSearching && (
-                  <div style={{ 
-                    width: '16px', 
-                    height: '16px', 
-                    border: '2px solid transparent',
-                    borderTop: '2px solid #666',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    marginRight: '12px'
-                  }} />
-                )}
-              </div>
-              
-              {/* Search Results Dropdown - using same implementation as BrowseAreaView */}
-              {showDropdown && searchResults.length > 0 && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  right: 0,
-                  background: 'white',
-                  border: '2px solid #002B4D',
-                  borderRadius: '8px',
-                  boxShadow: '0 8px 24px rgba(0, 43, 77, 0.2)',
-                  maxHeight: '300px',
-                  overflowY: 'auto',
-                  zIndex: 9999,
-                  marginTop: '4px'
-                }} ref={resultsRef}>
-                  {searchResults.map((result, index) => (
-                    <div
-                      key={index}
-                      onMouseDown={() => handleLocationSelect(result)}
-                      onMouseEnter={() => setHighlightedIndex(index)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '14px 16px',
-                        cursor: 'pointer',
-                        borderBottom: index < searchResults.length - 1 ? '1px solid #e9ecef' : 'none',
-                        backgroundColor: index === highlightedIndex ? '#f0f8ff' : 'transparent',
-                        borderLeft: index === highlightedIndex ? '4px solid #002B4D' : '4px solid transparent',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <FaMapPin style={{ marginRight: '12px', color: '#002B4D', fontSize: '14px' }} />
-                      <div style={{ flex: 1 }}>
-                        <span style={{ fontWeight: '600' }}>
-                          {result.name}
-                        </span>
-                        {result.displayAddress && result.displayAddress !== result.name ? (
-                          <span style={{ color: '#666', fontWeight: '400', fontSize: 13, display: 'block' }}>
-                            {result.displayAddress}
-                          </span>
-                        ) : null}
-                      </div>
-                      <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
-                        Location
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {searchError && (
-                <div style={{ color: '#d32f2f', fontSize: '14px', marginTop: '8px' }}>
-                  {searchError}
-                </div>
-              )}
-            </div>
 
-            {/* NEW: Browse Area button that appears when location is selected */}
-            {selectedLocation && (
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '12px',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '8px',
-                  marginBottom: '12px'
-                }}>
-                  <FaMapPin style={{ color: '#002B4D', marginRight: '8px' }} />
-                  <span style={{ fontSize: '14px', fontWeight: '500' }}>
-                    View vostcards near {selectedLocation.name}
-                  </span>
-                </div>
-                <button
-                  onClick={handleBrowseArea}
-                  style={{
-                    backgroundColor: '#002B4D',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '12px 20px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'center'
-                  }}
-                >
-                  Browse Area
-                </button>
-              </div>
-            )}
-            
-            <button
-              onClick={() => setShowBrowseModal(false)}
-              style={{
-                backgroundColor: '#e0e0e0',
-                color: '#333',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 20px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                width: '100%',
-                textAlign: 'center'
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </>
-      )}
     </div>
   );
 };
