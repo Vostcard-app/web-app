@@ -362,74 +362,7 @@ const AllPostedVostcardsView: React.FC = () => {
     fetchAllPostedVostcards();
   }, [loadData]);
 
-  // Add effect to handle page focus/visibility for refreshing
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('🔄 Page became visible, refreshing vostcards...');
-        // Refresh data when page becomes visible - but don't reload the page
-        // This was causing the search field to lose focus on mobile
-        setLoading(true);
-        // Instead of reloading, just refetch the data
-        setTimeout(() => {
-          // Trigger a data refresh without page reload
-          window.dispatchEvent(new CustomEvent('refreshVostcards'));
-        }, 100);
-      }
-    };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // Add a separate effect to handle the custom refresh event
-  useEffect(() => {
-    const handleRefreshVostcards = () => {
-      // Refetch data without page reload
-      const fetchAllPostedVostcards = async () => {
-        setLoading(true);
-        try {
-          console.log('🔄 Refreshing all posted vostcards and quickcards...');
-          
-          // Query 1: Regular posted vostcards
-          const q1 = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
-          const snapshot1 = await getDocs(q1);
-          const postedVostcards = snapshot1.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as Vostcard[];
-          
-          // Combine and filter: Include regular vostcards + posted quickcards, exclude offers
-          const allContent = postedVostcards.filter(v => 
-            !v.isOffer && // Exclude offers
-            (
-              !v.isQuickcard || // Include regular vostcards
-              (v.isQuickcard && v.state === 'posted') // Include posted quickcards
-            )
-          );
-          
-          console.log('📋 Refreshed vostcards and quickcards:', allContent.length);
-          
-          setVostcards(allContent);
-          setLastUpdated(new Date());
-          
-          // Load like and rating data for all content
-          if (allContent.length > 0) {
-            await loadData(allContent.map(v => v.id), allContent);
-          }
-        } catch (error) {
-          console.error('Error refreshing posted content:', error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchAllPostedVostcards();
-    };
-
-    window.addEventListener('refreshVostcards', handleRefreshVostcards);
-    return () => window.removeEventListener('refreshVostcards', handleRefreshVostcards);
-  }, [loadData]);
 
   // Set up real-time listeners for like and rating updates
   useEffect(() => {
