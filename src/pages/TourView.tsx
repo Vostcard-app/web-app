@@ -1,8 +1,58 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { TourService } from '../services/tourService';
 import type { Tour, TourPost } from '../types/TourTypes';
+
+// Import pin images
+import VostcardPin from '../assets/Vostcard_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
+import QuickcardPin from '../assets/quickcard_pin.png';
+
+// Create icons
+const vostcardIcon = new L.Icon({
+  iconUrl: VostcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+const offerIcon = new L.Icon({
+  iconUrl: OfferPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+// Map updater component to fit bounds to all markers
+const TourMapUpdater = ({ tourPosts }: { tourPosts: TourPost[] }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (tourPosts.length > 0 && map) {
+      const positions = tourPosts
+        .filter(post => post.latitude && post.longitude)
+        .map(post => [post.latitude!, post.longitude!] as [number, number]);
+      
+      if (positions.length > 0) {
+        const bounds = L.latLngBounds(positions);
+        map.fitBounds(bounds, { padding: [20, 20] });
+      }
+    }
+  }, [tourPosts, map]);
+
+  return null;
+};
 
 const TourView: React.FC = () => {
   const { tourId } = useParams<{ tourId: string }>();
@@ -17,6 +67,12 @@ const TourView: React.FC = () => {
   const getTourTerminology = () => {
     // Try to get user role from tour creator
     return tour?.creatorId ? 'Tour' : 'Trip'; // Default to Trip, will be refined when we have user data
+  };
+
+  const getPostIcon = (post: TourPost) => {
+    if (post.isOffer) return offerIcon;
+    if (post.isQuickcard) return quickcardIcon;
+    return vostcardIcon;
   };
 
   useEffect(() => {
@@ -227,18 +283,104 @@ const TourView: React.FC = () => {
             No posts in this {getTourTerminology().toLowerCase()}
           </div>
         ) : viewMode === 'map' ? (
-          /* Map View - Placeholder for now */
+          /* Map View */
           <div style={{ 
             backgroundColor: 'white',
             borderRadius: '12px',
-            padding: '40px',
-            textAlign: 'center',
-            color: '#666'
+            overflow: 'hidden',
+            height: '500px',
+            position: 'relative'
           }}>
-            <FaMapPin size={48} style={{ color: '#007aff', marginBottom: '16px' }} />
-            <h3>Map View</h3>
-            <p>Map view showing {tourPosts.length} posts will be implemented here.</p>
-            <p>This will show pins for all {getTourTerminology().toLowerCase()} posts and offer posts in the area.</p>
+            {tourPosts.length === 0 ? (
+              <div style={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                color: '#666'
+              }}>
+                <FaMapPin size={48} style={{ color: '#007aff', marginBottom: '16px' }} />
+                <h3>No Posts with Location</h3>
+                <p>This {getTourTerminology().toLowerCase()} has no posts with location data.</p>
+              </div>
+            ) : (
+              <MapContainer
+                center={[0, 0]}
+                zoom={2}
+                style={{ height: '100%', width: '100%' }}
+                zoomControl={true}
+                scrollWheelZoom={true}
+                doubleClickZoom={true}
+                dragging={true}
+                touchZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                
+                <TourMapUpdater tourPosts={tourPosts} />
+                
+                {/* Tour Post Markers */}
+                {tourPosts
+                  .filter(post => post.latitude && post.longitude)
+                  .map((post) => {
+                    const position: [number, number] = [post.latitude!, post.longitude!];
+                    const icon = getPostIcon(post);
+                    
+                    return (
+                      <Marker
+                        key={post.id}
+                        position={position}
+                        icon={icon}
+                        eventHandlers={{
+                          click: () => {
+                            navigate(`/vostcard/${post.id}`);
+                          }
+                        }}
+                      >
+                        <Popup>
+                          <div style={{ textAlign: 'center', minWidth: '200px' }}>
+                            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
+                              {post.title || (post.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
+                            </h3>
+                            <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
+                              {post.description || 'No description'}
+                            </p>
+                            
+                            {/* Show post type indicator */}
+                            <div style={{
+                              backgroundColor: post.isQuickcard ? '#e8f4ff' : post.isOffer ? '#fff3e0' : '#f3e5f5',
+                              border: post.isQuickcard ? '1px solid #b3d9ff' : post.isOffer ? '1px solid #ffcc80' : '1px solid #e1bee7',
+                              borderRadius: '6px',
+                              padding: '8px',
+                              marginBottom: '12px'
+                            }}>
+                              <strong style={{ 
+                                color: post.isQuickcard ? '#0066cc' : post.isOffer ? '#f57c00' : '#7b1fa2' 
+                              }}>
+                                {post.isQuickcard ? '📱 Quickcard' : post.isOffer ? '🎁 Offer' : '📹 Vostcard'}
+                              </strong>
+                              <br />
+                              <span style={{ fontSize: '12px' }}>
+                                {post.isQuickcard ? 'Quick photo with location' : 
+                                 post.isOffer ? 'Special offer available' : 'Video content'}
+                              </span>
+                            </div>
+                            
+                            {post.username && (
+                              <p style={{ margin: '0', fontSize: '12px', color: '#999' }}>
+                                by {post.username}
+                              </p>
+                            )}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+              </MapContainer>
+            )}
           </div>
         ) : (
           /* List View */
