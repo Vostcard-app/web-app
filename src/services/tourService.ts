@@ -50,10 +50,14 @@ export class TourService {
   // Get a single tour by ID
   static async getTour(tourId: string): Promise<Tour | null> {
     try {
+      console.log('🔍 TourService: Getting tour with ID:', tourId);
       const tourDoc = await getDoc(doc(this.toursCollection, tourId));
+      
+      console.log('🔍 TourService: Tour doc exists:', tourDoc.exists());
       
       if (tourDoc.exists()) {
         const data = tourDoc.data();
+        console.log('🔍 TourService: Tour data:', data);
         return {
           id: tourDoc.id,
           creatorId: data.creatorId,
@@ -66,9 +70,10 @@ export class TourService {
         };
       }
       
+      console.log('❌ TourService: Tour not found');
       return null;
     } catch (error) {
-      console.error('❌ Error getting tour:', error);
+      console.error('❌ TourService: Error getting tour:', error);
       throw error;
     }
   }

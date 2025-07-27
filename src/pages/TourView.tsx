@@ -21,7 +21,11 @@ const TourView: React.FC = () => {
 
   useEffect(() => {
     const loadTour = async () => {
-      if (!tourId) return;
+      console.log('🔍 TourView: Loading tour with ID:', tourId);
+      if (!tourId) {
+        console.log('❌ TourView: No tourId provided');
+        return;
+      }
 
       try {
         setLoading(true);
@@ -29,29 +33,39 @@ const TourView: React.FC = () => {
 
         // Try to get tour from location state first (if navigated from profile)
         const tourFromState = location.state?.tour as Tour | null;
+        console.log('🔍 TourView: Tour from state:', tourFromState);
         
         let tourData: Tour | null;
         if (tourFromState && tourFromState.id === tourId) {
+          console.log('✅ TourView: Using tour from state');
           tourData = tourFromState;
         } else {
+          console.log('🔍 TourView: Fetching tour from Firebase');
           tourData = await TourService.getTour(tourId);
         }
 
+        console.log('🔍 TourView: Tour data:', tourData);
+
         if (!tourData) {
+          console.log('❌ TourView: Tour not found');
           setError('Tour not found');
           return;
         }
 
+        console.log('✅ TourView: Setting tour data');
         setTour(tourData);
 
         // Load tour posts
+        console.log('🔍 TourView: Loading tour posts');
         const posts = await TourService.getTourPosts(tourData);
+        console.log('🔍 TourView: Tour posts:', posts);
         setTourPosts(posts);
 
       } catch (error) {
-        console.error('Error loading tour:', error);
+        console.error('❌ TourView: Error loading tour:', error);
         setError('Failed to load tour');
       } finally {
+        console.log('✅ TourView: Loading complete');
         setLoading(false);
       }
     };
