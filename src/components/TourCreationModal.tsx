@@ -61,13 +61,24 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
     }
   }, [isOpen, userPosts]);
 
+  // Monitor selectedPostIds changes
+  useEffect(() => {
+    console.log('selectedPostIds changed:', selectedPostIds);
+  }, [selectedPostIds]);
+
   const handlePostToggle = (postId: string) => {
     console.log('Toggling post:', postId, 'Current selected:', selectedPostIds);
-    setSelectedPostIds(prev => 
-      prev.includes(postId) 
-        ? prev.filter(id => id !== postId)
-        : [...prev, postId]
-    );
+    
+    // Use a more explicit approach
+    if (selectedPostIds.includes(postId)) {
+      const newSelection = selectedPostIds.filter(id => id !== postId);
+      console.log('Removing post, new selection:', newSelection);
+      setSelectedPostIds(newSelection);
+    } else {
+      const newSelection = [...selectedPostIds, postId];
+      console.log('Adding post, new selection:', newSelection);
+      setSelectedPostIds(newSelection);
+    }
   };
 
   const handleCreateTour = async () => {
@@ -271,7 +282,10 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
                   <input
                     type="checkbox"
                     checked={selectedPostIds.includes(post.id)}
-                    onChange={() => handlePostToggle(post.id)}
+                    onChange={(e) => {
+                      console.log('Checkbox onChange triggered for post:', post.id, 'checked:', e.target.checked);
+                      handlePostToggle(post.id);
+                    }}
                     style={{ marginRight: '12px' }}
                   />
                   <div style={{ flex: 1 }}>
