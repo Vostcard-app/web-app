@@ -368,8 +368,6 @@ const AllPostedVostcardsView: React.FC = () => {
     if (vostcards.length === 0) return;
 
     const unsubscribers: (() => void)[] = [];
-    
-
 
     vostcards.forEach(vostcard => {
       // Like listeners
@@ -394,7 +392,7 @@ const AllPostedVostcardsView: React.FC = () => {
     return () => {
       unsubscribers.forEach(unsubscribe => unsubscribe());
     };
-  }, [vostcards, setupLikeListeners]);
+  }, [vostcards.map(v => v.id).join(','), setupLikeListeners]); // Use stable dependency
 
   // Fetch user friends list
   useEffect(() => {
@@ -557,7 +555,6 @@ const AllPostedVostcardsView: React.FC = () => {
 
   return (
     <div 
-      key={`all-posted-${Date.now()}`}
       style={{ 
         background: '#f5f5f5', 
         minHeight: '100vh',
