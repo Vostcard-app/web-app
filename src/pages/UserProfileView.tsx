@@ -59,7 +59,7 @@ const UserProfileView: React.FC = () => {
     const fetchProfileAndVostcards = async () => {
       try {
         if (!userId) return;
-        console.log('📥 Fetching user profile and vostcards:', userId);
+    
 
         // Fetch user profile
         const docRef = doc(db, 'users', userId);

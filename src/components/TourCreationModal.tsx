@@ -56,27 +56,15 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
       setIsPublic(true);
       setIsShareable(false);
       setError(null);
-      console.log('Modal opened with posts:', userPosts);
-      console.log('First post structure:', userPosts[0]);
     }
   }, [isOpen, userPosts]);
 
-  // Monitor selectedPostIds changes
-  useEffect(() => {
-    console.log('selectedPostIds changed:', selectedPostIds);
-  }, [selectedPostIds]);
-
   const handlePostToggle = (postId: string) => {
-    console.log('Toggling post:', postId, 'Current selected:', selectedPostIds);
-    
-    // Use a more explicit approach
     if (selectedPostIds.includes(postId)) {
       const newSelection = selectedPostIds.filter(id => id !== postId);
-      console.log('Removing post, new selection:', newSelection);
       setSelectedPostIds(newSelection);
     } else {
       const newSelection = [...selectedPostIds, postId];
-      console.log('Adding post, new selection:', newSelection);
       setSelectedPostIds(newSelection);
     }
   };
@@ -263,7 +251,7 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
               </div>
             ) : (
               userPosts.map((post) => {
-                console.log('Rendering post:', post.id, post.title, 'Selected:', selectedPostIds.includes(post.id));
+
                 return (
                 <div
                   key={post.id}
@@ -282,10 +270,7 @@ const TourCreationModal: React.FC<TourCreationModalProps> = ({
                   <input
                     type="checkbox"
                     checked={selectedPostIds.includes(post.id)}
-                    onChange={(e) => {
-                      console.log('Checkbox onChange triggered for post:', post.id, 'checked:', e.target.checked);
-                      handlePostToggle(post.id);
-                    }}
+                    onChange={() => handlePostToggle(post.id)}
                     style={{ marginRight: '12px' }}
                   />
                   <div style={{ flex: 1 }}>

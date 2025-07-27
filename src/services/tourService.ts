@@ -39,7 +39,7 @@ export class TourService {
         });
       }
 
-      console.log('✅ Tour created successfully:', tourDoc.id);
+  
       return tourDoc.id;
     } catch (error) {
       console.error('❌ Error creating tour:', error);
@@ -153,7 +153,7 @@ export class TourService {
       if (tourData.isPublic !== undefined) updateData.isPublic = tourData.isPublic;
       
       await updateDoc(doc(this.toursCollection, tourId), updateData);
-      console.log('✅ Tour updated successfully:', tourId);
+  
     } catch (error) {
       console.error('❌ Error updating tour:', error);
       throw error;
@@ -164,7 +164,7 @@ export class TourService {
   static async deleteTour(tourId: string): Promise<void> {
     try {
       await deleteDoc(doc(this.toursCollection, tourId));
-      console.log('✅ Tour deleted successfully:', tourId);
+  
     } catch (error) {
       console.error('❌ Error deleting tour:', error);
       throw error;
@@ -180,7 +180,7 @@ export class TourService {
         shareableUrl,
         updatedAt: serverTimestamp(),
       });
-      console.log('✅ Shareable URL generated for tour:', tourId);
+  
       return shareableUrl;
     } catch (error) {
       console.error('❌ Error generating shareable URL:', error);
@@ -196,7 +196,7 @@ export class TourService {
         shareableUrl: null,
         updatedAt: serverTimestamp(),
       });
-      console.log('✅ Sharing disabled for tour:', tourId);
+  
     } catch (error) {
       console.error('❌ Error disabling sharing:', error);
       throw error;
