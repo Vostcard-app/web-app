@@ -631,6 +631,8 @@ const HomeView = () => {
   // YouTube video URL using current tutorial video
   const youtubeEmbedUrl = `https://www.youtube.com/embed/${currentTutorialVideo}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
+  console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -653,20 +655,27 @@ const HomeView = () => {
         overflow: 'hidden'
       }}>
         {/* Header */}
-        <div style={{
-          backgroundColor: '#002B4D',
-          height: 80,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-          position: 'relative',
-          zIndex: 1000,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          touchAction: 'manipulation',
-          flexShrink: 0,
-          borderRadius: shouldUseContainer ? '16px' : '0'
-        }}>
+        <div 
+          style={{
+            backgroundColor: '#002B4D',
+            height: 80,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 16px',
+            position: 'relative',
+            zIndex: 1000,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            touchAction: 'manipulation',
+            flexShrink: 0,
+            borderRadius: shouldUseContainer ? '16px' : '0',
+            // Add safe area padding for mobile
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingLeft: 'env(safe-area-inset-left, 16px)',
+            paddingRight: 'env(safe-area-inset-right, 16px)'
+          }}
+          data-testid="home-header"
+        >
           <div 
             onClick={() => navigate('/home')}
             style={{ 
@@ -1265,7 +1274,7 @@ const HomeView = () => {
       {/* Bottom Navigation - 2 buttons */}
       <div style={{
         position: 'fixed',
-        bottom: shouldUseContainer ? 40 : 20,
+        bottom: shouldUseContainer ? 40 : `calc(20px + env(safe-area-inset-bottom, 0px))`,
         left: shouldUseContainer ? '50%' : 15,
         right: shouldUseContainer ? 'auto' : 15,
         transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
@@ -1275,6 +1284,8 @@ const HomeView = () => {
         justifyContent: 'space-between',
         gap: '4%',
         padding: shouldUseContainer ? '0 15px' : '0',
+        // Add safe area padding for mobile
+        paddingBottom: shouldUseContainer ? 0 : 'env(safe-area-inset-bottom, 0px)',
       }}>
         {/* Create Vostcard Button */}
         <button

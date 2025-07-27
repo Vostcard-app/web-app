@@ -34,22 +34,35 @@ const quickcardIcon = new L.Icon({
   popupAnchor: [0, -75],
 });
 
+// Blue dot icon for user location
+const userLocationIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiLz4KPC9zdmc+',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
+});
+
 // Map updater component to fit bounds to all markers
-const TourMapUpdater = ({ tourPosts }: { tourPosts: TourPost[] }) => {
+const TourMapUpdater = ({ tourPosts, userLocation }: { tourPosts: TourPost[]; userLocation: [number, number] | null }) => {
   const map = useMap();
 
   useEffect(() => {
-    if (tourPosts.length > 0 && map) {
+    if (map) {
       const positions = tourPosts
         .filter(post => post.latitude && post.longitude)
         .map(post => [post.latitude!, post.longitude!] as [number, number]);
+      
+      // Include user location in bounds if available
+      if (userLocation) {
+        positions.push(userLocation);
+      }
       
       if (positions.length > 0) {
         const bounds = L.latLngBounds(positions);
         map.fitBounds(bounds, { padding: [20, 20] });
       }
     }
-  }, [tourPosts, map]);
+  }, [tourPosts, userLocation, map]);
 
   return null;
 };
@@ -63,6 +76,7 @@ const TourView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [error, setError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
 
   const getTourTerminology = () => {
     // Try to get user role from tour creator
@@ -74,6 +88,32 @@ const TourView: React.FC = () => {
     if (post.isQuickcard) return quickcardIcon;
     return vostcardIcon;
   };
+
+  // Get user location
+  useEffect(() => {
+    const getUserLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log('📍 TourView: User location updated:', { latitude, longitude });
+            setUserLocation([latitude, longitude]);
+          },
+          (error) => {
+            console.warn('📍 TourView: Location error:', error.message);
+            // Don't set error state, just log it - location is optional
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+          }
+        );
+      }
+    };
+
+    getUserLocation();
+  }, []);
 
   useEffect(() => {
     const loadTour = async () => {
@@ -320,7 +360,23 @@ const TourView: React.FC = () => {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 
-                <TourMapUpdater tourPosts={tourPosts} />
+                <TourMapUpdater tourPosts={tourPosts} userLocation={userLocation} />
+                
+                {/* User Location Marker */}
+                {userLocation && (
+                  <Marker
+                    position={userLocation}
+                    icon={userLocationIcon}
+                  >
+                    <Popup>
+                      <div style={{ textAlign: 'center' }}>
+                        <strong>Your Location</strong>
+                        <br />
+                        <small>Tap to recenter map</small>
+                      </div>
+                    </Popup>
+                  </Marker>
+                )}
                 
                 {/* Tour Post Markers */}
                 {tourPosts

@@ -1,24 +1,29 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaHome, FaTrash } from 'react-icons/fa';
-import { useVostcard } from '../context/VostcardContext';
+import { useScripts } from '../context/ScriptContext';
 import { useResponsive } from '../hooks/useResponsive';
 
 const ScriptLibraryView: React.FC = () => {
   const { isDesktop } = useResponsive();
   const navigate = useNavigate();
-  const { scripts, loadScripts, deleteScript } = useVostcard();
+  const { scripts, loadScripts, deleteScript } = useScripts();
 
   useEffect(() => {
     console.log('📜 Loading scripts in Script Library...');
+    console.log('🔍 ScriptLibraryView: scripts state:', scripts);
+    console.log('🔍 ScriptLibraryView: loadScripts function:', !!loadScripts);
+    
     if (loadScripts) {
       loadScripts().then(() => {
         console.log('✅ Scripts loaded successfully, count:', scripts?.length);
       }).catch((err: any) => {
         console.error('⚠️ Failed to fetch scripts from Firebase:', err);
       });
+    } else {
+      console.error('❌ loadScripts function is not available');
     }
-  }, [loadScripts]);
+  }, [loadScripts, scripts]);
 
   const handleCreateNew = () => {
     navigate('/script-editor/new'); // Navigate to script editor to create new script
