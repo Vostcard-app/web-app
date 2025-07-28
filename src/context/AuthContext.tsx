@@ -13,6 +13,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   convertUserToGuide: (userIdToConvert: string) => Promise<void>;
+  refreshUserRole: () => Promise<void>;
   isAdmin: boolean;
 }
 
@@ -49,6 +50,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('❌ Error converting user to Guide:', error);
       throw error;
+    }
+  };
+
+  // Force refresh user role from Firestore
+  const refreshUserRole = async () => {
+    if (!user) return;
+    
+    try {
+      console.log('🔄 Manually refreshing user role from Firestore...');
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        console.log('✅ Manual refresh successful:', userData);
+        setUsername(userData.username || null);
+        setUserRole(userData.userRole || 'user');
+      } else {
+        console.warn('❌ Manual refresh: No user document found');
+      }
+    } catch (error) {
+      console.error('❌ Manual refresh failed:', error);
     }
   };
 
@@ -125,9 +148,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           // Add timeout for Firestore queries specifically
           const firestoreTimeout = setTimeout(() => {
-            console.warn('⏰ AuthProvider: Firestore query timeout after 1 second, proceeding with basic auth');
+            console.warn('⏰ AuthProvider: Firestore query timeout after 3 seconds, proceeding with basic auth');
             setLoading(false);
-          }, 1000); // Reduced from 1500 to 1000ms
+          }, 3000); // Reduced from 1500 to 1000ms
 
           // Fetch user data from Firestore - check both collections simultaneously
           try {
@@ -139,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             [userDocSnap, advertiserDocSnap] = await Promise.race([
               Promise.all([getDoc(userDocRef), getDoc(advertiserDocRef)]),
               new Promise<never>((_, reject) => 
-                setTimeout(() => reject(new Error('Firestore query timeout')), 800)
+                setTimeout(() => reject(new Error('Firestore query timeout')), 3000)
               )
             ]);
 
@@ -180,7 +203,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // If it's a timeout error, we can still proceed with basic auth
             if (error instanceof Error && error.message === 'Firestore query timeout') {
               console.warn('⏰ Proceeding with basic authentication due to Firestore timeout');
-              setUserRole('user'); // Default to user role for faster experience
+              
+              // FALLBACK: Try a simple direct query as last resort
+              try {
+                console.log('🔄 Attempting fallback direct Firestore query...');
+                const fallbackUserDoc = await getDoc(doc(db, "users", currentUser.uid));
+                if (fallbackUserDoc.exists()) {
+                  const fallbackData = fallbackUserDoc.data();
+                  console.log('✅ Fallback query successful:', fallbackData);
+                  setUsername(fallbackData.username || null);
+                  setUserRole(fallbackData.userRole || 'user');
+                } else {
+                  console.warn('❌ Fallback: No user document found');
+                  setUserRole('user'); // Default to user role
+                }
+              } catch (fallbackError) {
+                console.error('❌ Fallback query also failed:', fallbackError);
+                setUserRole('user'); // Default to user role for faster experience
+              }
             } else {
               setUserRole(null);
             }
@@ -236,6 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     logout,
     convertUserToGuide,
+    refreshUserRole,
     isAdmin,
   };
 
