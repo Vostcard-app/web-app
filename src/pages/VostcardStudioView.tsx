@@ -81,6 +81,9 @@ const VostcardStudioView: React.FC = () => {
   
   // Ref for managing touch event listeners
   const photoGridRef = useRef<HTMLDivElement | null>(null);
+  
+  // Editing state for quickcards
+  const [editingQuickcardId, setEditingQuickcardId] = useState<string | null>(null);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -1027,6 +1030,97 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
+  // Update and repost existing quickcard
+  const handleUpdateAndRepostQuickcard = async () => {
+    if (!editingQuickcardId) {
+      alert('No quickcard is being edited.');
+      return;
+    }
+
+    if (!quickcardTitle.trim()) {
+      alert('Please enter a title for your quickcard.');
+      return;
+    }
+
+    if (quickcardPhotos.length === 0) {
+      alert('Please add at least one photo for your quickcard.');
+      return;
+    }
+
+    if (!quickcardLocation) {
+      alert('Please set a location for your quickcard.');
+      return;
+    }
+
+    if (quickcardCategories.length === 0) {
+      alert('Please select at least one category for your quickcard.');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Prepare audio files and labels
+      const audioFiles: Blob[] = [];
+      const audioLabels: string[] = [];
+      
+      if (quickcardIntroAudio) {
+        audioFiles.push(quickcardIntroAudio);
+        audioLabels.push('intro');
+      }
+      
+      if (quickcardDetailAudio) {
+        audioFiles.push(quickcardDetailAudio);
+        audioLabels.push('detail');
+      }
+      
+      // Update the existing quickcard with same ID
+      const updatedQuickcard: Vostcard = {
+        id: editingQuickcardId, // Keep the same ID
+        title: quickcardTitle.trim(),
+        description: quickcardDescription.trim() || 'Quickcard',
+        photos: quickcardPhotos,
+        audio: quickcardIntroAudio,
+        audioFiles: audioFiles,
+        audioLabels: audioLabels,
+        categories: quickcardCategories,
+        geo: quickcardLocation,
+        username: user?.displayName || user?.email || 'Unknown User',
+        userID: user?.uid || '',
+        userRole: userRole || 'user',
+        state: 'private',
+        video: null,
+        isQuickcard: true,
+        hasVideo: false,
+        hasPhotos: quickcardPhotos.length > 0,
+        hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
+        createdAt: new Date().toISOString(), // This will be preserved from original
+        updatedAt: new Date().toISOString()
+      };
+
+      setCurrentVostcard(updatedQuickcard);
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await postQuickcard(updatedQuickcard);
+      
+      resetQuickcardForm();
+      alert(`🎉 Quickcard updated and reposted to map with ${quickcardPhotos.length} photo(s)! No duplicates created.`);
+      
+      navigate('/home', { 
+        state: { 
+          freshLoad: true,
+          timestamp: Date.now(),
+          justPosted: 'quickcard'
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Error updating quickcard:', error);
+      alert('Failed to update quickcard. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Helper function to reset form - UPDATED for multiple photos
   const resetQuickcardForm = () => {
     setQuickcardTitle('');
@@ -1045,6 +1139,9 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardDetailAudioFileName(null);
     setQuickcardLocation(null);
     setQuickcardCategories([]);
+    
+    // Clear editing state
+    setEditingQuickcardId(null);
   };
 
   // Function to load a quickcard for editing
@@ -1133,8 +1230,11 @@ const VostcardStudioView: React.FC = () => {
         }
       }
 
+      // Set editing state
+      setEditingQuickcardId(quickcard.id);
+      
       setShowQuickcardLoader(false);
-      alert(`✅ Quickcard "${quickcard.title}" loaded for editing!`);
+      alert(`✅ Quickcard "${quickcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
       
     } catch (error) {
       console.error('Error loading quickcard:', error);
@@ -1349,9 +1449,27 @@ const VostcardStudioView: React.FC = () => {
             maxHeight: 'none', // ✅ Remove height limit
             overflowY: 'visible' // ✅ Allow content to flow
           }}>
-            <h3 style={{ marginTop: 0, marginBottom: '15px' }}>
-              📷 Quickcard Creator
-            </h3>
+            <div style={{ marginBottom: '15px' }}>
+              <h3 style={{ marginTop: 0, marginBottom: '8px' }}>
+                📷 Quickcard Creator
+              </h3>
+              {editingQuickcardId && (
+                <div style={{ 
+                  backgroundColor: '#fff3cd', 
+                  border: '1px solid #ffeaa7', 
+                  borderRadius: '4px', 
+                  padding: '8px 12px', 
+                  fontSize: '13px', 
+                  color: '#856404',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <FaEdit size={12} />
+                  <strong>Editing Mode:</strong> Use "Update & Repost" to avoid creating duplicates
+                </div>
+              )}
+            </div>
 
             {/* Title Input */}
             <div style={{ marginBottom: '15px' }}>
@@ -1562,10 +1680,10 @@ const VostcardStudioView: React.FC = () => {
               </div>
             )}
 
-            {/* Enhanced Button Grid - Load Card and Load Photos */}
+            {/* Enhanced Button Grid - Load Card, Load Photos, and New Card */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              gridTemplateColumns: editingQuickcardId ? '1fr 1fr 1fr' : '1fr 1fr',
               gap: '10px',
               marginBottom: '15px'
             }}>
@@ -1622,6 +1740,35 @@ const VostcardStudioView: React.FC = () => {
                 <FaImages size={14} />
                 🖼️ Load Photos
               </button>
+              
+              {/* New Quickcard Button (only when editing) */}
+              {editingQuickcardId && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to start a new quickcard? Current changes will be lost.')) {
+                      resetQuickcardForm();
+                    }
+                  }}
+                  disabled={isLoading}
+                  style={{
+                    backgroundColor: isLoading ? '#ccc' : '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 8px',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <FaEdit size={14} />
+                  🆕 New Card
+                </button>
+              )}
             </div>
 
             {/* Location and Take Photo Buttons */}
@@ -1896,29 +2043,56 @@ const VostcardStudioView: React.FC = () => {
                 Save
               </button>
 
-              {/* Post to Map Button */}
-              <button 
-                onClick={handlePostQuickcardToMap}
-                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
-                style={{
-                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaGlobe size={12} />
-                Post to Map
-              </button>
+              {/* Conditional buttons based on editing state */}
+              {editingQuickcardId ? (
+                /* Update & Repost Button (when editing) */
+                <button 
+                  onClick={handleUpdateAndRepostQuickcard}
+                  disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
+                  style={{
+                    backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#ff9800',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 8px',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <FaEdit size={12} />
+                  Update & Repost
+                </button>
+              ) : (
+                /* Post to Map Button (when creating new) */
+                <button 
+                  onClick={handlePostQuickcardToMap}
+                  disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
+                  style={{
+                    backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 8px',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <FaGlobe size={12} />
+                  Post to Map
+                </button>
+              )}
             </div>
 
             {/* Clear Photo Button */}
@@ -2441,18 +2615,7 @@ const VostcardStudioView: React.FC = () => {
                        visibility: (q as any).visibility
                      })));
                      
-                     // Specific check for the problematic quickcard
-                     const targetQuickcard = savedVostcards.find(v => v.id === 'quickcard_1753533464643');
-                     console.log('🎯 SPECIFIC QUICKCARD CHECK (quickcard_1753533464643):', targetQuickcard ? {
-                       found: 'YES',
-                       id: targetQuickcard.id,
-                       title: targetQuickcard.title,
-                       isQuickcard: targetQuickcard.isQuickcard,
-                       state: targetQuickcard.state,
-                       visibility: (targetQuickcard as any).visibility,
-                       userID: targetQuickcard.userID,
-                       _isMetadataOnly: (targetQuickcard as any)._isMetadataOnly
-                     } : { found: 'NO', searched_in: savedVostcards.length + ' vostcards' });
+
                    }}
                    disabled={isLoadingQuickcards}
                    style={{

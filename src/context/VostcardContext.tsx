@@ -866,17 +866,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         console.log(`⚡ Found ${allFirebaseMetadata.length} vostcards metadata from Firebase`);
         
-        // DEBUG: Check for specific quickcard in Firebase data
-        const targetQuickcard = allFirebaseMetadata.find(v => v.id === 'quickcard_1753533464643');
-        console.log('🎯 FIREBASE CHECK (quickcard_1753533464643):', targetQuickcard ? {
-          found: 'YES in Firebase',
-          id: targetQuickcard.id,
-          title: targetQuickcard.title,
-          isQuickcard: targetQuickcard.isQuickcard,
-          state: targetQuickcard.state,
-          visibility: targetQuickcard.visibility,
-          userID: targetQuickcard.userID
-        } : { found: 'NO in Firebase', searched_in: allFirebaseMetadata.length + ' Firebase vostcards' });
+
         
         // Filter out deleted vostcards, but keep both private and posted quickcards
         const filteredMetadata = allFirebaseMetadata.filter(v => {
@@ -2276,16 +2266,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // Log details of loaded vostcards for debugging sync issues
           console.log('📂 Loaded vostcards from IndexedDB:', filteredVostcards.length);
           
-          // DEBUG: Check for specific quickcard in IndexedDB
-          const targetQuickcardIDB = filteredVostcards.find(v => v.id === 'quickcard_1753533464643');
-          console.log('🎯 INDEXEDDB CHECK (quickcard_1753533464643):', targetQuickcardIDB ? {
-            found: 'YES in IndexedDB',
-            id: targetQuickcardIDB.id,
-            title: targetQuickcardIDB.title,
-            isQuickcard: targetQuickcardIDB.isQuickcard,
-            state: targetQuickcardIDB.state,
-            userID: targetQuickcardIDB.userID
-          } : { found: 'NO in IndexedDB', searched_in: filteredVostcards.length + ' IndexedDB vostcards' });
+
           
           // 🔧 DEBUG: Count and log quickcards specifically
           const quickcardsFound = filteredVostcards.filter(v => v.isQuickcard === true);
