@@ -1549,10 +1549,8 @@ const HomeView = () => {
       )}
 
       {/* Video Modal */}
-      {showVideoModal && (
-        <>
-          {console.log('🎥 Video modal rendering:', { showVideoModal, currentTutorialVideo, youtubeEmbedUrl })}
-          <AnimatePresence>
+      <AnimatePresence>
+        {showVideoModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1563,82 +1561,80 @@ const HomeView = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'rgba(0,0,0,0.8)',
+              background: 'rgba(0,0,0,0.9)',
+              zIndex: 10000,
               display: 'flex',
-              justifyContent: 'center',
               alignItems: 'center',
-              zIndex: 2002
+              justifyContent: 'center',
+              padding: '20px'
             }}
             onClick={() => setShowVideoModal(false)}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+            <button
+              onClick={() => setShowVideoModal(false)}
               style={{
-                backgroundColor: 'white',
-                borderRadius: '12px',
-                width: '90%',
-                maxWidth: '600px',
-                maxHeight: '80vh',
-                overflow: 'hidden',
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
                 display: 'flex',
-                flexDirection: 'column'
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10001,
+                fontSize: '18px',
+                color: 'white',
+                backdropFilter: 'blur(10px)'
               }}
             >
-              <div style={{
-                position: 'relative',
-                paddingTop: '56.25%', // 16:9 Aspect Ratio
-                height: 0,
-                overflow: 'hidden'
-              }}>
-                <iframe
-                  src={youtubeEmbedUrl}
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: '12px 12px 0 0'
-                  }}
-                />
-              </div>
-              <div style={{
-                padding: '16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: '#f0f0f0',
-                borderBottom: '1px solid #ddd'
-              }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>{currentTutorialVideo.replace('J-', '').replace('-', ' ')}</h3>
-                <button
-                  onClick={() => setShowVideoModal(false)}
-                  style={{
-                    backgroundColor: '#002B4D',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 12px',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <FaTimes size={18} />
-                </button>
-              </div>
-            </motion.div>
+              <FaTimes />
+            </button>
+
+            <div style={{ 
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <iframe
+                src={youtubeEmbedUrl}
+                width="100%"
+                height="100%"
+                style={{
+                  minHeight: '315px',
+                  maxWidth: '560px',
+                  aspectRatio: '16/9',
+                  borderRadius: 8,
+                  border: 'none'
+                }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '14px',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              Tap outside video or ✕ to close
+            </div>
           </motion.div>
-        </AnimatePresence>
-        </>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Auth Loading Overlay */}
       {showAuthLoading && (
