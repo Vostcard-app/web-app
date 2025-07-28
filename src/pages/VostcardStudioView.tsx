@@ -994,16 +994,8 @@ const VostcardStudioView: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       await postQuickcard(quickcard);
       
-      alert(`🎉 Quickcard posted to map with ${quickcardPhotos.length} photo(s)!`);
       resetQuickcardForm();
-      
-      navigate('/home', { 
-        state: { 
-          freshLoad: true,
-          timestamp: Date.now(),
-          justPosted: 'quickcard'
-        }
-      });
+      alert(`🎉 Quickcard posted to map with ${quickcardPhotos.length} photo(s)! Form cleared for your next quickcard.`);
       
     } catch (error) {
       console.error('❌ Error posting quickcard:', error);
