@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, query, collection, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { FaArrowLeft, FaHome, FaPlus } from 'react-icons/fa';
 import { TourService } from '../services/tourService';
 import TourCreationModal from '../components/TourCreationModal';
+import TourEditModal from '../components/TourEditModal';
 import TourList from '../components/TourList';
 import type { Tour } from '../types/TourTypes';
 
@@ -22,8 +23,11 @@ const ToursView: React.FC = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [tours, setTours] = useState<Tour[]>([]);
+  const [userPosts, setUserPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isTourModalOpen, setIsTourModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTour, setEditingTour] = useState<Tour | null>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -54,6 +58,24 @@ const ToursView: React.FC = () => {
           } catch (error) {
             console.error('Error loading tours:', error);
           }
+
+          // Load user posts for tour creation/editing (only for current user)
+          if (isCurrentUser) {
+            try {
+              const allPostsQuery = query(
+                collection(db, 'vostcards'),
+                where('userID', '==', userId)
+              );
+              const allPostsSnapshot = await getDocs(allPostsQuery);
+              const allUserPosts = allPostsSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+              setUserPosts(allUserPosts);
+            } catch (error) {
+              console.error('Error loading user posts:', error);
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -76,6 +98,20 @@ const ToursView: React.FC = () => {
 
   const handleTourClick = (tour: Tour) => {
     navigate(`/tour/${tour.id}`, { state: { tour } });
+  };
+
+  const handleEditTour = (tour: Tour) => {
+    setEditingTour(tour);
+    setIsEditModalOpen(true);
+  };
+
+  const handleTourUpdated = async () => {
+    try {
+      const userTours = await TourService.getToursByCreator(userId!);
+      setTours(userTours);
+    } catch (error) {
+      console.error('Error refreshing tours after update:', error);
+    }
   };
 
   const handleDeleteTour = async (tour: Tour) => {
@@ -244,6 +280,7 @@ const ToursView: React.FC = () => {
           tours={tours}
           isCurrentUser={isCurrentUser}
           onTourClick={handleTourClick}
+          onEditTour={isCurrentUser ? handleEditTour : undefined}
           onDeleteTour={isCurrentUser ? handleDeleteTour : undefined}
           onToggleSharing={isCurrentUser ? handleToggleSharing : undefined}
           userRole={profile?.userRole}
@@ -256,9 +293,24 @@ const ToursView: React.FC = () => {
         onClose={() => setIsTourModalOpen(false)}
         onTourCreated={handleTourCreated}
         creatorId={userId!}
-        userPosts={[]} // We'll need to fetch this if needed
+        userPosts={userPosts}
         userRole={profile?.userRole}
       />
+
+      {/* Tour Edit Modal */}
+      {editingTour && (
+        <TourEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingTour(null);
+          }}
+          onTourUpdated={handleTourUpdated}
+          tour={editingTour}
+          userPosts={userPosts}
+          userRole={profile?.userRole}
+        />
+      )}
     </div>
   );
 };
