@@ -73,6 +73,10 @@ const VostcardStudioView: React.FC = () => {
   // Drag and drop state for photo reordering
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  
+  // Touch drag state for mobile
+  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -676,6 +680,75 @@ const VostcardStudioView: React.FC = () => {
   const handleDragEnd = () => {
     setDraggedIndex(null);
     setDragOverIndex(null);
+  };
+
+  // Touch event handlers for mobile drag and drop
+  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    const touch = e.touches[0];
+    setTouchStartPos({ x: touch.clientX, y: touch.clientY });
+    setDraggedIndex(index);
+    setIsDragging(false);
+    
+    // Prevent scrolling when starting to drag
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (draggedIndex === null || !touchStartPos) return;
+    
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartPos.x);
+    const deltaY = Math.abs(touch.clientY - touchStartPos.y);
+    
+    // Start dragging if moved more than 10px
+    if (deltaX > 10 || deltaY > 10) {
+      setIsDragging(true);
+      
+      // Find which photo we're over
+      const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+      const photoElement = elements.find(el => el.getAttribute('data-photo-index'));
+      if (photoElement) {
+        const targetIndex = parseInt(photoElement.getAttribute('data-photo-index') || '0');
+        if (targetIndex !== draggedIndex) {
+          setDragOverIndex(targetIndex);
+        } else {
+          setDragOverIndex(null);
+        }
+      }
+    }
+    
+    // Prevent scrolling while dragging
+    if (isDragging) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (draggedIndex === null) return;
+    
+    if (isDragging && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      // Perform the reorder
+      const newPhotos = [...quickcardPhotos];
+      const newPreviews = [...quickcardPhotoPreviews];
+      
+      const draggedPhoto = newPhotos[draggedIndex];
+      const draggedPreview = newPreviews[draggedIndex];
+      
+      newPhotos.splice(draggedIndex, 1);
+      newPreviews.splice(draggedIndex, 1);
+      
+      newPhotos.splice(dragOverIndex, 0, draggedPhoto);
+      newPreviews.splice(dragOverIndex, 0, draggedPreview);
+      
+      setQuickcardPhotos(newPhotos);
+      setQuickcardPhotoPreviews(newPreviews);
+    }
+    
+    // Reset all drag state
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    setTouchStartPos(null);
+    setIsDragging(false);
   };
 
   const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
@@ -1325,11 +1398,15 @@ const VostcardStudioView: React.FC = () => {
                   {quickcardPhotoPreviews.map((preview, index) => (
                     <div
                       key={index}
+                      data-photo-index={index}
                       draggable
                       onDragStart={(e) => handleDragStart(e, index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                       onDragEnd={handleDragEnd}
+                      onTouchStart={(e) => handleTouchStart(e, index)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
                       onMouseDown={(e) => {
                         // Handle mouse drag for desktop
                         if (e.button === 0) { // Left mouse button only
@@ -1367,7 +1444,7 @@ const VostcardStudioView: React.FC = () => {
                         setDraggedIndex(null);
                         setDragOverIndex(null);
                       }}
-                                              style={{
+                      style={{
                           position: 'relative',
                           aspectRatio: '1',
                           borderRadius: '8px',
@@ -1376,9 +1453,10 @@ const VostcardStudioView: React.FC = () => {
                           cursor: 'grab',
                           opacity: draggedIndex === index ? 0.5 : 1,
                           transform: draggedIndex === index ? 'scale(0.95)' : 'scale(1)',
-                          transition: 'all 0.2s ease',
+                          transition: isDragging ? 'none' : 'all 0.2s ease', // Disable transition during touch drag
                           border: dragOverIndex === index && draggedIndex !== index ? '2px dashed #007aff' : 'none',
-                          boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none'
+                          boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none',
+                          touchAction: 'none' // Prevent browser touch behaviors
                         }}
                     >
                       <img
@@ -1442,7 +1520,7 @@ const VostcardStudioView: React.FC = () => {
                     fontStyle: 'italic',
                     marginTop: '4px'
                   }}>
-                    💡 Drag photos to reorder them
+                    💡 Tap and drag photos to reorder them
                   </div>
                 )}
               </div>
