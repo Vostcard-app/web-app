@@ -1216,8 +1216,10 @@ const HomeView = () => {
               </div>
               
               <button
-                onClick={() => {
+                onClick={(e) => {
                   console.log('🏠 Home Page button clicked!');
+                  e.preventDefault();
+                  e.stopPropagation();
                   setShowHelpMenu(false);
                   handleTutorialVideo('VTfeDwSUy-o', 'Home Page');
                 }}
@@ -1231,10 +1233,16 @@ const HomeView = () => {
                   fontSize: '14px',
                   textAlign: 'left',
                   color: '#333',
-                  transition: 'background-color 0.2s ease'
+                  transition: 'background-color 0.2s ease',
+                  pointerEvents: 'auto'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                onMouseDown={(e) => {
+                  console.log('🏠 Home Page button mousedown!');
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
               >
                 🏠 Home Page
               </button>
