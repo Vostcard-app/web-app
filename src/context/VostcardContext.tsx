@@ -2230,11 +2230,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return restored;
           });
 
-          // Filter out Vostcards with state === 'posted' and deleted vostcards
+          // Filter out deleted vostcards, but keep posted quickcards for editing
           const deletedVostcards = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
-          const filteredVostcards = restoredVostcards.filter(v => 
-            v.state !== 'posted' && !deletedVostcards.includes(v.id)
-          );
+          const filteredVostcards = restoredVostcards.filter(v => {
+            // Always exclude deleted vostcards
+            if (deletedVostcards.includes(v.id)) return false;
+            
+            // Keep all private/draft vostcards
+            if (v.state !== 'posted') return true;
+            
+            // Keep posted quickcards for editing
+            if (v.state === 'posted' && v.isQuickcard) return true;
+            
+            // Filter out posted regular vostcards (they're managed separately)
+            return false;
+          });
           
           // Log details of loaded vostcards for debugging sync issues
           console.log('📂 Loaded vostcards from IndexedDB:', filteredVostcards.length);
