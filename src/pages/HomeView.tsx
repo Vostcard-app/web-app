@@ -639,8 +639,10 @@ const HomeView = () => {
 
   // Tutorial video handlers
   const handleTutorialVideo = (videoId: string, title: string) => {
+    console.log('🎥 handleTutorialVideo called:', { videoId, title });
     setCurrentTutorialVideo(videoId);
     setShowVideoModal(true);
+    console.log('🎥 Video modal should be showing now');
   };
 
   // YouTube video URL using current tutorial video
@@ -1184,7 +1186,11 @@ const HomeView = () => {
                 gap: '8px',
                 margin: '0 5px'
               }} 
-              onClick={() => setShowHelpMenu(!showHelpMenu)}
+              onClick={() => {
+                console.log('❓ Help button clicked, showHelpMenu:', showHelpMenu);
+                setShowHelpMenu(!showHelpMenu);
+                console.log('❓ Help menu should now be:', !showHelpMenu);
+              }}
             >
               <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
               Help
@@ -1211,6 +1217,7 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
+                  console.log('🏠 Home Page button clicked!');
                   setShowHelpMenu(false);
                   handleTutorialVideo('VTfeDwSUy-o', 'Home Page');
                 }}
@@ -1535,7 +1542,9 @@ const HomeView = () => {
 
       {/* Video Modal */}
       {showVideoModal && (
-        <AnimatePresence>
+        <>
+          {console.log('🎥 Video modal rendering:', { showVideoModal, currentTutorialVideo, youtubeEmbedUrl })}
+          <AnimatePresence>
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1620,6 +1629,7 @@ const HomeView = () => {
             </motion.div>
           </motion.div>
         </AnimatePresence>
+        </>
       )}
 
       {/* Auth Loading Overlay */}
