@@ -2426,15 +2426,31 @@ const VostcardStudioView: React.FC = () => {
                        id: v.id,
                        title: v.title || 'Untitled',
                        isQuickcard: v.isQuickcard,
-                       state: v.state
+                       state: v.state,
+                       visibility: (v as any).visibility
                      })));
                      const quickcards = savedVostcards.filter(card => card.isQuickcard);
                      console.log('🔧 Filtered quickcards:', quickcards.length);
                      console.log('🔧 Quickcard details:', quickcards.map(q => ({
                        id: q.id,
                        title: q.title || 'Untitled',
-                       isQuickcard: q.isQuickcard
+                       isQuickcard: q.isQuickcard,
+                       state: q.state,
+                       visibility: (q as any).visibility
                      })));
+                     
+                     // Specific check for the problematic quickcard
+                     const targetQuickcard = savedVostcards.find(v => v.id === 'quickcard_1753533464643');
+                     console.log('🎯 SPECIFIC QUICKCARD CHECK (quickcard_1753533464643):', targetQuickcard ? {
+                       found: 'YES',
+                       id: targetQuickcard.id,
+                       title: targetQuickcard.title,
+                       isQuickcard: targetQuickcard.isQuickcard,
+                       state: targetQuickcard.state,
+                       visibility: (targetQuickcard as any).visibility,
+                       userID: targetQuickcard.userID,
+                       _isMetadataOnly: (targetQuickcard as any)._isMetadataOnly
+                     } : { found: 'NO', searched_in: savedVostcards.length + ' vostcards' });
                    }}
                    disabled={isLoadingQuickcards}
                    style={{
