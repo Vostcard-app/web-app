@@ -1139,37 +1139,48 @@ const HomeView = () => {
                 Offers
               </button>
               
-              <button 
-                type="button"
-                style={{ 
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '0px 20px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                  pointerEvents: 'auto',
-                  transition: 'transform 0.1s ease',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  lineHeight: '1',
-                  gap: '8px'
-                }} 
-                onClick={() => {
-                  // To be wired later
-                  console.log('Help button clicked - to be wired later');
-                }}
-              >
-                <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
-                Help
-              </button>
             </div>
+
+          {/* Help button - positioned from right side */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '20px',
+              zIndex: 1002
+            }}
+          >
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0px 20px',
+                fontSize: '16px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '8px'
+              }} 
+              onClick={() => {
+                // To be wired later
+                console.log('Help button clicked - to be wired later');
+              }}
+            >
+              <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
+              Help
+            </button>
+          </div>
 
           {/* Recenter control */}
           <div style={{
