@@ -824,11 +824,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const deletedVostcards = await getDeletionMarkers();
         console.log(`🗑️ Found ${deletedVostcards.length} deletion markers from Firebase`);
         
-        // Get Firebase vostcards metadata only
+        // Get Firebase vostcards metadata - include both private and public for editing
         const firebaseQuery = query(
           collection(db, 'vostcards'),
-          where('userID', '==', user.uid),
-          where('visibility', '==', 'private')
+          where('userID', '==', user.uid)
+          // Removed visibility filter to get both private and public quickcards
         );
         
         const firebaseSnapshot = await getDocs(firebaseQuery);
@@ -843,10 +843,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             userID: data.userID || '',
             createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            state: 'private' as const,
+            state: data.state || 'private', // Preserve actual state from Firebase
+            visibility: data.visibility || 'private', // Track visibility separately
             hasVideo: data.hasVideo || false,
             hasPhotos: data.hasPhotos || false,
             isOffer: data.isOffer || false,
+            isQuickcard: data.isQuickcard || false, // Preserve isQuickcard flag
             offerDetails: data.offerDetails || null,
             script: data.script || null,
             scriptId: data.scriptId || null,
@@ -864,9 +866,22 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         console.log(`⚡ Found ${allFirebaseMetadata.length} vostcards metadata from Firebase`);
         
-        // Filter out deleted vostcards using Firebase deletion markers
-        const filteredMetadata = allFirebaseMetadata.filter(v => !deletedVostcards.includes(v.id));
-        console.log(`⚡ Filtered out ${allFirebaseMetadata.length - filteredMetadata.length} deleted vostcards`);
+        // Filter out deleted vostcards, but keep both private and posted quickcards
+        const filteredMetadata = allFirebaseMetadata.filter(v => {
+          // Always exclude deleted vostcards
+          if (deletedVostcards.includes(v.id)) return false;
+          
+          // Keep all private vostcards
+          if (v.visibility === 'private') return true;
+          
+          // Keep posted quickcards for editing (they have visibility: 'public')
+          if (v.visibility === 'public' && v.isQuickcard) return true;
+          
+          // Filter out other public vostcards (they're managed separately)
+          return false;
+        });
+        
+        console.log(`⚡ Filtered: ${filteredMetadata.length} kept (${filteredMetadata.filter(v => v.isQuickcard).length} quickcards), ${allFirebaseMetadata.length - filteredMetadata.length} excluded`);
         
         // Clean up any vostcards that exist in Firebase but are marked as deleted
         const firebaseVostcardsToDelete = allFirebaseMetadata.filter(v => deletedVostcards.includes(v.id));
