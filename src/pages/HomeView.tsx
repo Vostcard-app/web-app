@@ -16,7 +16,6 @@ import './HomeView.css';
 import LocationDebugger from '../components/LocationDebugger';
 import DriveModePlayer from '../components/DriveModePlayer';
 import InfoButton from '../assets/Info_button.png';
-import RoundInfoButton from '../assets/RoundInfo_Button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
@@ -185,7 +184,6 @@ const HomeView = () => {
   const [userFriends, setUserFriends] = useState<string[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [showInfoMenu, setShowInfoMenu] = useState(false);
   const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
@@ -624,7 +622,6 @@ const HomeView = () => {
   // Tutorial video handlers
   const handleTutorialVideo = (videoId: string, title: string) => {
     setCurrentTutorialVideo(videoId);
-    setShowInfoMenu(false);
     setShowVideoModal(true);
   };
 
@@ -683,7 +680,8 @@ const HomeView = () => {
               fontSize: 28, 
               fontWeight: 'bold',
               cursor: 'pointer',
-              userSelect: 'none'
+              userSelect: 'none',
+              paddingLeft: '10px'
             }}
           >
             Vōstcard
@@ -718,7 +716,7 @@ const HomeView = () => {
               size={48}
               color="white"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'pointer', paddingRight: '10px' }}
             />
           </div>
         </div>
@@ -1140,57 +1138,37 @@ const HomeView = () => {
                 <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
                 Offers
               </button>
-            </div>
-
-          {/* Video Guide button - stays in original position */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '6px',
-              right: '20px',
-              zIndex: 1002
-            }}
-          >
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                <button
-                  onClick={() => setShowInfoMenu(!showInfoMenu)}
-                  style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    padding: '4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <img 
-                    src={RoundInfoButton} 
-                    alt="Round Info Button" 
-                    style={{
-                      width: '60px',
-                      height: '60px'
-                    }}
-                  />
-                </button>
-                <div style={{
+              
+              <button 
+                type="button"
+                style={{ 
                   backgroundColor: '#002B4D',
                   color: 'white',
-                  padding: '4px 8px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: '600',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0px 20px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  pointerEvents: 'auto',
+                  transition: 'transform 0.1s ease',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   textAlign: 'center',
-                  whiteSpace: 'nowrap'
-                }}>
-                  Video Guides
-                </div>
-              </div>
+                  lineHeight: '1',
+                  gap: '8px'
+                }} 
+                onClick={() => {
+                  // To be wired later
+                  console.log('Help button clicked - to be wired later');
+                }}
+              >
+                <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
+                Help
+              </button>
             </div>
 
           {/* Recenter control */}
