@@ -184,6 +184,7 @@ const HomeView = () => {
   const [userFriends, setUserFriends] = useState<string[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
@@ -463,6 +464,23 @@ const HomeView = () => {
       }
     };
   }, [singleVostcard]); // Add singleVostcard as dependency so location handling knows when it changes
+
+  // Close help menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showHelpMenu) {
+        setShowHelpMenu(false);
+      }
+    };
+
+    if (showHelpMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showHelpMenu]);
 
   const handleLogout = async () => {
     try {
@@ -1166,15 +1184,56 @@ const HomeView = () => {
                 gap: '8px',
                 margin: '0 5px'
               }} 
-              onClick={() => {
-                // To be wired later
-                console.log('Help button clicked - to be wired later');
-              }}
+              onClick={() => setShowHelpMenu(!showHelpMenu)}
             >
               <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
               Help
             </button>
           </div>
+
+          {/* Help Menu Dropdown */}
+          {showHelpMenu && (
+            <div style={{
+              position: 'absolute',
+              top: '55px',
+              right: '15px',
+              backgroundColor: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 2001,
+              minWidth: '180px',
+              maxWidth: '200px'
+            }}>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', fontSize: '14px', fontWeight: 'bold', color: '#002B4D' }}>
+                Help Resources
+              </div>
+              
+              <button
+                onClick={() => {
+                  setShowHelpMenu(false);
+                  // To be wired next
+                  console.log('Home Page clicked - to be wired next');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #f0f0f0',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  color: '#333',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                🏠 Home Page
+              </button>
+            </div>
+          )}
 
           {/* Recenter control */}
           <div style={{
