@@ -28,7 +28,7 @@ const VostcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
-  // Debug navigation state on load only
+  // Debug navigation state on load and scroll to top
   useEffect(() => {
     console.log('🔍 VostcardDetailView loaded:', {
       vostcardList: vostcardList.length,
@@ -37,6 +37,9 @@ const VostcardDetailView: React.FC = () => {
       canGoToPrevious: vostcardList.length > 0 && currentIndex > 0,
       canGoToNext: vostcardList.length > 0 && currentIndex < vostcardList.length - 1
     });
+    
+    // Ensure page loads at top with avatar visible under banner
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [id]); // Only log when ID changes
   
   // ✅ Handle window resize for responsive banner positioning
@@ -648,6 +651,9 @@ Tap OK to continue.`;
 
   // Navigation functions
   const handlePreviousVostcard = () => {
+    // Scroll to top before navigation to show avatar under banner
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     if (vostcardList.length > 0) {
       // Use provided list navigation
       if (currentIndex > 0) {
@@ -669,6 +675,9 @@ Tap OK to continue.`;
   };
 
   const handleNextVostcard = () => {
+    // Scroll to top before navigation to show avatar under banner
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     if (vostcardList.length > 0) {
       // Use provided list navigation
       if (currentIndex < vostcardList.length - 1) {

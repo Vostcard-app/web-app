@@ -39,7 +39,7 @@ const QuickcardDetailView: React.FC = () => {
   const vostcardList = navigationState?.vostcardList || [];
   const currentIndex = navigationState?.currentIndex || 0;
   
-  // Debug navigation state on load only
+  // Debug navigation state on load and scroll to top
   useEffect(() => {
     console.log('🔍 QuickcardDetailView loaded:', {
       vostcardList: vostcardList.length,
@@ -48,6 +48,9 @@ const QuickcardDetailView: React.FC = () => {
       canGoToPrevious: vostcardList.length > 0 && currentIndex > 0,
       canGoToNext: vostcardList.length > 0 && currentIndex < vostcardList.length - 1
     });
+    
+    // Ensure page loads at top with avatar visible under banner
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [id]); // Only log when ID changes, not on every render
   
   const [quickcard, setQuickcard] = useState<any>(null);
@@ -629,6 +632,9 @@ Tap OK to continue.`;
   const canGoToNext = vostcardList.length > 0 && currentIndex < vostcardList.length - 1;
 
   const handlePreviousQuickcard = () => {
+    // Scroll to top before navigation to show avatar under banner
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     console.log('🔄 handlePreviousQuickcard called:', { canGoToPrevious, currentIndex, vostcardList: vostcardList.length });
     if (canGoToPrevious) {
       const previousId = vostcardList[currentIndex - 1];
@@ -650,6 +656,9 @@ Tap OK to continue.`;
   };
 
   const handleNextQuickcard = () => {
+    // Scroll to top before navigation to show avatar under banner
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
     console.log('🔄 handleNextQuickcard called:', { canGoToNext, currentIndex, vostcardList: vostcardList.length });
     if (canGoToNext) {
       const nextId = vostcardList[currentIndex + 1];
