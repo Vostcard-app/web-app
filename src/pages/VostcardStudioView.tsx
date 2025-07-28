@@ -77,6 +77,9 @@ const VostcardStudioView: React.FC = () => {
   // Touch drag state for mobile
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Ref for managing touch event listeners
+  const photoGridRef = useRef<HTMLDivElement | null>(null);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -682,8 +685,13 @@ const VostcardStudioView: React.FC = () => {
     setDragOverIndex(null);
   };
 
-  // Touch event handlers for mobile drag and drop
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+  // Touch event handlers for mobile drag and drop (manual event listeners)
+  const handleTouchStart = (e: TouchEvent) => {
+    const target = e.target as HTMLElement;
+    const photoIndex = target.getAttribute('data-photo-index');
+    if (!photoIndex) return;
+    
+    const index = parseInt(photoIndex);
     const touch = e.touches[0];
     setTouchStartPos({ x: touch.clientX, y: touch.clientY });
     setDraggedIndex(index);
@@ -693,7 +701,7 @@ const VostcardStudioView: React.FC = () => {
     e.preventDefault();
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: TouchEvent) => {
     if (draggedIndex === null || !touchStartPos) return;
     
     const touch = e.touches[0];
@@ -718,12 +726,10 @@ const VostcardStudioView: React.FC = () => {
     }
     
     // Prevent scrolling while dragging
-    if (isDragging) {
-      e.preventDefault();
-    }
+    e.preventDefault();
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = (e: TouchEvent) => {
     if (draggedIndex === null) return;
     
     if (isDragging && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
@@ -750,6 +756,23 @@ const VostcardStudioView: React.FC = () => {
     setTouchStartPos(null);
     setIsDragging(false);
   };
+
+  // Effect to manage touch event listeners with passive: false
+  useEffect(() => {
+    const photoGrid = photoGridRef.current;
+    if (!photoGrid) return;
+
+    // Add non-passive touch event listeners
+    photoGrid.addEventListener('touchstart', handleTouchStart, { passive: false });
+    photoGrid.addEventListener('touchmove', handleTouchMove, { passive: false });
+    photoGrid.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    return () => {
+      photoGrid.removeEventListener('touchstart', handleTouchStart);
+      photoGrid.removeEventListener('touchmove', handleTouchMove);
+      photoGrid.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [draggedIndex, touchStartPos, isDragging, dragOverIndex, quickcardPhotos, quickcardPhotoPreviews]);
 
   const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
     const file = e.target.files?.[0];
@@ -1389,12 +1412,14 @@ const VostcardStudioView: React.FC = () => {
                 }}>
                   Photos ({quickcardPhotoPreviews.length}/4)
                 </label>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '8px',
-                  marginBottom: '8px'
-                }}>
+                <div 
+                  ref={photoGridRef}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: '8px',
+                    marginBottom: '8px'
+                  }}>
                   {quickcardPhotoPreviews.map((preview, index) => (
                     <div
                       key={index}
@@ -1404,9 +1429,6 @@ const VostcardStudioView: React.FC = () => {
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                       onDragEnd={handleDragEnd}
-                      onTouchStart={(e) => handleTouchStart(e, index)}
-                      onTouchMove={handleTouchMove}
-                      onTouchEnd={handleTouchEnd}
                       onMouseDown={(e) => {
                         // Handle mouse drag for desktop
                         if (e.button === 0) { // Left mouse button only
