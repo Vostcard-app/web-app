@@ -1212,7 +1212,7 @@ const HomeView = () => {
               <button
                 onClick={() => {
                   setShowHelpMenu(false);
-                  window.open('https://youtube.com/shorts/VTfeDwSUy-o?feature=share', '_blank');
+                  handleTutorialVideo('VTfeDwSUy-o', 'Home Page');
                 }}
                 style={{
                   width: '100%',
