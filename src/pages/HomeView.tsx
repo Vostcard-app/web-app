@@ -639,22 +639,14 @@ const HomeView = () => {
 
   // Tutorial video handlers
   const handleTutorialVideo = (videoId: string, title: string) => {
-    console.log('🎥 handleTutorialVideo called:', { videoId, title });
     setCurrentTutorialVideo(videoId);
     setShowVideoModal(true);
-    console.log('🎥 Video modal should be showing now');
   };
 
   // YouTube video URL using current tutorial video
   const youtubeEmbedUrl = `https://www.youtube.com/embed/${currentTutorialVideo}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
-  console.log('🔍 VOSTCARD STUDIO DEBUG:', { 
-    userRole, 
-    isGuide: userRole === 'guide', 
-    userRoleType: typeof userRole,
-    shouldShowStudio: userRole === 'guide'
-  });
 
   return (
     <div style={{ 
@@ -1192,11 +1184,7 @@ const HomeView = () => {
                 gap: '8px',
                 margin: '0 5px'
               }} 
-              onClick={() => {
-                console.log('❓ Help button clicked, showHelpMenu:', showHelpMenu);
-                setShowHelpMenu(!showHelpMenu);
-                console.log('❓ Help menu should now be:', !showHelpMenu);
-              }}
+              onClick={() => setShowHelpMenu(!showHelpMenu)}
             >
               <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
               Help
@@ -1222,10 +1210,7 @@ const HomeView = () => {
               </div>
               
               <button
-                onClick={(e) => {
-                  console.log('🏠 Home Page button clicked!');
-                  e.preventDefault();
-                  e.stopPropagation();
+                onClick={() => {
                   setShowHelpMenu(false);
                   handleTutorialVideo('VTfeDwSUy-o', 'Home Page');
                 }}
@@ -1239,47 +1224,15 @@ const HomeView = () => {
                   fontSize: '14px',
                   textAlign: 'left',
                   color: '#333',
-                  transition: 'background-color 0.2s ease',
-                  pointerEvents: 'auto'
+                  transition: 'background-color 0.2s ease'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                onMouseDown={(e) => {
-                  console.log('🏠 Home Page button mousedown!');
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
               >
                 🏠 Home Page
               </button>
               
-              {/* Temporary refresh button for Firestore connection issues */}
-              <button
-                onClick={(e) => {
-                  console.log('🔄 Refresh Role button clicked!');
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowHelpMenu(false);
-                  refreshUserRole();
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #f0f0f0',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease',
-                  pointerEvents: 'auto'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                🔄 Refresh Account Role
-              </button>
+
             </div>
           )}
 
