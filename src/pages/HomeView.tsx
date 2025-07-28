@@ -1071,83 +1071,18 @@ const HomeView = () => {
 
           {/* Floating Controls Over Map */}
           
-          {/* ListView and Offers buttons - moved up */}
+          {/* Top buttons - evenly distributed */}
           <div
             style={{
               position: 'absolute',
               top: '8px',
-              left: '20px',
+              left: '10px',
+              right: '10px',
               display: 'flex',
               alignItems: 'center',
-              gap: '30px', // 30px spacing between buttons
-              zIndex: 1002
-            }}
-          >
-              <button 
-                type="button"
-                style={{ 
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '0px 20px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                  pointerEvents: 'auto',
-                  transition: 'transform 0.1s ease',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  lineHeight: '1',
-                  gap: '8px'
-                }} 
-                onClick={handleListViewClick}
-              >
-                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
-                List View
-              </button>
-              
-              <button 
-                type="button"
-                style={{ 
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '0px 20px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                  pointerEvents: 'auto',
-                  transition: 'transform 0.1s ease',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  lineHeight: '1',
-                  gap: '8px'
-                }} 
-                onClick={handleOffersClick}
-              >
-                <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
-                Offers
-              </button>
-              
-            </div>
-
-          {/* Help button - positioned from right side */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '8px',
-              right: '20px',
-              zIndex: 1002
+              justifyContent: 'space-evenly',
+              zIndex: 1002,
+              padding: '0 5px'
             }}
           >
             <button 
@@ -1157,7 +1092,7 @@ const HomeView = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
-                padding: '0px 20px',
+                padding: '0px 15px',
                 fontSize: '16px',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -1170,7 +1105,66 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '8px'
+                gap: '8px',
+                margin: '0 5px'
+              }} 
+              onClick={handleListViewClick}
+            >
+              <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+              List View
+            </button>
+            
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0px 15px',
+                fontSize: '16px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '8px',
+                margin: '0 5px'
+              }} 
+              onClick={handleOffersClick}
+            >
+              <span style={{ fontSize: '20px', lineHeight: '1' }}>⋮</span>
+              Offers
+            </button>
+            
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0px 15px',
+                fontSize: '16px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '8px',
+                margin: '0 5px'
               }} 
               onClick={() => {
                 // To be wired later
