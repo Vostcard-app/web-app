@@ -15,7 +15,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { loadQuickcard } = useVostcardEdit();
-  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcardsImmediate } = useVostcard();
+  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcardsImmediate, loadAllLocalVostcards } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -476,11 +476,12 @@ const VostcardStudioView: React.FC = () => {
   useEffect(() => {
     if (showQuickcardLoader) {
       const refreshQuickcards = async () => {
-        console.log('📂 Quickcard loader opened - refreshing saved vostcards...');
+        console.log('📂 Quickcard loader opened - refreshing saved vostcards with full sync...');
         setIsLoadingQuickcards(true);
         try {
-          await loadAllLocalVostcardsImmediate();
-          console.log('✅ Saved vostcards refreshed for quickcard loader');
+          // Use full sync instead of immediate load to get Firebase data too
+          await loadAllLocalVostcards();
+          console.log('✅ Saved vostcards refreshed for quickcard loader (full sync)');
         } catch (error) {
           console.error('❌ Failed to refresh saved vostcards:', error);
         } finally {
@@ -489,7 +490,7 @@ const VostcardStudioView: React.FC = () => {
       };
       refreshQuickcards();
     }
-  }, [showQuickcardLoader, loadAllLocalVostcardsImmediate]);
+  }, [showQuickcardLoader, loadAllLocalVostcards]);
 
   // Handle quickcard import
   const handleQuickcardImport = (quickcard: Vostcard) => {
@@ -1570,10 +1571,11 @@ const VostcardStudioView: React.FC = () => {
             }}>
               <button
                 onClick={async () => {
-                  console.log('📂 Opening quickcard loader - refreshing saved vostcards...');
+                  console.log('📂 Opening quickcard loader - refreshing saved vostcards with full sync...');
                   try {
-                    await loadAllLocalVostcardsImmediate();
-                    console.log('✅ Vostcards refreshed, opening loader modal');
+                    // Use full sync to get both IndexedDB and Firebase data
+                    await loadAllLocalVostcards();
+                    console.log('✅ Vostcards refreshed with full sync, opening loader modal');
                   } catch (error) {
                     console.error('❌ Failed to refresh vostcards:', error);
                   }
@@ -2469,11 +2471,12 @@ const VostcardStudioView: React.FC = () => {
                  
                  <button
                    onClick={async () => {
-                     console.log('🔄 Manually reloading quickcards...');
+                     console.log('🔄 Manually reloading quickcards with full sync...');
                      setIsLoadingQuickcards(true);
                      try {
-                       await loadAllLocalVostcardsImmediate();
-                       console.log('✅ Quickcards reloaded successfully');
+                       // Use full sync to get both IndexedDB and Firebase data
+                       await loadAllLocalVostcards();
+                       console.log('✅ Quickcards reloaded successfully with full sync');
                      } catch (error) {
                        console.error('❌ Failed to reload quickcards:', error);
                      } finally {
