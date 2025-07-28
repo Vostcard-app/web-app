@@ -904,7 +904,7 @@ Tap OK to continue.`;
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 9px 16px',
-        position: isDesktop ? 'absolute' : 'fixed', 
+        position: 'fixed', 
         top: 0,
         left: 0,
         right: 0,

@@ -21,6 +21,7 @@ export const VOSTCARD_CATEGORIES = [
   'Art & Culture',
   'Sports & Recreation',
   'Technology',
+  'Park',
   'Drive Mode', // New category for location-triggered content
   'Other'
 ] as const;

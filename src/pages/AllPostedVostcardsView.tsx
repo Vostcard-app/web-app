@@ -47,6 +47,7 @@ const AllPostedVostcardsView: React.FC = () => {
     'Gallery',
     'Restaurant',
     'Nature',
+    'Park',
     'Drive Mode Event',
     'Wish you were here',
     'Made for kids',
@@ -558,11 +559,11 @@ const AllPostedVostcardsView: React.FC = () => {
     <div 
       style={{ 
         background: '#f5f5f5', 
-        minHeight: '100vh',
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        overflow: 'auto'
+        overflow: 'hidden'
       }}
     >
       {/* Add CSS animation for spinning icon */}

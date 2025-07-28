@@ -32,6 +32,7 @@ const QuickcardStep3: React.FC = () => {
     'Gallery',
     'Restaurant',
     'Nature',
+    'Park',
     'Drive Mode Event',
     'Wish you were here',
     'Made for kids',

@@ -135,6 +135,7 @@ export const AVAILABLE_CATEGORIES = [
   'Gallery',
   'Restaurant',
   'Nature',
+  'Park',
   'Drive Mode Event',
   'Wish you were here',
   'Made for kids',
