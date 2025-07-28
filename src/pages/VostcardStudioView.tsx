@@ -85,6 +85,7 @@ const VostcardStudioView: React.FC = () => {
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingQuickcards, setIsLoadingQuickcards] = useState(false);
 
   // Drivecard creation state
   const [title, setTitle] = useState('');
@@ -470,6 +471,25 @@ const VostcardStudioView: React.FC = () => {
       }
     };
   }, []);
+
+  // Auto-refresh quickcards when loader modal opens
+  useEffect(() => {
+    if (showQuickcardLoader) {
+      const refreshQuickcards = async () => {
+        console.log('📂 Quickcard loader opened - refreshing saved vostcards...');
+        setIsLoadingQuickcards(true);
+        try {
+          await loadAllLocalVostcardsImmediate();
+          console.log('✅ Saved vostcards refreshed for quickcard loader');
+        } catch (error) {
+          console.error('❌ Failed to refresh saved vostcards:', error);
+        } finally {
+          setIsLoadingQuickcards(false);
+        }
+      };
+      refreshQuickcards();
+    }
+  }, [showQuickcardLoader, loadAllLocalVostcardsImmediate]);
 
   // Handle quickcard import
   const handleQuickcardImport = (quickcard: Vostcard) => {
@@ -1549,7 +1569,16 @@ const VostcardStudioView: React.FC = () => {
               marginBottom: '15px'
             }}>
               <button
-                onClick={() => setShowQuickcardLoader(true)}
+                onClick={async () => {
+                  console.log('📂 Opening quickcard loader - refreshing saved vostcards...');
+                  try {
+                    await loadAllLocalVostcardsImmediate();
+                    console.log('✅ Vostcards refreshed, opening loader modal');
+                  } catch (error) {
+                    console.error('❌ Failed to refresh vostcards:', error);
+                  }
+                  setShowQuickcardLoader(true);
+                }}
                 disabled={isLoading}
                 style={{
                   backgroundColor: isLoading ? '#ccc' : '#28a745',
@@ -2407,14 +2436,15 @@ const VostcardStudioView: React.FC = () => {
                        isQuickcard: q.isQuickcard
                      })));
                    }}
+                   disabled={isLoadingQuickcards}
                    style={{
-                     backgroundColor: '#17a2b8',
+                     backgroundColor: isLoadingQuickcards ? '#ccc' : '#17a2b8',
                      color: 'white',
                      border: 'none',
                      borderRadius: '4px',
                      padding: '8px 16px',
                      fontSize: '12px',
-                     cursor: 'pointer',
+                     cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer',
                      marginRight: '8px'
                    }}
                  >
@@ -2424,30 +2454,39 @@ const VostcardStudioView: React.FC = () => {
                  <button
                    onClick={async () => {
                      console.log('🔄 Manually reloading quickcards...');
+                     setIsLoadingQuickcards(true);
                      try {
                        await loadAllLocalVostcardsImmediate();
                        console.log('✅ Quickcards reloaded successfully');
                      } catch (error) {
                        console.error('❌ Failed to reload quickcards:', error);
+                     } finally {
+                       setIsLoadingQuickcards(false);
                      }
                    }}
+                   disabled={isLoadingQuickcards}
                    style={{
-                     backgroundColor: '#28a745',
+                     backgroundColor: isLoadingQuickcards ? '#ccc' : '#28a745',
                      color: 'white',
                      border: 'none',
                      borderRadius: '4px',
                      padding: '8px 16px',
                      fontSize: '12px',
-                     cursor: 'pointer'
+                     cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer'
                    }}
                  >
-                   🔄 Reload Quickcards
+                   {isLoadingQuickcards ? '🔄 Loading...' : '🔄 Reload Quickcards'}
                  </button>
                </div>
 
                              {/* Quickcard List */}
                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                 {savedVostcards.filter(card => card.isQuickcard).length === 0 ? (
+                 {isLoadingQuickcards ? (
+                   <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                     <div style={{ fontSize: '16px', marginBottom: '8px' }}>🔄 Loading quickcards...</div>
+                     <div style={{ fontSize: '12px', color: '#999' }}>Refreshing saved vostcards from storage</div>
+                   </div>
+                 ) : savedVostcards.filter(card => card.isQuickcard).length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
                      <p>No quickcards found.</p>
                      <p style={{ fontSize: '14px' }}>Create a quickcard first, then you can load it for editing.</p>
@@ -2460,7 +2499,7 @@ const VostcardStudioView: React.FC = () => {
                    savedVostcards.filter(card => card.isQuickcard).map((quickcard) => (
                      <div
                        key={quickcard.id}
-                       onClick={() => loadQuickcardForEditing(quickcard)}
+                       onClick={() => !isLoadingQuickcards && loadQuickcardForEditing(quickcard)}
                        style={{
                          display: 'flex',
                          alignItems: 'center',
@@ -2468,12 +2507,13 @@ const VostcardStudioView: React.FC = () => {
                          border: '1px solid #ddd',
                          borderRadius: '8px',
                          marginBottom: '8px',
-                         cursor: 'pointer',
-                         backgroundColor: '#f9f9f9',
-                         transition: 'background-color 0.2s'
+                         cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer',
+                         backgroundColor: isLoadingQuickcards ? '#f5f5f5' : '#f9f9f9',
+                         transition: 'background-color 0.2s',
+                         opacity: isLoadingQuickcards ? 0.6 : 1
                        }}
-                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f9f9f9'}
+                       onMouseEnter={(e) => !isLoadingQuickcards && (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+                       onMouseLeave={(e) => !isLoadingQuickcards && (e.currentTarget.style.backgroundColor = '#f9f9f9')}
                      >
                        <div style={{ flex: 1 }}>
                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
