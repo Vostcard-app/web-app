@@ -1212,8 +1212,7 @@ const HomeView = () => {
               <button
                 onClick={() => {
                   setShowHelpMenu(false);
-                  setCurrentTutorialVideo('VTfeDwSUy-o');
-                  setShowVideoModal(true);
+                  window.open('https://youtube.com/shorts/VTfeDwSUy-o?feature=share', '_blank');
                 }}
                 style={{
                   width: '100%',
