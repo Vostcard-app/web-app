@@ -1212,8 +1212,8 @@ const HomeView = () => {
               <button
                 onClick={() => {
                   setShowHelpMenu(false);
-                  // To be wired next
-                  console.log('Home Page clicked - to be wired next');
+                  setCurrentTutorialVideo('VTfeDwSUy-o');
+                  setShowVideoModal(true);
                 }}
                 style={{
                   width: '100%',
