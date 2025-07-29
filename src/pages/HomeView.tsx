@@ -263,7 +263,9 @@ const HomeView = () => {
   const hasRecenteredOnce = useRef(false);
   const [staticMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Static center - never changes
   const { isDriveModeEnabled } = useDriveMode();
-  
+
+  // Add mapRef for direct access to the Leaflet map instance
+  const mapRef = useRef<L.Map>(null);
   // Use ref to track browse location for geolocation closure
   const browseLocationRef = useRef<any>(null);
   // Use ref to track singleVostcard for geolocation closure
@@ -1107,6 +1109,7 @@ const HomeView = () => {
                 WebkitTapHighlightColor: 'transparent'
               }}
               zoomControl={false}
+              ref={mapRef}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -1217,15 +1220,15 @@ const HomeView = () => {
               })}
           {/* Active Pin Popup Overlay */}
           {(() => {
-            // Safely get the leaflet map instance from the ref
-            const leafletMap = mapRef.current;
+            // Get the leaflet map instance from the ref safely
+            const map = mapRef?.current;
             return (
-              activePin && leafletMap && (
+              activePin && map && map.latLngToContainerPoint && (
                 <div
                   style={{
                     position: 'absolute',
-                    left: `${leafletMap?.latLngToContainerPoint([activePin.lat, activePin.lng]).x ?? 0}px`,
-                    top: `${(leafletMap?.latLngToContainerPoint([activePin.lat, activePin.lng]).y ?? 0) - 60}px`,
+                    left: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).x ?? 0}px`,
+                    top: `${(map.latLngToContainerPoint([activePin.lat, activePin.lng]).y ?? 0) - 60}px`,
                     backgroundColor: 'white',
                     padding: '10px',
                     borderRadius: '8px',
