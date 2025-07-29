@@ -846,6 +846,19 @@ const HomeView = () => {
                 🎬 Vostcard Studio
               </button>
             )}
+
+            {/* 9.5. Admin Panel */}
+            {userRole === 'admin' && (
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  navigate('/admin');
+                }}
+                style={menuItemStyle}
+              >
+                🔧 Admin Panel
+              </button>
+            )}
             
             {/* 10. Settings */}
             <button
