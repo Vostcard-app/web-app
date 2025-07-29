@@ -272,7 +272,7 @@ const HomeView = () => {
     setActivePin({
       type: 'guide',
       id: vostcard.id,
-      title: vostcard.username || vostcard.title || 'Guide',
+      title: vostcard.title || vostcard.username || 'Guide Post',
       lat: vostcard.latitude,
       lng: vostcard.longitude
     });
