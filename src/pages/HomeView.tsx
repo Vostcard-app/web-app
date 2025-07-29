@@ -1161,23 +1161,39 @@ const HomeView = () => {
                         console.log('📍 Prevented context menu on pin:', vostcard.title);
                       },
                       mousedown: (e) => {
+                        // Debug for mobile touch
+                        if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                          console.log('📱 TOOLTIP DEBUG: mousedown triggered on:', vostcard.title);
+                        }
+                        
                         const timeout = setTimeout(() => {
+                          const tooltipTitle = vostcard.title || (
+                            vostcard.isOffer ? 'Untitled Offer' :
+                            vostcard.isQuickcard ? 'Untitled Quickcard' : 
+                            'Untitled Vostcard'
+                          );
+                          
+                          if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                            console.log('📱 TOOLTIP DEBUG: Showing tooltip for:', tooltipTitle);
+                            // Temporary alert for mobile debugging
+                            alert(`📱 TOOLTIP: ${tooltipTitle}`);
+                          }
+                          
                           const rect = e.target._map.getContainer().getBoundingClientRect();
                           setShowTooltip({
                             show: true,
-                            title: vostcard.title || (
-                              vostcard.isOffer ? 'Untitled Offer' :
-                              vostcard.isQuickcard ? 'Untitled Quickcard' : 
-                              'Untitled Vostcard'
-                            ),
+                            title: tooltipTitle,
                             x: e.containerPoint.x + rect.left,
                             y: e.containerPoint.y + rect.top - 50
                           });
-                        }, 500);
+                        }, 300); // Reduced from 500ms for better mobile responsiveness
                         
                         const cleanup = () => {
                           clearTimeout(timeout);
                           setShowTooltip({ show: false, title: '', x: 0, y: 0 });
+                          if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                            console.log('📱 TOOLTIP DEBUG: Tooltip cleared');
+                          }
                         };
                         
                         const handleMouseUp = () => {
@@ -1188,6 +1204,11 @@ const HomeView = () => {
                         
                         document.addEventListener('mouseup', handleMouseUp);
                         document.addEventListener('touchend', handleMouseUp);
+                        
+                        // Store timeout reference for mobile debugging
+                        if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                          console.log('📱 TOOLTIP DEBUG: Event listeners added for:', vostcard.title);
+                        }
                       }
                     }}
                   >
