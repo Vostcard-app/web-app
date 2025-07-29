@@ -1140,52 +1140,13 @@ const HomeView = () => {
                     position={position}
                     icon={icon}
                     eventHandlers={{
-                      click: (e) => {
-                        // Mobile-friendly tap and hold detection
-                        const tooltipTitle = vostcard.title || (
-                          vostcard.isOffer ? 'Untitled Offer' :
-                          vostcard.isQuickcard ? 'Untitled Quickcard' : 
-                          'Untitled Vostcard'
-                        );
-                        
-                        console.log('📱 PIN CLICKED:', tooltipTitle);
-                        
-                        // Show tooltip immediately on click for mobile
-                        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                          console.log('📱 MOBILE: Showing tooltip for:', tooltipTitle);
-                          
-                          // Calculate center position
-                          const mapContainer = e.target._map.getContainer();
-                          const rect = mapContainer.getBoundingClientRect();
-                          const centerX = rect.left + rect.width / 2;
-                          const centerY = rect.top + rect.height / 2;
-                          
-                          setShowTooltip({
-                            show: true,
-                            title: tooltipTitle,
-                            x: centerX,
-                            y: centerY - 60
-                          });
-                          
-                          // Hide tooltip and navigate after delay
-                          setTimeout(() => {
-                            setShowTooltip({ show: false, title: '', x: 0, y: 0 });
-                            
-                            // Navigate to detail view
-                            if (vostcard.isOffer) {
-                              navigate(`/offer/${vostcard.id}`);
-                            } else {
-                              navigate(`/vostcard/${vostcard.id}`);
-                            }
-                          }, 1500); // Show tooltip for 1.5 seconds, then navigate
+                      click: () => {
+                        console.log('📍 Vostcard pin clicked:', vostcard.title);
+                        // Direct navigation - no tooltip interference
+                        if (vostcard.isOffer) {
+                          navigate(`/offer/${vostcard.id}`);
                         } else {
-                          // Desktop: immediate navigation
-                          console.log('📍 Desktop pin clicked:', vostcard.title);
-                          if (vostcard.isOffer) {
-                            navigate(`/offer/${vostcard.id}`);
-                          } else {
-                            navigate(`/vostcard/${vostcard.id}`);
-                          }
+                          navigate(`/vostcard/${vostcard.id}`);
                         }
                       },
                       contextmenu: (e) => {
