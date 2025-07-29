@@ -440,11 +440,33 @@ const HomeView = () => {
     if (navigationState?.freshLoad || navigationState?.justPosted) {
       console.log('🔄 Fresh load requested after posting:', navigationState.justPosted);
       
-      // Force refresh the vostcards to show newly posted content
-      loadVostcards(true);
-      
-      // Clear the navigation state
+      // Clear navigation state first to prevent re-triggering
       navigate(location.pathname, { replace: true, state: {} });
+      
+      // Add a small delay to ensure Firebase posting is complete, then refresh multiple times
+      const refreshAfterPosting = async () => {
+        console.log('⏳ Waiting for Firebase posting to complete...');
+        
+        // Initial refresh after 1 second
+        setTimeout(() => {
+          console.log('🔄 First refresh attempt...');
+          loadVostcards(true);
+        }, 1000);
+        
+        // Second refresh after 3 seconds (in case of network delays)
+        setTimeout(() => {
+          console.log('🔄 Second refresh attempt...');
+          loadVostcards(true);
+        }, 3000);
+        
+        // Third refresh after 5 seconds (final attempt)
+        setTimeout(() => {
+          console.log('🔄 Final refresh attempt...');
+          loadVostcards(true);
+        }, 5000);
+      };
+      
+      refreshAfterPosting();
     }
   }, [location.state, navigate, location.pathname, loadVostcards]);
 
