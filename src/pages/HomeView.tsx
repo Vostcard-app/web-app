@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useVostcard } from '../context/VostcardContext';
@@ -1035,6 +1035,9 @@ const HomeView = () => {
                       }
                     }}
                   >
+                    <Tooltip permanent={false} sticky={true} direction="top" offset={[0, -10]}>
+                      <strong>{vostcard.title || (vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}</strong>
+                    </Tooltip>
                     <Popup>
                       <div style={{ textAlign: 'center', minWidth: '200px' }}>
                         <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
