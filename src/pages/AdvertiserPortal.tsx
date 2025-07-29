@@ -115,7 +115,7 @@ const AdvertiserPortal: React.FC = () => {
           </button>
         </div>
 
-        {/* Create Offer Section */}
+        {/* Offer Creator Section */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
@@ -125,26 +125,49 @@ const AdvertiserPortal: React.FC = () => {
           textAlign: 'center'
         }}>
           <h2 style={{ margin: '0 0 8px 0', color: '#28a745' }}>
-            Create an Offer
+            Offer Creator
           </h2>
           <p style={{ margin: 0, color: '#666', fontSize: '16px' }}>
-            You must update your profile before creating an offer.
+            Your profile must be up to date to create an offer.
           </p>
-          <button
-            onClick={() => navigate('/create-offer')}
-            style={{
-              marginTop: '16px',
-              padding: '12px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: 'pointer'
-            }}
-          >
-            Create Offer
-          </button>
+          <div style={{ 
+            marginTop: '16px', 
+            display: 'flex', 
+            gap: '12px', 
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
+            <button
+              onClick={() => navigate('/create-offer')}
+              style={{
+                padding: '12px 20px',
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                minWidth: '140px'
+              }}
+            >
+              Create Offer
+            </button>
+            <button
+              onClick={() => navigate('/create-offer?mode=update')}
+              style={{
+                padding: '12px 20px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                minWidth: '140px'
+              }}
+            >
+              Update Offer
+            </button>
+          </div>
         </div>
 
         {/* Stats Cards */}
