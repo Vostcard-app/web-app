@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaKey, FaUser, FaSearch } from 'react-icons/fa';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { NameMigrationService } from '../utils/nameMigration';
 
@@ -111,6 +111,72 @@ const AdminPanel: React.FC = () => {
       alert(`Migration failed: ${err}`);
     }
   };
+
+  const searchForDocument = async (docId: string) => {
+    try {
+      console.log(`🔍 Searching for document: ${docId}`);
+      
+      // Check vostcards collection
+      const vostcardRef = doc(db, 'vostcards', docId);
+      const vostcardSnap = await getDoc(vostcardRef);
+      
+      if (vostcardSnap.exists()) {
+        console.log(`✅ Found in vostcards:`, vostcardSnap.data());
+        alert(`✅ Found in vostcards collection: ${JSON.stringify(vostcardSnap.data(), null, 2)}`);
+      } else {
+        console.log(`❌ Not found in vostcards collection`);
+      }
+      
+      // Check if there are similar IDs in vostcards
+      const vostcardsQuery = query(collection(db, 'vostcards'));
+      const vostcardsSnapshot = await getDocs(vostcardsQuery);
+      
+             let similarDocs: Array<{ id: string; collection: string; data: any }> = [];
+       vostcardsSnapshot.docs.forEach(doc => {
+         if (doc.id.includes('6212fd87') || doc.id.includes(docId.substring(0, 8))) {
+           similarDocs.push({ id: doc.id, collection: 'vostcards', data: doc.data() });
+         }
+       });
+      
+      if (similarDocs.length > 0) {
+        console.log(`🔍 Found ${similarDocs.length} similar documents:`, similarDocs);
+        alert(`🔍 Found ${similarDocs.length} similar documents: ${JSON.stringify(similarDocs.map(d => ({id: d.id, title: d.data.title})), null, 2)}`);
+      } else {
+        alert(`❌ No documents found with ID: ${docId}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error searching for document:', error);
+      alert(`❌ Error searching: ${error}`);
+    }
+  };
+
+  const forceDeleteDocument = async (docId: string) => {
+    try {
+      console.log(`🗑️ Force deleting document: ${docId}`);
+      
+      // Try to delete from vostcards
+      const vostcardRef = doc(db, 'vostcards', docId);
+      await deleteDoc(vostcardRef);
+      console.log(`✅ Deleted from vostcards`);
+      
+      // Also check and delete from any metadata collections
+      try {
+        const metadataRef = doc(db, 'vostcardMetadata', docId);
+        await deleteDoc(metadataRef);
+        console.log(`✅ Deleted from vostcardMetadata`);
+      } catch (e) {
+        console.log(`ℹ️ No metadata document found`);
+      }
+      
+      alert(`✅ Force delete completed for: ${docId}`);
+      
+    } catch (error) {
+      console.error('❌ Error force deleting:', error);
+      alert(`❌ Error force deleting: ${error}`);
+    }
+  };
+
 
   if (!isAdmin) {
     return (
@@ -341,6 +407,43 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
       </div>
+      
+      <div style={{ margin: '20px 0', padding: '20px', border: '2px solid #dc3545', borderRadius: '8px' }}>
+        <h3 style={{ color: '#dc3545', margin: '0 0 15px 0' }}>🔍 Document Troubleshooting</h3>
+        
+        <button
+          onClick={() => searchForDocument('6212fd87-fd82-4844-854c-8a2ed5df235f')}
+          style={{
+            backgroundColor: '#17a2b8',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            margin: '5px',
+            fontWeight: 'bold'
+          }}
+        >
+          🔍 Search for Document
+        </button>
+        
+        <button
+          onClick={() => forceDeleteDocument('6212fd87-fd82-4844-854c-8a2ed5df235f')}
+          style={{
+            backgroundColor: '#dc3545',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            margin: '5px',
+            fontWeight: 'bold'
+          }}
+        >
+          🗑️ Force Delete Document
+        </button>
+      </div>
+      
     </div>
   );
 };
