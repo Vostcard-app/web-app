@@ -1140,40 +1140,21 @@ const HomeView = () => {
                     position={position}
                     icon={icon}
                     eventHandlers={{
-                      click: () => {
-                        console.log('📍 Vostcard pin clicked:', vostcard.title);
-                        // ✅ UNIFIED EXPERIENCE: Use VostcardDetailView for both quickcards and regular vostcards
-                        if (vostcard.isOffer) {
-                          navigate(`/offer/${vostcard.id}`);
-                        } else {
-                          // Both quickcards and regular vostcards use the same detail view
-                          navigate(`/vostcard/${vostcard.id}`);
-                        }
-                      },
-                      contextmenu: (e) => {
-                        // Prevent the browser's context menu from appearing on long press
-                        e.originalEvent?.preventDefault?.();
-                        console.log('📍 Prevented context menu on pin:', vostcard.title);
-                      },
-                      mousedown: (e) => {
-                        // Add immediate feedback for debugging
-                        console.log('📱 TOUCH DEBUG: mousedown event fired on:', vostcard.title);
-                        
-                        let touchTimer: NodeJS.Timeout;
-                        let isLongPress = false;
-                        
+                      click: (e) => {
+                        // Mobile-friendly tap and hold detection
                         const tooltipTitle = vostcard.title || (
                           vostcard.isOffer ? 'Untitled Offer' :
                           vostcard.isQuickcard ? 'Untitled Quickcard' : 
                           'Untitled Vostcard'
                         );
                         
-                        // Set up long press detection
-                        touchTimer = setTimeout(() => {
-                          isLongPress = true;
-                          console.log('📱 LONG PRESS detected for:', tooltipTitle);
+                        console.log('📱 PIN CLICKED:', tooltipTitle);
+                        
+                        // Show tooltip immediately on click for mobile
+                        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                          console.log('📱 MOBILE: Showing tooltip for:', tooltipTitle);
                           
-                          // Calculate position more reliably for mobile
+                          // Calculate center position
                           const mapContainer = e.target._map.getContainer();
                           const rect = mapContainer.getBoundingClientRect();
                           const centerX = rect.left + rect.width / 2;
@@ -1186,39 +1167,31 @@ const HomeView = () => {
                             y: centerY - 60
                           });
                           
-                          // Auto-hide after 2 seconds
+                          // Hide tooltip and navigate after delay
                           setTimeout(() => {
                             setShowTooltip({ show: false, title: '', x: 0, y: 0 });
-                          }, 2000);
-                        }, 300);
-                        
-                        const cleanup = () => {
-                          clearTimeout(touchTimer);
-                          if (!isLongPress) {
-                            console.log('📱 TOUCH DEBUG: Short tap detected, no tooltip');
+                            
+                            // Navigate to detail view
+                            if (vostcard.isOffer) {
+                              navigate(`/offer/${vostcard.id}`);
+                            } else {
+                              navigate(`/vostcard/${vostcard.id}`);
+                            }
+                          }, 1500); // Show tooltip for 1.5 seconds, then navigate
+                        } else {
+                          // Desktop: immediate navigation
+                          console.log('📍 Desktop pin clicked:', vostcard.title);
+                          if (vostcard.isOffer) {
+                            navigate(`/offer/${vostcard.id}`);
+                          } else {
+                            navigate(`/vostcard/${vostcard.id}`);
                           }
-                        };
-                        
-                        const handleEnd = (eventName: string) => {
-                          console.log('📱 TOUCH DEBUG:', eventName, 'event fired');
-                          cleanup();
-                        };
-                        
-                        // Clean up on touch end or mouse up
-                        const handleMouseUp = () => {
-                          handleEnd('mouseup');
-                          document.removeEventListener('mouseup', handleMouseUp);
-                          document.removeEventListener('touchend', handleTouchEnd);
-                        };
-                        
-                        const handleTouchEnd = () => {
-                          handleEnd('touchend');
-                          document.removeEventListener('mouseup', handleMouseUp);
-                          document.removeEventListener('touchend', handleTouchEnd);
-                        };
-                        
-                        document.addEventListener('mouseup', handleMouseUp);
-                        document.addEventListener('touchend', handleTouchEnd);
+                        }
+                      },
+                      contextmenu: (e) => {
+                        // Prevent the browser's context menu from appearing on long press
+                        e.originalEvent?.preventDefault?.();
+                        console.log('📍 Prevented context menu on pin:', vostcard.title);
                       }
                     }}
                   >
