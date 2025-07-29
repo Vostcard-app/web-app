@@ -194,6 +194,11 @@ const HomeView = () => {
   // Also add a direct effect to watch userRole changes
   useEffect(() => {
     console.log('🏪 HomeView: userRole changed to:', userRole);
+    
+    // ADMIN DEBUG: Show role on mobile (admin only)
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && userRole === 'admin') {
+      alert(`🏪 USER ROLE: ${userRole}`);
+    }
   }, [userRole]);
 
   // Mobile debugging console - ADMIN ONLY
@@ -456,6 +461,11 @@ const HomeView = () => {
         source: accuracy < 50 ? 'GPS' : 'Network/WiFi'
       });
       
+      // ADMIN DEBUG: Show all GPS updates on mobile (admin only)
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && userRole === 'admin') {
+        alert(`📍 GPS UPDATE!\nLat: ${latitude.toFixed(4)}\nRole: ${userRole}\nHasInitial: ${hasInitialPosition}`);
+      }
+      
       // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
       
@@ -470,11 +480,6 @@ const HomeView = () => {
       } else {
         console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
         console.log('🔒 MOBILE DEBUG: hasInitialPosition:', hasInitialPosition, 'shouldUpdateMapView:', shouldUpdateMapView);
-        
-        // Alert debugging for mobile (admin only)
-        if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          alert(`🔒 GPS Update - hasInitial: ${hasInitialPosition}, shouldUpdate: ${shouldUpdateMapView}`);
-        }
       }
     };
 
@@ -780,10 +785,25 @@ const HomeView = () => {
               fontWeight: 'bold',
               cursor: 'pointer',
               userSelect: 'none',
-              paddingLeft: '10px'
+              paddingLeft: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}
           >
             Vōstcard
+            {userRole === 'admin' && (
+              <span style={{
+                backgroundColor: '#ff4444',
+                color: 'white',
+                fontSize: '12px',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontWeight: 'bold'
+              }}>
+                ADMIN
+              </span>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
