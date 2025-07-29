@@ -61,11 +61,11 @@ const userIcon = new L.Icon({
 });
 
 // MapUpdater component - DISABLED automatic updates
-const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView }: { 
+const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView }: { 
   targetLocation: [number, number] | null; 
   singleVostcard?: any;
   shouldUpdateMapView: boolean;
-  setShouldUpdateMapView: (value: boolean) => void;
+  stableShouldUpdateMapView: (value: boolean) => void;
 }) => {
   const map = useMap();
 
@@ -80,13 +80,13 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, setSh
       
       map.setView(targetLocation, zoomLevel);
       // Reset the flag after updating the map
-      setShouldUpdateMapView(false);
+      stableShouldUpdateMapView(false);
       console.log('🗺️ MapUpdater: Map updated, shouldUpdateMapView reset to false');
     } else if (shouldUpdateMapView) {
       console.log('🗺️ MapUpdater: Update requested but missing targetLocation or map');
     }
     // No logging for normal case to reduce console spam
-  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView]);
+  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView]);
 
   return null;
 };
@@ -245,6 +245,11 @@ const HomeView = () => {
   const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
   const [hasInitialPosition, setHasInitialPosition] = useState(false); // Track if we've set initial position
   const [mapTargetLocation, setMapTargetLocation] = useState<[number, number] | null>(null); // Separate state for map positioning
+  
+  // Stable callback to prevent MapUpdater from re-running constantly
+  const stableShouldUpdateMapView = useCallback((value: boolean) => {
+    setShouldUpdateMapView(value);
+  }, []);
   const [staticMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Static center - never changes
   const { isDriveModeEnabled } = useDriveMode();
   
@@ -1269,7 +1274,7 @@ const HomeView = () => {
                 targetLocation={mapTargetLocation} 
                 singleVostcard={singleVostcard}
                 shouldUpdateMapView={shouldUpdateMapView}
-                setShouldUpdateMapView={setShouldUpdateMapView}
+                stableShouldUpdateMapView={stableShouldUpdateMapView}
               />
               <ZoomControls />
             </MapContainer>
