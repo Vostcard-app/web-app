@@ -74,11 +74,11 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
     if (targetLocation && map && shouldUpdateMapView) {
       console.log('🗺️ MapUpdater: EXPLICIT map update requested to:', targetLocation);
       
-      // Use higher zoom level (20) when displaying a single vostcard for "full zoom in"
-      const zoomLevel = singleVostcard ? 20 : 16;
-      console.log('🗺️ MapUpdater: Using zoom level:', zoomLevel, singleVostcard ? '(single vostcard)' : '(normal view)');
+      // Preserve user's current zoom level instead of forcing specific zoom
+      const currentZoom = map.getZoom();
+      console.log('🗺️ MapUpdater: Preserving current zoom level:', currentZoom);
       
-      map.setView(targetLocation, zoomLevel);
+      map.setView(targetLocation, currentZoom);
       // Reset the flag after updating the map
       stableShouldUpdateMapView(false);
       console.log('🗺️ MapUpdater: Map updated, shouldUpdateMapView reset to false');
