@@ -1226,23 +1226,22 @@ const HomeView = () => {
               activePin && map && map.latLngToContainerPoint && (
                 <div
                   style={{
-                    position: 'absolute',
-                    left: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).x ?? 0}px`,
-                    top: `${(map.latLngToContainerPoint([activePin.lat, activePin.lng]).y ?? 0) - 60}px`,
-                    style: undefined, // Remove nested style property if present
-                    // Updated popup styles for better visibility and readability
-                    position: 'absolute',
+                    position: 'fixed',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
                     zIndex: 1000,
                     backgroundColor: 'white',
                     border: '1px solid #ccc',
                     borderRadius: '8px',
                     padding: '10px',
-                    width: '200px',
-                    height: '75px',
+                    width: '250px',
+                    height: '100px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    fontSize: '22px',
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
                   }}
                 >
