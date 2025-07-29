@@ -966,7 +966,17 @@ const HomeView = () => {
             <MapContainer
               center={userLocation}
               zoom={16}
-              style={{ height: '100%', width: '100%' }}
+              style={{ 
+                height: '100%', 
+                width: '100%',
+                // Prevent context menus and image selection on mobile
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
               zoomControl={false}
             >
               <TileLayer
@@ -980,6 +990,13 @@ const HomeView = () => {
                 <Marker
                   position={actualUserLocation}
                   icon={userIcon}
+                  eventHandlers={{
+                    contextmenu: (e) => {
+                      // Prevent the browser's context menu from appearing on long press
+                      e.originalEvent?.preventDefault?.();
+                      console.log('📍 Prevented context menu on user location marker');
+                    }
+                  }}
                 >
                   <Popup>
                     <div style={{ textAlign: 'center' }}>
@@ -1032,11 +1049,32 @@ const HomeView = () => {
                           // Both quickcards and regular vostcards use the same detail view
                           navigate(`/vostcard/${vostcard.id}`);
                         }
+                      },
+                      contextmenu: (e) => {
+                        // Prevent the browser's context menu from appearing on long press
+                        e.originalEvent?.preventDefault?.();
+                        console.log('📍 Prevented context menu on pin:', vostcard.title);
                       }
                     }}
                   >
-                    <Tooltip permanent={false} sticky={true} direction="top" offset={[0, -10]}>
-                      <strong>{vostcard.title || (vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}</strong>
+                    <Tooltip 
+                      permanent={false} 
+                      sticky={true} 
+                      direction="top" 
+                      offset={[0, -10]}
+                      opacity={0.9}
+                      className="pin-tooltip"
+                    >
+                      <div style={{ 
+                        fontSize: '12px', 
+                        fontWeight: 'bold', 
+                        color: '#333',
+                        textAlign: 'center',
+                        maxWidth: '150px',
+                        wordWrap: 'break-word'
+                      }}>
+                        {vostcard.title || (vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
+                      </div>
                     </Tooltip>
                     <Popup>
                       <div style={{ textAlign: 'center', minWidth: '200px' }}>
