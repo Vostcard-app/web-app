@@ -1066,7 +1066,7 @@ Tap OK to continue.`;
               boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
               pointerEvents: 'auto',
               transition: 'transform 0.1s ease',
-              height: '28px',
+              height: '50px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
