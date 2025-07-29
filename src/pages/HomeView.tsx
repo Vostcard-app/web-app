@@ -470,6 +470,11 @@ const HomeView = () => {
       } else {
         console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
         console.log('🔒 MOBILE DEBUG: hasInitialPosition:', hasInitialPosition, 'shouldUpdateMapView:', shouldUpdateMapView);
+        
+        // Alert debugging for mobile (admin only)
+        if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+          alert(`🔒 GPS Update - hasInitial: ${hasInitialPosition}, shouldUpdate: ${shouldUpdateMapView}`);
+        }
       }
     };
 
