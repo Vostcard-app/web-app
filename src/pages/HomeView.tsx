@@ -177,11 +177,22 @@ const HomeView = () => {
 
   // Redirect advertisers to advertiser portal
   useEffect(() => {
-    if (!loading && userRole === 'advertiser') {
-      console.log('🏪 Redirecting advertiser to advertiser portal');
-      navigate('/advertiser-portal');
+    console.log('🏪 HomeView useEffect: Checking advertiser redirect - loading:', loading, 'userRole:', userRole, 'user:', !!user);
+    if (!loading && user && userRole === 'advertiser') {
+      console.log('🏪 HomeView useEffect: REDIRECTING advertiser to advertiser portal');
+      try {
+        navigate('/advertiser-portal');
+        console.log('🏪 HomeView useEffect: Navigate called successfully');
+      } catch (error) {
+        console.error('🏪 HomeView useEffect: Navigate failed:', error);
+      }
     }
-  }, [userRole, loading, navigate]);
+  }, [userRole, loading, navigate, user]);
+
+  // Also add a direct effect to watch userRole changes
+  useEffect(() => {
+    console.log('🏪 HomeView: userRole changed to:', userRole);
+  }, [userRole]);
 
   // State variables
   const [vostcards, setVostcards] = useState<any[]>([]);
@@ -675,6 +686,11 @@ const HomeView = () => {
   const youtubeEmbedUrl = `https://www.youtube.com/embed/${currentTutorialVideo}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
+  
+  // Add immediate advertiser check in render
+  if (!loading && user && userRole === 'advertiser') {
+    console.log('🏪 IMMEDIATE CHECK: Advertiser detected in render, should redirect!');
+  }
 
   return (
     <div style={{ 
