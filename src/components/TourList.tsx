@@ -175,16 +175,28 @@ const TourList: React.FC<TourListProps> = ({
                         onEditTour(tour);
                       }}
                       style={{
-                        background: 'none',
-                        border: 'none',
+                        background: '#f8f9fa',
+                        border: '1px solid #007aff',
                         color: '#007aff',
                         cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '4px',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        transition: 'all 0.2s ease',
+                        fontSize: '12px',
+                        fontWeight: '500'
                       }}
                       title="Edit tour"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#007aff';
+                        e.currentTarget.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = '#f8f9fa';
+                        e.currentTarget.style.color = '#007aff';
+                      }}
                     >
-                      <FaEdit size={14} />
+                      <FaEdit size={12} style={{ marginRight: '4px' }} />
+                      Edit
                     </button>
                   )}
                   {onDeleteTour && (
