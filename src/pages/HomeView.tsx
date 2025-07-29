@@ -1153,6 +1153,31 @@ const HomeView = () => {
                         // Prevent the browser's context menu from appearing on long press
                         e.originalEvent?.preventDefault?.();
                         console.log('📍 Prevented context menu on pin:', vostcard.title);
+                      },
+                      mousedown: (e) => {
+                        const timeout = setTimeout(() => {
+                          const rect = e.target._map.getContainer().getBoundingClientRect();
+                          setShowTooltip({
+                            show: true,
+                            title: vostcard.title || (vostcard.isOffer ? 'Untitled Offer' : vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard'),
+                            x: e.containerPoint.x + rect.left,
+                            y: e.containerPoint.y + rect.top - 50
+                          });
+                        }, 500);
+                        
+                        const cleanup = () => {
+                          clearTimeout(timeout);
+                          setShowTooltip({ show: false, title: '', x: 0, y: 0 });
+                        };
+                        
+                        const handleMouseUp = () => {
+                          cleanup();
+                          document.removeEventListener('mouseup', handleMouseUp);
+                          document.removeEventListener('touchend', handleMouseUp);
+                        };
+                        
+                        document.addEventListener('mouseup', handleMouseUp);
+                        document.addEventListener('touchend', handleMouseUp);
                       }
                     }}
                   >
