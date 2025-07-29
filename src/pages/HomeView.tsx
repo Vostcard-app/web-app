@@ -175,6 +175,14 @@ const HomeView = () => {
   const { isDesktop } = useResponsive();
   const shouldUseContainer = isDesktop;
 
+  // Redirect advertisers to advertiser portal
+  useEffect(() => {
+    if (!loading && userRole === 'advertiser') {
+      console.log('🏪 Redirecting advertiser to advertiser portal');
+      navigate('/advertiser-portal');
+    }
+  }, [userRole, loading, navigate]);
+
   // State variables
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loadingVostcards, setLoadingVostcards] = useState(false);
@@ -1073,13 +1081,21 @@ const HomeView = () => {
                         maxWidth: '150px',
                         wordWrap: 'break-word'
                       }}>
-                        {vostcard.title || (vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
+                        {vostcard.title || (
+                          vostcard.isOffer ? 'Untitled Offer' :
+                          vostcard.isQuickcard ? 'Untitled Quickcard' : 
+                          'Untitled Vostcard'
+                        )}
                       </div>
                     </Tooltip>
                     <Popup>
                       <div style={{ textAlign: 'center', minWidth: '200px' }}>
                         <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
-                          {vostcard.title || (vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
+                          {vostcard.title || (
+                            vostcard.isOffer ? 'Untitled Offer' :
+                            vostcard.isQuickcard ? 'Untitled Quickcard' : 
+                            'Untitled Vostcard'
+                          )}
                         </h3>
                         <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
                           {vostcard.description || 'No description'}

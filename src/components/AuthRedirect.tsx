@@ -61,16 +61,15 @@ const AuthRedirect = () => {
       return;
     }
 
-    // Allow both authenticated and unauthenticated users to access root view
-    // Commenting out auto-redirect from root so users can stay on RootView
-    // if (user && location.pathname === '/') {
-    //   if (userRole === 'advertiser') {
-    //     navigate('/advertiser-portal');
-    //   } else {
-    //     navigate('/home');
-    //   }
-    //   return;
-    // }
+    // Redirect authenticated users from root based on their role
+    if (user && location.pathname === '/') {
+      if (userRole === 'advertiser') {
+        navigate('/advertiser-portal');
+      } else {
+        navigate('/home');
+      }
+      return;
+    }
 
   }, [loading, user, userRole, location.pathname, navigate]);
 
