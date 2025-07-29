@@ -221,7 +221,7 @@ const HomeView = () => {
 
   // State variables
   const [activePin, setActivePin] = useState<{
-    type: 'vostcard' | 'guide';
+    type: 'vostcard' | 'guide' | 'offer';
     id: string;
     title: string;
     lat: number;
@@ -273,6 +273,17 @@ const HomeView = () => {
       type: 'guide',
       id: vostcard.id,
       title: vostcard.title || vostcard.username || 'Guide Post',
+      lat: vostcard.latitude,
+      lng: vostcard.longitude
+    });
+  };
+
+  // Handle offer pin clicks
+  const handleOfferPinClick = (vostcard: any) => {
+    setActivePin({
+      type: 'offer',
+      id: vostcard.id,
+      title: vostcard.title || 'Special Offer',
       lat: vostcard.latitude,
       lng: vostcard.longitude
     });
@@ -1203,14 +1214,12 @@ const HomeView = () => {
                       });
                     }
                   };
-                } else {
-                  // Offer pins: keep original navigation
-                  eventHandlers = {
-                    click: () => {
-                      navigate(`/offer/${vostcard.id}`);
-                    }
-                  };
-                }
+                                 } else {
+                   // Offer pins: show popup like other pins
+                   eventHandlers = {
+                     click: () => handleOfferPinClick(vostcard)
+                   };
+                 }
 
                 return (
                   <Marker
@@ -1267,6 +1276,8 @@ const HomeView = () => {
                      onClick={() => {
                        if (activePin?.type === 'vostcard' || activePin?.type === 'guide') {
                          navigate(`/vostcard/${activePin.id}`);
+                       } else if (activePin?.type === 'offer') {
+                         navigate(`/offer/${activePin.id}`);
                        }
                      }}
                      style={{
