@@ -50,27 +50,31 @@ const userLocationIcon = new L.Icon({
   popupAnchor: [0, -10],
 });
 
-// Map updater component to fit bounds to all markers
+// Map updater component to center on first tour item and fit tour posts
 const TourMapUpdater = ({ tourPosts, userLocation }: { tourPosts: TourPost[]; userLocation: [number, number] | null }) => {
   const map = useMap();
 
   useEffect(() => {
-    if (map) {
-      const positions = tourPosts
-        .filter(post => post.latitude && post.longitude)
-        .map(post => [post.latitude!, post.longitude!] as [number, number]);
+    if (map && tourPosts.length > 0) {
+      const validPosts = tourPosts.filter(post => post.latitude && post.longitude);
       
-      // Include user location in bounds if available
-      if (userLocation) {
-        positions.push(userLocation);
-      }
-      
-      if (positions.length > 0) {
-        const bounds = L.latLngBounds(positions);
-        map.fitBounds(bounds, { padding: [20, 20] });
+      if (validPosts.length > 0) {
+        // Center map on first tour item, not user location
+        const firstPost = validPosts[0];
+        const firstPostPosition = [firstPost.latitude!, firstPost.longitude!] as [number, number];
+        
+        if (validPosts.length === 1) {
+          // Single post - center on it with good zoom
+          map.setView(firstPostPosition, 15);
+        } else {
+          // Multiple posts - fit bounds of tour posts only (exclude user location)
+          const tourPositions = validPosts.map(post => [post.latitude!, post.longitude!] as [number, number]);
+          const bounds = L.latLngBounds(tourPositions);
+          map.fitBounds(bounds, { padding: [20, 20] });
+        }
       }
     }
-  }, [tourPosts, userLocation, map]);
+  }, [tourPosts, map]); // Removed userLocation from dependencies
 
   return null;
 };
