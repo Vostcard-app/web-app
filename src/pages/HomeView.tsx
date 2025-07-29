@@ -222,6 +222,7 @@ const HomeView = () => {
   const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
   const [hasInitialPosition, setHasInitialPosition] = useState(false); // Track if we've set initial position
   const [mapTargetLocation, setMapTargetLocation] = useState<[number, number] | null>(null); // Separate state for map positioning
+  const [staticMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Static center - never changes
   const { isDriveModeEnabled } = useDriveMode();
   
   // Use ref to track browse location for geolocation closure
@@ -251,12 +252,12 @@ const HomeView = () => {
 
   // Separate effect to clear state after location is set
   useEffect(() => {
-    if (browseLocation && userLocation) {
+    if (browseLocation && mapTargetLocation) {
       console.log('🗺️ Clearing navigation state after browse location set');
       // Clear the navigation state after the location has been set
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [browseLocation, userLocation, navigate, location.pathname]);
+  }, [browseLocation, mapTargetLocation, navigate, location.pathname]);
 
   // Update ref when browse location changes
   useEffect(() => {
@@ -509,7 +510,7 @@ const HomeView = () => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [singleVostcard]); // Add singleVostcard as dependency so location handling knows when it changes
+  }, []); // Empty dependency - location watch should only start once and never restart
 
   // Close help menu when clicking outside
   useEffect(() => {
@@ -995,10 +996,9 @@ const HomeView = () => {
           )}
 
           {/* Map */}
-          {userLocation && (
-            <MapContainer
-              center={userLocation}
-              zoom={16}
+          <MapContainer
+            center={staticMapCenter}
+            zoom={16}
               style={{ 
                 height: '100%', 
                 width: '100%',
@@ -1236,7 +1236,6 @@ const HomeView = () => {
               />
               <ZoomControls />
             </MapContainer>
-          )}
 
           {/* Floating Controls Over Map */}
           
