@@ -2043,9 +2043,32 @@ const VostcardStudioView: React.FC = () => {
                 Save
               </button>
 
-              {/* Conditional buttons based on editing state */}
-              {editingQuickcardId ? (
-                /* Update & Repost Button (when editing) */
+              {/* Post to Map Button - Always visible */}
+              <button 
+                onClick={handlePostQuickcardToMap}
+                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
+                style={{
+                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaGlobe size={12} />
+                Post to Map
+              </button>
+
+              {/* Update Button - Only visible when editing */}
+              {editingQuickcardId && (
                 <button 
                   onClick={handleUpdateAndRepostQuickcard}
                   disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
@@ -2066,31 +2089,7 @@ const VostcardStudioView: React.FC = () => {
                   }}
                 >
                   <FaEdit size={12} />
-                  Update & Repost
-                </button>
-              ) : (
-                /* Post to Map Button (when creating new) */
-                <button 
-                  onClick={handlePostQuickcardToMap}
-                  disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
-                  style={{
-                    backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
-                    color: 'white',
-                    border: 'none',
-                    padding: '12px 8px',
-                    borderRadius: '4px',
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
-                >
-                  <FaGlobe size={12} />
-                  Post to Map
+                  Update
                 </button>
               )}
             </div>
