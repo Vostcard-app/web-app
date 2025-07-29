@@ -59,11 +59,16 @@ const userIcon = new L.Icon({
 });
 
 // MapUpdater component
-const MapUpdater = ({ userLocation, singleVostcard }: { userLocation: [number, number] | null; singleVostcard?: any }) => {
+const MapUpdater = ({ userLocation, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView }: { 
+  userLocation: [number, number] | null; 
+  singleVostcard?: any;
+  shouldUpdateMapView: boolean;
+  setShouldUpdateMapView: (value: boolean) => void;
+}) => {
   const map = useMap();
 
   useEffect(() => {
-    if (userLocation && map) {
+    if (userLocation && map && shouldUpdateMapView) {
       console.log('🗺️ MapUpdater: Setting map view to:', userLocation);
       console.log('🗺️ MapUpdater: Map instance:', map);
       
@@ -72,10 +77,14 @@ const MapUpdater = ({ userLocation, singleVostcard }: { userLocation: [number, n
       console.log('️ MapUpdater: Using zoom level:', zoomLevel, singleVostcard ? '(single vostcard)' : '(normal view)');
       
       map.setView(userLocation, zoomLevel);
+      // Reset the flag after updating the map
+      setShouldUpdateMapView(false);
+    } else if (!shouldUpdateMapView) {
+      console.log('🗺️ MapUpdater: Skipping map update - shouldUpdateMapView is false');
     } else {
       console.log('🗺️ MapUpdater: Missing userLocation or map:', { userLocation, map: !!map });
     }
-  }, [userLocation, map, singleVostcard]);
+  }, [userLocation, map, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView]);
 
   return null;
 };
@@ -190,6 +199,7 @@ const HomeView = () => {
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
+  const [shouldUpdateMapView, setShouldUpdateMapView] = useState(true); // Flag to control when map should recenter
   const { isDriveModeEnabled } = useDriveMode();
   
   // Use ref to track browse location for geolocation closure
@@ -211,6 +221,7 @@ const HomeView = () => {
       setBrowseLocation(browseLocationState);
       browseLocationRef.current = browseLocationState;
       setUserLocation(browseLocationState.coordinates);
+      setShouldUpdateMapView(true); // Allow map to center on browse location
       // Remove the immediate state clearing - let it persist for this render cycle
     }
   }, [browseLocationState]);
@@ -244,6 +255,7 @@ const HomeView = () => {
         const vostcardLocation: [number, number] = [singleVostcardState.latitude, singleVostcardState.longitude];
         setUserLocation(vostcardLocation);
         setActualUserLocation(vostcardLocation);
+        setShouldUpdateMapView(true); // Allow map to center on single vostcard
         console.log('📍 Set map center to quickcard location:', vostcardLocation);
       }
       navigate(location.pathname, { replace: true, state: {} });
@@ -407,6 +419,7 @@ const HomeView = () => {
       if (userLocation === null) {
         console.log('📍 Setting initial userLocation on first load');
         setUserLocation([latitude, longitude]);
+        setShouldUpdateMapView(true); // Allow map to center on initial load
       } else {
         console.log('🔒 Map center preserved - no automatic recentering');
       }
@@ -436,6 +449,7 @@ const HomeView = () => {
       if (userLocation === null) {
         console.log('📍 Setting default location on first load due to error');
         setUserLocation(defaultLocation);
+        setShouldUpdateMapView(true); // Allow map to center on initial load
       }
       setActualUserLocation(defaultLocation);
     };
@@ -576,7 +590,8 @@ const HomeView = () => {
   const handleRecenter = () => {
     if (actualUserLocation) {
       setUserLocation(actualUserLocation);
-      console.log(' Recentered to user location:', actualUserLocation);
+      setShouldUpdateMapView(true); // Allow map to center on manual recenter
+      console.log('🎯 Recentered to user location:', actualUserLocation);
     }
   };
 
@@ -1100,7 +1115,12 @@ const HomeView = () => {
               })}
               
               {/* Map Controls */}
-              <MapUpdater userLocation={userLocation} singleVostcard={singleVostcard} />
+              <MapUpdater 
+                userLocation={userLocation} 
+                singleVostcard={singleVostcard}
+                shouldUpdateMapView={shouldUpdateMapView}
+                setShouldUpdateMapView={setShouldUpdateMapView}
+              />
               <ZoomControls />
             </MapContainer>
           )}
