@@ -195,10 +195,8 @@ const HomeView = () => {
   useEffect(() => {
     console.log('🏪 HomeView: userRole changed to:', userRole);
     
-    // ADMIN DEBUG: Show role on mobile (admin only)
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && userRole === 'admin') {
-      alert(`🏪 USER ROLE: ${userRole}`);
-    }
+    // Role change logging only
+    // Debug alerts removed per user request
   }, [userRole]);
 
   // Mobile debugging console - ADMIN ONLY
@@ -461,10 +459,7 @@ const HomeView = () => {
         source: accuracy < 50 ? 'GPS' : 'Network/WiFi'
       });
       
-      // ADMIN DEBUG: Show all GPS updates on mobile (admin only)
-      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && userRole === 'admin') {
-        alert(`📍 GPS UPDATE!\nLat: ${latitude.toFixed(4)}\nRole: ${userRole}\nHasInitial: ${hasInitialPosition}`);
-      }
+      // GPS update logging only (alerts removed per user request)
       
       // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
@@ -1161,10 +1156,7 @@ const HomeView = () => {
                         console.log('📍 Prevented context menu on pin:', vostcard.title);
                       },
                       mousedown: (e) => {
-                        // Debug for mobile touch
-                        if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                          console.log('📱 TOOLTIP DEBUG: mousedown triggered on:', vostcard.title);
-                        }
+                        // Touch event initiated
                         
                         const timeout = setTimeout(() => {
                           const tooltipTitle = vostcard.title || (
@@ -1173,10 +1165,9 @@ const HomeView = () => {
                             'Untitled Vostcard'
                           );
                           
+                          // Tooltip debug logging only (alert removed per user request)
                           if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
                             console.log('📱 TOOLTIP DEBUG: Showing tooltip for:', tooltipTitle);
-                            // Temporary alert for mobile debugging
-                            alert(`📱 TOOLTIP: ${tooltipTitle}`);
                           }
                           
                           const rect = e.target._map.getContainer().getBoundingClientRect();
@@ -1191,9 +1182,7 @@ const HomeView = () => {
                         const cleanup = () => {
                           clearTimeout(timeout);
                           setShowTooltip({ show: false, title: '', x: 0, y: 0 });
-                          if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                            console.log('📱 TOOLTIP DEBUG: Tooltip cleared');
-                          }
+                          // Tooltip cleared
                         };
                         
                         const handleMouseUp = () => {
@@ -1205,10 +1194,7 @@ const HomeView = () => {
                         document.addEventListener('mouseup', handleMouseUp);
                         document.addEventListener('touchend', handleMouseUp);
                         
-                        // Store timeout reference for mobile debugging
-                        if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                          console.log('📱 TOOLTIP DEBUG: Event listeners added for:', vostcard.title);
-                        }
+                        // Event listeners configured
                       }
                     }}
                   >
