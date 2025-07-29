@@ -1229,14 +1229,36 @@ const HomeView = () => {
                     position: 'absolute',
                     left: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).x ?? 0}px`,
                     top: `${(map.latLngToContainerPoint([activePin.lat, activePin.lng]).y ?? 0) - 60}px`,
+                    // New styles for popup
+                    position: 'absolute',
+                    zIndex: 1000,
                     backgroundColor: 'white',
-                    padding: '10px',
+                    border: '1px solid #ccc',
                     borderRadius: '8px',
-                    boxShadow: '0 0 8px rgba(0,0,0,0.2)',
-                    zIndex: 999
+                    padding: '10px',
+                    width: '75px',
+                    height: '50px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <strong>{activePin.title}</strong><br />
+                  <button
+                    onClick={() => setActivePin(null)}
+                    style={{
+                      position: 'absolute',
+                      top: '4px',
+                      right: '6px',
+                      border: 'none',
+                      background: 'transparent',
+                      fontSize: '16px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ❌
+                  </button>
+                  <strong>{activePin.title}</strong>
                   <button
                     onClick={() => {
                       if (activePin?.type === 'vostcard') {
@@ -1246,9 +1268,8 @@ const HomeView = () => {
                       }
                     }}
                   >
-                    Open
+                    Let&apos;s go see!
                   </button>
-                  <button onClick={() => setActivePin(null)}>Dismiss</button>
                 </div>
               )
             );
