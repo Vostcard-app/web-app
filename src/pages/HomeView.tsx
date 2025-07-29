@@ -1156,45 +1156,69 @@ const HomeView = () => {
                         console.log('📍 Prevented context menu on pin:', vostcard.title);
                       },
                       mousedown: (e) => {
-                        // Touch event initiated
+                        // Add immediate feedback for debugging
+                        console.log('📱 TOUCH DEBUG: mousedown event fired on:', vostcard.title);
                         
-                        const timeout = setTimeout(() => {
-                          const tooltipTitle = vostcard.title || (
-                            vostcard.isOffer ? 'Untitled Offer' :
-                            vostcard.isQuickcard ? 'Untitled Quickcard' : 
-                            'Untitled Vostcard'
-                          );
+                        let touchTimer: NodeJS.Timeout;
+                        let isLongPress = false;
+                        
+                        const tooltipTitle = vostcard.title || (
+                          vostcard.isOffer ? 'Untitled Offer' :
+                          vostcard.isQuickcard ? 'Untitled Quickcard' : 
+                          'Untitled Vostcard'
+                        );
+                        
+                        // Set up long press detection
+                        touchTimer = setTimeout(() => {
+                          isLongPress = true;
+                          console.log('📱 LONG PRESS detected for:', tooltipTitle);
                           
-                          // Tooltip debug logging only (alert removed per user request)
-                          if (userRole === 'admin' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                            console.log('📱 TOOLTIP DEBUG: Showing tooltip for:', tooltipTitle);
-                          }
+                          // Calculate position more reliably for mobile
+                          const mapContainer = e.target._map.getContainer();
+                          const rect = mapContainer.getBoundingClientRect();
+                          const centerX = rect.left + rect.width / 2;
+                          const centerY = rect.top + rect.height / 2;
                           
-                          const rect = e.target._map.getContainer().getBoundingClientRect();
                           setShowTooltip({
                             show: true,
                             title: tooltipTitle,
-                            x: e.containerPoint.x + rect.left,
-                            y: e.containerPoint.y + rect.top - 50
+                            x: centerX,
+                            y: centerY - 60
                           });
-                        }, 300); // Reduced from 500ms for better mobile responsiveness
+                          
+                          // Auto-hide after 2 seconds
+                          setTimeout(() => {
+                            setShowTooltip({ show: false, title: '', x: 0, y: 0 });
+                          }, 2000);
+                        }, 300);
                         
                         const cleanup = () => {
-                          clearTimeout(timeout);
-                          setShowTooltip({ show: false, title: '', x: 0, y: 0 });
-                          // Tooltip cleared
+                          clearTimeout(touchTimer);
+                          if (!isLongPress) {
+                            console.log('📱 TOUCH DEBUG: Short tap detected, no tooltip');
+                          }
                         };
                         
-                        const handleMouseUp = () => {
+                        const handleEnd = (eventName: string) => {
+                          console.log('📱 TOUCH DEBUG:', eventName, 'event fired');
                           cleanup();
+                        };
+                        
+                        // Clean up on touch end or mouse up
+                        const handleMouseUp = () => {
+                          handleEnd('mouseup');
                           document.removeEventListener('mouseup', handleMouseUp);
-                          document.removeEventListener('touchend', handleMouseUp);
+                          document.removeEventListener('touchend', handleTouchEnd);
+                        };
+                        
+                        const handleTouchEnd = () => {
+                          handleEnd('touchend');
+                          document.removeEventListener('mouseup', handleMouseUp);
+                          document.removeEventListener('touchend', handleTouchEnd);
                         };
                         
                         document.addEventListener('mouseup', handleMouseUp);
-                        document.addEventListener('touchend', handleMouseUp);
-                        
-                        // Event listeners configured
+                        document.addEventListener('touchend', handleTouchEnd);
                       }
                     }}
                   >
