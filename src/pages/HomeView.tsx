@@ -266,6 +266,17 @@ const HomeView = () => {
 
   // Add mapRef for direct access to the Leaflet map instance
   const mapRef = useRef<L.Map>(null);
+
+  // Handle guide pin clicks
+  const handleGuidePinClick = (vostcard: any) => {
+    setActivePin({
+      type: 'guide',
+      id: vostcard.id,
+      title: vostcard.username || vostcard.title || 'Guide',
+      lat: vostcard.latitude,
+      lng: vostcard.longitude
+    });
+  };
   // Use ref to track browse location for geolocation closure
   const browseLocationRef = useRef<any>(null);
   // Use ref to track singleVostcard for geolocation closure
@@ -1176,18 +1187,10 @@ const HomeView = () => {
 
                 // Pin event handlers for Vostcard and Guide pins
                 let eventHandlers: any = {};
-                if (isGuidePin) {
-                  eventHandlers = {
-                    click: () => {
-                      setActivePin({
-                        type: 'guide',
-                        id: vostcard.id,
-                        title: vostcard.username || 'Guide',
-                        lat: vostcard.latitude,
-                        lng: vostcard.longitude
-                      });
-                    }
-                  };
+                                 if (isGuidePin) {
+                   eventHandlers = {
+                     click: () => handleGuidePinClick(vostcard)
+                   };
                 } else if (isVostcardPin) {
                   eventHandlers = {
                     click: () => {
@@ -1218,12 +1221,12 @@ const HomeView = () => {
                   />
                 );
               })}
-          {/* Active Pin Popup Overlay */}
-          {(() => {
-            // Get the leaflet map instance from the ref safely
-            const map = mapRef?.current;
-            return (
-              activePin && map && map.latLngToContainerPoint && (
+                     {/* Active Pin Popup Overlay */}
+           {(() => {
+             // Get the leaflet map instance from the ref safely
+             const map = mapRef?.current;
+             return (
+               activePin && map && (
                 <div
                   style={{
                     position: 'fixed',
@@ -1260,17 +1263,24 @@ const HomeView = () => {
                     ❌
                   </button>
                   <strong>{activePin.title}</strong>
-                  <button
-                    onClick={() => {
-                      if (activePin?.type === 'vostcard') {
-                        navigate(`/vostcard/${activePin.id}`);
-                      } else if (activePin?.type === 'guide') {
-                        navigate(`/guide/${activePin.id}`);
-                      }
-                    }}
-                  >
-                    Let&apos;s go see!
-                  </button>
+                                     <button
+                     onClick={() => {
+                       if (activePin?.type === 'vostcard' || activePin?.type === 'guide') {
+                         navigate(`/vostcard/${activePin.id}`);
+                       }
+                     }}
+                     style={{
+                       backgroundColor: '#002B4D',
+                       color: 'white',
+                       border: 'none',
+                       borderRadius: '6px',
+                       padding: '8px 16px',
+                       fontSize: '16px',
+                       cursor: 'pointer'
+                     }}
+                   >
+                     Let&apos;s go see!
+                   </button>
                 </div>
               )
             );
