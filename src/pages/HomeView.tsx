@@ -61,32 +61,34 @@ const userIcon = new L.Icon({
 });
 
 // MapUpdater component - DISABLED automatic updates
-const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView }: { 
-  targetLocation: [number, number] | null; 
+const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce }: {
+  targetLocation: [number, number] | null;
   singleVostcard?: any;
   shouldUpdateMapView: boolean;
   stableShouldUpdateMapView: (value: boolean) => void;
+  hasRecenteredOnce: React.MutableRefObject<boolean>;
 }) => {
   const map = useMap();
 
   useEffect(() => {
     // ONLY update if explicitly requested via shouldUpdateMapView flag
-    if (targetLocation && map && shouldUpdateMapView) {
+    if (targetLocation && map && shouldUpdateMapView && !hasRecenteredOnce.current) {
       console.log('🗺️ MapUpdater: EXPLICIT map update requested to:', targetLocation);
-      
+
       // Preserve user's current zoom level instead of forcing specific zoom
       const currentZoom = map.getZoom();
       console.log('🗺️ MapUpdater: Preserving current zoom level:', currentZoom);
-      
+
       map.setView(targetLocation, currentZoom);
+      hasRecenteredOnce.current = true;
       // Reset the flag after updating the map
       stableShouldUpdateMapView(false);
       console.log('🗺️ MapUpdater: Map updated, shouldUpdateMapView reset to false');
     } else if (shouldUpdateMapView) {
-      console.log('🗺️ MapUpdater: Update requested but missing targetLocation or map');
+      console.log('🗺️ MapUpdater: Update requested but missing targetLocation or map or already recentered once');
     }
     // No logging for normal case to reduce console spam
-  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView]);
+  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce]);
 
   return null;
 };
@@ -250,6 +252,8 @@ const HomeView = () => {
   const stableShouldUpdateMapView = useCallback((value: boolean) => {
     setShouldUpdateMapView(value);
   }, []);
+  // Track if we've recentered map once after initial load or manual recenter
+  const hasRecenteredOnce = useRef(false);
   const [staticMapCenter] = useState<[number, number]>([40.7128, -74.0060]); // Static center - never changes
   const { isDriveModeEnabled } = useDriveMode();
   
@@ -652,6 +656,7 @@ const HomeView = () => {
   const handleRecenter = () => {
     if (actualUserLocation) {
       console.log('🎯 Manual recenter requested to user location:', actualUserLocation);
+      hasRecenteredOnce.current = false;
       setMapTargetLocation(actualUserLocation);
       setShouldUpdateMapView(true); // Allow map to center on manual recenter
       console.log('🎯 Map will recenter to current GPS location');
@@ -1285,11 +1290,12 @@ const HomeView = () => {
               })}
               
               {/* Map Controls */}
-              <MapUpdater 
-                targetLocation={mapTargetLocation} 
+              <MapUpdater
+                targetLocation={mapTargetLocation}
                 singleVostcard={singleVostcard}
                 shouldUpdateMapView={shouldUpdateMapView}
                 stableShouldUpdateMapView={stableShouldUpdateMapView}
+                hasRecenteredOnce={hasRecenteredOnce}
               />
               <ZoomControls />
             </MapContainer>
