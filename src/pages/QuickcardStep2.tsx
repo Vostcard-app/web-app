@@ -154,11 +154,12 @@ export default function QuickcardStep2() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100vh',
       background: 'white',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center'
+      alignItems: 'center',
+      overflow: 'hidden'
     }}>
       {/* Banner */}
       <div style={{
@@ -210,7 +211,9 @@ export default function QuickcardStep2() {
         padding: '70px 24px 24px',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center'
+        alignItems: 'center',
+        overflow: 'auto',
+        overflowX: 'hidden'
       }}>
         {/* Header */}
         <h1 style={{

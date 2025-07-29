@@ -1446,8 +1446,9 @@ const VostcardStudioView: React.FC = () => {
             maxWidth: '350px',
             backgroundColor: '#f9f9f9',
             border: '1px solid #ddd',
-            maxHeight: 'none', // ✅ Remove height limit
-            overflowY: 'visible' // ✅ Allow content to flow
+            maxHeight: 'calc(100vh - 200px)', // ✅ Set reasonable max height
+            overflowY: 'auto', // ✅ Enable internal scrolling
+            overflowX: 'hidden' // ✅ Prevent horizontal scrolling
           }}>
             <div style={{ marginBottom: '15px' }}>
               <h3 style={{ marginTop: 0, marginBottom: '8px' }}>
