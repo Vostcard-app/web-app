@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-lea
 import { Icon, LatLng } from 'leaflet';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
-import { FaHome, FaCheck, FaTimes, FaMapMarkerAlt, FaCrosshairs, FaSearch } from 'react-icons/fa';
+import { FaHome, FaCheck, FaTimes, FaMapMarkerAlt, FaCrosshairs, FaSearch, FaPlus, FaMinus } from 'react-icons/fa';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import 'leaflet/dist/leaflet.css';
 
@@ -63,6 +63,78 @@ const MapUpdater: React.FC<{ center: [number, number] }> = ({ center }) => {
   }, [center[0], center[1], map]); // Watch individual coordinates
   
   return null;
+};
+
+// Zoom controls component
+const ZoomControls = () => {
+  const map = useMap();
+
+  const handleZoomIn = () => {
+    console.log('🔍 Pin Placer: Zoom In clicked');
+    map.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    console.log('🔍 Pin Placer: Zoom Out clicked'); 
+    map.zoomOut();
+  };
+
+  return (
+    <>
+      {/* Zoom controls */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        right: 20,
+        transform: 'translateY(-50%)',
+        zIndex: 1000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}>
+        <button 
+          onClick={handleZoomIn}
+          style={{
+            background: '#fff',
+            color: '#002B4D',
+            border: '1px solid #ddd',
+            borderRadius: 8,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <FaPlus />
+        </button>
+        <button 
+          onClick={handleZoomOut}
+          style={{
+            background: '#fff',
+            color: '#002B4D',
+            border: '1px solid #ddd',
+            borderRadius: 8,
+            width: 40,
+            height: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <FaMinus />
+        </button>
+      </div>
+    </>
+  );
 };
 
 const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
@@ -498,6 +570,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
           />
           
           <MapUpdater center={pinPosition} />
+          <ZoomControls />
           
           <Marker
             position={pinPosition}
