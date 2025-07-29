@@ -220,6 +220,13 @@ const HomeView = () => {
   }, [userRole]);
 
   // State variables
+  const [activePin, setActivePin] = useState<{
+    type: 'vostcard' | 'guide';
+    id: string;
+    title: string;
+    lat: number;
+    lng: number;
+  } | null>(null);
   const [vostcards, setVostcards] = useState<any[]>([]);
   const [loadingVostcards, setLoadingVostcards] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -1161,186 +1168,72 @@ const HomeView = () => {
 
                 const position: [number, number] = [vostcard.latitude, vostcard.longitude];
                 const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
-
-                // Only add the tooltip eventHandlers for Vostcard pins (not offers)
                 const isVostcardPin = !vostcard.isOffer;
-
-                // Detect if this is a guide pin (userRole === 'guide' and not offer)
                 const isGuidePin = !vostcard.isOffer && vostcard.userRole === 'guide';
 
-                // For guide pins, show username in tooltip on long press
-                const guideEventHandlers = {
-                  click: () => {
-                    console.log('📍 Guide pin clicked:', vostcard.username || vostcard.title);
-                    navigate(`/vostcard/${vostcard.id}`);
-                  },
-                  contextmenu: (e: any) => {
-                    e.originalEvent?.preventDefault?.();
-                    console.log('📍 Prevented context menu on guide pin:', vostcard.username || vostcard.title);
-                  },
-                  mousedown: (e: any) => {
-                    const timeout = setTimeout(() => {
-                      const rect = e.target._map.getContainer().getBoundingClientRect();
-                      setShowTooltip({
-                        show: true,
+                // Pin event handlers for Vostcard and Guide pins
+                let eventHandlers: any = {};
+                if (isGuidePin) {
+                  eventHandlers = {
+                    click: () => {
+                      setActivePin({
+                        type: 'guide',
+                        id: vostcard.id,
                         title: vostcard.username || 'Guide',
-                        x: e.containerPoint.x + rect.left,
-                        y: e.containerPoint.y + rect.top - 50
+                        lat: vostcard.latitude,
+                        lng: vostcard.longitude
                       });
-                    }, 500);
-
-                    const cleanup = () => {
-                      clearTimeout(timeout);
-                      setShowTooltip({ show: false, title: '', x: 0, y: 0 });
-                    };
-
-                    const handleMouseUp = () => {
-                      cleanup();
-                      document.removeEventListener('mouseup', handleMouseUp);
-                      document.removeEventListener('touchend', handleMouseUp);
-                    };
-
-                    document.addEventListener('mouseup', handleMouseUp);
-                    document.addEventListener('touchend', handleMouseUp);
-                  }
-                };
-
-                const vostcardEventHandlers = isGuidePin
-                  ? guideEventHandlers
-                  : isVostcardPin
-                  ? {
-                      click: () => {
-                        console.log('📍 Vostcard pin clicked:', vostcard.title);
-                        navigate(`/vostcard/${vostcard.id}`);
-                      },
-                      contextmenu: (e: any) => {
-                        e.originalEvent?.preventDefault?.();
-                        console.log('📍 Prevented context menu on pin:', vostcard.title);
-                      },
-                      mousedown: (e: any) => {
-                        const timeout = setTimeout(() => {
-                          const rect = e.target._map.getContainer().getBoundingClientRect();
-                          setShowTooltip({
-                            show: true,
-                            title: vostcard.title || 'Untitled Vostcard',
-                            x: e.containerPoint.x + rect.left,
-                            y: e.containerPoint.y + rect.top - 50
-                          });
-                        }, 500);
-
-                        const cleanup = () => {
-                          clearTimeout(timeout);
-                          setShowTooltip({ show: false, title: '', x: 0, y: 0 });
-                        };
-
-                        const handleMouseUp = () => {
-                          cleanup();
-                          document.removeEventListener('mouseup', handleMouseUp);
-                          document.removeEventListener('touchend', handleMouseUp);
-                        };
-
-                        document.addEventListener('mouseup', handleMouseUp);
-                        document.addEventListener('touchend', handleMouseUp);
-                      }
                     }
-                  : {
-                      click: () => {
-                        console.log('📍 Offer pin clicked:', vostcard.title);
-                        navigate(`/offer/${vostcard.id}`);
-                      },
-                      contextmenu: (e: any) => {
-                        e.originalEvent?.preventDefault?.();
-                        console.log('📍 Prevented context menu on offer pin:', vostcard.title);
-                      }
-                    };
+                  };
+                } else if (isVostcardPin) {
+                  eventHandlers = {
+                    click: () => {
+                      setActivePin({
+                        type: 'vostcard',
+                        id: vostcard.id,
+                        title: vostcard.title || 'Untitled Vostcard',
+                        lat: vostcard.latitude,
+                        lng: vostcard.longitude
+                      });
+                    }
+                  };
+                } else {
+                  // Offer pins: keep original navigation
+                  eventHandlers = {
+                    click: () => {
+                      navigate(`/offer/${vostcard.id}`);
+                    }
+                  };
+                }
 
                 return (
                   <Marker
                     key={vostcard.id}
                     position={position}
                     icon={icon}
-                    eventHandlers={vostcardEventHandlers}
-                  >
-                    <Popup>
-                      <div style={{ textAlign: 'center', minWidth: '200px' }}>
-                        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
-                          {vostcard.title || (
-                            vostcard.isOffer ? 'Untitled Offer' :
-                            vostcard.isQuickcard ? 'Untitled Quickcard' : 
-                            'Untitled Vostcard'
-                          )}
-                        </h3>
-                        <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
-                          {vostcard.description || 'No description'}
-                        </p>
-                        
-                        {/* Show quickcard indicator */}
-                        {vostcard.isQuickcard && (
-                          <div style={{
-                            backgroundColor: '#e8f4ff',
-                            border: '1px solid #b3d9ff',
-                            borderRadius: '6px',
-                            padding: '8px',
-                            marginBottom: '12px'
-                          }}>
-                            <strong style={{ color: '#0066cc' }}>📱 Quickcard</strong>
-                            <br />
-                            <span style={{ fontSize: '12px' }}>Quick photo with location</span>
-                          </div>
-                        )}
-                        
-                        {/* Existing offer details */}
-                        {vostcard.isOffer && vostcard.offerDetails?.discount && (
-                          <div style={{
-                            backgroundColor: '#e8f4ff',
-                            border: '1px solid #b3d9ff',
-                            borderRadius: '6px',
-                            padding: '8px',
-                            marginBottom: '12px'
-                          }}>
-                            <strong style={{ color: '#0066cc' }}>🎁 Special Offer:</strong>
-                            <br />
-                            <span style={{ fontSize: '14px' }}>{vostcard.offerDetails.discount}</span>
-                            {vostcard.offerDetails.validUntil && (
-                              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-                                Valid until: {vostcard.offerDetails.validUntil}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        
-                        {/* Categories */}
-                        {vostcard.categories && Array.isArray(vostcard.categories) && vostcard.categories.length > 0 && (
-                          <p style={{ margin: '0 0 8px 0', fontSize: '12px', color: '#666' }}>
-                            <strong>Categories:</strong> {vostcard.categories.join(', ')}
-                          </p>
-                        )}
-                        
-                        <button
-                          onClick={() => {
-                            if (vostcard.isOffer) {
-                              navigate(`/offer/${vostcard.id}`);
-                            } else {
-                              navigate(`/vostcard/${vostcard.id}`);
-                            }
-                          }}
-                          style={{
-                            backgroundColor: '#002B4D',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          View Details
-                        </button>
-                      </div>
-                    </Popup>
-                  </Marker>
+                    eventHandlers={eventHandlers}
+                  />
                 );
               })}
+          {/* Active Pin Popup Overlay */}
+          {activePin && window.L && window.L.DomUtil && map && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).x}px`,
+                top: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).y - 60}px`,
+                backgroundColor: 'white',
+                padding: '10px',
+                borderRadius: '8px',
+                boxShadow: '0 0 8px rgba(0,0,0,0.2)',
+                zIndex: 999
+              }}
+            >
+              <strong>{activePin.title}</strong><br />
+              <button onClick={() => navigate(`/vostcard/${activePin.id}`)}>Open</button>
+              <button onClick={() => setActivePin(null)}>Dismiss</button>
+            </div>
+          )}
               
               {/* Map Controls */}
               <MapUpdater
