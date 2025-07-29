@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useVostcard } from '../context/VostcardContext';
@@ -219,6 +219,7 @@ const HomeView = () => {
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const [shouldUpdateMapView, setShouldUpdateMapView] = useState(true); // Flag to control when map should recenter
+  const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
   const { isDriveModeEnabled } = useDriveMode();
   
   // Use ref to track browse location for geolocation closure
@@ -1019,6 +1020,31 @@ const HomeView = () => {
                       // Prevent the browser's context menu from appearing on long press
                       e.originalEvent?.preventDefault?.();
                       console.log('📍 Prevented context menu on user location marker');
+                    },
+                    mousedown: (e) => {
+                      const timeout = setTimeout(() => {
+                        const rect = e.target._map.getContainer().getBoundingClientRect();
+                        setShowTooltip({
+                          show: true,
+                          title: 'Your Location',
+                          x: e.containerPoint.x + rect.left,
+                          y: e.containerPoint.y + rect.top - 50
+                        });
+                      }, 500);
+                      
+                      const cleanup = () => {
+                        clearTimeout(timeout);
+                        setShowTooltip({ show: false, title: '', x: 0, y: 0 });
+                      };
+                      
+                      const handleMouseUp = () => {
+                        cleanup();
+                        document.removeEventListener('mouseup', handleMouseUp);
+                        document.removeEventListener('touchend', handleMouseUp);
+                      };
+                      
+                      document.addEventListener('mouseup', handleMouseUp);
+                      document.addEventListener('touchend', handleMouseUp);
                     }
                   }}
                 >
@@ -1078,32 +1104,38 @@ const HomeView = () => {
                         // Prevent the browser's context menu from appearing on long press
                         e.originalEvent?.preventDefault?.();
                         console.log('📍 Prevented context menu on pin:', vostcard.title);
+                      },
+                      mousedown: (e) => {
+                        const timeout = setTimeout(() => {
+                          const rect = e.target._map.getContainer().getBoundingClientRect();
+                          setShowTooltip({
+                            show: true,
+                            title: vostcard.title || (
+                              vostcard.isOffer ? 'Untitled Offer' :
+                              vostcard.isQuickcard ? 'Untitled Quickcard' : 
+                              'Untitled Vostcard'
+                            ),
+                            x: e.containerPoint.x + rect.left,
+                            y: e.containerPoint.y + rect.top - 50
+                          });
+                        }, 500);
+                        
+                        const cleanup = () => {
+                          clearTimeout(timeout);
+                          setShowTooltip({ show: false, title: '', x: 0, y: 0 });
+                        };
+                        
+                        const handleMouseUp = () => {
+                          cleanup();
+                          document.removeEventListener('mouseup', handleMouseUp);
+                          document.removeEventListener('touchend', handleMouseUp);
+                        };
+                        
+                        document.addEventListener('mouseup', handleMouseUp);
+                        document.addEventListener('touchend', handleMouseUp);
                       }
                     }}
                   >
-                    <Tooltip 
-                      permanent={false} 
-                      sticky={true} 
-                      direction="top" 
-                      offset={[0, -10]}
-                      opacity={0.9}
-                      className="pin-tooltip"
-                    >
-                      <div style={{ 
-                        fontSize: '12px', 
-                        fontWeight: 'bold', 
-                        color: '#333',
-                        textAlign: 'center',
-                        maxWidth: '150px',
-                        wordWrap: 'break-word'
-                      }}>
-                        {vostcard.title || (
-                          vostcard.isOffer ? 'Untitled Offer' :
-                          vostcard.isQuickcard ? 'Untitled Quickcard' : 
-                          'Untitled Vostcard'
-                        )}
-                      </div>
-                    </Tooltip>
                     <Popup>
                       <div style={{ textAlign: 'center', minWidth: '200px' }}>
                         <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
@@ -1414,6 +1446,32 @@ const HomeView = () => {
             </button>
           </div>
         </div>
+
+        {/* Custom Tooltip Overlay */}
+        {showTooltip.show && (
+          <div
+            style={{
+              position: 'fixed',
+              left: showTooltip.x,
+              top: showTooltip.y,
+              transform: 'translateX(-50%)',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              maxWidth: '150px',
+              wordWrap: 'break-word',
+              zIndex: 10000,
+              pointerEvents: 'none',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+            }}
+          >
+            {showTooltip.title}
+          </div>
+        )}
 
         {/* Drive Mode Player */}
         {userLocation && (
