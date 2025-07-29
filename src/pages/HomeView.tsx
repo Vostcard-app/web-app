@@ -474,8 +474,8 @@ const HomeView = () => {
         console.log('📍 MOBILE DEBUG: Setting initial position ONCE on first load');
         console.log('📍 MOBILE DEBUG: Device type:', /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
         setUserLocation([latitude, longitude]);
-        // setMapTargetLocation([latitude, longitude]);
-        // setShouldUpdateMapView(true); // Allow map to center on initial load
+        setMapTargetLocation([latitude, longitude]);
+        setShouldUpdateMapView(true); // Allow map to center on initial load
         setHasInitialPosition(true); // Mark that we've set initial position
       } else {
         console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
