@@ -1138,53 +1138,27 @@ const HomeView = () => {
                 if (!vostcard.latitude || !vostcard.longitude) return null;
 
                 const position: [number, number] = [vostcard.latitude, vostcard.longitude];
-
-                // 🔍 DEBUG: Log icon selection for quickcards
-                if (vostcard.isQuickcard) {
-                  console.log('🔍 DEBUG: Rendering quickcard marker:', {
-                    title: vostcard.title,
-                    userRole: vostcard.userRole,
-                    isOffer: vostcard.isOffer,
-                    isQuickcard: vostcard.isQuickcard
-                  });
-                }
-
                 const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
 
-                // 🔍 DEBUG: Log which icon was selected
-                if (vostcard.isQuickcard) {
-                  const iconName = icon === guideIcon ? 'GuideIcon' :
-                                   icon === vostcardIcon ? 'VostcardIcon' :
-                                   icon === offerIcon ? 'OfferIcon' : 'Unknown';
-                  console.log('🔍 DEBUG: Selected icon for quickcard:', iconName, 'for userRole:', vostcard.userRole);
-                }
+                // Only add the tooltip eventHandlers for Vostcard pins (not offers)
+                const isVostcardPin = !vostcard.isOffer;
 
-                return (
-                  <Marker
-                    key={vostcard.id}
-                    position={position}
-                    icon={icon}
-                    eventHandlers={{
+                const vostcardEventHandlers = isVostcardPin
+                  ? {
                       click: () => {
                         console.log('📍 Vostcard pin clicked:', vostcard.title);
-                        // Direct navigation - no tooltip interference
-                        if (vostcard.isOffer) {
-                          navigate(`/offer/${vostcard.id}`);
-                        } else {
-                          navigate(`/vostcard/${vostcard.id}`);
-                        }
+                        navigate(`/vostcard/${vostcard.id}`);
                       },
-                      contextmenu: (e) => {
-                        // Prevent the browser's context menu from appearing on long press
+                      contextmenu: (e: any) => {
                         e.originalEvent?.preventDefault?.();
                         console.log('📍 Prevented context menu on pin:', vostcard.title);
                       },
-                      mousedown: (e) => {
+                      mousedown: (e: any) => {
                         const timeout = setTimeout(() => {
                           const rect = e.target._map.getContainer().getBoundingClientRect();
                           setShowTooltip({
                             show: true,
-                            title: vostcard.title || (vostcard.isOffer ? 'Untitled Offer' : vostcard.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard'),
+                            title: vostcard.title || 'Untitled Vostcard',
                             x: e.containerPoint.x + rect.left,
                             y: e.containerPoint.y + rect.top - 50
                           });
@@ -1204,7 +1178,24 @@ const HomeView = () => {
                         document.addEventListener('mouseup', handleMouseUp);
                         document.addEventListener('touchend', handleMouseUp);
                       }
-                    }}
+                    }
+                  : {
+                      click: () => {
+                        console.log('📍 Offer pin clicked:', vostcard.title);
+                        navigate(`/offer/${vostcard.id}`);
+                      },
+                      contextmenu: (e: any) => {
+                        e.originalEvent?.preventDefault?.();
+                        console.log('📍 Prevented context menu on offer pin:', vostcard.title);
+                      }
+                    };
+
+                return (
+                  <Marker
+                    key={vostcard.id}
+                    position={position}
+                    icon={icon}
+                    eventHandlers={vostcardEventHandlers}
                   >
                     <Popup>
                       <div style={{ textAlign: 'center', minWidth: '200px' }}>
@@ -1263,11 +1254,9 @@ const HomeView = () => {
                         
                         <button
                           onClick={() => {
-                            // ✅ UNIFIED EXPERIENCE: Use VostcardDetailView for both quickcards and regular vostcards
                             if (vostcard.isOffer) {
                               navigate(`/offer/${vostcard.id}`);
                             } else {
-                              // Both quickcards and regular vostcards use the same detail view
                               navigate(`/vostcard/${vostcard.id}`);
                             }
                           }}
