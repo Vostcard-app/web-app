@@ -403,12 +403,12 @@ const HomeView = () => {
       // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
       
-      // Only update userLocation if we don't have a browse location or singleVostcard
-      if (!browseLocationRef.current && !singleVostcardRef.current) {
-        console.log('📍 Setting userLocation to actual location');
+      // Only set userLocation on first load (when it's null), never recenter automatically
+      if (userLocation === null) {
+        console.log('📍 Setting initial userLocation on first load');
         setUserLocation([latitude, longitude]);
       } else {
-        console.log(' Browse location or singleVostcard active, keeping userLocation unchanged');
+        console.log('🔒 Map center preserved - no automatic recentering');
       }
     };
 
@@ -431,7 +431,12 @@ const HomeView = () => {
       console.warn('📍 Location help:', errorMsg);
       
       const defaultLocation: [number, number] = [40.7128, -74.0060];
-      setUserLocation(defaultLocation);
+      
+      // Only set default location on first load, never recenter automatically
+      if (userLocation === null) {
+        console.log('📍 Setting default location on first load due to error');
+        setUserLocation(defaultLocation);
+      }
       setActualUserLocation(defaultLocation);
     };
 
