@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+
+// Mobile debugging console - ADMIN ONLY
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -192,6 +194,24 @@ const HomeView = () => {
   // Also add a direct effect to watch userRole changes
   useEffect(() => {
     console.log('🏪 HomeView: userRole changed to:', userRole);
+  }, [userRole]);
+
+  // Mobile debugging console - ADMIN ONLY
+  useEffect(() => {
+    if (userRole === 'admin' && typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      // Only load if not already loaded
+      if (!(window as any).eruda) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+        document.head.appendChild(script);
+        script.onload = () => {
+          if ((window as any).eruda) {
+            (window as any).eruda.init();
+            console.log('📱 Admin mobile debug console loaded');
+          }
+        };
+      }
+    }
   }, [userRole]);
 
   // State variables
@@ -441,13 +461,15 @@ const HomeView = () => {
       
       // Only set initial position ONCE, never update map automatically again
       if (!hasInitialPosition) {
-        console.log('📍 Setting initial position ONCE on first load');
+        console.log('📍 MOBILE DEBUG: Setting initial position ONCE on first load');
+        console.log('📍 MOBILE DEBUG: Device type:', /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop');
         setUserLocation([latitude, longitude]);
         setMapTargetLocation([latitude, longitude]);
         setShouldUpdateMapView(true); // Allow map to center on initial load
         setHasInitialPosition(true); // Mark that we've set initial position
       } else {
-        console.log('🔒 GPS update received - actualUserLocation updated, map position unchanged');
+        console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
+        console.log('🔒 MOBILE DEBUG: hasInitialPosition:', hasInitialPosition, 'shouldUpdateMapView:', shouldUpdateMapView);
       }
     };
 
