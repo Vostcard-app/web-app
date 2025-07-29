@@ -473,6 +473,9 @@ const HomeView = () => {
       if (!hasInitialPosition) {
         console.log('📍 MOBILE DEBUG: Setting initial position ONCE on first load');
         setUserLocation([latitude, longitude]);
+        // Center the map on the user's location ONCE at initial GPS success
+        setMapTargetLocation([latitude, longitude]);
+        setShouldUpdateMapView(true);
         setHasInitialPosition(true); // Mark that we've set initial position
       } else {
         console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
