@@ -58,9 +58,9 @@ const userIcon = new L.Icon({
   popupAnchor: [0, -10],
 });
 
-// MapUpdater component
-const MapUpdater = ({ userLocation, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView }: { 
-  userLocation: [number, number] | null; 
+// MapUpdater component - DISABLED automatic updates
+const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView }: { 
+  targetLocation: [number, number] | null; 
   singleVostcard?: any;
   shouldUpdateMapView: boolean;
   setShouldUpdateMapView: (value: boolean) => void;
@@ -68,21 +68,23 @@ const MapUpdater = ({ userLocation, singleVostcard, shouldUpdateMapView, setShou
   const map = useMap();
 
   useEffect(() => {
-    if (userLocation && map && shouldUpdateMapView) {
-      console.log('🗺️ MapUpdater: UPDATING map view to:', userLocation, 'shouldUpdateMapView:', shouldUpdateMapView);
+    // ONLY update if explicitly requested via shouldUpdateMapView flag
+    if (targetLocation && map && shouldUpdateMapView) {
+      console.log('🗺️ MapUpdater: EXPLICIT map update requested to:', targetLocation);
       
       // Use higher zoom level (20) when displaying a single vostcard for "full zoom in"
       const zoomLevel = singleVostcard ? 20 : 16;
       console.log('🗺️ MapUpdater: Using zoom level:', zoomLevel, singleVostcard ? '(single vostcard)' : '(normal view)');
       
-      map.setView(userLocation, zoomLevel);
+      map.setView(targetLocation, zoomLevel);
       // Reset the flag after updating the map
       setShouldUpdateMapView(false);
       console.log('🗺️ MapUpdater: Map updated, shouldUpdateMapView reset to false');
-    } else {
-      console.log('🗺️ MapUpdater: SKIPPING update - userLocation:', !!userLocation, 'map:', !!map, 'shouldUpdateMapView:', shouldUpdateMapView);
+    } else if (shouldUpdateMapView) {
+      console.log('🗺️ MapUpdater: Update requested but missing targetLocation or map');
     }
-  }, [userLocation, map, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView]);
+    // No logging for normal case to reduce console spam
+  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView]);
 
   return null;
 };
@@ -219,6 +221,7 @@ const HomeView = () => {
   const [shouldUpdateMapView, setShouldUpdateMapView] = useState(true); // Flag to control when map should recenter
   const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
   const [hasInitialPosition, setHasInitialPosition] = useState(false); // Track if we've set initial position
+  const [mapTargetLocation, setMapTargetLocation] = useState<[number, number] | null>(null); // Separate state for map positioning
   const { isDriveModeEnabled } = useDriveMode();
   
   // Use ref to track browse location for geolocation closure
@@ -239,9 +242,9 @@ const HomeView = () => {
       console.log('📍 Setting browse location and user location...');
       setBrowseLocation(browseLocationState);
       browseLocationRef.current = browseLocationState;
-      setUserLocation(browseLocationState.coordinates);
+      setMapTargetLocation(browseLocationState.coordinates);
       setShouldUpdateMapView(true); // Allow map to center on browse location
-      console.log('🗺️ Navigation: Setting location for browse area (intentional override)');
+      console.log('🗺️ Navigation: Setting map target for browse area (intentional override)');
       // Remove the immediate state clearing - let it persist for this render cycle
     }
   }, [browseLocationState]);
@@ -273,10 +276,10 @@ const HomeView = () => {
       singleVostcardRef.current = singleVostcardState;
       if (singleVostcardState.latitude && singleVostcardState.longitude) {
         const vostcardLocation: [number, number] = [singleVostcardState.latitude, singleVostcardState.longitude];
-        setUserLocation(vostcardLocation);
+        setMapTargetLocation(vostcardLocation);
         setActualUserLocation(vostcardLocation);
         setShouldUpdateMapView(true); // Allow map to center on single vostcard
-        console.log('📍 Navigation: Setting location for single vostcard (intentional override):', vostcardLocation);
+        console.log('📍 Navigation: Setting map target for single vostcard (intentional override):', vostcardLocation);
       }
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -435,14 +438,15 @@ const HomeView = () => {
       // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
       
-      // Only set userLocation on very first load, never again
+      // Only set initial position ONCE, never update map automatically again
       if (!hasInitialPosition) {
-        console.log('📍 Setting initial userLocation ONCE on first load');
+        console.log('📍 Setting initial position ONCE on first load');
         setUserLocation([latitude, longitude]);
+        setMapTargetLocation([latitude, longitude]);
         setShouldUpdateMapView(true); // Allow map to center on initial load
         setHasInitialPosition(true); // Mark that we've set initial position
       } else {
-        console.log('🔒 Initial position already set - GPS updates ignored');
+        console.log('🔒 GPS update received - actualUserLocation updated, map position unchanged');
       }
     };
 
@@ -470,6 +474,7 @@ const HomeView = () => {
       if (!hasInitialPosition) {
         console.log('📍 Setting default location ONCE on first load due to error');
         setUserLocation(defaultLocation);
+        setMapTargetLocation(defaultLocation);
         setShouldUpdateMapView(true); // Allow map to center on initial load
         setHasInitialPosition(true); // Mark that we've set initial position
       }
@@ -612,9 +617,9 @@ const HomeView = () => {
   const handleRecenter = () => {
     if (actualUserLocation) {
       console.log('🎯 Manual recenter requested to user location:', actualUserLocation);
-      setUserLocation(actualUserLocation);
+      setMapTargetLocation(actualUserLocation);
       setShouldUpdateMapView(true); // Allow map to center on manual recenter
-      // Don't reset hasInitialPosition - this is a manual action
+      console.log('🎯 Map will recenter to current GPS location');
     }
   };
 
@@ -1224,7 +1229,7 @@ const HomeView = () => {
               
               {/* Map Controls */}
               <MapUpdater 
-                userLocation={userLocation} 
+                targetLocation={mapTargetLocation} 
                 singleVostcard={singleVostcard}
                 shouldUpdateMapView={shouldUpdateMapView}
                 setShouldUpdateMapView={setShouldUpdateMapView}
