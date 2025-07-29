@@ -1230,7 +1230,17 @@ const HomeView = () => {
               }}
             >
               <strong>{activePin.title}</strong><br />
-              <button onClick={() => navigate(`/vostcard/${activePin.id}`)}>Open</button>
+              <button
+                onClick={() => {
+                  if (activePin?.type === 'vostcard') {
+                    navigate(`/vostcard/${activePin.id}`);
+                  } else if (activePin?.type === 'guide') {
+                    navigate(`/guide/${activePin.id}`);
+                  }
+                }}
+              >
+                Open
+              </button>
               <button onClick={() => setActivePin(null)}>Dismiss</button>
             </div>
           )}
