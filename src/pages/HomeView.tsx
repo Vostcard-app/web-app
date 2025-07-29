@@ -1216,34 +1216,40 @@ const HomeView = () => {
                 );
               })}
           {/* Active Pin Popup Overlay */}
-          {activePin && window.L && window.L.DomUtil && map && (
-            <div
-              style={{
-                position: 'absolute',
-                left: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).x}px`,
-                top: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).y - 60}px`,
-                backgroundColor: 'white',
-                padding: '10px',
-                borderRadius: '8px',
-                boxShadow: '0 0 8px rgba(0,0,0,0.2)',
-                zIndex: 999
-              }}
-            >
-              <strong>{activePin.title}</strong><br />
-              <button
-                onClick={() => {
-                  if (activePin?.type === 'vostcard') {
-                    navigate(`/vostcard/${activePin.id}`);
-                  } else if (activePin?.type === 'guide') {
-                    navigate(`/guide/${activePin.id}`);
-                  }
-                }}
-              >
-                Open
-              </button>
-              <button onClick={() => setActivePin(null)}>Dismiss</button>
-            </div>
-          )}
+          {(() => {
+            // Safely get the leaflet map instance from the ref
+            const leafletMap = mapRef.current;
+            return (
+              activePin && leafletMap && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: `${leafletMap?.latLngToContainerPoint([activePin.lat, activePin.lng]).x ?? 0}px`,
+                    top: `${(leafletMap?.latLngToContainerPoint([activePin.lat, activePin.lng]).y ?? 0) - 60}px`,
+                    backgroundColor: 'white',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    boxShadow: '0 0 8px rgba(0,0,0,0.2)',
+                    zIndex: 999
+                  }}
+                >
+                  <strong>{activePin.title}</strong><br />
+                  <button
+                    onClick={() => {
+                      if (activePin?.type === 'vostcard') {
+                        navigate(`/vostcard/${activePin.id}`);
+                      } else if (activePin?.type === 'guide') {
+                        navigate(`/guide/${activePin.id}`);
+                      }
+                    }}
+                  >
+                    Open
+                  </button>
+                  <button onClick={() => setActivePin(null)}>Dismiss</button>
+                </div>
+              )
+            );
+          })()}
               
               {/* Map Controls */}
               <MapUpdater
