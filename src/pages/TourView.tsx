@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee } from 'react-icons/fa';
+import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee, FaCrosshairs } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -50,31 +50,15 @@ const userLocationIcon = new L.Icon({
   popupAnchor: [0, -10],
 });
 
-// Map updater component to center on first tour item and fit tour posts
-const TourMapUpdater = ({ tourPosts, userLocation }: { tourPosts: TourPost[]; userLocation: [number, number] | null }) => {
+// Map updater component - captures map reference
+const TourMapUpdater = ({ setMapRef }: { setMapRef: (map: L.Map) => void }) => {
   const map = useMap();
-
+  
   useEffect(() => {
-    if (map && tourPosts.length > 0) {
-      const validPosts = tourPosts.filter(post => post.latitude && post.longitude);
-      
-      if (validPosts.length > 0) {
-        // Center map on first tour item, not user location
-        const firstPost = validPosts[0];
-        const firstPostPosition = [firstPost.latitude!, firstPost.longitude!] as [number, number];
-        
-        if (validPosts.length === 1) {
-          // Single post - center on it with good zoom
-          map.setView(firstPostPosition, 15);
-        } else {
-          // Multiple posts - fit bounds of tour posts only (exclude user location)
-          const tourPositions = validPosts.map(post => [post.latitude!, post.longitude!] as [number, number]);
-          const bounds = L.latLngBounds(tourPositions);
-          map.fitBounds(bounds, { padding: [20, 20] });
-        }
-      }
+    if (map) {
+      setMapRef(map);
     }
-  }, [tourPosts, map]); // Removed userLocation from dependencies
+  }, [map, setMapRef]);
 
   return null;
 };
@@ -89,6 +73,7 @@ const TourView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [mapRef, setMapRef] = useState<L.Map | null>(null);
 
   const getTourTerminology = () => {
     // Try to get user role from tour creator
@@ -105,6 +90,26 @@ const TourView: React.FC = () => {
       return quickcardIcon;
     }
     return vostcardIcon;
+  };
+
+  // Function to recenter map on tour posts
+  const handleRecenterOnTour = () => {
+    if (!mapRef || tourPosts.length === 0) return;
+    
+    const validPosts = tourPosts.filter(post => post.latitude && post.longitude);
+    
+    if (validPosts.length > 0) {
+      if (validPosts.length === 1) {
+        // Single post - center on it with good zoom
+        const firstPost = validPosts[0];
+        mapRef.setView([firstPost.latitude!, firstPost.longitude!], 15);
+      } else {
+        // Multiple posts - fit bounds of tour posts only
+        const tourPositions = validPosts.map(post => [post.latitude!, post.longitude!] as [number, number]);
+        const bounds = L.latLngBounds(tourPositions);
+        mapRef.fitBounds(bounds, { padding: [20, 20] });
+      }
+    }
   };
 
   // Get user location
@@ -327,6 +332,31 @@ const TourView: React.FC = () => {
           <FaList size={14} />
           List View
         </button>
+        
+        {/* Recenter Button - Only visible in map view */}
+        {viewMode === 'map' && tourPosts.length > 0 && (
+          <button
+            onClick={handleRecenterOnTour}
+            disabled={!mapRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: mapRef ? 'pointer' : 'not-allowed',
+              fontSize: '14px',
+              fontWeight: '500',
+              backgroundColor: mapRef ? '#28a745' : '#e0e0e0',
+              color: mapRef ? 'white' : '#999',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <FaCrosshairs size={14} />
+            Recenter Tour
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -372,13 +402,14 @@ const TourView: React.FC = () => {
                 doubleClickZoom={true}
                 dragging={true}
                 touchZoom={true}
+                
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 
-                <TourMapUpdater tourPosts={tourPosts} userLocation={userLocation} />
+                <TourMapUpdater setMapRef={setMapRef} />
                 
                 {/* User Location Marker */}
                 {userLocation && (
