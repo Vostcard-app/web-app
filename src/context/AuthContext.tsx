@@ -13,6 +13,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   convertUserToGuide: (userIdToConvert: string) => Promise<void>;
+  convertUserToAdmin: (userIdToConvert: string) => Promise<void>;
   refreshUserRole: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -49,6 +50,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log(`✅ User ${userIdToConvert} converted to Guide account`);
     } catch (error) {
       console.error('❌ Error converting user to Guide:', error);
+      throw error;
+    }
+  };
+
+  // Admin function to convert user to Admin
+  const convertUserToAdmin = async (userIdToConvert: string) => {
+    if (!isAdmin) {
+      throw new Error('Only administrators can convert users to Admin accounts');
+    }
+
+    try {
+      // Update user document to have admin role
+      const userDocRef = doc(db, 'users', userIdToConvert);
+      await updateDoc(userDocRef, {
+        userRole: 'admin',
+        convertedToAdminAt: new Date(),
+        convertedByAdmin: user?.uid
+      });
+      
+      console.log(`✅ User ${userIdToConvert} converted to Admin account`);
+    } catch (error) {
+      console.error('❌ Error converting user to Admin:', error);
       throw error;
     }
   };
@@ -276,6 +299,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading,
     logout,
     convertUserToGuide,
+    convertUserToAdmin,
     refreshUserRole,
     isAdmin,
   };

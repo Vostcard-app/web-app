@@ -4,20 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaKey, FaUser, FaSearch } from 'react-icons/fa';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
-import { NameMigrationService } from '../utils/nameMigration';
 
 const AdminPanel: React.FC = () => {
-  const { user, userRole, isAdmin, convertUserToGuide } = useAuth();
+  const { user, userRole, isAdmin, convertUserToGuide, convertUserToAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [migrationStatus, setMigrationStatus] = useState<{
-    isRunning: boolean;
-    processed: number;
-    errors: string[];
-  } | null>(null);
+  const [documentId, setDocumentId] = useState('');
+  const [adminSearchTerm, setAdminSearchTerm] = useState('');
+  const [adminSearchResults, setAdminSearchResults] = useState<any[]>([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
 
   // Redirect if not admin
   useEffect(() => {
@@ -81,36 +80,62 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleRunMigration = async () => {
-    if (!confirm('Are you sure you want to run the name migration? This will update all existing users to have separate first and last names.')) {
+  const handleConvertToAdmin = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to convert ${userEmail} to an Admin account? This will give them full administrative privileges.`)) {
       return;
     }
-
-    setMigrationStatus({ isRunning: true, processed: 0, errors: [] });
     
     try {
-      const results = await NameMigrationService.migrateExistingUsers();
-      setMigrationStatus({ 
-        isRunning: false, 
-        processed: results.processed, 
-        errors: results.errors 
-      });
+      await convertUserToAdmin(userId);
+      alert(`Successfully converted ${userEmail} to Admin account!`);
       
-      if (results.success) {
-        alert(`Migration completed successfully!\nProcessed: ${results.processed} users\nErrors: ${results.errors.length}`);
-      } else {
-        alert(`Migration completed with errors.\nProcessed: ${results.processed} users\nErrors: ${results.errors.length}`);
-      }
+      // Refresh admin search results
+      await handleSearchAdminUsers();
+      
     } catch (err) {
-      console.error('Migration failed:', err);
-      setMigrationStatus({ 
-        isRunning: false, 
-        processed: 0, 
-        errors: [`Migration failed: ${err}`] 
-      });
-      alert(`Migration failed: ${err}`);
+      console.error('Error converting user to Admin:', err);
+      alert('Failed to convert user to Admin. Please try again.');
     }
   };
+
+  const handleSearchAdminUsers = async () => {
+    if (!adminSearchTerm.trim()) return;
+    
+    setAdminLoading(true);
+    setAdminError(null);
+    
+    try {
+      // Search users by email or username (same logic as handleSearchUsers)
+      const usersRef = collection(db, 'users');
+      const emailQuery = query(usersRef, where('email', '==', adminSearchTerm.toLowerCase()));
+      const usernameQuery = query(usersRef, where('username', '==', adminSearchTerm));
+      
+      const [emailResults, usernameResults] = await Promise.all([
+        getDocs(emailQuery),
+        getDocs(usernameQuery)
+      ]);
+      
+      const allResults = [
+        ...emailResults.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        ...usernameResults.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      ];
+      
+      // Remove duplicates
+      const uniqueResults = allResults.filter((user, index, self) => 
+        index === self.findIndex(u => u.id === user.id)
+      );
+      
+      setAdminSearchResults(uniqueResults);
+      
+    } catch (err) {
+      console.error('Error searching users for admin conversion:', err);
+      setAdminError('Failed to search users. Please try again.');
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+
 
   const searchForDocument = async (docId: string) => {
     try {
@@ -231,76 +256,7 @@ const AdminPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* Name Migration Section */}
-      <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #dee2e6' }}>
-        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#495057' }}>
-          <FaUser style={{ marginRight: '10px' }} />
-          Name Migration Tool
-        </h2>
-        
-        <p style={{ marginBottom: '15px', color: '#6c757d' }}>
-          This tool will migrate all existing users to have separate first and last names. 
-          Users who already have separate names will be skipped.
-        </p>
-        
-        <button
-          onClick={handleRunMigration}
-          disabled={migrationStatus?.isRunning}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: migrationStatus?.isRunning ? '#6c757d' : '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: migrationStatus?.isRunning ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          {migrationStatus?.isRunning ? 'Running Migration...' : 'Run Name Migration'}
-        </button>
 
-        {migrationStatus && (
-          <div style={{ 
-            marginTop: '20px', 
-            padding: '15px', 
-            backgroundColor: migrationStatus.errors.length > 0 ? '#f8d7da' : '#d1ecf1', 
-            borderRadius: '4px', 
-            border: `1px solid ${migrationStatus.errors.length > 0 ? '#f5c6cb' : '#bee5eb'}` 
-          }}>
-            <h4 style={{ marginBottom: '10px', color: '#495057' }}>Migration Results:</h4>
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Status:</strong> {migrationStatus.isRunning ? 'Running...' : 'Completed'}
-            </div>
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Users Processed:</strong> {migrationStatus.processed}
-            </div>
-            <div style={{ marginBottom: '10px' }}>
-              <strong>Errors:</strong> {migrationStatus.errors.length}
-            </div>
-            
-            {migrationStatus.errors.length > 0 && (
-              <div style={{ marginTop: '15px' }}>
-                <h5 style={{ color: '#721c24', marginBottom: '10px' }}>Error Details:</h5>
-                <div style={{ 
-                  backgroundColor: '#f1f3f4', 
-                  padding: '10px', 
-                  borderRadius: '4px', 
-                  maxHeight: '200px', 
-                  overflowY: 'auto',
-                  fontFamily: 'monospace',
-                  fontSize: '14px'
-                }}>
-                  {migrationStatus.errors.map((error, index) => (
-                    <div key={index} style={{ marginBottom: '5px', color: '#721c24' }}>
-                      {index + 1}. {error}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
 
       {/* Convert User to Guide Section */}
       <div style={{ backgroundColor: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
@@ -407,42 +363,198 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
       </div>
-      
-      <div style={{ margin: '20px 0', padding: '20px', border: '2px solid #dc3545', borderRadius: '8px' }}>
-        <h3 style={{ color: '#dc3545', margin: '0 0 15px 0' }}>🔍 Document Troubleshooting</h3>
+
+      {/* Convert User to Admin Section */}
+      <div style={{ backgroundColor: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeaa7' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#856404' }}>
+          <FaKey style={{ marginRight: '10px' }} />
+          Convert User to Admin
+        </h2>
         
-        <button
-          onClick={() => searchForDocument('6212fd87-fd82-4844-854c-8a2ed5df235f')}
-          style={{
-            backgroundColor: '#17a2b8',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            margin: '5px',
-            fontWeight: 'bold'
-          }}
-        >
-          🔍 Search for Document
-        </button>
-        
-        <button
-          onClick={() => forceDeleteDocument('6212fd87-fd82-4844-854c-8a2ed5df235f')}
-          style={{
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            padding: '12px 24px',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            margin: '5px',
-            fontWeight: 'bold'
-          }}
-        >
-          🗑️ Force Delete Document
-        </button>
+        <div style={{ display: 'flex', marginBottom: '15px' }}>
+          <input
+            type="text"
+            placeholder="Search by email or username"
+            value={adminSearchTerm}
+            onChange={(e) => setAdminSearchTerm(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '10px',
+              borderRadius: '4px',
+              border: '1px solid #ddd',
+              marginRight: '10px'
+            }}
+            onKeyPress={(e) => e.key === 'Enter' && handleSearchAdminUsers()}
+          />
+          <button
+            onClick={handleSearchAdminUsers}
+            disabled={adminLoading}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: adminLoading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            <FaSearch style={{ marginRight: '5px' }} />
+            {adminLoading ? 'Searching...' : 'Search'}
+          </button>
+        </div>
+
+        {adminError && (
+          <div style={{ color: 'red', marginBottom: '15px' }}>
+            {adminError}
+          </div>
+        )}
+
+        {adminSearchResults.length > 0 && (
+          <div>
+            <h3 style={{ marginBottom: '10px' }}>Search Results:</h3>
+            {adminSearchResults.map((user) => (
+              <div 
+                key={user.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px',
+                  backgroundColor: 'white',
+                  borderRadius: '4px',
+                  marginBottom: '10px',
+                  border: '1px solid #ddd'
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>
+                    <FaUser style={{ marginRight: '5px' }} />
+                    {user.email}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    Username: {user.username || 'Not set'}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    Role: {user.userRole || 'user'}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    Name: {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : (user.name || 'Not set')}
+                  </div>
+                </div>
+                
+                {user.userRole !== 'admin' && (
+                  <button
+                    onClick={() => handleConvertToAdmin(user.id, user.email)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FaKey style={{ marginRight: '5px' }} />
+                    Convert to Admin
+                  </button>
+                )}
+                
+                {user.userRole === 'admin' && (
+                  <span style={{ color: '#dc3545', fontWeight: 'bold' }}>
+                    ✅ Admin Account
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+      
+             <div style={{ margin: '20px 0', padding: '20px', border: '2px solid #dc3545', borderRadius: '8px' }}>
+         <h3 style={{ color: '#dc3545', margin: '0 0 15px 0' }}>🔍 Document Troubleshooting</h3>
+         
+         <div style={{ marginBottom: '15px' }}>
+           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+             Document ID:
+           </label>
+           <input
+             type="text"
+             value={documentId}
+             onChange={(e) => setDocumentId(e.target.value)}
+             placeholder="Enter document ID (e.g., 6212fd87-fd82-4844-854c-8a2ed5df235f)"
+             style={{
+               width: '100%',
+               padding: '10px',
+               borderRadius: '4px',
+               border: '1px solid #ccc',
+               fontSize: '14px',
+               fontFamily: 'monospace'
+             }}
+           />
+         </div>
+         
+         <button
+           onClick={() => {
+             if (!documentId.trim()) {
+               alert('Please enter a document ID first');
+               return;
+             }
+             searchForDocument(documentId.trim());
+           }}
+           style={{
+             backgroundColor: '#17a2b8',
+             color: 'white',
+             border: 'none',
+             padding: '12px 24px',
+             borderRadius: '6px',
+             cursor: 'pointer',
+             margin: '5px',
+             fontWeight: 'bold'
+           }}
+         >
+           🔍 Search for Document
+         </button>
+         
+         <button
+           onClick={() => {
+             if (!documentId.trim()) {
+               alert('Please enter a document ID first');
+               return;
+             }
+             if (window.confirm(`Are you sure you want to force delete document: ${documentId.trim()}?`)) {
+               forceDeleteDocument(documentId.trim());
+             }
+           }}
+           style={{
+             backgroundColor: '#dc3545',
+             color: 'white',
+             border: 'none',
+             padding: '12px 24px',
+             borderRadius: '6px',
+             cursor: 'pointer',
+             margin: '5px',
+             fontWeight: 'bold'
+           }}
+         >
+           🗑️ Force Delete Document
+         </button>
+         
+         <button
+           onClick={() => setDocumentId('6212fd87-fd82-4844-854c-8a2ed5df235f')}
+           style={{
+             backgroundColor: '#6c757d',
+             color: 'white',
+             border: 'none',
+             padding: '8px 16px',
+             borderRadius: '4px',
+             cursor: 'pointer',
+             margin: '5px',
+             fontSize: '12px'
+           }}
+         >
+           📋 Fill Problem Document
+         </button>
+       </div>
       
     </div>
   );
