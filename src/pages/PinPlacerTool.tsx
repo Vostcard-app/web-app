@@ -313,7 +313,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
     }}>
       {/* Header */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
@@ -521,7 +521,7 @@ const PinPlacerTool: React.FC<PinPlacerToolProps> = ({ pinData }) => {
 
       {/* Controls */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed',
         bottom: 75,
         left: 0,
         right: 0,
