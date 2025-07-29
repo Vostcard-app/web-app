@@ -400,12 +400,13 @@ const VostcardStudioView: React.FC = () => {
           setQuickcardLocation(location);
           sessionStorage.removeItem('quickcardLocation');
           
-          // Restore quickcard creator state ONLY if it exists and has actual data
+          // ONLY restore quickcard creator state when coming back from pin placer
+          // This ensures clean initialization when first opening studio
           const creatorState = sessionStorage.getItem('quickcardCreatorState');
           if (creatorState) {
             const state = JSON.parse(creatorState);
             
-            // Only restore fields that have actual values (don't overwrite existing data with empty values)
+            // Only restore fields that have actual values
             if (state.title) setQuickcardTitle(state.title);
             if (state.description) setQuickcardDescription(state.description);
             if (state.categories && state.categories.length > 0) setQuickcardCategories(state.categories);
@@ -459,6 +460,20 @@ const VostcardStudioView: React.FC = () => {
 
     restoreState();
   }, []); // Only run once on mount
+
+  // Ensure clean initialization when first opening studio (clear stale data)
+  useEffect(() => {
+    // Only clear if we're not restoring from pin placer or transfer
+    const hasLocationToRestore = sessionStorage.getItem('quickcardLocation') || 
+                                  sessionStorage.getItem('drivecardLocation');
+    const hasTransferData = sessionStorage.getItem('quickcardTransferData');
+    
+    if (!hasLocationToRestore && !hasTransferData) {
+      // Clear any stale creator state to ensure clean start
+      sessionStorage.removeItem('quickcardCreatorState');
+      console.log('🧹 Cleared stale quickcard creator state for clean initialization');
+    }
+  }, []);
 
   // Separate useEffect for loading existing quickcard data - only runs once
   useEffect(() => {
@@ -1019,6 +1034,10 @@ const VostcardStudioView: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       await postQuickcard(quickcard);
       
+      // Clear any remaining sessionStorage state to ensure clean initialization next time
+      sessionStorage.removeItem('quickcardCreatorState');
+      sessionStorage.removeItem('quickcardTransferData');
+      
       resetQuickcardForm();
       alert(`🎉 Quickcard posted to map with ${quickcardPhotos.length} photo(s)! Form cleared for your next quickcard.`);
       
@@ -1101,6 +1120,10 @@ const VostcardStudioView: React.FC = () => {
       setCurrentVostcard(updatedQuickcard);
       await new Promise(resolve => setTimeout(resolve, 100));
       await postQuickcard(updatedQuickcard);
+      
+      // Clear any remaining sessionStorage state to ensure clean initialization next time
+      sessionStorage.removeItem('quickcardCreatorState');
+      sessionStorage.removeItem('quickcardTransferData');
       
       resetQuickcardForm();
       alert(`🎉 Quickcard updated and reposted to map with ${quickcardPhotos.length} photo(s)! No duplicates created.`);
