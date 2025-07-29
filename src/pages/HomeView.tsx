@@ -278,14 +278,14 @@ const HomeView = () => {
     }
   }, [browseLocationState]);
 
-  // Separate effect to clear state after location is set
+  // Separate effect to clear state after browse location is set (NOT GPS updates)
   useEffect(() => {
-    if (browseLocation && mapTargetLocation) {
+    if (browseLocation && mapTargetLocation && browseLocationState) {
       console.log('🗺️ Clearing navigation state after browse location set');
       // Clear the navigation state after the location has been set
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [browseLocation, mapTargetLocation, navigate, location.pathname]);
+  }, [browseLocation, browseLocationState, navigate, location.pathname]);
 
   // Update ref when browse location changes
   useEffect(() => {
