@@ -241,7 +241,7 @@ const HomeView = () => {
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
-  const [shouldUpdateMapView, setShouldUpdateMapView] = useState(true); // Flag to control when map should recenter
+  const [shouldUpdateMapView, setShouldUpdateMapView] = useState(false); // Flag to control when map should recenter
   const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
   const [hasInitialPosition, setHasInitialPosition] = useState(false); // Track if we've set initial position
   const [mapTargetLocation, setMapTargetLocation] = useState<[number, number] | null>(null); // Separate state for map positioning
