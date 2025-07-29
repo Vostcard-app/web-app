@@ -1143,7 +1143,49 @@ const HomeView = () => {
                 // Only add the tooltip eventHandlers for Vostcard pins (not offers)
                 const isVostcardPin = !vostcard.isOffer;
 
-                const vostcardEventHandlers = isVostcardPin
+                // Detect if this is a guide pin (userRole === 'guide' and not offer)
+                const isGuidePin = !vostcard.isOffer && vostcard.userRole === 'guide';
+
+                // For guide pins, show username in tooltip on long press
+                const guideEventHandlers = {
+                  click: () => {
+                    console.log('📍 Guide pin clicked:', vostcard.username || vostcard.title);
+                    navigate(`/vostcard/${vostcard.id}`);
+                  },
+                  contextmenu: (e: any) => {
+                    e.originalEvent?.preventDefault?.();
+                    console.log('📍 Prevented context menu on guide pin:', vostcard.username || vostcard.title);
+                  },
+                  mousedown: (e: any) => {
+                    const timeout = setTimeout(() => {
+                      const rect = e.target._map.getContainer().getBoundingClientRect();
+                      setShowTooltip({
+                        show: true,
+                        title: vostcard.username || 'Guide',
+                        x: e.containerPoint.x + rect.left,
+                        y: e.containerPoint.y + rect.top - 50
+                      });
+                    }, 500);
+
+                    const cleanup = () => {
+                      clearTimeout(timeout);
+                      setShowTooltip({ show: false, title: '', x: 0, y: 0 });
+                    };
+
+                    const handleMouseUp = () => {
+                      cleanup();
+                      document.removeEventListener('mouseup', handleMouseUp);
+                      document.removeEventListener('touchend', handleMouseUp);
+                    };
+
+                    document.addEventListener('mouseup', handleMouseUp);
+                    document.addEventListener('touchend', handleMouseUp);
+                  }
+                };
+
+                const vostcardEventHandlers = isGuidePin
+                  ? guideEventHandlers
+                  : isVostcardPin
                   ? {
                       click: () => {
                         console.log('📍 Vostcard pin clicked:', vostcard.title);
