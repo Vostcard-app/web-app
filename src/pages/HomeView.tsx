@@ -69,20 +69,18 @@ const MapUpdater = ({ userLocation, singleVostcard, shouldUpdateMapView, setShou
 
   useEffect(() => {
     if (userLocation && map && shouldUpdateMapView) {
-      console.log('🗺️ MapUpdater: Setting map view to:', userLocation);
-      console.log('🗺️ MapUpdater: Map instance:', map);
+      console.log('🗺️ MapUpdater: UPDATING map view to:', userLocation, 'shouldUpdateMapView:', shouldUpdateMapView);
       
       // Use higher zoom level (20) when displaying a single vostcard for "full zoom in"
       const zoomLevel = singleVostcard ? 20 : 16;
-      console.log('️ MapUpdater: Using zoom level:', zoomLevel, singleVostcard ? '(single vostcard)' : '(normal view)');
+      console.log('🗺️ MapUpdater: Using zoom level:', zoomLevel, singleVostcard ? '(single vostcard)' : '(normal view)');
       
       map.setView(userLocation, zoomLevel);
       // Reset the flag after updating the map
       setShouldUpdateMapView(false);
-    } else if (!shouldUpdateMapView) {
-      console.log('🗺️ MapUpdater: Skipping map update - shouldUpdateMapView is false');
+      console.log('🗺️ MapUpdater: Map updated, shouldUpdateMapView reset to false');
     } else {
-      console.log('🗺️ MapUpdater: Missing userLocation or map:', { userLocation, map: !!map });
+      console.log('🗺️ MapUpdater: SKIPPING update - userLocation:', !!userLocation, 'map:', !!map, 'shouldUpdateMapView:', shouldUpdateMapView);
     }
   }, [userLocation, map, singleVostcard, shouldUpdateMapView, setShouldUpdateMapView]);
 
@@ -220,6 +218,7 @@ const HomeView = () => {
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const [shouldUpdateMapView, setShouldUpdateMapView] = useState(true); // Flag to control when map should recenter
   const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
+  const [hasInitialPosition, setHasInitialPosition] = useState(false); // Track if we've set initial position
   const { isDriveModeEnabled } = useDriveMode();
   
   // Use ref to track browse location for geolocation closure
@@ -242,6 +241,7 @@ const HomeView = () => {
       browseLocationRef.current = browseLocationState;
       setUserLocation(browseLocationState.coordinates);
       setShouldUpdateMapView(true); // Allow map to center on browse location
+      console.log('🗺️ Navigation: Setting location for browse area (intentional override)');
       // Remove the immediate state clearing - let it persist for this render cycle
     }
   }, [browseLocationState]);
@@ -276,7 +276,7 @@ const HomeView = () => {
         setUserLocation(vostcardLocation);
         setActualUserLocation(vostcardLocation);
         setShouldUpdateMapView(true); // Allow map to center on single vostcard
-        console.log('📍 Set map center to quickcard location:', vostcardLocation);
+        console.log('📍 Navigation: Setting location for single vostcard (intentional override):', vostcardLocation);
       }
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -435,13 +435,14 @@ const HomeView = () => {
       // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
       
-      // Only set userLocation on first load (when it's null), never recenter automatically
-      if (userLocation === null) {
-        console.log('📍 Setting initial userLocation on first load');
+      // Only set userLocation on very first load, never again
+      if (!hasInitialPosition) {
+        console.log('📍 Setting initial userLocation ONCE on first load');
         setUserLocation([latitude, longitude]);
         setShouldUpdateMapView(true); // Allow map to center on initial load
+        setHasInitialPosition(true); // Mark that we've set initial position
       } else {
-        console.log('🔒 Map center preserved - no automatic recentering');
+        console.log('🔒 Initial position already set - GPS updates ignored');
       }
     };
 
@@ -465,11 +466,12 @@ const HomeView = () => {
       
       const defaultLocation: [number, number] = [40.7128, -74.0060];
       
-      // Only set default location on first load, never recenter automatically
-      if (userLocation === null) {
-        console.log('📍 Setting default location on first load due to error');
+      // Only set default location on very first load, never again
+      if (!hasInitialPosition) {
+        console.log('📍 Setting default location ONCE on first load due to error');
         setUserLocation(defaultLocation);
         setShouldUpdateMapView(true); // Allow map to center on initial load
+        setHasInitialPosition(true); // Mark that we've set initial position
       }
       setActualUserLocation(defaultLocation);
     };
@@ -609,9 +611,10 @@ const HomeView = () => {
 
   const handleRecenter = () => {
     if (actualUserLocation) {
+      console.log('🎯 Manual recenter requested to user location:', actualUserLocation);
       setUserLocation(actualUserLocation);
       setShouldUpdateMapView(true); // Allow map to center on manual recenter
-      console.log('🎯 Recentered to user location:', actualUserLocation);
+      // Don't reset hasInitialPosition - this is a manual action
     }
   };
 
