@@ -484,6 +484,8 @@ const HomeView = () => {
       }
     };
 
+
+    
     const handleLocationError = (error: GeolocationPositionError) => {
       console.error('❌ Location error:', {
         code: error.code,
@@ -1130,9 +1132,9 @@ const HomeView = () => {
               {/* Vostcard markers */}
               {filteredVostcards.map((vostcard) => {
                 if (!vostcard.latitude || !vostcard.longitude) return null;
-                
+
                 const position: [number, number] = [vostcard.latitude, vostcard.longitude];
-                
+
                 // 🔍 DEBUG: Log icon selection for quickcards
                 if (vostcard.isQuickcard) {
                   console.log('🔍 DEBUG: Rendering quickcard marker:', {
@@ -1142,17 +1144,17 @@ const HomeView = () => {
                     isQuickcard: vostcard.isQuickcard
                   });
                 }
-                
+
                 const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
-                
+
                 // 🔍 DEBUG: Log which icon was selected
                 if (vostcard.isQuickcard) {
-                  const iconName = icon === guideIcon ? 'GuideIcon' : 
-                                   icon === vostcardIcon ? 'VostcardIcon' : 
+                  const iconName = icon === guideIcon ? 'GuideIcon' :
+                                   icon === vostcardIcon ? 'VostcardIcon' :
                                    icon === offerIcon ? 'OfferIcon' : 'Unknown';
                   console.log('🔍 DEBUG: Selected icon for quickcard:', iconName, 'for userRole:', vostcard.userRole);
                 }
-                
+
                 return (
                   <Marker
                     key={vostcard.id}
@@ -1183,18 +1185,18 @@ const HomeView = () => {
                             y: e.containerPoint.y + rect.top - 50
                           });
                         }, 500);
-                        
+
                         const cleanup = () => {
                           clearTimeout(timeout);
                           setShowTooltip({ show: false, title: '', x: 0, y: 0 });
                         };
-                        
+
                         const handleMouseUp = () => {
                           cleanup();
                           document.removeEventListener('mouseup', handleMouseUp);
                           document.removeEventListener('touchend', handleMouseUp);
                         };
-                        
+
                         document.addEventListener('mouseup', handleMouseUp);
                         document.addEventListener('touchend', handleMouseUp);
                       }
