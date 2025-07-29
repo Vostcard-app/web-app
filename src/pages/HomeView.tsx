@@ -1229,19 +1229,21 @@ const HomeView = () => {
                     position: 'absolute',
                     left: `${map.latLngToContainerPoint([activePin.lat, activePin.lng]).x ?? 0}px`,
                     top: `${(map.latLngToContainerPoint([activePin.lat, activePin.lng]).y ?? 0) - 60}px`,
-                    // New styles for popup
+                    style: undefined, // Remove nested style property if present
+                    // Updated popup styles for better visibility and readability
                     position: 'absolute',
                     zIndex: 1000,
                     backgroundColor: 'white',
                     border: '1px solid #ccc',
                     borderRadius: '8px',
                     padding: '10px',
-                    width: '75px',
-                    height: '50px',
+                    width: '200px',
+                    height: '75px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
                   }}
                 >
                   <button
