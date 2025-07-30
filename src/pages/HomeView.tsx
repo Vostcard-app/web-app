@@ -696,8 +696,8 @@ const HomeView = () => {
 
   const handleToursClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('🎬 Tours button clicked - will wire later');
-    // TODO: Wire to tours functionality
+    console.log('🎬 Navigating to Tours Near Me');
+    navigate('/tours-near-me');
   };
 
   const handleCreateClick = (e: React.MouseEvent) => {
