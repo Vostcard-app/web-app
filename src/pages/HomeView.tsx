@@ -1794,7 +1794,7 @@ const HomeView = () => {
                 id="friends-only"
                 checked={showFriendsOnly}
                 onChange={(e) => setShowFriendsOnly(e.target.checked)}
-                style={{ width: '16px', height: '16px }}
+                style={{ width: '16px', height: '16px' }}
               />
               <label htmlFor="friends-only" style={{ fontSize: '14px', color: '#333' }}>
                 Show only friends' posts
