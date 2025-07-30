@@ -353,6 +353,8 @@ const HomeView = () => {
   useEffect(() => {
     if (tourDataState) {
       console.log('🎬 Tour data received:', tourDataState);
+      console.log('🎬 Tour:', tourDataState.tour);
+      console.log('🎬 Tour posts count:', tourDataState.tourPosts?.length);
       setTourData(tourDataState);
       
       // Convert tour posts to vostcard format for display
@@ -375,6 +377,7 @@ const HomeView = () => {
         }));
         
         console.log('🎬 Setting tour posts as vostcards:', tourPostsAsVostcards);
+        console.log('🎬 Tour posts with locations:', tourPostsAsVostcards.filter((p: any) => p.latitude && p.longitude));
         setVostcards(tourPostsAsVostcards);
         
         // Clear navigation state to prevent re-loading

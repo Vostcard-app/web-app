@@ -351,7 +351,7 @@ const TourView: React.FC = () => {
         <button
           onClick={() => {
             console.log('Load Tour clicked - navigating to HomeView with tour data');
-            navigate('/', { 
+            navigate('/home', { 
               state: { 
                 tourData: {
                   tour,
