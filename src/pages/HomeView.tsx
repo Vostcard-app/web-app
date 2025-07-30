@@ -1,4 +1,4 @@
-// Mobile debugging console - ADMIN ONLY
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
