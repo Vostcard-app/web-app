@@ -383,6 +383,34 @@ const HomeView = () => {
     }
   }, [tourDataState, navigate, location.pathname]);
 
+  // Auto-fit map bounds when tour is loaded to show both tour posts and user location
+  useEffect(() => {
+    if (tourData && mapRef?.current && actualUserLocation && vostcards.length > 0) {
+      console.log('🎬 Auto-fitting map bounds for loaded tour');
+      
+      // Get all valid tour post positions
+      const tourPositions = vostcards
+        .filter(v => v.latitude && v.longitude)
+        .map(v => [v.latitude, v.longitude] as [number, number]);
+      
+      if (tourPositions.length > 0) {
+        // Include user location in bounds calculation
+        const allPositions = [...tourPositions, actualUserLocation];
+        
+        try {
+          const bounds = L.latLngBounds(allPositions);
+          console.log('🎬 Fitting map to bounds that include tour posts and user location');
+          mapRef.current.fitBounds(bounds, { 
+            padding: [50, 50], // Extra padding to ensure everything is visible
+            maxZoom: 15 // Don't zoom in too close
+          });
+        } catch (error) {
+          console.warn('🎬 Error fitting map bounds:', error);
+        }
+      }
+    }
+  }, [tourData, mapRef, actualUserLocation, vostcards]);
+
   // Debug authentication state and manage auth loading overlay
   useEffect(() => {
     console.log('🏠 HomeView: Auth state:', {
