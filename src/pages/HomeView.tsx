@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo, FaTag, FaPercent, FaStar } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo, FaTag, FaPercent, FaStar, FaWalking } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -1486,7 +1486,7 @@ const HomeView = () => {
               }} 
               onClick={handleToursClick}
             >
-              <span style={{ fontSize: '14px', lineHeight: '1' }}>🎬</span>
+              <FaWalking style={{ fontSize: '14px' }} />
               <span>Tours</span>
             </button>
           </div>
