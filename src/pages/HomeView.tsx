@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo, FaTag, FaPercent, FaStar } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -1456,7 +1456,7 @@ const HomeView = () => {
               }} 
               onClick={handleOffersClick}
             >
-              <span style={{ fontSize: '14px', lineHeight: '1' }}>🎁</span>
+              <img src={OfferPin} alt="Offers" style={{ width: '14px', height: '14px' }} />
               <span>Offers</span>
             </button>
             
