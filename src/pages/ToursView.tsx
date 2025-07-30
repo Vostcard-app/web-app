@@ -97,7 +97,7 @@ const ToursView: React.FC = () => {
   };
 
   const handleTourClick = (tour: Tour) => {
-    navigate(`/tour/${tour.id}`, { state: { tour } });
+    navigate(`/tour/${tour.id}`, { state: { tour, autoRecenter: true } });
   };
 
   const handleEditTour = (tour: Tour) => {

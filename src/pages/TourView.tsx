@@ -192,6 +192,20 @@ const TourView: React.FC = () => {
     loadTour();
   }, [tourId, location.state]);
 
+  // Auto-recenter effect when navigating from user profile
+  useEffect(() => {
+    const shouldAutoRecenter = location.state?.autoRecenter === true;
+    
+    if (shouldAutoRecenter && mapRef && tourPosts.length > 0 && !loading) {
+      const validPosts = tourPosts.filter(post => post.latitude && post.longitude);
+      
+      if (validPosts.length > 0) {
+        console.log('🎯 TourView: Auto-recentering map on tour posts');
+        handleRecenterOnTour();
+      }
+    }
+  }, [mapRef, tourPosts, loading, location.state?.autoRecenter]);
+
   if (loading) {
     return (
       <div style={{ 
