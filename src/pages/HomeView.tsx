@@ -1356,16 +1356,17 @@ const HomeView = () => {
 
           {/* Floating Controls Over Map */}
           
-          {/* Left side buttons - stacked vertically */}
+          {/* Top buttons - horizontal layout with 4 buttons */}
           <div
             style={{
               position: 'absolute',
               top: '8px',
-              left: '10px',
+              left: '8px',
+              right: '8px',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: '8px',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '4px',
               zIndex: 1002
             }}
           >
@@ -1376,9 +1377,9 @@ const HomeView = () => {
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '8px 15px',
-                fontSize: '14px',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -1389,13 +1390,14 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '6px',
-                minWidth: '100px'
+                gap: '4px',
+                flex: '1',
+                minWidth: '0'
               }} 
               onClick={() => setShowHelpMenu(!showHelpMenu)}
             >
-              <span style={{ fontSize: '16px', lineHeight: '1' }}>❓</span>
-              Help
+              <span style={{ fontSize: '14px', lineHeight: '1' }}>❓</span>
+              <span>Help</span>
             </button>
             
             {/* List View Button */}
@@ -1405,9 +1407,9 @@ const HomeView = () => {
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '8px 15px',
-                fontSize: '14px',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -1418,13 +1420,14 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '6px',
-                minWidth: '100px'
+                gap: '4px',
+                flex: '1',
+                minWidth: '0'
               }} 
               onClick={handleListViewClick}
             >
-              <span style={{ fontSize: '16px', lineHeight: '1' }}>⋮</span>
-              List View
+              <span style={{ fontSize: '14px', lineHeight: '1' }}>⋮</span>
+              <span>List</span>
             </button>
             
             {/* Offers Button */}
@@ -1434,9 +1437,9 @@ const HomeView = () => {
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '8px 15px',
-                fontSize: '14px',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -1447,13 +1450,14 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '6px',
-                minWidth: '100px'
+                gap: '4px',
+                flex: '1',
+                minWidth: '0'
               }} 
               onClick={handleOffersClick}
             >
-              <span style={{ fontSize: '16px', lineHeight: '1' }}>🎁</span>
-              Offers
+              <span style={{ fontSize: '14px', lineHeight: '1' }}>🎁</span>
+              <span>Offers</span>
             </button>
             
             {/* Tours Button */}
@@ -1463,9 +1467,9 @@ const HomeView = () => {
                 backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '8px 15px',
-                fontSize: '14px',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -1476,13 +1480,14 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '6px',
-                minWidth: '100px'
+                gap: '4px',
+                flex: '1',
+                minWidth: '0'
               }} 
               onClick={handleToursClick}
             >
-              <span style={{ fontSize: '16px', lineHeight: '1' }}>🎬</span>
-              Tours
+              <span style={{ fontSize: '14px', lineHeight: '1' }}>🎬</span>
+              <span>Tours</span>
             </button>
           </div>
 
@@ -1490,8 +1495,8 @@ const HomeView = () => {
           {showHelpMenu && (
             <div style={{
               position: 'absolute',
-              top: '55px',
-              left: '10px',
+              top: '50px',
+              left: '8px',
               backgroundColor: 'white',
               border: '1px solid #ddd',
               borderRadius: '8px',
