@@ -791,6 +791,12 @@ const HomeView = () => {
   };
 
   const filterVostcards = (vostcards: any[]) => {
+    // When tour data is loaded, show ONLY tour posts (no regular vostcards)
+    if (tourData) {
+      console.log('🎬 Tour mode active - showing only tour posts');
+      return vostcards; // vostcards already contains only tour posts when tourData is active
+    }
+    
     let filtered = vostcards;
     
     if (selectedCategories.length > 0 && !selectedCategories.includes('None')) {
@@ -1564,72 +1570,76 @@ const HomeView = () => {
             </div>
           )}
 
-          {/* Recenter control */}
-          <div style={{
-            position: 'absolute',
-            top: '33%',
-            right: 20,
-            transform: 'translateY(-50%)',
-            zIndex: 1000
-          }}>
-            <button 
-              onClick={handleRecenter} 
-              style={{
-                background: '#fff',
-                color: '#002B4D',
-                border: '1px solid #ddd',
-                borderRadius: 8,
-                width: 40,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 20,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <FaLocationArrow />
-            </button>
-          </div>
+          {/* Recenter control - Hidden when viewing a tour */}
+          {!tourData && (
+            <div style={{
+              position: 'absolute',
+              top: '33%',
+              right: 20,
+              transform: 'translateY(-50%)',
+              zIndex: 1000
+            }}>
+              <button 
+                onClick={handleRecenter} 
+                style={{
+                  background: '#fff',
+                  color: '#002B4D',
+                  border: '1px solid #ddd',
+                  borderRadius: 8,
+                  width: 40,
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 20,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <FaLocationArrow />
+              </button>
+            </div>
+          )}
 
-          {/* Filter button */}
-          <div style={{
-            position: 'absolute',
-            top: '66.7%', // 2/3 down the screen
-            right: 20, // Right side
-            zIndex: 1002
-          }}>
-            <button
-              onClick={() => setShowFilterModal(!showFilterModal)}
-              style={{
-                background: (
-                  (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
-                  selectedTypes.length > 0 ||
-                  showFriendsOnly
-                ) ? '#002B4D' : '#fff',
-                color: (
-                  (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
-                  selectedTypes.length > 0 ||
-                  showFriendsOnly
-                ) ? 'white' : '#002B4D',
-                border: '1px solid #ddd',
-                borderRadius: 8,
-                width: 40,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 20,
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <FaFilter />
-            </button>
-          </div>
+          {/* Filter button - Hidden when viewing a tour */}
+          {!tourData && (
+            <div style={{
+              position: 'absolute',
+              top: '66.7%', // 2/3 down the screen
+              right: 20, // Right side
+              zIndex: 1002
+            }}>
+              <button
+                onClick={() => setShowFilterModal(!showFilterModal)}
+                style={{
+                  background: (
+                    (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+                    selectedTypes.length > 0 ||
+                    showFriendsOnly
+                  ) ? '#002B4D' : '#fff',
+                  color: (
+                    (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+                    selectedTypes.length > 0 ||
+                    showFriendsOnly
+                  ) ? 'white' : '#002B4D',
+                  border: '1px solid #ddd',
+                  borderRadius: 8,
+                  width: 40,
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 20,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <FaFilter />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Custom Tooltip Overlay */}
