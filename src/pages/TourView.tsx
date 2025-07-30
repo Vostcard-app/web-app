@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee, FaCrosshairs } from 'react-icons/fa';
+import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee, FaCrosshairs, FaDownload } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -371,6 +371,31 @@ const TourView: React.FC = () => {
             Recenter Tour
           </button>
         )}
+        
+        {/* Load Tour Button */}
+        <button
+          onClick={() => {
+            // TODO: Wire up Load Tour functionality
+            console.log('Load Tour clicked');
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontWeight: '500',
+            backgroundColor: '#007aff',
+            color: 'white',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <FaDownload size={14} />
+          Load Tour
+        </button>
       </div>
 
       {/* Content */}
