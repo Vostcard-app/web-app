@@ -1,5 +1,3 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-
 // Mobile debugging console - ADMIN ONLY
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo } from 'react-icons/fa';
@@ -250,6 +248,7 @@ const HomeView = () => {
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
+  const [tourData, setTourData] = useState<{tour: any, tourPosts: any[]} | null>(null);
   const [shouldUpdateMapView, setShouldUpdateMapView] = useState(false); // Flag to control when map should recenter
   const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
   const [hasInitialPosition, setHasInitialPosition] = useState(false); // Track if we've set initial position
@@ -297,6 +296,7 @@ const HomeView = () => {
   const navigationState = location.state as any;
   const browseLocationState = navigationState?.browseLocation;
   const singleVostcardState = navigationState?.singleVostcard;
+  const tourDataState = navigationState?.tourData;
 
   // Handle browse location from navigation
   useEffect(() => {
@@ -349,6 +349,40 @@ const HomeView = () => {
     }
   }, [singleVostcardState, navigate, location.pathname]);
 
+  // Handle tour data from navigation
+  useEffect(() => {
+    if (tourDataState) {
+      console.log('🎬 Tour data received:', tourDataState);
+      setTourData(tourDataState);
+      
+      // Convert tour posts to vostcard format for display
+      if (tourDataState.tour && tourDataState.tourPosts) {
+        console.log('🎬 Converting tour posts to vostcard format');
+        const tourPostsAsVostcards = tourDataState.tourPosts.map((post: any) => ({
+          id: post.id,
+          title: post.title || 'Tour Post',
+          description: post.description || '',
+          latitude: post.latitude,
+          longitude: post.longitude,
+          isOffer: post.isOffer || false,
+          isQuickcard: post.isQuickcard || false,
+          userRole: post.userRole,
+          username: post.username,
+          state: 'posted',
+          photoURLs: post.photoURLs || [],
+          videoURL: post.videoURL,
+          createdAt: post.createdAt
+        }));
+        
+        console.log('🎬 Setting tour posts as vostcards:', tourPostsAsVostcards);
+        setVostcards(tourPostsAsVostcards);
+        
+        // Clear navigation state to prevent re-loading
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [tourDataState, navigate, location.pathname]);
+
   // Debug authentication state and manage auth loading overlay
   useEffect(() => {
     console.log('🏠 HomeView: Auth state:', {
@@ -378,6 +412,12 @@ const HomeView = () => {
 
   // Load vostcards function
   const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
+    // Skip loading regular vostcards if we have tour data
+    if (tourData && !forceRefresh) {
+      console.log('🗺️ HomeView: Skipping vostcard load - tour data is active');
+      return;
+    }
+    
     // Remove the early return - we want to load all vostcards even when singleVostcard is set
     // This allows the private map to show all posts nearby while centering on the specific quickcard
     
@@ -432,7 +472,7 @@ const HomeView = () => {
     } finally {
       setLoadingVostcards(false);
     }
-  }, [singleVostcard, loadingVostcards]);
+  }, [singleVostcard, loadingVostcards, tourData]);
 
   // Load user avatar
   useEffect(() => {
@@ -1754,7 +1794,7 @@ const HomeView = () => {
                 id="friends-only"
                 checked={showFriendsOnly}
                 onChange={(e) => setShowFriendsOnly(e.target.checked)}
-                style={{ width: '16px', height: '16px' }}
+                style={{ width: '16px', height: '16px }}
               />
               <label htmlFor="friends-only" style={{ fontSize: '14px', color: '#333' }}>
                 Show only friends' posts

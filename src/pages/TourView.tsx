@@ -375,8 +375,15 @@ const TourView: React.FC = () => {
         {/* Load Tour Button */}
         <button
           onClick={() => {
-            // TODO: Wire up Load Tour functionality
-            console.log('Load Tour clicked');
+            console.log('Load Tour clicked - navigating to HomeView with tour data');
+            navigate('/', { 
+              state: { 
+                tourData: {
+                  tour,
+                  tourPosts
+                }
+              } 
+            });
           }}
           style={{
             display: 'flex',
