@@ -101,24 +101,29 @@ const ToursNearMeView: React.FC = () => {
           const creatorDoc = await getDoc(doc(db, 'users', tourData.creatorId));
           const creatorData = creatorDoc.exists() ? creatorDoc.data() : null;
 
-                     // Get first post location for distance calculation
-           let firstPostLocation: { latitude: number; longitude: number } | undefined = undefined;
-           if (tourData.postIds && tourData.postIds.length > 0) {
-             try {
-               const firstPostDoc = await getDoc(doc(db, 'vostcards', tourData.postIds[0]));
-               if (firstPostDoc.exists()) {
-                 const postData = firstPostDoc.data();
-                 if (postData.latitude && postData.longitude) {
-                   firstPostLocation = {
-                     latitude: postData.latitude,
-                     longitude: postData.longitude
-                   };
-                 }
-               }
-             } catch (postError) {
-               console.warn('Could not fetch first post location:', postError);
-             }
-           }
+                               // Get first post with valid location for distance calculation
+          let firstPostLocation: { latitude: number; longitude: number } | undefined = undefined;
+          if (tourData.postIds && tourData.postIds.length > 0) {
+            // Check all posts to find the first one with valid location data
+            for (const postId of tourData.postIds) {
+              try {
+                const postDoc = await getDoc(doc(db, 'vostcards', postId));
+                if (postDoc.exists()) {
+                  const postData = postDoc.data();
+                  if (postData.latitude && postData.longitude) {
+                    firstPostLocation = {
+                      latitude: postData.latitude,
+                      longitude: postData.longitude
+                    };
+                    break; // Found first valid location, stop searching
+                  }
+                }
+              } catch (postError) {
+                console.warn(`Could not fetch post location for ${postId}:`, postError);
+                continue; // Try next post
+              }
+            }
+          }
 
                      // Calculate distance if we have location data
            let distance: number | undefined = undefined;
