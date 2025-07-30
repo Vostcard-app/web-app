@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee, FaCrosshairs, FaDownload } from 'react-icons/fa';
+import { FaArrowLeft, FaMap, FaList, FaMapPin, FaHeart, FaCoffee, FaDownload } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -346,31 +346,6 @@ const TourView: React.FC = () => {
           <FaList size={14} />
           List View
         </button>
-        
-        {/* Recenter Button - Only visible in map view */}
-        {viewMode === 'map' && tourPosts.length > 0 && (
-          <button
-            onClick={handleRecenterOnTour}
-            disabled={!mapRef}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 20px',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: mapRef ? 'pointer' : 'not-allowed',
-              fontSize: '14px',
-              fontWeight: '500',
-              backgroundColor: mapRef ? '#28a745' : '#e0e0e0',
-              color: mapRef ? 'white' : '#999',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            <FaCrosshairs size={14} />
-            Recenter Tour
-          </button>
-        )}
         
         {/* Load Tour Button */}
         <button
