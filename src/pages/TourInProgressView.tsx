@@ -4,8 +4,11 @@ import { FaTimes, FaList, FaMap, FaLocationArrow, FaWalking, FaStar, FaUserCircl
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 import { TourService } from '../services/tourService';
 import { useResponsive } from '../hooks/useResponsive';
+import TipDropdownMenu from '../components/TipDropdownMenu';
 import type { Tour, TourPost } from '../types/TourTypes';
 
 // Import pin images
@@ -96,6 +99,12 @@ const TourInProgressView: React.FC = () => {
   const [showLeavingTourView, setShowLeavingTourView] = useState(false);
   const [tourRating, setTourRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
+  const [guideProfile, setGuideProfile] = useState<any>(null);
+  const [showTipDropdown, setShowTipDropdown] = useState(false);
+  const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
+
+  // Refs for tip functionality
+  const tipButtonRef = useRef<HTMLButtonElement>(null);
 
   // Get tour data from navigation state or fetch by ID
   useEffect(() => {
@@ -136,6 +145,47 @@ const TourInProgressView: React.FC = () => {
 
     loadTour();
   }, [tourId, location.state]);
+
+  // Fetch guide profile data
+  useEffect(() => {
+    const fetchGuideProfile = async () => {
+      if (!tour?.creatorId) return;
+
+      try {
+        console.log('🧑‍🏫 Fetching guide profile for:', tour.creatorId);
+        const userRef = doc(db, 'users', tour.creatorId);
+        const userSnap = await getDoc(userRef);
+        
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setGuideProfile({
+            id: tour.creatorId,
+            username: userData.username || 'Tour Guide',
+            avatarURL: userData.avatarURL || '',
+            userRole: userData.userRole || 'user',
+            buyMeACoffeeURL: userData.buyMeACoffeeURL || '',
+            kofiURL: userData.kofiURL || '',
+            paypalURL: userData.paypalURL || '',
+            venmoURL: userData.venmoURL || '',
+            cashappURL: userData.cashappURL || '',
+            zelleURL: userData.zelleURL || '',
+            applePayURL: userData.applePayURL || '',
+            googlePayURL: userData.googlePayURL || '',
+            patreonURL: userData.patreonURL || '',
+            bitcoinURL: userData.bitcoinURL || '',
+            ethereumURL: userData.ethereumURL || ''
+          });
+          console.log('✅ Guide profile loaded:', userData.username);
+        } else {
+          console.warn('❌ Guide profile not found');
+        }
+      } catch (error) {
+        console.error('❌ Error fetching guide profile:', error);
+      }
+    };
+
+    fetchGuideProfile();
+  }, [tour?.creatorId]);
 
   // Start continuous location tracking
   useEffect(() => {
@@ -228,6 +278,21 @@ const TourInProgressView: React.FC = () => {
 
   const handleStarLeave = () => {
     setHoveredStar(0);
+  };
+
+  const handleTipButtonClick = () => {
+    if (tipButtonRef.current) {
+      const rect = tipButtonRef.current.getBoundingClientRect();
+      setTipDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + rect.width / 2 + window.scrollX
+      });
+      setShowTipDropdown(true);
+    }
+  };
+
+  const handleCloseTipDropdown = () => {
+    setShowTipDropdown(false);
   };
 
   // Type for tour posts with distance information
@@ -717,9 +782,23 @@ const TourInProgressView: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '24px',
-                  color: '#666'
+                  color: '#666',
+                  overflow: 'hidden'
                 }}>
-                  <FaUserCircle size={60} color="#002B4D" />
+                  {guideProfile?.avatarURL ? (
+                    <img
+                      src={guideProfile.avatarURL}
+                      alt={guideProfile.username || 'Guide Avatar'}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                      onError={() => setGuideProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+                    />
+                  ) : (
+                    <FaUserCircle size={60} color="#002B4D" />
+                  )}
                 </div>
                 <div>
                   <h3 style={{
@@ -728,7 +807,7 @@ const TourInProgressView: React.FC = () => {
                     fontWeight: '600',
                     color: '#002B4D'
                   }}>
-                    {tourPosts[0]?.username || 'Tour Guide'}
+                    {guideProfile?.username || tourPosts[0]?.username || 'Tour Guide'}
                   </h3>
                 </div>
               </div>
@@ -783,26 +862,30 @@ const TourInProgressView: React.FC = () => {
                 marginBottom: '24px'
               }}>
                 <button
-                  onClick={() => {
-                    // TODO: Implement tip functionality
-                    console.log('💰 Leave a tip clicked');
-                  }}
+                  ref={tipButtonRef}
+                  onClick={handleTipButtonClick}
+                  disabled={!guideProfile || guideProfile.userRole !== 'guide'}
                   style={{
-                    backgroundColor: '#28a745',
+                    backgroundColor: (!guideProfile || guideProfile.userRole !== 'guide') ? '#cccccc' : '#28a745',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '12px 24px',
                     fontSize: '16px',
                     fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s ease'
+                    cursor: (!guideProfile || guideProfile.userRole !== 'guide') ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s ease',
+                    opacity: (!guideProfile || guideProfile.userRole !== 'guide') ? 0.6 : 1
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#218838';
+                    if (guideProfile && guideProfile.userRole === 'guide') {
+                      e.currentTarget.style.backgroundColor = '#218838';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#28a745';
+                    if (guideProfile && guideProfile.userRole === 'guide') {
+                      e.currentTarget.style.backgroundColor = '#28a745';
+                    }
                   }}
                 >
                   💰 Leave a Tip
@@ -857,6 +940,14 @@ const TourInProgressView: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Tip Dropdown Menu */}
+        <TipDropdownMenu
+          userProfile={guideProfile}
+          isVisible={showTipDropdown}
+          onClose={handleCloseTipDropdown}
+          position={tipDropdownPosition}
+        />
       </div>
     </div>
   );
