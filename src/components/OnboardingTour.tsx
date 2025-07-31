@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaQuestion } from 'react-icons/fa';
+import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface OnboardingTourProps {
@@ -32,7 +32,28 @@ const tourSlides: TourSlide[] = [
     id: 2,
     title: "Need Help? We've Got You!",
     description: "Tap on the help button to find this quick start and other helpful information to learn more about Vōstcard.",
-    icon: <FaQuestion size={48} color="#002B4D" />,
+    icon: (
+      <div style={{
+        backgroundColor: '#002B4D',
+        color: 'white',
+        border: 'none',
+        borderRadius: '6px',
+        padding: '6px 8px',
+        fontSize: '12px',
+        fontWeight: 500,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        lineHeight: '1',
+        gap: '4px',
+        minWidth: '60px'
+      }}>
+        <span style={{ fontSize: '14px', lineHeight: '1' }}>❓</span>
+        <span>Help</span>
+      </div>
+    ),
     features: [
       "Access Quick Start Tour anytime",
       "Find tutorial videos", 
