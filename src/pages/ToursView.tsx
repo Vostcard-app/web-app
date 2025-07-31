@@ -96,8 +96,28 @@ const ToursView: React.FC = () => {
     }
   };
 
-  const handleTourClick = (tour: Tour) => {
-    navigate(`/tour/${tour.id}`, { state: { tour, autoRecenter: true } });
+  const handleTourClick = async (tour: Tour) => {
+    try {
+      console.log('🎬 Loading tour for dedicated map view:', tour.name);
+      
+      // Get the tour posts
+      const tourPosts = await TourService.getTourPosts(tour);
+      console.log('🎬 Fetched tour posts:', tourPosts.length);
+      
+      // Navigate to dedicated TourMapView with tour data (same as HomeView tours)
+      navigate(`/tour-map/${tour.id}`, { 
+        state: { 
+          tourData: {
+            tour,
+            tourPosts
+          }
+        } 
+      });
+    } catch (error) {
+      console.error('❌ Error loading tour for map view:', error);
+      // Fallback to original tour detail view
+      navigate(`/tour/${tour.id}`, { state: { tour, autoRecenter: true } });
+    }
   };
 
   const handleEditTour = (tour: Tour) => {

@@ -13,7 +13,7 @@ interface TourWithCreator extends Tour {
 interface TourListProps {
   tours: Tour[];
   isCurrentUser: boolean;
-  onTourClick: (tour: Tour) => void;
+  onTourClick: (tour: Tour) => void | Promise<void>;
   onEditTour?: (tour: Tour) => void;
   onDeleteTour?: (tour: Tour) => void;
   onToggleSharing?: (tour: Tour) => void;
