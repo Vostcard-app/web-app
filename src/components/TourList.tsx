@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { FaMapPin, FaEye, FaEyeSlash, FaEdit, FaTrash, FaShare, FaLink, FaUser, FaStar } from 'react-icons/fa';
+import { FaMapPin, FaEye, FaEyeSlash, FaEdit, FaTrash, FaShare, FaLink, FaUser, FaStar, FaComment } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { RatingService, type RatingStats } from '../services/ratingService';
+import { ReviewService } from '../services/reviewService';
+import ReviewsModal from './ReviewsModal';
 import type { Tour } from '../types/TourTypes';
 
 interface TourWithCreator extends Tour {
@@ -10,6 +12,7 @@ interface TourWithCreator extends Tour {
   creatorAvatar?: string;
   creatorRole?: string;
   ratingStats?: RatingStats;
+  reviewCount?: number;
 }
 
 interface TourListProps {
@@ -33,9 +36,29 @@ const TourList: React.FC<TourListProps> = ({
 }) => {
   const [toursWithCreators, setToursWithCreators] = useState<TourWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<TourWithCreator | null>(null);
 
   const getTourTerminology = (creatorRole?: string) => {
     return (creatorRole || userRole) === 'guide' ? 'Tour' : 'Trip';
+  };
+
+  // Get review count for a tour
+  const getTourReviewCount = async (tourId: string): Promise<number> => {
+    try {
+      const reviews = await ReviewService.getTourReviews(tourId);
+      return reviews.length;
+    } catch (error) {
+      console.warn(`Failed to fetch review count for tour ${tourId}:`, error);
+      return 0;
+    }
+  };
+
+  // Handle review icon click
+  const handleReviewIconClick = (tour: TourWithCreator, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent tour click
+    setSelectedTour(tour);
+    setShowReviewsModal(true);
   };
 
   // Fetch creator information and rating stats for each tour
@@ -53,12 +76,16 @@ const TourList: React.FC<TourListProps> = ({
           // Fetch rating stats
           const ratingStats = await RatingService.getTourRatingStats(tour.id);
 
+          // Fetch review count
+          const reviewCount = await getTourReviewCount(tour.id);
+
           const tourWithCreator: TourWithCreator = {
             ...tour,
             creatorUsername: creatorData?.username || 'Unknown User',
             creatorAvatar: creatorData?.avatarURL,
             creatorRole: creatorData?.userRole,
             ratingStats,
+            reviewCount,
           };
 
           toursWithCreatorInfo.push(tourWithCreator);
@@ -72,7 +99,8 @@ const TourList: React.FC<TourListProps> = ({
               averageRating: 0,
               ratingCount: 0,
               lastUpdated: new Date().toISOString()
-            }
+            },
+            reviewCount: 0
           });
         }
       }
@@ -225,32 +253,72 @@ const TourList: React.FC<TourListProps> = ({
                     by {tour.creatorUsername} • {getTourTerminology(tour.creatorRole)}
                   </div>
 
-                  {/* Star Rating */}
-                  {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      marginBottom: '8px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <FaStar
-                            key={star}
-                            size={14}
-                            color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
-                          />
-                        ))}
-                      </div>
-                      <span style={{
-                        fontSize: '12px',
-                        color: '#666',
-                        fontWeight: '500'
+                  {/* Rating and Reviews Row */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    marginBottom: '8px'
+                  }}>
+                    {/* Star Rating */}
+                    {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}>
-                        {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount} rating{tour.ratingStats.ratingCount !== 1 ? 's' : ''})
-                      </span>
-                    </div>
-                  )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <FaStar
+                              key={star}
+                              size={14}
+                              color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
+                            />
+                          ))}
+                        </div>
+                        <span style={{
+                          fontSize: '12px',
+                          color: '#666',
+                          fontWeight: '500'
+                        }}>
+                          {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount})
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Review Count */}
+                    {tour.reviewCount !== undefined && tour.reviewCount > 0 && (
+                      <button
+                        onClick={(e) => handleReviewIconClick(tour, e)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '4px',
+                          borderRadius: '4px',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f0f0f0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <FaComment size={12} color="#666" />
+                        <span style={{
+                          fontSize: '12px',
+                          color: '#666',
+                          fontWeight: '500'
+                        }}>
+                          {tour.reviewCount} review{tour.reviewCount !== 1 ? 's' : ''}
+                        </span>
+                      </button>
+                    )}
+                  </div>
 
                   {/* Description */}
                   {tour.description && (
@@ -375,6 +443,19 @@ const TourList: React.FC<TourListProps> = ({
           );
         })}
       </div>
+
+      {/* Reviews Modal */}
+      {selectedTour && (
+        <ReviewsModal
+          isOpen={showReviewsModal}
+          onClose={() => {
+            setShowReviewsModal(false);
+            setSelectedTour(null);
+          }}
+          tourId={selectedTour.id}
+          tourName={selectedTour.name}
+        />
+      )}
     </>
   );
 };
