@@ -50,13 +50,34 @@ const quickcardIcon = new L.Icon({
   popupAnchor: [0, -75],
 });
 
-// Blue dot icon for user location
+// Blue dot icon for user location (basic)
 const userIcon = new L.Icon({
   iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iOCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjMiLz4KPC9zdmc+',
   iconSize: [20, 20],
   iconAnchor: [10, 10],
   popupAnchor: [0, -10],
 });
+
+// Create directional user icon with flashlight effect
+const createDirectionalUserIcon = (heading: number) => {
+  const svg = `
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Flashlight beam cone -->
+      <path d="M20 20 L35 5 L35 35 Z" fill="rgba(66, 133, 244, 0.3)" stroke="rgba(66, 133, 244, 0.5)" stroke-width="1" transform="rotate(${heading} 20 20)"/>
+      <!-- User location dot -->
+      <circle cx="20" cy="20" r="8" fill="#4285F4" stroke="#ffffff" stroke-width="3"/>
+      <!-- Direction arrow -->
+      <path d="M20 12 L20 8 L24 12 L20 16 L16 12 Z" fill="#ffffff" transform="rotate(${heading} 20 20)"/>
+    </svg>
+  `;
+  
+  return new L.Icon({
+    iconUrl: `data:image/svg+xml;base64,${btoa(svg)}`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20],
+  });
+};
 
 // MapUpdater component - DISABLED automatic updates
 const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce }: {
@@ -229,6 +250,7 @@ const HomeView = () => {
   const [loadingVostcards, setLoadingVostcards] = useState(false);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [actualUserLocation, setActualUserLocation] = useState<[number, number] | null>(null);
+  const [userHeading, setUserHeading] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [showAuthLoading, setShowAuthLoading] = useState(true);
@@ -584,15 +606,27 @@ const HomeView = () => {
     let watchId: number | null = null;
 
     const handleLocationSuccess = (position: GeolocationPosition) => {
-      const { latitude, longitude, accuracy } = position.coords;
+      const { latitude, longitude, accuracy, heading } = position.coords;
       console.log('✅ Location updated:', { 
         latitude: latitude.toFixed(6), 
         longitude: longitude.toFixed(6), 
         accuracy: `${accuracy}m`,
+        heading: heading !== null ? `${heading}°` : 'unavailable',
         source: accuracy < 50 ? 'GPS' : 'Network/WiFi'
       });
       
-      // GPS update logging only (alerts removed per user request)
+      // Update heading if available and device is moving
+      if (heading !== null && !isNaN(heading)) {
+        // GPS heading is only reliable when moving, but we'll show it when available
+        const speed = position.coords.speed; // Speed in m/s
+        if (speed === null || speed > 0.5) { // Show heading if speed > 0.5 m/s (~1.8 km/h) or speed unavailable
+          setUserHeading(heading);
+          console.log('🧭 Heading updated:', `${heading}°`, speed ? `(speed: ${(speed * 3.6).toFixed(1)} km/h)` : '');
+        } else {
+          // Not moving fast enough for reliable heading
+          console.log('🧭 Speed too low for reliable heading:', speed ? `${(speed * 3.6).toFixed(1)} km/h` : 'unknown');
+        }
+      }
       
       // Always update actualUserLocation for the recenter button
       setActualUserLocation([latitude, longitude]);
@@ -1226,7 +1260,7 @@ const HomeView = () => {
               {actualUserLocation && (
                 <Marker
                   position={actualUserLocation}
-                  icon={userIcon}
+                  icon={userHeading !== null ? createDirectionalUserIcon(userHeading) : userIcon}
                   eventHandlers={{
                     contextmenu: (e) => {
                       // Prevent the browser's context menu from appearing on long press
@@ -1263,6 +1297,12 @@ const HomeView = () => {
                   <Popup>
                     <div style={{ textAlign: 'center' }}>
                       <strong>Your Location</strong>
+                      {userHeading !== null && (
+                        <>
+                          <br />
+                          <small>🧭 Heading: {Math.round(userHeading)}°</small>
+                        </>
+                      )}
                       <br />
                       <small>Tap to recenter map</small>
                     </div>
