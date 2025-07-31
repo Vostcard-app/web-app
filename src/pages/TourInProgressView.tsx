@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
+import { RatingService } from '../services/ratingService';
 import { TourService } from '../services/tourService';
 import { useResponsive } from '../hooks/useResponsive';
 import TipDropdownMenu from '../components/TipDropdownMenu';
@@ -268,8 +269,19 @@ const TourInProgressView: React.FC = () => {
     navigate('/home');
   };
 
-  const handleStarClick = (rating: number) => {
+  const handleStarClick = async (rating: number) => {
     setTourRating(rating);
+    
+    // Save the rating to the database
+    if (tour?.id) {
+      try {
+        await RatingService.submitTourRating(tour.id, rating);
+        console.log(`✅ Tour rating submitted: ${rating} stars for tour ${tour.id}`);
+      } catch (error) {
+        console.error('❌ Error submitting tour rating:', error);
+        // Could show an error message to user here if needed
+      }
+    }
   };
 
   const handleStarHover = (rating: number) => {

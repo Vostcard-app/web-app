@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { FaMapPin, FaEye, FaEyeSlash, FaEdit, FaTrash, FaShare, FaLink, FaUser } from 'react-icons/fa';
+import { FaMapPin, FaEye, FaEyeSlash, FaEdit, FaTrash, FaShare, FaLink, FaUser, FaStar } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
+import { RatingService, type RatingStats } from '../services/ratingService';
 import type { Tour } from '../types/TourTypes';
 
 interface TourWithCreator extends Tour {
   creatorUsername?: string;
   creatorAvatar?: string;
   creatorRole?: string;
+  ratingStats?: RatingStats;
 }
 
 interface TourListProps {
@@ -36,7 +38,7 @@ const TourList: React.FC<TourListProps> = ({
     return (creatorRole || userRole) === 'guide' ? 'Tour' : 'Trip';
   };
 
-  // Fetch creator information for each tour
+  // Fetch creator information and rating stats for each tour
   useEffect(() => {
     const fetchCreatorInfo = async () => {
       setLoading(true);
@@ -44,23 +46,33 @@ const TourList: React.FC<TourListProps> = ({
 
       for (const tour of tours) {
         try {
+          // Fetch creator info
           const creatorDoc = await getDoc(doc(db, 'users', tour.creatorId));
           const creatorData = creatorDoc.exists() ? creatorDoc.data() : null;
+
+          // Fetch rating stats
+          const ratingStats = await RatingService.getTourRatingStats(tour.id);
 
           const tourWithCreator: TourWithCreator = {
             ...tour,
             creatorUsername: creatorData?.username || 'Unknown User',
             creatorAvatar: creatorData?.avatarURL,
             creatorRole: creatorData?.userRole,
+            ratingStats,
           };
 
           toursWithCreatorInfo.push(tourWithCreator);
         } catch (error) {
-          console.error('Error fetching creator info:', error);
+          console.error('Error fetching creator info or ratings:', error);
           // Add tour without creator info as fallback
           toursWithCreatorInfo.push({
             ...tour,
             creatorUsername: 'Unknown User',
+            ratingStats: {
+              averageRating: 0,
+              ratingCount: 0,
+              lastUpdated: new Date().toISOString()
+            }
           });
         }
       }
@@ -194,6 +206,33 @@ const TourList: React.FC<TourListProps> = ({
                 }}>
                   by {tour.creatorUsername} • {getTourTerminology(tour.creatorRole)}
                 </div>
+
+                {/* Star Rating */}
+                {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginBottom: '8px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FaStar
+                          key={star}
+                          size={14}
+                          color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
+                        />
+                      ))}
+                    </div>
+                    <span style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      fontWeight: '500'
+                    }}>
+                      {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount} rating{tour.ratingStats.ratingCount !== 1 ? 's' : ''})
+                    </span>
+                  </div>
+                )}
 
                 {/* Description */}
                 {tour.description && (

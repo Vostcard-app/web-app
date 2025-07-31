@@ -1,9 +1,8 @@
-import { db } from '../firebase/firebaseConfig';
-import { doc, setDoc, getDoc, collection, getDocs, query, updateDoc, increment, onSnapshot, runTransaction, deleteDoc } from 'firebase/firestore';
-import { auth } from '../firebase/firebaseConfig';
+import { doc, collection, getDoc, getDocs, setDoc, deleteDoc, runTransaction } from 'firebase/firestore';
+import { db, auth } from '../firebase/firebaseConfig';
 
 export interface Rating {
-  vostcardID: string;
+  id: string;
   userID: string;
   rating: number;
   createdAt: string;
@@ -11,7 +10,6 @@ export interface Rating {
 }
 
 export interface RatingStats {
-  vostcardID: string;
   averageRating: number;
   ratingCount: number;
   lastUpdated: string;
@@ -25,6 +23,27 @@ export const RatingService = {
    * @returns Promise<void>
    */
   async submitRating(vostcardID: string, rating: number): Promise<void> {
+    return this.submitItemRating('vostcards', vostcardID, rating);
+  },
+
+  /**
+   * Submit or update a rating for a Tour
+   * @param tourID - The ID of the Tour to rate
+   * @param rating - The rating value (1-5)
+   * @returns Promise<void>
+   */
+  async submitTourRating(tourID: string, rating: number): Promise<void> {
+    return this.submitItemRating('tours', tourID, rating);
+  },
+
+  /**
+   * Generic method to submit ratings for any item type
+   * @param collection - The collection name ('vostcards' | 'tours')
+   * @param itemID - The ID of the item to rate
+   * @param rating - The rating value (1-5)
+   * @returns Promise<void>
+   */
+  async submitItemRating(collectionName: string, itemID: string, rating: number): Promise<void> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -39,8 +58,8 @@ export const RatingService = {
       
       // Use a transaction to ensure consistency
       await runTransaction(db, async (transaction) => {
-        const ratingDocRef = doc(db, 'vostcards', vostcardID, 'ratings', userID);
-        const statsDocRef = doc(db, 'vostcards', vostcardID, 'ratingStats', 'summary');
+        const ratingDocRef = doc(db, collectionName, itemID, 'ratings', userID);
+        const statsDocRef = doc(db, collectionName, itemID, 'ratingStats', 'summary');
         
         // Get current rating and stats
         const currentRatingDoc = await transaction.get(ratingDocRef);
@@ -51,7 +70,7 @@ export const RatingService = {
         
         // Update or create rating document
         const ratingData = {
-          vostcardID,
+          [collectionName.slice(0, -1) + 'ID']: itemID, // vostcardID or tourID
           userID,
           rating,
           createdAt: isUpdate ? currentRatingDoc.data()?.createdAt : new Date().toISOString(),
@@ -90,7 +109,7 @@ export const RatingService = {
         transaction.set(statsDocRef, newStats);
       });
       
-      console.log(`✅ Rating submitted: ${rating} stars for Vostcard ${vostcardID}`);
+      console.log(`✅ Rating submitted: ${rating} stars for ${collectionName.slice(0, -1)} ${itemID}`);
     } catch (error) {
       console.error('❌ Error submitting rating:', error);
       throw error;
@@ -103,6 +122,25 @@ export const RatingService = {
    * @returns Promise<void>
    */
   async removeRating(vostcardID: string): Promise<void> {
+    return this.removeItemRating('vostcards', vostcardID);
+  },
+
+  /**
+   * Remove a user's rating for a Tour
+   * @param tourID - The ID of the Tour to remove rating from
+   * @returns Promise<void>
+   */
+  async removeTourRating(tourID: string): Promise<void> {
+    return this.removeItemRating('tours', tourID);
+  },
+
+  /**
+   * Generic method to remove ratings for any item type
+   * @param collection - The collection name ('vostcards' | 'tours')
+   * @param itemID - The ID of the item to remove rating from
+   * @returns Promise<void>
+   */
+  async removeItemRating(collectionName: string, itemID: string): Promise<void> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -111,23 +149,21 @@ export const RatingService = {
 
       const userID = user.uid;
       
-      // Use a transaction to ensure consistency
       await runTransaction(db, async (transaction) => {
-        const ratingDocRef = doc(db, 'vostcards', vostcardID, 'ratings', userID);
-        const statsDocRef = doc(db, 'vostcards', vostcardID, 'ratingStats', 'summary');
+        const ratingDocRef = doc(db, collectionName, itemID, 'ratings', userID);
+        const statsDocRef = doc(db, collectionName, itemID, 'ratingStats', 'summary');
         
         // Get current rating and stats
         const currentRatingDoc = await transaction.get(ratingDocRef);
         const currentStatsDoc = await transaction.get(statsDocRef);
         
         if (!currentRatingDoc.exists()) {
-          // No rating to remove
-          return;
+          throw new Error('No rating found to remove');
         }
         
         const oldRating = currentRatingDoc.data()?.rating || 0;
         
-        // Delete the rating document
+        // Remove rating document
         transaction.delete(ratingDocRef);
         
         // Update stats
@@ -137,9 +173,8 @@ export const RatingService = {
           lastUpdated: new Date().toISOString()
         };
         
-        let newRatingCount = Math.max(0, currentStats.ratingCount - 1);
-        let newTotalRating = (currentStats.averageRating * currentStats.ratingCount) - oldRating;
-        
+        const newRatingCount = Math.max(0, currentStats.ratingCount - 1);
+        const newTotalRating = Math.max(0, (currentStats.averageRating * currentStats.ratingCount) - oldRating);
         const newAverageRating = newRatingCount > 0 ? newTotalRating / newRatingCount : 0;
         
         const newStats = {
@@ -151,7 +186,7 @@ export const RatingService = {
         transaction.set(statsDocRef, newStats);
       });
       
-      console.log(`✅ Rating removed for Vostcard ${vostcardID}`);
+      console.log(`✅ Rating removed for ${collectionName.slice(0, -1)} ${itemID}`);
     } catch (error) {
       console.error('❌ Error removing rating:', error);
       throw error;
@@ -159,11 +194,78 @@ export const RatingService = {
   },
 
   /**
-   * Get current user's rating for a Vostcard
+   * Get rating statistics for a Vostcard
    * @param vostcardID - The ID of the Vostcard
-   * @returns Promise<number> - The user's rating (0 if no rating)
+   * @returns Promise<RatingStats>
    */
-  async getCurrentUserRating(vostcardID: string): Promise<number> {
+  async getRatingStats(vostcardID: string): Promise<RatingStats> {
+    return this.getItemRatingStats('vostcards', vostcardID);
+  },
+
+  /**
+   * Get rating statistics for a Tour
+   * @param tourID - The ID of the Tour
+   * @returns Promise<RatingStats>
+   */
+  async getTourRatingStats(tourID: string): Promise<RatingStats> {
+    return this.getItemRatingStats('tours', tourID);
+  },
+
+  /**
+   * Generic method to get rating statistics for any item type
+   * @param collection - The collection name ('vostcards' | 'tours')
+   * @param itemID - The ID of the item
+   * @returns Promise<RatingStats>
+   */
+  async getItemRatingStats(collectionName: string, itemID: string): Promise<RatingStats> {
+    try {
+      const statsDocRef = doc(db, collectionName, itemID, 'ratingStats', 'summary');
+      const statsDoc = await getDoc(statsDocRef);
+      
+      if (statsDoc.exists()) {
+        return statsDoc.data() as RatingStats;
+      } else {
+        return {
+          averageRating: 0,
+          ratingCount: 0,
+          lastUpdated: new Date().toISOString()
+        };
+      }
+    } catch (error) {
+      console.error('❌ Error fetching rating stats:', error);
+      return {
+        averageRating: 0,
+        ratingCount: 0,
+        lastUpdated: new Date().toISOString()
+      };
+    }
+  },
+
+  /**
+   * Get user's rating for a Vostcard
+   * @param vostcardID - The ID of the Vostcard
+   * @returns Promise<number> - User's rating (0 if no rating)
+   */
+  async getUserRating(vostcardID: string): Promise<number> {
+    return this.getUserItemRating('vostcards', vostcardID);
+  },
+
+  /**
+   * Get user's rating for a Tour
+   * @param tourID - The ID of the Tour
+   * @returns Promise<number> - User's rating (0 if no rating)
+   */
+  async getUserTourRating(tourID: string): Promise<number> {
+    return this.getUserItemRating('tours', tourID);
+  },
+
+  /**
+   * Generic method to get user's rating for any item type
+   * @param collection - The collection name ('vostcards' | 'tours')
+   * @param itemID - The ID of the item
+   * @returns Promise<number> - User's rating (0 if no rating)
+   */
+  async getUserItemRating(collectionName: string, itemID: string): Promise<number> {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -171,162 +273,56 @@ export const RatingService = {
       }
 
       const userID = user.uid;
-      const ratingDocRef = doc(db, 'vostcards', vostcardID, 'ratings', userID);
+      const ratingDocRef = doc(db, collectionName, itemID, 'ratings', userID);
       const ratingDoc = await getDoc(ratingDocRef);
       
       if (ratingDoc.exists()) {
-        return ratingDoc.data().rating || 0;
+        return ratingDoc.data()?.rating || 0;
+      } else {
+        return 0;
       }
-      
-      return 0;
     } catch (error) {
-      console.error('❌ Error fetching current user rating:', error);
+      console.error('❌ Error fetching user rating:', error);
       return 0;
     }
   },
 
   /**
-   * Get rating statistics for a Vostcard
+   * Get all ratings for a Vostcard
    * @param vostcardID - The ID of the Vostcard
-   * @returns Promise<RatingStats> - The rating statistics
-   */
-  async getRatingStats(vostcardID: string): Promise<RatingStats> {
-    try {
-      const statsDocRef = doc(db, 'vostcards', vostcardID, 'ratingStats', 'summary');
-      const statsDoc = await getDoc(statsDocRef);
-      
-      if (statsDoc.exists()) {
-        const data = statsDoc.data();
-        return {
-          vostcardID,
-          averageRating: data.averageRating || 0,
-          ratingCount: data.ratingCount || 0,
-          lastUpdated: data.lastUpdated || new Date().toISOString()
-        };
-      }
-      
-      return {
-        vostcardID,
-        averageRating: 0,
-        ratingCount: 0,
-        lastUpdated: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('❌ Error fetching rating stats:', error);
-      return {
-        vostcardID,
-        averageRating: 0,
-        ratingCount: 0,
-        lastUpdated: new Date().toISOString()
-      };
-    }
-  },
-
-  /**
-   * Get all ratings for a Vostcard (for admin purposes)
-   * @param vostcardID - The ID of the Vostcard
-   * @returns Promise<Rating[]> - Array of all ratings
+   * @returns Promise<Rating[]>
    */
   async getAllRatings(vostcardID: string): Promise<Rating[]> {
+    return this.getAllItemRatings('vostcards', vostcardID);
+  },
+
+  /**
+   * Get all ratings for a Tour
+   * @param tourID - The ID of the Tour
+   * @returns Promise<Rating[]>
+   */
+  async getAllTourRatings(tourID: string): Promise<Rating[]> {
+    return this.getAllItemRatings('tours', tourID);
+  },
+
+  /**
+   * Generic method to get all ratings for any item type
+   * @param collection - The collection name ('vostcards' | 'tours')
+   * @param itemID - The ID of the item
+   * @returns Promise<Rating[]>
+   */
+  async getAllItemRatings(collectionName: string, itemID: string): Promise<Rating[]> {
     try {
-      const ratingsCollectionRef = collection(db, 'vostcards', vostcardID, 'ratings');
-      const querySnapshot = await getDocs(ratingsCollectionRef);
-
-      const ratings: Rating[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        ratings.push({
-          vostcardID: data.vostcardID,
-          userID: data.userID,
-          rating: data.rating,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt
-        });
-      });
-
-      return ratings;
+      const ratingsRef = collection(db, collectionName, itemID, 'ratings');
+      const snapshot = await getDocs(ratingsRef);
+      
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Rating[];
     } catch (error) {
       console.error('❌ Error fetching all ratings:', error);
       return [];
-    }
-  },
-
-  /**
-   * Set up real-time listener for rating stats changes
-   * @param vostcardID - The ID of the Vostcard to monitor
-   * @param callback - Function to call when rating stats change
-   * @returns Function to unsubscribe from the listener
-   */
-  listenToRatingStats(vostcardID: string, callback: (stats: RatingStats) => void): () => void {
-    try {
-      const statsDocRef = doc(db, 'vostcards', vostcardID, 'ratingStats', 'summary');
-      
-      const unsubscribe = onSnapshot(statsDocRef, (doc) => {
-        if (doc.exists()) {
-          const data = doc.data();
-          callback({
-            vostcardID,
-            averageRating: data.averageRating || 0,
-            ratingCount: data.ratingCount || 0,
-            lastUpdated: data.lastUpdated || new Date().toISOString()
-          });
-        } else {
-          callback({
-            vostcardID,
-            averageRating: 0,
-            ratingCount: 0,
-            lastUpdated: new Date().toISOString()
-          });
-        }
-      }, (error) => {
-        console.error('❌ Error in rating stats listener:', error);
-        callback({
-          vostcardID,
-          averageRating: 0,
-          ratingCount: 0,
-          lastUpdated: new Date().toISOString()
-        });
-      });
-
-      return unsubscribe;
-    } catch (error) {
-      console.error('❌ Error setting up rating stats listener:', error);
-      return () => {}; // Return empty function if setup fails
-    }
-  },
-
-  /**
-   * Set up real-time listener for user's rating changes
-   * @param vostcardID - The ID of the Vostcard to monitor
-   * @param callback - Function to call when user's rating changes
-   * @returns Function to unsubscribe from the listener
-   */
-  listenToUserRating(vostcardID: string, callback: (rating: number) => void): () => void {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        callback(0);
-        return () => {};
-      }
-
-      const userID = user.uid;
-      const ratingDocRef = doc(db, 'vostcards', vostcardID, 'ratings', userID);
-      
-      const unsubscribe = onSnapshot(ratingDocRef, (doc) => {
-        if (doc.exists()) {
-          callback(doc.data().rating || 0);
-        } else {
-          callback(0);
-        }
-      }, (error) => {
-        console.error('❌ Error in user rating listener:', error);
-        callback(0);
-      });
-
-      return unsubscribe;
-    } catch (error) {
-      console.error('❌ Error setting up user rating listener:', error);
-      return () => {}; // Return empty function if setup fails
     }
   }
 }; 

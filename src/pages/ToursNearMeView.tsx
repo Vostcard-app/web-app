@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaMapPin, FaWalking, FaUser } from 'react-icons/fa';
+import { FaArrowLeft, FaMapPin, FaWalking, FaUser, FaStar } from 'react-icons/fa';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
+import { RatingService, type RatingStats } from '../services/ratingService';
 import type { Tour } from '../types/TourTypes';
 
 interface TourWithCreator extends Tour {
@@ -16,6 +17,7 @@ interface TourWithCreator extends Tour {
     latitude: number;
     longitude: number;
   };
+  ratingStats?: RatingStats;
 }
 
 const ToursNearMeView: React.FC = () => {
@@ -101,7 +103,10 @@ const ToursNearMeView: React.FC = () => {
           const creatorDoc = await getDoc(doc(db, 'users', tourData.creatorId));
           const creatorData = creatorDoc.exists() ? creatorDoc.data() : null;
 
-                               // Get first post with valid location for distance calculation
+          // Get rating stats
+          const ratingStats = await RatingService.getTourRatingStats(tourDoc.id);
+
+          // Get first post with valid location for distance calculation
           let firstPostLocation: { latitude: number; longitude: number } | undefined = undefined;
           if (tourData.postIds && tourData.postIds.length > 0) {
             // Check all posts to find the first one with valid location data
@@ -125,16 +130,16 @@ const ToursNearMeView: React.FC = () => {
             }
           }
 
-                     // Calculate distance if we have location data
-           let distance: number | undefined = undefined;
-           if (firstPostLocation) {
-             distance = calculateDistance(
-               userLocation.latitude,
-               userLocation.longitude,
-               firstPostLocation.latitude,
-               firstPostLocation.longitude
-             );
-           }
+          // Calculate distance if we have location data
+          let distance: number | undefined = undefined;
+          if (firstPostLocation) {
+            distance = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              firstPostLocation.latitude,
+              firstPostLocation.longitude
+            );
+          }
 
           const tourWithCreator: TourWithCreator = {
             id: tourDoc.id,
@@ -151,7 +156,8 @@ const ToursNearMeView: React.FC = () => {
             creatorAvatar: creatorData?.avatarURL,
             creatorRole: creatorData?.userRole,
             distance,
-            firstPostLocation
+            firstPostLocation,
+            ratingStats
           };
 
           toursWithCreators.push(tourWithCreator);
@@ -417,6 +423,33 @@ const ToursNearMeView: React.FC = () => {
                         }}>
                           by {tour.creatorUsername} • {getTourTerminology(tour.creatorRole)}
                         </div>
+
+                        {/* Star Rating */}
+                        {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            marginBottom: '8px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <FaStar
+                                  key={star}
+                                  size={14}
+                                  color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
+                                />
+                              ))}
+                            </div>
+                            <span style={{
+                              fontSize: '12px',
+                              color: '#666',
+                              fontWeight: '500'
+                            }}>
+                              {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount} rating{tour.ratingStats.ratingCount !== 1 ? 's' : ''})
+                            </span>
+                          </div>
+                        )}
 
                         {/* Description */}
                         {tour.description && (
