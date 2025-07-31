@@ -386,8 +386,8 @@ const TourInProgressView: React.FC = () => {
               onClick={() => setViewMode('map')}
               style={{
                 flex: 1,
-                backgroundColor: viewMode === 'map' ? 'white' : 'transparent',
-                color: viewMode === 'map' ? '#002B4D' : 'white',
+                backgroundColor: viewMode === 'map' ? '#002B4D' : 'white',
+                color: viewMode === 'map' ? 'white' : '#002B4D',
                 border: '2px solid white',
                 borderRadius: '8px',
                 padding: '10px 16px',
@@ -409,8 +409,8 @@ const TourInProgressView: React.FC = () => {
               onClick={() => setViewMode('list')}
               style={{
                 flex: 1,
-                backgroundColor: viewMode === 'list' ? 'white' : 'transparent',
-                color: viewMode === 'list' ? '#002B4D' : 'white',
+                backgroundColor: viewMode === 'list' ? '#002B4D' : 'white',
+                color: viewMode === 'list' ? 'white' : '#002B4D',
                 border: '2px solid white',
                 borderRadius: '8px',
                 padding: '10px 16px',
