@@ -184,8 +184,31 @@ const ToursNearMeView: React.FC = () => {
     fetchToursNearMe();
   }, [userLocation]);
 
-  const handleTourClick = (tour: TourWithCreator) => {
-    navigate(`/tour/${tour.id}`, { state: { tour, autoRecenter: true } });
+  const handleTourClick = async (tour: TourWithCreator) => {
+    try {
+      console.log('🎬 Loading tour for map view:', tour.name);
+      
+      // Import TourService to get tour posts
+      const { TourService } = await import('../services/tourService');
+      
+      // Get the tour posts
+      const tourPosts = await TourService.getTourPosts(tour);
+      console.log('🎬 Fetched tour posts:', tourPosts.length);
+      
+      // Navigate to HomeView with tour data (same format as Load Tour button)
+      navigate('/home', { 
+        state: { 
+          tourData: {
+            tour,
+            tourPosts
+          }
+        } 
+      });
+    } catch (error) {
+      console.error('❌ Error loading tour for map view:', error);
+      // Fallback to original behavior if there's an error
+      navigate(`/tour/${tour.id}`, { state: { tour, autoRecenter: true } });
+    }
   };
 
   const formatDistance = (distance: number): string => {
