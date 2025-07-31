@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaMapPin, FaWalking, FaUser, FaStar } from 'react-icons/fa';
+import { FaArrowLeft, FaMapPin, FaWalking, FaUser, FaStar, FaComment } from 'react-icons/fa';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { RatingService, type RatingStats } from '../services/ratingService';
+import { ReviewService } from '../services/reviewService';
+import ReviewsModal from '../components/ReviewsModal';
 import type { Tour } from '../types/TourTypes';
 
 interface TourWithCreator extends Tour {
@@ -18,6 +20,7 @@ interface TourWithCreator extends Tour {
     longitude: number;
   };
   ratingStats?: RatingStats;
+  reviewCount?: number;
 }
 
 const ToursNearMeView: React.FC = () => {
@@ -30,6 +33,8 @@ const ToursNearMeView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<TourWithCreator | null>(null);
 
   // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -43,6 +48,24 @@ const ToursNearMeView: React.FC = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     const d = R * c; // Distance in kilometers
     return d;
+  };
+
+  // Get review count for a tour
+  const getTourReviewCount = async (tourId: string): Promise<number> => {
+    try {
+      const reviews = await ReviewService.getTourReviews(tourId);
+      return reviews.length;
+    } catch (error) {
+      console.warn(`Failed to fetch review count for tour ${tourId}:`, error);
+      return 0;
+    }
+  };
+
+  // Handle review icon click
+  const handleReviewIconClick = (tour: TourWithCreator, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent tour click
+    setSelectedTour(tour);
+    setShowReviewsModal(true);
   };
 
   // Get user's current location
@@ -106,6 +129,9 @@ const ToursNearMeView: React.FC = () => {
           // Get rating stats
           const ratingStats = await RatingService.getTourRatingStats(tourDoc.id);
 
+          // Get review count for the tour
+          const reviewCount = await getTourReviewCount(tourDoc.id);
+
           // Get first post with valid location for distance calculation
           let firstPostLocation: { latitude: number; longitude: number } | undefined = undefined;
           if (tourData.postIds && tourData.postIds.length > 0) {
@@ -157,7 +183,8 @@ const ToursNearMeView: React.FC = () => {
             creatorRole: creatorData?.userRole,
             distance,
             firstPostLocation,
-            ratingStats
+            ratingStats,
+            reviewCount
           };
 
           toursWithCreators.push(tourWithCreator);
@@ -424,32 +451,72 @@ const ToursNearMeView: React.FC = () => {
                           by {tour.creatorUsername} • {getTourTerminology(tour.creatorRole)}
                         </div>
 
-                        {/* Star Rating */}
-                        {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            marginBottom: '8px'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <FaStar
-                                  key={star}
-                                  size={14}
-                                  color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
-                                />
-                              ))}
-                            </div>
-                            <span style={{
-                              fontSize: '12px',
-                              color: '#666',
-                              fontWeight: '500'
+                        {/* Rating and Reviews Row */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '16px',
+                          marginBottom: '8px'
+                        }}>
+                          {/* Star Rating */}
+                          {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
                             }}>
-                              {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount} rating{tour.ratingStats.ratingCount !== 1 ? 's' : ''})
-                            </span>
-                          </div>
-                        )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <FaStar
+                                    key={star}
+                                    size={14}
+                                    color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
+                                  />
+                                ))}
+                              </div>
+                              <span style={{
+                                fontSize: '12px',
+                                color: '#666',
+                                fontWeight: '500'
+                              }}>
+                                {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount})
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Review Count */}
+                          {tour.reviewCount !== undefined && tour.reviewCount > 0 && (
+                            <button
+                              onClick={(e) => handleReviewIconClick(tour, e)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                transition: 'background-color 0.2s ease'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#f0f0f0';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                              }}
+                            >
+                              <FaComment size={12} color="#666" />
+                              <span style={{
+                                fontSize: '12px',
+                                color: '#666',
+                                fontWeight: '500'
+                              }}>
+                                {tour.reviewCount} review{tour.reviewCount !== 1 ? 's' : ''}
+                              </span>
+                            </button>
+                          )}
+                        </div>
 
                         {/* Description */}
                         {tour.description && (
@@ -495,6 +562,19 @@ const ToursNearMeView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Reviews Modal */}
+      {selectedTour && (
+        <ReviewsModal
+          isOpen={showReviewsModal}
+          onClose={() => {
+            setShowReviewsModal(false);
+            setSelectedTour(null);
+          }}
+          tourId={selectedTour.id}
+          tourName={selectedTour.name}
+        />
+      )}
     </div>
   );
 };
