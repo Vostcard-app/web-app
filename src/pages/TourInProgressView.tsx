@@ -872,7 +872,7 @@ const TourInProgressView: React.FC = () => {
                 {/* Star Rating */}
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
+                  justifyContent: 'space-between',
                   marginBottom: '24px'
                 }}>
                   {[1, 2, 3, 4, 5].map((star) => {
