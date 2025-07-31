@@ -259,8 +259,20 @@ const TourInProgressView: React.FC = () => {
     setShowLeavingTourView(true);
   };
 
-  const handleConfirmLeaveTour = () => {
+  const handleConfirmLeaveTour = async () => {
     console.log('🚪 Leaving tour in progress');
+    
+    // Save the rating if user provided one
+    if (tourRating > 0 && tour?.id) {
+      try {
+        await RatingService.submitTourRating(tour.id, tourRating);
+        console.log(`✅ Tour rating submitted: ${tourRating} stars for tour ${tour.id}`);
+      } catch (error) {
+        console.error('❌ Error submitting tour rating:', error);
+        // Continue with leaving tour even if rating fails
+      }
+    }
+    
     // Clean up location tracking
     if (watchId) {
       navigator.geolocation.clearWatch(watchId);
@@ -269,19 +281,8 @@ const TourInProgressView: React.FC = () => {
     navigate('/home');
   };
 
-  const handleStarClick = async (rating: number) => {
+  const handleStarClick = (rating: number) => {
     setTourRating(rating);
-    
-    // Save the rating to the database
-    if (tour?.id) {
-      try {
-        await RatingService.submitTourRating(tour.id, rating);
-        console.log(`✅ Tour rating submitted: ${rating} stars for tour ${tour.id}`);
-      } catch (error) {
-        console.error('❌ Error submitting tour rating:', error);
-        // Could show an error message to user here if needed
-      }
-    }
   };
 
   const handleStarHover = (rating: number) => {
@@ -913,15 +914,17 @@ const TourInProgressView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Leave a Tip Button */}
+              {/* Action Buttons */}
               <div style={{
-                textAlign: 'center',
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'center',
                 marginBottom: '24px'
               }}>
                 <button
                   ref={tipButtonRef}
                   onClick={(e) => {
-                    console.log('🔘 Button clicked - raw event');
+                    console.log('🔘 Tip button clicked - raw event');
                     e.preventDefault();
                     e.stopPropagation();
                     handleTipButtonClick();
@@ -935,7 +938,8 @@ const TourInProgressView: React.FC = () => {
                     fontSize: '16px',
                     fontWeight: '600',
                     cursor: 'pointer',
-                    transition: 'background-color 0.2s ease'
+                    transition: 'background-color 0.2s ease',
+                    flex: 1
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#218838';
@@ -945,6 +949,36 @@ const TourInProgressView: React.FC = () => {
                   }}
                 >
                   💰 Leave a Tip
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    console.log('📝 Review button clicked');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // TODO: Implement review functionality
+                    alert('Review feature coming soon!');
+                  }}
+                  style={{
+                    backgroundColor: '#007aff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease',
+                    flex: 1
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#0056b3';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#007aff';
+                  }}
+                >
+                  📝 Leave a Review
                 </button>
               </div>
 
