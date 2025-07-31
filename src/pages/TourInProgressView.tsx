@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaTimes, FaList, FaMap, FaLocationArrow, FaWalking } from 'react-icons/fa';
+import { FaTimes, FaList, FaMap, FaLocationArrow, FaWalking, FaStar, FaUserCircle } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -93,6 +93,9 @@ const TourInProgressView: React.FC = () => {
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
   const [watchId, setWatchId] = useState<number | null>(null);
+  const [showLeavingTourView, setShowLeavingTourView] = useState(false);
+  const [tourRating, setTourRating] = useState(0);
+  const [hoveredStar, setHoveredStar] = useState(0);
 
   // Get tour data from navigation state or fetch by ID
   useEffect(() => {
@@ -201,6 +204,11 @@ const TourInProgressView: React.FC = () => {
   };
 
   const handleLeaveTour = () => {
+    console.log('🚪 Showing leaving tour view');
+    setShowLeavingTourView(true);
+  };
+
+  const handleConfirmLeaveTour = () => {
     console.log('🚪 Leaving tour in progress');
     // Clean up location tracking
     if (watchId) {
@@ -208,6 +216,18 @@ const TourInProgressView: React.FC = () => {
     }
     // Navigate back to tours list
     navigate('/tours-near-me');
+  };
+
+  const handleStarClick = (rating: number) => {
+    setTourRating(rating);
+  };
+
+  const handleStarHover = (rating: number) => {
+    setHoveredStar(rating);
+  };
+
+  const handleStarLeave = () => {
+    setHoveredStar(0);
   };
 
   // Type for tour posts with distance information
@@ -636,6 +656,211 @@ const TourInProgressView: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Leaving Tour View Modal */}
+        {showLeavingTourView && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '350px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              position: 'relative'
+            }}>
+              {/* Close Button */}
+              <button
+                onClick={() => setShowLeavingTourView(false)}
+                style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '4px'
+                }}
+              >
+                <FaTimes />
+              </button>
+
+              {/* Guide Info */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '24px'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  marginBottom: '16px'
+                }}>
+                  {/* Guide Avatar - Using placeholder for now */}
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: '#e0e0e0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '24px',
+                    color: '#666'
+                  }}>
+                    <FaUserCircle size={60} color="#002B4D" />
+                  </div>
+                  <div>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      color: '#002B4D'
+                    }}>
+                      {tourPosts[0]?.username || 'Tour Guide'}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Leave a Tip Button */}
+                <button
+                  onClick={() => {
+                    // TODO: Implement tip functionality
+                    console.log('💰 Leave a tip clicked');
+                  }}
+                  style={{
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    marginBottom: '24px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#218838';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#28a745';
+                  }}
+                >
+                  💰 Leave a Tip
+                </button>
+              </div>
+
+              {/* Rating Section */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '24px'
+              }}>
+                <h4 style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#002B4D'
+                }}>
+                  How'd you like the tour?
+                </h4>
+
+                {/* Star Rating */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginBottom: '24px'
+                }}>
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const isActive = star <= (hoveredStar || tourRating);
+                    return (
+                      <button
+                        key={star}
+                        onClick={() => handleStarClick(star)}
+                        onMouseEnter={() => handleStarHover(star)}
+                        onMouseLeave={handleStarLeave}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '32px',
+                          color: isActive ? '#ffc107' : '#e0e0e0',
+                          transition: 'color 0.2s ease',
+                          padding: '4px'
+                        }}
+                      >
+                        <FaStar />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'space-between'
+              }}>
+                <button
+                  onClick={() => setShowLeavingTourView(false)}
+                  style={{
+                    flex: 1,
+                    backgroundColor: 'white',
+                    color: '#002B4D',
+                    border: '2px solid #002B4D',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Continue Tour
+                </button>
+                <button
+                  onClick={handleConfirmLeaveTour}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#dc3545',
+                    color: 'white',
+                    border: '2px solid #dc3545',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#c82333';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#dc3545';
+                  }}
+                >
+                  Leave Tour
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
