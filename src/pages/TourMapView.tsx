@@ -358,10 +358,27 @@ const TourMapView: React.FC = () => {
           {/* Load Tour Button */}
           <button
             onClick={() => {
+              // Validate data before navigating
+              if (!tour) {
+                console.error('❌ Load Tour: Tour data not available');
+                alert('Tour data is still loading. Please wait a moment and try again.');
+                return;
+              }
+
+              if (!tourPosts || tourPosts.length === 0) {
+                console.error('❌ Load Tour: No tour posts available');
+                alert('This tour has no stops available. Please try a different tour.');
+                return;
+              }
+
               console.log('🎬 Starting tour in progress:', tour.name);
-              console.log('🎬 Tour data:', { tour, tourPosts });
+              console.log('🎬 Tour data validated:', { 
+                tourId: tour.id, 
+                tourName: tour.name, 
+                postsCount: tourPosts.length 
+              });
               
-              // Navigate to TourInProgressView with tour data
+              // Navigate to TourInProgressView with validated tour data
               navigate(`/tour-in-progress/${tour.id}`, { 
                 state: { 
                   tourData: {
@@ -371,30 +388,36 @@ const TourMapView: React.FC = () => {
                 } 
               });
             }}
+            disabled={loading || !tour || !tourPosts || tourPosts.length === 0}
             style={{
               flex: 1,
-              backgroundColor: 'white',
-              color: '#002B4D',
+              backgroundColor: (loading || !tour || !tourPosts || tourPosts.length === 0) ? '#f5f5f5' : 'white',
+              color: (loading || !tour || !tourPosts || tourPosts.length === 0) ? '#999' : '#002B4D',
               border: '2px solid #002B4D',
               borderRadius: '8px',
               padding: '10px 16px',
               fontSize: '14px',
               fontWeight: '600',
-              cursor: 'pointer',
+              cursor: (loading || !tour || !tourPosts || tourPosts.length === 0) ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px'
+              gap: '6px',
+              opacity: (loading || !tour || !tourPosts || tourPosts.length === 0) ? 0.6 : 1
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f8f9fa';
+              if (!loading && tour && tourPosts && tourPosts.length > 0) {
+                e.currentTarget.style.backgroundColor = '#f8f9fa';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
+              if (!loading && tour && tourPosts && tourPosts.length > 0) {
+                e.currentTarget.style.backgroundColor = 'white';
+              }
             }}
           >
-            🎬 Load Tour
+            {loading ? '⏳ Loading...' : '🎬 Load Tour'}
           </button>
         </div>
 
