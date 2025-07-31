@@ -342,11 +342,11 @@ const TourMapView: React.FC = () => {
            {/* Load Tour Button */}
            <button
              onClick={() => {
-               console.log('🎬 Loading tour onto main map:', tour.name);
+               console.log('🎬 Starting tour in progress:', tour.name);
                console.log('🎬 Tour data:', { tour, tourPosts });
                
-               // Navigate to HomeView with tour data (same as original Load Tour functionality)
-               navigate('/home', { 
+               // Navigate to TourInProgressView with tour data
+               navigate(`/tour-in-progress/${tour.id}`, { 
                  state: { 
                    tourData: {
                      tour,
