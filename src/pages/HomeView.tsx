@@ -551,12 +551,16 @@ const HomeView = () => {
     }
   }, [user?.uid, userAvatar]);
 
-  // Initial load
+  // Initial load - Skip if tour data is active
   useEffect(() => {
-    if (!loading && !hasInitialLoad) {
+    if (!loading && !hasInitialLoad && !tourData) {
+      console.log('🔄 Initial load - loading regular vostcards');
       loadVostcards();
+    } else if (tourData) {
+      console.log('🎬 Initial load - skipping regular vostcards, tour data is active');
+      setHasInitialLoad(true); // Mark as loaded to prevent future loads
     }
-  }, [loading, hasInitialLoad, loadVostcards]);
+  }, [loading, hasInitialLoad, tourData, loadVostcards]);
 
   // Handle fresh load after posting
   useEffect(() => {
