@@ -340,9 +340,12 @@ const TourInProgressView: React.FC = () => {
   type TourPostWithDistance = TourPost & { distance: number };
 
   const getSortedPosts = (): TourPostWithDistance[] => {
-    if (!userLocation) return tourPosts.map(post => ({ ...post, distance: 0 }));
+    // Filter out offers from list view, but keep regular posts, quickcards, and guide posts
+    const nonOfferPosts = tourPosts.filter(post => !post.isOffer);
     
-    return tourPosts
+    if (!userLocation) return nonOfferPosts.map(post => ({ ...post, distance: 0 }));
+    
+    return nonOfferPosts
       .filter(post => post.latitude && post.longitude)
       .map(post => ({
         ...post,
@@ -667,7 +670,7 @@ const TourInProgressView: React.FC = () => {
                 fontSize: '14px',
                 color: '#002B4D'
               }}>
-                📍 Stops sorted by distance from your current location
+                📍 Tour stops sorted by distance from your current location (offers shown on map only)
               </div>
 
               {getSortedPosts().map((post, index) => (
