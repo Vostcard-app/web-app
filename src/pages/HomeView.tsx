@@ -280,6 +280,11 @@ const HomeView = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
 
+  // Debug showOnboarding state changes
+  useEffect(() => {
+    console.log('🎯 showOnboarding state changed to:', showOnboarding);
+  }, [showOnboarding]);
+
 
   
   // Stable callback to prevent MapUpdater from re-running constantly
@@ -1652,8 +1657,10 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
+                  console.log('🎯 Quick Start Tour clicked - before:', showOnboarding);
                   setShowHelpMenu(false);
                   setShowOnboarding(true);
+                  console.log('🎯 Quick Start Tour clicked - after setShowOnboarding(true)');
                 }}
                 style={{
                   width: '100%',
