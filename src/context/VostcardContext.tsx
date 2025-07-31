@@ -2249,7 +2249,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
           // Filter out deleted vostcards, but keep posted quickcards for editing
           const deletedVostcards = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
+          const currentUser = authContext.user;
           const filteredVostcards = restoredVostcards.filter(v => {
+            // ⚡ CRITICAL FIX: Only show current user's posts
+            if (!currentUser || v.userID !== currentUser.uid) {
+              console.log('🚫 Filtering out post from different user:', {
+                postId: v.id,
+                postUserID: v.userID,
+                currentUserID: currentUser?.uid,
+                title: v.title
+              });
+              return false;
+            }
+            
             // Always exclude deleted vostcards
             if (deletedVostcards.includes(v.id)) return false;
             
