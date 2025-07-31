@@ -700,76 +700,41 @@ const TourInProgressView: React.FC = () => {
                 <FaTimes />
               </button>
 
-              {/* Guide Info */}
+              {/* Guide Info - Left Justified */}
               <div style={{
-                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
                 marginBottom: '24px'
               }}>
+                {/* Guide Avatar */}
                 <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  backgroundColor: '#e0e0e0',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '12px',
-                  marginBottom: '16px'
+                  fontSize: '24px',
+                  color: '#666'
                 }}>
-                  {/* Guide Avatar - Using placeholder for now */}
-                  <div style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    backgroundColor: '#e0e0e0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '24px',
-                    color: '#666'
-                  }}>
-                    <FaUserCircle size={60} color="#002B4D" />
-                  </div>
-                  <div>
-                    <h3 style={{
-                      margin: 0,
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      color: '#002B4D'
-                    }}>
-                      {tourPosts[0]?.username || 'Tour Guide'}
-                    </h3>
-                  </div>
+                  <FaUserCircle size={60} color="#002B4D" />
                 </div>
-
-                {/* Leave a Tip Button */}
-                <button
-                  onClick={() => {
-                    // TODO: Implement tip functionality
-                    console.log('💰 Leave a tip clicked');
-                  }}
-                  style={{
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '12px 24px',
-                    fontSize: '16px',
+                <div>
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '18px',
                     fontWeight: '600',
-                    cursor: 'pointer',
-                    marginBottom: '24px',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#218838';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#28a745';
-                  }}
-                >
-                  💰 Leave a Tip
-                </button>
+                    color: '#002B4D'
+                  }}>
+                    {tourPosts[0]?.username || 'Tour Guide'}
+                  </h3>
+                </div>
               </div>
 
               {/* Rating Section */}
               <div style={{
-                textAlign: 'center',
                 marginBottom: '24px'
               }}>
                 <h4 style={{
@@ -784,7 +749,6 @@ const TourInProgressView: React.FC = () => {
                 {/* Star Rating */}
                 <div style={{
                   display: 'flex',
-                  justifyContent: 'center',
                   gap: '8px',
                   marginBottom: '24px'
                 }}>
@@ -811,6 +775,38 @@ const TourInProgressView: React.FC = () => {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Leave a Tip Button */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '24px'
+              }}>
+                <button
+                  onClick={() => {
+                    // TODO: Implement tip functionality
+                    console.log('💰 Leave a tip clicked');
+                  }}
+                  style={{
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 24px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#218838';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#28a745';
+                  }}
+                >
+                  💰 Leave a Tip
+                </button>
               </div>
 
               {/* Action Buttons */}
