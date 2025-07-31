@@ -210,8 +210,11 @@ const TourInProgressView: React.FC = () => {
     navigate('/tours-near-me');
   };
 
-  const getSortedPosts = () => {
-    if (!userLocation) return tourPosts;
+  // Type for tour posts with distance information
+  type TourPostWithDistance = TourPost & { distance: number };
+
+  const getSortedPosts = (): TourPostWithDistance[] => {
+    if (!userLocation) return tourPosts.map(post => ({ ...post, distance: 0 }));
     
     return tourPosts
       .filter(post => post.latitude && post.longitude)
@@ -297,132 +300,143 @@ const TourInProgressView: React.FC = () => {
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Header */}
+        {/* Fixed Header Section */}
         <div style={{
-          backgroundColor: '#001a33',
-          height: 80,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 16px',
-          position: 'relative',
+          position: 'sticky',
+          top: 0,
           zIndex: 1000,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-          flexShrink: 0,
-          borderRadius: shouldUseContainer ? '16px 16px 0 0' : '0',
-          paddingTop: 'env(safe-area-inset-top, 0px)',
-          paddingLeft: 'env(safe-area-inset-left, 16px)',
-          paddingRight: 'env(safe-area-inset-right, 16px)'
+          backgroundColor: '#002B4D',
+          borderRadius: shouldUseContainer ? '16px 16px 0 0' : '0'
         }}>
+          {/* Header */}
           <div style={{
-            color: 'white',
-            fontSize: 18,
-            fontWeight: 'bold',
-            textAlign: 'center',
-            flex: 1,
+            backgroundColor: '#001a33',
+            height: 80,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px'
+            justifyContent: 'space-between',
+            padding: '0 16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            borderRadius: shouldUseContainer ? '16px 16px 0 0' : '0',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingLeft: 'env(safe-area-inset-left, 16px)',
+            paddingRight: 'env(safe-area-inset-right, 16px)'
           }}>
-            <FaWalking />
-            Tour in Progress
+            <div style={{
+              color: 'white',
+              fontSize: 18,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}>
+              <FaWalking />
+              Tour in Progress
+            </div>
+
+            <button
+              onClick={handleLeaveTour}
+              style={{
+                background: '#ff6b6b',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '14px',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontWeight: '600'
+              }}
+            >
+              <FaTimes size={12} />
+              Leave Tour
+            </button>
           </div>
 
-          <button
-            onClick={handleLeaveTour}
-            style={{
-              background: '#ff6b6b',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontSize: '14px',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              fontWeight: '600'
-            }}
-          >
-            <FaTimes size={12} />
-            Leave Tour
-          </button>
+          {/* Tour Info */}
+          <div style={{
+            backgroundColor: '#002B4D',
+            padding: '12px 16px',
+            borderBottom: '1px solid #001a33',
+            color: 'white'
+          }}>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>
+              {tour.name}
+            </h3>
+            <p style={{ margin: 0, fontSize: '12px', opacity: 0.8 }}>
+              {tourPosts.length} {tourPosts.length === 1 ? 'stop' : 'stops'}
+              {tour.description && ` • ${tour.description}`}
+            </p>
+          </div>
+
+          {/* View Toggle Buttons */}
+          <div style={{
+            backgroundColor: '#002B4D',
+            padding: '12px 16px',
+            borderBottom: '1px solid #001a33',
+            display: 'flex',
+            gap: '8px'
+          }}>
+            <button
+              onClick={() => setViewMode('map')}
+              style={{
+                flex: 1,
+                backgroundColor: viewMode === 'map' ? 'white' : 'transparent',
+                color: viewMode === 'map' ? '#002B4D' : 'white',
+                border: '2px solid white',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              <FaMap />
+              Map View
+            </button>
+
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                flex: 1,
+                backgroundColor: viewMode === 'list' ? 'white' : 'transparent',
+                color: viewMode === 'list' ? '#002B4D' : 'white',
+                border: '2px solid white',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              <FaList />
+              List View
+            </button>
+          </div>
         </div>
 
-        {/* Tour Info */}
-        <div style={{
-          backgroundColor: '#002B4D',
-          padding: '12px 16px',
-          borderBottom: '1px solid #001a33',
-          color: 'white'
+        {/* Scrollable Content Area */}
+        <div style={{ 
+          flex: 1, 
+          position: 'relative', 
+          backgroundColor: 'white',
+          overflow: 'hidden'
         }}>
-          <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>
-            {tour.name}
-          </h3>
-          <p style={{ margin: 0, fontSize: '12px', opacity: 0.8 }}>
-            {tourPosts.length} {tourPosts.length === 1 ? 'stop' : 'stops'}
-            {tour.description && ` • ${tour.description}`}
-          </p>
-        </div>
-
-        {/* View Toggle Buttons */}
-        <div style={{
-          backgroundColor: '#002B4D',
-          padding: '12px 16px',
-          borderBottom: '1px solid #001a33',
-          display: 'flex',
-          gap: '8px'
-        }}>
-          <button
-            onClick={() => setViewMode('map')}
-            style={{
-              flex: 1,
-              backgroundColor: viewMode === 'map' ? 'white' : 'transparent',
-              color: viewMode === 'map' ? '#002B4D' : 'white',
-              border: '2px solid white',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
-          >
-            <FaMap />
-            Map View
-          </button>
-
-          <button
-            onClick={() => setViewMode('list')}
-            style={{
-              flex: 1,
-              backgroundColor: viewMode === 'list' ? 'white' : 'transparent',
-              color: viewMode === 'list' ? '#002B4D' : 'white',
-              border: '2px solid white',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
-          >
-            <FaList />
-            List View
-          </button>
-        </div>
-
-        {/* Content Area */}
-        <div style={{ flex: 1, position: 'relative', backgroundColor: 'white' }}>
           {viewMode === 'map' ? (
             /* Map View */
             <MapContainer
@@ -511,11 +525,13 @@ const TourInProgressView: React.FC = () => {
                 })}
             </MapContainer>
           ) : (
-            /* List View */
+            /* Scrollable List View */
             <div style={{
               height: '100%',
               overflowY: 'auto',
-              padding: '16px'
+              overflowX: 'hidden',
+              padding: '16px',
+              WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
             }}>
               <div style={{
                 marginBottom: '16px',
