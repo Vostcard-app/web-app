@@ -15,6 +15,8 @@ import { signOut } from 'firebase/auth';
 import './HomeView.css';
 import LocationDebugger from '../components/LocationDebugger';
 import DriveModePlayer from '../components/DriveModePlayer';
+import OnboardingTour from '../components/OnboardingTour';
+import { OnboardingService } from '../services/onboardingService';
 import InfoButton from '../assets/Info_button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
@@ -274,7 +276,9 @@ const HomeView = () => {
   const [shouldUpdateMapView, setShouldUpdateMapView] = useState(false); // Flag to control when map should recenter
   const [showTooltip, setShowTooltip] = useState<{ show: boolean; title: string; x: number; y: number }>({ show: false, title: '', x: 0, y: 0 });
   const [hasInitialPosition, setHasInitialPosition] = useState(false); // Track if we've set initial position
-  const [mapTargetLocation, setMapTargetLocation] = useState<[number, number] | null>(null); // Separate state for map positioning
+  const [mapTargetLocation, setMapTargetLocation] = useState<[number, number] | null>(null); // Separate state for map positioning  
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(false);
   
   // Stable callback to prevent MapUpdater from re-running constantly
   const stableShouldUpdateMapView = useCallback((value: boolean) => {
@@ -462,6 +466,35 @@ const HomeView = () => {
       setShowAuthLoading(false);
     }
   }, [user, username, userID, userRole, loading]);
+
+  // Check if user has seen onboarding tour
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      // Only check if user is logged in and auth is complete
+      if (!loading && user && userID && !checkingOnboarding) {
+        setCheckingOnboarding(true);
+        try {
+          console.log('🎯 Checking onboarding status for user:', userID);
+          const hasSeenOnboarding = await OnboardingService.hasUserSeenOnboarding();
+          console.log('🎯 User has seen onboarding:', hasSeenOnboarding);
+          
+          if (!hasSeenOnboarding) {
+            console.log('✨ First-time user detected - showing onboarding tour');
+            // Small delay to ensure the home view is fully loaded
+            setTimeout(() => {
+              setShowOnboarding(true);
+            }, 1000);
+          }
+        } catch (error) {
+          console.error('❌ Error checking onboarding status:', error);
+        } finally {
+          setCheckingOnboarding(false);
+        }
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [loading, user, userID, checkingOnboarding]);
 
   // Load vostcards function
   const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
@@ -907,6 +940,33 @@ const HomeView = () => {
 
   // YouTube video URL using current tutorial video
   const youtubeEmbedUrl = `https://www.youtube.com/embed/${currentTutorialVideo}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+
+  // Onboarding handlers
+  const handleOnboardingComplete = async () => {
+    console.log('✅ User completed onboarding tour');
+    try {
+      await OnboardingService.markOnboardingCompleted();
+      setShowOnboarding(false);
+      console.log('✅ Onboarding completion saved to Firebase');
+    } catch (error) {
+      console.error('❌ Error saving onboarding completion:', error);
+      // Still hide the onboarding even if save fails
+      setShowOnboarding(false);
+    }
+  };
+
+  const handleOnboardingSkip = async () => {
+    console.log('⏭️ User skipped onboarding tour');
+    try {
+      await OnboardingService.markOnboardingCompleted();
+      setShowOnboarding(false);
+      console.log('✅ Onboarding skip saved to Firebase');
+    } catch (error) {
+      console.error('❌ Error saving onboarding skip:', error);
+      // Still hide the onboarding even if save fails
+      setShowOnboarding(false);
+    }
+  };
 
   console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
   
@@ -1593,6 +1653,29 @@ const HomeView = () => {
               <button
                 onClick={() => {
                   setShowHelpMenu(false);
+                  setShowOnboarding(true);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #f0f0f0',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  color: '#333',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                ✨ Quick Start Tour
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowHelpMenu(false);
                   handleTutorialVideo('VTfeDwSUy-o', 'Home Page');
                 }}
                 style={{
@@ -2069,6 +2152,13 @@ const HomeView = () => {
       {userLocation && (
         <LocationDebugger />
       )}
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        isOpen={showOnboarding}
+        onComplete={handleOnboardingComplete}
+        onSkip={handleOnboardingSkip}
+      />
     </div>
   );
 };
