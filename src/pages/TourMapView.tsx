@@ -437,7 +437,7 @@ const TourMapView: React.FC = () => {
               }
             }}
           >
-            {loading ? '⏳ Loading...' : '🎬 Load Tour'}
+            {loading ? '⏳ Loading...' : '🎬 Start Tour'}
           </button>
         </div>
 

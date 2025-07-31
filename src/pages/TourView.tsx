@@ -376,7 +376,7 @@ const TourView: React.FC = () => {
           }}
         >
           <FaDownload size={14} />
-          Load Tour
+          Start Tour
         </button>
       </div>
 
