@@ -281,13 +281,54 @@ const TourInProgressView: React.FC = () => {
   };
 
   const handleTipButtonClick = () => {
+    console.log('💰 Tip button clicked!');
+    console.log('🧑‍🏫 Guide profile:', guideProfile);
+    
+    if (!guideProfile && (!tour?.creatorId || !tourPosts || tourPosts.length === 0)) {
+      console.warn('❌ No guide profile or tour data available');
+      alert('Tour information is still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    // If we don't have full guide profile but have basic info, create a minimal profile
+    let profileToUse = guideProfile;
+    if (!guideProfile && tour?.creatorId) {
+      console.log('🔄 Creating fallback guide profile');
+      profileToUse = {
+        id: tour.creatorId,
+        username: tourPosts[0]?.username || 'Tour Guide',
+        userRole: 'guide', // Assume tour creators are guides
+        buyMeACoffeeURL: '',
+        kofiURL: '',
+        paypalURL: '',
+        venmoURL: '',
+        cashappURL: '',
+        zelleURL: '',
+        applePayURL: '',
+        googlePayURL: '',
+        patreonURL: '',
+        bitcoinURL: '',
+        ethereumURL: ''
+      };
+    }
+
     if (tipButtonRef.current) {
       const rect = tipButtonRef.current.getBoundingClientRect();
+      console.log('📍 Button position:', { rect, scrollY: window.scrollY, scrollX: window.scrollX });
+      
       setTipDropdownPosition({
         top: rect.bottom + window.scrollY + 8,
         left: rect.left + rect.width / 2 + window.scrollX
       });
       setShowTipDropdown(true);
+      console.log('✅ Tip dropdown should now be visible');
+      
+      // Update the guide profile state if we created a fallback
+      if (!guideProfile && profileToUse) {
+        setGuideProfile(profileToUse);
+      }
+    } else {
+      console.error('❌ Tip button ref not found');
     }
   };
 
@@ -863,29 +904,28 @@ const TourInProgressView: React.FC = () => {
               }}>
                 <button
                   ref={tipButtonRef}
-                  onClick={handleTipButtonClick}
-                  disabled={!guideProfile || guideProfile.userRole !== 'guide'}
+                  onClick={(e) => {
+                    console.log('🔘 Button clicked - raw event');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTipButtonClick();
+                  }}
                   style={{
-                    backgroundColor: (!guideProfile || guideProfile.userRole !== 'guide') ? '#cccccc' : '#28a745',
+                    backgroundColor: '#28a745',
                     color: 'white',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '12px 24px',
                     fontSize: '16px',
                     fontWeight: '600',
-                    cursor: (!guideProfile || guideProfile.userRole !== 'guide') ? 'not-allowed' : 'pointer',
-                    transition: 'background-color 0.2s ease',
-                    opacity: (!guideProfile || guideProfile.userRole !== 'guide') ? 0.6 : 1
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
                   }}
                   onMouseEnter={(e) => {
-                    if (guideProfile && guideProfile.userRole === 'guide') {
-                      e.currentTarget.style.backgroundColor = '#218838';
-                    }
+                    e.currentTarget.style.backgroundColor = '#218838';
                   }}
                   onMouseLeave={(e) => {
-                    if (guideProfile && guideProfile.userRole === 'guide') {
-                      e.currentTarget.style.backgroundColor = '#28a745';
-                    }
+                    e.currentTarget.style.backgroundColor = '#28a745';
                   }}
                 >
                   💰 Leave a Tip
@@ -942,12 +982,16 @@ const TourInProgressView: React.FC = () => {
         )}
 
         {/* Tip Dropdown Menu */}
-        <TipDropdownMenu
-          userProfile={guideProfile}
-          isVisible={showTipDropdown}
-          onClose={handleCloseTipDropdown}
-          position={tipDropdownPosition}
-        />
+        {showTipDropdown && (
+          <div style={{ zIndex: 9999 }}>
+            <TipDropdownMenu
+              userProfile={guideProfile}
+              isVisible={showTipDropdown}
+              onClose={handleCloseTipDropdown}
+              position={tipDropdownPosition}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
