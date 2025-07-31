@@ -221,6 +221,33 @@ const PublicQuickcardView: React.FC = () => {
     fetchQuickcard();
   }, [fetchQuickcard]);
 
+  // Fetch creator profile data (including avatar)
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!quickcard?.userID) return;
+      
+      try {
+        const userRef = doc(db, 'users', quickcard.userID);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          console.log('🔍 PublicQuickcardView - Creator profile loaded:', {
+            username: userData.username,
+            hasAvatar: !!userData.avatarURL,
+            userRole: userData.userRole
+          });
+          setUserProfile(userData);
+        }
+      } catch (err) {
+        console.error('Failed to load creator profile:', err);
+      }
+    };
+    
+    if (quickcard?.userID) {
+      fetchUserProfile();
+    }
+  }, [quickcard?.userID]);
+
   // ✅ Retry function
   const handleRetry = useCallback(async () => {
     const newAttempt = retryCount + 2; // Next attempt number
@@ -629,20 +656,36 @@ const PublicQuickcardView: React.FC = () => {
           alignItems: 'center',
           gap: '12px'
         }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            backgroundColor: '#007aff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontSize: '18px',
-            fontWeight: 'bold'
-          }}>
-            {quickcardUsername?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
+          {/* Creator Avatar - Show actual avatar or fallback to initial */}
+          {userProfile?.avatarURL ? (
+            <img
+              src={userProfile.avatarURL}
+              alt={`${quickcardUsername || 'User'}'s avatar`}
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '2px solid #e0e0e0'
+              }}
+              onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+            />
+          ) : (
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: '#007aff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 'bold'
+            }}>
+              {quickcardUsername?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+          )}
           <div>
             <div style={{
               fontSize: '16px',
