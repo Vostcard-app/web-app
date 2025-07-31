@@ -1656,12 +1656,19 @@ const HomeView = () => {
               </div>
               
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  console.log('🎯 BUTTON CLICKED! Event:', e);
                   console.log('🎯 Quick Start Tour clicked - before:', showOnboarding);
-                  setShowHelpMenu(false);
-                  setShowOnboarding(true);
-                  console.log('🎯 Quick Start Tour clicked - after setShowOnboarding(true)');
+                  try {
+                    setShowHelpMenu(false);
+                    setShowOnboarding(true);
+                    console.log('🎯 Quick Start Tour clicked - after setShowOnboarding(true)');
+                  } catch (error) {
+                    console.error('🎯 ERROR in button click:', error);
+                  }
                 }}
+                onMouseDown={() => console.log('🎯 MOUSE DOWN on Quick Start button')}
+                onTouchStart={() => console.log('🎯 TOUCH START on Quick Start button')}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
