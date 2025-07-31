@@ -264,8 +264,8 @@ const TourInProgressView: React.FC = () => {
     if (watchId) {
       navigator.geolocation.clearWatch(watchId);
     }
-    // Navigate back to tours list
-    navigate('/tours-near-me');
+    // Navigate back to home screen
+    navigate('/home');
   };
 
   const handleStarClick = (rating: number) => {
