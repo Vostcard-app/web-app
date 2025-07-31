@@ -373,8 +373,8 @@ const TourMapView: React.FC = () => {
             }}
             style={{
               flex: 1,
-              backgroundColor: '#002B4D',
-              color: 'white',
+              backgroundColor: 'white',
+              color: '#002B4D',
               border: '2px solid #002B4D',
               borderRadius: '8px',
               padding: '10px 16px',
@@ -388,10 +388,10 @@ const TourMapView: React.FC = () => {
               gap: '6px'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#001a33';
+              e.currentTarget.style.backgroundColor = '#f8f9fa';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#002B4D';
+              e.currentTarget.style.backgroundColor = 'white';
             }}
           >
             🎬 Load Tour
