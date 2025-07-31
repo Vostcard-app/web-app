@@ -67,6 +67,7 @@ import EmailVostcardView from "./pages/EmailVostcardView";
 import TourView from "./pages/TourView";
 import ToursView from "./pages/ToursView";
 import ToursNearMeView from "./pages/ToursNearMeView";
+import TourMapView from "./pages/TourMapView";
 import AuthRedirect from "./components/AuthRedirect";
 
 function App() {
@@ -143,6 +144,7 @@ function App() {
                   <Route path="/offer/:id" element={<OfferView />} />
                   <Route path="/tour/:tourId" element={<TourView />} />
                   <Route path="/tours-near-me" element={<ToursNearMeView />} />
+                  <Route path="/tour-map/:tourId" element={<TourMapView />} />
 
                   {/* 👤 Profile */}
                   <Route path="/user-settings" element={<UserSettingsView />} />

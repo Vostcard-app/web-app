@@ -1,0 +1,412 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { FaArrowLeft, FaLocationArrow } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { TourService } from '../services/tourService';
+import { useResponsive } from '../hooks/useResponsive';
+import type { Tour, TourPost } from '../types/TourTypes';
+
+// Import pin images
+import VostcardPin from '../assets/Vostcard_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
+import QuickcardPin from '../assets/quickcard_pin.png';
+import GuidePin from '../assets/Guide_pin.png';
+
+// Create icons
+const vostcardIcon = new L.Icon({
+  iconUrl: VostcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+const offerIcon = new L.Icon({
+  iconUrl: OfferPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+const guideIcon = new L.Icon({
+  iconUrl: GuidePin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
+
+// Standard user location icon
+const userIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtb3BhY2l0eT0iMC4zIi8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjYiIGZpbGw9IiM0Mjg1RjQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjIuNSIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4=',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12],
+});
+
+// Map updater component
+const TourMapUpdater = ({ setMapRef }: { setMapRef: (map: L.Map) => void }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (map) {
+      setMapRef(map);
+    }
+  }, [map, setMapRef]);
+
+  return null;
+};
+
+const TourMapView: React.FC = () => {
+  const { tourId } = useParams<{ tourId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isDesktop } = useResponsive();
+  const shouldUseContainer = isDesktop;
+
+  const [tour, setTour] = useState<Tour | null>(null);
+  const [tourPosts, setTourPosts] = useState<TourPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [mapRef, setMapRef] = useState<L.Map | null>(null);
+
+  // Get tour data from navigation state or fetch by ID
+  useEffect(() => {
+    const loadTour = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Check if tour data was passed via navigation state
+        const navigationState = location.state as any;
+        const tourData = navigationState?.tourData;
+
+        if (tourData?.tour && tourData?.tourPosts) {
+          console.log('🎬 TourMapView: Using tour data from navigation state');
+          setTour(tourData.tour);
+          setTourPosts(tourData.tourPosts);
+        } else if (tourId) {
+          console.log('🎬 TourMapView: Fetching tour data for ID:', tourId);
+          // Fetch tour and posts from Firebase
+          const fetchedTour = await TourService.getTour(tourId);
+          if (fetchedTour) {
+            setTour(fetchedTour);
+            const fetchedPosts = await TourService.getTourPosts(fetchedTour);
+            setTourPosts(fetchedPosts);
+          } else {
+            setError('Tour not found');
+          }
+        } else {
+          setError('No tour ID provided');
+        }
+      } catch (err) {
+        console.error('❌ Error loading tour:', err);
+        setError('Failed to load tour');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTour();
+  }, [tourId, location.state]);
+
+  // Get user location
+  useEffect(() => {
+    const getUserLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            console.log('📍 TourMapView: User location updated:', { latitude, longitude });
+            setUserLocation([latitude, longitude]);
+          },
+          (error) => {
+            console.warn('📍 TourMapView: Location error:', error.message);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000
+          }
+        );
+      }
+    };
+
+    getUserLocation();
+  }, []);
+
+  // Auto-fit map bounds when data is loaded
+  useEffect(() => {
+    if (mapRef && tourPosts.length > 0 && userLocation) {
+      console.log('🎬 TourMapView: Auto-fitting map bounds');
+
+      // Get all valid tour post positions
+      const tourPositions = tourPosts
+        .filter(post => post.latitude && post.longitude)
+        .map(post => [post.latitude!, post.longitude!] as [number, number]);
+
+      if (tourPositions.length > 0) {
+        // Include user location in bounds calculation
+        const allPositions = [...tourPositions, userLocation];
+
+        try {
+          const bounds = L.latLngBounds(allPositions);
+          console.log('🎬 TourMapView: Fitting map to bounds');
+          mapRef.fitBounds(bounds, {
+            padding: [50, 50],
+            maxZoom: 15
+          });
+        } catch (error) {
+          console.warn('🎬 TourMapView: Error fitting map bounds:', error);
+        }
+      }
+    }
+  }, [mapRef, tourPosts, userLocation]);
+
+  const getPostIcon = (post: TourPost) => {
+    if (post.isOffer) return offerIcon;
+    if (post.isQuickcard) {
+      if (post.userRole === 'guide') return guideIcon;
+      return quickcardIcon;
+    }
+    if (post.userRole === 'guide') return guideIcon;
+    return vostcardIcon;
+  };
+
+  const getTourTerminology = () => {
+    // Default to Tour for now - could be enhanced with creator role info
+    return 'Tour';
+  };
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontSize: '16px',
+        color: '#666'
+      }}>
+        Loading tour...
+      </div>
+    );
+  }
+
+  if (error || !tour) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px'
+      }}>
+        <h2 style={{ color: '#c62828', marginBottom: '16px' }}>Error</h2>
+        <p style={{ color: '#666', textAlign: 'center' }}>{error || 'Tour not found'}</p>
+        <button
+          onClick={() => navigate('/tours-near-me')}
+          style={{
+            marginTop: '20px',
+            backgroundColor: '#002B4D',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            cursor: 'pointer'
+          }}
+        >
+          Back to Tours
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: shouldUseContainer ? '#f0f0f0' : 'white',
+      display: shouldUseContainer ? 'flex' : 'block',
+      justifyContent: shouldUseContainer ? 'center' : 'initial',
+      alignItems: shouldUseContainer ? 'flex-start' : 'initial',
+      padding: shouldUseContainer ? '20px' : '0'
+    }}>
+      <div style={{
+        width: shouldUseContainer ? '390px' : '100%',
+        maxWidth: shouldUseContainer ? '390px' : '100%',
+        height: shouldUseContainer ? '844px' : '100vh',
+        backgroundColor: 'white',
+        boxShadow: shouldUseContainer ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: shouldUseContainer ? '16px' : '0',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Header */}
+        <div style={{
+          backgroundColor: '#002B4D',
+          height: 80,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 16px',
+          position: 'relative',
+          zIndex: 1000,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          flexShrink: 0,
+          borderRadius: shouldUseContainer ? '16px 16px 0 0' : '0',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 16px)',
+          paddingRight: 'env(safe-area-inset-right, 16px)'
+        }}>
+          <button
+            onClick={() => navigate('/tours-near-me')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '16px',
+              padding: '8px'
+            }}
+          >
+            <FaArrowLeft size={20} />
+          </button>
+
+          <div style={{
+            color: 'white',
+            fontSize: 18,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            flex: 1,
+            paddingRight: '44px' // Offset for back button
+          }}>
+            {tour.name}
+          </div>
+        </div>
+
+        {/* Map Container */}
+        <div style={{ flex: 1, position: 'relative' }}>
+          <MapContainer
+            center={[53.3498, -6.2603]} // Dublin fallback
+            zoom={13}
+            style={{
+              height: '100%',
+              width: '100%',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
+              MozUserSelect: 'none',
+              msUserSelect: 'none',
+              WebkitTouchCallout: 'none',
+              WebkitTapHighlightColor: 'transparent'
+            }}
+            zoomControl={false}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maxZoom={22}
+            />
+
+            <TourMapUpdater setMapRef={setMapRef} />
+
+            {/* User Location Marker */}
+            {userLocation && (
+              <Marker
+                position={userLocation}
+                icon={userIcon}
+              >
+                <Popup>
+                  <div style={{ textAlign: 'center' }}>
+                    <strong>Your Location</strong>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+
+            {/* Tour Post Markers */}
+            {tourPosts
+              .filter(post => post.latitude && post.longitude)
+              .map((post) => {
+                const position: [number, number] = [post.latitude!, post.longitude!];
+                const icon = getPostIcon(post);
+
+                return (
+                  <Marker
+                    key={post.id}
+                    position={position}
+                    icon={icon}
+                  >
+                    <Popup>
+                      <div style={{
+                        maxWidth: '200px',
+                        fontSize: '14px',
+                        lineHeight: '1.4'
+                      }}>
+                        <h4 style={{
+                          margin: '0 0 8px 0',
+                          fontSize: '16px',
+                          fontWeight: '600'
+                        }}>
+                          {post.title}
+                        </h4>
+                        {post.description && (
+                          <p style={{
+                            margin: '0 0 8px 0',
+                            color: '#666'
+                          }}>
+                            {post.description}
+                          </p>
+                        )}
+                        <div style={{
+                          fontSize: '12px',
+                          color: '#999'
+                        }}>
+                          by {post.username}
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+          </MapContainer>
+        </div>
+
+        {/* Tour Info Footer */}
+        <div style={{
+          backgroundColor: 'white',
+          padding: '16px',
+          borderTop: '1px solid #e0e0e0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>
+              {tour.name}
+            </h3>
+            <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
+              {tourPosts.length} {tourPosts.length === 1 ? 'stop' : 'stops'}
+              {tour.description && ` • ${tour.description}`}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TourMapView; 

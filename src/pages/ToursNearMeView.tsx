@@ -186,7 +186,7 @@ const ToursNearMeView: React.FC = () => {
 
   const handleTourClick = async (tour: TourWithCreator) => {
     try {
-      console.log('🎬 Loading tour for map view:', tour.name);
+      console.log('🎬 Loading tour for dedicated map view:', tour.name);
       
       // Import TourService to get tour posts
       const { TourService } = await import('../services/tourService');
@@ -195,8 +195,8 @@ const ToursNearMeView: React.FC = () => {
       const tourPosts = await TourService.getTourPosts(tour);
       console.log('🎬 Fetched tour posts:', tourPosts.length);
       
-      // Navigate to HomeView with tour data (same format as Load Tour button)
-      navigate('/home', { 
+      // Navigate to dedicated TourMapView with tour data
+      navigate(`/tour-map/${tour.id}`, { 
         state: { 
           tourData: {
             tour,
@@ -206,7 +206,7 @@ const ToursNearMeView: React.FC = () => {
       });
     } catch (error) {
       console.error('❌ Error loading tour for map view:', error);
-      // Fallback to original behavior if there's an error
+      // Fallback to original tour detail view
       navigate(`/tour/${tour.id}`, { state: { tour, autoRecenter: true } });
     }
   };
