@@ -117,6 +117,15 @@ const TourList: React.FC<TourListProps> = ({
     );
   }
 
+  // Debug logging to help identify the issue
+  console.log('🔍 TourList Debug:', {
+    isCurrentUser,
+    hasOnEditTour: !!onEditTour,
+    hasOnDeleteTour: !!onDeleteTour,
+    hasOnToggleSharing: !!onToggleSharing,
+    tourCount: toursWithCreators.length
+  });
+
   return (
     <>
       <div style={{
@@ -129,232 +138,242 @@ const TourList: React.FC<TourListProps> = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {toursWithCreators.map((tour) => (
-          <div
-            key={tour.id}
-            style={{
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              padding: '16px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}
-            onClick={() => onTourClick(tour)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f8f9fa';
-              e.currentTarget.style.borderColor = '#007aff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
-              e.currentTarget.style.borderColor = '#e0e0e0';
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              {/* Creator Avatar */}
-              <div style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                flexShrink: 0,
-                backgroundColor: '#f0f0f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                {tour.creatorAvatar ? (
-                  <img
-                    src={tour.creatorAvatar}
-                    alt={tour.creatorUsername}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover'
-                    }}
-                  />
-                ) : (
-                  <FaUser size={24} color="#666" />
-                )}
-              </div>
+        {toursWithCreators.map((tour) => {
+          // Explicit check - only show management icons if ALL conditions are met
+          const showManagementIcons = isCurrentUser && (onEditTour || onDeleteTour || onToggleSharing);
+          
+          console.log(`🔍 Tour "${tour.name}" - showManagementIcons:`, showManagementIcons, {
+            isCurrentUser,
+            hasHandlers: !!(onEditTour || onDeleteTour || onToggleSharing)
+          });
 
-              {/* Tour Details */}
-              <div style={{ flex: 1 }}>
-                {/* Tour Title */}
-                <h3 style={{
-                  margin: '0 0 4px 0',
-                  fontSize: '18px',
-                  fontWeight: '600',
-                  color: '#333'
-                }}>
-                  {tour.name}
-                  {!tour.isPublic && (
-                    <FaEyeSlash style={{ 
-                      color: '#666', 
-                      fontSize: '14px', 
-                      marginLeft: '8px' 
-                    }} title="Private tour" />
-                  )}
-                </h3>
-
-                {/* Creator Info */}
+          return (
+            <div
+              key={tour.id}
+              style={{
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                padding: '16px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+              onClick={() => onTourClick(tour)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.borderColor = '#007aff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'white';
+                e.currentTarget.style.borderColor = '#e0e0e0';
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                {/* Creator Avatar */}
                 <div style={{
-                  fontSize: '14px',
-                  color: '#007aff',
-                  marginBottom: '8px'
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                  backgroundColor: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}>
-                  by {tour.creatorUsername} • {getTourTerminology(tour.creatorRole)}
+                  {tour.creatorAvatar ? (
+                    <img
+                      src={tour.creatorAvatar}
+                      alt={tour.creatorUsername}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <FaUser size={24} color="#666" />
+                  )}
                 </div>
 
-                {/* Star Rating */}
-                {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
+                {/* Tour Details */}
+                <div style={{ flex: 1 }}>
+                  {/* Tour Title */}
+                  <h3 style={{
+                    margin: '0 0 4px 0',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#333'
+                  }}>
+                    {tour.name}
+                    {!tour.isPublic && (
+                      <FaEyeSlash style={{ 
+                        color: '#666', 
+                        fontSize: '14px', 
+                        marginLeft: '8px' 
+                      }} title="Private tour" />
+                    )}
+                  </h3>
+
+                  {/* Creator Info */}
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#007aff',
+                    marginBottom: '8px'
+                  }}>
+                    by {tour.creatorUsername} • {getTourTerminology(tour.creatorRole)}
+                  </div>
+
+                  {/* Star Rating */}
+                  {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginBottom: '8px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <FaStar
+                            key={star}
+                            size={14}
+                            color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
+                          />
+                        ))}
+                      </div>
+                      <span style={{
+                        fontSize: '12px',
+                        color: '#666',
+                        fontWeight: '500'
+                      }}>
+                        {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount} rating{tour.ratingStats.ratingCount !== 1 ? 's' : ''})
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  {tour.description && (
+                    <p style={{
+                      margin: '0 0 8px 0',
+                      color: '#666',
+                      fontSize: '14px',
+                      lineHeight: '1.4'
+                    }}>
+                      {tour.description}
+                    </p>
+                  )}
+
+                  {/* Meta Info */}
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
-                    marginBottom: '8px'
+                    gap: '16px',
+                    fontSize: '12px',
+                    color: '#999'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <FaStar
-                          key={star}
-                          size={14}
-                          color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
-                        />
-                      ))}
-                    </div>
-                    <span style={{
-                      fontSize: '12px',
-                      color: '#666',
-                      fontWeight: '500'
-                    }}>
-                      {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount} rating{tour.ratingStats.ratingCount !== 1 ? 's' : ''})
-                    </span>
+                    <span>{tour.postIds.length} {tour.postIds.length === 1 ? 'stop' : 'stops'}</span>
+                    <span>Created {tour.createdAt.toLocaleDateString()}</span>
+                    {tour.isShareable && tour.shareableUrl && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(tour.shareableUrl!);
+                          alert('Shareable link copied to clipboard!');
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#007aff',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontWeight: '500'
+                        }}
+                        title="Copy shareable link"
+                      >
+                        <FaShare size={10} />
+                        Copy Link
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Action buttons - ONLY show for current user AND when handlers are provided */}
+                {showManagementIcons && (
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    gap: '8px',
+                    marginLeft: '12px'
+                  }}>
+                    {onToggleSharing && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleSharing(tour);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: tour.isPublic ? '#28a745' : '#666',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          borderRadius: '4px',
+                        }}
+                        title={tour.isPublic ? 'Make private' : 'Make public'}
+                      >
+                        {tour.isPublic ? <FaEye size={14} /> : <FaEyeSlash size={14} />}
+                      </button>
+                    )}
+                    {onEditTour && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEditTour(tour);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#007aff',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          borderRadius: '4px',
+                        }}
+                        title="Edit tour"
+                      >
+                        <FaEdit size={14} />
+                      </button>
+                    )}
+                    {onDeleteTour && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Are you sure you want to delete "${tour.name}"?`)) {
+                            onDeleteTour(tour);
+                          }
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#d32f2f',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          borderRadius: '4px',
+                        }}
+                        title="Delete tour"
+                      >
+                        <FaTrash size={14} />
+                      </button>
+                    )}
                   </div>
                 )}
-
-                {/* Description */}
-                {tour.description && (
-                  <p style={{
-                    margin: '0 0 8px 0',
-                    color: '#666',
-                    fontSize: '14px',
-                    lineHeight: '1.4'
-                  }}>
-                    {tour.description}
-                  </p>
-                )}
-
-                {/* Meta Info */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '16px',
-                  fontSize: '12px',
-                  color: '#999'
-                }}>
-                  <span>{tour.postIds.length} {tour.postIds.length === 1 ? 'stop' : 'stops'}</span>
-                  <span>Created {tour.createdAt.toLocaleDateString()}</span>
-                  {tour.isShareable && tour.shareableUrl && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(tour.shareableUrl!);
-                        alert('Shareable link copied to clipboard!');
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#007aff',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontWeight: '500'
-                      }}
-                      title="Copy shareable link"
-                    >
-                      <FaShare size={10} />
-                      Copy Link
-                    </button>
-                  )}
-                </div>
               </div>
-              
-              {/* Action buttons for current user */}
-              {isCurrentUser && (
-                <div style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  gap: '8px',
-                  marginLeft: '12px'
-                }}>
-                  {onToggleSharing && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleSharing(tour);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: tour.isPublic ? '#28a745' : '#666',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '4px',
-                      }}
-                      title={tour.isPublic ? 'Make private' : 'Make public'}
-                    >
-                      {tour.isPublic ? <FaEye size={14} /> : <FaEyeSlash size={14} />}
-                    </button>
-                  )}
-                  {onEditTour && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditTour(tour);
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#007aff',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '4px',
-                      }}
-                      title="Edit tour"
-                    >
-                      <FaEdit size={14} />
-                    </button>
-                  )}
-                  {onDeleteTour && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm(`Are you sure you want to delete "${tour.name}"?`)) {
-                          onDeleteTour(tour);
-                        }
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#d32f2f',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        borderRadius: '4px',
-                      }}
-                      title="Delete tour"
-                    >
-                      <FaTrash size={14} />
-                    </button>
-                  )}
-                </div>
-              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );
