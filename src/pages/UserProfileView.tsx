@@ -273,6 +273,55 @@ const UserProfileView: React.FC = () => {
         )}
         <h2>{profile.username}</h2>
         
+        {/* 🗺️ Available Tours/Trips Button - Under Username */}
+        <div style={{ 
+          margin: '16px 0',
+          padding: '12px 16px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          border: '1px solid #e0e0e0',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          maxWidth: '300px',
+          marginLeft: 'auto',
+          marginRight: 'auto'
+        }}
+        onClick={() => navigate(`/user-profile/${userId}/tours`)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#f8f9fa';
+          e.currentTarget.style.borderColor = '#007aff';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'white';
+          e.currentTarget.style.borderColor = '#e0e0e0';
+        }}
+        >
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center' 
+          }}>
+            <div>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: '16px', 
+                fontWeight: '600',
+                color: '#333'
+              }}>
+                Available {getTourTerminology()}s
+              </h3>
+              <p style={{ 
+                margin: '2px 0 0 0', 
+                fontSize: '12px', 
+                color: '#666' 
+              }}>
+                {tours.length} {getTourTerminology().toLowerCase()}{tours.length !== 1 ? 's' : ''} available
+              </p>
+            </div>
+            <FaMapPin style={{ color: '#007aff', fontSize: '18px' }} />
+          </div>
+        </div>
+        
         {/* ✏️ Edit Profile Button */}
         {isCurrentUser && (
           <button
@@ -384,57 +433,7 @@ const UserProfileView: React.FC = () => {
         </div>
       )}
 
-      {/* 🗺️ Tours/Trips Section */}
-      <div style={{ marginBottom: 20 }}>
-        {/* Tour/Trip Dropdown for quick access */}
 
-
-        {/* Available Tours/Trips Link */}
-        <div style={{ 
-          marginTop: '20px',
-          padding: '16px',
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          border: '1px solid #e0e0e0',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-        }}
-        onClick={() => navigate(`/user-profile/${userId}/tours`)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = '#f8f9fa';
-          e.currentTarget.style.borderColor = '#007aff';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'white';
-          e.currentTarget.style.borderColor = '#e0e0e0';
-        }}
-        >
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center' 
-          }}>
-            <div>
-              <h3 style={{ 
-                margin: 0, 
-                fontSize: '18px', 
-                fontWeight: '600',
-                color: '#333'
-              }}>
-                Available {getTourTerminology()}s
-              </h3>
-              <p style={{ 
-                margin: '4px 0 0 0', 
-                fontSize: '14px', 
-                color: '#666' 
-              }}>
-                {tours.length} {getTourTerminology().toLowerCase()}{tours.length !== 1 ? 's' : ''} available
-              </p>
-            </div>
-            <FaMapPin style={{ color: '#007aff', fontSize: '20px' }} />
-          </div>
-        </div>
-      </div>
 
       {/* 📷 Posted Vostcards Grid */}
       {postedVostcards.length > 0 && (
