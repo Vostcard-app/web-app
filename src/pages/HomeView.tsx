@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaMapPin, FaTimes, FaInfo, FaTag, FaPercent, FaStar, FaWalking } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaTimes, FaWalking } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -280,10 +280,7 @@ const HomeView = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
 
-  // Debug showOnboarding state changes
-  useEffect(() => {
-    console.log('🎯 showOnboarding state changed to:', showOnboarding);
-  }, [showOnboarding]);
+
   
   // Stable callback to prevent MapUpdater from re-running constantly
   const stableShouldUpdateMapView = useCallback((value: boolean) => {
@@ -479,9 +476,7 @@ const HomeView = () => {
       if (!loading && user && userID && !checkingOnboarding) {
         setCheckingOnboarding(true);
         try {
-          console.log('🎯 Checking onboarding status for user:', userID);
           const hasSeenOnboarding = await OnboardingService.hasUserSeenOnboarding();
-          console.log('🎯 User has seen onboarding:', hasSeenOnboarding);
           
           if (!hasSeenOnboarding) {
             console.log('✨ First-time user detected - showing onboarding tour');
@@ -499,7 +494,7 @@ const HomeView = () => {
     };
 
     checkOnboardingStatus();
-  }, [loading, user, userID, checkingOnboarding]);
+  }, [loading, user, userID]); // Removed checkingOnboarding to prevent infinite loop
 
   // Load vostcards function
   const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
@@ -1657,11 +1652,8 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
-                  console.log('🎯 Quick Start Tour button clicked!');
-                  console.log('🎯 Current showOnboarding state:', showOnboarding);
                   setShowHelpMenu(false);
                   setShowOnboarding(true);
-                  console.log('🎯 Set showOnboarding to true');
                 }}
                 style={{
                   width: '100%',

@@ -130,14 +130,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
   const currentSlideData = tourSlides[currentSlide];
   const isLastSlide = currentSlide === tourSlides.length - 1;
 
-  console.log('🎯 OnboardingTour render - isOpen:', isOpen, 'currentSlide:', currentSlide);
-
-  if (!isOpen) {
-    console.log('🎯 OnboardingTour not rendering - isOpen is false');
-    return null;
-  }
-
-  console.log('🎯 OnboardingTour rendering with current slide:', currentSlideData.title);
+  if (!isOpen) return null;
 
   return (
     <>
