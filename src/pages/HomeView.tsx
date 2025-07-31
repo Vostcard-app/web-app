@@ -1656,19 +1656,20 @@ const HomeView = () => {
               </div>
               
               <button
-                onClick={(e) => {
-                  console.log('🎯 BUTTON CLICKED! Event:', e);
-                  console.log('🎯 Quick Start Tour clicked - before:', showOnboarding);
-                  try {
-                    setShowHelpMenu(false);
-                    setShowOnboarding(true);
-                    console.log('🎯 Quick Start Tour clicked - after setShowOnboarding(true)');
-                  } catch (error) {
-                    console.error('🎯 ERROR in button click:', error);
-                  }
+                onTouchStart={(e) => {
+                  console.log('🎯 TOUCH START - Quick Start Tour triggered!');
+                  e.preventDefault(); // Prevent default touch behavior
+                  setShowHelpMenu(false);
+                  setShowOnboarding(true);
+                  console.log('🎯 Quick Start Tour activated via touch');
                 }}
-                onMouseDown={() => console.log('🎯 MOUSE DOWN on Quick Start button')}
-                onTouchStart={() => console.log('🎯 TOUCH START on Quick Start button')}
+                onMouseDown={(e) => {
+                  console.log('🎯 MOUSE DOWN - Quick Start Tour triggered!');
+                  e.preventDefault(); // Prevent default mouse behavior
+                  setShowHelpMenu(false);
+                  setShowOnboarding(true);
+                  console.log('🎯 Quick Start Tour activated via mouse');
+                }}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
