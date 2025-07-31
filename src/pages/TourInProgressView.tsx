@@ -697,7 +697,7 @@ const TourInProgressView: React.FC = () => {
                       fontWeight: '600',
                       color: '#002B4D'
                     }}>
-                      Stop {tourPosts.indexOf(post) + 1}: {post.title}
+                      Stop {index + 1}: {post.title}
                     </h3>
                     {userLocation && (
                       <div style={{
