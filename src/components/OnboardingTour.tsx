@@ -20,7 +20,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 1,
     title: "Welcome to Vōstcard!",
-    description: "Your personal location-based storytelling platform. Share experiences, discover places, and connect with others around you.",
+    description: "Find free tours wherever you go. A location-based storytelling platform. Share experiences, discover places, and connect with others around you.",
     icon: <FaMapPin size={48} color="#002B4D" />,
     features: [
       "Share location-based content",
