@@ -872,7 +872,8 @@ const TourInProgressView: React.FC = () => {
                 {/* Star Rating */}
                 <div style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  justifyContent: 'center',
+                  gap: '12px',
                   marginBottom: '24px'
                 }}>
                   {[1, 2, 3, 4, 5].map((star) => {
@@ -887,10 +888,10 @@ const TourInProgressView: React.FC = () => {
                           background: 'none',
                           border: 'none',
                           cursor: 'pointer',
-                          fontSize: '32px',
+                          fontSize: '48px',
                           color: isActive ? '#ffc107' : '#e0e0e0',
                           transition: 'color 0.2s ease',
-                          padding: '4px'
+                          padding: '8px'
                         }}
                       >
                         <FaStar />
