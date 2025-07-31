@@ -528,7 +528,9 @@ const TourMapView: React.FC = () => {
                 📍 Tour stops in order
               </div>
 
-              {tourPosts.map((post, index) => (
+              {tourPosts
+                .filter(post => post.latitude && post.longitude)
+                .map((post, index) => (
                 <div
                   key={post.id}
                   style={{
