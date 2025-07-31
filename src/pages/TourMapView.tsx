@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaLocationArrow, FaMap, FaList } from 'react-icons/fa';
+import { FaArrowLeft, FaLocationArrow, FaMap, FaList, FaStar, FaComment } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TourService } from '../services/tourService';
+import { RatingService, type RatingStats } from '../services/ratingService';
 import { useResponsive } from '../hooks/useResponsive';
 import type { Tour, TourPost } from '../types/TourTypes';
 
@@ -78,6 +79,7 @@ const TourMapView: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [ratingStats, setRatingStats] = useState<RatingStats | null>(null);
 
   // Get tour data from navigation state or fetch by ID
   useEffect(() => {
@@ -94,6 +96,14 @@ const TourMapView: React.FC = () => {
           console.log('🎬 TourMapView: Using tour data from navigation state');
           setTour(tourData.tour);
           setTourPosts(tourData.tourPosts);
+          
+          // Fetch rating stats for the tour
+          try {
+            const stats = await RatingService.getTourRatingStats(tourData.tour.id);
+            setRatingStats(stats);
+          } catch (error) {
+            console.error('❌ Error fetching tour rating stats:', error);
+          }
         } else if (tourId) {
           console.log('🎬 TourMapView: Fetching tour data for ID:', tourId);
           // Fetch tour and posts from Firebase
@@ -102,6 +112,14 @@ const TourMapView: React.FC = () => {
             setTour(fetchedTour);
             const fetchedPosts = await TourService.getTourPosts(fetchedTour);
             setTourPosts(fetchedPosts);
+            
+            // Fetch rating stats for the tour
+            try {
+              const stats = await RatingService.getTourRatingStats(fetchedTour.id);
+              setRatingStats(stats);
+            } catch (error) {
+              console.error('❌ Error fetching tour rating stats:', error);
+            }
           } else {
             setError('Tour not found');
           }
@@ -572,9 +590,74 @@ const TourMapView: React.FC = () => {
                   <div style={{
                     fontSize: '12px',
                     color: '#999',
-                    marginBottom: '12px'
+                    marginBottom: '8px'
                   }}>
                     by {post.username}
+                  </div>
+
+                  {/* Tour Rating and Comment Icon */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    marginBottom: '12px'
+                  }}>
+                    {/* Star Rating */}
+                    {ratingStats && ratingStats.ratingCount > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <FaStar
+                              key={star}
+                              size={12}
+                              color={star <= Math.round(ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
+                            />
+                          ))}
+                        </div>
+                        <span style={{
+                          fontSize: '11px',
+                          color: '#666',
+                          fontWeight: '500'
+                        }}>
+                          {ratingStats.averageRating.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Comment Icon */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      borderRadius: '4px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // TODO: Implement comments/reviews functionality
+                      alert('Comments feature coming soon!');
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f5f5f5';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    >
+                      <FaComment size={12} color="#666" />
+                      <span style={{
+                        fontSize: '11px',
+                        color: '#666'
+                      }}>
+                        Reviews
+                      </span>
+                    </div>
                   </div>
 
                   <button
