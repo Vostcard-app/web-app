@@ -1,4 +1,4 @@
-import { doc, collection, getDoc, getDocs, setDoc, query, orderBy, limit } from 'firebase/firestore';
+import { doc, collection, getDoc, getDocs, setDoc, deleteDoc, updateDoc, query, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebaseConfig';
 
 export interface Review {
@@ -142,6 +142,108 @@ export const ReviewService = {
     } catch (error) {
       console.error('❌ Error checking if user has reviewed:', error);
       return false;
+    }
+  },
+
+  /**
+   * Update an existing review
+   * @param tourId - The ID of the tour
+   * @param reviewId - The ID of the review to update
+   * @param rating - The new rating (1-5)
+   * @param comment - The new review text
+   * @returns Promise<void>
+   */
+  async updateReview(tourId: string, reviewId: string, rating: number, comment: string): Promise<void> {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      if (rating < 1 || rating > 5) {
+        throw new Error('Rating must be between 1 and 5');
+      }
+
+      if (!comment.trim()) {
+        throw new Error('Review comment is required');
+      }
+
+      // Verify the review belongs to the current user
+      const reviewRef = doc(db, 'tours', tourId, 'reviews', reviewId);
+      const reviewDoc = await getDoc(reviewRef);
+      
+      if (!reviewDoc.exists()) {
+        throw new Error('Review not found');
+      }
+
+      const reviewData = reviewDoc.data() as Review;
+      if (reviewData.userId !== user.uid) {
+        throw new Error('You can only edit your own reviews');
+      }
+
+      // Update the review
+      await updateDoc(reviewRef, {
+        rating,
+        comment: comment.trim(),
+        updatedAt: new Date().toISOString()
+      });
+
+      console.log(`✅ Review updated for tour ${tourId}`);
+    } catch (error) {
+      console.error('❌ Error updating review:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a review
+   * @param tourId - The ID of the tour
+   * @param reviewId - The ID of the review to delete
+   * @returns Promise<void>
+   */
+  async deleteReview(tourId: string, reviewId: string): Promise<void> {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Verify the review belongs to the current user
+      const reviewRef = doc(db, 'tours', tourId, 'reviews', reviewId);
+      const reviewDoc = await getDoc(reviewRef);
+      
+      if (!reviewDoc.exists()) {
+        throw new Error('Review not found');
+      }
+
+      const reviewData = reviewDoc.data() as Review;
+      if (reviewData.userId !== user.uid) {
+        throw new Error('You can only delete your own reviews');
+      }
+
+      // Delete the review
+      await deleteDoc(reviewRef);
+
+      console.log(`✅ Review deleted for tour ${tourId}`);
+    } catch (error) {
+      console.error('❌ Error deleting review:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get a specific review by user and tour
+   * @param tourId - The ID of the tour
+   * @param userId - The ID of the user
+   * @returns Promise<Review | null>
+   */
+  async getUserReview(tourId: string, userId: string): Promise<Review | null> {
+    try {
+      const reviews = await this.getTourReviews(tourId);
+      return reviews.find(review => review.userId === userId) || null;
+    } catch (error) {
+      console.error('❌ Error getting user review:', error);
+      return null;
     }
   }
 }; 

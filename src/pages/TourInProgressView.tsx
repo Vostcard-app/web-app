@@ -932,51 +932,6 @@ const TourInProgressView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Rating Section */}
-              <div style={{
-                marginBottom: '24px'
-              }}>
-                <h4 style={{
-                  margin: '0 0 16px 0',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  color: '#002B4D'
-                }}>
-                  How'd you like the tour?
-                </h4>
-
-                {/* Star Rating */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: '12px',
-                  marginBottom: '24px'
-                }}>
-                  {[1, 2, 3, 4, 5].map((star) => {
-                    const isActive = star <= (hoveredStar || tourRating);
-                    return (
-                      <button
-                        key={star}
-                        onClick={() => handleStarClick(star)}
-                        onMouseEnter={() => handleStarHover(star)}
-                        onMouseLeave={handleStarLeave}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '48px',
-                          color: isActive ? '#ffc107' : '#e0e0e0',
-                          transition: 'color 0.2s ease',
-                          padding: '8px'
-                        }}
-                      >
-                        <FaStar />
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Action Buttons */}
               <div style={{
                 display: 'flex',
