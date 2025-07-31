@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaLocationArrow } from 'react-icons/fa';
+import { FaArrowLeft, FaLocationArrow, FaMap, FaList } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -77,6 +77,7 @@ const TourMapView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
 
   // Get tour data from navigation state or fetch by ID
   useEffect(() => {
@@ -298,175 +299,290 @@ const TourMapView: React.FC = () => {
           </div>
         </div>
 
-                 {/* Action Buttons */}
-         <div style={{
-           backgroundColor: 'white',
-           padding: '12px 16px',
-           borderBottom: '1px solid #e0e0e0',
-           display: 'flex',
-           gap: '12px',
-           justifyContent: 'space-between'
-         }}>
-           {/* List View Button */}
-           <button
-             onClick={() => {
-               console.log('📋 Navigating to tour list view for:', tour.name);
-               navigate(`/tour/${tour.id}`, { state: { tour } });
-             }}
-             style={{
-               flex: 1,
-               backgroundColor: '#fff',
-               color: '#002B4D',
-               border: '2px solid #002B4D',
-               borderRadius: '8px',
-               padding: '10px 16px',
-               fontSize: '14px',
-               fontWeight: '600',
-               cursor: 'pointer',
-               transition: 'all 0.2s ease',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center',
-               gap: '6px'
-             }}
-             onMouseEnter={(e) => {
-               e.currentTarget.style.backgroundColor = '#f8f9fa';
-             }}
-             onMouseLeave={(e) => {
-               e.currentTarget.style.backgroundColor = '#fff';
-             }}
-           >
-             📋 List View
-           </button>
-
-           {/* Load Tour Button */}
-           <button
-             onClick={() => {
-               console.log('🎬 Starting tour in progress:', tour.name);
-               console.log('🎬 Tour data:', { tour, tourPosts });
-               
-               // Navigate to TourInProgressView with tour data
-               navigate(`/tour-in-progress/${tour.id}`, { 
-                 state: { 
-                   tourData: {
-                     tour,
-                     tourPosts
-                   }
-                 } 
-               });
-             }}
-             style={{
-               flex: 1,
-               backgroundColor: '#002B4D',
-               color: 'white',
-               border: '2px solid #002B4D',
-               borderRadius: '8px',
-               padding: '10px 16px',
-               fontSize: '14px',
-               fontWeight: '600',
-               cursor: 'pointer',
-               transition: 'all 0.2s ease',
-               display: 'flex',
-               alignItems: 'center',
-               justifyContent: 'center',
-               gap: '6px'
-             }}
-             onMouseEnter={(e) => {
-               e.currentTarget.style.backgroundColor = '#001a33';
-             }}
-             onMouseLeave={(e) => {
-               e.currentTarget.style.backgroundColor = '#002B4D';
-             }}
-           >
-             🎬 Load Tour
-           </button>
-         </div>
-
-         {/* Map Container */}
-         <div style={{ flex: 1, position: 'relative' }}>
-           <MapContainer
-            center={[53.3498, -6.2603]} // Dublin fallback
-            zoom={13}
+        {/* View Toggle Buttons */}
+        <div style={{
+          backgroundColor: 'white',
+          padding: '12px 16px',
+          borderBottom: '1px solid #e0e0e0',
+          display: 'flex',
+          gap: '8px'
+        }}>
+          {/* Map View Button */}
+          <button
+            onClick={() => setViewMode('map')}
             style={{
-              height: '100%',
-              width: '100%',
-              userSelect: 'none',
-              WebkitUserSelect: 'none',
-              MozUserSelect: 'none',
-              msUserSelect: 'none',
-              WebkitTouchCallout: 'none',
-              WebkitTapHighlightColor: 'transparent'
+              flex: 1,
+              backgroundColor: viewMode === 'map' ? '#002B4D' : 'white',
+              color: viewMode === 'map' ? 'white' : '#002B4D',
+              border: '2px solid #002B4D',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
             }}
-            zoomControl={false}
           >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              maxZoom={22}
-            />
+            <FaMap />
+            Map View
+          </button>
 
-            <TourMapUpdater setMapRef={setMapRef} />
+          {/* List View Button */}
+          <button
+            onClick={() => setViewMode('list')}
+            style={{
+              flex: 1,
+              backgroundColor: viewMode === 'list' ? '#002B4D' : 'white',
+              color: viewMode === 'list' ? 'white' : '#002B4D',
+              border: '2px solid #002B4D',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <FaList />
+            List View
+          </button>
 
-            {/* User Location Marker */}
-            {userLocation && (
-              <Marker
-                position={userLocation}
-                icon={userIcon}
-              >
-                <Popup>
-                  <div style={{ textAlign: 'center' }}>
-                    <strong>Your Location</strong>
-                  </div>
-                </Popup>
-              </Marker>
-            )}
+          {/* Load Tour Button */}
+          <button
+            onClick={() => {
+              console.log('🎬 Starting tour in progress:', tour.name);
+              console.log('🎬 Tour data:', { tour, tourPosts });
+              
+              // Navigate to TourInProgressView with tour data
+              navigate(`/tour-in-progress/${tour.id}`, { 
+                state: { 
+                  tourData: {
+                    tour,
+                    tourPosts
+                  }
+                } 
+              });
+            }}
+            style={{
+              flex: 1,
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: '2px solid #002B4D',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#001a33';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#002B4D';
+            }}
+          >
+            🎬 Load Tour
+          </button>
+        </div>
 
-            {/* Tour Post Markers */}
-            {tourPosts
-              .filter(post => post.latitude && post.longitude)
-              .map((post) => {
-                const position: [number, number] = [post.latitude!, post.longitude!];
-                const icon = getPostIcon(post);
+        {/* Content Area */}
+        <div style={{ flex: 1, position: 'relative', backgroundColor: 'white' }}>
+          {viewMode === 'map' ? (
+            /* Map View */
+            <MapContainer
+              center={[53.3498, -6.2603]} // Dublin fallback
+              zoom={13}
+              style={{
+                height: '100%',
+                width: '100%',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+              zoomControl={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                maxZoom={22}
+              />
 
-                return (
-                  <Marker
-                    key={post.id}
-                    position={position}
-                    icon={icon}
-                  >
-                    <Popup>
-                      <div style={{
-                        maxWidth: '200px',
-                        fontSize: '14px',
-                        lineHeight: '1.4'
-                      }}>
-                        <h4 style={{
-                          margin: '0 0 8px 0',
-                          fontSize: '16px',
-                          fontWeight: '600'
-                        }}>
-                          {post.title}
-                        </h4>
-                        {post.description && (
-                          <p style={{
-                            margin: '0 0 8px 0',
-                            color: '#666'
-                          }}>
-                            {post.description}
-                          </p>
-                        )}
+              <TourMapUpdater setMapRef={setMapRef} />
+
+              {/* User Location Marker */}
+              {userLocation && (
+                <Marker
+                  position={userLocation}
+                  icon={userIcon}
+                >
+                  <Popup>
+                    <div style={{ textAlign: 'center' }}>
+                      <strong>Your Location</strong>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+
+              {/* Tour Post Markers */}
+              {tourPosts
+                .filter(post => post.latitude && post.longitude)
+                .map((post, index) => {
+                  const position: [number, number] = [post.latitude!, post.longitude!];
+                  const icon = getPostIcon(post);
+
+                  return (
+                    <Marker
+                      key={post.id}
+                      position={position}
+                      icon={icon}
+                    >
+                      <Popup>
                         <div style={{
-                          fontSize: '12px',
-                          color: '#999'
+                          maxWidth: '200px',
+                          fontSize: '14px',
+                          lineHeight: '1.4'
                         }}>
-                          by {post.username}
+                          <h4 style={{
+                            margin: '0 0 8px 0',
+                            fontSize: '16px',
+                            fontWeight: '600'
+                          }}>
+                            Stop {index + 1}: {post.title}
+                          </h4>
+                          {post.description && (
+                            <p style={{
+                              margin: '0 0 8px 0',
+                              color: '#666'
+                            }}>
+                              {post.description}
+                            </p>
+                          )}
+                          <div style={{
+                            fontSize: '12px',
+                            color: '#999'
+                          }}>
+                            by {post.username}
+                          </div>
                         </div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
-          </MapContainer>
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+            </MapContainer>
+          ) : (
+            /* List View */
+            <div style={{
+              height: '100%',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              padding: '16px',
+              WebkitOverflowScrolling: 'touch'
+            }}>
+              <div style={{
+                marginBottom: '16px',
+                padding: '12px',
+                backgroundColor: '#e8f4fd',
+                borderRadius: '8px',
+                fontSize: '14px',
+                color: '#002B4D'
+              }}>
+                📍 Tour stops in order
+              </div>
+
+              {tourPosts.map((post, index) => (
+                <div
+                  key={post.id}
+                  style={{
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    marginBottom: '16px',
+                    padding: '16px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    border: '1px solid #e0e0e0'
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '8px'
+                  }}>
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: '#002B4D'
+                    }}>
+                      Stop {index + 1}: {post.title}
+                    </h3>
+                  </div>
+
+                  {post.description && (
+                    <p style={{
+                      margin: '0 0 8px 0',
+                      color: '#666',
+                      fontSize: '14px',
+                      lineHeight: '1.4'
+                    }}>
+                      {post.description}
+                    </p>
+                  )}
+
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#999',
+                    marginBottom: '12px'
+                  }}>
+                    by {post.username}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      // Switch to map view and center on this post
+                      setViewMode('map');
+                      if (mapRef && post.latitude && post.longitude) {
+                        setTimeout(() => {
+                          mapRef.setView([post.latitude!, post.longitude!], 17);
+                        }, 100);
+                      }
+                    }}
+                    style={{
+                      backgroundColor: '#002B4D',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    <FaLocationArrow size={10} />
+                    View on Map
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Tour Info Footer */}
