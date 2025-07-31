@@ -946,7 +946,7 @@ const HomeView = () => {
             justifyContent: 'space-between',
             padding: '0 16px',
             position: 'relative',
-            zIndex: 1000,
+            zIndex: 10001,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             touchAction: 'manipulation',
             flexShrink: 0,
