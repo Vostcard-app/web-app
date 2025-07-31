@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart } from 'react-icons/fa';
+import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaQuestion } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface OnboardingTourProps {
@@ -30,6 +30,17 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 2,
+    title: "Need Help? We've Got You!",
+    description: "Tap on the help button to find this quick start and other helpful information to learn more about Vōstcard.",
+    icon: <FaQuestion size={48} color="#002B4D" />,
+    features: [
+      "Access Quick Start Tour anytime",
+      "Find tutorial videos", 
+      "Get helpful tips and guides"
+    ]
+  },
+  {
+    id: 3,
     title: "Create Vostcards & Quickcards",
     description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
     icon: <FaCamera size={48} color="#002B4D" />,
@@ -40,7 +51,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 3,
+    id: 4,
     title: "Explore Your Map",
     description: "See what's happening around you. Discover posts, offers, and tours from other users in your area.",
     icon: <FaMapPin size={48} color="#002B4D" />,
@@ -51,7 +62,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 4,
+    id: 5,
     title: "Join Tours & Adventures",
     description: "Follow guided tours created by local guides. Experience curated journeys through interesting locations.",
     icon: <FaWalking size={48} color="#002B4D" />,
@@ -62,7 +73,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 5,
+    id: 6,
     title: "Connect & Share",
     description: "Follow friends, like posts, and build your community. Your Vōstbox keeps track of all your interactions.",
     icon: <FaUsers size={48} color="#002B4D" />,
@@ -73,7 +84,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 6,
+    id: 7,
     title: "You're All Set!",
     description: "Ready to start exploring? Create your first post or discover what's around you!",
     icon: <FaCheck size={48} color="#00C851" />,
