@@ -288,7 +288,6 @@ const AllPostedVostcardsView: React.FC = () => {
         counts[id] = 0;
         statuses[id] = false;
         ratings[id] = {
-          vostcardID: id,
           averageRating: 0,
           ratingCount: 0,
           lastUpdated: ''
@@ -384,11 +383,7 @@ const AllPostedVostcardsView: React.FC = () => {
       );
       unsubscribers.push(unsubscribeLikes);
 
-      // Rating listeners
-      const unsubscribeRatings = RatingService.listenToRatingStats(vostcard.id, (stats) => {
-        setRatingStats(prev => ({ ...prev, [vostcard.id]: stats }));
-      });
-      unsubscribers.push(unsubscribeRatings);
+      // Rating listeners removed - using one-time fetch instead
     });
 
     return () => {
@@ -555,10 +550,17 @@ const AllPostedVostcardsView: React.FC = () => {
   const iosCount = 0;
   const webCount = vostcards.length;
 
+  console.log('🔍 AllPostedVostcardsView rendering:', { 
+    loading, 
+    vostcardsLength: vostcards.length, 
+    filteredLength: filterVostcards(vostcards).length 
+  });
+
   return (
     <div 
       style={{ 
         background: '#f5f5f5', 
+        minHeight: '100vh',
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
@@ -840,9 +842,36 @@ const AllPostedVostcardsView: React.FC = () => {
         touchAction: 'pan-y'
       } as React.CSSProperties}>
         {loading ? (
-          <div style={{ textAlign: 'center', marginTop: 40, color: '#888' }}>Loading posted Vostcards...</div>
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: 40, 
+            color: '#002B4D',
+            backgroundColor: 'white',
+            padding: '20px',
+            margin: '20px',
+            borderRadius: '8px'
+          }}>
+            <div>Loading posted Vostcards...</div>
+            <div style={{ fontSize: '12px', marginTop: '8px' }}>
+              Please wait while we fetch your content
+            </div>
+          </div>
         ) : vostcards.length === 0 ? (
-          <div style={{ textAlign: 'center', marginTop: 40, color: '#888' }}>No posted Vostcards found.</div>
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: 40, 
+            color: '#666',
+            backgroundColor: 'white',
+            padding: '20px',
+            margin: '20px',
+            borderRadius: '8px'
+          }}>
+            <div style={{ fontSize: '18px', marginBottom: '8px' }}>📱</div>
+            <div>No posted Vostcards found.</div>
+            <div style={{ fontSize: '12px', marginTop: '8px' }}>
+              Create your first Vostcard from the home screen!
+            </div>
+          </div>
         ) : (
           filterVostcards(vostcards).map((v, idx) => (
             <React.Fragment key={v.id}>

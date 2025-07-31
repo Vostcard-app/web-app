@@ -6,6 +6,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TourService } from '../services/tourService';
 import { RatingService, type RatingStats } from '../services/ratingService';
+import ReviewsModal from '../components/ReviewsModal';
 import { useResponsive } from '../hooks/useResponsive';
 import type { Tour, TourPost } from '../types/TourTypes';
 
@@ -80,6 +81,7 @@ const TourMapView: React.FC = () => {
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [ratingStats, setRatingStats] = useState<RatingStats | null>(null);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
 
   // Get tour data from navigation state or fetch by ID
   useEffect(() => {
@@ -640,8 +642,7 @@ const TourMapView: React.FC = () => {
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO: Implement comments/reviews functionality
-                      alert('Comments feature coming soon!');
+                      setShowReviewsModal(true);
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.backgroundColor = '#f5f5f5';
@@ -710,6 +711,14 @@ const TourMapView: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Reviews Modal */}
+      <ReviewsModal
+        isOpen={showReviewsModal}
+        onClose={() => setShowReviewsModal(false)}
+        tourId={tour.id}
+        tourName={tour.name}
+      />
     </div>
   );
 };

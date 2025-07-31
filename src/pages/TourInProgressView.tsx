@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { RatingService } from '../services/ratingService';
+import { ReviewService } from '../services/reviewService';
 import { TourService } from '../services/tourService';
 import { useResponsive } from '../hooks/useResponsive';
 import TipDropdownMenu from '../components/TipDropdownMenu';
@@ -103,6 +104,10 @@ const TourInProgressView: React.FC = () => {
   const [guideProfile, setGuideProfile] = useState<any>(null);
   const [showTipDropdown, setShowTipDropdown] = useState(false);
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewHoveredStar, setReviewHoveredStar] = useState(0);
 
   // Refs for tip functionality
   const tipButtonRef = useRef<HTMLButtonElement>(null);
@@ -347,6 +352,64 @@ const TourInProgressView: React.FC = () => {
 
   const handleCloseTipDropdown = () => {
     setShowTipDropdown(false);
+  };
+
+  // Review form handlers
+  const handleReviewButtonClick = () => {
+    console.log('📝 Review button clicked');
+    setShowReviewForm(true);
+  };
+
+  const handleReviewStarClick = (rating: number) => {
+    setReviewRating(rating);
+  };
+
+  const handleReviewStarHover = (rating: number) => {
+    setReviewHoveredStar(rating);
+  };
+
+  const handleReviewStarLeave = () => {
+    setReviewHoveredStar(0);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!tour?.id) {
+      alert('Unable to submit review - tour not found');
+      return;
+    }
+
+    if (reviewRating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+
+    if (!reviewComment.trim()) {
+      alert('Please enter a review comment');
+      return;
+    }
+
+    try {
+      await ReviewService.submitReview(tour.id, reviewRating, reviewComment.trim());
+      console.log('✅ Review submitted successfully');
+      
+      // Reset form
+      setReviewComment('');
+      setReviewRating(0);
+      setReviewHoveredStar(0);
+      setShowReviewForm(false);
+      
+      alert('Thank you for your review!');
+    } catch (error) {
+      console.error('❌ Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+    }
+  };
+
+  const handleCancelReview = () => {
+    setReviewComment('');
+    setReviewRating(0);
+    setReviewHoveredStar(0);
+    setShowReviewForm(false);
   };
 
   // Type for tour posts with distance information
@@ -953,11 +1016,9 @@ const TourInProgressView: React.FC = () => {
 
                 <button
                   onClick={(e) => {
-                    console.log('📝 Review button clicked');
                     e.preventDefault();
                     e.stopPropagation();
-                    // TODO: Implement review functionality
-                    alert('Review feature coming soon!');
+                    handleReviewButtonClick();
                   }}
                   style={{
                     backgroundColor: '#007aff',
@@ -981,6 +1042,147 @@ const TourInProgressView: React.FC = () => {
                   📝 Leave a Review
                 </button>
               </div>
+
+              {/* Review Form */}
+              {showReviewForm && (
+                <div style={{
+                  marginBottom: '24px',
+                  padding: '20px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  border: '1px solid #e0e0e0'
+                }}>
+                  <h4 style={{
+                    margin: '0 0 16px 0',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#002B4D'
+                  }}>
+                    Leave a Review
+                  </h4>
+
+                  {/* Review Rating */}
+                  <div style={{
+                    marginBottom: '16px'
+                  }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#333'
+                    }}>
+                      Your Rating
+                    </label>
+                    <div style={{
+                      display: 'flex',
+                      gap: '4px'
+                    }}>
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const isActive = star <= (reviewHoveredStar || reviewRating);
+                        return (
+                          <button
+                            key={star}
+                            onClick={() => handleReviewStarClick(star)}
+                            onMouseEnter={() => handleReviewStarHover(star)}
+                            onMouseLeave={handleReviewStarLeave}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '24px',
+                              color: isActive ? '#ffc107' : '#e0e0e0',
+                              transition: 'color 0.2s ease',
+                              padding: '4px'
+                            }}
+                          >
+                            <FaStar />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Review Comment */}
+                  <div style={{
+                    marginBottom: '16px'
+                  }}>
+                    <label style={{
+                      display: 'block',
+                      marginBottom: '8px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: '#333'
+                    }}>
+                      Your Review
+                    </label>
+                    <textarea
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Share your experience with this tour..."
+                      style={{
+                        width: '100%',
+                        minHeight: '80px',
+                        padding: '12px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        fontFamily: 'inherit',
+                        resize: 'vertical',
+                        boxSizing: 'border-box'
+                      }}
+                      maxLength={500}
+                    />
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      textAlign: 'right',
+                      marginTop: '4px'
+                    }}>
+                      {reviewComment.length}/500 characters
+                    </div>
+                  </div>
+
+                  {/* Review Form Buttons */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    justifyContent: 'flex-end'
+                  }}>
+                    <button
+                      onClick={handleCancelReview}
+                      style={{
+                        backgroundColor: 'white',
+                        color: '#666',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmitReview}
+                      disabled={reviewRating === 0 || !reviewComment.trim()}
+                      style={{
+                        backgroundColor: reviewRating === 0 || !reviewComment.trim() ? '#ccc' : '#007aff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: reviewRating === 0 || !reviewComment.trim() ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Submit Review
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div style={{
