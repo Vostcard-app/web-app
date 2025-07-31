@@ -385,16 +385,14 @@ const TourMapView: React.FC = () => {
           </MapContainer>
         </div>
 
-        {/* Tour Info Footer */}
+        {/* Tour Info Footer with Buttons */}
         <div style={{
           backgroundColor: 'white',
           padding: '16px',
-          borderTop: '1px solid #e0e0e0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
+          borderTop: '1px solid #e0e0e0'
         }}>
-          <div>
+          {/* Tour Info */}
+          <div style={{ marginBottom: '16px' }}>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>
               {tour.name}
             </h3>
@@ -402,6 +400,87 @@ const TourMapView: React.FC = () => {
               {tourPosts.length} {tourPosts.length === 1 ? 'stop' : 'stops'}
               {tour.description && ` • ${tour.description}`}
             </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'space-between'
+          }}>
+            {/* List View Button */}
+            <button
+              onClick={() => {
+                console.log('📋 Navigating to tour list view for:', tour.name);
+                navigate(`/tour/${tour.id}`, { state: { tour } });
+              }}
+              style={{
+                flex: 1,
+                backgroundColor: '#fff',
+                color: '#002B4D',
+                border: '2px solid #002B4D',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f8f9fa';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#fff';
+              }}
+            >
+              📋 List View
+            </button>
+
+            {/* Load Tour Button */}
+            <button
+              onClick={() => {
+                console.log('🎬 Loading tour onto main map:', tour.name);
+                console.log('🎬 Tour data:', { tour, tourPosts });
+                
+                // Navigate to HomeView with tour data (same as original Load Tour functionality)
+                navigate('/home', { 
+                  state: { 
+                    tourData: {
+                      tour,
+                      tourPosts
+                    }
+                  } 
+                });
+              }}
+              style={{
+                flex: 1,
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: '2px solid #002B4D',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#001a33';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#002B4D';
+              }}
+            >
+              🎬 Load Tour
+            </button>
           </div>
         </div>
       </div>
