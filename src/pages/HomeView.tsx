@@ -443,9 +443,9 @@ const HomeView = () => {
 
   // Load vostcards function
   const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
-    // Skip loading regular vostcards if we have tour data
-    if (tourData && !forceRefresh) {
-      console.log('🗺️ HomeView: Skipping vostcard load - tour data is active');
+    // Skip loading regular vostcards if we have tour data (even with forceRefresh)
+    if (tourData) {
+      console.log('🗺️ HomeView: Skipping vostcard load - tour data is active (forceRefresh:', forceRefresh, ')');
       return;
     }
     
