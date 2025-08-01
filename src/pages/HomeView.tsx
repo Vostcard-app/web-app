@@ -1578,13 +1578,13 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '4px',
+                gap: '2px',
                 flex: '1',
                 minWidth: '0'
               }} 
               onClick={() => setShowHelpMenu(!showHelpMenu)}
             >
-              <span style={{ fontSize: '14px', lineHeight: '1' }}>❓</span>
+              <span style={{ fontSize: '18px', lineHeight: '1' }}>❓</span>
               <span>Help</span>
             </button>
             
@@ -1608,7 +1608,7 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '4px',
+                gap: '2px',
                 flex: '1',
                 minWidth: '0'
               }} 
@@ -1638,7 +1638,7 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '4px',
+                gap: '2px',
                 flex: '1',
                 minWidth: '0'
               }} 
@@ -1668,13 +1668,13 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '4px',
+                gap: '2px',
                 flex: '1',
                 minWidth: '0'
               }} 
               onClick={handleToursClick}
             >
-              <FaWalking style={{ fontSize: '14px' }} />
+              <FaWalking style={{ fontSize: '18px' }} />
               <span>Tours</span>
             </button>
           </div>
