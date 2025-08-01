@@ -474,7 +474,7 @@ const HomeView = () => {
       console.log('✅ HomeView: Auth complete, hiding loading overlay');
       setShowAuthLoading(false);
     }
-  }, [user, username, userID, userRole, loading]);
+  }, [loading]); // FIXED: Only depend on loading to prevent excessive re-renders
 
   // Check if user has seen onboarding tour
   useEffect(() => {
@@ -773,13 +773,11 @@ const HomeView = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isMenuOpen) {
-        console.log('🖱️ Click outside detected, closing menu');
         setIsMenuOpen(false);
       }
     };
 
     if (isMenuOpen) {
-      console.log('🎯 Adding click outside listener');
       document.addEventListener('mousedown', handleClickOutside);
     }
 
@@ -942,11 +940,11 @@ const HomeView = () => {
     position: 'absolute' as const,
     top: '75px',
     right: '16px',
-    backgroundColor: 'red', // Temporarily red to make it obvious
-    border: '3px solid #000', // Thick black border
+    backgroundColor: 'white',
+    border: '1px solid #ddd',
     borderRadius: '8px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    zIndex: 9999, // Very high z-index
+    zIndex: 3000,
     minWidth: '180px',
     maxWidth: '200px',
     maxHeight: '70vh',
@@ -1003,7 +1001,7 @@ const HomeView = () => {
     }
   };
 
-  console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer, isMenuOpen });
+  console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
   
   // Add immediate advertiser check in render
   if (!loading && user && userRole === 'advertiser') {
@@ -1126,11 +1124,7 @@ const HomeView = () => {
             <FaBars
               size={48}
               color="white"
-              onClick={() => {
-                console.log('Hamburger clicked, isMenuOpen before:', isMenuOpen);
-                setIsMenuOpen(!isMenuOpen);
-                console.log('Hamburger clicked, isMenuOpen after:', !isMenuOpen);
-              }}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               style={{ cursor: 'pointer', paddingRight: '10px' }}
             />
           </div>
@@ -1139,7 +1133,6 @@ const HomeView = () => {
         {/* Main Menu */}
         {isMenuOpen && (
           <div style={menuStyle} onClick={(e) => e.stopPropagation()}>
-            {console.log('🍔 Menu is rendering, isMenuOpen:', isMenuOpen)}
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', fontSize: '14px', fontWeight: 'bold', color: '#002B4D' }}>
               Menu
             </div>
