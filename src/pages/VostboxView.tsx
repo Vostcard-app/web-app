@@ -490,7 +490,12 @@ const VostboxView: React.FC = () => {
           >
             <FaArrowLeft size={20} />
           </button>
-          <h1 style={{ margin: 0, fontSize: '24px' }}>Vōstbox</h1>
+          <h1 
+          onClick={() => navigate('/home')}
+          style={{ margin: 0, fontSize: '24px', cursor: 'pointer' }}
+        >
+          Vōstbox
+        </h1>
           {unreadCount > 0 && (
             <div style={{
               backgroundColor: '#ff4444',

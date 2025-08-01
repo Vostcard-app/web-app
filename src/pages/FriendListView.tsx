@@ -593,7 +593,12 @@ const FriendListView: React.FC = () => {
         >
           <FaArrowLeft size={20} />
         </button>
-        <h1 style={{ margin: 0, fontSize: '24px', flex: 1 }}>Friends</h1>
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{ margin: 0, fontSize: '24px', flex: 1, cursor: 'pointer' }}
+        >
+          Friends
+        </h1>
         
         {/* Home Button */}
         <button

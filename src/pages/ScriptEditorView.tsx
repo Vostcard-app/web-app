@@ -168,7 +168,10 @@ const ScriptEditorView: React.FC = () => {
           >
             <FaArrowLeft size={18} />
           </button>
-          <h1 style={{ fontSize: '30px', margin: 0 }}>
+          <h1 
+            onClick={() => navigate('/home')}
+            style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
+          >
             {isNewScript ? 'New Script' : 'Edit Script'}
           </h1>
         </div>

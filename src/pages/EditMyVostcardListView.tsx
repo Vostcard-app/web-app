@@ -63,7 +63,12 @@ const EditMyVostcardListView = () => {
         padding: '0 20px',
         color: 'white'
       }}>
-        <h1 style={{ fontSize: '24px', margin: 0 }}>Edit My Vōstcards</h1>
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{ fontSize: '24px', margin: 0, cursor: 'pointer' }}
+        >
+          Edit My Vōstcards
+        </h1>
         <FaHome
           size={28}
           style={{ cursor: 'pointer' }}

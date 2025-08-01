@@ -171,7 +171,12 @@ const ScriptLibraryView: React.FC = () => {
         borderTopRightRadius: isDesktop ? 16 : 0,
         flexShrink: 0
       }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>Script Library</h1>
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
+        >
+          Script Library
+        </h1>
         
         {/* Home Button */}
         <FaHome

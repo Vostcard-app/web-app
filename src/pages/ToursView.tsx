@@ -237,7 +237,10 @@ const ToursView: React.FC = () => {
             <FaArrowLeft />
           </button>
           <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '600' }}>
+            <h1 
+          onClick={() => navigate('/home')}
+          style={{ margin: 0, fontSize: '24px', fontWeight: '600', cursor: 'pointer' }}
+        >
               {profile.username}'s {getTourTerminology()}s
             </h1>
             <p style={{ margin: '4px 0 0 0', opacity: 0.9, fontSize: '14px' }}>

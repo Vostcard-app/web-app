@@ -233,7 +233,12 @@ Tap OK to continue.`;
         right: 0,
         zIndex: 1000,
       }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>My Quickcards ({quickcards.length})</h1>
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{ margin: 0, fontSize: '24px', cursor: 'pointer' }}
+        >
+          My Quickcards ({quickcards.length})
+        </h1>
         <button
           onClick={() => navigate('/home')}
           style={{

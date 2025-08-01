@@ -110,7 +110,12 @@ export default function ScriptToolView() {
         position: 'relative',
         padding: '15px 0 24px 20px'
       }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>Script</h1>
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
+        >
+          Script
+        </h1>
         
         {/* Home Button */}
         <FaHome

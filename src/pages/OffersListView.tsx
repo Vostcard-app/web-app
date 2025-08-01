@@ -211,12 +211,16 @@ const OffersListView: React.FC = () => {
           >
             <FaArrowLeft size={20} />
           </button>
-          <h1 style={{
-            color: 'white',
-            margin: 0,
-            fontSize: '24px',
-            fontWeight: 600
-          }}>
+          <h1 
+            onClick={() => navigate('/home')}
+            style={{
+              color: 'white',
+              margin: 0,
+              fontSize: '24px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
             Available Offers ({offers.length})
           </h1>
         </div>

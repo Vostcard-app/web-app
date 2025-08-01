@@ -186,7 +186,12 @@ const BrowseAreaView: React.FC = () => {
           color: 'white'
         }}
       >
-        <h1 style={{ fontSize: '30px', margin: 0 }}>Browse Area</h1>
+        <h1 
+          onClick={() => navigate('/home')}
+          style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
+        >
+          Browse Area
+        </h1>
         <FaHome
           size={40}
           color="white"
