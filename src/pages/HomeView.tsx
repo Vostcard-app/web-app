@@ -1085,7 +1085,13 @@ const HomeView = () => {
                   navigate(`/user-profile/${user.uid}`);
                 }
               }}
-              style={{ cursor: 'pointer' }}
+              style={{ 
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2px'
+              }}
             >
               {userAvatar ? (
                 <img
@@ -1101,6 +1107,16 @@ const HomeView = () => {
                 />
               ) : (
                 <FaUserCircle size={55} color="white" />
+              )}
+              {userRole === 'guide' && (
+                <div style={{
+                  fontSize: '10px',
+                  color: 'white',
+                  fontWeight: '600',
+                  textAlign: 'center'
+                }}>
+                  Guide
+                </div>
               )}
             </div>
             <FaBars
