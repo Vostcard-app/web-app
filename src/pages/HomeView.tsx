@@ -263,7 +263,9 @@ const HomeView = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [showFriendsOnly, setShowFriendsOnly] = useState(false);
+  const [showCreatorsIFollow, setShowCreatorsIFollow] = useState(false);
   const [userFriends, setUserFriends] = useState<string[]>([]);
+  const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
@@ -900,6 +902,13 @@ const HomeView = () => {
       filtered = filtered.filter(v => {
         if (v.isOffer) return true;
         return userFriends.includes(v.userID || v.userId);
+      });
+    }
+    
+    if (showCreatorsIFollow) {
+      filtered = filtered.filter(v => {
+        if (v.isOffer) return true;
+        return followedCreators.includes(v.userID || v.userId);
       });
     }
     
@@ -1761,12 +1770,14 @@ const HomeView = () => {
                   background: (
                     selectedCategories.length > 0 || 
                     selectedTypes.length > 0 ||
-                    showFriendsOnly
+                    showFriendsOnly ||
+                    showCreatorsIFollow
                   ) ? '#002B4D' : '#fff',
                   color: (
                     selectedCategories.length > 0 || 
                     selectedTypes.length > 0 ||
-                    showFriendsOnly
+                    showFriendsOnly ||
+                    showCreatorsIFollow
                   ) ? 'white' : '#002B4D',
                   border: '1px solid #ddd',
                   borderRadius: 8,
@@ -1960,36 +1971,82 @@ const HomeView = () => {
               />
             </div>
             
-            {/* Types */}
+            {/* Types and Who Section */}
             <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '20px',
               marginBottom: '20px'
             }}>
-              <label style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
-                Types
-              </label>
-              {AVAILABLE_TYPES.map(type => (
-                <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Types Column */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                <label style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                  Types
+                </label>
+                {AVAILABLE_TYPES.map(type => (
+                  <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      id={`type-${type}`}
+                      checked={selectedTypes.includes(type)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTypes(prev => [...prev, type]);
+                        } else {
+                          setSelectedTypes(prev => prev.filter(t => t !== type));
+                        }
+                      }}
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                    <label htmlFor={`type-${type}`} style={{ fontSize: '14px', color: '#333' }}>
+                      {type}
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              {/* Who Column */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                <label style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                  Who?
+                </label>
+                
+                {/* Show only friends' posts */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <input
                     type="checkbox"
-                    id={`type-${type}`}
-                    checked={selectedTypes.includes(type)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedTypes(prev => [...prev, type]);
-                      } else {
-                        setSelectedTypes(prev => prev.filter(t => t !== type));
-                      }
-                    }}
+                    id="friends-only"
+                    checked={showFriendsOnly}
+                    onChange={(e) => setShowFriendsOnly(e.target.checked)}
                     style={{ width: '16px', height: '16px' }}
                   />
-                  <label htmlFor={`type-${type}`} style={{ fontSize: '14px', color: '#333' }}>
-                    {type}
+                  <label htmlFor="friends-only" style={{ fontSize: '14px', color: '#333' }}>
+                    Show only friends' posts
                   </label>
                 </div>
-              ))}
+
+                {/* Creators I follow */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id="creators-follow"
+                    checked={showCreatorsIFollow}
+                    onChange={(e) => setShowCreatorsIFollow(e.target.checked)}
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                  <label htmlFor="creators-follow" style={{ fontSize: '14px', color: '#333' }}>
+                    Creators I follow
+                  </label>
+                </div>
+              </div>
             </div>
 
             {/* Categories */}
@@ -2030,24 +2087,7 @@ const HomeView = () => {
               </div>
             </div>
 
-            {/* Friends Only */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '20px'
-            }}>
-              <input
-                type="checkbox"
-                id="friends-only"
-                checked={showFriendsOnly}
-                onChange={(e) => setShowFriendsOnly(e.target.checked)}
-                style={{ width: '16px', height: '16px' }}
-              />
-              <label htmlFor="friends-only" style={{ fontSize: '14px', color: '#333' }}>
-                Show only friends' posts
-              </label>
-            </div>
+
 
             <button
               onClick={() => setShowFilterModal(false)}
