@@ -1122,7 +1122,10 @@ const HomeView = () => {
             <FaBars
               size={48}
               color="white"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => {
+                console.log('Hamburger clicked, current isMenuOpen:', isMenuOpen);
+                setIsMenuOpen(!isMenuOpen);
+              }}
               style={{ cursor: 'pointer', paddingRight: '10px' }}
             />
           </div>
@@ -1138,6 +1141,7 @@ const HomeView = () => {
             {/* 1. Personal Posts */}
             <button
               onClick={() => {
+                console.log('Personal Posts clicked');
                 setIsMenuOpen(false);
                 navigate('/my-vostcards');
               }}
