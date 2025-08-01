@@ -930,9 +930,9 @@ const HomeView = () => {
 
   // Menu style
   const menuStyle = {
-    position: 'absolute' as const,
-    top: '75px',
-    right: '16px',
+    position: 'fixed' as const,
+    top: shouldUseContainer ? '115px' : '95px', // Adjusted for header height
+    right: shouldUseContainer ? 'calc(50% - 164px)' : '16px', // Adjusted for container positioning
     backgroundColor: 'white',
     border: '1px solid #ddd',
     borderRadius: '8px',
@@ -941,7 +941,8 @@ const HomeView = () => {
     minWidth: '180px',
     maxWidth: '200px',
     maxHeight: '70vh',
-    overflow: 'auto'
+    overflow: 'auto',
+    pointerEvents: 'auto' as const
   };
 
   const menuItemStyle = {
