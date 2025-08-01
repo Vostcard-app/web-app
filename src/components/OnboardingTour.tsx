@@ -93,15 +93,15 @@ const tourSlides: TourSlide[] = [
     icon: <FaMapPin size={48} color="#002B4D" />,
     features: [
       {
-        icon: <img src={GuidePin} alt="Guide Pin" style={{ width: '16px', height: '16px' }} />,
+        icon: <img src={GuidePin} alt="Guide Pin" style={{ width: '32px', height: '32px' }} />,
         text: "Tap these to see content made by Guides"
       },
       {
-        icon: <img src={OfferPin} alt="Offer Pin" style={{ width: '16px', height: '16px' }} />,
+        icon: <img src={OfferPin} alt="Offer Pin" style={{ width: '32px', height: '32px' }} />,
         text: "Tap these to find offers and deals nearby"
       },
       {
-        icon: <img src={VostcardPin} alt="Vostcard Pin" style={{ width: '16px', height: '16px' }} />,
+        icon: <img src={VostcardPin} alt="Vostcard Pin" style={{ width: '32px', height: '32px' }} />,
         text: "Tap these to see content made by anyone"
       }
     ]
