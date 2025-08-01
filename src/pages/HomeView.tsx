@@ -1584,7 +1584,7 @@ const HomeView = () => {
               }} 
               onClick={() => setShowHelpMenu(!showHelpMenu)}
             >
-              <span style={{ fontSize: '18px', lineHeight: '1' }}>❓</span>
+              <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
               <span>Help</span>
             </button>
             
