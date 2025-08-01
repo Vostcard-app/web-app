@@ -88,17 +88,6 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 3,
-    title: "Create Vostcards & Quickcards",
-    description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
-    icon: <FaCamera size={48} color="#002B4D" />,
-    features: [
-      "Full Vostcards with photos, videos & stories",
-      "Quick photo-based Quickcards",
-      "Automatically tagged with your location"
-    ]
-  },
-  {
-    id: 4,
     title: "Explore Your Map",
     description: "See what's happening around you. Discover posts, offers, and tours from other users in your area.",
     icon: <FaMapPin size={48} color="#002B4D" />,
@@ -106,6 +95,17 @@ const tourSlides: TourSlide[] = [
       "View all content on an interactive map",
       "Filter by categories and types",
       "Find offers and special deals nearby"
+    ]
+  },
+  {
+    id: 4,
+    title: "Create Vostcards & Quickcards",
+    description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
+    icon: <FaCamera size={48} color="#002B4D" />,
+    features: [
+      "Full Vostcards with photos, videos & stories",
+      "Quick photo-based Quickcards",
+      "Automatically tagged with your location"
     ]
   },
   {
