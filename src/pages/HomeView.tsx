@@ -967,8 +967,8 @@ const HomeView = () => {
   // YouTube video URL using current tutorial video
   const youtubeEmbedUrl = `https://www.youtube.com/embed/${currentTutorialVideo}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
-  // Onboarding handlers
-  const handleOnboardingComplete = async () => {
+  // Onboarding handlers - memoized to prevent OnboardingTour re-renders
+  const handleOnboardingComplete = useCallback(async () => {
     console.log('✅ User completed onboarding tour');
     try {
       await OnboardingService.markOnboardingCompleted();
@@ -979,9 +979,9 @@ const HomeView = () => {
       // Still hide the onboarding even if save fails
       setShowOnboarding(false);
     }
-  };
+  }, []);
 
-  const handleOnboardingSkip = async () => {
+  const handleOnboardingSkip = useCallback(async () => {
     console.log('⏭️ User skipped onboarding tour');
     try {
       await OnboardingService.markOnboardingCompleted();
@@ -992,7 +992,7 @@ const HomeView = () => {
       // Still hide the onboarding even if save fails
       setShowOnboarding(false);
     }
-  };
+  }, []);
 
   // Reduced logging to prevent console spam
   // console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
