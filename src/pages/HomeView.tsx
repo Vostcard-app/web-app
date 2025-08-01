@@ -270,6 +270,7 @@ const HomeView = () => {
   const [mapTargetLocation, setMapTargetLocation] = useState<[number, number] | null>(null); // Separate state for map positioning  
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
   // Debug showOnboarding state changes
   useEffect(() => {
@@ -775,6 +776,7 @@ const HomeView = () => {
             !menuElement.contains(target) && 
             !hamburgerButton.contains(target)) {
           setIsMenuOpen(false);
+          setOpenSubmenu(null); // Close any open submenus
         }
       }
     };
@@ -969,6 +971,21 @@ const HomeView = () => {
     pointerEvents: 'auto' as const
   };
 
+  const submenuItemStyle = {
+    ...menuItemStyle,
+    paddingLeft: '32px', // Indented for nested items
+    fontSize: '13px',
+    color: '#555',
+    borderBottom: '1px solid #f8f8f8'
+  };
+
+  const parentMenuItemStyle = {
+    ...menuItemStyle,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  };
+
   // Tutorial video handlers
   const handleTutorialVideo = (videoId: string, title: string) => {
     setCurrentTutorialVideo(videoId);
@@ -1126,7 +1143,14 @@ const HomeView = () => {
             <FaBars
               size={48}
               color="white"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => {
+                const newMenuState = !isMenuOpen;
+                setIsMenuOpen(newMenuState);
+                // Close any open submenus when closing the main menu
+                if (!newMenuState) {
+                  setOpenSubmenu(null);
+                }
+              }}
               style={{ cursor: 'pointer', paddingRight: '10px' }}
               data-hamburger="button"
             />
@@ -1141,31 +1165,63 @@ const HomeView = () => {
             </div>
             
 
-            {/* 1. Personal Posts */}
+            {/* 1. Posts - Parent Menu */}
             <button
               onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/my-vostcards');
+                setOpenSubmenu(openSubmenu === 'posts' ? null : 'posts');
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              style={menuItemStyle}
+              style={parentMenuItemStyle}
             >
-              📱 Personal Posts
+              <span>📱 Posts</span>
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                {openSubmenu === 'posts' ? '▼' : '▶'}
+              </span>
             </button>
             
-            {/* 2. Public Posts */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/my-posted-vostcards');
-              }}
-              style={menuItemStyle}
-            >
-              🌍 Public Posts
-            </button>
+            {/* Posts Submenu */}
+            {openSubmenu === 'posts' && (
+              <>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/my-vostcards');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Personal Posts
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/my-posted-vostcards');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Public Posts
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/liked-vostcards');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Liked Posts
+                </button>
+              </>
+            )}
             
-            {/* 3. Browse Area */}
+            {/* 2. Browse Area */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1176,7 +1232,7 @@ const HomeView = () => {
               🗺️ Browse Area
             </button>
             
-            {/* 4. Drive Mode */}
+            {/* 3. Drive Mode */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1187,7 +1243,7 @@ const HomeView = () => {
               🚗 Drive Mode
             </button>
             
-            {/* 5. Vōstbox */}
+            {/* 4. Vōstbox */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1198,7 +1254,7 @@ const HomeView = () => {
               📬 Vōstbox
             </button>
             
-            {/* 6. Friend List */}
+            {/* 5. Friend List */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1209,18 +1265,8 @@ const HomeView = () => {
               👥 Friend List
             </button>
             
-            {/* 7. Liked */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/liked-vostcards');
-              }}
-              style={menuItemStyle}
-            >
-              ❤️ Liked
-            </button>
-            
-            {/* 8. Following */}
+
+            {/* 6. Following */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1231,7 +1277,7 @@ const HomeView = () => {
               👥 Following
             </button>
 
-            {/* 9. Vostcard Studio */}
+            {/* 7. Vostcard Studio */}
             {userRole === 'guide' && (
               <button
                 onClick={() => {
@@ -1244,7 +1290,7 @@ const HomeView = () => {
               </button>
             )}
 
-            {/* 9.5. Admin Panel */}
+            {/* 8. Admin Panel */}
             {userRole === 'admin' && (
               <button
                 onClick={() => {
@@ -1257,7 +1303,7 @@ const HomeView = () => {
               </button>
             )}
 
-            {/* Admin Dashboard (admin only, just above Settings) */}
+            {/* 9. Admin Dashboard */}
             {userRole === 'admin' && (
               <button
                 onClick={() => {
