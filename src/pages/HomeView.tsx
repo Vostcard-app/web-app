@@ -1964,17 +1964,41 @@ const HomeView = () => {
             overflow: 'auto',
             zIndex: 2001
           }}>
-            <h3 
-              onClick={() => navigate('/home')}
-              style={{ 
-                margin: '0 0 20px 0', 
-                fontSize: '20px', 
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              Filter Content
-            </h3>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: '20px' 
+            }}>
+              <h3 
+                onClick={() => navigate('/home')}
+                style={{ 
+                  margin: 0, 
+                  fontSize: '20px', 
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Filter Content
+              </h3>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666',
+                  fontSize: '16px'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
             
             {/* Types and Who Section */}
             <div style={{
