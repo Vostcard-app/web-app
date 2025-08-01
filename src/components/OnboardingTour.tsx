@@ -182,7 +182,7 @@ const tourSlides: TourSlide[] = [
   }
 ];
 
-const OnboardingTour: React.FC<OnboardingTourProps> = ({
+const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
   isOpen,
   onComplete,
   onSkip
@@ -227,10 +227,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
   const currentSlideData = tourSlides[currentSlide];
   const isLastSlide = currentSlide === tourSlides.length - 1;
 
-  console.log('🎯 OnboardingTour render - isOpen:', isOpen, 'currentSlide:', currentSlide);
-  
+  // Removed console.log to prevent spam - only log when actually showing
   if (!isOpen) {
-    console.log('🎯 OnboardingTour not rendering - isOpen is false');
     return null;
   }
   
@@ -524,3 +522,5 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
 };
 
 export default OnboardingTour;
+
+// React.memo will prevent re-renders when props haven't changed
