@@ -202,27 +202,16 @@ const HomeView = () => {
 
   // Redirect advertisers to advertiser portal
   useEffect(() => {
-    console.log('🏪 HomeView useEffect: Checking advertiser redirect - loading:', loading, 'userRole:', userRole, 'user:', !!user);
+    // Reduced logging to prevent console spam
     if (!loading && user && userRole === 'advertiser') {
-      console.log('🏪 HomeView useEffect: REDIRECTING advertiser to advertiser portal');
-      try {
-        navigate('/advertiser-portal');
-        console.log('🏪 HomeView useEffect: Navigate called successfully');
-      } catch (error) {
-        console.error('🏪 HomeView useEffect: Navigate failed:', error);
-      }
+      console.log('🏪 Redirecting advertiser to advertiser portal');
+      navigate('/advertiser-portal');
     }
-  }, [userRole, loading, navigate, user]);
+  }, [userRole, navigate]); // FIXED: Removed loading and user to prevent re-renders
 
-  // Also add a direct effect to watch userRole changes
-  useEffect(() => {
-    console.log('🏪 HomeView: userRole changed to:', userRole);
-    
-    // Role change logging only
-    // Debug alerts removed per user request
-  }, [userRole]);
+  // Role change logging - removed to prevent excessive re-renders
 
-  // Mobile debugging console - ADMIN ONLY
+  // Mobile debugging console - ADMIN ONLY (runs once)
   useEffect(() => {
     if (userRole === 'admin' && typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
       // Only load if not already loaded
@@ -238,7 +227,7 @@ const HomeView = () => {
         };
       }
     }
-  }, [userRole]);
+  }, []); // FIXED: Empty deps - only run once, check userRole inside
 
   // State variables
   const [activePin, setActivePin] = useState<{
@@ -451,14 +440,15 @@ const HomeView = () => {
 
   // Debug authentication state and manage auth loading overlay
   useEffect(() => {
-    console.log('🏠 HomeView: Auth state:', {
-      user: !!user,
-      username,
-      userID,
-      userRole,
-      loading,
-      authCurrentUser: !!auth.currentUser
-    });
+    // Reduced logging to prevent console spam
+    // console.log('🏠 HomeView: Auth state:', {
+    //   user: !!user,
+    //   username,
+    //   userID,
+    //   userRole,
+    //   loading,
+    //   authCurrentUser: !!auth.currentUser
+    // });
     
     // FIXED: More aggressive loading overlay management
     if (loading) {
@@ -476,7 +466,7 @@ const HomeView = () => {
     }
   }, [loading]); // FIXED: Only depend on loading to prevent excessive re-renders
 
-  // Check if user has seen onboarding tour
+  // Check if user has seen onboarding tour - run once when auth is stable
   useEffect(() => {
     const checkOnboardingStatus = async () => {
       // Only check if user is logged in and auth is complete
@@ -500,8 +490,11 @@ const HomeView = () => {
       }
     };
 
-    checkOnboardingStatus();
-  }, [loading, user, userID]); // Removed checkingOnboarding to prevent infinite loop
+    // Only run when loading becomes false (auth complete)
+    if (!loading && user && userID) {
+      checkOnboardingStatus();
+    }
+  }, [loading]); // FIXED: Only depend on loading to prevent excessive re-renders
 
   // Load vostcards function
   const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
@@ -1001,12 +994,10 @@ const HomeView = () => {
     }
   };
 
-  console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
+  // Reduced logging to prevent console spam
+  // console.log('🏠 HomeView: Rendering with user:', { user: !!user, userRole, loading, shouldUseContainer });
   
-  // Add immediate advertiser check in render
-  if (!loading && user && userRole === 'advertiser') {
-    console.log('🏪 IMMEDIATE CHECK: Advertiser detected in render, should redirect!');
-  }
+  // Immediate advertiser check removed to prevent console spam
 
   return (
     <div style={{ 
