@@ -443,14 +443,21 @@ const TourMapView: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div style={{ flex: 1, position: 'relative', backgroundColor: 'white' }}>
+        <div style={{ 
+          flex: 1, 
+          position: 'relative', 
+          backgroundColor: 'white',
+          overflow: 'hidden',  // ✅ FIXED: Establish scrolling context for child elements
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
           {viewMode === 'map' ? (
             /* Map View */
             <MapContainer
               center={[53.3498, -6.2603]} // Dublin fallback
               zoom={13}
               style={{
-                height: '100%',
+                flex: 1,  // ✅ FIXED: Use flex instead of height 100%
                 width: '100%',
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
@@ -532,7 +539,7 @@ const TourMapView: React.FC = () => {
           ) : (
             /* List View */
             <div style={{
-              height: '100%',
+              flex: 1,  // ✅ FIXED: Use flex instead of height 100% to properly fill content area
               overflowY: 'auto',
               overflowX: 'hidden',
               padding: '16px',
