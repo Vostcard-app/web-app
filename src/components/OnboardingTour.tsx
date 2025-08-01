@@ -119,17 +119,6 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 5,
-    title: "Create Vostcards & Quickcards",
-    description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
-    icon: <FaCamera size={48} color="#002B4D" />,
-    features: [
-      "Full Vostcards with photos, videos & stories",
-      "Quick photo-based Quickcards",
-      "Automatically tagged with your location"
-    ]
-  },
-  {
-    id: 6,
     title: "Join Tours & Adventures",
     description: "Follow guided tours created by local guides. Experience curated journeys through interesting locations.",
     icon: <FaWalking size={48} color="#002B4D" />,
@@ -137,6 +126,17 @@ const tourSlides: TourSlide[] = [
       "Follow step-by-step guided tours",
       "Rate and review your experiences",
       "Discover hidden gems with local guides"
+    ]
+  },
+  {
+    id: 6,
+    title: "Create Vostcards & Quickcards",
+    description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
+    icon: <FaCamera size={48} color="#002B4D" />,
+    features: [
+      "Full Vostcards with photos, videos & stories",
+      "Quick photo-based Quickcards",
+      "Automatically tagged with your location"
     ]
   },
   {
@@ -269,7 +269,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
               fontWeight: '600',
               color: '#002B4D'
             }}>
-              Quick Tour
+              Quick Start
             </span>
             <span style={{
               fontSize: '12px',
