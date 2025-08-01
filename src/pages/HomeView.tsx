@@ -1608,7 +1608,7 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '2px',
+                gap: '6px',
                 flex: '1',
                 minWidth: '0'
               }} 
@@ -1638,7 +1638,7 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '2px',
+                gap: '6px',
                 flex: '1',
                 minWidth: '0'
               }} 
