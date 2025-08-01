@@ -937,7 +937,7 @@ const HomeView = () => {
     border: '1px solid #ddd',
     borderRadius: '8px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    zIndex: 3000,
+    zIndex: 100000,
     minWidth: '180px',
     maxWidth: '200px',
     maxHeight: '70vh',
