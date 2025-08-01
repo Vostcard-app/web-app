@@ -519,7 +519,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
       </div>
     </>
   );
-};
+});
 
 export default OnboardingTour;
 
