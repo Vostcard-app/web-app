@@ -766,7 +766,19 @@ const HomeView = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (isMenuOpen) {
-        setIsMenuOpen(false);
+        const target = event.target as HTMLElement;
+        // Check if click is outside the menu and hamburger button
+        const menuElement = document.querySelector('[data-menu="main-menu"]');
+        const hamburgerButton = document.querySelector('[data-hamburger="button"]');
+        
+        if (menuElement && hamburgerButton && 
+            !menuElement.contains(target) && 
+            !hamburgerButton.contains(target)) {
+          console.log('🔴 DEBUG: Clicking outside menu, closing');
+          setIsMenuOpen(false);
+        } else {
+          console.log('🔴 DEBUG: Clicking inside menu or hamburger, keeping open');
+        }
       }
     };
 
@@ -1122,13 +1134,14 @@ const HomeView = () => {
                 setIsMenuOpen(!isMenuOpen);
               }}
               style={{ cursor: 'pointer', paddingRight: '10px' }}
+              data-hamburger="button"
             />
           </div>
         </div>
 
         {/* Main Menu */}
         {isMenuOpen && (
-          <div style={menuStyle} onClick={(e) => e.stopPropagation()}>
+          <div style={menuStyle} onClick={(e) => e.stopPropagation()} data-menu="main-menu">
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', fontSize: '14px', fontWeight: 'bold', color: '#002B4D' }}>
               Menu
             </div>
