@@ -1327,29 +1327,51 @@ const HomeView = () => {
               ⚙️ Settings
             </button>
             
-            {/* 11. Suggestion Box */}
+            {/* 11. Contact - Parent Menu */}
             <button
               onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/suggestion-box');
+                setOpenSubmenu(openSubmenu === 'contact' ? null : 'contact');
               }}
-              style={menuItemStyle}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              style={parentMenuItemStyle}
             >
-              💡 Suggestion Box
+              <span>📞 Contact</span>
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                {openSubmenu === 'contact' ? '▼' : '▶'}
+              </span>
             </button>
             
-            {/* 12. Report a bug */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/report-bug');
-              }}
-              style={menuItemStyle}
-            >
-              🐛 Report a Bug
-            </button>
+            {/* Contact Submenu */}
+            {openSubmenu === 'contact' && (
+              <>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/suggestion-box');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Suggestion Box
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/report-bug');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Report a Bug
+                </button>
+              </>
+            )}
             
-            {/* 13. Logout */}
+            {/* 12. Logout */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
