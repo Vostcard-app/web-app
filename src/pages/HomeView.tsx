@@ -878,7 +878,7 @@ const HomeView = () => {
     
     let filtered = vostcards;
     
-    if (selectedCategories.length > 0 && !selectedCategories.includes('None')) {
+    if (selectedCategories.length > 0) {
       filtered = filtered.filter(v => {
         if (v.isOffer) return true;
         if (!v.categories || !Array.isArray(v.categories)) return false;
@@ -1759,12 +1759,12 @@ const HomeView = () => {
                 onClick={() => setShowFilterModal(!showFilterModal)}
                 style={{
                   background: (
-                    (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+                    selectedCategories.length > 0 || 
                     selectedTypes.length > 0 ||
                     showFriendsOnly
                   ) ? '#002B4D' : '#fff',
                   color: (
-                    (selectedCategories.length > 0 && !selectedCategories.includes('None')) || 
+                    selectedCategories.length > 0 || 
                     selectedTypes.length > 0 ||
                     showFriendsOnly
                   ) ? 'white' : '#002B4D',
@@ -1940,38 +1940,6 @@ const HomeView = () => {
               Filter Content
             </h3>
             
-            {/* Categories */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px',
-              marginBottom: '20px'
-            }}>
-              <label style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
-                Categories
-              </label>
-              {AVAILABLE_CATEGORIES.map(category => (
-                <div key={category} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input
-                    type="checkbox"
-                    id={`category-${category}`}
-                    checked={selectedCategories.includes(category)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedCategories(prev => [...prev, category]);
-                      } else {
-                        setSelectedCategories(prev => prev.filter(c => c !== category));
-                      }
-                    }}
-                    style={{ width: '16px', height: '16px' }}
-                  />
-                  <label htmlFor={`category-${category}`} style={{ fontSize: '14px', color: '#333' }}>
-                    {category}
-                  </label>
-                </div>
-              ))}
-            </div>
-
             {/* Types */}
             <div style={{
               display: 'flex',
@@ -2002,6 +1970,44 @@ const HomeView = () => {
                   </label>
                 </div>
               ))}
+            </div>
+
+            {/* Categories */}
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              marginBottom: '20px'
+            }}>
+              <label style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                Categories
+              </label>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '8px'
+              }}>
+                {AVAILABLE_CATEGORIES.map(category => (
+                  <div key={category} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input
+                      type="checkbox"
+                      id={`category-${category}`}
+                      checked={selectedCategories.includes(category)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCategories(prev => [...prev, category]);
+                        } else {
+                          setSelectedCategories(prev => prev.filter(c => c !== category));
+                        }
+                      }}
+                      style={{ width: '16px', height: '16px' }}
+                    />
+                    <label htmlFor={`category-${category}`} style={{ fontSize: '13px', color: '#333' }}>
+                      {category}
+                    </label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Friends Only */}

@@ -124,7 +124,6 @@ export interface FilterState {
 
 // Available categories constant
 export const AVAILABLE_CATEGORIES = [
-  'None',
   'View',
   'Landmark',
   'Fun Fact',

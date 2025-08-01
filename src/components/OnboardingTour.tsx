@@ -112,7 +112,7 @@ const tourSlides: TourSlide[] = [
     description: "Use filters to discover exactly what you're looking for. Filter by content type, user role, or categories to find the perfect experience.",
     icon: <FaFilter size={48} color="#002B4D" />,
     features: [
-      "Filter by Vostcards, Quickcards, or Offers",
+      "Filter by Vostcards, Quickcards or Guide pins",
       "Find content from Guides or regular users",
       "Filter by categories like Nature, Restaurant, Historical"
     ]
