@@ -16,7 +16,7 @@ interface TourSlide {
   title: string;
   description: string;
   icon: React.ReactNode;
-  features?: string[];
+  features?: (string | { icon: React.ReactNode; text: string })[];
 }
 
 const tourSlides: TourSlide[] = [
@@ -92,9 +92,18 @@ const tourSlides: TourSlide[] = [
     description: "See what's happening around you. Discover posts, offers, and tours from other users in your area.",
     icon: <FaMapPin size={48} color="#002B4D" />,
     features: [
-      "View all content on an interactive map",
-      "Filter by categories and types",
-      "Find offers and special deals nearby"
+      {
+        icon: <img src={GuidePin} alt="Guide Pin" style={{ width: '16px', height: '16px' }} />,
+        text: "Tap these to see content made by Guides"
+      },
+      {
+        icon: <img src={OfferPin} alt="Offer Pin" style={{ width: '16px', height: '16px' }} />,
+        text: "Tap these to find offers and deals nearby"
+      },
+      {
+        icon: <img src={VostcardPin} alt="Vostcard Pin" style={{ width: '16px', height: '16px' }} />,
+        text: "Tap these to see content made by anyone"
+      }
     ]
   },
   {
@@ -345,14 +354,23 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
                     fontSize: '14px',
                     color: '#666'
                   }}>
-                    <div style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      backgroundColor: '#002B4D',
-                      flexShrink: 0
-                    }} />
-                    {feature}
+                    {typeof feature === 'string' ? (
+                      <>
+                        <div style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: '#002B4D',
+                          flexShrink: 0
+                        }} />
+                        {feature}
+                      </>
+                    ) : (
+                      <>
+                        {feature.icon}
+                        {feature.text}
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
