@@ -63,20 +63,20 @@ const tourSlides: TourSlide[] = [
         backgroundColor: '#002B4D',
         color: 'white',
         border: 'none',
-        borderRadius: '6px',
-        padding: '6px 8px',
-        fontSize: '12px',
+        borderRadius: '12px',
+        padding: '12px 16px',
+        fontSize: '24px',
         fontWeight: 500,
-        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
         lineHeight: '1',
-        gap: '4px',
-        minWidth: '60px'
+        gap: '8px',
+        minWidth: '120px'
       }}>
-        <span style={{ fontSize: '14px', lineHeight: '1' }}>❓</span>
+        <span style={{ fontSize: '28px', lineHeight: '1' }}>❓</span>
         <span>Help</span>
       </div>
     ),
