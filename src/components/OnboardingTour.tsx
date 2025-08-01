@@ -57,7 +57,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 2,
     title: "Need Help?\nWe've Got You!",
-    description: "Tap on the help button to find this quick start and other helpful information to learn more about Vōstcard.",
+    description: "Tap on the help button to find this quickstart and other helpful information and learn more about Vōstcard.",
     icon: (
       <div style={{
         backgroundColor: '#002B4D',
