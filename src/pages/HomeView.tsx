@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaTimes, FaWalking } from 'react-icons/fa';
+import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaTimes, FaWalking } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -769,6 +769,23 @@ const HomeView = () => {
     };
   }, [showHelpMenu]);
 
+  // Close main menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isMenuOpen) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -1086,7 +1103,7 @@ const HomeView = () => {
                 <FaUserCircle size={55} color="white" />
               )}
             </div>
-            <FaHome
+            <FaBars
               size={48}
               color="white"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
