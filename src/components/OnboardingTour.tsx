@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import VostcardPin from '../assets/Vostcard_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
+import GuidePin from '../assets/Guide_pin.png';
 
 interface OnboardingTourProps {
   isOpen: boolean;
@@ -21,7 +24,30 @@ const tourSlides: TourSlide[] = [
     id: 1,
     title: "Welcome to Vōstcard!",
     description: "Find free tours wherever you go. A location-based storytelling platform. Share experiences, discover places, and connect with others around you.",
-    icon: <FaMapPin size={48} color="#002B4D" />,
+    icon: (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
+      }}>
+        <img 
+          src={VostcardPin} 
+          alt="Vostcard Pin" 
+          style={{ width: '32px', height: '32px' }} 
+        />
+        <img 
+          src={OfferPin} 
+          alt="Offer Pin" 
+          style={{ width: '32px', height: '32px' }} 
+        />
+        <img 
+          src={GuidePin} 
+          alt="Guide Pin" 
+          style={{ width: '32px', height: '32px' }} 
+        />
+      </div>
+    ),
     features: [
       "Share location-based content",
       "Discover nearby experiences", 
