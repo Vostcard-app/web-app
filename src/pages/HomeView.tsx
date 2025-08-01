@@ -1116,7 +1116,10 @@ const HomeView = () => {
             <FaBars
               size={48}
               color="white"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => {
+                console.log('🔴 DEBUG: Hamburger menu clicked, current state:', isMenuOpen);
+                setIsMenuOpen(!isMenuOpen);
+              }}
               style={{ cursor: 'pointer', paddingRight: '10px' }}
             />
           </div>
@@ -1132,6 +1135,7 @@ const HomeView = () => {
             {/* 1. Personal Posts */}
             <button
               onClick={() => {
+                console.log('🔴 DEBUG: Personal Posts clicked');
                 setIsMenuOpen(false);
                 navigate('/my-vostcards');
               }}
@@ -1145,6 +1149,7 @@ const HomeView = () => {
             {/* 2. Public Posts */}
             <button
               onClick={() => {
+                console.log('🔴 DEBUG: Public Posts clicked');
                 setIsMenuOpen(false);
                 navigate('/my-posted-vostcards');
               }}
@@ -1261,6 +1266,7 @@ const HomeView = () => {
             {/* 10. Settings */}
             <button
               onClick={() => {
+                console.log('🔴 DEBUG: Settings clicked');
                 setIsMenuOpen(false);
                 navigate('/settings');
               }}
