@@ -1614,7 +1614,7 @@ const HomeView = () => {
               }} 
               onClick={handleListViewClick}
             >
-              <img src={VostcardPin} alt="List" style={{ width: '14px', height: '14px' }} />
+              <img src={VostcardPin} alt="List" style={{ width: '18px', height: '18px' }} />
               <span>List</span>
             </button>
             
@@ -1644,7 +1644,7 @@ const HomeView = () => {
               }} 
               onClick={handleOffersClick}
             >
-              <img src={OfferPin} alt="Offers" style={{ width: '14px', height: '14px' }} />
+              <img src={OfferPin} alt="Offers" style={{ width: '18px', height: '18px' }} />
               <span>Offers</span>
             </button>
             
