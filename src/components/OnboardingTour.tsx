@@ -121,7 +121,26 @@ const tourSlides: TourSlide[] = [
     id: 5,
     title: "Join Tours & Adventures",
     description: "Follow guided tours created by local guides. Experience curated journeys through interesting locations.",
-    icon: <FaWalking size={48} color="#002B4D" />,
+    icon: (
+      <div style={{
+        backgroundColor: '#002B4D',
+        color: 'white',
+        border: 'none',
+        borderRadius: '6px',
+        padding: '12px 16px',
+        fontSize: '16px',
+        fontWeight: 500,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        minWidth: '100px'
+      }}>
+        <FaWalking style={{ fontSize: '16px' }} />
+        <span>Tours</span>
+      </div>
+    ),
     features: [
       "Follow step-by-step guided tours",
       "Rate and review your experiences",
