@@ -1988,7 +1988,14 @@ const HomeView = () => {
                           setSelectedTypes(prev => prev.filter(t => t !== type));
                         }
                       }}
-                      style={{ width: '16px', height: '16px' }}
+                      style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        minWidth: '16px',
+                        minHeight: '16px',
+                        flexShrink: 0,
+                        margin: 0
+                      }}
                     />
                     <label htmlFor={`type-${type}`} style={{ fontSize: '14px', color: '#333' }}>
                       {type}
@@ -2014,7 +2021,14 @@ const HomeView = () => {
                     id="friends-only"
                     checked={showFriendsOnly}
                     onChange={(e) => setShowFriendsOnly(e.target.checked)}
-                    style={{ width: '16px', height: '16px' }}
+                    style={{ 
+                      width: '16px', 
+                      height: '16px',
+                      minWidth: '16px',
+                      minHeight: '16px',
+                      flexShrink: 0,
+                      margin: 0
+                    }}
                   />
                   <label htmlFor="friends-only" style={{ fontSize: '14px', color: '#333' }}>
                     Show only friends' posts
@@ -2028,7 +2042,14 @@ const HomeView = () => {
                     id="creators-follow"
                     checked={showCreatorsIFollow}
                     onChange={(e) => setShowCreatorsIFollow(e.target.checked)}
-                    style={{ width: '16px', height: '16px' }}
+                    style={{ 
+                      width: '16px', 
+                      height: '16px',
+                      minWidth: '16px',
+                      minHeight: '16px',
+                      flexShrink: 0,
+                      margin: 0
+                    }}
                   />
                   <label htmlFor="creators-follow" style={{ fontSize: '14px', color: '#333' }}>
                     Creators I follow
@@ -2065,7 +2086,14 @@ const HomeView = () => {
                           setSelectedCategories(prev => prev.filter(c => c !== category));
                         }
                       }}
-                      style={{ width: '16px', height: '16px' }}
+                      style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        minWidth: '16px',
+                        minHeight: '16px',
+                        flexShrink: 0,
+                        margin: 0
+                      }}
                     />
                     <label htmlFor={`category-${category}`} style={{ fontSize: '13px', color: '#333' }}>
                       {category}
