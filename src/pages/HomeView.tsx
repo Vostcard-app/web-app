@@ -774,10 +774,7 @@ const HomeView = () => {
         if (menuElement && hamburgerButton && 
             !menuElement.contains(target) && 
             !hamburgerButton.contains(target)) {
-          console.log('🔴 DEBUG: Clicking outside menu, closing');
           setIsMenuOpen(false);
-        } else {
-          console.log('🔴 DEBUG: Clicking inside menu or hamburger, keeping open');
         }
       }
     };
@@ -1129,10 +1126,7 @@ const HomeView = () => {
             <FaBars
               size={48}
               color="white"
-              onClick={() => {
-                console.log('🔴 DEBUG: Hamburger menu clicked, current state:', isMenuOpen);
-                setIsMenuOpen(!isMenuOpen);
-              }}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               style={{ cursor: 'pointer', paddingRight: '10px' }}
               data-hamburger="button"
             />
@@ -1146,28 +1140,12 @@ const HomeView = () => {
               Menu
             </div>
             
-            {/* DEBUG: Test clickable area */}
-            <div 
-              onClick={() => console.log('🔴 DEBUG: Test div clicked')}
-              style={{ padding: '12px 16px', backgroundColor: '#f0f0f0', cursor: 'pointer', pointerEvents: 'auto' }}
-            >
-              🔴 DEBUG: Click me to test
-            </div>
-            
+
             {/* 1. Personal Posts */}
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🔴 DEBUG: Personal Posts clicked');
+              onClick={() => {
                 setIsMenuOpen(false);
                 navigate('/my-vostcards');
-              }}
-              onMouseDown={(e) => {
-                console.log('🔴 DEBUG: Personal Posts mousedown');
-              }}
-              onTouchStart={(e) => {
-                console.log('🔴 DEBUG: Personal Posts touchstart');
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
@@ -1179,7 +1157,6 @@ const HomeView = () => {
             {/* 2. Public Posts */}
             <button
               onClick={() => {
-                console.log('🔴 DEBUG: Public Posts clicked');
                 setIsMenuOpen(false);
                 navigate('/my-posted-vostcards');
               }}
@@ -1296,7 +1273,6 @@ const HomeView = () => {
             {/* 10. Settings */}
             <button
               onClick={() => {
-                console.log('🔴 DEBUG: Settings clicked');
                 setIsMenuOpen(false);
                 navigate('/settings');
               }}
