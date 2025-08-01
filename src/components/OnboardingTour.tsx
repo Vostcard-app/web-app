@@ -34,17 +34,17 @@ const tourSlides: TourSlide[] = [
         <img 
           src={VostcardPin} 
           alt="Vostcard Pin" 
-          style={{ width: '32px', height: '32px' }} 
+          style={{ width: '64px', height: '64px' }} 
         />
         <img 
           src={OfferPin} 
           alt="Offer Pin" 
-          style={{ width: '32px', height: '32px' }} 
+          style={{ width: '64px', height: '64px' }} 
         />
         <img 
           src={GuidePin} 
           alt="Guide Pin" 
-          style={{ width: '32px', height: '32px' }} 
+          style={{ width: '64px', height: '64px' }} 
         />
       </div>
     ),
