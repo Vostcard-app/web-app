@@ -1243,41 +1243,63 @@ const HomeView = () => {
               🚗 Drive Mode
             </button>
             
-            {/* 4. Vōstbox */}
+            {/* 4. Social - Parent Menu */}
             <button
               onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/vostbox');
+                setOpenSubmenu(openSubmenu === 'social' ? null : 'social');
               }}
-              style={menuItemStyle}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              style={parentMenuItemStyle}
             >
-              📬 Vōstbox
+              <span>👥 Social</span>
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                {openSubmenu === 'social' ? '▼' : '▶'}
+              </span>
             </button>
             
-            {/* 5. Friend List */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/friends');
-              }}
-              style={menuItemStyle}
-            >
-              👥 Friend List
-            </button>
-            
+            {/* Social Submenu */}
+            {openSubmenu === 'social' && (
+              <>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/vostbox');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Vōstbox
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/friends');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Friend List
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    navigate('/following');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  Following
+                </button>
+              </>
+            )}
 
-            {/* 6. Following */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/following');
-              }}
-              style={menuItemStyle}
-            >
-              👥 Following
-            </button>
-
-            {/* 7. Vostcard Studio */}
+            {/* 5. Vostcard Studio */}
             {userRole === 'guide' && (
               <button
                 onClick={() => {
@@ -1290,7 +1312,7 @@ const HomeView = () => {
               </button>
             )}
 
-            {/* 8. Admin Panel */}
+            {/* 6. Admin Panel */}
             {userRole === 'admin' && (
               <button
                 onClick={() => {
@@ -1303,7 +1325,7 @@ const HomeView = () => {
               </button>
             )}
 
-            {/* 9. Admin Dashboard */}
+            {/* 7. Admin Dashboard */}
             {userRole === 'admin' && (
               <button
                 onClick={() => {
@@ -1316,7 +1338,7 @@ const HomeView = () => {
               </button>
             )}
             
-            {/* 10. Settings */}
+            {/* 8. Settings */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1327,7 +1349,7 @@ const HomeView = () => {
               ⚙️ Settings
             </button>
             
-            {/* 11. Contact - Parent Menu */}
+            {/* 9. Contact - Parent Menu */}
             <button
               onClick={() => {
                 setOpenSubmenu(openSubmenu === 'contact' ? null : 'contact');
@@ -1371,7 +1393,7 @@ const HomeView = () => {
               </>
             )}
             
-            {/* 12. Logout */}
+            {/* 10. Logout */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
