@@ -56,7 +56,7 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 2,
-    title: "Need Help? We've Got You!",
+    title: "Need Help?\nWe've Got You!",
     description: "Tap on the help button to find this quick start and other helpful information to learn more about Vōstcard.",
     icon: (
       <div style={{
@@ -332,7 +332,8 @@ const OnboardingTour: React.FC<OnboardingTourProps> = ({
               fontSize: '24px',
               fontWeight: '700',
               color: '#002B4D',
-              lineHeight: '1.2'
+              lineHeight: '1.2',
+              whiteSpace: 'pre-line'
             }}>
               {currentSlideData.title}
             </h2>
