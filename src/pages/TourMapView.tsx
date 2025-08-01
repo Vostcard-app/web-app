@@ -325,7 +325,8 @@ const TourMapView: React.FC = () => {
           padding: '12px 16px',
           borderBottom: '1px solid #e0e0e0',
           display: 'flex',
-          gap: '8px'
+          gap: '8px',
+          flexShrink: 0  // ✅ FIXED: Prevent shrinking to ensure content area gets proper height
         }}>
           {/* Map View Button */}
           <button
