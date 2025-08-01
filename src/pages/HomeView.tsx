@@ -956,7 +956,8 @@ const HomeView = () => {
     color: '#333',
     transition: 'background-color 0.2s ease',
     width: '100%',
-    display: 'block'
+    display: 'block',
+    pointerEvents: 'auto' as const
   };
 
   // Tutorial video handlers
@@ -1132,12 +1133,28 @@ const HomeView = () => {
               Menu
             </div>
             
+            {/* DEBUG: Test clickable area */}
+            <div 
+              onClick={() => console.log('🔴 DEBUG: Test div clicked')}
+              style={{ padding: '12px 16px', backgroundColor: '#f0f0f0', cursor: 'pointer', pointerEvents: 'auto' }}
+            >
+              🔴 DEBUG: Click me to test
+            </div>
+            
             {/* 1. Personal Posts */}
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 console.log('🔴 DEBUG: Personal Posts clicked');
                 setIsMenuOpen(false);
                 navigate('/my-vostcards');
+              }}
+              onMouseDown={(e) => {
+                console.log('🔴 DEBUG: Personal Posts mousedown');
+              }}
+              onTouchStart={(e) => {
+                console.log('🔴 DEBUG: Personal Posts touchstart');
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
