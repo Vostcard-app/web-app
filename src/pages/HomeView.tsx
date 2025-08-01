@@ -1936,9 +1936,29 @@ const HomeView = () => {
             overflow: 'auto',
             zIndex: 2001
           }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold' }}>
-              Filter Content
-            </h3>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              marginBottom: '20px' 
+            }}>
+              <h3 
+                onClick={() => navigate('/home')}
+                style={{ 
+                  margin: 0, 
+                  fontSize: '20px', 
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Filter Content
+              </h3>
+              <FaHome
+                size={24}
+                style={{ cursor: 'pointer', color: '#002B4D' }}
+                onClick={() => navigate('/home')}
+              />
+            </div>
             
             {/* Types */}
             <div style={{
