@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaBars, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaTimes, FaWalking } from 'react-icons/fa';
+import { FaHome, FaUserCircle, FaPlus, FaMinus, FaLocationArrow, FaFilter, FaTimes, FaWalking } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -1077,7 +1077,7 @@ const HomeView = () => {
                 <FaUserCircle size={55} color="white" />
               )}
             </div>
-            <FaBars
+            <FaHome
               size={48}
               color="white"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
