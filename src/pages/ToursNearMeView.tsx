@@ -405,28 +405,45 @@ const ToursNearMeView: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       {/* Guide Avatar */}
                       <div style={{
-                        width: '50px',
-                        height: '50px',
-                        borderRadius: '50%',
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        backgroundColor: '#f0f0f0',
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        flexShrink: 0,
+                        gap: '4px'
                       }}>
-                        {tour.creatorAvatar ? (
-                          <img
-                            src={tour.creatorAvatar}
-                            alt={tour.creatorUsername}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover'
-                            }}
-                          />
-                        ) : (
-                          <FaUser size={24} color="#666" />
+                        <div style={{
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          backgroundColor: '#f0f0f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          {tour.creatorAvatar ? (
+                            <img
+                              src={tour.creatorAvatar}
+                              alt={tour.creatorUsername}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          ) : (
+                            <FaUser size={24} color="#666" />
+                          )}
+                        </div>
+                        {tour.creatorRole === 'guide' && (
+                          <div style={{
+                            fontSize: '10px',
+                            color: '#007aff',
+                            fontWeight: '600',
+                            textAlign: 'center'
+                          }}>
+                            Guide
+                          </div>
                         )}
                       </div>
 
