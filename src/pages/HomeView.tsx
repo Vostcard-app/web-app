@@ -938,13 +938,13 @@ const HomeView = () => {
   // Menu style
   const menuStyle = {
     position: 'absolute' as const,
-    top: '65px',
+    top: '75px',
     right: '16px',
     backgroundColor: 'white',
     border: '1px solid #ddd',
     borderRadius: '8px',
     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-    zIndex: 2000,
+    zIndex: 3000,
     minWidth: '180px',
     maxWidth: '200px',
     maxHeight: '70vh',
@@ -960,7 +960,9 @@ const HomeView = () => {
     fontSize: '14px',
     textAlign: 'left' as const,
     color: '#333',
-    transition: 'background-color 0.2s ease'
+    transition: 'background-color 0.2s ease',
+    width: '100%',
+    display: 'block'
   };
 
   // Tutorial video handlers
@@ -1122,10 +1124,7 @@ const HomeView = () => {
             <FaBars
               size={48}
               color="white"
-              onClick={() => {
-                console.log('Hamburger clicked, current isMenuOpen:', isMenuOpen);
-                setIsMenuOpen(!isMenuOpen);
-              }}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               style={{ cursor: 'pointer', paddingRight: '10px' }}
             />
           </div>
@@ -1141,10 +1140,11 @@ const HomeView = () => {
             {/* 1. Personal Posts */}
             <button
               onClick={() => {
-                console.log('Personal Posts clicked');
                 setIsMenuOpen(false);
                 navigate('/my-vostcards');
               }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               style={menuItemStyle}
             >
               📱 Personal Posts
