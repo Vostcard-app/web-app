@@ -2204,7 +2204,7 @@ const HomeView = () => {
           <div
             style={{
               position: 'absolute',
-              top: '52px', // Below the top buttons (8px + 40px button height + 4px gap)
+              top: '108px', // Below the top buttons (8px + 40px button height + 60px gap)
               left: '8px',
               zIndex: 1002,
               display: 'flex',
