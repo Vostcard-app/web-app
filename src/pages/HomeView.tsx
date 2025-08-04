@@ -182,7 +182,7 @@ const ZoomControls = () => {
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
-        gap: 8,
+        gap: 16,
       }}>
         <button 
           onClick={handleZoomIn} // ✅ Fixed: Added proper zoom in handler
