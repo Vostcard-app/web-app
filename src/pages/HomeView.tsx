@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { useDriveMode } from '../context/DriveModeContext';
 import { db, auth } from '../firebase/firebaseConfig';
-import { collection, getDocs, query, where, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, getDoc, limit, orderBy, startAfter } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import './HomeView.css';
 import LocationDebugger from '../components/LocationDebugger';
@@ -110,6 +110,49 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
     }
     // No logging for normal case to reduce console spam
   }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce]);
+
+  return null;
+};
+
+// MapBoundsListener component - Track map bounds changes for smart loading
+const MapBoundsListener = ({ onBoundsChange, onZoomOptimization }: {
+  onBoundsChange: (bounds: any) => void;
+  onZoomOptimization: (posts: any[], userLocation: [number, number] | null) => void;
+}) => {
+  const map = useMap();
+  const [hasOptimizedZoom, setHasOptimizedZoom] = useState(false);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const handleMoveEnd = () => {
+      const bounds = map.getBounds();
+      console.log('🗺️ Map bounds changed:', bounds);
+      onBoundsChange(bounds);
+    };
+
+    // Debounced move handler to avoid excessive calls
+    let timeoutId: NodeJS.Timeout;
+    const debouncedMoveEnd = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleMoveEnd, 500); // 500ms debounce
+    };
+
+    map.on('moveend', debouncedMoveEnd);
+    map.on('zoomend', debouncedMoveEnd);
+
+    // Initial bounds
+    setTimeout(() => {
+      const initialBounds = map.getBounds();
+      onBoundsChange(initialBounds);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      map.off('moveend', debouncedMoveEnd);
+      map.off('zoomend', debouncedMoveEnd);
+    };
+  }, [map, onBoundsChange]);
 
   return null;
 };
@@ -271,6 +314,13 @@ const HomeView = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+
+  // Pagination and map-based loading state
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [mapBounds, setMapBounds] = useState<any>(null);
+  const MAX_POSTS = 20; // Never load more than 20 posts
 
   // Debug showOnboarding state changes
   useEffect(() => {
@@ -497,32 +547,55 @@ const HomeView = () => {
     }
   }, [loading]); // FIXED: Only depend on loading to prevent excessive re-renders
 
-  // Load vostcards function
-  const loadVostcards = useCallback(async (forceRefresh: boolean = false) => {
+  // Load vostcards function with pagination and map bounds
+  const loadVostcards = useCallback(async (forceRefresh: boolean = false, loadMore: boolean = false) => {
     // Skip loading regular vostcards if we have tour data (even with forceRefresh)
     if (tourData) {
       console.log('🗺️ HomeView: Skipping vostcard load - tour data is active (forceRefresh:', forceRefresh, ')');
       return;
     }
     
-    // Remove the early return - we want to load all vostcards even when singleVostcard is set
-    // This allows the private map to show all posts nearby while centering on the specific quickcard
-    
-    if (loadingVostcards && !forceRefresh) {
+    if ((loadingVostcards || loadingMore) && !forceRefresh) {
       return;
     }
     
     try {
-      setLoadingVostcards(true);
-      setMapError(null);
+      if (loadMore) {
+        setLoadingMore(true);
+      } else {
+        setLoadingVostcards(true);
+        setMapError(null);
+      }
       
       if (forceRefresh) {
         console.log('🔄 Force refreshing vostcards after posting');
+        setLastDoc(null);
+        setHasMore(true);
+      } else if (loadMore) {
+        console.log('🔄 Loading more vostcards (pagination)');
       } else {
-        console.log('🔄 Loading posted vostcards and quickcards');
+        console.log('🔄 Loading first', MAX_POSTS, 'posted vostcards and quickcards');
       }
       
-      const q1 = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
+      // Build query with pagination
+      let q1;
+      if (loadMore && lastDoc) {
+        q1 = query(
+          collection(db, 'vostcards'), 
+          where('state', '==', 'posted'),
+          orderBy('createdAt', 'desc'),
+          startAfter(lastDoc),
+          limit(MAX_POSTS)
+        );
+      } else {
+        q1 = query(
+          collection(db, 'vostcards'), 
+          where('state', '==', 'posted'),
+          orderBy('createdAt', 'desc'),
+          limit(MAX_POSTS)
+        );
+      }
+      
       const snapshot1 = await getDocs(q1);
       const postedVostcards = snapshot1.docs.map(doc => ({
         id: doc.id,
@@ -536,7 +609,9 @@ const HomeView = () => {
       
       console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
         regular: allContent.filter(v => !v.isQuickcard).length,
-        quickcards: allContent.filter(v => v.isQuickcard).length
+        quickcards: allContent.filter(v => v.isQuickcard).length,
+        isLoadMore: loadMore,
+        hasMore: snapshot1.docs.length === MAX_POSTS
       });
 
       // 🔍 DEBUG: Log userRole values for all quickcards
@@ -551,15 +626,122 @@ const HomeView = () => {
         });
       });
       
-      setVostcards(allContent);
-      setHasInitialLoad(true);
+      // Update pagination state
+      if (snapshot1.docs.length > 0) {
+        setLastDoc(snapshot1.docs[snapshot1.docs.length - 1]);
+      }
+      setHasMore(snapshot1.docs.length === MAX_POSTS);
+      
+      // Set or append vostcards
+      if (loadMore) {
+        setVostcards(prev => [...prev, ...allContent]);
+      } else {
+        setVostcards(allContent);
+        setHasInitialLoad(true);
+      }
+      
     } catch (error) {
       console.error('❌ Error loading vostcards:', error);
       setMapError('Failed to load content. Please check your connection and try again.');
     } finally {
       setLoadingVostcards(false);
+      setLoadingMore(false);
     }
-  }, [singleVostcard, loadingVostcards, tourData]);
+  }, [singleVostcard, loadingVostcards, loadingMore, tourData, lastDoc, MAX_POSTS]);
+
+  // Load more vostcards (pagination)
+  const loadMoreVostcards = useCallback(async () => {
+    if (!hasMore || loadingMore) return;
+    await loadVostcards(false, true);
+  }, [hasMore, loadingMore, loadVostcards]);
+
+  // Calculate optimal zoom level based on post density
+  const calculateOptimalZoom = useCallback((posts: any[], userLoc: [number, number] | null) => {
+    if (!userLoc || posts.length === 0) return 16; // Default zoom
+    
+    // Calculate distances from user to all posts
+    const distances = posts
+      .filter(p => p.latitude && p.longitude)
+      .map(p => {
+        const lat1 = userLoc[0];
+        const lon1 = userLoc[1];
+        const lat2 = p.latitude;
+        const lon2 = p.longitude;
+        
+        // Haversine formula for distance calculation
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c; // Distance in km
+      });
+    
+    if (distances.length === 0) return 16;
+    
+    // Find the 90th percentile distance to encompass most posts
+    distances.sort((a, b) => a - b);
+    const percentile90 = distances[Math.floor(distances.length * 0.9)];
+    
+    // Map distance to zoom level (rough approximation)
+    if (percentile90 < 0.5) return 17;      // < 500m
+    else if (percentile90 < 1) return 16;   // < 1km  
+    else if (percentile90 < 2) return 15;   // < 2km
+    else if (percentile90 < 5) return 14;   // < 5km
+    else if (percentile90 < 10) return 13;  // < 10km
+    else if (percentile90 < 20) return 12;  // < 20km
+    else return 11; // > 20km
+  }, []);
+
+  // Handle map bounds changes
+  const handleMapBoundsChange = useCallback((bounds: any) => {
+    setMapBounds(bounds);
+    console.log('🗺️ Map bounds updated:', {
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest()
+    });
+  }, []);
+
+  // Filter posts by current map bounds
+  const filterPostsByBounds = useCallback((posts: any[], bounds: any) => {
+    if (!bounds) return posts;
+    
+    return posts.filter(post => {
+      if (!post.latitude || !post.longitude) return false;
+      
+      const lat = parseFloat(post.latitude);
+      const lng = parseFloat(post.longitude);
+      
+      return lat >= bounds.getSouth() && 
+             lat <= bounds.getNorth() && 
+             lng >= bounds.getWest() && 
+             lng <= bounds.getEast();
+    });
+  }, []);
+
+  // Get visible posts (within map bounds)
+  const visiblePosts = useMemo(() => {
+    if (!mapBounds) return vostcards;
+    return filterPostsByBounds(vostcards, mapBounds);
+  }, [vostcards, mapBounds, filterPostsByBounds]);
+
+  // Optimize zoom when posts are loaded
+  const handleZoomOptimization = useCallback((posts: any[], userLoc: [number, number] | null) => {
+    if (!mapRef.current || posts.length === 0) return;
+    
+    const optimalZoom = calculateOptimalZoom(posts, userLoc);
+    const currentZoom = mapRef.current.getZoom();
+    
+    // Only adjust zoom if it's significantly different (avoid constant adjustments)
+    if (Math.abs(currentZoom - optimalZoom) > 1) {
+      console.log('🎯 Optimizing zoom from', currentZoom, 'to', optimalZoom, 'for', posts.length, 'posts');
+      mapRef.current.setZoom(optimalZoom);
+    }
+  }, [calculateOptimalZoom]);
 
   // Load user avatar
   useEffect(() => {
@@ -595,6 +777,13 @@ const HomeView = () => {
       setHasInitialLoad(true); // Mark as loaded to prevent future loads
     }
   }, [loading, hasInitialLoad, tourData, loadVostcards]);
+
+  // Optimize zoom when posts are loaded and user location is available
+  useEffect(() => {
+    if (vostcards.length > 0 && actualUserLocation && hasInitialLoad) {
+      handleZoomOptimization(vostcards, actualUserLocation);
+    }
+  }, [vostcards.length, actualUserLocation, hasInitialLoad, handleZoomOptimization]);
 
   // Handle fresh load after posting
   useEffect(() => {
@@ -936,8 +1125,23 @@ const HomeView = () => {
     return filtered;
   };
 
-  // FIXED: Always show all pins, but center on singleVostcard if present
-  const filteredVostcards = filterVostcards(vostcards);
+  // Apply filtering and map bounds - limit to visible posts for performance
+  const filteredVostcards = useMemo(() => {
+    // First apply regular filters (categories, types, friends, etc.)
+    const regularFiltered = filterVostcards(vostcards);
+    
+    // Then apply map bounds filtering to limit to visible area
+    const boundsFiltered = filterPostsByBounds(regularFiltered, mapBounds);
+    
+    console.log('🗺️ Filtered posts:', {
+      total: vostcards.length,
+      afterFilters: regularFiltered.length,
+      visibleInBounds: boundsFiltered.length,
+      maxAllowed: MAX_POSTS
+    });
+    
+    return boundsFiltered;
+  }, [vostcards, selectedCategories, selectedTypes, showFriendsOnly, showCreatorsIFollow, mapBounds, filterPostsByBounds, MAX_POSTS]);
 
   // Menu style
   const menuStyle = {
@@ -1647,6 +1851,10 @@ const HomeView = () => {
                 shouldUpdateMapView={shouldUpdateMapView}
                 stableShouldUpdateMapView={stableShouldUpdateMapView}
                 hasRecenteredOnce={hasRecenteredOnce}
+              />
+              <MapBoundsListener
+                onBoundsChange={handleMapBoundsChange}
+                onZoomOptimization={handleZoomOptimization}
               />
               <ZoomControls />
             </MapContainer>
