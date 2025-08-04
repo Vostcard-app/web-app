@@ -141,7 +141,8 @@ const tourSlides: TourSlide[] = [
         alignItems: 'center',
         justifyContent: 'center',
         gap: '8px',
-        minWidth: '100px'
+        minWidth: '100px',
+        marginTop: '20px'
       }}>
         <FaWalking style={{ fontSize: '16px' }} />
         <span>Tours</span>
