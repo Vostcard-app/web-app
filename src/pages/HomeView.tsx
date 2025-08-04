@@ -321,7 +321,7 @@ const HomeView = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [mapBounds, setMapBounds] = useState<any>(null);
   const [hasLoadedBeyondZoom16, setHasLoadedBeyondZoom16] = useState(false);
-  const MAX_POSTS = 5; // Load up to 5 pins on the map
+  const MAX_POSTS = 50; // Load broader sample from database to ensure offers are included
 
   // Debug showOnboarding state changes
   useEffect(() => {
