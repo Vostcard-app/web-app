@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "name": "🏠 B&B-Keeper",
+      "path": "./B&B-Keeper"
+    }
+  ],
+  "settings": {
+    "terminal.integrated.cwd": "./B&B-Keeper",
+    "git.defaultCloneDirectory": "./B&B-Keeper", 
+    "workbench.colorTheme": "Default Dark+",
+    "window.title": "🏠 B&B-KEEPER - ${dirty}${activeEditorShort}${separator}${rootName}",
+    "workbench.colorCustomizations": {
+      "titleBar.activeBackground": "#059669",
+      "titleBar.activeForeground": "#ffffff"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss", 
+      "esbenp.prettier-vscode"
+    ]
+  }
+}
