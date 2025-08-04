@@ -92,7 +92,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 3,
     title: "Filters",
-    description: "See pins from professionals or everyone.",
+    description: "Choose to see pins from just professionals or from everyone.",
     icon: (
       <div style={{
         display: 'flex',
