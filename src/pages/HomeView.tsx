@@ -601,20 +601,18 @@ const HomeView = () => {
       let q1;
       
       if (loadMore && lastDoc) {
-        // For load more, use standard pagination
+        // For load more, use standard pagination without orderBy to avoid composite index
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
-          orderBy('createdAt', 'desc'),
           startAfter(lastDoc),
           limit(MAX_POSTS)
         );
       } else {
-        // Standard query - load recent posts, then filter by zoom 16 area
+        // Standard query - load posts, no orderBy to avoid composite index requirement
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
-          orderBy('createdAt', 'desc'),
           limit(MAX_POSTS)
         );
       }
@@ -839,7 +837,7 @@ const HomeView = () => {
       console.log('🎬 Initial load - skipping regular vostcards, tour data is active');
       setHasInitialLoad(true); // Mark as loaded to prevent future loads
     }
-  }, [loading, hasInitialLoad, tourData, loadVostcards]);
+  }, [loading, hasInitialLoad, tourData]); // Removed loadVostcards to prevent infinite loop
 
   // Optimize zoom when posts are loaded and user location is available
   useEffect(() => {
@@ -882,14 +880,14 @@ const HomeView = () => {
       
       refreshAfterPosting();
     }
-  }, [location.state, navigate, location.pathname, loadVostcards]);
+  }, [location.state, navigate, location.pathname]); // Removed loadVostcards to prevent infinite loop
 
   // Retry mechanism
   useEffect(() => {
     if (retryCount > 0) {
       loadVostcards(true);
     }
-  }, [retryCount, loadVostcards]);
+  }, [retryCount]); // Removed loadVostcards to prevent infinite loop
 
   // Location handling - IMPROVED FOR LAPTOPS
   useEffect(() => {
