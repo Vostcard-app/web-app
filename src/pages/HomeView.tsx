@@ -547,7 +547,27 @@ const HomeView = () => {
     }
   }, [loading]); // FIXED: Only depend on loading to prevent excessive re-renders
 
-  // Load vostcards function with pagination and map bounds
+  // Calculate geographic bounds for a given zoom level around a center point
+  const calculateBoundsForZoom = useCallback((center: [number, number], zoom: number) => {
+    const [lat, lng] = center;
+    
+    // Approximate degrees per pixel at different zoom levels (at equator)
+    // Zoom 16 ≈ 1.2km radius, so about 0.01 degrees lat/lng
+    const degreesPerPixel = 360 / (256 * Math.pow(2, zoom));
+    const pixelRadius = 150; // Approximate radius in pixels for zoom level coverage
+    
+    const latDelta = degreesPerPixel * pixelRadius;
+    const lngDelta = degreesPerPixel * pixelRadius / Math.cos(lat * Math.PI / 180); // Adjust for latitude
+    
+    return {
+      north: lat + latDelta,
+      south: lat - latDelta,
+      east: lng + lngDelta,
+      west: lng - lngDelta
+    };
+  }, []);
+
+  // Load vostcards function with smart geographic loading
   const loadVostcards = useCallback(async (forceRefresh: boolean = false, loadMore: boolean = false) => {
     // Skip loading regular vostcards if we have tour data (even with forceRefresh)
     if (tourData) {
@@ -574,12 +594,14 @@ const HomeView = () => {
       } else if (loadMore) {
         console.log('🔄 Loading more vostcards (pagination)');
       } else {
-        console.log('🔄 Loading first', MAX_POSTS, 'posted vostcards and quickcards');
+        console.log('🔄 Smart loading: checking zoom 16 area first');
       }
       
-      // Build query with pagination
+      // Build query with geographic filtering for initial load
       let q1;
+      
       if (loadMore && lastDoc) {
+        // For load more, use standard pagination
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
@@ -588,6 +610,7 @@ const HomeView = () => {
           limit(MAX_POSTS)
         );
       } else {
+        // Standard query - load recent posts, then filter by zoom 16 area
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
@@ -602,16 +625,56 @@ const HomeView = () => {
         ...doc.data()
       })) as any[];
       
-      const allContent = postedVostcards.filter(v => 
+      let allContent = postedVostcards.filter(v => 
         !v.isQuickcard || 
         (v.isQuickcard && v.state === 'posted')
       );
       
-      console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
+      // For initial load (not loadMore), filter by zoom 16 area if we have user location
+      const isInitialLoad = !loadMore && !forceRefresh;
+      let postsInZoom16Area = allContent;
+      
+      if (isInitialLoad && actualUserLocation) {
+        const bounds = calculateBoundsForZoom(actualUserLocation, 16);
+        console.log('🎯 Filtering by zoom 16 area:', bounds);
+        
+        postsInZoom16Area = allContent.filter(post => {
+          if (!post.latitude || !post.longitude) return false;
+          
+          const lat = parseFloat(post.latitude);
+          const lng = parseFloat(post.longitude);
+          
+          return lat >= bounds.south && 
+                 lat <= bounds.north && 
+                 lng >= bounds.west && 
+                 lng <= bounds.east;
+        });
+        
+        console.log('📊 Zoom 16 filtering results:', {
+          totalLoaded: allContent.length,
+          inZoom16Area: postsInZoom16Area.length,
+          shouldUseZoom16Only: postsInZoom16Area.length < MAX_POSTS
+        });
+        
+        // If fewer than MAX_POSTS in zoom 16 area, only use those
+        if (postsInZoom16Area.length < MAX_POSTS && postsInZoom16Area.length > 0) {
+          console.log('🎯 Perfect! Using only', postsInZoom16Area.length, 'posts from zoom 16 area');
+          allContent = postsInZoom16Area;
+        } else if (postsInZoom16Area.length === 0) {
+          console.log('📍 No posts in zoom 16 area, using all', allContent.length, 'loaded posts');
+          // Keep all loaded posts
+        } else {
+          console.log('📊 Zoom 16 area has', postsInZoom16Area.length, 'posts - showing all', allContent.length, 'loaded posts');
+          // Keep all loaded posts since zoom 16 area is dense
+        }
+      }
+      
+      console.log('📋 Final loaded vostcards and quickcards:', allContent.length, {
         regular: allContent.filter(v => !v.isQuickcard).length,
         quickcards: allContent.filter(v => v.isQuickcard).length,
         isLoadMore: loadMore,
-        hasMore: snapshot1.docs.length === MAX_POSTS
+        hasMore: snapshot1.docs.length === MAX_POSTS,
+        wasZoom16Filtered: isInitialLoad && actualUserLocation
       });
 
       // 🔍 DEBUG: Log userRole values for all quickcards
@@ -647,7 +710,7 @@ const HomeView = () => {
       setLoadingVostcards(false);
       setLoadingMore(false);
     }
-  }, [singleVostcard, loadingVostcards, loadingMore, tourData, lastDoc, MAX_POSTS]);
+  }, [singleVostcard, loadingVostcards, loadingMore, tourData, lastDoc, MAX_POSTS, actualUserLocation, calculateBoundsForZoom]);
 
   // Load more vostcards (pagination)
   const loadMoreVostcards = useCallback(async () => {
