@@ -800,8 +800,7 @@ const HomeView = () => {
       }
       
       mapRef.current.fitBounds(bounds, {
-        padding: [50, 50], // Extra padding to ensure everything is visible
-        minZoom: 16 // Never zoom out wider than level 16
+        padding: [50, 50] // Extra padding to ensure everything is visible
       });
     } catch (error) {
       console.warn('🗺️ Error fitting map bounds:', error);
@@ -1871,7 +1870,7 @@ const HomeView = () => {
               )}
 
               {/* Vostcard markers */}
-              {filteredVostcards.map((vostcard) => {
+              {visiblePosts.map((vostcard) => {
                 if (!vostcard.latitude || !vostcard.longitude) return null;
 
                 const position: [number, number] = [vostcard.latitude, vostcard.longitude];
