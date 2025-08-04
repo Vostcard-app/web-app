@@ -63,6 +63,47 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 2,
+    title: "Welcome to Vōstcard!",
+    description: "Free tours wherever you go!",
+    icon: (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
+      }}>
+        <img 
+          src={VostcardPin} 
+          alt="Vostcard Pin" 
+          style={{ width: '64px', height: '64px' }} 
+        />
+        <img 
+          src={OfferPin} 
+          alt="Offer Pin" 
+          style={{ width: '64px', height: '64px' }} 
+        />
+        <img 
+          src={GuidePin} 
+          alt="Guide Pin" 
+          style={{ width: '64px', height: '64px' }} 
+        />
+      </div>
+    ),
+    features: [
+      {
+        icon: (
+          <img 
+            src={GuidePin} 
+            alt="Guide Pin" 
+            style={{ width: '64px', height: '64px', flexShrink: 0 }} 
+          />
+        ),
+        text: "Points of interest made by professionals"
+      }
+    ]
+  },
+  {
+    id: 3,
     title: "Need Help?\nWe've Got You!",
     description: "Tap on the help button to find this quickstart and other helpful information and learn more about Vōstcard.",
     icon: (
@@ -94,7 +135,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 3,
+    id: 4,
     title: "Explore Your Map",
     description: "See what's happening around you. Discover posts, offers, and tours from other users in your area.",
     icon: <FaMapPin size={48} color="#002B4D" />,
@@ -114,7 +155,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 4,
+    id: 5,
     title: "Filters",
     description: "Use filters to discover exactly what you're looking for. Filter by content type, user role, or categories to find the perfect experience.",
     icon: <FaFilter size={48} color="#002B4D" />,
@@ -125,7 +166,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 5,
+    id: 6,
     title: "Join Tours & Adventures",
     description: "Tap the tour button or Guide Avatars to see available tours. Experience curated journeys through interesting locations.",
     icon: (
@@ -155,7 +196,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 6,
+    id: 7,
     title: "Create Vostcards & Quickcards",
     description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
     icon: <FaCamera size={48} color="#002B4D" />,
@@ -166,7 +207,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 7,
+    id: 8,
     title: "Connect & Share",
     description: "Follow friends, like posts, and build your community. Your Vōstbox keeps track of all your interactions.",
     icon: <FaUsers size={48} color="#002B4D" />,
@@ -177,7 +218,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 8,
+    id: 9,
     title: "You're All Set!",
     description: "Ready to start exploring? Create your first post or discover what's around you!",
     icon: <FaCheck size={48} color="#00C851" />,
