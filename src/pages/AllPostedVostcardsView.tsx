@@ -39,7 +39,11 @@ const AllPostedVostcardsView: React.FC = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const availableTypes = ['Vostcard', 'Quickcard', 'Guide'];
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [showGuidesOnly, setShowGuidesOnly] = useState(false);
+  const [showGuidesOnly, setShowGuidesOnly] = useState(() => {
+    // Load persisted state from localStorage
+    const saved = localStorage.getItem('showGuidesOnly');
+    return saved ? JSON.parse(saved) : false;
+  });
   
   // Category filtering state (same as HomeView)
   const availableCategories = [
@@ -84,6 +88,11 @@ const AllPostedVostcardsView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+
+  // Persist showGuidesOnly state to localStorage
+  useEffect(() => {
+    localStorage.setItem('showGuidesOnly', JSON.stringify(showGuidesOnly));
+  }, [showGuidesOnly]);
 
   // Real-time location search with debouncing - using same implementation as BrowseAreaView
   useEffect(() => {
@@ -724,7 +733,7 @@ const AllPostedVostcardsView: React.FC = () => {
                   borderRadius: '50%',
                   background: 'white',
                   position: 'absolute',
-                  left: showGuidesOnly ? '22px' : '2px',
+                  left: showGuidesOnly ? '2px' : '22px',
                   transition: 'left 0.2s',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
                 }}
