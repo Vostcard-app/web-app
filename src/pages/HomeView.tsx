@@ -1243,7 +1243,19 @@ const HomeView = () => {
               🚗 Drive Mode
             </button>
             
-            {/* 4. Social - Parent Menu */}
+            {/* 4. Itineraries */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                // TODO: Wire up itineraries functionality
+                alert('Itineraries feature coming soon!');
+              }}
+              style={menuItemStyle}
+            >
+              📋 Itineraries
+            </button>
+            
+            {/* 5. Social - Parent Menu */}
             <button
               onClick={() => {
                 setOpenSubmenu(openSubmenu === 'social' ? null : 'social');
@@ -1299,7 +1311,7 @@ const HomeView = () => {
               </>
             )}
 
-            {/* 5. Vostcard Studio */}
+            {/* 6. Vostcard Studio */}
             {userRole === 'guide' && (
               <button
                 onClick={() => {
@@ -1312,7 +1324,7 @@ const HomeView = () => {
               </button>
             )}
 
-            {/* 6. Admin Panel */}
+            {/* 7. Admin Panel */}
             {userRole === 'admin' && (
               <button
                 onClick={() => {
@@ -1325,7 +1337,7 @@ const HomeView = () => {
               </button>
             )}
 
-            {/* 7. Admin Dashboard */}
+            {/* 8. Admin Dashboard */}
             {userRole === 'admin' && (
               <button
                 onClick={() => {
@@ -1338,7 +1350,7 @@ const HomeView = () => {
               </button>
             )}
             
-            {/* 8. Settings */}
+            {/* 9. Settings */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1349,7 +1361,7 @@ const HomeView = () => {
               ⚙️ Settings
             </button>
             
-            {/* 9. Contact - Parent Menu */}
+            {/* 10. Contact - Parent Menu */}
             <button
               onClick={() => {
                 setOpenSubmenu(openSubmenu === 'contact' ? null : 'contact');
@@ -1393,7 +1405,7 @@ const HomeView = () => {
               </>
             )}
             
-            {/* 10. Logout */}
+            {/* 11. Logout */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
