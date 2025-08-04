@@ -6,12 +6,12 @@ import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBFnR-0QZ6lIzgXfwEEXSt6lp6fKZt4fNc",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "bnb-keeper-baced.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "bnb-keeper-baced",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "bnb-keeper-baced.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "268443900050",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:268443900050:web:703857a981493eb6796e4b"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCcSAlfYfh9KrbN3NbI2CTyGY1wqZJ4Mxg",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "vostcard-app.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "vostcard-app",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "vostcard-app.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "YOUR_MESSAGING_SENDER_ID",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "YOUR_APP_ID"
 };
 
 console.log('🔥 Initializing Firebase with config:', {
