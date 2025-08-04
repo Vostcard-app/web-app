@@ -72,6 +72,8 @@ import ToursNearMeView from "./pages/ToursNearMeView";
 import TourMapView from "./pages/TourMapView";
 import TourInProgressView from "./pages/TourInProgressView";
 import AuthRedirect from "./components/AuthRedirect";
+import FiltersHelpView from "./pages/FiltersHelpView";
+import CreateCardsHelpView from "./pages/CreateCardsHelpView";
 
 function App() {
   return (
@@ -174,6 +176,10 @@ function App() {
                   <Route path="/report-bug" element={<ReportBugView />} />
                   <Route path="/flag-form" element={<FlagFormView />} />
                   <Route path="/suggestion-box" element={<SuggestionBoxView />} />
+                  
+                  {/* 🆘 Help */}
+                  <Route path="/help/filters" element={<FiltersHelpView />} />
+                  <Route path="/help/create-cards" element={<CreateCardsHelpView />} />
 
                   {/* 🏎️ Drive Mode */}
                   <Route path="/drivecards" element={<DrivecardsListView />} />

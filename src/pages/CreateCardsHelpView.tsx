@@ -1,80 +1,61 @@
 import React from 'react';
-import { FaTimes, FaCamera } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaCamera } from 'react-icons/fa';
 
-interface CreateCardsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const CreateCardsModal: React.FC<CreateCardsModalProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
+const CreateCardsHelpView: React.FC = () => {
+  const navigate = useNavigate();
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          zIndex: 10000
-        }}
-        onClick={onClose}
-      />
-      
-      {/* Modal Content */}
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#f8f9fa',
+      padding: '20px'
+    }}>
+      {/* Header */}
       <div style={{
-        position: 'fixed',
-        top: '10%',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        display: 'flex',
+        alignItems: 'center',
+        marginBottom: '30px',
+        maxWidth: '400px',
+        margin: '0 auto 30px auto'
+      }}>
+        <button
+          onClick={() => navigate('/home')}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '8px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#002B4D',
+            fontSize: '20px',
+            marginRight: '16px'
+          }}
+        >
+          <FaArrowLeft />
+        </button>
+        <h1 style={{
+          margin: 0,
+          fontSize: '24px',
+          fontWeight: 'bold',
+          color: '#002B4D'
+        }}>
+          Create Cards
+        </h1>
+      </div>
+
+      {/* Content */}
+      <div style={{
+        maxWidth: '400px',
+        margin: '0 auto',
         backgroundColor: 'white',
         borderRadius: '12px',
         padding: '24px',
-        maxWidth: '400px',
-        width: '90%',
-        maxHeight: '80vh',
-        overflow: 'auto',
-        zIndex: 10001
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
       }}>
-        {/* Header */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          marginBottom: '20px' 
-        }}>
-          <h3 style={{ 
-            margin: 0, 
-            fontSize: '20px', 
-            fontWeight: 'bold',
-            color: '#002B4D'
-          }}>
-            Create Vostcards & Quickcards
-          </h3>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666',
-              fontSize: '16px'
-            }}
-          >
-            <FaTimes />
-          </button>
-        </div>
-
-        {/* Content */}
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <div style={{ marginBottom: '30px' }}>
             <FaCamera size={48} color="#002B4D" style={{ marginBottom: '20px' }} />
@@ -138,10 +119,10 @@ const CreateCardsModal: React.FC<CreateCardsModalProps> = ({ isOpen, onClose }) 
           </div>
         </div>
 
-        {/* Close Button */}
+        {/* Back Button */}
         <div style={{ textAlign: 'center' }}>
           <button
-            onClick={onClose}
+            onClick={() => navigate('/home')}
             style={{
               backgroundColor: '#002B4D',
               color: 'white',
@@ -160,8 +141,8 @@ const CreateCardsModal: React.FC<CreateCardsModalProps> = ({ isOpen, onClose }) 
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
-export default CreateCardsModal;
+export default CreateCardsHelpView;
