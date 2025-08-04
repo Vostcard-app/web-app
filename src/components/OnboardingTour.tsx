@@ -428,7 +428,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    fontSize: '32px',
+                    fontSize: '28px',
                     color: '#666'
                   }}>
                     {typeof feature === 'string' ? (
