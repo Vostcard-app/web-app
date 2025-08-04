@@ -76,6 +76,16 @@ const QuickcardDetailView: React.FC = () => {
   const [showTipDropdown, setShowTipDropdown] = useState(false);
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
   const tipButtonRef = useRef<HTMLButtonElement>(null);
+  
+  // Itinerary modal state
+  const [showItineraryModal, setShowItineraryModal] = useState(false);
+  
+  // Mock existing itineraries (TODO: Replace with real data)
+  const [existingItineraries] = useState([
+    // Uncomment to test with existing itineraries:
+    // { id: '1', name: 'Weekend Trip' },
+    // { id: '2', name: 'Business Travel' }
+  ]);
 
   // Swipe gesture state for navigation
   const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
@@ -1467,8 +1477,7 @@ Tap OK to continue.`;
       }}>
         <button
           onClick={() => {
-            // TODO: Wire up itinerary functionality
-            alert('Add to itinerary feature coming soon!');
+            setShowItineraryModal(true);
           }}
           style={{
             backgroundColor: '#4CAF50',
@@ -1492,6 +1501,143 @@ Tap OK to continue.`;
           📋 Add to Itinerary
         </button>
       </div>
+
+      {/* Itinerary Modal */}
+      {showItineraryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setShowItineraryModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              minWidth: '320px',
+              maxWidth: '400px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{
+              margin: '0 0 20px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#333',
+              textAlign: 'center'
+            }}>
+              Add to Itinerary
+            </h3>
+            
+            {existingItineraries.length > 0 ? (
+              // Show both options when there are existing itineraries
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    // TODO: Show list of existing itineraries
+                    alert('Select from existing itineraries (feature coming soon!)');
+                    setShowItineraryModal(false);
+                  }}
+                  style={{
+                    backgroundColor: '#007aff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                >
+                  📋 Add to Existing Itinerary
+                </button>
+                
+                <button
+                  onClick={() => {
+                    // TODO: Open create new itinerary flow
+                    alert('Create new itinerary (feature coming soon!)');
+                    setShowItineraryModal(false);
+                  }}
+                  style={{
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                >
+                  ➕ Create New Itinerary
+                </button>
+              </div>
+            ) : (
+              // Show only create option when no existing itineraries
+              <div>
+                <p style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '14px',
+                  color: '#666',
+                  textAlign: 'center'
+                }}>
+                  You don't have any itineraries yet.
+                </p>
+                
+                <button
+                  onClick={() => {
+                    // TODO: Open create new itinerary flow
+                    alert('Create new itinerary (feature coming soon!)');
+                    setShowItineraryModal(false);
+                  }}
+                  style={{
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease',
+                    width: '100%'
+                  }}
+                >
+                  ➕ Create New Itinerary
+                </button>
+              </div>
+            )}
+            
+            <button
+              onClick={() => setShowItineraryModal(false)}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                marginTop: '12px',
+                width: '100%'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <CommentsModal
