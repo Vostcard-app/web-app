@@ -109,7 +109,8 @@ const tourSlides: TourSlide[] = [
         textAlign: 'center',
         lineHeight: '1',
         gap: '8px',
-        minWidth: '120px'
+        minWidth: '120px',
+        marginTop: '25px'
       }}>
         <span style={{ fontSize: '28px', lineHeight: '1' }}>❓</span>
         <span>Help</span>
