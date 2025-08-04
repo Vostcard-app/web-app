@@ -17,6 +17,7 @@ import LocationDebugger from '../components/LocationDebugger';
 import DriveModePlayer from '../components/DriveModePlayer';
 import OnboardingTour from '../components/OnboardingTour';
 import FiltersModal from '../components/FiltersModal';
+import CreateCardsModal from '../components/CreateCardsModal';
 import { OnboardingService } from '../services/onboardingService';
 import InfoButton from '../assets/Info_button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -306,6 +307,7 @@ const HomeView = () => {
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showHelpFiltersModal, setShowHelpFiltersModal] = useState(false);
+  const [showHelpCreateCardsModal, setShowHelpCreateCardsModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
@@ -2350,6 +2352,32 @@ const HomeView = () => {
                 Filters
               </button>
               
+              <button
+                onClick={() => {
+                  setShowHelpMenu(false);
+                  setShowHelpCreateCardsModal(true);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #f0f0f0',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  color: '#333',
+                  transition: 'background-color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <FaCamera style={{ marginRight: '8px' }} />
+                Create Cards
+              </button>
+              
 
             </div>
           )}
@@ -2915,6 +2943,12 @@ const HomeView = () => {
       <FiltersModal
         isOpen={showHelpFiltersModal}
         onClose={() => setShowHelpFiltersModal(false)}
+      />
+
+      {/* Help Create Cards Modal */}
+      <CreateCardsModal
+        isOpen={showHelpCreateCardsModal}
+        onClose={() => setShowHelpCreateCardsModal(false)}
       />
     </div>
   );

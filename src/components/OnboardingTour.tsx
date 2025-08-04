@@ -188,17 +188,6 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 6,
-    title: "Create Vostcards & Quickcards",
-    description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
-    icon: <FaCamera size={48} color="#002B4D" />,
-    features: [
-      "Full Vostcards with photos, videos & stories",
-      "Quick photo-based Quickcards",
-      "Automatically tagged with your location"
-    ]
-  },
-  {
-    id: 7,
     title: "Connect & Share",
     description: "Follow friends, like posts, and build your community. Your Vōstbox keeps track of all your interactions.",
     icon: <FaUsers size={48} color="#002B4D" />,
@@ -209,7 +198,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 8,
+    id: 7,
     title: "You're All Set!",
     description: "Ready to start exploring? Create your first post or discover what's around you!",
     icon: <FaCheck size={48} color="#00C851" />,
