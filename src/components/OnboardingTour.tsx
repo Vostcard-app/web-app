@@ -54,7 +54,7 @@ const tourSlides: TourSlide[] = [
           <img 
             src={GuidePin} 
             alt="Guide Pin" 
-            style={{ width: '64px', height: '64px', flexShrink: 0 }} 
+            style={{ width: '128px', height: '128px', flexShrink: 0 }} 
           />
         ),
         text: "Points of interest made by professionals"
@@ -95,7 +95,7 @@ const tourSlides: TourSlide[] = [
           <img 
             src={GuidePin} 
             alt="Guide Pin" 
-            style={{ width: '64px', height: '64px', flexShrink: 0 }} 
+            style={{ width: '128px', height: '128px', flexShrink: 0 }} 
           />
         ),
         text: "Points of interest made by professionals"
@@ -428,7 +428,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    fontSize: '16px',
+                    fontSize: '32px',
                     color: '#666'
                   }}>
                     {typeof feature === 'string' ? (
