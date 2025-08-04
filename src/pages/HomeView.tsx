@@ -687,6 +687,21 @@ const HomeView = () => {
         wasZoom16Filtered: isInitialLoad && actualUserLocation
       });
 
+      // 🔍 DEBUG: Log all offers loaded
+      const allOffers = allContent.filter(v => v.isOffer);
+      if (allOffers.length > 0) {
+        console.log('🎁 DEBUG: Loaded offers:', allOffers.map(offer => ({
+          id: offer.id,
+          title: offer.title,
+          isOffer: offer.isOffer,
+          latitude: offer.latitude,
+          longitude: offer.longitude,
+          hasCoordinates: !!(offer.latitude && offer.longitude)
+        })));
+      } else {
+        console.log('🎁 DEBUG: No offers found in loaded content');
+      }
+
       // 🔍 DEBUG: Log userRole values for all quickcards
       allContent.filter(v => v.isQuickcard).forEach(qc => {
         console.log('🔍 DEBUG: Loaded quickcard:', {
@@ -867,6 +882,25 @@ const HomeView = () => {
     // Separate offers from non-offer posts
     const offers = allPosts.filter(p => p.isOffer);
     const nonOfferPosts = allPosts.filter(p => !p.isOffer).slice(0, 5); // Limit to 5 non-offer posts
+    
+    // 🔍 DEBUG: Log visible posts processing
+    console.log('🎯 visiblePosts processing:', {
+      totalVostcards: vostcards.length,
+      allPosts: allPosts.length,
+      offers: offers.length,
+      nonOfferPosts: nonOfferPosts.length,
+      mapBounds: !!mapBounds
+    });
+    
+    if (offers.length > 0) {
+      console.log('🎁 DEBUG: Visible offers:', offers.map(offer => ({
+        id: offer.id,
+        title: offer.title,
+        isOffer: offer.isOffer,
+        latitude: offer.latitude,
+        longitude: offer.longitude
+      })));
+    }
     
     // Return combined array: 5 non-offer posts + all offers
     return [...nonOfferPosts, ...offers];
