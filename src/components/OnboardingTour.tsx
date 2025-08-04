@@ -57,7 +57,7 @@ const tourSlides: TourSlide[] = [
             style={{ width: '64px', height: '64px', flexShrink: 0 }} 
           />
         ),
-        text: "These pins show you things made by Professional Guides."
+        text: "These are points of interest made by professionals"
       }
     ]
   },
