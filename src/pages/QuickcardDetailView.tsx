@@ -1457,6 +1457,42 @@ Tap OK to continue.`;
         </div>
       </div>
 
+      {/* Add to Itinerary Button */}
+      <div style={{
+        textAlign: 'center',
+        padding: '20px',
+        borderBottom: '1px solid #eee',
+        maxWidth: '900px',
+        margin: '0 auto'
+      }}>
+        <button
+          onClick={() => {
+            // TODO: Wire up itinerary functionality
+            alert('Add to itinerary feature coming soon!');
+          }}
+          style={{
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#45a049';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#4CAF50';
+          }}
+        >
+          📋 Add to Itinerary
+        </button>
+      </div>
+
       {/* Modals */}
       <CommentsModal
         isOpen={showCommentsModal}
