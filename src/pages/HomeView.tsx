@@ -2208,16 +2208,16 @@ const HomeView = () => {
               left: '8px',
               zIndex: 1002,
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              gap: '8px',
+              gap: '4px',
               backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              padding: '6px 10px',
+              padding: '6px 8px',
               borderRadius: '6px',
               boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
               backdropFilter: 'blur(10px)'
             }}
           >
-            <span style={{ fontSize: '12px', color: '#333', fontWeight: 500 }}>📚 Guides Only</span>
             <div
               onClick={() => setShowGuidesOnly(!showGuidesOnly)}
               style={{
@@ -2245,6 +2245,7 @@ const HomeView = () => {
                 }}
               />
             </div>
+            <span style={{ fontSize: '10px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 Guides Only</span>
           </div>
 
           {/* Help Menu Dropdown */}
