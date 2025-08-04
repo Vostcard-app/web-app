@@ -22,11 +22,6 @@
 
 # 🔧 FIX: Add client-side routing support
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 # Force rebuild - Fri Jul 25 10:05:52 IST 2025
+  status = 200

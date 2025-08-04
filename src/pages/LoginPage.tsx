@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 import { useResponsive } from "../hooks/useResponsive";
+import RoundInfoButton from '../assets/RoundInfo_Button.png';
 
 export default function LoginPage() {
   const { isDesktop } = useResponsive();
@@ -17,6 +18,8 @@ export default function LoginPage() {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
 
   // Helper function to check if input is an email
   const isEmail = (input: string): boolean => {
@@ -104,7 +107,12 @@ export default function LoginPage() {
 
       await signInWithEmailAndPassword(auth, emailToUse, password);
       console.log('✅ Login successful');
-      // Auth redirect will handle navigation
+      
+      // Redirect to returnTo URL if provided, otherwise let auth redirect handle navigation
+      if (returnTo) {
+        navigate(returnTo);
+      }
+      // If no returnTo, auth redirect will handle navigation
     } catch (err: any) {
       console.error("Login error:", err);
       
@@ -244,6 +252,7 @@ export default function LoginPage() {
         padding: '20px',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         borderTopLeftRadius: isDesktop ? 16 : 0,
         borderTopRightRadius: isDesktop ? 16 : 0,
@@ -259,6 +268,36 @@ export default function LoginPage() {
         }}>
           Vōstcard
         </span>
+        
+        {/* What's Vōstcard Button */}
+        <div
+          onClick={() => navigate('/user-guide')}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            paddingRight: '30px'
+          }}
+        >
+          <img 
+            src={RoundInfoButton} 
+            alt="Round Info Button" 
+            style={{
+              width: '40px',
+              height: '40px',
+              marginBottom: '2px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            What's Vōstcard
+          </span>
+        </div>
       </div>
 
       {/* Content */}
@@ -305,7 +344,7 @@ export default function LoginPage() {
             maxWidth: 400,
             fontSize: 18,
             padding: '16px 20px',
-            borderRadius: 25,
+            borderRadius: 8,
             border: '1px solid #ddd',
             marginBottom: 20,
             backgroundColor: 'white',
@@ -335,7 +374,7 @@ export default function LoginPage() {
               width: '100%',
               fontSize: 18,
               padding: '16px 20px',
-              borderRadius: 25,
+              borderRadius: 8,
               border: '1px solid #ddd',
               backgroundColor: 'white',
               outline: 'none',
@@ -394,22 +433,12 @@ export default function LoginPage() {
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
-            marginBottom: 40,
+            marginBottom: 20,
             opacity: loading ? 0.7 : 1
           }}
         >
           {loading ? 'Logging in...' : 'Log In'}
         </button>
-
-        {/* Register Section */}
-        <p style={{
-          color: '#999',
-          fontSize: 16,
-          marginBottom: 20,
-          textAlign: 'center'
-        }}>
-          If you don't have an account tap here
-        </p>
 
         {/* Register Button */}
         <button

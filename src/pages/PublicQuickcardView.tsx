@@ -636,7 +636,7 @@ const PublicQuickcardView: React.FC = () => {
             color: 'white',
             textAlign: 'center'
           }}>
-            User Guide
+            What's Vōstcard
           </span>
         </div>
       </div>
@@ -705,7 +705,7 @@ const PublicQuickcardView: React.FC = () => {
 
         {/* Login/Register Button */}
         <button
-          onClick={() => navigate('/user-guide')}
+          onClick={() => navigate('/login')}
           style={{
             backgroundColor: '#007aff',
             color: 'white',
@@ -1018,9 +1018,17 @@ const PublicQuickcardView: React.FC = () => {
             <FaHeart size={22} />
           </button>
 
-          {/* Comment Button - Shows login prompt */}
+          {/* Comment Button - Login required to comment */}
           <button
-            onClick={() => setShowLoginModal(true)}
+            onClick={() => {
+              if (user) {
+                // User is logged in, redirect to personal version
+                navigate(`/quickcard/${id}`);
+              } else {
+                // User not logged in, redirect to login page with return URL
+                navigate(`/login?returnTo=${encodeURIComponent(`/quickcard/${id}`)}`);
+              }
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -1390,7 +1398,7 @@ const PublicQuickcardView: React.FC = () => {
               <button
                 onClick={() => {
                   setShowLoginModal(false);
-                  navigate('/user-guide');
+                  navigate('/login');
                 }}
                 style={{
                   backgroundColor: '#007aff',
