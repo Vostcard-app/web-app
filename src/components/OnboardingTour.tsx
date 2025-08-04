@@ -75,7 +75,7 @@ const tourSlides: TourSlide[] = [
             style={{ width: '128px', height: '128px', flexShrink: 0 }} 
           />
         ),
-        text: "Points of interest made by users"
+        text: "Points of interest made by anyone"
       },
       {
         icon: (
@@ -85,7 +85,7 @@ const tourSlides: TourSlide[] = [
             style={{ width: '128px', height: '128px', flexShrink: 0 }} 
           />
         ),
-        text: "Special offers and deals from businesses"
+        text: "Special offers and deals"
       }
     ]
   },
