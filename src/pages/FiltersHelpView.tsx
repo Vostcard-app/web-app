@@ -4,6 +4,8 @@ import { FaArrowLeft, FaFilter } from 'react-icons/fa';
 
 const FiltersHelpView: React.FC = () => {
   const navigate = useNavigate();
+  
+  console.log('🔍 FiltersHelpView component rendered!');
 
   return (
     <div style={{

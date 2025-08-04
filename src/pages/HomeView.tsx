@@ -2326,8 +2326,11 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
+                  console.log('🔍 Filters button clicked!');
                   setShowHelpMenu(false);
+                  console.log('🔍 Navigating to /help/filters');
                   navigate('/help/filters');
+                  console.log('🔍 Navigation completed');
                 }}
                 style={{
                   width: '100%',
@@ -2352,8 +2355,11 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
+                  console.log('📷 Create Cards button clicked!');
                   setShowHelpMenu(false);
+                  console.log('📷 Navigating to /help/create-cards');
                   navigate('/help/create-cards');
+                  console.log('📷 Navigation completed');
                 }}
                 style={{
                   width: '100%',

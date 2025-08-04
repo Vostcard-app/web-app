@@ -4,6 +4,8 @@ import { FaArrowLeft, FaCamera } from 'react-icons/fa';
 
 const CreateCardsHelpView: React.FC = () => {
   const navigate = useNavigate();
+  
+  console.log('📷 CreateCardsHelpView component rendered!');
 
   return (
     <div style={{
