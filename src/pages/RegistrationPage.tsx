@@ -9,7 +9,7 @@ import { useResponsive } from "../hooks/useResponsive";
 const inputStyle = {
   width: '100%',
   marginBottom: 20,
-  fontSize: 20,
+  fontSize: 16,
   padding: '14px 10px',
   borderRadius: 12,
   border: '1px solid #eee',
