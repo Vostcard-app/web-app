@@ -74,11 +74,14 @@ export default function LoginPage() {
   };
 
   const handleLogin = async (e?: React.FormEvent) => {
+    console.log('🚀 handleLogin called', { usernameOrEmail, password: '***' });
+    
     if (e) {
       e.preventDefault();
     }
 
     if (!usernameOrEmail || !password) {
+      console.log('❌ Missing fields', { usernameOrEmail: !!usernameOrEmail, password: !!password });
       setError("Please fill in all fields");
       return;
     }
@@ -226,7 +229,10 @@ export default function LoginPage() {
       padding: isDesktop ? '20px' : '0'
     }}>
       {/* Mobile-style container with responsive design */}
-      <form onSubmit={handleLogin} style={{
+      <form onSubmit={(e) => {
+        console.log('📤 Form submitted');
+        handleLogin(e);
+      }} style={{
         width: isDesktop ? '390px' : '100%',
         maxWidth: '390px',
         height: isDesktop ? '844px' : '100vh',
@@ -338,7 +344,10 @@ export default function LoginPage() {
           type="text"
           placeholder="Username or Email"
           value={usernameOrEmail}
-          onChange={(e) => setUsernameOrEmail(e.target.value)}
+          onChange={(e) => {
+            console.log('📝 Username/Email input changed:', e.target.value);
+            setUsernameOrEmail(e.target.value);
+          }}
           style={{
             width: '90%',
             maxWidth: 400,
@@ -364,7 +373,10 @@ export default function LoginPage() {
             type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              console.log('🔐 Password input changed, length:', e.target.value.length);
+              setPassword(e.target.value);
+            }}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
                 handleLogin();
