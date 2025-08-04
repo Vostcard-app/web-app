@@ -118,32 +118,12 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 4,
-    title: "Explore Your Map",
-    description: "See what's happening around you. Discover posts, offers, and tours from other users in your area.",
-    icon: <FaMapPin size={48} color="#002B4D" />,
-    features: [
-      {
-        icon: <img src={GuidePin} alt="Guide Pin" style={{ width: '32px', height: '32px' }} />,
-        text: "Tap these to see content made by Guides"
-      },
-      {
-        icon: <img src={OfferPin} alt="Offer Pin" style={{ width: '32px', height: '32px' }} />,
-        text: "Tap these to find offers and deals nearby"
-      },
-      {
-        icon: <img src={VostcardPin} alt="Vostcard Pin" style={{ width: '32px', height: '32px' }} />,
-        text: "Tap these to see content made by anyone"
-      }
-    ]
-  },
-  {
-    id: 5,
     title: "Filters",
     description: "Use filters to discover exactly what you're looking for. Filter by content type, user role, or categories to find the perfect experience.",
     icon: <FaFilter size={48} color="#002B4D" />
   },
   {
-    id: 6,
+    id: 5,
     title: "Join Tours & Adventures",
     description: "Tap the tour button or Guide Avatars to see available tours. Experience curated journeys through interesting locations.",
     icon: (
@@ -173,7 +153,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 7,
+    id: 6,
     title: "Create Vostcards & Quickcards",
     description: "Capture and share your experiences instantly. Create detailed Vostcards or quick photo-based Quickcards.",
     icon: <FaCamera size={48} color="#002B4D" />,
@@ -184,7 +164,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 8,
+    id: 7,
     title: "Connect & Share",
     description: "Follow friends, like posts, and build your community. Your Vōstbox keeps track of all your interactions.",
     icon: <FaUsers size={48} color="#002B4D" />,
@@ -195,7 +175,7 @@ const tourSlides: TourSlide[] = [
     ]
   },
   {
-    id: 9,
+    id: 8,
     title: "You're All Set!",
     description: "Ready to start exploring? Create your first post or discover what's around you!",
     icon: <FaCheck size={48} color="#00C851" />,
