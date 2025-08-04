@@ -49,9 +49,16 @@ const tourSlides: TourSlide[] = [
       </div>
     ),
     features: [
-      "Share location-based content",
-      "Discover nearby experiences", 
-      "Connect with your community"
+      {
+        icon: (
+          <img 
+            src={GuidePin} 
+            alt="Guide Pin" 
+            style={{ width: '48px', height: '48px', flexShrink: 0 }} 
+          />
+        ),
+        text: "These pins show you things made by Professional Guides."
+      }
     ]
   },
   {
