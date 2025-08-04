@@ -333,18 +333,44 @@ export const ItineraryService = {
       const itemId = doc(collection(db, 'itineraries', itineraryId, 'items')).id;
       const now = Timestamp.now();
 
+      // If cached data is missing, fetch it from the vostcard
+      let title = data.title;
+      let description = data.description;
+      let photoURL = data.photoURL;
+      let latitude = data.latitude;
+      let longitude = data.longitude;
+      let username = data.username;
+
+      if (!title || !photoURL) {
+        try {
+          const vostcardDoc = await getDoc(doc(db, 'vostcards', data.vostcardID));
+          if (vostcardDoc.exists()) {
+            const vostcardData = vostcardDoc.data();
+            title = title || vostcardData.title || 'Untitled';
+            description = description || vostcardData.description;
+            photoURL = photoURL || vostcardData.photoURL;
+            latitude = latitude || vostcardData.latitude;
+            longitude = longitude || vostcardData.longitude;
+            username = username || vostcardData.username;
+          }
+        } catch (fetchError) {
+          console.warn('⚠️ Could not fetch vostcard data for caching:', fetchError);
+          title = title || 'Untitled';
+        }
+      }
+
       const itemDoc: ItineraryItemFirebaseDoc = {
         id: itemId,
         vostcardID: data.vostcardID,
         type: data.type,
         order: nextOrder,
         addedAt: now,
-        title: data.title,
-        description: data.description,
-        photoURL: data.photoURL,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        username: data.username
+        title: title || 'Untitled',
+        description,
+        photoURL,
+        latitude,
+        longitude,
+        username
       };
 
       await setDoc(doc(db, 'itineraries', itineraryId, 'items', itemId), itemDoc);

@@ -144,6 +144,28 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
     }
 
+    // Allow authenticated users to manage their own itineraries
+    match /itineraries/{itineraryId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userID || // Owner can always read
+        resource.data.isPublic == true // Anyone can read public itineraries
+      );
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userID;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userID;
+      
+      // Allow authenticated users to manage items within their itineraries
+      match /items/{itemId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == get(/databases/$(database)/documents/itineraries/$(itineraryId)).data.userID ||
+          get(/databases/$(database)/documents/itineraries/$(itineraryId)).data.isPublic == true
+        );
+        allow create: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/itineraries/$(itineraryId)).data.userID;
+        allow update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/itineraries/$(itineraryId)).data.userID;
+        allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/itineraries/$(itineraryId)).data.userID;
+      }
+    }
+
     // Allow authenticated users to manage their own tours
     match /tours/{tourId} {
       allow read: if true; // Allow all users to read tours (for public sharing)
