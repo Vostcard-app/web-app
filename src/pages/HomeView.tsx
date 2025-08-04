@@ -1907,6 +1907,16 @@ const HomeView = () => {
               {visiblePosts.map((vostcard) => {
                 if (!vostcard.latitude || !vostcard.longitude) return null;
 
+                // 🔍 DEBUG: Log each pin being rendered
+                if (vostcard.isOffer) {
+                  console.log('🎁 DEBUG: Rendering offer pin:', {
+                    id: vostcard.id,
+                    title: vostcard.title,
+                    isOffer: vostcard.isOffer,
+                    position: [vostcard.latitude, vostcard.longitude]
+                  });
+                }
+
                 const position: [number, number] = [vostcard.latitude, vostcard.longitude];
                 const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
                 const isVostcardPin = !vostcard.isOffer;
