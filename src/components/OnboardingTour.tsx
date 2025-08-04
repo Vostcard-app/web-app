@@ -361,7 +361,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
             style={{
-              padding: '6px 24px 32px 24px',
+              padding: '0px 24px 32px 24px',
               textAlign: 'center',
               minHeight: '300px',
               display: 'flex',
@@ -373,7 +373,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
             <div style={{
               display: 'flex',
               justifyContent: 'center',
-              marginBottom: '24px'
+              marginBottom: '0px'
             }}>
               {currentSlideData.icon}
             </div>
