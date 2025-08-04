@@ -5,19 +5,9 @@ import { doc, setDoc, collection, query, where, getDocs } from "firebase/firesto
 import { auth, db } from "../firebase/firebaseConfig";
 import InfoPin from "../assets/Info_pin.png";
 import { useResponsive } from "../hooks/useResponsive";
+import "./RegistrationPage.css";
 
-const inputStyle = {
-  width: '100%',
-  marginBottom: 20,
-  fontSize: 16,
-  padding: '10px 12px',
-  borderRadius: 12,
-  border: '1px solid #eee',
-  background: '#f8f8f8',
-  color: '#222',
-  boxSizing: 'border-box' as const,
-  textAlign: 'center' as const,
-};
+
 
 const linkStyle = {
   color: '#07345c',
@@ -307,14 +297,14 @@ export default function RegistrationPage() {
           placeholder="First Name"
           value={firstName}
           onChange={e => setFirstName(e.target.value)}
-          style={inputStyle}
+          className="centered-input"
         />
         <input
           type="text"
           placeholder="Last Name"
           value={lastName}
           onChange={e => setLastName(e.target.value)}
-          style={inputStyle}
+          className="centered-input"
         />
         {formType === "user" && (
           <input
@@ -322,7 +312,7 @@ export default function RegistrationPage() {
             placeholder="Username"
             value={username}
             onChange={e => setUsername(e.target.value)}
-            style={inputStyle}
+            className="centered-input"
           />
         )}
         {formType === "advertiser" && (
@@ -331,7 +321,7 @@ export default function RegistrationPage() {
             placeholder="Business Name"
             value={businessName}
             onChange={e => setBusinessName(e.target.value)}
-            style={inputStyle}
+            className="centered-input"
           />
         )}
         <input
@@ -339,7 +329,7 @@ export default function RegistrationPage() {
           placeholder="Email"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          style={inputStyle}
+          className="centered-input"
         />
         <div style={{ position: 'relative', marginBottom: 16 }}>
           <input
@@ -347,7 +337,8 @@ export default function RegistrationPage() {
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            style={{ ...inputStyle, marginBottom: 0 }}
+            className="centered-input"
+            style={{ marginBottom: 0 }}
           />
           <button
             type="button"
