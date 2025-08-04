@@ -1018,9 +1018,17 @@ const PublicQuickcardView: React.FC = () => {
             <FaHeart size={22} />
           </button>
 
-          {/* Comment Button - Shows login prompt */}
+          {/* Comment Button - Login required to comment */}
           <button
-            onClick={() => setShowLoginModal(true)}
+            onClick={() => {
+              if (user) {
+                // User is logged in, redirect to personal version
+                navigate(`/quickcard/${id}`);
+              } else {
+                // User not logged in, redirect to login page with return URL
+                navigate(`/login?returnTo=${encodeURIComponent(`/quickcard/${id}`)}`);
+              }
+            }}
             style={{
               background: 'none',
               border: 'none',

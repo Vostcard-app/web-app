@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
 
   // Helper function to check if input is an email
   const isEmail = (input: string): boolean => {
@@ -105,7 +107,12 @@ export default function LoginPage() {
 
       await signInWithEmailAndPassword(auth, emailToUse, password);
       console.log('✅ Login successful');
-      // Auth redirect will handle navigation
+      
+      // Redirect to returnTo URL if provided, otherwise let auth redirect handle navigation
+      if (returnTo) {
+        navigate(returnTo);
+      }
+      // If no returnTo, auth redirect will handle navigation
     } catch (err: any) {
       console.error("Login error:", err);
       
@@ -270,7 +277,7 @@ export default function LoginPage() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            paddingRight: '20px'
+            paddingRight: '30px'
           }}
         >
           <img 
