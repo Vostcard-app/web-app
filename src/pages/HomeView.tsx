@@ -16,6 +16,7 @@ import './HomeView.css';
 import LocationDebugger from '../components/LocationDebugger';
 import DriveModePlayer from '../components/DriveModePlayer';
 import OnboardingTour from '../components/OnboardingTour';
+import FiltersModal from '../components/FiltersModal';
 import { OnboardingService } from '../services/onboardingService';
 import InfoButton from '../assets/Info_button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -304,6 +305,7 @@ const HomeView = () => {
   const [userFriends, setUserFriends] = useState<string[]>([]);
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showHelpFiltersModal, setShowHelpFiltersModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
@@ -2322,6 +2324,29 @@ const HomeView = () => {
                 🏠 Home Page
               </button>
               
+              <button
+                onClick={() => {
+                  setShowHelpMenu(false);
+                  setShowHelpFiltersModal(true);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #f0f0f0',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  color: '#333',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                🔍 Filters
+              </button>
+              
 
             </div>
           )}
@@ -2881,6 +2906,12 @@ const HomeView = () => {
         isOpen={showOnboarding}
         onComplete={handleOnboardingComplete}
         onSkip={handleOnboardingSkip}
+      />
+
+      {/* Help Filters Modal */}
+      <FiltersModal
+        isOpen={showHelpFiltersModal}
+        onClose={() => setShowHelpFiltersModal(false)}
       />
     </div>
   );
