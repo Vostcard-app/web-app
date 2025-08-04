@@ -27,13 +27,14 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const analytics = getAnalytics(app);
+// Temporarily disable analytics to test
+// export const analytics = getAnalytics(app);
 
 console.log('✅ Firebase services initialized:', {
   auth: !!auth,
   db: !!db,
   storage: !!storage,
-  analytics: !!analytics
+  // analytics: !!analytics
 });
 
 // Test Firebase connectivity
