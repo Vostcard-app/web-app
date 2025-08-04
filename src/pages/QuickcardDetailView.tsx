@@ -13,6 +13,8 @@ import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import { LikeService } from '../services/likeService';
 import { RatingService } from '../services/ratingService';
+import { ItineraryService } from '../services/itineraryService';
+import type { Itinerary } from '../types/ItineraryTypes';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
 import MultiPhotoModal from '../components/MultiPhotoModal';
@@ -79,13 +81,14 @@ const QuickcardDetailView: React.FC = () => {
   
   // Itinerary modal state
   const [showItineraryModal, setShowItineraryModal] = useState(false);
-  
-  // Mock existing itineraries (TODO: Replace with real data)
-  const [existingItineraries] = useState([
-    // Uncomment to test with existing itineraries:
-    // { id: '1', name: 'Weekend Trip' },
-    // { id: '2', name: 'Business Travel' }
-  ]);
+  const [existingItineraries, setExistingItineraries] = useState<Itinerary[]>([]);
+  const [loadingItineraries, setLoadingItineraries] = useState(false);
+  const [showCreateItineraryModal, setShowCreateItineraryModal] = useState(false);
+  const [showSelectItineraryModal, setShowSelectItineraryModal] = useState(false);
+  const [newItineraryName, setNewItineraryName] = useState('');
+  const [newItineraryDescription, setNewItineraryDescription] = useState('');
+  const [addingToItinerary, setAddingToItinerary] = useState(false);
+  const [creatingItinerary, setCreatingItinerary] = useState(false);
 
   // Swipe gesture state for navigation
   const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
@@ -610,6 +613,94 @@ Tap OK to continue.`;
       }
     }
   }, [isPlaying, quickcard]);
+
+  // Load user's existing itineraries
+  const loadUserItineraries = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingItineraries(true);
+      const itineraries = await ItineraryService.getUserItineraries();
+      setExistingItineraries(itineraries);
+      console.log(`✅ Loaded ${itineraries.length} user itineraries`);
+    } catch (error) {
+      console.error('❌ Error loading itineraries:', error);
+      alert('Failed to load itineraries. Please try again.');
+    } finally {
+      setLoadingItineraries(false);
+    }
+  };
+
+  // Handle adding quickcard to existing itinerary
+  const handleAddToExistingItinerary = async (itinerary: Itinerary) => {
+    if (!quickcard) return;
+
+    try {
+      setAddingToItinerary(true);
+      
+      await ItineraryService.addItemToItinerary(itinerary.id, {
+        vostcardID: quickcard.id,
+        type: 'quickcard',
+        title: quickcard.title,
+        description: quickcard.description,
+        photoURL: quickcard.photoURLs?.[0],
+        latitude: quickcard.latitude,
+        longitude: quickcard.longitude,
+        username: quickcard.username
+      });
+
+      setShowSelectItineraryModal(false);
+      setShowItineraryModal(false);
+      alert(`Added to "${itinerary.name}" itinerary!`);
+      console.log('✅ Added quickcard to existing itinerary:', itinerary.id);
+    } catch (error) {
+      console.error('❌ Error adding to itinerary:', error);
+      alert('Failed to add to itinerary. Please try again.');
+    } finally {
+      setAddingToItinerary(false);
+    }
+  };
+
+  // Handle creating new itinerary with this quickcard
+  const handleCreateNewItinerary = async () => {
+    if (!newItineraryName.trim() || !quickcard) {
+      alert('Please enter an itinerary name');
+      return;
+    }
+
+    try {
+      setCreatingItinerary(true);
+      
+      const newItinerary = await ItineraryService.createItinerary({
+        name: newItineraryName.trim(),
+        description: newItineraryDescription.trim() || undefined,
+        isPublic: true,
+        firstItem: {
+          vostcardID: quickcard.id,
+          type: 'quickcard'
+        }
+      });
+
+      // Also add the cached data for the item
+      if (newItinerary.items.length > 0) {
+        // The service creates the item, but we can update it with cached data
+        // This is optional since the service will fetch this data when viewing
+      }
+
+      setShowCreateItineraryModal(false);
+      setShowItineraryModal(false);
+      setNewItineraryName('');
+      setNewItineraryDescription('');
+      
+      alert(`Created "${newItinerary.name}" itinerary with this quickcard!`);
+      console.log('✅ Created new itinerary with quickcard:', newItinerary.id);
+    } catch (error) {
+      console.error('❌ Error creating itinerary:', error);
+      alert('Failed to create itinerary. Please try again.');
+    } finally {
+      setCreatingItinerary(false);
+    }
+  };
 
 
   const handleRefresh = () => {
@@ -1476,7 +1567,12 @@ Tap OK to continue.`;
         margin: '0 auto'
       }}>
         <button
-          onClick={() => {
+          onClick={async () => {
+            if (!user) {
+              alert('Please log in to add items to itineraries');
+              return;
+            }
+            await loadUserItineraries();
             setShowItineraryModal(true);
           }}
           style={{
@@ -1538,14 +1634,18 @@ Tap OK to continue.`;
               Add to Itinerary
             </h3>
             
-            {existingItineraries.length > 0 ? (
+            {loadingItineraries ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <div style={{ fontSize: '20px', marginBottom: '10px' }}>📋</div>
+                <div>Loading itineraries...</div>
+              </div>
+            ) : existingItineraries.length > 0 ? (
               // Show both options when there are existing itineraries
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
                   onClick={() => {
-                    // TODO: Show list of existing itineraries
-                    alert('Select from existing itineraries (feature coming soon!)');
                     setShowItineraryModal(false);
+                    setShowSelectItineraryModal(true);
                   }}
                   style={{
                     backgroundColor: '#007aff',
@@ -1564,9 +1664,8 @@ Tap OK to continue.`;
                 
                 <button
                   onClick={() => {
-                    // TODO: Open create new itinerary flow
-                    alert('Create new itinerary (feature coming soon!)');
                     setShowItineraryModal(false);
+                    setShowCreateItineraryModal(true);
                   }}
                   style={{
                     backgroundColor: '#4CAF50',
@@ -1597,9 +1696,8 @@ Tap OK to continue.`;
                 
                 <button
                   onClick={() => {
-                    // TODO: Open create new itinerary flow
-                    alert('Create new itinerary (feature coming soon!)');
                     setShowItineraryModal(false);
+                    setShowCreateItineraryModal(true);
                   }}
                   style={{
                     backgroundColor: '#4CAF50',
@@ -1635,6 +1733,281 @@ Tap OK to continue.`;
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Select Existing Itinerary Modal */}
+      {showSelectItineraryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => !addingToItinerary && setShowSelectItineraryModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              minWidth: '320px',
+              maxWidth: '400px',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{
+              margin: '0 0 20px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#333',
+              textAlign: 'center'
+            }}>
+              Select Itinerary
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {existingItineraries.map((itinerary) => (
+                <button
+                  key={itinerary.id}
+                  onClick={() => handleAddToExistingItinerary(itinerary)}
+                  disabled={addingToItinerary}
+                  style={{
+                    backgroundColor: addingToItinerary ? '#f0f0f0' : 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    textAlign: 'left',
+                    cursor: addingToItinerary ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!addingToItinerary) {
+                      e.currentTarget.style.backgroundColor = '#f5f5f5';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!addingToItinerary) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                    }
+                  }}
+                >
+                  <div style={{
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    color: '#333',
+                    marginBottom: '4px'
+                  }}>
+                    {itinerary.name}
+                  </div>
+                  
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#666',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>{itinerary.items.length} item{itinerary.items.length !== 1 ? 's' : ''}</span>
+                    {itinerary.isPublic && (
+                      <span style={{
+                        backgroundColor: '#e3f2fd',
+                        color: '#1976d2',
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        fontSize: '10px',
+                        fontWeight: '500'
+                      }}>
+                        Public
+                      </span>
+                    )}
+                  </div>
+                  
+                  {itinerary.description && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#888',
+                      marginTop: '4px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {itinerary.description}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={() => setShowSelectItineraryModal(false)}
+              disabled={addingToItinerary}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: addingToItinerary ? 'not-allowed' : 'pointer',
+                marginTop: '12px',
+                width: '100%'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Create New Itinerary Modal */}
+      {showCreateItineraryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => !creatingItinerary && setShowCreateItineraryModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              minWidth: '320px',
+              maxWidth: '400px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{
+              margin: '0 0 20px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#333',
+              textAlign: 'center'
+            }}>
+              Create New Itinerary
+            </h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                marginBottom: '6px'
+              }}>
+                Name *
+              </label>
+              <input
+                type="text"
+                value={newItineraryName}
+                onChange={(e) => setNewItineraryName(e.target.value)}
+                placeholder="Enter itinerary name"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+                maxLength={50}
+                disabled={creatingItinerary}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                marginBottom: '6px'
+              }}>
+                Description (optional)
+              </label>
+              <textarea
+                value={newItineraryDescription}
+                onChange={(e) => setNewItineraryDescription(e.target.value)}
+                placeholder="Enter description"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  minHeight: '80px',
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
+                }}
+                maxLength={200}
+                disabled={creatingItinerary}
+              />
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => setShowCreateItineraryModal(false)}
+                disabled={creatingItinerary}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  cursor: creatingItinerary ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={handleCreateNewItinerary}
+                disabled={creatingItinerary || !newItineraryName.trim()}
+                style={{
+                  backgroundColor: creatingItinerary || !newItineraryName.trim() ? '#ccc' : '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  cursor: creatingItinerary || !newItineraryName.trim() ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {creatingItinerary ? 'Creating...' : 'Create & Add'}
+              </button>
+            </div>
+            
+            <div style={{
+              fontSize: '12px',
+              color: '#666',
+              marginTop: '12px',
+              textAlign: 'center'
+            }}>
+              This quickcard will be added to your new itinerary
+            </div>
           </div>
         </div>
       )}
