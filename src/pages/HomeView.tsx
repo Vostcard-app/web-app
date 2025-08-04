@@ -296,6 +296,11 @@ const HomeView = () => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [showFriendsOnly, setShowFriendsOnly] = useState(false);
   const [showCreatorsIFollow, setShowCreatorsIFollow] = useState(false);
+  const [showGuidesOnly, setShowGuidesOnly] = useState(() => {
+    // Load persisted state from localStorage, default to true (Guides only enabled)
+    const saved = localStorage.getItem('homeView_showGuidesOnly');
+    return saved ? JSON.parse(saved) : true;
+  });
   const [userFriends, setUserFriends] = useState<string[]>([]);
   const [followedCreators, setFollowedCreators] = useState<string[]>([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -327,6 +332,11 @@ const HomeView = () => {
   useEffect(() => {
     console.log('🎯 showOnboarding state changed to:', showOnboarding);
   }, [showOnboarding]);
+
+  // Persist showGuidesOnly state to localStorage
+  useEffect(() => {
+    localStorage.setItem('homeView_showGuidesOnly', JSON.stringify(showGuidesOnly));
+  }, [showGuidesOnly]);
 
 
   
@@ -1295,6 +1305,17 @@ const HomeView = () => {
       });
     }
     
+    // Apply Guide-only filtering
+    if (showGuidesOnly) {
+      filtered = filtered.filter(v => {
+        // Always show offers regardless of guide filter
+        if (v.isOffer) return true;
+        // Only show posts from guide users
+        return v.userRole === 'guide';
+      });
+      console.log(`📚 Guide-only filter applied: ${filtered.length} posts from Guide users`);
+    }
+    
     return filtered;
   };
 
@@ -1314,7 +1335,7 @@ const HomeView = () => {
     });
     
     return boundsFiltered;
-  }, [vostcards, selectedCategories, selectedTypes, showFriendsOnly, showCreatorsIFollow, mapBounds, filterPostsByBounds, MAX_POSTS]);
+  }, [vostcards, selectedCategories, selectedTypes, showFriendsOnly, showCreatorsIFollow, showGuidesOnly, mapBounds, filterPostsByBounds, MAX_POSTS]);
 
   // Menu style
   const menuStyle = {
@@ -2177,6 +2198,53 @@ const HomeView = () => {
               <FaWalking style={{ fontSize: '18px' }} />
               <span>Tours</span>
             </button>
+          </div>
+
+          {/* Guides Only Toggle - positioned under Help button */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '52px', // Below the top buttons (8px + 40px button height + 4px gap)
+              left: '8px',
+              zIndex: 1002,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+              backdropFilter: 'blur(10px)'
+            }}
+          >
+            <span style={{ fontSize: '12px', color: '#333', fontWeight: 500 }}>📚 Guides Only</span>
+            <div
+              onClick={() => setShowGuidesOnly(!showGuidesOnly)}
+              style={{
+                width: '36px',
+                height: '20px',
+                borderRadius: '10px',
+                background: showGuidesOnly ? '#007AFF' : '#e0e0e0',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <div
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  position: 'absolute',
+                  left: showGuidesOnly ? '2px' : '18px',
+                  transition: 'left 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }}
+              />
+            </div>
           </div>
 
           {/* Help Menu Dropdown */}
