@@ -947,12 +947,15 @@ const HomeView = () => {
     }
   }, [loading, hasInitialLoad, tourData]); // Removed loadVostcards to prevent infinite loop
 
-  // Optimize map view when posts are loaded and user location is available
+  // Only fit map to pins on initial load, not every time posts change
+  const [hasOptimizedMapOnce, setHasOptimizedMapOnce] = useState(false);
   useEffect(() => {
-    if (vostcards.length > 0 && actualUserLocation && hasInitialLoad) {
+    if (vostcards.length > 0 && actualUserLocation && hasInitialLoad && !hasOptimizedMapOnce) {
+      console.log('🎯 Initial map optimization - fitting to pins once');
       handleMapOptimization(vostcards, actualUserLocation);
+      setHasOptimizedMapOnce(true);
     }
-  }, [vostcards.length, actualUserLocation, hasInitialLoad, handleMapOptimization]);
+  }, [vostcards.length, actualUserLocation, hasInitialLoad, handleMapOptimization, hasOptimizedMapOnce]);
 
   // Handle fresh load after posting
   useEffect(() => {
@@ -1246,6 +1249,7 @@ const HomeView = () => {
       hasRecenteredOnce.current = false;
       setMapTargetLocation(actualUserLocation);
       setShouldUpdateMapView(true); // Allow map to center on manual recenter
+      setHasOptimizedMapOnce(false); // Allow re-optimization after manual recenter
       console.log('🎯 Map will recenter to current GPS location');
     }
   };
