@@ -128,7 +128,7 @@ const tourSlides: TourSlide[] = [
             boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
           }} />
         </div>
-        <span style={{ fontSize: '20px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
+        <span style={{ fontSize: '20px', color: '#333', fontWeight: 500, textAlign: 'center' }}>Choose to see pins from professionals or everyone.</span>
       </div>
     )
   },
