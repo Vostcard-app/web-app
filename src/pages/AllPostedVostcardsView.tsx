@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, limit, orderBy, startAfter } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaCameraRetro, FaVideo, FaMapPin } from 'react-icons/fa';
@@ -28,6 +28,12 @@ const AllPostedVostcardsView: React.FC = () => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  
+  // Pagination state
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const ITEMS_PER_PAGE = 5;
   
   // Type filtering state (Offers are never filtered out)
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -318,18 +324,20 @@ const AllPostedVostcardsView: React.FC = () => {
     const fetchAllPostedVostcards = async () => {
       setLoading(true);
       try {
-        console.log('🔄 Fetching all posted vostcards and quickcards...');
+        console.log('🔄 Fetching first', ITEMS_PER_PAGE, 'posted vostcards and quickcards...');
         
-        // Query 1: Regular posted vostcards
-        const q1 = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
+        // Query with pagination: Order by createdAt desc, limit to ITEMS_PER_PAGE
+        const q1 = query(
+          collection(db, 'vostcards'), 
+          where('state', '==', 'posted'),
+          orderBy('createdAt', 'desc'),
+          limit(ITEMS_PER_PAGE)
+        );
         const snapshot1 = await getDocs(q1);
         const postedVostcards = snapshot1.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Vostcard[];
-        
-        // Query 2: Posted quickcards (they have state: 'posted' AND isQuickcard: true)  
-        // Since we already got all posted items in query 1, we just need to include quickcards from that result
         
         // Combine and filter: Include regular vostcards + posted quickcards, exclude offers
         const allContent = postedVostcards.filter(v => 
@@ -348,6 +356,12 @@ const AllPostedVostcardsView: React.FC = () => {
         setVostcards(allContent);
         setLastUpdated(new Date());
         
+        // Set pagination state
+        if (snapshot1.docs.length > 0) {
+          setLastDoc(snapshot1.docs[snapshot1.docs.length - 1]);
+        }
+        setHasMore(snapshot1.docs.length === ITEMS_PER_PAGE);
+        
         // Load like and rating data for all content
         if (allContent.length > 0) {
           await loadData(allContent.map(v => v.id), allContent);
@@ -360,9 +374,60 @@ const AllPostedVostcardsView: React.FC = () => {
     };
 
     fetchAllPostedVostcards();
-  }, [loadData]);
+  }, [loadData, ITEMS_PER_PAGE]);
 
-
+  // Load more vostcards for pagination
+  const loadMoreVostcards = async () => {
+    if (!hasMore || loadingMore || !lastDoc) return;
+    
+    setLoadingMore(true);
+    try {
+      console.log('🔄 Loading next', ITEMS_PER_PAGE, 'vostcards...');
+      
+      // Query for next batch, starting after the last document
+      const q1 = query(
+        collection(db, 'vostcards'), 
+        where('state', '==', 'posted'),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastDoc),
+        limit(ITEMS_PER_PAGE)
+      );
+      const snapshot1 = await getDocs(q1);
+      const newVostcards = snapshot1.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Vostcard[];
+      
+      // Filter the new content
+      const newContent = newVostcards.filter(v => 
+        !v.isOffer && // Exclude offers
+        (
+          !v.isQuickcard || // Include regular vostcards
+          (v.isQuickcard && v.state === 'posted') // Include posted quickcards
+        )
+      );
+      
+      console.log('📋 Loaded', newContent.length, 'more vostcards');
+      
+      // Append to existing vostcards
+      setVostcards(prev => [...prev, ...newContent]);
+      
+      // Update pagination state
+      if (snapshot1.docs.length > 0) {
+        setLastDoc(snapshot1.docs[snapshot1.docs.length - 1]);
+      }
+      setHasMore(snapshot1.docs.length === ITEMS_PER_PAGE);
+      
+      // Load like and rating data for new content
+      if (newContent.length > 0) {
+        await loadData(newContent.map(v => v.id), newContent);
+      }
+    } catch (error) {
+      console.error('Error loading more vostcards:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Set up real-time listeners for like and rating updates
   useEffect(() => {
@@ -1111,6 +1176,51 @@ const AllPostedVostcardsView: React.FC = () => {
               )}
             </React.Fragment>
           ))
+        )}
+        
+        {/* Next 5 Button */}
+        {hasMore && !loading && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '20px',
+            marginBottom: '16px'
+          }}>
+            <button
+              onClick={loadMoreVostcards}
+              disabled={loadingMore}
+              style={{
+                background: loadingMore ? '#e0e0e0' : '#007AFF',
+                color: loadingMore ? '#999' : 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: '500',
+                cursor: loadingMore ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'background 0.2s'
+              }}
+            >
+              {loadingMore ? (
+                <>
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid #999',
+                    borderTop: '2px solid transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  Loading...
+                </>
+              ) : (
+                'Next 5'
+              )}
+            </button>
+          </div>
         )}
       </div>
 
