@@ -146,12 +146,7 @@ const tourSlides: TourSlide[] = [
         <FaWalking style={{ fontSize: '16px' }} />
         <span>Tours</span>
       </div>
-    ),
-    features: [
-      "Follow step-by-step guided tours",
-      "Rate and review your experiences",
-      "Discover hidden gems with local guides"
-    ]
+    )
   },
   {
     id: 6,
