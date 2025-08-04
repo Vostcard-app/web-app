@@ -70,12 +70,12 @@ const tourSlides: TourSlide[] = [
       {
         icon: (
           <img 
-            src={GuidePin} 
-            alt="Guide Pin" 
+            src={VostcardPin} 
+            alt="Vostcard Pin" 
             style={{ width: '128px', height: '128px', flexShrink: 0 }} 
           />
         ),
-        text: "Points of interest made by professionals"
+        text: "Points of interest made by users"
       },
       {
         icon: (
