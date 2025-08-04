@@ -375,6 +375,7 @@ export default function RegistrationPage() {
           display: 'flex',
           alignItems: 'center',
           marginBottom: 24,
+          paddingLeft: 10,
         }}>
           <input
             type="checkbox"
@@ -383,7 +384,7 @@ export default function RegistrationPage() {
             style={{ width: 28, height: 28, marginRight: 12 }}
             id="agree"
           />
-          <label htmlFor="agree" style={{ color: '#b0b0b0', fontSize: 20 }}>
+          <label htmlFor="agree" style={{ color: '#b0b0b0', fontSize: 16 }}>
             I have Read and Agree to the above
           </label>
         </div>
