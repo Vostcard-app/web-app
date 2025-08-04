@@ -326,11 +326,10 @@ const AllPostedVostcardsView: React.FC = () => {
       try {
         console.log('🔄 Fetching first', ITEMS_PER_PAGE, 'posted vostcards and quickcards...');
         
-        // Query with pagination: Order by createdAt desc, limit to ITEMS_PER_PAGE
+        // Query with pagination: limit to ITEMS_PER_PAGE (no orderBy to avoid composite index requirement)
         const q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
-          orderBy('createdAt', 'desc'),
           limit(ITEMS_PER_PAGE)
         );
         const snapshot1 = await getDocs(q1);
@@ -388,7 +387,6 @@ const AllPostedVostcardsView: React.FC = () => {
       const q1 = query(
         collection(db, 'vostcards'), 
         where('state', '==', 'posted'),
-        orderBy('createdAt', 'desc'),
         startAfter(lastDoc),
         limit(ITEMS_PER_PAGE)
       );
