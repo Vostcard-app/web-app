@@ -164,7 +164,11 @@ const tourSlides: TourSlide[] = [
     id: 5,
     title: "Filters",
     description: "Use filters to discover exactly what you're looking for. Filter by content type, user role, or categories to find the perfect experience.",
-    icon: <FaFilter size={48} color="#002B4D" />
+    icon: (
+      <div style={{ marginTop: '30px' }}>
+        <FaFilter size={48} color="#002B4D" />
+      </div>
+    )
   },
   {
     id: 6,
