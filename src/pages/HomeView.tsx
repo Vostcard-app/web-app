@@ -748,6 +748,36 @@ const HomeView = () => {
       return;
     }
     
+    // Safety check: If pins are too far apart, just center on user location at zoom 16
+    if (userLoc && validNonOfferPosts.length > 1) {
+      const maxDistanceKm = 50; // Maximum 50km radius for zoom 16 view
+      
+      const isTooDist = validNonOfferPosts.some(pin => {
+        const lat1 = userLoc[0];
+        const lon1 = userLoc[1];
+        const lat2 = pin.latitude;
+        const lon2 = pin.longitude;
+        
+        // Haversine formula for distance
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+        
+        return distance > maxDistanceKm;
+      });
+      
+      if (isTooDist) {
+        console.log('🚫 Pins too far apart for zoom 16 - centering on user location instead');
+        mapRef.current.setView(userLoc, 16);
+        return;
+      }
+    }
+    
     // Get all pin positions
     const pinPositions = validNonOfferPosts.map(p => [p.latitude, p.longitude] as [number, number]);
     
@@ -757,6 +787,17 @@ const HomeView = () => {
     try {
       const bounds = L.latLngBounds(allPositions);
       console.log('🗺️ Fitting map bounds to', allPositions.length, 'positions (pins + user)');
+      
+      // Calculate zoom that would result from fitting these bounds
+      const zoom = mapRef.current.getBoundsZoom(bounds, false);
+      
+      if (zoom < 16) {
+        console.log('🚫 Calculated zoom', zoom, 'is wider than 16 - using zoom 16 instead');
+        if (userLoc) {
+          mapRef.current.setView(userLoc, 16);
+        }
+        return;
+      }
       
       mapRef.current.fitBounds(bounds, {
         padding: [50, 50], // Extra padding to ensure everything is visible
