@@ -1,0 +1,25 @@
+{
+  "folders": [
+    {
+      "name": "🗺️ Vostcard",
+      "path": "./vostcard-web-app"
+    }
+  ],
+  "settings": {
+    "terminal.integrated.cwd": "./vostcard-web-app",
+    "git.defaultCloneDirectory": "./vostcard-web-app",
+    "workbench.colorTheme": "Default Dark+",
+    "window.title": "🗺️ VOSTCARD - ${dirty}${activeEditorShort}${separator}${rootName}",
+    "workbench.colorCustomizations": {
+      "titleBar.activeBackground": "#1e40af",
+      "titleBar.activeForeground": "#ffffff"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode"
+    ]
+  }
+}
