@@ -23,7 +23,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 1,
     title: "Welcome to Vōstcard!",
-    description: "Find free tours wherever you go. A location-based storytelling platform. Share experiences, discover places, and connect with others around you.",
+    description: "Free tours wherever you go!",
     icon: (
       <div style={{
         display: 'flex',
