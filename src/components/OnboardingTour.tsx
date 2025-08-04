@@ -98,18 +98,18 @@ const tourSlides: TourSlide[] = [
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '4px',
+        gap: '8px',
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        padding: '6px 8px',
-        borderRadius: '6px',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        padding: '12px 16px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         backdropFilter: 'blur(10px)',
         marginTop: '25px'
       }}>
         <div style={{
-          width: '36px',
-          height: '20px',
-          borderRadius: '10px',
+          width: '72px',
+          height: '40px',
+          borderRadius: '20px',
           background: '#002B4D',
           position: 'relative',
           cursor: 'pointer',
@@ -118,17 +118,17 @@ const tourSlides: TourSlide[] = [
           alignItems: 'center'
         }}>
           <div style={{
-            width: '16px',
-            height: '16px',
+            width: '32px',
+            height: '32px',
             borderRadius: '50%',
             background: 'white',
             position: 'absolute',
-            left: '2px',
+            left: '4px',
             transition: 'left 0.2s',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
           }} />
         </div>
-        <span style={{ fontSize: '10px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
+        <span style={{ fontSize: '20px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
       </div>
     )
   },
