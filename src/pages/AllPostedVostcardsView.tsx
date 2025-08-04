@@ -619,8 +619,9 @@ const AllPostedVostcardsView: React.FC = () => {
     // Apply Guide-only filtering
     if (showGuidesOnly) {
       filtered = filtered.filter(v => {
-        // Check if this is a Guide post (has isGuide flag or isGuidePost)
-        return v.isGuide === true || v.isGuidePost === true || v.type === 'Guide';
+        // Check if the post creator is a Guide user
+        const authorProfile = userProfiles[v.userID];
+        return authorProfile && authorProfile.userRole === 'guide';
       });
     }
 
