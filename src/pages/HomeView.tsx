@@ -320,7 +320,8 @@ const HomeView = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [mapBounds, setMapBounds] = useState<any>(null);
-  const MAX_POSTS = 20; // Never load more than 20 posts
+  const [hasLoadedBeyondZoom16, setHasLoadedBeyondZoom16] = useState(false);
+  const MAX_POSTS = 5; // Load up to 5 pins on the map
 
   // Debug showOnboarding state changes
   useEffect(() => {
@@ -632,7 +633,7 @@ const HomeView = () => {
       const isInitialLoad = !loadMore && !forceRefresh;
       let postsInZoom16Area = allContent;
       
-      if (isInitialLoad && actualUserLocation) {
+      if (isInitialLoad && actualUserLocation && !hasLoadedBeyondZoom16) {
         const bounds = calculateBoundsForZoom(actualUserLocation, 16);
         console.log('🎯 Filtering by zoom 16 area:', bounds);
         
@@ -648,28 +649,39 @@ const HomeView = () => {
                  lng <= bounds.east;
         });
         
+        // Separate offers from non-offer posts for counting
+        const offersInArea = postsInZoom16Area.filter(p => p.isOffer);
+        const nonOfferPostsInArea = postsInZoom16Area.filter(p => !p.isOffer);
+        
         console.log('📊 Zoom 16 filtering results:', {
           totalLoaded: allContent.length,
           inZoom16Area: postsInZoom16Area.length,
-          shouldUseZoom16Only: postsInZoom16Area.length < MAX_POSTS
+          nonOfferPostsInArea: nonOfferPostsInArea.length,
+          offersInArea: offersInArea.length
         });
         
-        // If fewer than MAX_POSTS in zoom 16 area, only use those
-        if (postsInZoom16Area.length < MAX_POSTS && postsInZoom16Area.length > 0) {
-          console.log('🎯 Perfect! Using only', postsInZoom16Area.length, 'posts from zoom 16 area');
-          allContent = postsInZoom16Area;
-        } else if (postsInZoom16Area.length === 0) {
-          console.log('📍 No posts in zoom 16 area, using all', allContent.length, 'loaded posts');
-          // Keep all loaded posts
+        // Only use posts within zoom 16 area - never wider than zoom 16 on initial load
+        if (nonOfferPostsInArea.length === 0) {
+          console.log('📍 No non-offer posts in zoom 16 area - loading no pins (as requested)');
+          allContent = offersInArea; // Only show offers if any
         } else {
-          console.log('📊 Zoom 16 area has', postsInZoom16Area.length, 'posts - showing all', allContent.length, 'loaded posts');
-          // Keep all loaded posts since zoom 16 area is dense
+          // Limit to 5 non-offer posts + all offers in the area
+          const limitedNonOfferPosts = nonOfferPostsInArea.slice(0, 5);
+          allContent = [...limitedNonOfferPosts, ...offersInArea];
+          console.log('🎯 Using', limitedNonOfferPosts.length, 'non-offer posts +', offersInArea.length, 'offers from zoom 16 area');
         }
+      } else if (hasLoadedBeyondZoom16 || (loadMore || forceRefresh)) {
+        // When user has zoomed out or loading more, show more pins but still limit non-offers to reasonable amount
+        const offers = allContent.filter(p => p.isOffer);
+        const nonOfferPosts = allContent.filter(p => !p.isOffer).slice(0, 20); // Allow more pins when zoomed out
+        allContent = [...nonOfferPosts, ...offers];
+        console.log('🔍 Wider area mode: Using', nonOfferPosts.length, 'non-offer posts +', offers.length, 'offers');
       }
       
-      console.log('📋 Final loaded vostcards and quickcards:', allContent.length, {
-        regular: allContent.filter(v => !v.isQuickcard).length,
-        quickcards: allContent.filter(v => v.isQuickcard).length,
+      console.log('📋 Final loaded content:', allContent.length, {
+        regular: allContent.filter(v => !v.isQuickcard && !v.isOffer).length,
+        quickcards: allContent.filter(v => v.isQuickcard && !v.isOffer).length,
+        offers: allContent.filter(v => v.isOffer).length,
         isLoadMore: loadMore,
         hasMore: snapshot1.docs.length === MAX_POSTS,
         wasZoom16Filtered: isInitialLoad && actualUserLocation
@@ -716,56 +728,80 @@ const HomeView = () => {
     await loadVostcards(false, true);
   }, [hasMore, loadingMore, loadVostcards]);
 
-  // Calculate optimal zoom level based on post density
-  const calculateOptimalZoom = useCallback((posts: any[], userLoc: [number, number] | null) => {
-    if (!userLoc || posts.length === 0) return 16; // Default zoom
+  // Calculate optimal zoom and fit bounds for up to 5 pins (excluding offers)
+  const fitMapToPins = useCallback((posts: any[], userLoc: [number, number] | null) => {
+    if (!mapRef.current) return;
     
-    // Calculate distances from user to all posts
-    const distances = posts
-      .filter(p => p.latitude && p.longitude)
-      .map(p => {
-        const lat1 = userLoc[0];
-        const lon1 = userLoc[1];
-        const lat2 = p.latitude;
-        const lon2 = p.longitude;
-        
-        // Haversine formula for distance calculation
-        const R = 6371; // Earth's radius in km
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c; // Distance in km
+    // Get non-offer posts with valid coordinates (limit to 5)
+    const validNonOfferPosts = posts
+      .filter(p => p.latitude && p.longitude && !p.isOffer)
+      .slice(0, 5); // Only use first 5 non-offer posts
+    
+    console.log('🗺️ Fitting map to', validNonOfferPosts.length, 'non-offer pins (max 5)');
+    
+    if (validNonOfferPosts.length === 0) {
+      // No pins found, set zoom to 16 and center on user location
+      if (userLoc) {
+        console.log('🗺️ No pins found, centering on user location at zoom 16');
+        mapRef.current.setView(userLoc, 16);
+      }
+      return;
+    }
+    
+    // Get all pin positions
+    const pinPositions = validNonOfferPosts.map(p => [p.latitude, p.longitude] as [number, number]);
+    
+    // Include user location if available
+    const allPositions = userLoc ? [...pinPositions, userLoc] : pinPositions;
+    
+    try {
+      const bounds = L.latLngBounds(allPositions);
+      console.log('🗺️ Fitting map bounds to', allPositions.length, 'positions (pins + user)');
+      
+      mapRef.current.fitBounds(bounds, {
+        padding: [50, 50], // Extra padding to ensure everything is visible
+        minZoom: 16 // Never zoom out wider than level 16
       });
-    
-    if (distances.length === 0) return 16;
-    
-    // Find the 90th percentile distance to encompass most posts
-    distances.sort((a, b) => a - b);
-    const percentile90 = distances[Math.floor(distances.length * 0.9)];
-    
-    // Map distance to zoom level (rough approximation)
-    if (percentile90 < 0.5) return 17;      // < 500m
-    else if (percentile90 < 1) return 16;   // < 1km  
-    else if (percentile90 < 2) return 15;   // < 2km
-    else if (percentile90 < 5) return 14;   // < 5km
-    else if (percentile90 < 10) return 13;  // < 10km
-    else if (percentile90 < 20) return 12;  // < 20km
-    else return 11; // > 20km
+    } catch (error) {
+      console.warn('🗺️ Error fitting map bounds:', error);
+      // Fallback to zoom 16 on user location
+      if (userLoc) {
+        mapRef.current.setView(userLoc, 16);
+      }
+    }
   }, []);
 
-  // Handle map bounds changes
+  // Handle map bounds changes and detect zoom out/in
   const handleMapBoundsChange = useCallback((bounds: any) => {
     setMapBounds(bounds);
+    
+    if (mapRef.current && actualUserLocation) {
+      const currentZoom = mapRef.current.getZoom();
+      
+      // If user has zoomed out beyond level 16, load more pins from wider area
+      if (currentZoom < 16 && !hasLoadedBeyondZoom16) {
+        console.log('🔍 User zoomed out to level', currentZoom, '- loading more pins from wider area');
+        setHasLoadedBeyondZoom16(true);
+        // Force reload with wider area (not just zoom 16)
+        loadVostcards(true);
+      }
+      // If user zooms back to 16 or closer, reset to zoom 16 mode
+      else if (currentZoom >= 16 && hasLoadedBeyondZoom16) {
+        console.log('🎯 User zoomed back to level', currentZoom, '- resetting to zoom 16 mode');
+        setHasLoadedBeyondZoom16(false);
+        // Reload with zoom 16 filtering
+        loadVostcards(true);
+      }
+    }
+    
     console.log('🗺️ Map bounds updated:', {
       north: bounds.getNorth(),
       south: bounds.getSouth(),
       east: bounds.getEast(),
-      west: bounds.getWest()
+      west: bounds.getWest(),
+      zoom: mapRef.current?.getZoom()
     });
-  }, []);
+  }, [actualUserLocation, hasLoadedBeyondZoom16, loadVostcards]);
 
   // Filter posts by current map bounds
   const filterPostsByBounds = useCallback((posts: any[], bounds: any) => {
@@ -784,25 +820,23 @@ const HomeView = () => {
     });
   }, []);
 
-  // Get visible posts (within map bounds)
+  // Get visible posts (within map bounds) - limit to 5 non-offer pins plus all offers
   const visiblePosts = useMemo(() => {
-    if (!mapBounds) return vostcards;
-    return filterPostsByBounds(vostcards, mapBounds);
+    const allPosts = !mapBounds ? vostcards : filterPostsByBounds(vostcards, mapBounds);
+    
+    // Separate offers from non-offer posts
+    const offers = allPosts.filter(p => p.isOffer);
+    const nonOfferPosts = allPosts.filter(p => !p.isOffer).slice(0, 5); // Limit to 5 non-offer posts
+    
+    // Return combined array: 5 non-offer posts + all offers
+    return [...nonOfferPosts, ...offers];
   }, [vostcards, mapBounds, filterPostsByBounds]);
 
-  // Optimize zoom when posts are loaded
-  const handleZoomOptimization = useCallback((posts: any[], userLoc: [number, number] | null) => {
-    if (!mapRef.current || posts.length === 0) return;
-    
-    const optimalZoom = calculateOptimalZoom(posts, userLoc);
-    const currentZoom = mapRef.current.getZoom();
-    
-    // Only adjust zoom if it's significantly different (avoid constant adjustments)
-    if (Math.abs(currentZoom - optimalZoom) > 1) {
-      console.log('🎯 Optimizing zoom from', currentZoom, 'to', optimalZoom, 'for', posts.length, 'posts');
-      mapRef.current.setZoom(optimalZoom);
-    }
-  }, [calculateOptimalZoom]);
+  // Optimize map view to fit pins when posts are loaded
+  const handleMapOptimization = useCallback((posts: any[], userLoc: [number, number] | null) => {
+    // Use the new fitMapToPins function instead of zoom optimization
+    fitMapToPins(posts, userLoc);
+  }, [fitMapToPins]);
 
   // Load user avatar
   useEffect(() => {
@@ -839,12 +873,12 @@ const HomeView = () => {
     }
   }, [loading, hasInitialLoad, tourData]); // Removed loadVostcards to prevent infinite loop
 
-  // Optimize zoom when posts are loaded and user location is available
+  // Optimize map view when posts are loaded and user location is available
   useEffect(() => {
     if (vostcards.length > 0 && actualUserLocation && hasInitialLoad) {
-      handleZoomOptimization(vostcards, actualUserLocation);
+      handleMapOptimization(vostcards, actualUserLocation);
     }
-  }, [vostcards.length, actualUserLocation, hasInitialLoad, handleZoomOptimization]);
+  }, [vostcards.length, actualUserLocation, hasInitialLoad, handleMapOptimization]);
 
   // Handle fresh load after posting
   useEffect(() => {
@@ -1915,7 +1949,7 @@ const HomeView = () => {
               />
               <MapBoundsListener
                 onBoundsChange={handleMapBoundsChange}
-                onZoomOptimization={handleZoomOptimization}
+                onZoomOptimization={handleMapOptimization}
               />
               <ZoomControls />
             </MapContainer>
