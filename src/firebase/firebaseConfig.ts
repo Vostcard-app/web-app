@@ -4,14 +4,16 @@ import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCcSAlfYfh9KrbN3NbI2CTyGY1wqZJ4Mxg",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "vostcard-app.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "vostcard-app",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "vostcard-app.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "YOUR_MESSAGING_SENDER_ID",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "YOUR_APP_ID"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDNbo5KseD17nVAGw2jvGykVbelgJoIpFo",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "vostcard-a3b71.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "vostcard-a3b71",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "vostcard-a3b71.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "897191018962",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:897191018962:web:f989f240aa68cd7099080b",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-G6BVKFH8BE"
 };
 
 console.log('🔥 Initializing Firebase with config:', {
@@ -25,11 +27,13 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const analytics = getAnalytics(app);
 
 console.log('✅ Firebase services initialized:', {
   auth: !!auth,
   db: !!db,
-  storage: !!storage
+  storage: !!storage,
+  analytics: !!analytics
 });
 
 // Test Firebase connectivity
