@@ -903,11 +903,7 @@ Tap OK to continue.`;
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 9px 16px',
-        position: 'fixed', 
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
+        position: 'relative', 
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -998,7 +994,7 @@ Tap OK to continue.`;
         display: 'flex', 
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: '60px', // Minimal spacing to clear fixed header
+        marginTop: '0px', // Header is now inline with content
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div 
