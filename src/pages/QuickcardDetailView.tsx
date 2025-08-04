@@ -616,16 +616,33 @@ Tap OK to continue.`;
 
   // Load user's existing itineraries
   const loadUserItineraries = async () => {
-    if (!user) return;
+    if (!user) {
+      alert('Please log in to use itineraries');
+      return;
+    }
     
     try {
       setLoadingItineraries(true);
+      console.log('📋 Loading user itineraries...');
       const itineraries = await ItineraryService.getUserItineraries();
       setExistingItineraries(itineraries);
       console.log(`✅ Loaded ${itineraries.length} user itineraries`);
     } catch (error) {
       console.error('❌ Error loading itineraries:', error);
-      alert('Failed to load itineraries. Please try again.');
+      
+      let errorMessage = 'Failed to load itineraries. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('Permission denied')) {
+          errorMessage = 'Permission denied. Please log out and log back in.';
+        } else if (error.message.includes('Database configuration')) {
+          errorMessage = 'Service temporarily unavailable. Please try again in a few minutes.';
+        } else if (error.message.includes('not authenticated')) {
+          errorMessage = 'Please log in to use itineraries.';
+        }
+      }
+      
+      alert(errorMessage);
+      setShowItineraryModal(false);
     } finally {
       setLoadingItineraries(false);
     }

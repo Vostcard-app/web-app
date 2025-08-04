@@ -125,25 +125,50 @@ export const ItineraryService = {
         throw new Error('User not authenticated');
       }
 
+      console.log('📋 Fetching itineraries for user:', user.uid);
+
+      // Simplified query without orderBy to avoid composite index requirement
       const q = query(
         collection(db, 'itineraries'),
-        where('userID', '==', user.uid),
-        orderBy('updatedAt', 'desc')
+        where('userID', '==', user.uid)
       );
 
       const snapshot = await getDocs(q);
+      console.log(`📋 Found ${snapshot.docs.length} itinerary documents`);
+      
       const itineraries: Itinerary[] = [];
 
       for (const docSnap of snapshot.docs) {
-        const itineraryData = docSnap.data() as ItineraryFirebaseDoc;
-        const items = await ItineraryService.getItineraryItems(docSnap.id);
-        itineraries.push(convertFirebaseToItinerary(itineraryData, items));
+        try {
+          const itineraryData = docSnap.data() as ItineraryFirebaseDoc;
+          console.log('📋 Processing itinerary:', itineraryData.name);
+          
+          const items = await ItineraryService.getItineraryItems(docSnap.id);
+          itineraries.push(convertFirebaseToItinerary(itineraryData, items));
+        } catch (itemError) {
+          console.warn('⚠️ Error loading itinerary items for:', docSnap.id, itemError);
+          // Continue loading other itineraries even if one fails
+        }
       }
+
+      // Sort by updatedAt on the client side
+      itineraries.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
       console.log(`✅ Loaded ${itineraries.length} itineraries for user`);
       return itineraries;
     } catch (error) {
       console.error('❌ Error getting user itineraries:', error);
+      
+      // Check if it's a permissions error
+      if (error instanceof Error) {
+        if (error.message.includes('permission') || error.message.includes('PERMISSION_DENIED')) {
+          throw new Error('Permission denied. Please check your login status.');
+        }
+        if (error.message.includes('index') || error.message.includes('requires an index')) {
+          throw new Error('Database configuration issue. Please try again.');
+        }
+      }
+      
       throw error;
     }
   },
