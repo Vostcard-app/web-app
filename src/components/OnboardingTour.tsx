@@ -365,7 +365,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
             {/* Description */}
             <p style={{
               margin: '0 0 24px 0',
-              fontSize: '16px',
+              fontSize: '28px',
               lineHeight: '1.5',
               color: '#555',
               textAlign: 'center'
