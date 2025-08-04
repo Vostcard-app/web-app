@@ -39,6 +39,7 @@ const AllPostedVostcardsView: React.FC = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const availableTypes = ['Vostcard', 'Quickcard', 'Guide'];
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [showGuidesOnly, setShowGuidesOnly] = useState(false);
   
   // Category filtering state (same as HomeView)
   const availableCategories = [
@@ -605,6 +606,14 @@ const AllPostedVostcardsView: React.FC = () => {
         return distance <= 50; // 50km radius
       });
     }
+    
+    // Apply Guide-only filtering
+    if (showGuidesOnly) {
+      filtered = filtered.filter(v => {
+        // Check if this is a Guide post (has isGuide flag or isGuidePost)
+        return v.isGuide === true || v.isGuidePost === true || v.type === 'Guide';
+      });
+    }
 
     return filtered;
   };
@@ -683,8 +692,45 @@ const AllPostedVostcardsView: React.FC = () => {
         zIndex: 9,
         marginTop: '80px', // Account for fixed header
       }}>
-        <div style={{ fontSize: 24, fontWeight: 500, marginBottom: 4 }}>
-          {browseLocation ? `Vōstcards near ${browseLocation.name}` : 'Local Vōstcards'}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          marginBottom: 4 
+        }}>
+          <div style={{ fontSize: 24, fontWeight: 500 }}>
+            {browseLocation ? `Vōstcards near ${browseLocation.name}` : 'Local Vōstcards'}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: 14, color: '#666' }}>📚 Guides Only</span>
+            <div
+              onClick={() => setShowGuidesOnly(!showGuidesOnly)}
+              style={{
+                width: '44px',
+                height: '24px',
+                borderRadius: '12px',
+                background: showGuidesOnly ? '#007AFF' : '#e0e0e0',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  position: 'absolute',
+                  left: showGuidesOnly ? '22px' : '2px',
+                  transition: 'left 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }}
+              />
+            </div>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
           <span style={{ fontWeight: 600 }}>
