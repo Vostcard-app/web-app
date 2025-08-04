@@ -16,6 +16,7 @@ const inputStyle = {
   background: '#f8f8f8',
   color: '#222',
   boxSizing: 'border-box' as const,
+  textAlign: 'center' as const,
 };
 
 const linkStyle = {
