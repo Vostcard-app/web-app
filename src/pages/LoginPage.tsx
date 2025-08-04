@@ -336,7 +336,7 @@ export default function LoginPage() {
             maxWidth: 400,
             fontSize: 18,
             padding: '16px 20px',
-            borderRadius: 25,
+            borderRadius: 8,
             border: '1px solid #ddd',
             marginBottom: 20,
             backgroundColor: 'white',
@@ -366,7 +366,7 @@ export default function LoginPage() {
               width: '100%',
               fontSize: 18,
               padding: '16px 20px',
-              borderRadius: 25,
+              borderRadius: 8,
               border: '1px solid #ddd',
               backgroundColor: 'white',
               outline: 'none',
@@ -425,22 +425,12 @@ export default function LoginPage() {
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
             boxShadow: '0 4px 12px rgba(7, 52, 92, 0.3)',
-            marginBottom: 40,
+            marginBottom: 20,
             opacity: loading ? 0.7 : 1
           }}
         >
           {loading ? 'Logging in...' : 'Log In'}
         </button>
-
-        {/* Register Section */}
-        <p style={{
-          color: '#999',
-          fontSize: 16,
-          marginBottom: 20,
-          textAlign: 'center'
-        }}>
-          If you don't have an account tap here
-        </p>
 
         {/* Register Button */}
         <button

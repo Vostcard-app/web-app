@@ -705,7 +705,7 @@ const PublicQuickcardView: React.FC = () => {
 
         {/* Login/Register Button */}
         <button
-          onClick={() => navigate('/user-guide')}
+          onClick={() => navigate('/login')}
           style={{
             backgroundColor: '#007aff',
             color: 'white',
