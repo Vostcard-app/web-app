@@ -103,7 +103,8 @@ const tourSlides: TourSlide[] = [
         padding: '6px 8px',
         borderRadius: '6px',
         boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-        backdropFilter: 'blur(10px)'
+        backdropFilter: 'blur(10px)',
+        marginTop: '25px'
       }}>
         <div style={{
           width: '36px',
