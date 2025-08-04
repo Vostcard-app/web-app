@@ -269,7 +269,8 @@ export default function LoginPage() {
             cursor: 'pointer',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center'
+            alignItems: 'center',
+            paddingRight: '20px'
           }}
         >
           <img 
