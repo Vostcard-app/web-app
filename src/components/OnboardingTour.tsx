@@ -361,7 +361,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
             style={{
-              padding: '32px 24px',
+              padding: '6px 24px 32px 24px',
               textAlign: 'center',
               minHeight: '300px',
               display: 'flex',
