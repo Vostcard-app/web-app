@@ -7,7 +7,7 @@ import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDNbo5KseD17nVAGw2jvGykVbelgJoIpFo",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDARNPatKmx6vy633h9FkAwdPo2NIZT5UM",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "vostcard-a3b71.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "vostcard-a3b71",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "vostcard-a3b71.firebasestorage.app",
