@@ -114,12 +114,7 @@ const tourSlides: TourSlide[] = [
         <span style={{ fontSize: '28px', lineHeight: '1' }}>❓</span>
         <span>Help</span>
       </div>
-    ),
-    features: [
-      "Access Quick Start Tour anytime",
-      "Find tutorial videos", 
-      "Get helpful tips and guides"
-    ]
+    )
   },
   {
     id: 4,
