@@ -1247,8 +1247,7 @@ const HomeView = () => {
             <button
               onClick={() => {
                 setIsMenuOpen(false);
-                // TODO: Wire up itineraries functionality
-                alert('Itineraries feature coming soon!');
+                navigate('/itineraries');
               }}
               style={menuItemStyle}
             >

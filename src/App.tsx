@@ -43,6 +43,7 @@ import FriendListView from "./pages/FriendListView";
 import VostboxView from "./pages/VostboxView";
 import QuickcardListView from "./pages/QuickcardListView";
 import QuickcardDetailView from "./pages/QuickcardDetailView";
+import ItinerariesListView from "./pages/ItinerariesListView";
 import ScriptLibraryView from "./pages/ScriptLibraryView";
 import ScriptEditorView from "./pages/ScriptEditorView";
 import ScriptToolView from "./pages/ScriptToolView";
@@ -115,6 +116,9 @@ function App() {
                   {/* 📱 Quickcard Routes */}
                   <Route path="/quickcards" element={<QuickcardListView />} />
                   <Route path="/quickcard/:id" element={<QuickcardDetailView />} />
+
+                  {/* 📋 Itinerary Routes */}
+                  <Route path="/itineraries" element={<ItinerariesListView />} />
 
                   {/* 📜 Script Management */}
                   <Route path="/script-library" element={<ScriptLibraryView />} />
