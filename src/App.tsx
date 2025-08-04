@@ -44,6 +44,7 @@ import VostboxView from "./pages/VostboxView";
 import QuickcardListView from "./pages/QuickcardListView";
 import QuickcardDetailView from "./pages/QuickcardDetailView";
 import ItinerariesListView from "./pages/ItinerariesListView";
+import ItineraryDetailView from "./pages/ItineraryDetailView";
 import ScriptLibraryView from "./pages/ScriptLibraryView";
 import ScriptEditorView from "./pages/ScriptEditorView";
 import ScriptToolView from "./pages/ScriptToolView";
@@ -119,6 +120,7 @@ function App() {
 
                   {/* 📋 Itinerary Routes */}
                   <Route path="/itineraries" element={<ItinerariesListView />} />
+                  <Route path="/itinerary/:id" element={<ItineraryDetailView />} />
 
                   {/* 📜 Script Management */}
                   <Route path="/script-library" element={<ScriptLibraryView />} />
