@@ -6,13 +6,12 @@ import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDNbo5KseD17nVAGw2jvGykVbelgJoIpFo",
-  authDomain: "vostcard-a3b71.firebaseapp.com",
-  projectId: "vostcard-a3b71",
-  storageBucket: "vostcard-a3b71.firebasestorage.app",  // ✅ Fixed this line
-  messagingSenderId: "897191018962",
-  appId: "1:897191018962:web:f989f240aa68cd7099080b",
-  measurementId: "G-G6BVKFH8BE"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBFnR-0QZ6lIzgXfwEEXSt6lp6fKZt4fNc",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "bnb-keeper-baced.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "bnb-keeper-baced",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "bnb-keeper-baced.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "268443900050",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:268443900050:web:703857a981493eb6796e4b"
 };
 
 console.log('🔥 Initializing Firebase with config:', {
@@ -35,7 +34,7 @@ console.log('✅ Firebase services initialized:', {
 
 // Test Firebase connectivity
 console.log('🌐 Testing Firebase connectivity...');
-fetch('https://firebase.googleapis.com/v1/projects/vostcard-a3b71')
+fetch(`https://firebase.googleapis.com/v1/projects/${firebaseConfig.projectId}`)
   .then(response => {
     console.log('✅ Firebase API is reachable:', response.status);
   })

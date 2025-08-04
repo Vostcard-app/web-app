@@ -636,7 +636,7 @@ const PublicQuickcardView: React.FC = () => {
             color: 'white',
             textAlign: 'center'
           }}>
-            User Guide
+            What's Vōstcard
           </span>
         </div>
       </div>
@@ -1390,7 +1390,7 @@ const PublicQuickcardView: React.FC = () => {
               <button
                 onClick={() => {
                   setShowLoginModal(false);
-                  navigate('/user-guide');
+                  navigate('/login');
                 }}
                 style={{
                   backgroundColor: '#007aff',

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaEdit, FaMapPin, FaEye, FaShare, FaTrash } from 'react-icons/fa';
+import { FaHome, FaEdit, FaMapPin, FaEye, FaEnvelope, FaTrash } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, updateDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +15,6 @@ const MyPostedVostcardsListView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
   console.log('🔄 MyPostedVostcardsListView rendered', {
     authLoading,
@@ -24,16 +23,6 @@ const MyPostedVostcardsListView = () => {
     error,
     postedVostcardsCount: postedVostcards.length
   });
-
-  // Handle window resize for responsive design
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth > 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     console.log('🔄 Auth state changed:', { authLoading, user: !!user });
@@ -212,68 +201,40 @@ const MyPostedVostcardsListView = () => {
   };
 
   const handleView = (vostcardId: string) => {
-    const sortedVostcards = [...postedVostcards].sort((a, b) => {
-      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-      return dateB.getTime() - dateA.getTime();
-    });
-    const currentIndex = sortedVostcards.findIndex(vc => vc.id === vostcardId);
-    
-    navigate(`/vostcard/${vostcardId}`, {
-      state: {
-        vostcardList: sortedVostcards.map(vc => vc.id),
-        currentIndex: currentIndex
-      }
-    });
+    navigate(`/vostcard/${vostcardId}`);
   };
 
-  const handleShare = async (e: React.MouseEvent, vostcard: any) => {
+  const handleEmail = (e: React.MouseEvent, vostcard: any) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // NO WARNING for posted vostcards - they're already public
-    try {
-      // Update the vostcard to mark it as privately shared
-      if (vostcard?.id) {
-        const vostcardRef = doc(db, 'vostcards', vostcard.id);
-        await updateDoc(vostcardRef, {
-          isPrivatelyShared: true,
-          sharedAt: new Date()
-        });
+    // Get user's first name
+    const getUserFirstName = () => {
+      if (username) {
+        return username.split(' ')[0];
+      } else if (user?.displayName) {
+        return user.displayName.split(' ')[0];
+      } else if (user?.email) {
+        return user.email.split('@')[0];
       }
-      
-      // Generate the correct share URL based on content type
-      const privateUrl = vostcard.isQuickcard 
-        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
-        : `${window.location.origin}/share/${vostcard.id}`;
-      
-      // Generate share text
-      const itemType = vostcard.isQuickcard ? 'Quickcard' : 'Vostcard';
-      const shareText = `Check it out I made this with Vōstcard
+      return 'Anonymous';
+    };
+    
+    const subject = encodeURIComponent(`Check out my Vōstcard: "${vostcard.title}"`);
+    
+    const body = encodeURIComponent(`Hi,
 
+I made this with an app called Vōstcard
 
-"${vostcard.title || `Untitled ${itemType}`}"
+View it here: ${window.location.origin}/email/${vostcard.id}
 
+${vostcard.description || 'Description'}
 
-"${vostcard.description || 'No description'}"
+Cheers!
 
-
-${privateUrl}`;
-      
-      // Use native sharing if available, otherwise clipboard
-      if (navigator.share) {
-        navigator.share({ text: shareText }).catch(console.error);
-      } else {
-        navigator.clipboard.writeText(shareText).then(() => {
-          alert('Share link copied to clipboard!');
-        }).catch(() => {
-          alert(`Share this message: ${shareText}`);
-        });
-      }
-    } catch (error) {
-      console.error(`Error sharing ${itemType}:`, error);
-      alert(`Failed to share ${itemType}. Please try again.`);
-    }
+${getUserFirstName()}`);
+    
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   const handleUnpost = async (e: React.MouseEvent, vostcardId: string) => {
@@ -374,56 +335,29 @@ ${privateUrl}`;
   });
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: isDesktop ? '#f0f0f0' : '#f5f5f5',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      padding: isDesktop ? '20px' : '0'
-    }}>
-      {/* Mobile-style container with responsive design */}
+    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
+      {/* 🔵 Header with Home Icon */}
       <div style={{
-        width: isDesktop ? '390px' : '100%',
-        maxWidth: '390px',
-        height: isDesktop ? '844px' : '100vh',
-        backgroundColor: '#f5f5f5',
-        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
-        borderRadius: isDesktop ? '16px' : '0',
+        backgroundColor: '#07345c',
+        height: '30px',
         display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        transition: 'all 0.3s ease'
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingLeft: '16px',
+        color: 'white',
+        position: 'relative',
+        padding: '15px 0 24px 20px'
       }}>
-        {/* 🔵 Header with Home Icon */}
-        <div style={{
-          backgroundColor: '#07345c',
-          height: '30px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingLeft: '16px',
-          color: 'white',
-          position: 'relative',
-          padding: '15px 0 24px 20px',
-          borderRadius: isDesktop ? '16px 16px 0 0' : '0',
-          flexShrink: 0
-        }}>
-        <h1 
-          onClick={() => navigate('/home')}
-          style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
-        >
-          My Posts
-        </h1>
+        <h1 style={{ fontSize: '30px', margin: 0 }}>Posted Vōstcards</h1>
+        
         
         {/* Home Button */}
         <FaHome
-          size={40}
+          size={48}
           style={{
             cursor: 'pointer',
             position: 'absolute',
-            right: 29,
+            right: 44,
             top: 15,
             background: 'rgba(0,0,0,0.10)',
             border: 'none',
@@ -438,14 +372,14 @@ ${privateUrl}`;
         />
       </div>
 
-        {/* 📋 List of Vostcards */}
-        <div style={{ 
-          padding: '20px', 
-          flex: 1,
-          overflowY: 'auto',
-          overscrollBehavior: 'none',
-          WebkitOverflowScrolling: 'auto'
-        }}>
+      {/* 📋 List of Vostcards */}
+      <div style={{ 
+        padding: '20px', 
+        height: 'calc(100vh - 120px)', 
+        overflowY: 'auto',
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto'
+      }}>
         {/* Error State */}
         {error && (
           <div style={{
@@ -539,7 +473,7 @@ ${privateUrl}`;
               fontSize: '14px',
               color: '#495057'
             }}>
-              {postedVostcards.length} Post{postedVostcards.length !== 1 ? 's' : ''} on the Map
+              {postedVostcards.length} Posted Vōstcard{postedVostcards.length !== 1 ? 's' : ''} on the Map
             </div>
 
             {/* Vostcard List */}
@@ -563,32 +497,17 @@ ${privateUrl}`;
                     opacity: unpostingIds.has(vostcard.id) ? 0.5 : 1
                   }}
                 >
-                  {/* Title with Type Indicator */}
+                  {/* Title */}
                   <div style={{
-                    marginBottom: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
+                    marginBottom: '12px'
                   }}>
                     <h3 style={{ 
-                      margin: 0, 
+                      margin: '0 0 4px 0', 
                       color: '#002B4D',
                       fontSize: '18px'
                     }}>
-                      {vostcard.title || 'Untitled'}
+                      {vostcard.title || 'Untitled Vōstcard'}
                     </h3>
-                    {/* Type Badge */}
-                    <span style={{
-                      backgroundColor: vostcard.isQuickcard ? '#ff9800' : '#2196f3',
-                      color: 'white',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      textTransform: 'uppercase'
-                    }}>
-                      {vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}
-                    </span>
                   </div>
 
                   {/* Description */}
@@ -701,7 +620,7 @@ ${privateUrl}`;
                       <FaEye size={20} color="#6c757d" />
                     </div>
 
-                    {/* Share Icon */}
+                    {/* Email Icon */}
                     <div
                       style={{
                         cursor: 'pointer',
@@ -714,13 +633,13 @@ ${privateUrl}`;
                         backgroundColor: '#f8f9fa',
                         border: '1px solid #dee2e6'
                       }}
-                      onClick={(e) => handleShare(e, vostcard)}
+                      onClick={(e) => handleEmail(e, vostcard)}
                       onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
                       onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
                       onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      title="Share Vostcard"
+                      title="Email Vostcard"
                     >
-                      <FaShare size={20} color="#007bff" />
+                      <FaEnvelope size={20} color="#007bff" />
                     </div>
 
                     {/* Delete Icon */}
@@ -788,7 +707,6 @@ ${privateUrl}`;
             </div>
           </div>
         )}
-      </div>
       </div>
     </div>
   );
