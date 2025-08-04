@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/aut
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
 import { useResponsive } from "../hooks/useResponsive";
+import RoundInfoButton from '../assets/RoundInfo_Button.png';
 
 export default function LoginPage() {
   const { isDesktop } = useResponsive();
@@ -244,6 +245,7 @@ export default function LoginPage() {
         padding: '20px',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
         borderTopLeftRadius: isDesktop ? 16 : 0,
         borderTopRightRadius: isDesktop ? 16 : 0,
@@ -259,6 +261,35 @@ export default function LoginPage() {
         }}>
           Vōstcard
         </span>
+        
+        {/* What's Vōstcard Button */}
+        <div
+          onClick={() => navigate('/user-guide')}
+          style={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <img 
+            src={RoundInfoButton} 
+            alt="Round Info Button" 
+            style={{
+              width: '40px',
+              height: '40px',
+              marginBottom: '2px'
+            }}
+          />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: '500',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            What's Vōstcard
+          </span>
+        </div>
       </div>
 
       {/* Content */}
