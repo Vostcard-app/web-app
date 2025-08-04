@@ -394,7 +394,7 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
             {/* Title */}
             <h2 style={{
               margin: '0 0 16px 0',
-              fontSize: '24px',
+              fontSize: '28px',
               fontWeight: '700',
               color: '#002B4D',
               lineHeight: '1.2',
