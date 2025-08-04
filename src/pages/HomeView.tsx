@@ -2224,7 +2224,7 @@ const HomeView = () => {
                 width: '36px',
                 height: '20px',
                 borderRadius: '10px',
-                background: showGuidesOnly ? '#007AFF' : '#e0e0e0',
+                background: showGuidesOnly ? '#002B4D' : '#e0e0e0',
                 position: 'relative',
                 cursor: 'pointer',
                 transition: 'background 0.2s',
