@@ -76,6 +76,16 @@ const tourSlides: TourSlide[] = [
           />
         ),
         text: "Points of interest made by professionals"
+      },
+      {
+        icon: (
+          <img 
+            src={GuidePin} 
+            alt="Guide Pin" 
+            style={{ width: '128px', height: '128px', flexShrink: 0 }} 
+          />
+        ),
+        text: "Points of interest made by professionals"
       }
     ]
   },
