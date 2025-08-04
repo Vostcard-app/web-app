@@ -2339,12 +2339,15 @@ const HomeView = () => {
                   fontSize: '14px',
                   textAlign: 'left',
                   color: '#333',
-                  transition: 'background-color 0.2s ease'
+                  transition: 'background-color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                🔍 Filters
+                <FaFilter style={{ marginRight: '8px' }} />
+                Filters
               </button>
               
 
