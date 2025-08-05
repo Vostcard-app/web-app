@@ -142,15 +142,15 @@ const QuickcardStep3: React.FC = () => {
       setSelectedTripId(newTrip.id);
       setNewTripName('');
       
-      // ✅ Close modal and navigate back to step 2
+      // ✅ Close modal and add quickcard to the new trip
       setIsTripModalOpen(false);
       
-      // ✅ Small delay for smooth transition, then add to trip
+      // ✅ Small delay for smooth transition
       setTimeout(() => {
-        alert(`✅ Trip "${newTrip.name}" created!\n\nAdding quickcard and returning to save options...`);
+        alert(`✅ Trip "${newTrip.name}" created!\n\nAdding quickcard to your new trip...`);
         
-        console.log('🔄 Adding quickcard to new trip and navigating back...');
-        // This will handle the background saving and navigation
+        console.log('🔄 Adding quickcard to new trip...');
+        // This will handle the background saving - no navigation
         handleAddQuickcardToTripOptimized(newTrip.id);
       }, 100);
       
@@ -162,25 +162,17 @@ const QuickcardStep3: React.FC = () => {
     }
   };
 
-  // ✅ Optimized version with immediate feedback and return to step 2
+  // ✅ Add quickcard to trip and stay on current page
   const handleAddQuickcardToTripOptimized = async (tripId: string) => {
     if (!tripId || !currentVostcard) return;
     
     try {
-      // ✅ Close modal first
+      // ✅ Close modal and show success immediately
       setIsTripModalOpen(false);
       setSelectedTripId('');
       
-      // ✅ Small delay to ensure modal closes smoothly
-      setTimeout(() => {
-        // ✅ Show success message and navigate
-        const tripName = userTrips.find(t => t.id === tripId)?.name || 'your trip';
-        alert(`✅ Quickcard added to "${tripName}"!\n\nReturning to save options...`);
-        
-        // ✅ Navigate to step 2 for save options
-        console.log('🔄 Navigating back to quickcard step 2...');
-        navigate('/quickcard-step2');
-      }, 100);
+      const tripName = userTrips.find(t => t.id === tripId)?.name || 'your trip';
+      alert(`✅ Quickcard added to "${tripName}"!\n\nYou can now save or post your quickcard.`);
       
       // 🔄 Background processing - save quickcard and add to trip
       console.log('🔄 Background: Saving quickcard and adding to trip...');
@@ -210,11 +202,7 @@ const QuickcardStep3: React.FC = () => {
       
     } catch (error) {
       console.error('Background error adding quickcard to trip:', error);
-      // Show error but still navigate back
-      setTimeout(() => {
-        alert('⚠️ There was an issue adding to the trip, but you can still save your quickcard.');
-        navigate('/quickcard-step2');
-      }, 100);
+      alert('⚠️ There was an issue adding to the trip. Please try again.');
     }
   };
 
@@ -620,7 +608,7 @@ const QuickcardStep3: React.FC = () => {
                   cursor: isCreatingTrip ? 'not-allowed' : 'pointer',
                 }}
               >
-                {isCreatingTrip ? 'Creating Trip...' : 'Create Trip & Return to Save'}
+                {isCreatingTrip ? 'Creating Trip...' : 'Create New Trip'}
               </button>
             </div>
 
@@ -654,7 +642,7 @@ const QuickcardStep3: React.FC = () => {
                   cursor: (isAddingToTrip || !selectedTripId) ? 'not-allowed' : 'pointer',
                 }}
               >
-                {isAddingToTrip ? 'Adding to Trip...' : 'Add to Trip & Return to Save'}
+                {isAddingToTrip ? 'Adding to Trip...' : 'Add to Trip'}
               </button>
             </div>
           </div>
