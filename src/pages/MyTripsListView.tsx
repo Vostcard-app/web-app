@@ -107,16 +107,36 @@ const MyTripsListView = () => {
     }
   };
 
-  const handleShareTrip = (trip: Trip) => {
-    if (trip.shareableLink) {
-      const shareUrl = `${window.location.origin}/trip/${trip.shareableLink}`;
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('Share link copied to clipboard!');
-      }).catch(() => {
-        alert(`Share link: ${shareUrl}`);
-      });
-    } else {
-      alert('This trip is private and cannot be shared.');
+  const handleShareTrip = async (trip: Trip) => {
+    try {
+      let updatedTrip = trip;
+      
+      // If trip is private, make it public first
+      if (trip.isPrivate) {
+        updatedTrip = await TripService.updateTrip(trip.id, {
+          isPrivate: false
+        });
+        
+        // Update the trips list with the updated trip
+        setTrips(prev => prev.map(t => t.id === trip.id ? updatedTrip : t));
+      }
+      
+      // Generate share URL
+      const shareUrl = updatedTrip.shareableLink 
+        ? `${window.location.origin}/trip/${updatedTrip.shareableLink}`
+        : `${window.location.origin}/trip/${updatedTrip.id}`;
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      alert('✅ Share link copied to clipboard!\n\nAnyone with this link can view your trip.');
+      
+    } catch (error) {
+      console.error('Error sharing trip:', error);
+      // Fallback for browsers that don't support clipboard API
+      const shareUrl = trip.shareableLink 
+        ? `${window.location.origin}/trip/${trip.shareableLink}`
+        : `${window.location.origin}/trip/${trip.id}`;
+      alert(`Share this link:\n\n${shareUrl}`);
     }
   };
 
@@ -439,26 +459,25 @@ const MyTripsListView = () => {
                     View
                   </button>
                   
-                  {!trip.isPrivate && (
-                    <button
-                      onClick={() => handleShareTrip(trip)}
-                      style={{
-                        backgroundColor: '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: '8px 12px',
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      <FaShare size={12} />
-                      Share
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleShareTrip(trip)}
+                    style={{
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    title={trip.isPrivate ? 'Make public and share' : 'Share trip'}
+                  >
+                    <FaShare size={12} />
+                    Share
+                  </button>
                   
                   <button
                     onClick={() => handleDeleteTrip(trip)}
