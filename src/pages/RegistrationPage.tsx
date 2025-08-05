@@ -179,6 +179,7 @@ export default function RegistrationPage() {
         borderRadius: isDesktop ? '16px' : '0',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center',
         overflowY: 'auto',
         overflowX: 'hidden',
         transition: 'all 0.3s ease'
@@ -289,6 +290,8 @@ export default function RegistrationPage() {
           marginBottom: 40,
           display: 'flex',
           flexDirection: 'column',
+          alignSelf: 'center',
+          alignItems: 'center',
         }}
         onSubmit={handleRegister}
       >
@@ -338,7 +341,7 @@ export default function RegistrationPage() {
             value={password}
             onChange={e => setPassword(e.target.value)}
             className="centered-input"
-            style={{ marginBottom: 0 }}
+            style={{ marginBottom: 0, textAlign: 'center' }}
           />
           <button
             type="button"
@@ -398,7 +401,7 @@ export default function RegistrationPage() {
             letterSpacing: '0.01em',
           }}
         >
-          {loading ? "Registering..." : "Register"}
+          {loading ? "Registering..." : (formType === "advertiser" ? "Apply" : "Register")}
         </button>
       </form>
       </div>

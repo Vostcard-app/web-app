@@ -51,11 +51,35 @@
   background: #f8f8f8;
   color: #222;
   box-sizing: border-box;
-  text-align: center;
+  text-align: center !important;
 }
 
 .centered-input::placeholder {
-  text-align: center;
+  text-align: center !important;
+  opacity: 1 !important;
+}
+
+/* Force centering for all input states */
+.centered-input:focus {
+  text-align: center !important;
+  outline: none;
+}
+
+/* Additional browser-specific overrides */
+.centered-input::-webkit-input-placeholder {
+  text-align: center !important;
+}
+
+.centered-input::-moz-placeholder {
+  text-align: center !important;
+}
+
+.centered-input:-ms-input-placeholder {
+  text-align: center !important;
+}
+
+.centered-input:-moz-placeholder {
+  text-align: center !important;
 }
 
 .password-wrapper {

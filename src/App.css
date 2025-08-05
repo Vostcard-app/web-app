@@ -14,6 +14,11 @@ body {
   text-align: left;
 }
 
+/* Override for registration page inputs */
+#root .centered-input {
+  text-align: center !important;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;

@@ -1618,6 +1618,19 @@ const HomeView = () => {
                 >
                   Liked Posts
                 </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    // TODO: Wire up Trips navigation later
+                    console.log('Trips clicked - navigation to be added');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  🧳 Trips
+                </button>
               </>
             )}
             
@@ -2105,7 +2118,10 @@ const HomeView = () => {
                 flex: '1',
                 minWidth: '0'
               }} 
-              onClick={() => setShowHelpMenu(!showHelpMenu)}
+              onClick={() => {
+                alert('❓ Help button clicked!');
+                setShowHelpMenu(!showHelpMenu);
+              }}
             >
               <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
               <span>Help</span>
@@ -2298,7 +2314,7 @@ const HomeView = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                ✨ Quick Start
+                ✨ Quick Start TEST
               </button>
               
               <button
@@ -2326,6 +2342,7 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
+                  alert('🔍 Filters button clicked!');
                   console.log('🔍 Filters button clicked!');
                   setShowHelpMenu(false);
                   console.log('🔍 Navigating to /help/filters');
@@ -2355,6 +2372,7 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
+                  alert('📷 Create Cards button clicked!');
                   console.log('📷 Create Cards button clicked!');
                   setShowHelpMenu(false);
                   console.log('📷 Navigating to /help/create-cards');
