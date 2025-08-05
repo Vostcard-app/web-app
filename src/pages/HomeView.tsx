@@ -93,14 +93,25 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
   const map = useMap();
 
   useEffect(() => {
-    // ✅ DISABLED: No automatic recentering - user has full control of map position
-    console.log('🗺️ MapUpdater: Auto-recentering DISABLED - map will not move automatically');
-    
-    // Reset the flag to prevent any confusion
-    if (shouldUpdateMapView) {
+    // ✅ ONLY allow INITIAL positioning (first load) - no subsequent auto-recentering
+    if (targetLocation && map && shouldUpdateMapView && !hasRecenteredOnce.current) {
+      console.log('🗺️ MapUpdater: INITIAL positioning to:', targetLocation);
+
+      // Preserve user's current zoom level instead of forcing specific zoom
+      const currentZoom = map.getZoom();
+      console.log('🗺️ MapUpdater: Using zoom level:', currentZoom);
+
+      map.setView(targetLocation, currentZoom);
+      hasRecenteredOnce.current = true;
+      // Reset the flag after updating the map
+      stableShouldUpdateMapView(false);
+      console.log('🗺️ MapUpdater: Initial positioning complete - no more auto-recentering');
+    } else if (shouldUpdateMapView && hasRecenteredOnce.current) {
+      console.log('🚫 MapUpdater: Subsequent auto-recentering DISABLED - user has full control');
+      // Reset the flag to prevent any confusion
       stableShouldUpdateMapView(false);
     }
-  }, [shouldUpdateMapView, stableShouldUpdateMapView]);
+  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce]);
 
   return null;
 };
@@ -1039,7 +1050,7 @@ const HomeView = () => {
         setUserLocation([latitude, longitude]);
         // Center the map on the user's location ONCE at initial GPS success
         setMapTargetLocation([latitude, longitude]);
-        // setShouldUpdateMapView(true); // DISABLED - no auto-recentering
+        setShouldUpdateMapView(true); // ✅ INITIAL positioning only - show user location on first load
         setHasInitialPosition(true); // Mark that we've set initial position
       } else {
         console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
@@ -1074,7 +1085,7 @@ const HomeView = () => {
         console.log('📍 Setting default location ONCE on first load due to error');
         setUserLocation(defaultLocation);
         setMapTargetLocation(defaultLocation);
-        // setShouldUpdateMapView(true); // DISABLED - no auto-recentering
+        setShouldUpdateMapView(true); // ✅ INITIAL fallback positioning - show default location if GPS fails
         setHasInitialPosition(true); // Mark that we've set initial position
       }
       setActualUserLocation(defaultLocation);
@@ -1247,18 +1258,17 @@ const HomeView = () => {
   };
 
   const handleRecenter = () => {
-    // ✅ DISABLED: No recentering - user has full control of map position
-    console.log('🚫 Manual recenter DISABLED - map will not recenter');
-    /*
+    // ✅ Allow MANUAL recentering - user control
     if (actualUserLocation) {
       console.log('🎯 Manual recenter requested to user location:', actualUserLocation);
-      hasRecenteredOnce.current = false;
+      hasRecenteredOnce.current = false; // Allow this manual recenter
       setMapTargetLocation(actualUserLocation);
       setShouldUpdateMapView(true); // Allow map to center on manual recenter
       setHasOptimizedMapOnce(false); // Allow re-optimization after manual recenter
       console.log('🎯 Map will recenter to current GPS location');
+    } else {
+      console.log('🚫 No GPS location available for manual recenter');
     }
-    */
   };
 
   const filterVostcards = (vostcards: any[]) => {
