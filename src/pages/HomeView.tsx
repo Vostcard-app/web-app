@@ -82,7 +82,7 @@ const createDirectionalUserIcon = (heading: number) => {
   });
 };
 
-// MapUpdater component - DISABLED automatic updates
+// MapUpdater component - COMPLETELY DISABLED - No automatic recentering
 const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce }: {
   targetLocation: [number, number] | null;
   singleVostcard?: any;
@@ -93,24 +93,14 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
   const map = useMap();
 
   useEffect(() => {
-    // ONLY update if explicitly requested via shouldUpdateMapView flag
-    if (targetLocation && map && shouldUpdateMapView && !hasRecenteredOnce.current) {
-      console.log('🗺️ MapUpdater: EXPLICIT map update requested to:', targetLocation);
-
-      // Preserve user's current zoom level instead of forcing specific zoom
-      const currentZoom = map.getZoom();
-      console.log('🗺️ MapUpdater: Preserving current zoom level:', currentZoom);
-
-      map.setView(targetLocation, currentZoom);
-      hasRecenteredOnce.current = true;
-      // Reset the flag after updating the map
+    // ✅ DISABLED: No automatic recentering - user has full control of map position
+    console.log('🗺️ MapUpdater: Auto-recentering DISABLED - map will not move automatically');
+    
+    // Reset the flag to prevent any confusion
+    if (shouldUpdateMapView) {
       stableShouldUpdateMapView(false);
-      console.log('🗺️ MapUpdater: Map updated, shouldUpdateMapView reset to false');
-    } else if (shouldUpdateMapView) {
-      console.log('🗺️ MapUpdater: Update requested but missing targetLocation or map or already recentered once');
     }
-    // No logging for normal case to reduce console spam
-  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce]);
+  }, [shouldUpdateMapView, stableShouldUpdateMapView]);
 
   return null;
 };
@@ -395,7 +385,7 @@ const HomeView = () => {
       setBrowseLocation(browseLocationState);
       browseLocationRef.current = browseLocationState;
       setMapTargetLocation(browseLocationState.coordinates);
-      setShouldUpdateMapView(true); // Allow map to center on browse location
+      // setShouldUpdateMapView(true); // DISABLED - no auto-recentering
       console.log('🗺️ Navigation: Setting map target for browse area (intentional override)');
       // Remove the immediate state clearing - let it persist for this render cycle
     }
@@ -430,7 +420,7 @@ const HomeView = () => {
         const vostcardLocation: [number, number] = [singleVostcardState.latitude, singleVostcardState.longitude];
         setMapTargetLocation(vostcardLocation);
         setActualUserLocation(vostcardLocation);
-        setShouldUpdateMapView(true); // Allow map to center on single vostcard
+        // setShouldUpdateMapView(true); // DISABLED - no auto-recentering
         console.log('📍 Navigation: Setting map target for single vostcard (intentional override):', vostcardLocation);
       }
       navigate(location.pathname, { replace: true, state: {} });
@@ -769,8 +759,8 @@ const HomeView = () => {
     if (validNonOfferPosts.length === 0) {
       // No pins found, set zoom to 16 and center on user location
       if (userLoc) {
-        console.log('🗺️ No pins found, centering on user location at zoom 16');
-        mapRef.current.setView(userLoc, 16);
+        console.log('🗺️ No pins found, but auto-centering DISABLED');
+        // mapRef.current.setView(userLoc, 16); // DISABLED - no auto-recentering
       }
       return;
     }
@@ -799,8 +789,8 @@ const HomeView = () => {
       });
       
       if (isTooDist) {
-        console.log('🚫 Pins too far apart for zoom 16 - centering on user location instead');
-        mapRef.current.setView(userLoc, 16);
+        console.log('🚫 Pins too far apart for zoom 16 - but auto-centering DISABLED');
+        // mapRef.current.setView(userLoc, 16); // DISABLED - no auto-recentering
         return;
       }
     }
@@ -819,21 +809,22 @@ const HomeView = () => {
       const zoom = mapRef.current.getBoundsZoom(bounds, false);
       
       if (zoom < 16) {
-        console.log('🚫 Calculated zoom', zoom, 'is wider than 16 - using zoom 16 instead');
+        console.log('🚫 Calculated zoom', zoom, 'is wider than 16 - but auto-centering DISABLED');
         if (userLoc) {
-          mapRef.current.setView(userLoc, 16);
+          // mapRef.current.setView(userLoc, 16); // DISABLED - no auto-recentering
         }
         return;
       }
       
-      mapRef.current.fitBounds(bounds, {
-        padding: [50, 50] // Extra padding to ensure everything is visible
-      });
+      // mapRef.current.fitBounds(bounds, { // DISABLED - no auto-recentering
+      //   padding: [50, 50] // Extra padding to ensure everything is visible  
+      // });
+      console.log('🗺️ fitBounds DISABLED - map will not auto-fit to pins');
     } catch (error) {
       console.warn('🗺️ Error fitting map bounds:', error);
-      // Fallback to zoom 16 on user location
+      // Fallback to zoom 16 on user location - DISABLED
       if (userLoc) {
-        mapRef.current.setView(userLoc, 16);
+        // mapRef.current.setView(userLoc, 16); // DISABLED - no auto-recentering
       }
     }
   }, []);
@@ -1048,7 +1039,7 @@ const HomeView = () => {
         setUserLocation([latitude, longitude]);
         // Center the map on the user's location ONCE at initial GPS success
         setMapTargetLocation([latitude, longitude]);
-        setShouldUpdateMapView(true);
+        // setShouldUpdateMapView(true); // DISABLED - no auto-recentering
         setHasInitialPosition(true); // Mark that we've set initial position
       } else {
         console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
@@ -1083,7 +1074,7 @@ const HomeView = () => {
         console.log('📍 Setting default location ONCE on first load due to error');
         setUserLocation(defaultLocation);
         setMapTargetLocation(defaultLocation);
-        setShouldUpdateMapView(true); // Allow map to center on initial load
+        // setShouldUpdateMapView(true); // DISABLED - no auto-recentering
         setHasInitialPosition(true); // Mark that we've set initial position
       }
       setActualUserLocation(defaultLocation);
@@ -1256,6 +1247,9 @@ const HomeView = () => {
   };
 
   const handleRecenter = () => {
+    // ✅ DISABLED: No recentering - user has full control of map position
+    console.log('🚫 Manual recenter DISABLED - map will not recenter');
+    /*
     if (actualUserLocation) {
       console.log('🎯 Manual recenter requested to user location:', actualUserLocation);
       hasRecenteredOnce.current = false;
@@ -1264,6 +1258,7 @@ const HomeView = () => {
       setHasOptimizedMapOnce(false); // Allow re-optimization after manual recenter
       console.log('🎯 Map will recenter to current GPS location');
     }
+    */
   };
 
   const filterVostcards = (vostcards: any[]) => {
@@ -1469,7 +1464,7 @@ const HomeView = () => {
           </div>
         )}
         
-        {/* Header */}
+        {/* Header - Fixed at top */}
         <div 
           style={{
             backgroundColor: '#002B4D',
@@ -1478,12 +1473,17 @@ const HomeView = () => {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0 16px',
-            position: 'relative',
+            position: 'fixed',
+            top: shouldUseContainer ? '20px' : '0',
+            left: shouldUseContainer ? '50%' : '0',
+            right: shouldUseContainer ? 'auto' : '0',
+            width: shouldUseContainer ? '390px' : '100%',
+            transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
             zIndex: 10001,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             touchAction: 'manipulation',
             flexShrink: 0,
-            borderRadius: shouldUseContainer ? '16px' : '0',
+            borderRadius: shouldUseContainer ? '16px 16px 0 0' : '0',
             // Add safe area padding for mobile
             paddingTop: 'env(safe-area-inset-top, 0px)',
             paddingLeft: 'env(safe-area-inset-left, 16px)',
@@ -1850,8 +1850,8 @@ const HomeView = () => {
           </div>
         )}
 
-        {/* Map Container */}
-        <div style={{ flex: 1, position: 'relative' }}>
+        {/* Map Container - Add top margin for fixed header */}
+        <div style={{ flex: 1, position: 'relative', marginTop: '80px' }}>
           {/* Error Display */}
           {mapError && (
             <div style={{
