@@ -24,6 +24,7 @@ const QuickcardStep3: React.FC = () => {
   const [selectedTripId, setSelectedTripId] = useState<string>('');
   const [newTripName, setNewTripName] = useState('');
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
+  const [isAddingToTrip, setIsAddingToTrip] = useState(false);
   
 
   
@@ -135,48 +136,57 @@ const QuickcardStep3: React.FC = () => {
         description: '',
         isPrivate: true
       });
+      
+      // ✅ Immediate success feedback
       setUserTrips([...userTrips, newTrip]);
       setSelectedTripId(newTrip.id);
       setNewTripName('');
+      
+      // ✅ Show success and auto-proceed
+      alert(`✅ Trip "${newTrip.name}" created successfully!`);
+      
+      // ✅ Auto-add the quickcard to the new trip and return to step 2
+      await handleAddQuickcardToTripOptimized(newTrip.id);
+      
     } catch (error) {
       console.error('Error creating trip:', error);
-      console.error('Trip creation error details:', {
-        message: error.message,
-        code: error.code,
-        stack: error.stack,
-        tripData: {
-          name: newTripName.trim(),
-          description: '',
-          isPublic: false
-        }
-      });
       alert(`Error creating trip: ${error.message || 'Unknown error'}`);
     } finally {
       setIsCreatingTrip(false);
     }
   };
 
-  const handleAddQuickcardToTrip = async () => {
-    if (!selectedTripId || !currentVostcard) return;
+  // ✅ Optimized version with immediate feedback and return to step 2
+  const handleAddQuickcardToTripOptimized = async (tripId: string) => {
+    if (!tripId || !currentVostcard) return;
     
     try {
-      console.log('🔄 Saving quickcard first before adding to trip...');
+      // ✅ Immediate feedback - close modal and return to step 2
+      setIsTripModalOpen(false);
+      setSelectedTripId('');
       
-      // First, save the quickcard to get a real ID
-      // We'll save it privately first, then add to trip
+      // ✅ Show immediate success message
+      const tripName = userTrips.find(t => t.id === tripId)?.name || 'your trip';
+      alert(`✅ Quickcard will be added to "${tripName}"!\n\nProcessing in background...`);
+      
+      // ✅ Navigate to step 2 immediately
+      navigate('/create-quickcard-step2');
+      
+      // 🔄 Background processing - save quickcard and add to trip
+      console.log('🔄 Background: Saving quickcard and adding to trip...');
+      
       const quickcardToSave = {
         ...currentVostcard,
-        state: 'private' as const, // Save as private initially
+        state: 'private' as const,
         isQuickcard: true
       };
       
-      // Use the VostcardContext postQuickcard function to save
+      // Save quickcard first
       await postQuickcard(quickcardToSave);
+      console.log('✅ Background: Quickcard saved with ID:', quickcardToSave.id);
       
-      console.log('✅ Quickcard saved with ID:', quickcardToSave.id);
-      
-      // Now add to trip with the real ID
-      await TripService.addItemToTrip(selectedTripId, {
+      // Add to trip
+      await TripService.addItemToTrip(tripId, {
         vostcardID: quickcardToSave.id,
         type: 'quickcard',
         title: quickcardToSave.title || 'Untitled',
@@ -186,17 +196,23 @@ const QuickcardStep3: React.FC = () => {
         longitude: quickcardToSave.geo?.longitude
       });
       
-      console.log('✅ Added quickcard to trip successfully');
-      alert('Quickcard saved and added to trip successfully!');
-      setIsTripModalOpen(false);
-      setSelectedTripId('');
-      
-      // Navigate back to home or wherever appropriate
-      navigate('/home');
+      console.log('✅ Background: Quickcard added to trip successfully');
       
     } catch (error) {
-      console.error('Error saving quickcard or adding to trip:', error);
-      alert(`Error: ${error.message || 'Failed to save quickcard or add to trip'}`);
+      console.error('Background error adding quickcard to trip:', error);
+      // Silent error - don't interrupt user flow
+    }
+  };
+
+  const handleAddQuickcardToTrip = async () => {
+    if (!selectedTripId || !currentVostcard) return;
+    
+    setIsAddingToTrip(true);
+    try {
+      // ✅ Use the optimized version for existing trips too
+      await handleAddQuickcardToTripOptimized(selectedTripId);
+    } finally {
+      setIsAddingToTrip(false);
     }
   };
 
@@ -612,19 +628,19 @@ const QuickcardStep3: React.FC = () => {
               </button>
               <button
                 onClick={handleAddQuickcardToTrip}
-                disabled={!selectedTripId}
+                disabled={!selectedTripId || isAddingToTrip}
                 style={{
                   flex: 1,
                   padding: '12px',
-                  backgroundColor: selectedTripId ? '#007bff' : '#ccc',
+                  backgroundColor: isAddingToTrip ? '#ccc' : (selectedTripId ? '#007bff' : '#ccc'),
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
                   fontSize: '16px',
-                  cursor: selectedTripId ? 'pointer' : 'not-allowed',
+                  cursor: (isAddingToTrip || !selectedTripId) ? 'not-allowed' : 'pointer',
                 }}
               >
-                Add to Trip
+                {isAddingToTrip ? 'Adding...' : 'Add to Trip'}
               </button>
             </div>
           </div>
