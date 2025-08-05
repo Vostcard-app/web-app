@@ -317,11 +317,25 @@ const AllPostedVostcardsView: React.FC = () => {
         const userRef = doc(db, 'users', userId);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          profiles[userId] = userSnap.data();
+          const userData = userSnap.data();
+          profiles[userId] = userData;
+          // Debug: Log user roles to see what we're getting
+          console.log(`👤 User profile loaded: ${userId} - username: ${userData?.username}, userRole: ${userData?.userRole}`);
         }
       } catch (error) {
         console.error(`Error loading user profile for ${userId}:`, error);
       }
+    }
+    
+    // Debug: Log all loaded profiles
+    const guideProfiles = Object.entries(profiles).filter(([id, profile]) => profile?.userRole === 'guide');
+    console.log(`👨‍🏫 Profiles loaded - Total: ${Object.keys(profiles).length}, Guides: ${guideProfiles.length}`);
+    if (guideProfiles.length > 0) {
+      console.log('Guide profiles:', guideProfiles.map(([id, profile]) => ({
+        id,
+        username: profile?.username,
+        userRole: profile?.userRole
+      })));
     }
     
     setLikeCounts(counts);
@@ -670,6 +684,27 @@ const AllPostedVostcardsView: React.FC = () => {
     profilesLoaded,
     waitingForProfiles
   });
+
+  // Debug: Log guide users when showGuidesOnly is active
+  if (showGuidesOnly && profilesLoaded) {
+    const guideUsers = Object.entries(userProfiles).filter(([id, profile]) => profile?.userRole === 'guide');
+    console.log('👨‍🏫 Guide users found:', guideUsers.length, guideUsers.map(([id, profile]) => ({
+      id,
+      username: profile?.username,
+      userRole: profile?.userRole
+    })));
+    
+    const guidePosts = vostcards.filter(v => {
+      const userProfile = userProfiles[v.userID];
+      return userProfile?.userRole === 'guide';
+    });
+    console.log('📚 Guide posts found:', guidePosts.length, guidePosts.map(p => ({
+      id: p.id,
+      title: p.title,
+      userID: p.userID,
+      username: p.username
+    })));
+  }
 
   return (
     <div 
