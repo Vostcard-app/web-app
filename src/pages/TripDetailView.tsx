@@ -173,9 +173,9 @@ const TripDetailView: React.FC = () => {
     }
   };
 
-  // ✅ Check for issues in the trip
+  // ✅ Check for issues in the trip (for cleanup button)
   const getTripIssues = () => {
-    if (!trip) return { duplicates: 0, deleted: 0, total: 0 };
+    if (!trip) return { duplicates: 0, deleted: 0 };
     
     const seen = new Set<string>();
     let duplicates = 0;
@@ -195,7 +195,7 @@ const TripDetailView: React.FC = () => {
       }
     });
     
-    return { duplicates, deleted, total: trip.items.length };
+    return { duplicates, deleted };
   };
 
   // ✅ Check items existence when trip loads
@@ -395,7 +395,13 @@ const TripDetailView: React.FC = () => {
                 fontSize: '12px', 
                 margin: '4px 0 0 0' 
               }}>
-                {trip.items.length} {trip.items.length === 1 ? 'item' : 'items'}
+                {(() => {
+                  const visibleCount = trip.items.filter((item) => {
+                    const status = itemsStatus.get(item.vostcardID);
+                    return !status || status.loading || status.exists;
+                  }).length;
+                  return `${visibleCount} ${visibleCount === 1 ? 'item' : 'items'}`;
+                })()}
               </p>
             </div>
           </div>
@@ -548,22 +554,61 @@ const TripDetailView: React.FC = () => {
           padding: '0 20px 20px 20px',
           overflowY: 'auto'
         }}>
-          {trip.items.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px 20px',
-              color: '#666'
-            }}>
-              <FaMapMarkerAlt size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
-              <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No items yet</h3>
-              <p style={{ margin: 0, fontSize: '14px' }}>
-                Add vostcards and quickcards to this trip when creating content!
-              </p>
-            </div>
-          ) : (
+          {(() => {
+            const visibleItems = trip.items.filter((item) => {
+              const status = itemsStatus.get(item.vostcardID);
+              return !status || status.loading || status.exists;
+            });
+            const totalItems = trip.items.length;
+            
+            // No items at all in database
+            if (totalItems === 0) {
+              return (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#666'
+                }}>
+                  <FaMapMarkerAlt size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+                  <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No items yet</h3>
+                  <p style={{ margin: 0, fontSize: '14px' }}>
+                    Add vostcards and quickcards to this trip when creating content!
+                  </p>
+                </div>
+              );
+            }
+            
+            // Has items but all are deleted (hidden)
+            if (visibleItems.length === 0 && totalItems > 0) {
+              return (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#666'
+                }}>
+                  <FaExclamationTriangle size={48} style={{ color: '#ffc107', marginBottom: '16px' }} />
+                  <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>All items deleted</h3>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
+                    This trip had {totalItems} {totalItems === 1 ? 'item' : 'items'}, but all content has been deleted.
+                  </p>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#888' }}>
+                    Use the cleanup button above to remove deleted items permanently.
+                  </p>
+                </div>
+              );
+            }
+            
+            // Show the items list
+            return null; // This will fall through to the items list
+          })() || (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {trip.items
                 .sort((a, b) => a.order - b.order) // Sort by order
+                .filter((item) => {
+                  // ✅ Filter out deleted items automatically
+                  const status = itemsStatus.get(item.vostcardID);
+                  return !status || status.loading || status.exists;
+                })
                 .map((item, index) => (
                 <div
                   key={item.id}
@@ -651,24 +696,6 @@ const TripDetailView: React.FC = () => {
                             
                             return (
                               <>
-                                {/* Deleted content indicator */}
-                                {status && !status.loading && !status.exists && (
-                                  <span style={{
-                                    background: '#fff2f2',
-                                    color: '#dc3545',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '9px',
-                                    fontWeight: '600',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '2px'
-                                  }}>
-                                    <FaExclamationTriangle size={8} />
-                                    DELETED
-                                  </span>
-                                )}
-                                
                                 {/* Duplicate indicator */}
                                 {isDuplicate && (
                                   <span style={{
@@ -743,8 +770,44 @@ const TripDetailView: React.FC = () => {
                   </div>
                 </div>
               ))}
+              
+              {/* ✅ Show message if items were filtered out */}
+              {(() => {
+                const totalItems = trip.items.length;
+                const visibleItems = trip.items.filter((item) => {
+                  const status = itemsStatus.get(item.vostcardID);
+                  return !status || status.loading || status.exists;
+                }).length;
+                
+                const hiddenItems = totalItems - visibleItems;
+                
+                if (hiddenItems > 0) {
+                  return (
+                    <div style={{
+                      background: '#f8f9fa',
+                      border: '1px solid #e9ecef',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      textAlign: 'center',
+                      color: '#6c757d',
+                      fontSize: '13px',
+                      marginTop: '8px'
+                    }}>
+                      <FaExclamationTriangle style={{ color: '#ffc107', marginRight: '6px' }} />
+                      {hiddenItems} deleted {hiddenItems === 1 ? 'item' : 'items'} hidden from view
+                      {hiddenItems > 0 && (
+                        <div style={{ marginTop: '4px', fontSize: '11px' }}>
+                          Use the cleanup button above to remove {hiddenItems === 1 ? 'it' : 'them'} permanently
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
-          )}
+          ))
+        }
         </div>
       </div>
 
