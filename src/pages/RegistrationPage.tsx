@@ -398,7 +398,7 @@ export default function RegistrationPage() {
             letterSpacing: '0.01em',
           }}
         >
-          {loading ? "Registering..." : "Register"}
+          {loading ? "Registering..." : (formType === "advertiser" ? "Apply" : "Register")}
         </button>
       </form>
       </div>
