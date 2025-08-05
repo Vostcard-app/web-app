@@ -1643,14 +1643,13 @@ const HomeView = () => {
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
-                    // TODO: Wire up Trips navigation later
-                    console.log('Trips clicked - navigation to be added');
+                    navigate('/itineraries');
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   style={submenuItemStyle}
                 >
-                  🧳 Trips
+                  Trips
                 </button>
               </>
             )}

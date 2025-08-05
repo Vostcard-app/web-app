@@ -140,7 +140,17 @@ const QuickcardStep3: React.FC = () => {
       setNewTripName('');
     } catch (error) {
       console.error('Error creating trip:', error);
-      alert('Error creating trip');
+      console.error('Trip creation error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        tripData: {
+          name: newTripName.trim(),
+          description: '',
+          isPublic: false
+        }
+      });
+      alert(`Error creating trip: ${error.message || 'Unknown error'}`);
     } finally {
       setIsCreatingTrip(false);
     }

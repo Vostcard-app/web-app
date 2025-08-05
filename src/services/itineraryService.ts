@@ -111,6 +111,17 @@ export const ItineraryService = {
       return convertFirebaseToItinerary(itineraryDoc, items);
     } catch (error) {
       console.error('❌ Error creating itinerary:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack,
+        userData: {
+          userId: user?.uid,
+          userDisplayName: user?.displayName,
+          userEmail: user?.email
+        },
+        itineraryData: data
+      });
       throw error;
     }
   },
