@@ -619,28 +619,36 @@ const AllPostedVostcardsView: React.FC = () => {
       });
     }
     
-    // Apply Guide-only filtering
+    // Apply Guide-only filtering - but only if user profiles have been loaded
     if (showGuidesOnly) {
+      const profilesLoaded = Object.keys(userProfiles).length > 0;
       console.log(`🔍 Starting Guide-only filter. Total posts before filter: ${filtered.length}`);
-      console.log(`🔍 User profiles loaded:`, Object.keys(userProfiles).length);
-      console.log(`🔍 Sample user profiles:`, Object.entries(userProfiles).slice(0, 3).map(([id, profile]) => ({
-        id,
-        userRole: profile?.userRole,
-        username: profile?.username
-      })));
+      console.log(`🔍 User profiles loaded:`, Object.keys(userProfiles).length, 'profilesLoaded:', profilesLoaded);
       
-      filtered = filtered.filter(v => {
-        // Check if the post author has userRole='guide' from user profiles
-        const userProfile = userProfiles[v.userID];
-        const isGuideUser = userProfile?.userRole === 'guide';
+      if (!profilesLoaded) {
+        console.log(`⏳ User profiles not loaded yet - skipping guide filter to avoid showing empty results`);
+        // Don't filter yet - wait for profiles to load
+        // Return all posts for now
+      } else {
+        console.log(`🔍 Sample user profiles:`, Object.entries(userProfiles).slice(0, 3).map(([id, profile]) => ({
+          id,
+          userRole: profile?.userRole,
+          username: profile?.username
+        })));
         
-        // Debug logging
-        console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}, username=${userProfile?.username}`);
+        filtered = filtered.filter(v => {
+          // Check if the post author has userRole='guide' from user profiles
+          const userProfile = userProfiles[v.userID];
+          const isGuideUser = userProfile?.userRole === 'guide';
+          
+          // Debug logging
+          console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}, username=${userProfile?.username}`);
+          
+          return isGuideUser;
+        });
         
-        return isGuideUser;
-      });
-      
-      console.log(`📚 Guide-only filter applied: ${filtered.length} posts from Guide users`);
+        console.log(`📚 Guide-only filter applied: ${filtered.length} posts from Guide users`);
+      }
     }
 
     return filtered;
@@ -650,10 +658,17 @@ const AllPostedVostcardsView: React.FC = () => {
   const iosCount = 0;
   const webCount = vostcards.length;
 
+  // Check if we're waiting for user profiles to load for guide filtering
+  const profilesLoaded = Object.keys(userProfiles).length > 0;
+  const waitingForProfiles = showGuidesOnly && !profilesLoaded && vostcards.length > 0;
+
   console.log('🔍 AllPostedVostcardsView rendering:', { 
     loading, 
     vostcardsLength: vostcards.length, 
-    filteredLength: filterVostcards(vostcards).length 
+    filteredLength: filterVostcards(vostcards).length,
+    showGuidesOnly,
+    profilesLoaded,
+    waitingForProfiles
   });
 
   return (
@@ -991,6 +1006,21 @@ const AllPostedVostcardsView: React.FC = () => {
             <div>Loading posted Vostcards...</div>
             <div style={{ fontSize: '12px', marginTop: '8px' }}>
               Please wait while we fetch your content
+            </div>
+          </div>
+        ) : waitingForProfiles ? (
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: 40, 
+            color: '#002B4D',
+            backgroundColor: 'white',
+            padding: '20px',
+            margin: '20px',
+            borderRadius: '8px'
+          }}>
+            <div>📚 Loading Guide posts...</div>
+            <div style={{ fontSize: '12px', marginTop: '8px' }}>
+              Please wait while we load user profiles
             </div>
           </div>
         ) : vostcards.length === 0 ? (
