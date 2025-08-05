@@ -283,7 +283,8 @@ export const TripService = {
             const vostcardData = vostcardDoc.data();
             title = title || vostcardData.title || 'Untitled';
             description = description || vostcardData.description;
-            photoURL = photoURL || vostcardData.photoURL;
+            // Get first photo from photoURLs array
+            photoURL = photoURL || (vostcardData.photoURLs && vostcardData.photoURLs[0]) || vostcardData.photoURL;
             latitude = latitude || vostcardData.latitude;
             longitude = longitude || vostcardData.longitude;
           }

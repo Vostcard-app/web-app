@@ -182,13 +182,13 @@ const QuickcardStep3: React.FC = () => {
       await saveQuickcard();
       console.log('✅ Background: Quickcard saved privately with ID:', currentVostcard.id);
       
-      // Add to trip
+      // Add to trip (let the service fetch photoURL from the saved vostcard)
       await TripService.addItemToTrip(tripId, {
         vostcardID: currentVostcard.id,
         type: 'quickcard',
         title: currentVostcard.title || 'Untitled',
         description: currentVostcard.description,
-        photoURL: currentVostcard.photos?.[0] ? 'pending_upload' : undefined,
+        // Don't pass photoURL - let addItemToTrip fetch it from the saved vostcard
         latitude: currentVostcard.geo?.latitude,
         longitude: currentVostcard.geo?.longitude
       });
