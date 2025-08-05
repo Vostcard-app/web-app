@@ -14,7 +14,7 @@
 }
 
 .header h1 {
-  font-size: 36px;
+  font-size: 14px;
   color: #333;
 }
 
@@ -22,14 +22,14 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 14px;
   color: #0077cc;
 }
 
 .welcome {
   text-align: center;
   margin: 20px 0;
-  font-size: 24px;
+  font-size: 14px;
 }
 
 .input-field {
@@ -44,7 +44,7 @@
 .centered-input {
   width: 100%;
   margin-bottom: 20px;
-  font-size: 16px;
+  font-size: 14px;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid #eee;
@@ -95,7 +95,7 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 14px;
   margin-left: 8px;
 }
 
@@ -115,7 +115,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .main-button:hover {

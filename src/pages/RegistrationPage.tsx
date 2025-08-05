@@ -12,7 +12,7 @@ import "./RegistrationPage.css";
 const linkStyle = {
   color: '#07345c',
   fontWeight: 600,
-  fontSize: 22,
+  fontSize: 14,
   textDecoration: 'underline',
   cursor: 'pointer',
 };
@@ -123,8 +123,7 @@ export default function RegistrationPage() {
 
       // Send email verification
       await sendEmailVerification(user);
-      window.alert('Registration successful! Please verify your email before logging in. It may go to spam.');
-
+      
       // Save extra info to Firestore
       if (formType === "user") {
         const trimmedUsername = username.trim();
@@ -136,6 +135,7 @@ export default function RegistrationPage() {
           userRole: "user",
           createdAt: new Date(),
         });
+        window.alert('Registration successful! Please verify your email before logging in. It may go to spam.');
       } else {
         await setDoc(doc(db, "advertisers", user.uid), {
           firstName,
@@ -143,15 +143,20 @@ export default function RegistrationPage() {
           businessName,
           email,
           userRole: "advertiser",
+          accountStatus: "pending",
           createdAt: new Date(),
         });
+        window.alert('Application submitted successfully! Please verify your email, then an admin will review your advertiser application. You will be contacted once approved.');
       }
 
       // ✅ Force logout so they must log in after verifying
       await auth.signOut();
 
       // Redirect to login page with a success message
-      navigate("/login", { state: { message: "Registration successful! Please verify your email before logging in. It may go to spam." } });
+      const message = formType === "user" 
+        ? "Registration successful! Please verify your email before logging in. It may go to spam."
+        : "Application submitted! Please verify your email. An admin will review your advertiser application and contact you once approved.";
+      navigate("/login", { state: { message } });
     } catch (err: any) {
       console.error('Registration error:', err.code, err.message, err);
       setError((err.code ? err.code + ': ' : '') + (err.message || 'Registration failed.'));
@@ -204,7 +209,7 @@ export default function RegistrationPage() {
           style={{
           color: 'white',
           fontWeight: 700,
-          fontSize: '2.5rem',
+          fontSize: 14,
           margin: 0,
           cursor: 'pointer',
         }}>Vōstcard</h1>
@@ -227,7 +232,7 @@ export default function RegistrationPage() {
             }}
           />
           <span style={{
-            fontSize: '12px',
+            fontSize: 14,
             fontWeight: '500',
             color: 'white'
           }}>
@@ -240,9 +245,10 @@ export default function RegistrationPage() {
       <div style={{
         display: 'flex',
         justifyContent: 'center',
-        margin: '40px 0 24px 0',
+        margin: '40px auto 24px auto',
         width: '95%',
         maxWidth: 500,
+        alignSelf: 'center',
       }}>
         <button
           onClick={() => setFormType("user")}
@@ -254,7 +260,7 @@ export default function RegistrationPage() {
             border: 'none',
             borderRadius: '8px 0 0 8px',
             fontWeight: 700,
-            fontSize: 28,
+            fontSize: 14,
             cursor: 'pointer',
             transition: 'background 0.2s, color 0.2s',
             boxShadow: formType === "user" ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
@@ -272,7 +278,7 @@ export default function RegistrationPage() {
             border: 'none',
             borderRadius: '0 8px 8px 0',
             fontWeight: 700,
-            fontSize: 28,
+            fontSize: 14,
             cursor: 'pointer',
             transition: 'background 0.2s, color 0.2s',
             boxShadow: formType === "advertiser" ? '0 2px 8px rgba(0,0,0,0.10)' : 'none',
@@ -281,6 +287,25 @@ export default function RegistrationPage() {
           Advertiser
         </button>
       </div>
+
+      {/* Advertiser Notice */}
+      {formType === "advertiser" && (
+        <div style={{
+          width: '90%',
+          maxWidth: 400,
+          margin: '0 auto 24px auto',
+          padding: '16px',
+          backgroundColor: '#f0f8ff',
+          borderRadius: '8px',
+          border: '1px solid #e0e0e0',
+          textAlign: 'center',
+          fontSize: 14,
+          color: '#333',
+          lineHeight: 1.4,
+        }}>
+          To ensure there aren't too many advertisers in one area, we'll contact you to confirm availability in your location.
+        </div>
+      )}
 
       {/* Form */}
       <form
@@ -334,7 +359,7 @@ export default function RegistrationPage() {
           onChange={e => setEmail(e.target.value)}
           className="centered-input"
         />
-        <div style={{ position: 'relative', marginBottom: 16 }}>
+        <div style={{ position: 'relative', marginBottom: 20, width: '100%' }}>
           <input
             type={showPassword ? "text" : "password"}
             placeholder="Password"
@@ -357,7 +382,7 @@ export default function RegistrationPage() {
               padding: 0,
             }}
           >
-            <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 26, color: '#888' }}></i>
+            <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 14, color: '#888' }}></i>
           </button>
         </div>
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
@@ -379,7 +404,7 @@ export default function RegistrationPage() {
             style={{ width: 28, height: 28, marginRight: 12 }}
             id="agree"
           />
-          <label htmlFor="agree" style={{ color: '#b0b0b0', fontSize: 16 }}>
+          <label htmlFor="agree" style={{ color: '#b0b0b0', fontSize: 14 }}>
             I have Read and Agree to the above
           </label>
         </div>
@@ -393,7 +418,7 @@ export default function RegistrationPage() {
             color: 'white',
             border: 'none',
             borderRadius: 16,
-            fontSize: 32,
+            fontSize: 14,
             fontWeight: 600,
             padding: '20px 0',
             boxShadow: '0 2px 8px rgba(0,0,0,0.10)',

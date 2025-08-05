@@ -10,12 +10,14 @@ interface AuthContextType {
   username: string | null;
   userID: string | null;
   userRole: string | null;
+  accountStatus: string | null;
   loading: boolean;
   logout: () => Promise<void>;
   convertUserToGuide: (userIdToConvert: string) => Promise<void>;
   convertUserToAdmin: (userIdToConvert: string) => Promise<void>;
   refreshUserRole: () => Promise<void>;
   isAdmin: boolean;
+  isPendingAdvertiser: boolean;
 }
 
 // Create context
@@ -27,10 +29,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [username, setUsername] = useState<string | null>(null);
   const [userID, setUserID] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [accountStatus, setAccountStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Check if current user is admin
   const isAdmin = userRole === 'admin';
+  
+  // Check if current user is a pending advertiser
+  const isPendingAdvertiser = userRole === 'advertiser' && accountStatus === 'pending';
 
   // Admin function to convert user to Guide
   const convertUserToGuide = async (userIdToConvert: string) => {
@@ -83,15 +89,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('🔄 Manually refreshing user role from Firestore...');
       const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      const advertiserDocRef = doc(db, "advertisers", user.uid);
       
-      if (userDocSnap.exists()) {
+      const [userDocSnap, advertiserDocSnap] = await Promise.all([
+        getDoc(userDocRef), 
+        getDoc(advertiserDocRef)
+      ]);
+      
+      // Check advertiser first
+      if (advertiserDocSnap.exists()) {
+        const advertiserData = advertiserDocSnap.data();
+        console.log('✅ Manual refresh - advertiser found:', advertiserData);
+        setUsername(advertiserData.businessName || advertiserData.name || null);
+        setUserRole('advertiser');
+        setAccountStatus(advertiserData.accountStatus || 'approved');
+      } else if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
-        console.log('✅ Manual refresh successful:', userData);
+        console.log('✅ Manual refresh - user found:', userData);
         setUsername(userData.username || null);
         setUserRole(userData.userRole || 'user');
+        setAccountStatus('approved');
       } else {
-        console.warn('❌ Manual refresh: No user document found');
+        console.warn('❌ Manual refresh: No user or advertiser document found');
       }
     } catch (error) {
       console.error('❌ Manual refresh failed:', error);
@@ -125,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUsername(null);
         setUserID(null);
         setUserRole(null);
+        setAccountStatus(null);
       }
     }, 500); // Reduced from 1000 to 500ms
 
@@ -147,6 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUsername(null);
         setUserID(null);
         setUserRole(null);
+        setAccountStatus(null);
         return;
       }
       
@@ -204,18 +225,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               const data = advertiserDocSnap.data();
               console.log('📄 Firestore advertiser document found:', data);
               console.log('✅ Setting userRole to: advertiser');
+              console.log('📋 Account status:', data.accountStatus || 'approved');
               setUsername(data.businessName || data.name || null);
               setUserRole('advertiser'); // Set as advertiser
+              setAccountStatus(data.accountStatus || 'approved'); // Default to approved for existing accounts
             } else if (userDocSnap?.exists()) {
               const data = userDocSnap.data();
               console.log('📄 Firestore user document found:', data);
               console.log('✅ Setting userRole to: user');
               setUsername(data.username || null);
               setUserRole(data.userRole || 'user'); // Changed from data.role
+              setAccountStatus('approved'); // Users are automatically approved
             } else {
               console.warn("❌ No user or advertiser document found for:", currentUser.uid);
               setUsername(null);
               setUserRole('user'); // Default to user role for faster experience
+              setAccountStatus('approved'); // Default to approved
             }
           } catch (error) {
             console.error("❌ Error fetching user data:", error);
@@ -296,12 +321,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     username,
     userID,
     userRole,
+    accountStatus,
     loading,
     logout,
     convertUserToGuide,
     convertUserToAdmin,
     refreshUserRole,
     isAdmin,
+    isPendingAdvertiser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
