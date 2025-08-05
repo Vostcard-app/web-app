@@ -621,13 +621,21 @@ const AllPostedVostcardsView: React.FC = () => {
     
     // Apply Guide-only filtering
     if (showGuidesOnly) {
+      console.log(`🔍 Starting Guide-only filter. Total posts before filter: ${filtered.length}`);
+      console.log(`🔍 User profiles loaded:`, Object.keys(userProfiles).length);
+      console.log(`🔍 Sample user profiles:`, Object.entries(userProfiles).slice(0, 3).map(([id, profile]) => ({
+        id,
+        userRole: profile?.userRole,
+        username: profile?.username
+      })));
+      
       filtered = filtered.filter(v => {
         // Check if the post author has userRole='guide' from user profiles
         const userProfile = userProfiles[v.userID];
         const isGuideUser = userProfile?.userRole === 'guide';
         
         // Debug logging
-        console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}`);
+        console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}, username=${userProfile?.username}`);
         
         return isGuideUser;
       });
