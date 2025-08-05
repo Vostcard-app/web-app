@@ -545,7 +545,7 @@ const AllPostedVostcardsView: React.FC = () => {
   
 
   // Type filtering function (Offers are never filtered out)
-  const filterVostcardsByType = (vostcards: Vostcard[]): Vostcard[] => {
+  const filterVostcardsByType = (vostcards: Vostcard[], userProfiles: { [userId: string]: any }): Vostcard[] => {
     // If no types are selected, show all
     if (selectedTypes.length === 0) return vostcards;
     
@@ -554,9 +554,12 @@ const AllPostedVostcardsView: React.FC = () => {
       if (v.isOffer) return true;
       
       // Check if it matches selected types
-      if (selectedTypes.includes('Vostcard') && !v.isQuickcard && !v.isOffer && v.userRole !== 'guide') return true;
+      const userProfile = userProfiles[v.userID];
+      const isGuideUser = userProfile?.userRole === 'guide';
+      
+      if (selectedTypes.includes('Vostcard') && !v.isQuickcard && !v.isOffer && !isGuideUser) return true;
       if (selectedTypes.includes('Quickcard') && v.isQuickcard) return true;
-      if (selectedTypes.includes('Guide') && v.userRole === 'guide' && !v.isOffer) return true;
+      if (selectedTypes.includes('Guide') && isGuideUser && !v.isOffer) return true;
       
       return false;
     });
@@ -567,7 +570,7 @@ const AllPostedVostcardsView: React.FC = () => {
     let filtered = vostcards;
     
     // Apply type filtering
-    filtered = filterVostcardsByType(filtered);
+    filtered = filterVostcardsByType(filtered, userProfiles);
     
     // Apply category filtering (same logic as HomeView)
     if (selectedCategories.length > 0 && !selectedCategories.includes('None')) {
@@ -619,11 +622,12 @@ const AllPostedVostcardsView: React.FC = () => {
     // Apply Guide-only filtering
     if (showGuidesOnly) {
       filtered = filtered.filter(v => {
-        // Check if the post has userRole='guide' (already embedded in vostcard data)
-        const isGuideUser = v.userRole === 'guide';
+        // Check if the post author has userRole='guide' from user profiles
+        const userProfile = userProfiles[v.userID];
+        const isGuideUser = userProfile?.userRole === 'guide';
         
         // Debug logging
-        console.log(`🔍 Guide filter - Post ${v.id}: userRole=${v.userRole}, isGuide=${isGuideUser}`);
+        console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}`);
         
         return isGuideUser;
       });
