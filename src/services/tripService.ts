@@ -12,7 +12,8 @@ import {
   updateDoc, 
   writeBatch,
   Timestamp,
-  limit
+  limit,
+  deleteField
 } from 'firebase/firestore';
 import { auth } from '../firebase/firebaseConfig';
 import type { 
@@ -101,9 +102,9 @@ export const TripService = {
         userID: user.uid,
         username: user.displayName || 'Anonymous',
         isPrivate: data.isPrivate !== false, // Default to private
-        shareableLink,
         createdAt: now,
-        updatedAt: now
+        updatedAt: now,
+        ...(shareableLink && { shareableLink }) // Only include if not undefined
       };
 
       await setDoc(doc(db, 'trips', tripId), tripDoc);
@@ -376,7 +377,7 @@ export const TripService = {
         updateData.isPrivate = data.isPrivate;
         // Add or remove shareable link based on privacy setting
         if (data.isPrivate) {
-          updateData.shareableLink = undefined;
+          updateData.shareableLink = deleteField();
         } else if (!existingTrip.shareableLink) {
           updateData.shareableLink = generateShareableLink();
         }
