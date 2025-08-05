@@ -5,6 +5,8 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { db, auth, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ItineraryService } from '../services/itineraryService';
+import type { Itinerary } from '../types/ItineraryTypes';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +24,11 @@ const CreateVostcardStep3: React.FC = () => {
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
+  const [isTripModalOpen, setIsTripModalOpen] = useState(false);
+  const [userItineraries, setUserItineraries] = useState<Itinerary[]>([]);
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const [newTripName, setNewTripName] = useState('');
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   
   const availableCategories = [
     'None',
@@ -121,6 +128,72 @@ const CreateVostcardStep3: React.FC = () => {
       updateVostcard({ categories: categories.filter((c) => c !== category) });
     } else {
       updateVostcard({ categories: [...categories, category] });
+    }
+  };
+
+  // Trip functionality
+  const loadUserItineraries = async () => {
+    try {
+      const itineraries = await ItineraryService.getUserItineraries();
+      setUserItineraries(itineraries);
+    } catch (error) {
+      console.error('Error loading itineraries:', error);
+    }
+  };
+
+  const handleAddToTrip = () => {
+    loadUserItineraries();
+    setIsTripModalOpen(true);
+  };
+
+  const handleCreateNewTrip = async () => {
+    if (!newTripName.trim()) return;
+    
+    setIsCreatingTrip(true);
+    try {
+      const newTrip = await ItineraryService.createItinerary({
+        name: newTripName.trim(),
+        description: '',
+        isPublic: false
+      });
+      setUserItineraries([...userItineraries, newTrip]);
+      setSelectedTripId(newTrip.id);
+      setNewTripName('');
+    } catch (error) {
+      console.error('Error creating trip:', error);
+      alert('Error creating trip');
+    } finally {
+      setIsCreatingTrip(false);
+    }
+  };
+
+  const handleAddVostcardToTrip = async () => {
+    if (!selectedTripId) return;
+    
+    try {
+      // We need to save the vostcard first to get its ID
+      if (!currentVostcard) return;
+      
+      // For now, we'll use a placeholder ID - in a real implementation,
+      // you'd want to save the vostcard first to get its actual ID
+      const vostcardId = `temp_${Date.now()}`;
+      
+      await ItineraryService.addItemToItinerary(selectedTripId, {
+        vostcardID: vostcardId,
+        type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
+        title: currentVostcard.title || 'Untitled',
+        description: currentVostcard.description,
+        latitude: currentVostcard.geo?.latitude,
+        longitude: currentVostcard.geo?.longitude,
+        username: currentVostcard.username
+      });
+      
+      alert('Added to trip successfully!');
+      setIsTripModalOpen(false);
+      setSelectedTripId('');
+    } catch (error) {
+      console.error('Error adding to trip:', error);
+      alert('Error adding to trip');
     }
   };
 
@@ -330,6 +403,30 @@ const CreateVostcardStep3: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Add to Trip Section */}
+        <div style={{ marginTop: 20 }}>
+          <label style={labelStyle}>
+            Add to Trip (Not Required)
+          </label>
+          <button
+            onClick={handleAddToTrip}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: '#f0f8ff',
+              border: '2px solid #07345c',
+              borderRadius: '8px',
+              fontSize: '16px',
+              color: '#07345c',
+              cursor: 'pointer',
+              fontWeight: '500',
+              touchAction: 'manipulation',
+            }}
+          >
+            Add to Trip
+          </button>
+        </div>
       </div>
 
       {/* 🔘 Fixed Bottom Buttons */}
@@ -396,6 +493,131 @@ const CreateVostcardStep3: React.FC = () => {
             >
               Done
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Trip Modal */}
+      {isTripModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '400px',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to Trip</h3>
+            
+            {userItineraries.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                  Select Existing Trip:
+                </label>
+                <select
+                  value={selectedTripId}
+                  onChange={(e) => setSelectedTripId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '16px',
+                  }}
+                >
+                  <option value="">Choose a trip...</option>
+                  {userItineraries.map((trip) => (
+                    <option key={trip.id} value={trip.id}>
+                      {trip.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Or Create New Trip:
+              </label>
+              <input
+                type="text"
+                value={newTripName}
+                onChange={(e) => setNewTripName(e.target.value)}
+                placeholder="Enter trip name..."
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '16px',
+                  marginBottom: '10px',
+                }}
+              />
+              <button
+                onClick={handleCreateNewTrip}
+                disabled={!newTripName.trim() || isCreatingTrip}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: isCreatingTrip ? '#ccc' : '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: isCreatingTrip ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {isCreatingTrip ? 'Creating...' : 'Create New Trip'}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => setIsTripModalOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddVostcardToTrip}
+                disabled={!selectedTripId}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: selectedTripId ? '#007bff' : '#ccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: selectedTripId ? 'pointer' : 'not-allowed',
+                }}
+              >
+                Add to Trip
+              </button>
+            </div>
           </div>
         </div>
       )}

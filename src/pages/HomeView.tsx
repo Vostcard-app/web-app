@@ -240,7 +240,7 @@ const HomeView = () => {
     loadAllLocalVostcardsImmediate,
     createQuickcard
   } = useVostcard();
-  const { user, username, userID, userRole, loading, refreshUserRole } = useAuth();
+  const { user, username, userID, userRole, loading, refreshUserRole, isPendingAdvertiser } = useAuth();
   const { isDesktop } = useResponsive();
   const shouldUseContainer = isDesktop;
 
@@ -1448,6 +1448,27 @@ const HomeView = () => {
         position: 'relative',
         overflow: 'hidden'
       }}>
+        
+        {/* Pending Advertiser Notification */}
+        {isPendingAdvertiser && (
+          <div style={{
+            backgroundColor: '#fff3cd',
+            border: '1px solid #ffeaa7',
+            borderRadius: '0',
+            padding: '12px 16px',
+            textAlign: 'center',
+            fontSize: '14px',
+            color: '#856404',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            zIndex: 1000,
+            position: 'relative',
+            flexShrink: 0,
+          }}>
+            <strong>Account Pending Approval</strong><br />
+            Your advertiser application is being reviewed by an admin. You'll be contacted once approved.
+          </div>
+        )}
+        
         {/* Header */}
         <div 
           style={{

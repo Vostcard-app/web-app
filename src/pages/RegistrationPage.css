@@ -14,7 +14,7 @@
 }
 
 .header h1 {
-  font-size: 36px;
+  font-size: 14px;
   color: #333;
 }
 
@@ -22,14 +22,14 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
-  font-size: 24px;
+  font-size: 14px;
   color: #0077cc;
 }
 
 .welcome {
   text-align: center;
   margin: 20px 0;
-  font-size: 24px;
+  font-size: 14px;
 }
 
 .input-field {
@@ -44,42 +44,47 @@
 .centered-input {
   width: 100%;
   margin-bottom: 20px;
-  font-size: 16px;
+  font-size: 14px;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid #eee;
   background: #f8f8f8;
   color: #222;
   box-sizing: border-box;
-  text-align: center !important;
+  text-align: left !important;
+}
+
+/* Extra specific override to ensure left alignment works */
+input.centered-input {
+  text-align: left !important;
 }
 
 .centered-input::placeholder {
-  text-align: center !important;
+  text-align: left !important;
   opacity: 1 !important;
 }
 
-/* Force centering for all input states */
+/* Force left alignment for all input states */
 .centered-input:focus {
-  text-align: center !important;
+  text-align: left !important;
   outline: none;
 }
 
 /* Additional browser-specific overrides */
 .centered-input::-webkit-input-placeholder {
-  text-align: center !important;
+  text-align: left !important;
 }
 
 .centered-input::-moz-placeholder {
-  text-align: center !important;
+  text-align: left !important;
 }
 
 .centered-input:-ms-input-placeholder {
-  text-align: center !important;
+  text-align: left !important;
 }
 
 .centered-input:-moz-placeholder {
-  text-align: center !important;
+  text-align: left !important;
 }
 
 .password-wrapper {
@@ -95,7 +100,7 @@
   background-color: transparent;
   border: none;
   cursor: pointer;
-  font-size: 18px;
+  font-size: 14px;
   margin-left: 8px;
 }
 
@@ -115,7 +120,7 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .main-button:hover {

@@ -16,7 +16,7 @@ body {
 
 /* Override for registration page inputs */
 #root .centered-input {
-  text-align: center !important;
+  text-align: left !important;
 }
 
 .logo {
