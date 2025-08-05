@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
-import { ItineraryService } from '../services/itineraryService';
-import type { Itinerary, ItineraryItem } from '../types/ItineraryTypes';
+import { TripService } from '../services/tripService';
+import type { Trip, TripItem } from '../types/TripTypes';
 
 const TripDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,7 +12,7 @@ const TripDetailView: React.FC = () => {
   const { user } = useAuth();
   const { isDesktop } = useResponsive();
   
-  const [trip, setTrip] = useState<Itinerary | null>(null);
+  const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +46,7 @@ const TripDetailView: React.FC = () => {
       }
 
       console.log('📋 Loading trip:', id);
-      const tripData = await ItineraryService.getItinerary(id!);
+      const tripData = await TripService.getTripById(id!);
       setTrip(tripData);
       console.log(`✅ Loaded trip: ${tripData.name} with ${tripData.items.length} items`);
 
@@ -58,7 +58,7 @@ const TripDetailView: React.FC = () => {
     }
   };
 
-  const handleItemClick = (item: ItineraryItem) => {
+  const handleItemClick = (item: TripItem) => {
     console.log('🔄 Item clicked:', item.vostcardID, item.type);
     if (item.type === 'quickcard') {
       navigate(`/quickcard/${item.vostcardID}`);

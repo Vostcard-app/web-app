@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaPlus, FaMapMarkerAlt, FaCalendar, FaChevronRight, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
-import { ItineraryService } from '../services/itineraryService';
-import type { Itinerary } from '../types/ItineraryTypes';
+import { TripService } from '../services/tripService';
+import type { Trip } from '../types/TripTypes';
 
 const MyTripsListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { isDesktop } = useResponsive();
-  const [trips, setTrips] = useState<Itinerary[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -44,7 +44,7 @@ const MyTripsListView = () => {
       }
 
       console.log('📋 Loading user trips...');
-      const userTrips = await ItineraryService.getUserItineraries();
+      const userTrips = await TripService.getUserTrips();
       setTrips(userTrips);
       console.log(`✅ Loaded ${userTrips.length} trips`);
 
@@ -67,10 +67,10 @@ const MyTripsListView = () => {
     
     setIsCreatingTrip(true);
     try {
-      const newTrip = await ItineraryService.createItinerary({
+      const newTrip = await TripService.createTrip({
         name: newTripName.trim(),
         description: '',
-        isPublic: false
+        isPrivate: true
       });
       
       // Add to the trips list
@@ -90,7 +90,7 @@ const MyTripsListView = () => {
         tripData: {
           name: newTripName.trim(),
           description: '',
-          isPublic: false
+          isPrivate: true
         }
       });
       alert(`Error creating trip: ${error.message || 'Unknown error'}`);

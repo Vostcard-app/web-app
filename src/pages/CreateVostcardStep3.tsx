@@ -5,8 +5,8 @@ import { FaArrowLeft } from 'react-icons/fa';
 import { db, auth, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { ItineraryService } from '../services/itineraryService';
-import type { Itinerary } from '../types/ItineraryTypes';
+import { TripService } from '../services/tripService';
+import type { Trip } from '../types/TripTypes';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const CreateVostcardStep3: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
   const [isTripModalOpen, setIsTripModalOpen] = useState(false);
-  const [userItineraries, setUserItineraries] = useState<Itinerary[]>([]);
+  const [userTrips, setUserTrips] = useState<Trip[]>([]);
   const [selectedTripId, setSelectedTripId] = useState<string>('');
   const [newTripName, setNewTripName] = useState('');
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
@@ -132,17 +132,17 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   // Trip functionality
-  const loadUserItineraries = async () => {
+  const loadUserTrips = async () => {
     try {
-      const itineraries = await ItineraryService.getUserItineraries();
-      setUserItineraries(itineraries);
+      const trips = await TripService.getUserTrips();
+      setUserTrips(trips);
     } catch (error) {
       console.error('Error loading itineraries:', error);
     }
   };
 
   const handleAddToTrip = () => {
-    loadUserItineraries();
+    loadUserTrips();
     setIsTripModalOpen(true);
   };
 
@@ -151,12 +151,12 @@ const CreateVostcardStep3: React.FC = () => {
     
     setIsCreatingTrip(true);
     try {
-      const newTrip = await ItineraryService.createItinerary({
+      const newTrip = await TripService.createTrip({
         name: newTripName.trim(),
         description: '',
-        isPublic: false
+        isPrivate: true
       });
-      setUserItineraries([...userItineraries, newTrip]);
+      setUserTrips([...userTrips, newTrip]);
       setSelectedTripId(newTrip.id);
       setNewTripName('');
     } catch (error) {
@@ -186,7 +186,7 @@ const CreateVostcardStep3: React.FC = () => {
       console.log('✅ Vostcard saved with ID:', vostcardToSave.id);
       
       // Now add to trip with the real ID
-      await ItineraryService.addItemToItinerary(selectedTripId, {
+      await TripService.addItemToTrip(selectedTripId, {
         vostcardID: vostcardToSave.id,
         type: vostcardToSave.isQuickcard ? 'quickcard' : 'vostcard',
         title: vostcardToSave.title || 'Untitled',
@@ -194,7 +194,6 @@ const CreateVostcardStep3: React.FC = () => {
         photoURL: vostcardToSave.photos?.[0] ? 'pending_upload' : undefined,
         latitude: vostcardToSave.geo?.latitude,
         longitude: vostcardToSave.geo?.longitude,
-        username: vostcardToSave.username
       });
       
       console.log('✅ Added vostcard to trip successfully');
@@ -537,7 +536,7 @@ const CreateVostcardStep3: React.FC = () => {
           }}>
             <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to Trip</h3>
             
-            {userItineraries.length > 0 && (
+                            {userTrips.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
                   Select Existing Trip:
@@ -554,7 +553,7 @@ const CreateVostcardStep3: React.FC = () => {
                   }}
                 >
                   <option value="">Choose a trip...</option>
-                  {userItineraries.map((trip) => (
+                  {userTrips.map((trip) => (
                     <option key={trip.id} value={trip.id}>
                       {trip.name}
                     </option>

@@ -166,6 +166,29 @@ service cloud.firestore {
       }
     }
 
+    // Allow authenticated users to manage their own trips (personal collections)
+    match /trips/{tripId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userID || // Owner can always read
+        (resource.data.isPrivate == false && resource.data.shareableLink != null) // Public trips with shareable links
+      );
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userID;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userID;
+      
+      // Allow authenticated users to manage items within their trips
+      match /items/{itemId} {
+        allow read: if request.auth != null && (
+          request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID ||
+          (get(/databases/$(database)/documents/trips/$(tripId)).data.isPrivate == false && 
+           get(/databases/$(database)/documents/trips/$(tripId)).data.shareableLink != null)
+        );
+        allow create: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID;
+        allow update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID;
+        allow delete: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID;
+      }
+    }
+
     // Allow authenticated users to manage their own tours
     match /tours/{tourId} {
       allow read: if true; // Allow all users to read tours (for public sharing)
