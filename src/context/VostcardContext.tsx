@@ -2192,6 +2192,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // 🚀 FAST: Load from IndexedDB immediately without sync
   const loadAllLocalVostcardsImmediate = useCallback(async () => {
     console.log('⚡ loadAllLocalVostcardsImmediate called');
+    console.log('⚡ Current user:', authContext.user?.uid, authContext.username);
     try {
       const localDB = await openDB();
       const transaction = localDB.transaction([STORE_NAME], 'readonly');
@@ -2278,7 +2279,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // Log details of loaded vostcards for debugging sync issues
           console.log('📂 Loaded vostcards from IndexedDB:', filteredVostcards.length);
           
-
+          // 🔧 DEBUG: Log all personal posts details
+          console.log('📱 All personal posts loaded:', filteredVostcards.map(v => ({
+            id: v.id,
+            title: v.title,
+            isQuickcard: v.isQuickcard,
+            state: v.state,
+            userID: v.userID,
+            createdAt: v.createdAt
+          })));
           
           // 🔧 DEBUG: Count and log quickcards specifically
           const quickcardsFound = filteredVostcards.filter(v => v.isQuickcard === true);

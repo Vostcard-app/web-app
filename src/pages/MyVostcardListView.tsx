@@ -32,6 +32,24 @@ const MyVostcardListView = () => {
     savedVostcardsCount: savedVostcards.length
   });
 
+  // Debug: Log savedVostcards details
+  if (savedVostcards.length > 0) {
+    console.log('📱 Personal posts found:', savedVostcards.map(v => ({
+      id: v.id,
+      title: v.title,
+      isQuickcard: v.isQuickcard,
+      createdAt: v.createdAt,
+      state: v.state
+    })));
+  } else {
+    console.log('📱 No personal posts found. Checking loading state:', {
+      loading,
+      authLoading,
+      user: !!user,
+      error
+    });
+  }
+
   // Handle window resize for responsive design
   useEffect(() => {
     const handleResize = () => {
