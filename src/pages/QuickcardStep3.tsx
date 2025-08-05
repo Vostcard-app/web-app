@@ -170,7 +170,7 @@ const QuickcardStep3: React.FC = () => {
       alert(`✅ Quickcard will be added to "${tripName}"!\n\nProcessing in background...`);
       
       // ✅ Navigate to step 2 immediately
-      navigate('/create-quickcard-step2');
+      navigate('/quickcard-step2');
       
       // 🔄 Background processing - save quickcard and add to trip
       console.log('🔄 Background: Saving quickcard and adding to trip...');
