@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { TripService } from '../services/tripService';
+import { db } from '../firebase/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 import type { Trip, TripItem } from '../types/TripTypes';
 
 const TripDetailView: React.FC = () => {
@@ -15,6 +17,8 @@ const TripDetailView: React.FC = () => {
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [itemsStatus, setItemsStatus] = useState<Map<string, { exists: boolean; loading: boolean }>>(new Map());
+  const [cleaning, setCleaning] = useState(false);
 
   console.log('🔄 TripDetailView rendered', {
     id,
@@ -83,7 +87,7 @@ const TripDetailView: React.FC = () => {
     }
   };
 
-  const getItemTypeIcon = (item: ItineraryItem) => {
+  const getItemTypeIcon = (item: TripItem) => {
     if (item.type === 'quickcard') {
       return <FaImage style={{ color: '#007aff' }} />;
     } else {
@@ -91,9 +95,115 @@ const TripDetailView: React.FC = () => {
     }
   };
 
-  const getItemTypeLabel = (item: ItineraryItem) => {
+  const getItemTypeLabel = (item: TripItem) => {
     return item.type === 'quickcard' ? 'Quickcard' : 'Vostcard';
   };
+
+  // ✅ Check if content still exists
+  const checkContentExists = async (vostcardID: string) => {
+    try {
+      const docRef = doc(db, 'vostcards', vostcardID);
+      const docSnap = await getDoc(docRef);
+      return docSnap.exists();
+    } catch (error) {
+      console.error('Error checking content:', error);
+      return false;
+    }
+  };
+
+  // ✅ Check all trip items for existence
+  const checkAllItemsExistence = async () => {
+    if (!trip) return;
+    
+    const statusMap = new Map();
+    
+    for (const item of trip.items) {
+      statusMap.set(item.vostcardID, { exists: false, loading: true });
+      setItemsStatus(new Map(statusMap));
+      
+      const exists = await checkContentExists(item.vostcardID);
+      statusMap.set(item.vostcardID, { exists, loading: false });
+      setItemsStatus(new Map(statusMap));
+    }
+  };
+
+  // ✅ Remove duplicates and deleted items
+  const cleanupTrip = async () => {
+    if (!trip || !id) return;
+    
+    setCleaning(true);
+    try {
+      // Find unique items (remove duplicates) and existing items
+      const seen = new Set<string>();
+      const validItems: TripItem[] = [];
+      
+      for (const item of trip.items) {
+        const itemKey = `${item.vostcardID}-${item.type}`;
+        
+        // Skip duplicates
+        if (seen.has(itemKey)) {
+          console.log('🗑️ Removing duplicate:', item.title);
+          await TripService.removeItemFromTrip(id, item.id);
+          continue;
+        }
+        
+        // Check if content exists
+        const exists = await checkContentExists(item.vostcardID);
+        if (!exists) {
+          console.log('🗑️ Removing deleted content:', item.title);
+          await TripService.removeItemFromTrip(id, item.id);
+          continue;
+        }
+        
+        seen.add(itemKey);
+        validItems.push(item);
+      }
+      
+      // Reload the trip to show cleaned data
+      const updatedTrip = await TripService.getTripById(id);
+      setTrip(updatedTrip);
+      
+      alert(`✅ Trip cleaned up!\n\n• Removed ${trip.items.length - validItems.length} duplicate/deleted items\n• ${validItems.length} valid items remaining`);
+      
+    } catch (error) {
+      console.error('Error cleaning trip:', error);
+      alert(`Error cleaning trip: ${error.message || 'Unknown error'}`);
+    } finally {
+      setCleaning(false);
+    }
+  };
+
+  // ✅ Check for issues in the trip
+  const getTripIssues = () => {
+    if (!trip) return { duplicates: 0, deleted: 0, total: 0 };
+    
+    const seen = new Set<string>();
+    let duplicates = 0;
+    let deleted = 0;
+    
+    trip.items.forEach(item => {
+      const itemKey = `${item.vostcardID}-${item.type}`;
+      if (seen.has(itemKey)) {
+        duplicates++;
+      } else {
+        seen.add(itemKey);
+      }
+      
+      const status = itemsStatus.get(item.vostcardID);
+      if (status && !status.loading && !status.exists) {
+        deleted++;
+      }
+    });
+    
+    return { duplicates, deleted, total: trip.items.length };
+  };
+
+  // ✅ Check items existence when trip loads
+  useEffect(() => {
+    if (trip && trip.items.length > 0) {
+      checkAllItemsExistence();
+    }
+  }, [trip]);
 
   if (loading) {
     return (
@@ -291,6 +401,65 @@ const TripDetailView: React.FC = () => {
           </div>
           
           <div style={{ display: 'flex', gap: '8px' }}>
+            {/* ✅ Cleanup button if there are issues */}
+            {(() => {
+              const issues = getTripIssues();
+              if (issues.duplicates > 0 || issues.deleted > 0) {
+                return (
+                  <button
+                    onClick={cleanupTrip}
+                    disabled={cleaning}
+                    style={{
+                      background: cleaning ? 'rgba(255,193,7,0.3)' : 'rgba(255,193,7,0.9)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: 36,
+                      height: 36,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: cleaning ? 'not-allowed' : 'pointer',
+                      color: 'white',
+                      position: 'relative'
+                    }}
+                    title={`Clean up ${issues.duplicates} duplicates and ${issues.deleted} deleted items`}
+                  >
+                    {cleaning ? (
+                      <div style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        border: '2px solid #fff3cd', 
+                        borderTop: '2px solid #fff', 
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                    ) : (
+                      <FaTrash size={14} />
+                    )}
+                    {/* Issue indicator */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '-2px',
+                      right: '-2px',
+                      background: '#dc3545',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '14px',
+                      height: '14px',
+                      fontSize: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 'bold'
+                    }}>
+                      {issues.duplicates + issues.deleted}
+                    </div>
+                  </button>
+                );
+              }
+              return null;
+            })()}
+            
             {/* TODO: Add share functionality later */}
             <button
               style={{
@@ -463,6 +632,71 @@ const TripDetailView: React.FC = () => {
                           }}>
                             {getItemTypeLabel(item)}
                           </span>
+                          
+                          {/* ✅ Status indicators */}
+                          {(() => {
+                            const status = itemsStatus.get(item.vostcardID);
+                            const seen = new Set<string>();
+                            let isDuplicate = false;
+                            
+                            // Check for duplicates by scanning items before this one
+                            for (let i = 0; i < index; i++) {
+                              const prevItem = trip.items[i];
+                              const itemKey = `${prevItem.vostcardID}-${prevItem.type}`;
+                              seen.add(itemKey);
+                            }
+                            
+                            const currentItemKey = `${item.vostcardID}-${item.type}`;
+                            isDuplicate = seen.has(currentItemKey);
+                            
+                            return (
+                              <>
+                                {/* Deleted content indicator */}
+                                {status && !status.loading && !status.exists && (
+                                  <span style={{
+                                    background: '#fff2f2',
+                                    color: '#dc3545',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '9px',
+                                    fontWeight: '600',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '2px'
+                                  }}>
+                                    <FaExclamationTriangle size={8} />
+                                    DELETED
+                                  </span>
+                                )}
+                                
+                                {/* Duplicate indicator */}
+                                {isDuplicate && (
+                                  <span style={{
+                                    background: '#fff8e1',
+                                    color: '#f57c00',
+                                    padding: '2px 6px',
+                                    borderRadius: '4px',
+                                    fontSize: '9px',
+                                    fontWeight: '600'
+                                  }}>
+                                    DUPLICATE
+                                  </span>
+                                )}
+                                
+                                {/* Loading indicator */}
+                                {status && status.loading && (
+                                  <div style={{
+                                    width: '12px',
+                                    height: '12px',
+                                    border: '1px solid #ddd',
+                                    borderTop: '1px solid #007aff',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite'
+                                  }} />
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                         <FaChevronRight style={{ color: '#007aff', fontSize: '12px' }} />
                       </div>
