@@ -178,25 +178,19 @@ const QuickcardStep3: React.FC = () => {
       // 🔄 Background processing - save quickcard and add to trip
       console.log('🔄 Background: Saving quickcard and adding to trip...');
       
-      const quickcardToSave = {
-        ...currentVostcard,
-        state: 'private' as const,
-        isQuickcard: true
-      };
-      
-      // Save quickcard first
-      await postQuickcard(quickcardToSave);
-      console.log('✅ Background: Quickcard saved with ID:', quickcardToSave.id);
+      // ✅ Save quickcard as private post (not public to map)
+      await saveQuickcard();
+      console.log('✅ Background: Quickcard saved privately with ID:', currentVostcard.id);
       
       // Add to trip
       await TripService.addItemToTrip(tripId, {
-        vostcardID: quickcardToSave.id,
+        vostcardID: currentVostcard.id,
         type: 'quickcard',
-        title: quickcardToSave.title || 'Untitled',
-        description: quickcardToSave.description,
-        photoURL: quickcardToSave.photos?.[0] ? 'pending_upload' : undefined,
-        latitude: quickcardToSave.geo?.latitude,
-        longitude: quickcardToSave.geo?.longitude
+        title: currentVostcard.title || 'Untitled',
+        description: currentVostcard.description,
+        photoURL: currentVostcard.photos?.[0] ? 'pending_upload' : undefined,
+        latitude: currentVostcard.geo?.latitude,
+        longitude: currentVostcard.geo?.longitude
       });
       
       console.log('✅ Background: Quickcard added to trip successfully');

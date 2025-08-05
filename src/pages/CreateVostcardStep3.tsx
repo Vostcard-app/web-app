@@ -171,29 +171,22 @@ const CreateVostcardStep3: React.FC = () => {
     if (!selectedTripId || !currentVostcard) return;
     
     try {
-      console.log('🔄 Saving vostcard first before adding to trip...');
+      console.log('🔄 Saving vostcard privately first before adding to trip...');
       
-      // First, save the vostcard to get a real ID
-      // We'll save it privately first, then add to trip
-      const vostcardToSave = {
-        ...currentVostcard,
-        state: 'private' as const // Save as private initially
-      };
+      // ✅ Save vostcard as private post (not public to map)
+      await saveLocalVostcard();
       
-      // Use the VostcardContext postVostcard function to save
-      await postVostcard(vostcardToSave);
-      
-      console.log('✅ Vostcard saved with ID:', vostcardToSave.id);
+      console.log('✅ Vostcard saved privately with ID:', currentVostcard.id);
       
       // Now add to trip with the real ID
       await TripService.addItemToTrip(selectedTripId, {
-        vostcardID: vostcardToSave.id,
-        type: vostcardToSave.isQuickcard ? 'quickcard' : 'vostcard',
-        title: vostcardToSave.title || 'Untitled',
-        description: vostcardToSave.description,
-        photoURL: vostcardToSave.photos?.[0] ? 'pending_upload' : undefined,
-        latitude: vostcardToSave.geo?.latitude,
-        longitude: vostcardToSave.geo?.longitude,
+        vostcardID: currentVostcard.id,
+        type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
+        title: currentVostcard.title || 'Untitled',
+        description: currentVostcard.description,
+        photoURL: currentVostcard.photos?.[0] ? 'pending_upload' : undefined,
+        latitude: currentVostcard.geo?.latitude,
+        longitude: currentVostcard.geo?.longitude,
       });
       
       console.log('✅ Added vostcard to trip successfully');
