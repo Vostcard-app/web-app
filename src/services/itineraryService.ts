@@ -70,8 +70,8 @@ export const ItineraryService = {
    * Create a new itinerary
    */
   async createItinerary(data: CreateItineraryData): Promise<Itinerary> {
+    const user = auth.currentUser; // Move user declaration outside try block
     try {
-      const user = auth.currentUser;
       if (!user) {
         throw new Error('User not authenticated');
       }
