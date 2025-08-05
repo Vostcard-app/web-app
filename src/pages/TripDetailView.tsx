@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { TripService } from '../services/tripService';
@@ -19,6 +19,9 @@ const TripDetailView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [itemsStatus, setItemsStatus] = useState<Map<string, { exists: boolean; loading: boolean }>>(new Map());
   const [cleaning, setCleaning] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTrip, setEditingTrip] = useState<{name: string; description: string; isPrivate: boolean} | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   console.log('🔄 TripDetailView rendered', {
     id,
@@ -196,6 +199,73 @@ const TripDetailView: React.FC = () => {
     });
     
     return { duplicates, deleted };
+  };
+
+  // Handle edit trip
+  const handleEditTrip = () => {
+    if (!trip) return;
+    setEditingTrip({
+      name: trip.name,
+      description: trip.description || '',
+      isPrivate: trip.isPrivate
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateTrip = async () => {
+    if (!trip || !editingTrip) return;
+    
+    setUpdating(true);
+    try {
+      const updatedTrip = await TripService.updateTrip(trip.id, {
+        name: editingTrip.name.trim(),
+        description: editingTrip.description.trim() || undefined,
+        isPrivate: editingTrip.isPrivate
+      });
+      
+      setTrip(updatedTrip);
+      setShowEditModal(false);
+      setEditingTrip(null);
+      alert('✅ Trip updated successfully!');
+      
+    } catch (error) {
+      console.error('Error updating trip:', error);
+      alert(`Error updating trip: ${error.message || 'Unknown error'}`);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Handle share trip
+  const handleShareTrip = async () => {
+    if (!trip) return;
+    
+    try {
+      // If trip is private, make it public first
+      if (trip.isPrivate) {
+        const updatedTrip = await TripService.updateTrip(trip.id, {
+          isPrivate: false
+        });
+        setTrip(updatedTrip);
+      }
+      
+      // Generate share URL
+      const shareUrl = trip.shareableLink 
+        ? `${window.location.origin}/trip/${trip.shareableLink}`
+        : `${window.location.origin}/trip/${trip.id}`;
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      alert('✅ Share link copied to clipboard!\n\nAnyone with this link can view your trip.');
+      
+    } catch (error) {
+      console.error('Error sharing trip:', error);
+      // Fallback for browsers that don't support clipboard API
+      const shareUrl = trip.shareableLink 
+        ? `${window.location.origin}/trip/${trip.shareableLink}`
+        : `${window.location.origin}/trip/${trip.id}`;
+      alert(`Share this link:\n\n${shareUrl}`);
+    }
   };
 
   // ✅ Check items existence when trip loads
@@ -466,7 +536,7 @@ const TripDetailView: React.FC = () => {
               return null;
             })()}
             
-            {/* TODO: Add share functionality later */}
+            {/* Edit Trip Button */}
             <button
               style={{
                 background: 'rgba(255,255,255,0.15)',
@@ -480,7 +550,28 @@ const TripDetailView: React.FC = () => {
                 cursor: 'pointer',
                 color: 'white',
               }}
-              onClick={() => console.log('Share trip - TODO')}
+              onClick={handleEditTrip}
+              title="Edit Trip"
+            >
+              <FaEdit size={16} />
+            </button>
+            
+            {/* Share Trip Button */}
+            <button
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 36,
+                height: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'white',
+              }}
+              onClick={handleShareTrip}
+              title="Share Trip"
             >
               <FaShare size={16} />
             </button>
@@ -819,6 +910,202 @@ const TripDetailView: React.FC = () => {
           }
         `
       }} />
+
+      {/* Edit Trip Modal */}
+      {showEditModal && editingTrip && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#333'
+              }}>
+                Edit Trip
+              </h3>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingTrip(null);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <FaTimes style={{ color: '#666' }} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                marginBottom: '6px'
+              }}>
+                Trip Name *
+              </label>
+              <input
+                type="text"
+                value={editingTrip.name}
+                onChange={(e) => setEditingTrip({
+                  ...editingTrip,
+                  name: e.target.value
+                })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+                maxLength={50}
+                disabled={updating}
+              />
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                marginBottom: '6px'
+              }}>
+                Description (optional)
+              </label>
+              <textarea
+                value={editingTrip.description}
+                onChange={(e) => setEditingTrip({
+                  ...editingTrip,
+                  description: e.target.value
+                })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  minHeight: '80px',
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
+                }}
+                maxLength={200}
+                disabled={updating}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="checkbox"
+                  checked={editingTrip.isPrivate}
+                  onChange={(e) => setEditingTrip({
+                    ...editingTrip,
+                    isPrivate: e.target.checked
+                  })}
+                  style={{ marginRight: '8px' }}
+                  disabled={updating}
+                />
+                Keep trip private
+              </label>
+              <div style={{
+                fontSize: '12px',
+                color: '#666',
+                marginTop: '4px',
+                marginLeft: '20px'
+              }}>
+                {editingTrip.isPrivate 
+                  ? 'Only you can see this trip' 
+                  : 'Trip can be shared with others'
+                }
+              </div>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingTrip(null);
+                }}
+                disabled={updating}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  cursor: updating ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleUpdateTrip}
+                disabled={updating || !editingTrip.name.trim()}
+                style={{
+                  backgroundColor: updating || !editingTrip.name.trim() ? '#ccc' : '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  cursor: updating || !editingTrip.name.trim() ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {updating ? 'Updating...' : 'Update Trip'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
