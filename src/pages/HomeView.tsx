@@ -1643,7 +1643,7 @@ const HomeView = () => {
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
-                    navigate('/itineraries');
+                    navigate('/my-trips');
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}

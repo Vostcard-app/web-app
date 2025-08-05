@@ -168,32 +168,46 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handleAddVostcardToTrip = async () => {
-    if (!selectedTripId) return;
+    if (!selectedTripId || !currentVostcard) return;
     
     try {
-      // We need to save the vostcard first to get its ID
-      if (!currentVostcard) return;
+      console.log('🔄 Saving vostcard first before adding to trip...');
       
-      // For now, we'll use a placeholder ID - in a real implementation,
-      // you'd want to save the vostcard first to get its actual ID
-      const vostcardId = `temp_${Date.now()}`;
+      // First, save the vostcard to get a real ID
+      // We'll save it privately first, then add to trip
+      const vostcardToSave = {
+        ...currentVostcard,
+        state: 'private' as const // Save as private initially
+      };
       
+      // Use the VostcardContext postVostcard function to save
+      await postVostcard(vostcardToSave);
+      
+      console.log('✅ Vostcard saved with ID:', vostcardToSave.id);
+      
+      // Now add to trip with the real ID
       await ItineraryService.addItemToItinerary(selectedTripId, {
-        vostcardID: vostcardId,
-        type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-        title: currentVostcard.title || 'Untitled',
-        description: currentVostcard.description,
-        latitude: currentVostcard.geo?.latitude,
-        longitude: currentVostcard.geo?.longitude,
-        username: currentVostcard.username
+        vostcardID: vostcardToSave.id,
+        type: vostcardToSave.isQuickcard ? 'quickcard' : 'vostcard',
+        title: vostcardToSave.title || 'Untitled',
+        description: vostcardToSave.description,
+        photoURL: vostcardToSave.photos?.[0] ? 'pending_upload' : undefined,
+        latitude: vostcardToSave.geo?.latitude,
+        longitude: vostcardToSave.geo?.longitude,
+        username: vostcardToSave.username
       });
       
-      alert('Added to trip successfully!');
+      console.log('✅ Added vostcard to trip successfully');
+      alert('Vostcard saved and added to trip successfully!');
       setIsTripModalOpen(false);
       setSelectedTripId('');
+      
+      // Navigate back to home or wherever appropriate
+      navigate('/home');
+      
     } catch (error) {
-      console.error('Error adding to trip:', error);
-      alert('Error adding to trip');
+      console.error('Error saving vostcard or adding to trip:', error);
+      alert(`Error: ${error.message || 'Failed to save vostcard or add to trip'}`);
     }
   };
 

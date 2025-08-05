@@ -45,6 +45,8 @@ import QuickcardListView from "./pages/QuickcardListView";
 import QuickcardDetailView from "./pages/QuickcardDetailView";
 import ItinerariesListView from "./pages/ItinerariesListView";
 import ItineraryDetailView from "./pages/ItineraryDetailView";
+import MyTripsListView from "./pages/MyTripsListView";
+import TripDetailView from "./pages/TripDetailView";
 import ScriptLibraryView from "./pages/ScriptLibraryView";
 import ScriptEditorView from "./pages/ScriptEditorView";
 import ScriptToolView from "./pages/ScriptToolView";
@@ -123,6 +125,10 @@ function App() {
                   {/* 📋 Itinerary Routes */}
                   <Route path="/itineraries" element={<ItinerariesListView />} />
                   <Route path="/itinerary/:id" element={<ItineraryDetailView />} />
+                  
+                  {/* 🧳 Trip Routes */}
+                  <Route path="/my-trips" element={<MyTripsListView />} />
+                  <Route path="/trip/:id" element={<TripDetailView />} />
 
                   {/* 📜 Script Management */}
                   <Route path="/script-library" element={<ScriptLibraryView />} />
