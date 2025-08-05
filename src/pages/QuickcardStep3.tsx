@@ -25,6 +25,7 @@ const QuickcardStep3: React.FC = () => {
   const [newTripName, setNewTripName] = useState('');
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [isAddingToTrip, setIsAddingToTrip] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
 
   
@@ -226,8 +227,19 @@ const QuickcardStep3: React.FC = () => {
       return;
     }
     
+    // ✅ Set saving state and provide immediate feedback
+    setIsSaving(true);
+    
+    // ✅ Show immediate success message and navigate to home
+    alert('✅ Saving your Quickcard...\n\nReturning to home screen.');
+    
+    // ✅ Navigate to home immediately
+    console.log('🔄 Navigating to home while saving in background...');
+    navigate('/home');
+    
+    // 🔄 Handle saving in background
     try {
-      console.log('💾 Starting quickcard private save...');
+      console.log('💾 Background: Starting quickcard private save...');
       
       // Save the quickcard privately
       await saveQuickcard();
@@ -235,15 +247,13 @@ const QuickcardStep3: React.FC = () => {
       // Clear the current vostcard state
       clearVostcard();
       
-      // Show success message
-      alert('Your Quickcard has been saved privately and is available in your Quickcards list.');
-      
-      // Navigate to quickcards list
-      navigate('/quickcards');
+      console.log('✅ Background: Quickcard saved successfully');
       
     } catch (error) {
-      console.error('❌ Error saving quickcard privately:', error);
-      alert('Failed to save quickcard. Please try again.');
+      console.error('❌ Background error saving quickcard:', error);
+      // Silent error - user already navigated away
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -469,15 +479,15 @@ const QuickcardStep3: React.FC = () => {
         {/* Save to Personal Posts Button */}
         <button
           onClick={handleSavePrivately}
-          disabled={!isReadyForPersonalSave}
+          disabled={!isReadyForPersonalSave || isSaving}
           style={{
             ...saveButtonStyle,
-            backgroundColor: isReadyForPersonalSave ? '#002B4D' : '#aaa',
-            cursor: isReadyForPersonalSave ? 'pointer' : 'not-allowed',
+            backgroundColor: isSaving ? '#28a745' : (isReadyForPersonalSave ? '#002B4D' : '#aaa'),
+            cursor: (isSaving || !isReadyForPersonalSave) ? 'not-allowed' : 'pointer',
             touchAction: 'manipulation'
           }}
         >
-          Save to Personal Posts
+          {isSaving ? '✅ Saving...' : 'Save to Personal Posts'}
         </button>
 
         {/* Post to Map (Public Posts) Button */}
