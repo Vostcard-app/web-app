@@ -1,12 +1,49 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus, FaSave } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { TripService } from '../services/tripService';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import type { Trip, TripItem } from '../types/TripTypes';
+
+// Import pin assets
+import VostcardPin from '../assets/Vostcard_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
+import QuickcardPin from '../assets/quickcard_pin.png';
+
+// Custom icons for the map
+const vostcardIcon = new L.Icon({
+  iconUrl: VostcardPin,
+  iconSize: [60, 60],
+  iconAnchor: [30, 60],
+  popupAnchor: [0, -60],
+});
+
+const offerIcon = new L.Icon({
+  iconUrl: OfferPin,
+  iconSize: [60, 60],
+  iconAnchor: [30, 60],
+  popupAnchor: [0, -60],
+});
+
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
+  iconSize: [60, 60],
+  iconAnchor: [30, 60],
+  popupAnchor: [0, -60],
+});
+
+const guideIcon = new L.Icon({
+  iconUrl: '/Guide_pin.png',
+  iconSize: [60, 60],
+  iconAnchor: [30, 60],
+  popupAnchor: [0, -60],
+});
 
 const TripDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -385,6 +422,21 @@ const TripDetailView: React.FC = () => {
       console.error('❌ Error saving trip:', error);
       alert('Failed to save trip. Please try again.');
     }
+  };
+
+  // Function to get the appropriate icon for a trip item
+  const getIconForItem = (item: TripItem) => {
+    if (item.isOffer) return offerIcon;
+    if (item.isQuickcard) {
+      // Check user role for quickcards
+      if (item.userRole === 'guide' || item.userRole === 'admin') {
+        return guideIcon;
+      }
+      return quickcardIcon;
+    }
+    // Regular vostcard - check if posted by guide
+    if (item.userRole === 'guide') return guideIcon;
+    return vostcardIcon;
   };
 
   // ✅ Check items existence when trip loads
@@ -867,18 +919,111 @@ const TripDetailView: React.FC = () => {
           )}
         </div>
 
-        {/* Items List */}
+        {/* Content Area - List or Map View */}
         <div style={{ 
           flex: 1,
-          padding: '0 20px 20px 20px',
-          overflowY: 'auto'
+          padding: viewMode === 'map' ? '0' : '0 20px 20px 20px',
+          overflowY: viewMode === 'map' ? 'hidden' : 'auto'
         }}>
-          {(() => {
-            const visibleItems = trip.items.filter((item) => {
-              const status = itemsStatus.get(item.vostcardID);
-              return !status || status.loading || status.exists;
-            });
-            const totalItems = trip.items.length;
+          {viewMode === 'map' ? (
+            // Map View
+            (() => {
+              const itemsWithLocation = trip.items.filter((item) => {
+                const status = itemsStatus.get(item.vostcardID);
+                const exists = !status || status.loading || status.exists;
+                return exists && item.latitude && item.longitude;
+              });
+
+              if (itemsWithLocation.length === 0) {
+                return (
+                  <div style={{
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    color: '#666'
+                  }}>
+                    <div>
+                      <FaMapMarkerAlt size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+                      <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No locations to show</h3>
+                      <p style={{ margin: 0, fontSize: '14px' }}>
+                        None of the posts in this trip have location data.
+                      </p>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Calculate center point of all locations
+              const centerLat = itemsWithLocation.reduce((sum, item) => sum + parseFloat(item.latitude!), 0) / itemsWithLocation.length;
+              const centerLng = itemsWithLocation.reduce((sum, item) => sum + parseFloat(item.longitude!), 0) / itemsWithLocation.length;
+
+              return (
+                <div style={{ height: '100%', position: 'relative' }}>
+                  <MapContainer
+                    center={[centerLat, centerLng]}
+                    zoom={13}
+                    style={{ height: '100%', width: '100%' }}
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    {itemsWithLocation.map((item) => (
+                      <Marker
+                        key={item.id}
+                        position={[parseFloat(item.latitude!), parseFloat(item.longitude!)]}
+                        icon={getIconForItem(item)}
+                      >
+                        <Popup>
+                          <div style={{ minWidth: '200px' }}>
+                            <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>
+                              {item.title || 'Untitled'}
+                            </h4>
+                            {item.description && (
+                              <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
+                                {item.description.length > 100 
+                                  ? `${item.description.substring(0, 100)}...` 
+                                  : item.description}
+                              </p>
+                            )}
+                            <div style={{ fontSize: '12px', color: '#888' }}>
+                              {item.isQuickcard ? 'Quickcard' : item.isOffer ? 'Offer' : 'Vostcard'}
+                              {item.username && ` • by ${item.username}`}
+                            </div>
+                            <button
+                              onClick={() => handleItemClick(item)}
+                              style={{
+                                marginTop: '8px',
+                                background: '#007aff',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MapContainer>
+                </div>
+              );
+            })()
+          ) : (
+            // List View
+            (() => {
+              const visibleItems = trip.items.filter((item) => {
+                const status = itemsStatus.get(item.vostcardID);
+                return !status || status.loading || status.exists;
+              });
+              const totalItems = trip.items.length;
             
             // No items at all in database
             if (totalItems === 0) {
@@ -1108,6 +1253,8 @@ const TripDetailView: React.FC = () => {
                 return null;
               })()}
             </div>
+          )}
+            ))
           )}
         </div>
       </div>
