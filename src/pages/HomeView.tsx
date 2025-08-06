@@ -926,7 +926,7 @@ const HomeView = () => {
     fitMapToPins(posts, userLoc);
   }, [fitMapToPins]);
 
-  // Load user avatar
+  // Load user avatar - deferred to improve login speed
   useEffect(() => {
     const loadUserAvatar = async () => {
       if (user?.uid) {
@@ -946,15 +946,21 @@ const HomeView = () => {
     };
 
     if (user?.uid && !userAvatar) {
-      loadUserAvatar();
+      // Defer avatar loading to improve login speed
+      setTimeout(() => {
+        loadUserAvatar();
+      }, 1000); // Load avatar 1s after auth completes
     }
   }, [user?.uid, userAvatar]);
 
-  // Initial load - Skip if tour data is active
+  // Initial load - Skip if tour data is active, defer for faster login
   useEffect(() => {
     if (!loading && !hasInitialLoad && !tourData) {
-      console.log('🔄 Initial load - loading regular vostcards');
-      loadVostcards();
+      // Defer vostcards loading to improve login speed
+      setTimeout(() => {
+        console.log('🔄 Deferred initial load - loading regular vostcards');
+        loadVostcards();
+      }, 500); // Load vostcards 500ms after auth completes
     } else if (tourData) {
       console.log('🎬 Initial load - skipping regular vostcards, tour data is active');
       setHasInitialLoad(true); // Mark as loaded to prevent future loads
