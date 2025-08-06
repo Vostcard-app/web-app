@@ -1428,7 +1428,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // 2. Delete from Firebase - FAIL HARD if this doesn't work
       console.log('🗑️ Attempting to delete from Firebase...');
+      
+      // First, let's check what's in the document to debug permission issues
       const vostcardRef = doc(db, 'vostcards', id);
+      try {
+        const docSnap = await getDoc(vostcardRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log('🔍 DEBUG: Document data before delete:', {
+            id: docSnap.id,
+            userID: data.userID,
+            currentUserUID: user.uid,
+            hasUserID: !!data.userID,
+            userIDMatch: data.userID === user.uid,
+            visibility: data.visibility,
+            state: data.state
+          });
+        } else {
+          console.log('🔍 DEBUG: Document does not exist:', id);
+        }
+      } catch (readError) {
+        console.error('🔍 DEBUG: Error reading document before delete:', readError);
+      }
+      
       await deleteDoc(vostcardRef);
       console.log('✅ Deleted Vostcard from Firebase:', id);
       
