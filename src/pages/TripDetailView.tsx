@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
+import { useVostcardStorage } from '../context/VostcardStorageContext';
 import { TripService } from '../services/tripService';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
@@ -13,6 +14,7 @@ const TripDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDesktop } = useResponsive();
+  const { savedVostcards } = useVostcardStorage();
   
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +28,11 @@ const TripDetailView: React.FC = () => {
   // View mode states
   type ViewMode = 'list' | 'map' | 'slideshow';
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  
+  // Content management states for edit modal
+  const [userVostcards, setUserVostcards] = useState<any[]>([]);
+  const [loadingUserContent, setLoadingUserContent] = useState(false);
+  const [showAddItemsSection, setShowAddItemsSection] = useState(false);
 
   console.log('🔄 TripDetailView rendered', {
     id,
@@ -214,6 +221,77 @@ const TripDetailView: React.FC = () => {
       isPrivate: trip.isPrivate
     });
     setShowEditModal(true);
+    loadUserContent();
+  };
+
+  // Load user's vostcards and quickcards for adding to trip
+  const loadUserContent = async () => {
+    setLoadingUserContent(true);
+    try {
+      // Filter out items that are already in the trip
+      const tripItemIds = new Set(trip?.items.map(item => item.vostcardID) || []);
+      const availableContent = savedVostcards.filter(vostcard => 
+        !tripItemIds.has(vostcard.id) && 
+        (vostcard.state === 'posted' || vostcard.state === 'private')
+      );
+      setUserVostcards(availableContent);
+    } catch (error) {
+      console.error('Error loading user content:', error);
+    } finally {
+      setLoadingUserContent(false);
+    }
+  };
+
+  // Add item to trip
+  const handleAddItemToTrip = async (vostcard: any) => {
+    if (!trip) return;
+    
+    try {
+      const newItem = await TripService.addItemToTrip(trip.id, {
+        vostcardID: vostcard.id,
+        type: vostcard.isQuickcard ? 'quickcard' : 'vostcard',
+        title: vostcard.title,
+        description: vostcard.description,
+        photoURL: vostcard.photoURLs?.[0] || vostcard.photoURL,
+        latitude: vostcard.geo?.latitude,
+        longitude: vostcard.geo?.longitude
+      });
+      
+      // Update trip with new item
+      setTrip(prev => prev ? {
+        ...prev,
+        items: [...prev.items, newItem]
+      } : null);
+      
+      // Remove from available content
+      setUserVostcards(prev => prev.filter(v => v.id !== vostcard.id));
+      
+    } catch (error) {
+      console.error('Error adding item to trip:', error);
+      alert('Failed to add item to trip. Please try again.');
+    }
+  };
+
+  // Remove item from trip
+  const handleRemoveItemFromTrip = async (itemId: string) => {
+    if (!trip) return;
+    
+    try {
+      await TripService.removeItemFromTrip(trip.id, itemId);
+      
+      // Update trip by removing the item
+      setTrip(prev => prev ? {
+        ...prev,
+        items: prev.items.filter(item => item.id !== itemId)
+      } : null);
+      
+      // Reload user content to include the removed item
+      loadUserContent();
+      
+    } catch (error) {
+      console.error('Error removing item from trip:', error);
+      alert('Failed to remove item from trip. Please try again.');
+    }
   };
 
   const handleUpdateTrip = async () => {
@@ -1065,6 +1143,207 @@ const TripDetailView: React.FC = () => {
                   : 'Trip can be shared with others'
                 }
               </div>
+            </div>
+
+            {/* Content Management Section */}
+            <div style={{ marginBottom: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '16px'
+              }}>
+                <h4 style={{ 
+                  margin: 0, 
+                  fontSize: '16px', 
+                  fontWeight: '600', 
+                  color: '#333' 
+                }}>
+                  Manage Content ({trip?.items.length || 0} items)
+                </h4>
+                <button
+                  onClick={() => setShowAddItemsSection(!showAddItemsSection)}
+                  disabled={updating}
+                  style={{
+                    backgroundColor: showAddItemsSection ? '#e8f4fd' : '#007aff',
+                    color: showAddItemsSection ? '#007aff' : 'white',
+                    border: showAddItemsSection ? '1px solid #007aff' : 'none',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    cursor: updating ? 'not-allowed' : 'pointer',
+                    fontWeight: '500'
+                  }}
+                >
+                  {showAddItemsSection ? 'Hide' : 'Add Items'}
+                </button>
+              </div>
+
+              {/* Current Trip Items */}
+              {trip && trip.items.length > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '500', 
+                    color: '#333', 
+                    marginBottom: '8px' 
+                  }}>
+                    Current Items:
+                  </div>
+                  <div style={{ 
+                    maxHeight: '150px', 
+                    overflowY: 'auto',
+                    border: '1px solid #eee',
+                    borderRadius: '6px'
+                  }}>
+                    {trip.items.map((item, index) => (
+                      <div key={item.id} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '8px 12px',
+                        borderBottom: index < trip.items.length - 1 ? '1px solid #f0f0f0' : 'none'
+                      }}>
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          backgroundColor: '#f0f0f0',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: '600',
+                          color: '#666',
+                          marginRight: '8px',
+                          flexShrink: 0
+                        }}>
+                          {index + 1}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ 
+                            fontSize: '13px', 
+                            fontWeight: '500', 
+                            color: '#333',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {item.title || 'Untitled'}
+                          </div>
+                          <div style={{ 
+                            fontSize: '11px', 
+                            color: '#666'
+                          }}>
+                            {item.type === 'quickcard' ? '📷 Quickcard' : '📱 Vostcard'}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveItemFromTrip(item.id)}
+                          disabled={updating}
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: '#dc3545',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '4px',
+                            cursor: updating ? 'not-allowed' : 'pointer',
+                            fontSize: '12px'
+                          }}
+                          title="Remove from trip"
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Add Items Section */}
+              {showAddItemsSection && (
+                <div>
+                  <div style={{ 
+                    fontSize: '14px', 
+                    fontWeight: '500', 
+                    color: '#333', 
+                    marginBottom: '8px' 
+                  }}>
+                    Add from your content:
+                  </div>
+                  
+                  {loadingUserContent ? (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '20px',
+                      color: '#666'
+                    }}>
+                      Loading your content...
+                    </div>
+                  ) : userVostcards.length === 0 ? (
+                    <div style={{ 
+                      textAlign: 'center', 
+                      padding: '20px',
+                      color: '#666',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '6px',
+                      fontSize: '13px'
+                    }}>
+                      No additional content available to add
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      maxHeight: '200px', 
+                      overflowY: 'auto',
+                      border: '1px solid #eee',
+                      borderRadius: '6px'
+                    }}>
+                      {userVostcards.map((vostcard) => (
+                        <div key={vostcard.id} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '8px 12px',
+                          borderBottom: '1px solid #f0f0f0'
+                        }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ 
+                              fontSize: '13px', 
+                              fontWeight: '500', 
+                              color: '#333',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {vostcard.title || 'Untitled'}
+                            </div>
+                            <div style={{ 
+                              fontSize: '11px', 
+                              color: '#666'
+                            }}>
+                              {vostcard.isQuickcard ? '📷 Quickcard' : '📱 Vostcard'} • {vostcard.state}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleAddItemToTrip(vostcard)}
+                            disabled={updating}
+                            style={{
+                              backgroundColor: '#4CAF50',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '4px 8px',
+                              fontSize: '11px',
+                              cursor: updating ? 'not-allowed' : 'pointer',
+                              fontWeight: '500'
+                            }}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div style={{
