@@ -245,6 +245,15 @@ export const TripService = {
    */
   async addItemToTrip(tripId: string, data: AddItemToTripData): Promise<TripItem> {
     try {
+      console.log('🎯 addItemToTrip called with data:', {
+        vostcardID: data.vostcardID,
+        type: data.type,
+        title: data.title,
+        photoURL: data.photoURL,
+        hasPhotoURL: !!data.photoURL,
+        photoURLValue: data.photoURL
+      });
+      
       const user = auth.currentUser;
       if (!user) {
         throw new Error('User not authenticated');
@@ -275,6 +284,8 @@ export const TripService = {
       let photoURL = data.photoURL;
       let latitude = data.latitude;
       let longitude = data.longitude;
+      
+      console.log('🔍 Initial values before fetch:', { title, photoURL, needsFetch: !title || !photoURL });
 
       if (!title || !photoURL) {
         try {
@@ -317,6 +328,13 @@ export const TripService = {
         latitude,
         longitude
       };
+
+      console.log('💾 Saving trip item with data:', {
+        id: itemId,
+        title: itemDoc.title,
+        photoURL: itemDoc.photoURL,
+        photoURLType: typeof itemDoc.photoURL
+      });
 
       await setDoc(doc(db, 'trips', tripId, 'items', itemId), itemDoc);
 
