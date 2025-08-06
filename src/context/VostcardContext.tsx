@@ -1470,46 +1470,61 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Update last sync timestamp
       setLastSyncTimestamp(new Date());
 
-      // 3. Delete from IndexedDB
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      await new Promise<void>((resolve, reject) => {
-        const request = store.delete(id);
-        request.onerror = () => {
-          console.error('❌ Failed to delete Vostcard from IndexedDB:', request.error);
-          reject(request.error);
-        };
-        request.onsuccess = () => {
-          console.log('✅ Deleted Vostcard from IndexedDB:', id);
-          resolve();
-        };
-      });
+      // 3. Delete from IndexedDB (graceful failure - don't fail the whole operation)
+      try {
+        console.log('🔍 DEBUG: Attempting IndexedDB deletion...');
+        const localDB = await openDB();
+        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        await new Promise<void>((resolve, reject) => {
+          const request = store.delete(id);
+          request.onerror = () => {
+            console.error('❌ Failed to delete Vostcard from IndexedDB:', request.error);
+            reject(request.error);
+          };
+          request.onsuccess = () => {
+            console.log('✅ Deleted Vostcard from IndexedDB:', id);
+            resolve();
+          };
+        });
+      } catch (indexedDBError) {
+        console.warn('⚠️ IndexedDB deletion failed, but Firebase deletion succeeded:', indexedDBError);
+        console.log('ℹ️ This is not critical - the post was successfully deleted from the server');
+      }
 
-      // 4. Update UI
+      // 4. Update UI (always do this since Firebase deletion succeeded)
       setSavedVostcards(prev => prev.filter(vostcard => vostcard.id !== id));
       console.log('✅ Hybrid delete completed for Vostcard:', id);
       
     } catch (error) {
       console.error('❌ Error in deletePrivateVostcard:', error);
+      console.error('🔍 DEBUG: Error occurred during delete process');
       
-      // Show specific error message based on what failed
-      if (error instanceof Error) {
-        if ((error as any).code === 'permission-denied') {
-          alert('Permission denied. Check your Firebase rules or try logging in again.');
-        } else if ((error as any).code === 'unavailable') {
-          alert('Network error. Please check your internet connection and try again.');
-        } else if ((error as any).code === 'unauthenticated') {
-          alert('Authentication error. Please log in again.');
+      // Check if this is a critical error (Firebase deletion failed) vs non-critical (IndexedDB only)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Only show user error if it's a critical Firebase error
+      if (errorMessage.includes('Firebase') || errorMessage.includes('permission') || errorMessage.includes('auth')) {
+        if (error instanceof Error) {
+          if ((error as any).code === 'permission-denied') {
+            alert('Permission denied. Check your Firebase rules or try logging in again.');
+          } else if ((error as any).code === 'unavailable') {
+            alert('Network error. Please check your internet connection and try again.');
+          } else if ((error as any).code === 'unauthenticated') {
+            alert('Authentication error. Please log in again.');
+          } else {
+            alert(`Failed to delete post: ${error.message}`);
+          }
         } else {
-          alert(`Failed to delete Vostcard: ${error.message}`);
+          alert('Failed to delete post: Unknown error occurred');
         }
+        
+        throw error instanceof Error ? error : new Error('Unknown error occurred while deleting vostcard');
       } else {
-        alert('Failed to delete Vostcard: Unknown error occurred');
+        // Non-critical error - log it but don't fail the operation
+        console.warn('⚠️ Non-critical error during delete (likely IndexedDB issue)');
       }
-      
-      throw error instanceof Error ? error : new Error('Unknown error occurred while deleting vostcard');
     }
   }, [addDeletionMarker, setLastSyncTimestamp]);
 
