@@ -244,7 +244,6 @@ export default function CreateVostcardStep2() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture
         multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}

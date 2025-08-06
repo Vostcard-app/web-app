@@ -418,7 +418,6 @@ export default function QuickcardStep2() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        capture
         multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}
