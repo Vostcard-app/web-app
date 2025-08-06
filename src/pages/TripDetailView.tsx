@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { TripService } from '../services/tripService';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import type { Trip, TripItem } from '../types/TripTypes';
 
 const TripDetailView: React.FC = () => {
@@ -19,6 +19,12 @@ const TripDetailView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [itemsStatus, setItemsStatus] = useState<Map<string, { exists: boolean; loading: boolean }>>(new Map());
   const [cleaning, setCleaning] = useState(false);
+  
+  // Add Post modal states
+  const [showAddPostModal, setShowAddPostModal] = useState(false);
+  const [availablePosts, setAvailablePosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [addingPosts, setAddingPosts] = useState<Set<string>>(new Set());
 
   
   // View mode states
@@ -269,6 +275,102 @@ const TripDetailView: React.FC = () => {
         : `${window.location.origin}/trip/${trip.id}`;
       alert(`Share this link:\n\n${shareUrl}`);
     }
+  };
+
+  // Add Post functionality
+  const handleOpenAddPostModal = async () => {
+    setShowAddPostModal(true);
+    setLoadingPosts(true);
+    
+    try {
+      // Load user's posts that aren't already in this trip
+      const currentItemIds = trip?.items.map(item => item.vostcardID) || [];
+      
+      // Get user's posted vostcards (public posts)
+      const userPostsQuery = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user?.uid),
+        where('state', '==', 'posted'),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const userPostsSnapshot = await getDocs(userPostsQuery);
+      const userPosts = userPostsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        type: 'vostcard'
+      }));
+      
+      // Get user's quickcards
+      const quickcardsQuery = query(
+        collection(db, 'quickcards'),
+        where('userID', '==', user?.uid),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const quickcardsSnapshot = await getDocs(quickcardsQuery);
+      const quickcards = quickcardsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        type: 'quickcard'
+      }));
+      
+      // Combine and filter out posts already in trip
+      const allPosts = [...userPosts, ...quickcards].filter(post => 
+        !currentItemIds.includes(post.id)
+      );
+      
+      setAvailablePosts(allPosts);
+      
+    } catch (error) {
+      console.error('Error loading available posts:', error);
+      alert('Failed to load your posts. Please try again.');
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  const handleAddPostToTrip = async (post: any) => {
+    if (!trip) return;
+    
+    setAddingPosts(prev => new Set([...prev, post.id]));
+    
+    try {
+      const addItemData = {
+        vostcardID: post.id,
+        type: post.type,
+        title: post.title || 'Untitled',
+        description: post.description,
+        photoURL: post.photoURLs?.[0] || post.photoURL || null,
+        latitude: post.latitude,
+        longitude: post.longitude
+      };
+      
+      await TripService.addItemToTrip(trip.id, addItemData);
+      
+      // Refresh the trip to show the new item
+      await loadTrip();
+      
+      // Remove from available posts
+      setAvailablePosts(prev => prev.filter(p => p.id !== post.id));
+      
+      console.log('✅ Added post to trip:', post.id);
+      
+    } catch (error) {
+      console.error('Error adding post to trip:', error);
+      alert('Failed to add post to trip. Please try again.');
+    } finally {
+      setAddingPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(post.id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleCloseAddPostModal = () => {
+    setShowAddPostModal(false);
+    setAvailablePosts([]);
   };
 
   // ✅ Check items existence when trip loads
@@ -539,7 +641,27 @@ const TripDetailView: React.FC = () => {
               return null;
             })()}
             
-
+            {/* Add Post Button - Only show for trip owner */}
+            {user && trip && user.uid === trip.userID && (
+              <button
+                onClick={handleOpenAddPostModal}
+                style={{
+                  background: 'rgba(76, 175, 80, 0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 36,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                }}
+                title="Add Post to Trip"
+              >
+                <FaPlus size={14} />
+              </button>
+            )}
             
             {/* Share Trip Button */}
             <button
@@ -953,6 +1075,228 @@ const TripDetailView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Add Post Modal */}
+      {showAddPostModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }} onClick={handleCloseAddPostModal}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '20px',
+            maxWidth: '400px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: '18px',
+                fontWeight: '600',
+                color: '#333'
+              }}>
+                Add Post to Trip
+              </h3>
+              <button
+                onClick={handleCloseAddPostModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '0',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            {/* Loading State */}
+            {loadingPosts && (
+              <div style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: '#666'
+              }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  border: '3px solid #f3f3f3',
+                  borderTop: '3px solid #007aff',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 16px'
+                }} />
+                Loading your posts...
+              </div>
+            )}
+
+            {/* Posts List */}
+            {!loadingPosts && (
+              <>
+                {availablePosts.length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    color: '#666'
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱</div>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '500' }}>
+                      No posts available
+                    </p>
+                    <p style={{ margin: '0', fontSize: '14px' }}>
+                      All your posts are already in this trip or you haven't created any posts yet.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    {availablePosts.map((post) => {
+                      const isAdding = addingPosts.has(post.id);
+                      return (
+                        <div
+                          key={post.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '12px',
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '8px',
+                            backgroundColor: isAdding ? '#f8f9fa' : 'white'
+                          }}
+                        >
+                          {/* Thumbnail */}
+                          <div style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '6px',
+                            overflow: 'hidden',
+                            backgroundColor: '#f0f0f0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            {(post.photoURLs?.[0] || post.photoURL) ? (
+                              <img
+                                src={post.photoURLs?.[0] || post.photoURL}
+                                alt={post.title || 'Post'}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover'
+                                }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: '20px', color: '#999' }}>
+                                {post.type === 'quickcard' ? '📷' : '📱'}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Content */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <h4 style={{
+                              margin: '0 0 4px 0',
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              color: '#333',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {post.title || 'Untitled'}
+                            </h4>
+                            <p style={{
+                              margin: '0',
+                              fontSize: '12px',
+                              color: '#666',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {post.type === 'quickcard' ? 'Quickcard' : 'Vostcard'}
+                              {post.description && ` • ${post.description}`}
+                            </p>
+                          </div>
+
+                          {/* Add Button */}
+                          <button
+                            onClick={() => handleAddPostToTrip(post)}
+                            disabled={isAdding}
+                            style={{
+                              backgroundColor: isAdding ? '#ccc' : '#4CAF50',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '8px 12px',
+                              fontSize: '12px',
+                              cursor: isAdding ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              flexShrink: 0
+                            }}
+                          >
+                            {isAdding ? (
+                              <>
+                                <div style={{
+                                  width: '12px',
+                                  height: '12px',
+                                  border: '2px solid #fff',
+                                  borderTop: '2px solid transparent',
+                                  borderRadius: '50%',
+                                  animation: 'spin 1s linear infinite'
+                                }} />
+                                Adding...
+                              </>
+                            ) : (
+                              <>
+                                <FaPlus size={10} />
+                                Add
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* CSS Animation for loading spinner */}
       <style dangerouslySetInnerHTML={{
