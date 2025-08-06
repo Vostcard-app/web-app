@@ -34,7 +34,6 @@ const AllPostedVostcardsView: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const ITEMS_PER_PAGE = 5;
-  const GUIDE_FILTER_ITEMS_PER_PAGE = 20; // Load more when guide filter is active
   
   // Type filtering state (Offers are never filtered out)
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -349,15 +348,26 @@ const AllPostedVostcardsView: React.FC = () => {
     const fetchAllPostedVostcards = async () => {
       setLoading(true);
       try {
-        const itemsToLoad = showGuidesOnly ? GUIDE_FILTER_ITEMS_PER_PAGE : ITEMS_PER_PAGE;
-        console.log('🔄 Fetching first', itemsToLoad, 'posted vostcards and quickcards...', showGuidesOnly ? '(guide filter active)' : '');
+        console.log('🔄 Fetching first', ITEMS_PER_PAGE, 'posted vostcards and quickcards...', showGuidesOnly ? '(guide filter active)' : '');
         
-        // Query with pagination: limit based on whether guide filter is active
-        const q1 = query(
-          collection(db, 'vostcards'), 
-          where('state', '==', 'posted'),
-          limit(itemsToLoad)
-        );
+        // Query based on whether guide filter is active
+        let q1;
+        if (showGuidesOnly) {
+          // When guide filter is active, query directly for guide posts
+          q1 = query(
+            collection(db, 'vostcards'), 
+            where('state', '==', 'posted'),
+            where('userRole', '==', 'guide'),
+            limit(ITEMS_PER_PAGE)
+          );
+        } else {
+          // Normal query for all posts
+          q1 = query(
+            collection(db, 'vostcards'), 
+            where('state', '==', 'posted'),
+            limit(ITEMS_PER_PAGE)
+          );
+        }
         const snapshot1 = await getDocs(q1);
         const postedVostcards = snapshot1.docs.map(doc => ({
           id: doc.id,
@@ -407,15 +417,28 @@ const AllPostedVostcardsView: React.FC = () => {
     
     setLoadingMore(true);
     try {
-      console.log('🔄 Loading next', ITEMS_PER_PAGE, 'vostcards...');
+      console.log('🔄 Loading next', ITEMS_PER_PAGE, 'vostcards...', showGuidesOnly ? '(guide filter active)' : '');
       
       // Query for next batch, starting after the last document
-      const q1 = query(
-        collection(db, 'vostcards'), 
-        where('state', '==', 'posted'),
-        startAfter(lastDoc),
-        limit(ITEMS_PER_PAGE)
-      );
+      let q1;
+      if (showGuidesOnly) {
+        // When guide filter is active, query directly for guide posts
+        q1 = query(
+          collection(db, 'vostcards'), 
+          where('state', '==', 'posted'),
+          where('userRole', '==', 'guide'),
+          startAfter(lastDoc),
+          limit(ITEMS_PER_PAGE)
+        );
+      } else {
+        // Normal query for all posts
+        q1 = query(
+          collection(db, 'vostcards'), 
+          where('state', '==', 'posted'),
+          startAfter(lastDoc),
+          limit(ITEMS_PER_PAGE)
+        );
+      }
       const snapshot1 = await getDocs(q1);
       const newVostcards = snapshot1.docs.map(doc => ({
         id: doc.id,
@@ -635,45 +658,9 @@ const AllPostedVostcardsView: React.FC = () => {
       });
     }
     
-    // Apply Guide-only filtering - but only if user profiles have been loaded
+    // Guide filtering is now done at the database level, no client-side filtering needed
     if (showGuidesOnly) {
-      const profilesLoaded = Object.keys(userProfiles).length > 0;
-      console.log(`🔍 Starting Guide-only filter. Total posts before filter: ${filtered.length}`);
-      console.log(`🔍 User profiles loaded:`, Object.keys(userProfiles).length, 'profilesLoaded:', profilesLoaded);
-      
-      if (!profilesLoaded) {
-        console.log(`⏳ User profiles not loaded yet - skipping guide filter to avoid showing empty results`);
-        // Don't filter yet - wait for profiles to load
-        // Return all posts for now
-      } else {
-        console.log(`🔍 Sample user profiles:`, Object.entries(userProfiles).slice(0, 3).map(([id, profile]) => ({
-          id,
-          userRole: profile?.userRole,
-          username: profile?.username
-        })));
-        
-        // Filter based on the userRole field in the vostcard document itself (same as map pins)
-        filtered = filtered.filter(v => {
-          const isGuidePost = v.userRole === 'guide';
-          
-          // Debug logging
-          console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, vostcard.userRole=${v.userRole}, isGuide=${isGuidePost}, username=${v.username}`);
-          
-          return isGuidePost;
-        });
-        
-        console.log(`📚 Guide-only filter applied: ${filtered.length} guide posts found`);
-        
-        // Also log guide posts found for debugging
-        const guidePosts = filtered.filter(v => v.userRole === 'guide');
-        console.log('📚 Guide posts found:', guidePosts.length, guidePosts.map(p => ({
-          id: p.id,
-          title: p.title,
-          userID: p.userID,
-          username: p.username,
-          userRole: p.userRole
-        })));
-      }
+      console.log(`📚 Guide filter active - posts already filtered at database level: ${filtered.length} guide posts`);
     }
 
     return filtered;
