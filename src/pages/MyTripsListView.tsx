@@ -365,7 +365,7 @@ const MyTripsListView = () => {
                   }}
                   title={deletingIds.has(trip.id) ? 'Deleting...' : 'Delete trip'}
                 >
-                  <FaTrash size={16} />
+                  <FaTrash size={22} />
                 </button>
 
                 {/* Trip Title and Date */}
