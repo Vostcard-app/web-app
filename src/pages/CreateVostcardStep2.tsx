@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import PhotoOptionsModal from '../components/PhotoOptionsModal';
 
 /*
   📱 CAMERA APPROACH: Currently using Step2CameraView for enhanced orientation handling
@@ -16,10 +17,16 @@ export default function CreateVostcardStep2() {
   const navigate = useNavigate();
   const { updateVostcard, currentVostcard } = useVostcard();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
+  
+  // Photo options modal state
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+  const [pendingPhotoIndex, setPendingPhotoIndex] = useState<number | null>(null);
 
   // Load saved photos when component mounts
   useEffect(() => {
@@ -37,33 +44,74 @@ export default function CreateVostcardStep2() {
     }
   }, [currentVostcard]);
 
-  // Handler for when a thumbnail is tapped - NEW: Navigate to dedicated camera view
+  // Handler for when a thumbnail is tapped - shows photo options modal
   const handleAddPhoto = (index: number) => {
-    const photoType = index === 0 ? 'distant' : 'near';
-    navigate('/step2-camera', {
-      state: {
-        photoType,
-        photoIndex: index
-      }
-    });
+    setPendingPhotoIndex(index);
+    setShowPhotoOptions(true);
   };
 
-  // FALLBACK: Original file input handler (kept for easy reversion)
-  const handleAddPhotoFallback = (index: number) => {
-    setActiveThumbnail(index);
-    fileInputRef.current?.click();
+  // Handle photo option selection
+  const handleTakePhoto = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null) {
+      // Option 1: Navigate to dedicated camera view (original approach)
+      const photoType = pendingPhotoIndex === 0 ? 'distant' : 'near';
+      navigate('/step2-camera', {
+        state: {
+          photoType,
+          photoIndex: pendingPhotoIndex
+        }
+      });
+    }
+  };
+
+  const handleUploadFile = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && fileInputRef.current) {
+      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleSelectFromLibrary = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && libraryInputRef.current) {
+      libraryInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      libraryInputRef.current.click();
+    }
   };
 
   // Handle file selection (camera or library)
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && activeThumbnail !== null) {
+    const indexStr = event.target.getAttribute('data-index');
+    const index = indexStr ? parseInt(indexStr, 10) : activeThumbnail;
+    
+    if (file && index !== null && index >= 0 && index < 2) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        return;
+      }
+
+      console.log(`📸 Adding photo ${index + 1}:`, {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
       setSelectedPhotos(prev => {
         const updated = [...prev];
-        updated[activeThumbnail] = file;
+        updated[index] = file;
         return updated;
       });
-      setActiveThumbnail(null);
+    }
+    
+    setActiveThumbnail(null);
+    
+    // Clear the input
+    if (event.target) {
+      event.target.value = '';
     }
   };
 
@@ -226,13 +274,42 @@ export default function CreateVostcardStep2() {
         </div>
       </div>
 
-      {/* Hidden file inputs */}
+      {/* Hidden file inputs for different photo sources */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         style={{ display: 'none' }}
         onChange={handleFileChange}
+      />
+      
+      {/* Camera input - optimized for camera capture */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      
+      {/* Library input - allows multiple file types */}
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
+      {/* Photo Options Modal */}
+      <PhotoOptionsModal
+        isOpen={showPhotoOptions}
+        onClose={() => setShowPhotoOptions(false)}
+        onTakePhoto={handleTakePhoto}
+        onUploadFile={handleUploadFile}
+        onSelectFromLibrary={handleSelectFromLibrary}
+        title="Add Photo"
       />
     </div>
   );

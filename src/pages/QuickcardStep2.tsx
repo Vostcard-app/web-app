@@ -2,15 +2,22 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages, FaTimes } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import PhotoOptionsModal from '../components/PhotoOptionsModal';
 
 export default function QuickcardStep2() {
   const navigate = useNavigate();
   const { updateVostcard, currentVostcard } = useVostcard();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos (4 thumbnails for quickcards)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
+  
+  // Photo options modal state
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+  const [pendingPhotoIndex, setPendingPhotoIndex] = useState<number | null>(null);
 
   // Initialize empty quickcard or load saved photos when component mounts
   useEffect(() => {
@@ -47,12 +54,34 @@ export default function QuickcardStep2() {
     }
   }, [currentVostcard, updateVostcard]);
 
-  // Handler for when a thumbnail is tapped - opens native camera/file picker
+  // Handler for when a thumbnail is tapped - shows photo options modal
   const handleAddPhoto = (index: number) => {
-    setActiveThumbnail(index);
-    if (fileInputRef.current) {
-      fileInputRef.current.setAttribute('data-index', index.toString());
+    setPendingPhotoIndex(index);
+    setShowPhotoOptions(true);
+  };
+
+  // Handle photo option selection
+  const handleTakePhoto = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && cameraInputRef.current) {
+      cameraInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleUploadFile = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && fileInputRef.current) {
+      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
       fileInputRef.current.click();
+    }
+  };
+
+  const handleSelectFromLibrary = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && libraryInputRef.current) {
+      libraryInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      libraryInputRef.current.click();
     }
   };
 
@@ -413,7 +442,7 @@ export default function QuickcardStep2() {
         </div>
       </div>
 
-      {/* Hidden file input */}
+      {/* Hidden file inputs for different photo sources */}
       <input
         ref={fileInputRef}
         type="file"
@@ -421,7 +450,35 @@ export default function QuickcardStep2() {
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
+      
+      {/* Camera input - optimized for camera capture */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+      
+      {/* Library input - allows multiple file types */}
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
 
+      {/* Photo Options Modal */}
+      <PhotoOptionsModal
+        isOpen={showPhotoOptions}
+        onClose={() => setShowPhotoOptions(false)}
+        onTakePhoto={handleTakePhoto}
+        onUploadFile={handleUploadFile}
+        onSelectFromLibrary={handleSelectFromLibrary}
+        title="Add Photo"
+      />
 
     </div>
   );
