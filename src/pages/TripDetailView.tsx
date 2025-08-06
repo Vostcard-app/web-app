@@ -756,6 +756,27 @@ const TripDetailView: React.FC = () => {
               <FaMap size={12} />
               Map View
             </button>
+            
+            <button
+              onClick={() => setViewMode('slideshow')}
+              style={{
+                backgroundColor: viewMode === 'slideshow' ? '#007aff' : '#f0f0f0',
+                color: viewMode === 'slideshow' ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FaPhotoVideo size={12} />
+              Slideshow
+            </button>
           </div>
           
           {trip.isPublic && (
