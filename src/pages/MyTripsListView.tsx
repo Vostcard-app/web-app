@@ -412,8 +412,8 @@ const MyTripsListView = () => {
                 }}>
                   {/* Single Thumbnail */}
                   <div style={{
-                    minWidth: '80px',
-                    height: '80px',
+                    minWidth: '50px',
+                    height: '50px',
                     backgroundColor: '#f0f0f0',
                     borderRadius: '8px',
                     display: 'flex',
@@ -434,11 +434,11 @@ const MyTripsListView = () => {
                         }}
                       />
                     ) : trip.items && trip.items.length > 0 ? (
-                      <div style={{ fontSize: '32px' }}>
+                      <div style={{ fontSize: '20px' }}>
                         {trip.items[0].type === 'quickcard' ? '📷' : '📱'}
                       </div>
                     ) : (
-                      <div style={{ fontSize: '32px', color: '#ccc' }}>🧳</div>
+                      <div style={{ fontSize: '20px', color: '#ccc' }}>🧳</div>
                     )}
                     {trip.items && trip.items.length > 1 && (
                       <div style={{
