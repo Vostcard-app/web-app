@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { TripService } from '../services/tripService';
@@ -22,6 +22,10 @@ const TripDetailView: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingTrip, setEditingTrip] = useState<{name: string; description: string; isPrivate: boolean} | null>(null);
   const [updating, setUpdating] = useState(false);
+  
+  // View mode states
+  type ViewMode = 'list' | 'map' | 'slideshow';
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   console.log('🔄 TripDetailView rendered', {
     id,
@@ -639,12 +643,97 @@ const TripDetailView: React.FC = () => {
           )}
         </div>
 
-        {/* Items List */}
+        {/* View Mode Toggle */}
+        <div style={{ 
+          padding: '0 20px 16px 20px',
+          borderBottom: '1px solid #eee'
+        }}>
+          <div style={{
+            display: 'flex',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '12px',
+            padding: '4px',
+            gap: '4px'
+          }}>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: viewMode === 'list' ? '#007aff' : 'transparent',
+                color: viewMode === 'list' ? 'white' : '#666',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FaList size={12} />
+              List
+            </button>
+            
+            <button
+              onClick={() => setViewMode('map')}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: viewMode === 'map' ? '#007aff' : 'transparent',
+                color: viewMode === 'map' ? 'white' : '#666',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FaMap size={12} />
+              Map
+            </button>
+            
+            <button
+              onClick={() => setViewMode('slideshow')}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: viewMode === 'slideshow' ? '#007aff' : 'transparent',
+                color: viewMode === 'slideshow' ? 'white' : '#666',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FaPhotoVideo size={12} />
+              Slideshow
+            </button>
+          </div>
+        </div>
+
+        {/* Dynamic Content Area */}
         <div style={{ 
           flex: 1,
           padding: '0 20px 20px 20px',
           overflowY: 'auto'
         }}>
+          {viewMode === 'list' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {(() => {
             const visibleItems = trip.items.filter((item) => {
               const status = itemsStatus.get(item.vostcardID);
@@ -896,6 +985,48 @@ const TripDetailView: React.FC = () => {
                 }
                 return null;
               })()}
+            </div>
+          )}
+
+          {viewMode === 'map' && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '400px',
+              textAlign: 'center',
+              color: '#666'
+            }}>
+              <FaMap size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+              <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>Map View</h3>
+              <p style={{ margin: 0, fontSize: '14px' }}>
+                Interactive map showing all trip locations
+              </p>
+              <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#999' }}>
+                Coming soon!
+              </p>
+            </div>
+          )}
+
+          {viewMode === 'slideshow' && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '400px',
+              textAlign: 'center',
+              color: '#666'
+            }}>
+              <FaPhotoVideo size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+              <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>Slideshow View</h3>
+              <p style={{ margin: 0, fontSize: '14px' }}>
+                Auto-cycling slideshow of trip items
+              </p>
+              <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#999' }}>
+                Coming soon!
+              </p>
             </div>
           )}
         </div>
