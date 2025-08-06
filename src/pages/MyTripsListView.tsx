@@ -46,6 +46,21 @@ const MyTripsListView = () => {
 
       console.log('📋 Loading user trips...');
       const userTrips = await TripService.getUserTrips();
+      
+      // Debug: Log trip data to see what photoURL data we have
+      console.log('🧳 Loaded trips:', userTrips.length);
+      userTrips.forEach(trip => {
+        console.log(`Trip "${trip.name}":`, {
+          itemCount: trip.items?.length || 0,
+          firstItem: trip.items?.[0] ? {
+            id: trip.items[0].id,
+            title: trip.items[0].title,
+            photoURL: trip.items[0].photoURL,
+            type: trip.items[0].type
+          } : null
+        });
+      });
+      
       setTrips(userTrips);
       console.log(`✅ Loaded ${userTrips.length} trips`);
 
