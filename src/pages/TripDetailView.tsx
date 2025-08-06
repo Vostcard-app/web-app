@@ -702,10 +702,60 @@ const TripDetailView: React.FC = () => {
             alignItems: 'center', 
             gap: '4px',
             fontSize: '12px',
-            color: '#888'
+            color: '#888',
+            marginBottom: '16px'
           }}>
             <FaCalendar />
             Created {formatDate(trip.createdAt)}
+          </div>
+
+          {/* View Mode Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '16px'
+          }}>
+            <button
+              onClick={() => setViewMode('list')}
+              style={{
+                backgroundColor: viewMode === 'list' ? '#007aff' : '#f0f0f0',
+                color: viewMode === 'list' ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FaList size={12} />
+              List View
+            </button>
+            
+            <button
+              onClick={() => setViewMode('map')}
+              style={{
+                backgroundColor: viewMode === 'map' ? '#007aff' : '#f0f0f0',
+                color: viewMode === 'map' ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <FaMap size={12} />
+              Map View
+            </button>
           </div>
           
           {trip.isPublic && (
