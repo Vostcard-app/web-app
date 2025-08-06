@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus, FaSave } from 'react-icons/fa';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAuth } from '../context/AuthContext';
@@ -44,6 +44,29 @@ const guideIcon = new L.Icon({
   iconAnchor: [30, 60],
   popupAnchor: [0, -60],
 });
+
+// Component to auto-fit map bounds to show all pins
+const AutoFitBounds: React.FC<{ positions: [number, number][] }> = ({ positions }) => {
+  const map = useMap();
+
+  React.useEffect(() => {
+    if (positions.length > 0) {
+      if (positions.length === 1) {
+        // Single pin - center on it with a reasonable zoom
+        map.setView(positions[0], 15);
+      } else {
+        // Multiple pins - fit to bounds
+        const bounds = L.latLngBounds(positions);
+        map.fitBounds(bounds, { 
+          padding: [20, 20], // Add some padding around the bounds
+          maxZoom: 16 // Don't zoom in too much even for close pins
+        });
+      }
+    }
+  }, [map, positions]);
+
+  return null;
+};
 
 const TripDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -956,21 +979,28 @@ const TripDetailView: React.FC = () => {
                 );
               }
 
-              // Calculate center point of all locations
-              const centerLat = itemsWithLocation.reduce((sum, item) => sum + parseFloat(item.latitude!), 0) / itemsWithLocation.length;
-              const centerLng = itemsWithLocation.reduce((sum, item) => sum + parseFloat(item.longitude!), 0) / itemsWithLocation.length;
+              // Get all positions for auto-fitting bounds
+              const positions: [number, number][] = itemsWithLocation.map(item => [
+                parseFloat(item.latitude!), 
+                parseFloat(item.longitude!)
+              ]);
+
+              // Calculate center point as fallback (won't be used due to AutoFitBounds)
+              const centerLat = positions.reduce((sum, pos) => sum + pos[0], 0) / positions.length;
+              const centerLng = positions.reduce((sum, pos) => sum + pos[1], 0) / positions.length;
 
               return (
                 <div style={{ height: '100%', position: 'relative' }}>
                   <MapContainer
                     center={[centerLat, centerLng]}
-                    zoom={13}
+                    zoom={10}
                     style={{ height: '100%', width: '100%' }}
                   >
                     <TileLayer
                       url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
+                    <AutoFitBounds positions={positions} />
                     {itemsWithLocation.map((item) => (
                       <Marker
                         key={item.id}
