@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
@@ -42,9 +42,9 @@ const TripDetailView: React.FC = () => {
       setError('Invalid trip ID');
       setLoading(false);
     }
-  }, [id, loadTrip]);
+  }, [id]);
 
-  const loadTrip = useCallback(async () => {
+  const loadTrip = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -76,7 +76,7 @@ const TripDetailView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  };
 
   const handleItemClick = (item: TripItem) => {
     console.log('🔄 Item clicked:', item.vostcardID, item.type);
