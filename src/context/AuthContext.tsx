@@ -184,34 +184,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser);
           setUserID(currentUser.uid);
 
-          // Set basic auth immediately for faster user experience
-          setTimeout(() => {
-            console.log('⚡ AuthProvider: Proceeding with basic auth for speed');
-            setLoading(false);
-          }, 100); // Reduced from 400ms to 100ms for much faster UI
+          // Set basic auth immediately for fastest user experience
+          console.log('⚡ AuthProvider: Proceeding with basic auth for speed');
+          setLoading(false);
 
-          // Add timeout for Firestore queries specifically
-          const firestoreTimeout = setTimeout(() => {
-            console.warn('⏰ AuthProvider: Firestore query timeout after 2 seconds, proceeding with basic auth');
-            setLoading(false);
-          }, 2000); // Reduced from 3000ms to 2000ms
-
-          // Fetch user data from Firestore - check both collections simultaneously
-          try {
-            const userDocRef = doc(db, "users", currentUser.uid);
-            const advertiserDocRef = doc(db, "advertisers", currentUser.uid);
-            
-            let userDocSnap, advertiserDocSnap;
-
-            [userDocSnap, advertiserDocSnap] = await Promise.race([
-              Promise.all([getDoc(userDocRef), getDoc(advertiserDocRef)]),
-              new Promise<never>((_, reject) => 
-                setTimeout(() => reject(new Error('Firestore query timeout')), 2000)
-              )
-            ]);
-
-            // Clear the Firestore timeout since we got results
-            clearTimeout(firestoreTimeout);
+          // Fetch user data from Firestore in background - don't block UI
+          setTimeout(async () => {
+            try {
+              const userDocRef = doc(db, "users", currentUser.uid);
+              const advertiserDocRef = doc(db, "advertisers", currentUser.uid);
+              
+              const [userDocSnap, advertiserDocSnap] = await Promise.all([
+                getDoc(userDocRef), 
+                getDoc(advertiserDocRef)
+              ]);
 
             console.log('🔍 AuthContext Debug:', {
               userExists: userDocSnap?.exists() || false,
@@ -242,37 +228,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setUserRole('user'); // Default to user role for faster experience
               setAccountStatus('approved'); // Default to approved
             }
-          } catch (error) {
-            console.error("❌ Error fetching user data:", error);
-            // Clear the Firestore timeout on error
-            clearTimeout(firestoreTimeout);
-            setUsername(null);
-            
-            // If it's a timeout error, we can still proceed with basic auth
-            if (error instanceof Error && error.message === 'Firestore query timeout') {
-              console.warn('⏰ Proceeding with basic authentication due to Firestore timeout');
-              
-              // FALLBACK: Try a simple direct query as last resort
-              try {
-                console.log('🔄 Attempting fallback direct Firestore query...');
-                const fallbackUserDoc = await getDoc(doc(db, "users", currentUser.uid));
-                if (fallbackUserDoc.exists()) {
-                  const fallbackData = fallbackUserDoc.data();
-                  console.log('✅ Fallback query successful:', fallbackData);
-                  setUsername(fallbackData.username || null);
-                  setUserRole(fallbackData.userRole || 'user');
-                } else {
-                  console.warn('❌ Fallback: No user document found');
-                  setUserRole('user'); // Default to user role
-                }
-              } catch (fallbackError) {
-                console.error('❌ Fallback query also failed:', fallbackError);
-                setUserRole('user'); // Default to user role for faster experience
-              }
-            } else {
-              setUserRole(null);
+            } catch (error) {
+              console.error("❌ Error fetching user data:", error);
+              setUsername(null);
+              // Default to basic user role on error
+              setUserRole('user');
+              setAccountStatus('approved');
             }
-          }
+          }, 50); // Run Firestore queries after 50ms to not block initial auth
         } else {
           console.log('🔐 No user authenticated - setting up guest state immediately');
           setUser(null);
