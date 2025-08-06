@@ -215,6 +215,7 @@ const TripDetailView: React.FC = () => {
   // Handle edit trip
   const handleEditTrip = () => {
     if (!trip) return;
+    console.log('🎯 Opening edit modal for trip:', trip.name, 'with', trip.items.length, 'items');
     setEditingTrip({
       name: trip.name,
       description: trip.description || '',
@@ -226,14 +227,19 @@ const TripDetailView: React.FC = () => {
 
   // Load user's vostcards and quickcards for adding to trip
   const loadUserContent = async () => {
+    console.log('📋 Loading user content for trip editing...');
     setLoadingUserContent(true);
     try {
       // Filter out items that are already in the trip
       const tripItemIds = new Set(trip?.items.map(item => item.vostcardID) || []);
+      console.log('🔍 Trip item IDs to exclude:', Array.from(tripItemIds));
+      console.log('📱 Total saved vostcards:', savedVostcards.length);
+      
       const availableContent = savedVostcards.filter(vostcard => 
         !tripItemIds.has(vostcard.id) && 
         (vostcard.state === 'posted' || vostcard.state === 'private')
       );
+      console.log('✅ Available content for adding:', availableContent.length, 'items');
       setUserVostcards(availableContent);
     } catch (error) {
       console.error('Error loading user content:', error);
@@ -1013,7 +1019,9 @@ const TripDetailView: React.FC = () => {
             borderRadius: '12px',
             padding: '24px',
             width: '100%',
-            maxWidth: '400px',
+            maxWidth: '500px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
             boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
           }}>
             <div style={{
@@ -1147,6 +1155,7 @@ const TripDetailView: React.FC = () => {
 
             {/* Content Management Section */}
             <div style={{ marginBottom: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+              {console.log('🎨 Rendering content management section, trip items:', trip?.items.length)}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
