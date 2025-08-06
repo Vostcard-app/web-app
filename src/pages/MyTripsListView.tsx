@@ -154,6 +154,28 @@ const MyTripsListView = () => {
     return parts.join(', ');
   };
 
+  const getTripCreationDate = (trip: Trip) => {
+    if (!trip.items || trip.items.length === 0) {
+      // If no items, use trip creation date
+      return new Date(trip.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+    
+    // Find the earliest item (first post added to trip)
+    const sortedItems = trip.items.sort((a, b) => 
+      new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime()
+    );
+    
+    return new Date(sortedItems[0].addedAt).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   const formatDate = (date: any) => {
     if (!date) return 'No date';
     try {
@@ -321,183 +343,176 @@ const MyTripsListView = () => {
                   borderRadius: '12px',
                   padding: '16px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  border: '1px solid #e0e0e0'
+                  border: '1px solid #e0e0e0',
+                  position: 'relative'
                 }}
               >
-                {/* Trip Header */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  marginBottom: '12px'
-                }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{
-                      margin: '0 0 4px 0',
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      color: '#333',
-                      cursor: 'pointer'
-                    }}
-                      onClick={() => navigate(`/trip/${trip.id}`)}
-                    >
-                      {trip.name}
-                    </h3>
-                    <p style={{
-                      margin: '0 0 8px 0',
-                      fontSize: '14px',
-                      color: '#666',
-                      lineHeight: '1.4'
-                    }}>
-                      {trip.description || 'No description'}
-                    </p>
-                    <div style={{
-                      fontSize: '13px',
-                      color: '#888',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}>
-                      <span>{getTripSummary(trip)}</span>
-                      {!trip.isPrivate && (
-                        <span style={{
-                          backgroundColor: '#e3f2fd',
-                          color: '#1976d2',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: '500'
-                        }}>
-                          Public
-                        </span>
-                      )}
-                    </div>
+                {/* Delete Button - Upper Right Corner */}
+                <button
+                  onClick={() => handleDeleteTrip(trip)}
+                  disabled={deletingIds.has(trip.id)}
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    color: deletingIds.has(trip.id) ? '#ccc' : '#ff4444',
+                    cursor: deletingIds.has(trip.id) ? 'not-allowed' : 'pointer',
+                    fontSize: '18px',
+                    padding: '4px',
+                    borderRadius: '4px'
+                  }}
+                  title={deletingIds.has(trip.id) ? 'Deleting...' : 'Delete trip'}
+                >
+                  <FaTrash size={16} />
+                </button>
+
+                {/* Trip Title and Date */}
+                <div style={{ marginBottom: '16px', paddingRight: '40px' }}>
+                  <h3 style={{
+                    margin: '0 0 4px 0',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#333',
+                    cursor: 'pointer'
+                  }}
+                    onClick={() => navigate(`/trip/${trip.id}`)}
+                  >
+                    {trip.name}
+                  </h3>
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#888'
+                  }}>
+                    {getTripCreationDate(trip)}
                   </div>
                 </div>
 
-                {/* Preview Images */}
-                {trip.items && trip.items.length > 0 && (
-                  <div style={{
-                    display: 'flex',
-                    gap: '8px',
-                    marginBottom: '16px',
-                    overflowX: 'auto'
-                  }}>
-                    {trip.items.slice(0, 4).map((item, index) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          minWidth: '60px',
-                          height: '60px',
-                          backgroundColor: '#f0f0f0',
-                          borderRadius: '8px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'relative'
-                        }}
-                      >
-                        {item.photoURL ? (
-                          <img
-                            src={item.photoURL}
-                            alt={item.title}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              borderRadius: '8px'
-                            }}
-                          />
-                        ) : (
-                          <div style={{ fontSize: '24px' }}>
-                            {item.type === 'quickcard' ? '📷' : '📱'}
-                          </div>
-                        )}
-                        {index === 3 && trip.items.length > 4 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: 0, left: 0, right: 0, bottom: 0,
-                            backgroundColor: 'rgba(0,0,0,0.6)',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontSize: '12px',
-                            fontWeight: '600'
-                          }}>
-                            +{trip.items.length - 4}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Action Buttons */}
+                {/* Main Content Area */}
                 <div style={{
                   display: 'flex',
-                  gap: '8px',
-                  justifyContent: 'flex-end'
+                  gap: '16px',
+                  alignItems: 'flex-start'
                 }}>
-                  <button
-                    onClick={() => navigate(`/trip/${trip.id}`)}
-                    style={{
-                      backgroundColor: '#007aff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 12px',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <FaEye size={12} />
-                    View
-                  </button>
-                  
-                  <button
-                    onClick={() => handleShareTrip(trip)}
-                    style={{
-                      backgroundColor: '#4CAF50',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 12px',
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                    title={trip.isPrivate ? 'Make public and share' : 'Share trip'}
-                  >
-                    <FaShare size={12} />
-                    Share
-                  </button>
-                  
-                  <button
-                    onClick={() => handleDeleteTrip(trip)}
-                    disabled={deletingIds.has(trip.id)}
-                    style={{
-                      backgroundColor: deletingIds.has(trip.id) ? '#ccc' : '#ff4444',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 12px',
-                      fontSize: '13px',
-                      cursor: deletingIds.has(trip.id) ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <FaTrash size={12} />
-                    {deletingIds.has(trip.id) ? 'Deleting...' : 'Delete'}
-                  </button>
+                  {/* Single Thumbnail */}
+                  <div style={{
+                    minWidth: '80px',
+                    height: '80px',
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    flexShrink: 0
+                  }}>
+                    {trip.items && trip.items.length > 0 && trip.items[0].photoURL ? (
+                      <img
+                        src={trip.items[0].photoURL}
+                        alt={trip.items[0].title}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    ) : trip.items && trip.items.length > 0 ? (
+                      <div style={{ fontSize: '32px' }}>
+                        {trip.items[0].type === 'quickcard' ? '📷' : '📱'}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '32px', color: '#ccc' }}>🧳</div>
+                    )}
+                    {trip.items && trip.items.length > 1 && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '4px',
+                        right: '4px',
+                        backgroundColor: 'rgba(0,0,0,0.7)',
+                        color: 'white',
+                        fontSize: '10px',
+                        padding: '2px 4px',
+                        borderRadius: '4px',
+                        fontWeight: '600'
+                      }}>
+                        +{trip.items.length - 1}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    flex: 1
+                  }}>
+                    <button
+                      onClick={() => navigate(`/trip/${trip.id}`)}
+                      style={{
+                        backgroundColor: '#007aff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '10px 16px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <FaEye size={14} />
+                      View
+                    </button>
+                    
+                    <button
+                      onClick={() => handleShareTrip(trip)}
+                      style={{
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '10px 16px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontWeight: '500'
+                      }}
+                      title={trip.isPrivate ? 'Make public and share' : 'Share trip'}
+                    >
+                      <FaShare size={14} />
+                      Share
+                    </button>
+                    
+                    <button
+                      onClick={() => {/* TODO: Add edit functionality */}}
+                      style={{
+                        backgroundColor: '#FF9500',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '10px 16px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <FaEdit size={14} />
+                      Edit
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
