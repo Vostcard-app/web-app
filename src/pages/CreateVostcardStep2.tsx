@@ -2,7 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
-import PhotoOptionsModal from '../components/PhotoOptionsModal';
 
 /*
   📱 CAMERA APPROACH: Currently using Step2CameraView for enhanced orientation handling
@@ -21,10 +20,6 @@ export default function CreateVostcardStep2() {
   // Track selected photos
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
-  
-  // Photo options modal state
-  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
-  const [pendingPhotoIndex, setPendingPhotoIndex] = useState<number | null>(null);
 
   // Load saved photos when component mounts
   useEffect(() => {
@@ -42,45 +37,11 @@ export default function CreateVostcardStep2() {
     }
   }, [currentVostcard]);
 
-  // Handler for when a thumbnail is tapped - shows photo options modal
+  // Handler for when a thumbnail is tapped - directly opens browser's native photo selection
   const handleAddPhoto = (index: number) => {
-    setPendingPhotoIndex(index);
-    setShowPhotoOptions(true);
-  };
-
-  // Handle photo option selection
-  const handleTakePhoto = () => {
-    setShowPhotoOptions(false);
-    if (pendingPhotoIndex !== null) {
-      // Option 1: Navigate to dedicated camera view (original approach)
-      const photoType = pendingPhotoIndex === 0 ? 'distant' : 'near';
-      navigate('/step2-camera', {
-        state: {
-          photoType,
-          photoIndex: pendingPhotoIndex
-        }
-      });
-    }
-  };
-
-  const handleUploadFile = () => {
-    setShowPhotoOptions(false);
-    if (pendingPhotoIndex !== null && fileInputRef.current) {
-      // Configure for file upload
-      fileInputRef.current.setAttribute('accept', 'image/*');
-      fileInputRef.current.removeAttribute('capture');
-      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleSelectFromLibrary = () => {
-    setShowPhotoOptions(false);
-    if (pendingPhotoIndex !== null && fileInputRef.current) {
-      // Configure for photo library
-      fileInputRef.current.setAttribute('accept', 'image/*');
-      fileInputRef.current.removeAttribute('capture');
-      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+    setActiveThumbnail(index);
+    if (fileInputRef.current) {
+      fileInputRef.current.setAttribute('data-index', index.toString());
       fileInputRef.current.click();
     }
   };
@@ -278,23 +239,14 @@ export default function CreateVostcardStep2() {
         </div>
       </div>
 
-      {/* Dynamic file input - configured based on user selection */}
+      {/* File input - triggers browser's native photo selection dialog */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        capture="environment"
         style={{ display: 'none' }}
         onChange={handleFileChange}
-      />
-
-      {/* Photo Options Modal */}
-      <PhotoOptionsModal
-        isOpen={showPhotoOptions}
-        onClose={() => setShowPhotoOptions(false)}
-        onTakePhoto={handleTakePhoto}
-        onUploadFile={handleUploadFile}
-        onSelectFromLibrary={handleSelectFromLibrary}
-        title="Add Photo"
       />
     </div>
   );
