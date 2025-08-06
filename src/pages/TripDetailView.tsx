@@ -686,16 +686,6 @@ const TripDetailView: React.FC = () => {
 
         {/* Trip Info */}
         <div style={{ padding: '20px 20px 16px 20px' }}>
-          {trip.description && (
-            <p style={{ 
-              color: '#666', 
-              fontSize: '14px', 
-              margin: '0 0 12px 0',
-              lineHeight: '1.4'
-            }}>
-              {trip.description}
-            </p>
-          )}
           
           <div style={{ 
             display: 'flex', 
@@ -708,6 +698,30 @@ const TripDetailView: React.FC = () => {
             <FaCalendar />
             Created {formatDate(trip.createdAt)}
           </div>
+
+          {/* Trip Description */}
+          {trip.description && (
+            <div style={{
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              border: '1px solid #e9ecef'
+            }}>
+              <p style={{ 
+                margin: '0',
+                fontSize: '14px', 
+                color: '#555',
+                lineHeight: '1.4',
+                overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: 'vertical'
+              }}>
+                {trip.description}
+              </p>
+            </div>
+          )}
 
           {/* View Mode Buttons */}
           <div style={{
