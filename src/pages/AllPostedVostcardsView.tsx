@@ -1331,7 +1331,7 @@ const AllPostedVostcardsView: React.FC = () => {
             display: 'flex',
             justifyContent: 'center',
             padding: '20px',
-            marginBottom: '16px'
+            marginBottom: '100px' // Extra space to stay above fixed filter bar
           }}>
             <button
               onClick={loadMoreVostcards}
