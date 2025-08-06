@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
@@ -42,9 +42,9 @@ const TripDetailView: React.FC = () => {
       setError('Invalid trip ID');
       setLoading(false);
     }
-  }, [id]);
+  }, [id, loadTrip]);
 
-  const loadTrip = async () => {
+  const loadTrip = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -63,9 +63,9 @@ const TripDetailView: React.FC = () => {
       // Debug ownership information
       console.log('🔍 Trip ownership debug:', {
         tripName: tripData.name,
-        tripCreatedBy: tripData.createdBy,
+        tripUserID: tripData.userID,
         currentUserUid: user.uid,
-        isOwner: user.uid === tripData.createdBy
+        isOwner: user.uid === tripData.userID
       });
       
       console.log(`✅ Loaded trip: ${tripData.name} with ${tripData.items.length} items`);
@@ -76,7 +76,7 @@ const TripDetailView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user, navigate]);
 
   const handleItemClick = (item: TripItem) => {
     console.log('🔄 Item clicked:', item.vostcardID, item.type);
@@ -797,7 +797,7 @@ const TripDetailView: React.FC = () => {
                   }}
                 >
                   {/* Delete Button */}
-                  {user && trip && user.uid === trip.createdBy && (
+                  {user && trip && user.uid === trip.userID && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
