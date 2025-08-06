@@ -913,17 +913,23 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [getDeletionMarkers]);
 
-  // Load all Vostcards only when user is authenticated
+  // Load all Vostcards only when user is authenticated (deferred to not block login)
   useEffect(() => {
     if (authContext.user && !authContext.loading) {
-      loadAllLocalVostcards();
+      // Defer loading to allow login UI to show immediately
+      setTimeout(() => {
+        loadAllLocalVostcards();
+      }, 50); // Very short delay to unblock login UI
     }
   }, [authContext.user, authContext.loading]);
   
-  // Load posted vostcards only when user is authenticated
+  // Load posted vostcards only when user is authenticated (deferred to not block login)
   useEffect(() => {
     if (authContext.user && !authContext.loading) {
-      loadPostedVostcards();
+      // Defer loading to allow login UI to show immediately
+      setTimeout(() => {
+        loadPostedVostcards();
+      }, 100); // Slightly longer delay to stagger the requests
     }
   }, [authContext.user, authContext.loading]);
 
