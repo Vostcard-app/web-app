@@ -505,11 +505,11 @@ const HomeView = () => {
     
     // FIXED: More aggressive loading overlay management
     if (loading) {
-      console.log('🏠 HomeView: Auth loading detected, will hide overlay after 3 seconds');
+      console.log('🏠 HomeView: Auth loading detected, will hide overlay after 1 second');
       const loadingTimeout = setTimeout(() => {
         console.log('⏰ HomeView: Hiding auth loading overlay to prevent UI blocking');
         setShowAuthLoading(false);
-      }, 3000);
+      }, 1000);
       
       return () => clearTimeout(loadingTimeout);
     } else {
@@ -530,10 +530,8 @@ const HomeView = () => {
           
           if (!hasSeenOnboarding) {
             console.log('✨ First-time user detected - showing onboarding tour');
-            // Small delay to ensure the home view is fully loaded
-            setTimeout(() => {
-              setShowOnboarding(true);
-            }, 1000);
+            // Show onboarding immediately for faster experience
+            setShowOnboarding(true);
           }
         } catch (error) {
           console.error('❌ Error checking onboarding status:', error);
@@ -899,14 +897,12 @@ const HomeView = () => {
     }
   }, [user?.uid, userAvatar]);
 
-  // Initial load - Skip if tour data is active, defer for faster login
+  // Initial load - Skip if tour data is active, load immediately for faster experience
   useEffect(() => {
     if (!loading && !hasInitialLoad && !tourData) {
-      // Defer vostcards loading to improve login speed
-      setTimeout(() => {
-        console.log('🔄 Deferred initial load - loading regular vostcards');
-        loadVostcards();
-      }, 500); // Load vostcards 500ms after auth completes
+      // Load vostcards immediately for faster user experience
+      console.log('🔄 Immediate initial load - loading regular vostcards');
+      loadVostcards();
     } else if (tourData) {
       console.log('🎬 Initial load - skipping regular vostcards, tour data is active');
       setHasInitialLoad(true); // Mark as loaded to prevent future loads

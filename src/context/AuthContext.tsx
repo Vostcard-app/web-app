@@ -131,9 +131,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Very short timeout for initial load to prevent slow experience
     const loadingTimeout = setTimeout(() => {
-      console.warn('⏰ AuthProvider: Loading state timeout after 1 second, forcing loading to false');
+      console.warn('⏰ AuthProvider: Loading state timeout after 200ms, forcing loading to false');
       setLoading(false);
-    }, 1000); // Reduced to 1 second for faster experience
+    }, 200); // Reduced to 200ms for much faster experience
 
     // Immediate check for auth state - no delay
     if (!auth.currentUser) {
@@ -185,8 +185,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('⚡ AuthProvider: Proceeding with basic auth for speed');
           setLoading(false);
 
-          // Fetch user data from Firestore in background - don't block UI
-          setTimeout(async () => {
+          // Fetch user data from Firestore immediately in background - don't block UI
+          (async () => {
             try {
               const userDocRef = doc(db, "users", currentUser.uid);
               const advertiserDocRef = doc(db, "advertisers", currentUser.uid);
@@ -232,7 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               setUserRole('user');
               setAccountStatus('approved');
             }
-          }, 50); // Run Firestore queries after 50ms to not block initial auth
+          })(); // Run Firestore queries immediately
         } else {
           console.log('🔐 No user authenticated - setting up guest state immediately');
           setUser(null);
