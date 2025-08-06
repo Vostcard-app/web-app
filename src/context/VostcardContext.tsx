@@ -2341,9 +2341,40 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (error) {
       console.error('❌ Failed to open IndexedDB:', error);
-      console.warn('⚠️ IndexedDB unavailable, app will continue without local storage');
-      // Don't show alert - app should continue working without IndexedDB
-      setSavedVostcards([]); // Set empty array as fallback
+      console.warn('⚠️ IndexedDB unavailable, trying Firebase fallback');
+      
+      // Fallback: Load personal posts from Firebase when IndexedDB fails
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+          console.log('❌ No user authenticated for Firebase fallback');
+          setSavedVostcards([]);
+          return;
+        }
+
+        console.log('🔄 Loading personal posts from Firebase as fallback...');
+        
+        // Load private vostcards from Firebase
+        const privateVostcardsRef = collection(db, 'private_vostcards');
+        const privateQuery = query(privateVostcardsRef, where('userID', '==', currentUser.uid));
+        const privateSnapshot = await getDocs(privateQuery);
+        
+        const firebaseVostcards = privateSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          // Ensure required fields
+          video: null,
+          photos: [],
+          state: doc.data().state || 'draft'
+        })) as Vostcard[];
+        
+        console.log('✅ Loaded', firebaseVostcards.length, 'personal posts from Firebase fallback');
+        setSavedVostcards(firebaseVostcards);
+        
+      } catch (firebaseError) {
+        console.error('❌ Firebase fallback also failed:', firebaseError);
+        setSavedVostcards([]); // Set empty array as final fallback
+      }
     }
   }, []);
 
