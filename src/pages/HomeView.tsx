@@ -688,32 +688,9 @@ const HomeView = () => {
         wasZoom16Filtered: isInitialLoad && actualUserLocation
       });
 
-      // 🔍 DEBUG: Log all offers loaded
       const allOffers = allContent.filter(v => v.isOffer);
-      if (allOffers.length > 0) {
-        console.log('🎁 DEBUG: Loaded offers:', allOffers.map(offer => ({
-          id: offer.id,
-          title: offer.title,
-          isOffer: offer.isOffer,
-          latitude: offer.latitude,
-          longitude: offer.longitude,
-          hasCoordinates: !!(offer.latitude && offer.longitude)
-        })));
-      } else {
-        console.log('🎁 DEBUG: No offers found in loaded content');
-      }
 
-      // 🔍 DEBUG: Log userRole values for all quickcards
-      allContent.filter(v => v.isQuickcard).forEach(qc => {
-        console.log('🔍 DEBUG: Loaded quickcard:', {
-          id: qc.id,
-          title: qc.title,
-          userRole: qc.userRole,
-          username: qc.username,
-          isQuickcard: qc.isQuickcard,
-          isOffer: qc.isOffer || false
-        });
-      });
+
       
       // Update pagination state
       if (snapshot1.docs.length > 0) {
@@ -1020,7 +997,6 @@ const HomeView = () => {
       
       // Only set initial position ONCE, never update map automatically again
       if (!hasInitialPosition) {
-        console.log('📍 MOBILE DEBUG: Setting initial position ONCE on first load');
         setUserLocation([latitude, longitude]);
         // Center the map on the user's location ONCE at initial GPS success
         setMapTargetLocation([latitude, longitude]);
@@ -1951,15 +1927,7 @@ const HomeView = () => {
               {visiblePosts.map((vostcard) => {
                 if (!vostcard.latitude || !vostcard.longitude) return null;
 
-                // 🔍 DEBUG: Log each pin being rendered
-                if (vostcard.isOffer) {
-                  console.log('🎁 DEBUG: Rendering offer pin:', {
-                    id: vostcard.id,
-                    title: vostcard.title,
-                    isOffer: vostcard.isOffer,
-                    position: [vostcard.latitude, vostcard.longitude]
-                  });
-                }
+
 
                 const position: [number, number] = [vostcard.latitude, vostcard.longitude];
                 const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
