@@ -675,11 +675,14 @@ const AllPostedVostcardsView: React.FC = () => {
   // Check if we're waiting for user profiles to load for guide filtering
   const profilesLoaded = Object.keys(userProfiles).length > 0;
   const waitingForProfiles = showGuidesOnly && !profilesLoaded && vostcards.length > 0;
+  
+  // Get filtered vostcards once to avoid multiple calls
+  const filteredVostcards = filterVostcards(vostcards);
 
   console.log('🔍 AllPostedVostcardsView rendering:', { 
     loading, 
     vostcardsLength: vostcards.length, 
-    filteredLength: filterVostcards(vostcards).length,
+    filteredLength: filteredVostcards.length,
     showGuidesOnly,
     profilesLoaded,
     waitingForProfiles
@@ -812,12 +815,10 @@ const AllPostedVostcardsView: React.FC = () => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
           <span style={{ fontWeight: 600 }}>
-            {(() => {
-              const filtered = filterVostcards(vostcards);
-              return filtered.length === vostcards.length 
-                ? `Total: ${vostcards.length}`
-                : `Showing: ${filtered.length} of ${vostcards.length}`;
-            })()}
+            {filteredVostcards.length === vostcards.length 
+              ? `Total: ${vostcards.length}`
+              : `Showing: ${filteredVostcards.length} of ${vostcards.length}`
+            }
           </span>
           {browseLocation && (
             <span style={{ marginLeft: '8px', color: '#666', fontSize: '14px' }}>
@@ -1058,7 +1059,7 @@ const AllPostedVostcardsView: React.FC = () => {
               Please wait while we load user profiles
             </div>
           </div>
-        ) : vostcards.length === 0 ? (
+        ) : filteredVostcards.length === 0 ? (
           <div style={{ 
             textAlign: 'center', 
             marginTop: 40, 
@@ -1069,13 +1070,21 @@ const AllPostedVostcardsView: React.FC = () => {
             borderRadius: '8px'
           }}>
             <div style={{ fontSize: '18px', marginBottom: '8px' }}>📱</div>
-            <div>No posted Vostcards found.</div>
+            <div>
+              {showGuidesOnly 
+                ? 'No Guide posts found with current filters.' 
+                : 'No posted Vostcards found.'
+              }
+            </div>
             <div style={{ fontSize: '12px', marginTop: '8px' }}>
-              Create your first Vostcard from the home screen!
+              {showGuidesOnly 
+                ? 'Try adjusting your filters or check back later.'
+                : 'Create your first Vostcard from the home screen!'
+              }
             </div>
           </div>
         ) : (
-          filterVostcards(vostcards).map((v, idx) => (
+          filteredVostcards.map((v, idx) => (
             <React.Fragment key={v.id}>
               <div
                 style={{
@@ -1095,7 +1104,7 @@ const AllPostedVostcardsView: React.FC = () => {
                 }}
                 onClick={() => navigate(`/vostcard/${v.id}`, {
                   state: {
-                    vostcardList: filterVostcards(vostcards).map(vc => vc.id),
+                                                vostcardList: filteredVostcards.map(vc => vc.id),
                     currentIndex: idx
                   }
                 })}
@@ -1108,7 +1117,7 @@ const AllPostedVostcardsView: React.FC = () => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     navigate(`/vostcard/${v.id}`, {
                       state: {
-                        vostcardList: filterVostcards(vostcards).map(vc => vc.id),
+                                                    vostcardList: filteredVostcards.map(vc => vc.id),
                         currentIndex: idx
                       }
                     });
