@@ -154,9 +154,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAnonymous: currentUser?.isAnonymous
       });
 
-      // Clear both timeouts since we got an auth state change
+      // Clear timeout since we got an auth state change
       clearTimeout(loadingTimeout);
-      clearTimeout(quickAuthCheck);
       
       // Don't set loading to true if we already have user data
       if (!currentUser) {
