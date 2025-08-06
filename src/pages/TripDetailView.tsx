@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus, FaSave } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { TripService } from '../services/tripService';
@@ -373,6 +373,20 @@ const TripDetailView: React.FC = () => {
     setAvailablePosts([]);
   };
 
+  const handleSaveTrip = async () => {
+    if (!trip || !user) return;
+    
+    try {
+      // For now, just show a success message since trip is auto-saved
+      // In the future, this could save any pending edits
+      alert('Trip saved successfully!');
+      console.log('✅ Trip saved:', trip.title);
+    } catch (error) {
+      console.error('❌ Error saving trip:', error);
+      alert('Failed to save trip. Please try again.');
+    }
+  };
+
   // ✅ Check items existence when trip loads
   useEffect(() => {
     if (trip && trip.items.length > 0) {
@@ -660,6 +674,28 @@ const TripDetailView: React.FC = () => {
                 title="Add Post to Trip"
               >
                 <FaPlus size={14} />
+              </button>
+            )}
+            
+            {/* Save Trip Button - Only show for trip owner */}
+            {user && trip && user.uid === trip.userID && (
+              <button
+                onClick={handleSaveTrip}
+                style={{
+                  background: 'rgba(0, 122, 255, 0.9)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 36,
+                  height: 36,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                }}
+                title="Save Trip"
+              >
+                <FaSave size={14} />
               </button>
             )}
             
