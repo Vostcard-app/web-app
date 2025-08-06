@@ -37,15 +37,7 @@ console.log('✅ Firebase services initialized:', {
   // analytics: !!analytics
 });
 
-// Test Firebase connectivity
-console.log('🌐 Testing Firebase connectivity...');
-fetch(`https://firebase.googleapis.com/v1/projects/${firebaseConfig.projectId}`)
-  .then(response => {
-    console.log('✅ Firebase API is reachable:', response.status);
-  })
-  .catch(error => {
-    console.error('❌ Firebase API connectivity issue:', error);
-  });
+// Firebase connectivity test removed to improve startup performance
 
 // Connect to emulators in development
 if (process.env.NODE_ENV === 'development') {

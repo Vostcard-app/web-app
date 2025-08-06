@@ -129,24 +129,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('❌ Failed to set Firebase Auth persistence:', error);
       });
 
-    // Much shorter timeout for initial load to prevent slow experience
+    // Very short timeout for initial load to prevent slow experience
     const loadingTimeout = setTimeout(() => {
-      console.warn('⏰ AuthProvider: Loading state timeout after 2 seconds, forcing loading to false');
+      console.warn('⏰ AuthProvider: Loading state timeout after 1 second, forcing loading to false');
       setLoading(false);
-    }, 2000); // Reduced from 3 to 2 seconds
+    }, 1000); // Reduced to 1 second for faster experience
 
-    // Quick check for immediate auth state
-    const quickAuthCheck = setTimeout(() => {
-      if (loading && !auth.currentUser) {
-        console.log('⚡ AuthProvider: No user detected after 500ms, proceeding with no auth');
-        setLoading(false);
-        setUser(null);
-        setUsername(null);
-        setUserID(null);
-        setUserRole(null);
-        setAccountStatus(null);
-      }
-    }, 300); // Reduced from 500ms to 300ms for faster initial check
+    // Immediate check for auth state - no delay
+    if (!auth.currentUser) {
+      console.log('⚡ AuthProvider: No user detected immediately, proceeding with no auth');
+      setLoading(false);
+      setUser(null);
+      setUsername(null);
+      setUserID(null);
+      setUserRole(null);
+      setAccountStatus(null);
+    }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log('🔐 AuthProvider: Auth state changed:', {
@@ -256,14 +254,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, (error) => {
       console.error('❌ Firebase Auth state change error:', error);
       clearTimeout(loadingTimeout);
-      clearTimeout(quickAuthCheck);
       setLoading(false);
     });
 
     return () => {
       console.log('🔐 AuthProvider: Cleaning up Firebase Auth listener');
       clearTimeout(loadingTimeout);
-      clearTimeout(quickAuthCheck);
       unsubscribe();
     };
   }, []);
