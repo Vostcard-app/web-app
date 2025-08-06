@@ -1428,11 +1428,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // 2. Delete from Firebase - FAIL HARD if this doesn't work
       console.log('🗑️ Attempting to delete from Firebase...');
+      console.log('🔍 DEBUG: Current user UID:', user.uid);
+      console.log('🔍 DEBUG: Document ID to delete:', id);
+      
+      const vostcardRef = doc(db, 'vostcards', id);
       
       // First, let's check what's in the document to debug permission issues
-      const vostcardRef = doc(db, 'vostcards', id);
+      console.log('🔍 DEBUG: About to read document for debugging...');
       try {
         const docSnap = await getDoc(vostcardRef);
+        console.log('🔍 DEBUG: getDoc completed, exists:', docSnap.exists());
+        
         if (docSnap.exists()) {
           const data = docSnap.data();
           console.log('🔍 DEBUG: Document data before delete:', {
@@ -1442,15 +1448,22 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             hasUserID: !!data.userID,
             userIDMatch: data.userID === user.uid,
             visibility: data.visibility,
-            state: data.state
+            state: data.state,
+            createdAt: data.createdAt,
+            username: data.username
           });
         } else {
           console.log('🔍 DEBUG: Document does not exist:', id);
+          console.error('❌ Cannot delete document that does not exist');
+          return;
         }
       } catch (readError) {
         console.error('🔍 DEBUG: Error reading document before delete:', readError);
+        console.error('❌ Cannot proceed with delete due to read error');
+        throw readError;
       }
       
+      console.log('🔍 DEBUG: About to attempt deleteDoc...');
       await deleteDoc(vostcardRef);
       console.log('✅ Deleted Vostcard from Firebase:', id);
       
