@@ -7,7 +7,7 @@ import { collection, query, where, getDocs, doc, setDoc, deleteDoc, Timestamp, u
 import { db } from '../firebase/firebaseConfig';
 
 // ✅ NEW: Import our refactored utilities and types
-import { getVostcardStatus, isReadyToPost, generateShareText, createErrorMessage } from '../utils/vostcardUtils';
+import { getVostcardStatus, generateShareText, createErrorMessage } from '../utils/vostcardUtils';
 import { LoadingSpinner, ErrorMessage } from '../components/shared';
 import type { Vostcard } from '../types/VostcardTypes';
 import SharedOptionsModal from '../components/SharedOptionsModal';
@@ -15,11 +15,11 @@ import SharedOptionsModal from '../components/SharedOptionsModal';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, loadAllLocalVostcardsImmediate, syncInBackground, deletePrivateVostcard, setCurrentVostcard, postVostcard } = useVostcard();
+  const { savedVostcards, loadAllLocalVostcardsImmediate, syncInBackground, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-  const [postingIds, setPostingIds] = useState<Set<string>>(new Set());
+
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
   const [showSharedOptions, setShowSharedOptions] = useState(false);
   const [selectedVostcard, setSelectedVostcard] = useState<Vostcard | null>(null);
@@ -283,46 +283,7 @@ Tap OK to continue.`;
     }
   };
 
-  const handlePost = async (e: React.MouseEvent, vostcard: Vostcard) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (!isReadyToPost(vostcard)) {
-      alert('Please complete all required fields before posting.');
-      return;
-    }
 
-    console.log('📤 Post clicked for private post:', vostcard.id);
-    
-    try {
-      // Show loading state
-      setPostingIds(prev => new Set([...prev, vostcard.id]));
-      
-      // Post the vostcard
-      await postVostcard(vostcard);
-      
-      console.log('✅ Private post posted successfully:', vostcard.id);
-      
-      // Clear loading state
-      setPostingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(vostcard.id);
-        return newSet;
-      });
-      
-    } catch (error) {
-      console.error('❌ Failed to post private post:', error);
-      
-      // Clear loading state
-      setPostingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(vostcard.id);
-        return newSet;
-      });
-      
-      alert('Failed to publish post. Please try again.');
-    }
-  };
 
   const handleRetry = () => {
     console.log('🔄 Retrying to load private posts...');
@@ -467,9 +428,7 @@ Tap OK to continue.`;
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((vostcard, index) => {
                   const missingItems = getVostcardStatus(vostcard);
-                  const canPost = isReadyToPost(vostcard);
                   const isDeleting = deletingIds.has(vostcard.id);
-                  const isPosting = postingIds.has(vostcard.id);
                   
                   return (
                     <div
@@ -481,7 +440,7 @@ Tap OK to continue.`;
                         borderRadius: '12px',
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                         border: '1px solid #e0e0e0',
-                        opacity: isDeleting || isPosting ? 0.5 : 1
+                        opacity: isDeleting ? 0.5 : 1
                       }}
                     >
                       {/* Title with Type Indicator */}
@@ -689,7 +648,7 @@ Tap OK to continue.`;
                         {/* Delete Icon */}
                         <div
                           style={{
-                            cursor: (isDeleting || isPosting) ? 'not-allowed' : 'pointer',
+                            cursor: isDeleting ? 'not-allowed' : 'pointer',
                             transition: 'transform 0.1s',
                             display: 'flex',
                             alignItems: 'center',
@@ -698,65 +657,29 @@ Tap OK to continue.`;
                             borderRadius: '8px',
                             backgroundColor: '#f8f9fa',
                             border: '1px solid #dee2e6',
-                            opacity: (isDeleting || isPosting) ? 0.5 : 1,
+                            opacity: isDeleting ? 0.5 : 1,
                             pointerEvents: 'auto', // Ensure pointer events are enabled
                             zIndex: 10 // Ensure it's above other elements
                           }}
                           onClick={(e) => {
                             console.log('🗑️ Delete icon div clicked!');
-                            console.log('🗑️ isDeleting:', isDeleting, 'isPosting:', isPosting);
-                            if (!(isDeleting || isPosting)) {
+                            console.log('🗑️ isDeleting:', isDeleting);
+                            if (!isDeleting) {
                               handleDelete(e, vostcard.id);
                             } else {
                               console.log('🗑️ Delete click ignored - item is processing');
                             }
                           }}
-                          onMouseDown={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(0.95)')}
-                          onMouseUp={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(1)')}
-                          onMouseLeave={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(1)')}
-                          title={(isDeleting || isPosting) ? 'Loading...' : 'Delete Vostcard'}
+                          onMouseDown={(e) => !isDeleting && (e.currentTarget.style.transform = 'scale(0.95)')}
+                          onMouseUp={(e) => !isDeleting && (e.currentTarget.style.transform = 'scale(1)')}
+                          onMouseLeave={(e) => !isDeleting && (e.currentTarget.style.transform = 'scale(1)')}
+                          title={isDeleting ? 'Loading...' : 'Delete Vostcard'}
                         >
                           <FaTrash size={20} color="#dc3545" />
                         </div>
                       </div>
 
-                      {/* 📤 Post Button */}
-                      <div style={{
-                        marginTop: '12px',
-                        display: 'flex',
-                        justifyContent: 'center'
-                      }}>
-                        <button
-                          onClick={(e) => handlePost(e, vostcard)}
-                          disabled={!canPost || isPosting}
-                          style={{
-                            backgroundColor: canPost && !isPosting ? '#28a745' : '#6c757d',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '12px 24px',
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            cursor: canPost && !isPosting ? 'pointer' : 'not-allowed',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'background-color 0.2s'
-                          }}
-                          onMouseOver={(e) => {
-                            if (canPost && !isPosting) {
-                              e.currentTarget.style.backgroundColor = '#218838';
-                            }
-                          }}
-                          onMouseOut={(e) => {
-                            if (canPost && !isPosting) {
-                              e.currentTarget.style.backgroundColor = '#28a745';
-                            }
-                          }}
-                        >
-                          {isPosting ? '⏳ Posting...' : canPost ? '📤 Post to Map' : '📋 Complete to Post'}
-                        </button>
-                      </div>
+
                     </div>
                   );
                 })}
