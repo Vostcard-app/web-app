@@ -2354,22 +2354,48 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         console.log('🔄 Loading personal posts from Firebase as fallback...');
         
-        // Load private vostcards from Firebase
-        const privateVostcardsRef = collection(db, 'private_vostcards');
-        const privateQuery = query(privateVostcardsRef, where('userID', '==', currentUser.uid));
-        const privateSnapshot = await getDocs(privateQuery);
+        // Load ALL your vostcards from Firebase to see what we have
+        const allQuery = query(
+          collection(db, 'vostcards'),
+          where('userID', '==', currentUser.uid)
+        );
+        const allSnapshot = await getDocs(allQuery);
         
-        const firebaseVostcards = privateSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          // Ensure required fields
-          video: null,
-          photos: [],
-          state: doc.data().state || 'draft'
-        })) as Vostcard[];
+        console.log('🔍 DEBUG: Found', allSnapshot.docs.length, 'total vostcards for user');
         
-        console.log('✅ Loaded', firebaseVostcards.length, 'personal posts from Firebase fallback');
-        setSavedVostcards(firebaseVostcards);
+        const allVostcards = allSnapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log('🔍 DEBUG: Vostcard data:', {
+            id: doc.id,
+            title: data.title,
+            state: data.state,
+            visibility: data.visibility,
+            isQuickcard: data.isQuickcard
+          });
+          return {
+            id: doc.id,
+            ...data,
+            // Ensure required fields
+            video: null,
+            photos: [],
+            state: data.state || 'draft'
+          } as Vostcard;
+        });
+        
+        // For personal posts, we want draft/private posts, but let's show all for debugging
+        const personalPosts = allVostcards.filter(v => 
+          v.state !== 'posted' || v.visibility === 'private'
+        );
+        
+        console.log('✅ Loaded', personalPosts.length, 'personal posts from Firebase fallback');
+        console.log('🔍 DEBUG: Personal posts:', personalPosts.map(p => ({
+          id: p.id,
+          title: p.title,
+          state: p.state,
+          visibility: p.visibility
+        })));
+        
+        setSavedVostcards(personalPosts);
         
       } catch (firebaseError) {
         console.error('❌ Firebase fallback also failed:', firebaseError);
