@@ -19,13 +19,7 @@ const MyTripsListView = () => {
   const [newTripDescription, setNewTripDescription] = useState('');
   const [creating, setCreating] = useState(false);
   
-  // Edit modal states
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
-  const [editTripName, setEditTripName] = useState('');
-  const [editTripDescription, setEditTripDescription] = useState('');
-  const [editTripPrivate, setEditTripPrivate] = useState(false);
-  const [updating, setUpdating] = useState(false);
+
 
   console.log('🔄 MyTripsListView rendered', {
     authLoading,
@@ -222,52 +216,7 @@ const MyTripsListView = () => {
     }
   };
 
-  // Edit trip functionality
-  const handleEditTrip = (trip: Trip) => {
-    setEditingTrip(trip);
-    setEditTripName(trip.name);
-    setEditTripDescription(trip.description || '');
-    setEditTripPrivate(trip.isPrivate || false);
-    setShowEditModal(true);
-  };
 
-  const handleUpdateTrip = async () => {
-    if (!editingTrip || !editTripName.trim()) return;
-
-    setUpdating(true);
-    try {
-      const updatedTrip = await TripService.updateTrip(editingTrip.id, {
-        name: editTripName.trim(),
-        description: editTripDescription.trim() || undefined,
-        isPrivate: editTripPrivate
-      });
-
-      // Update the trips list with the updated trip
-      setTrips(prev => prev.map(t => t.id === editingTrip.id ? updatedTrip : t));
-      
-      setShowEditModal(false);
-      setEditingTrip(null);
-      setEditTripName('');
-      setEditTripDescription('');
-      setEditTripPrivate(false);
-      
-      alert('✅ Trip updated successfully!');
-      console.log('✅ Updated trip:', updatedTrip.id);
-    } catch (error) {
-      console.error('❌ Error updating trip:', error);
-      alert('Failed to update trip. Please try again.');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setShowEditModal(false);
-    setEditingTrip(null);
-    setEditTripName('');
-    setEditTripDescription('');
-    setEditTripPrivate(false);
-  };
 
   const getTripSummary = (trip: Trip) => {
     const itemCount = trip.items?.length || 0;
@@ -646,28 +595,7 @@ const MyTripsListView = () => {
                       Share
                     </button>
                     
-                    <button
-                      onClick={() => handleEditTrip(trip)}
-                      style={{
-                        backgroundColor: '#FF9500',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '8px 10px',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '4px',
-                        fontWeight: '500',
-                        flex: 1,
-                        minWidth: 0
-                      }}
-                    >
-                      <FaEdit size={12} />
-                      Edit
-                    </button>
+
                   </div>
                 </div>
               </div>
@@ -816,197 +744,7 @@ const MyTripsListView = () => {
         </>
       )}
 
-      {/* Edit Trip Modal */}
-      {showEditModal && (
-        <>
-          {/* Modal Overlay */}
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }} onClick={handleCancelEdit}>
-            {/* Modal Content */}
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              padding: '24px',
-              minWidth: '320px',
-              maxWidth: '400px',
-              width: '100%',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-              position: 'relative'
-            }} onClick={(e) => e.stopPropagation()}>
-              
-              {/* Close button */}
-              <button
-                onClick={handleCancelEdit}
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  color: '#666',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '50%'
-                }}
-              >
-                ×
-              </button>
 
-              <h3 style={{
-                margin: '0 0 20px 0',
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#333',
-                textAlign: 'center'
-              }}>
-                Edit Trip
-              </h3>
-              
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#333',
-                  marginBottom: '6px'
-                }}>
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={editTripName}
-                  onChange={(e) => setEditTripName(e.target.value)}
-                  placeholder="Enter trip name"
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
-                  maxLength={50}
-                  disabled={updating}
-                />
-              </div>
-              
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#333',
-                  marginBottom: '6px'
-                }}>
-                  Description
-                </label>
-                <textarea
-                  value={editTripDescription}
-                  onChange={(e) => setEditTripDescription(e.target.value)}
-                  placeholder="Optional description"
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    resize: 'vertical',
-                    boxSizing: 'border-box'
-                  }}
-                  maxLength={200}
-                  disabled={updating}
-                />
-              </div>
-
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#333',
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="checkbox"
-                    checked={editTripPrivate}
-                    onChange={(e) => setEditTripPrivate(e.target.checked)}
-                    disabled={updating}
-                    style={{
-                      marginRight: '8px',
-                      cursor: 'pointer'
-                    }}
-                  />
-                  Private Trip
-                </label>
-                <div style={{
-                  fontSize: '12px',
-                  color: '#666',
-                  marginTop: '4px',
-                  marginLeft: '20px'
-                }}>
-                  Private trips can only be viewed by you
-                </div>
-              </div>
-              
-              <div style={{
-                display: 'flex',
-                gap: '8px',
-                justifyContent: 'flex-end'
-              }}>
-                <button
-                  onClick={handleCancelEdit}
-                  disabled={updating}
-                  style={{
-                    backgroundColor: 'transparent',
-                    color: '#666',
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    padding: '10px 16px',
-                    fontSize: '14px',
-                    cursor: updating ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  Cancel
-                </button>
-                
-                <button
-                  onClick={handleUpdateTrip}
-                  disabled={updating || !editTripName.trim()}
-                  style={{
-                    backgroundColor: updating || !editTripName.trim() ? '#ccc' : '#FF9500',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '10px 16px',
-                    fontSize: '14px',
-                    cursor: updating || !editTripName.trim() ? 'not-allowed' : 'pointer'
-                  }}
-                >
-                  {updating ? 'Updating...' : 'Update'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 };
