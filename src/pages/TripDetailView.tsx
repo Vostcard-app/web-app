@@ -229,8 +229,7 @@ const TripDetailView: React.FC = () => {
         items: prev.items.filter(item => item.id !== itemId)
       } : null);
       
-      // Reload user content to include the removed item
-      loadUserContent();
+      console.log('✅ Item removed from trip successfully');
       
     } catch (error) {
       console.error('Error removing item from trip:', error);
