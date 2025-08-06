@@ -76,7 +76,7 @@ const TripDetailView: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, user, navigate]);
+  }, [id]);
 
   const handleItemClick = (item: TripItem) => {
     console.log('🔄 Item clicked:', item.vostcardID, item.type);
