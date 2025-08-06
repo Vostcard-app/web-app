@@ -1153,8 +1153,16 @@ const TripDetailView: React.FC = () => {
               </div>
             </div>
 
-            {/* Content Management Section */}
-            <div style={{ marginBottom: '20px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+            {/* Content Management Section - TESTING VISIBILITY */}
+            <div style={{ 
+              marginBottom: '20px', 
+              borderTop: '3px solid #ff0000', 
+              paddingTop: '20px',
+              backgroundColor: '#fff3cd',
+              border: '2px solid #ffc107',
+              borderRadius: '8px',
+              padding: '16px'
+            }}>
               {console.log('🎨 Rendering content management section, trip items:', trip?.items.length)}
               <div style={{
                 display: 'flex',
@@ -1164,11 +1172,14 @@ const TripDetailView: React.FC = () => {
               }}>
                 <h4 style={{ 
                   margin: 0, 
-                  fontSize: '16px', 
-                  fontWeight: '600', 
-                  color: '#333' 
+                  fontSize: '18px', 
+                  fontWeight: '700', 
+                  color: '#d63384',
+                  backgroundColor: '#f8d7da',
+                  padding: '8px 12px',
+                  borderRadius: '4px'
                 }}>
-                  Manage Content ({trip?.items.length || 0} items)
+                  🚨 TEST: Manage Content ({trip?.items.length || 0} items)
                 </h4>
                 <button
                   onClick={() => setShowAddItemsSection(!showAddItemsSection)}
