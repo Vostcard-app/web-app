@@ -56,9 +56,20 @@ const MyTripsListView = () => {
             id: trip.items[0].id,
             title: trip.items[0].title,
             photoURL: trip.items[0].photoURL,
-            type: trip.items[0].type
+            type: trip.items[0].type,
+            hasPhotoURL: !!trip.items[0].photoURL,
+            photoURLLength: trip.items[0].photoURL?.length
           } : null
         });
+        
+        // Log all items to see if any have photoURLs
+        if (trip.items && trip.items.length > 0) {
+          console.log(`📸 All items for "${trip.name}":`, trip.items.map(item => ({
+            title: item.title,
+            photoURL: item.photoURL,
+            hasPhotoURL: !!item.photoURL
+          })));
+        }
       });
       
       setTrips(userTrips);
@@ -423,24 +434,37 @@ const MyTripsListView = () => {
                     flexShrink: 0
                   }}>
                     {(() => {
-                      console.log('🖼️ Rendering thumbnail for trip:', trip.name, {
-                        hasItems: !!(trip.items && trip.items.length > 0),
-                        firstItemPhotoURL: trip.items?.[0]?.photoURL,
-                        firstItemTitle: trip.items?.[0]?.title,
-                        firstItemType: trip.items?.[0]?.type
+                      const hasItems = !!(trip.items && trip.items.length > 0);
+                      const firstItem = trip.items?.[0];
+                      const photoURL = firstItem?.photoURL;
+                      
+                      console.log('🖼️ THUMBNAIL RENDER DEBUG for:', trip.name, {
+                        hasItems,
+                        firstItemExists: !!firstItem,
+                        photoURL,
+                        hasPhotoURL: !!photoURL,
+                        photoURLType: typeof photoURL,
+                        condition1: hasItems,
+                        condition2: !!photoURL,
+                        finalCondition: hasItems && !!photoURL
                       });
-                      return trip.items && trip.items.length > 0 && trip.items[0].photoURL ? (
+                      
+                      return hasItems && photoURL ? (
                         <img
-                          src={trip.items[0].photoURL}
-                          alt={trip.items[0].title}
+                          src={photoURL}
+                          alt={firstItem?.title || 'Trip item'}
                           style={{
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
                             borderRadius: '8px'
                           }}
+                          onError={(e) => {
+                            console.error('🚨 Image failed to load:', photoURL);
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
-                      ) : trip.items && trip.items.length > 0 ? (
+                      ) : hasItems ? (
                         <div style={{ fontSize: '20px' }}>
                           {trip.items[0].type === 'quickcard' ? '📷' : '📱'}
                         </div>
