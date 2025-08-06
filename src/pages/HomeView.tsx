@@ -102,7 +102,7 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
     } else if (shouldUpdateMapView && hasRecenteredOnce.current) {
       stableShouldUpdateMapView(false);
     }
-  }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce]);
+  }, [targetLocation, map, shouldUpdateMapView]);
 
   return null;
 };
@@ -144,7 +144,7 @@ const MapBoundsListener = ({ onBoundsChange, onZoomOptimization }: {
       map.off('moveend', debouncedMoveEnd);
       map.off('zoomend', debouncedMoveEnd);
     };
-  }, [map, onBoundsChange]);
+  }, [map]);
 
   return null;
 };
@@ -154,12 +154,10 @@ const ZoomControls = () => {
   const map = useMap();
 
   const handleZoomIn = () => {
-    console.log('🔍 Zoom In clicked');
     map.zoomIn();
   };
 
-  const handleZoomOut = () => {
-    console.log('🔍 Zoom Out clicked'); 
+  const handleZoomOut = () => { 
     map.zoomOut();
   };
 
@@ -942,11 +940,10 @@ const HomeView = () => {
   const [hasOptimizedMapOnce, setHasOptimizedMapOnce] = useState(false);
   useEffect(() => {
     if (vostcards.length > 0 && actualUserLocation && hasInitialLoad && !hasOptimizedMapOnce) {
-      console.log('🎯 Initial map optimization - fitting to pins once');
       handleMapOptimization(vostcards, actualUserLocation);
       setHasOptimizedMapOnce(true);
     }
-  }, [vostcards.length, actualUserLocation, hasInitialLoad, handleMapOptimization, hasOptimizedMapOnce]);
+  }, [vostcards.length, actualUserLocation, hasInitialLoad, hasOptimizedMapOnce]);
 
   // Handle fresh load after posting
   useEffect(() => {
