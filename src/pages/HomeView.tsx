@@ -95,20 +95,11 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
   useEffect(() => {
     // ✅ ONLY allow INITIAL positioning (first load) - no subsequent auto-recentering
     if (targetLocation && map && shouldUpdateMapView && !hasRecenteredOnce.current) {
-      console.log('🗺️ MapUpdater: INITIAL positioning to:', targetLocation);
-
-      // Preserve user's current zoom level instead of forcing specific zoom
       const currentZoom = map.getZoom();
-      console.log('🗺️ MapUpdater: Using zoom level:', currentZoom);
-
       map.setView(targetLocation, currentZoom);
       hasRecenteredOnce.current = true;
-      // Reset the flag after updating the map
       stableShouldUpdateMapView(false);
-      console.log('🗺️ MapUpdater: Initial positioning complete - no more auto-recentering');
     } else if (shouldUpdateMapView && hasRecenteredOnce.current) {
-      console.log('🚫 MapUpdater: Subsequent auto-recentering DISABLED - user has full control');
-      // Reset the flag to prevent any confusion
       stableShouldUpdateMapView(false);
     }
   }, [targetLocation, map, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce]);
@@ -129,7 +120,6 @@ const MapBoundsListener = ({ onBoundsChange, onZoomOptimization }: {
 
     const handleMoveEnd = () => {
       const bounds = map.getBounds();
-      console.log('🗺️ Map bounds changed:', bounds);
       onBoundsChange(bounds);
     };
 
@@ -896,25 +886,6 @@ const HomeView = () => {
     // Separate offers from non-offer posts
     const offers = allPosts.filter(p => p.isOffer);
     const nonOfferPosts = allPosts.filter(p => !p.isOffer).slice(0, 5); // Limit to 5 non-offer posts
-    
-    // 🔍 DEBUG: Log visible posts processing
-    console.log('🎯 visiblePosts processing:', {
-      totalVostcards: vostcards.length,
-      allPosts: allPosts.length,
-      offers: offers.length,
-      nonOfferPosts: nonOfferPosts.length,
-      mapBounds: !!mapBounds
-    });
-    
-    if (offers.length > 0) {
-      console.log('🎁 DEBUG: Visible offers:', offers.map(offer => ({
-        id: offer.id,
-        title: offer.title,
-        isOffer: offer.isOffer,
-        latitude: offer.latitude,
-        longitude: offer.longitude
-      })));
-    }
     
     // Return combined array: 5 non-offer posts + all offers
     return [...nonOfferPosts, ...offers];
