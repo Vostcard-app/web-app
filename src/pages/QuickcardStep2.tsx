@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages, FaTimes } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import PhotoOptionsModal from '../components/PhotoOptionsModal';
 
 export default function QuickcardStep2() {
   const navigate = useNavigate();
@@ -11,6 +12,13 @@ export default function QuickcardStep2() {
   // Track selected photos (4 thumbnails for quickcards)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
+  
+  // Desktop photo options modal state
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
+  const [pendingPhotoIndex, setPendingPhotoIndex] = useState<number | null>(null);
+
+  // Mobile detection
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   // Initialize empty quickcard or load saved photos when component mounts
   useEffect(() => {
@@ -47,11 +55,45 @@ export default function QuickcardStep2() {
     }
   }, [currentVostcard, updateVostcard]);
 
-  // Handler for when a thumbnail is tapped - directly opens browser's native photo selection
+  // Handler for when a thumbnail is tapped - mobile uses native action sheet, desktop shows modal
   const handleAddPhoto = (index: number) => {
     setActiveThumbnail(index);
-    if (fileInputRef.current) {
-      fileInputRef.current.setAttribute('data-index', index.toString());
+    
+    if (isMobile) {
+      // Mobile: Use native action sheet directly
+      if (fileInputRef.current) {
+        fileInputRef.current.setAttribute('data-index', index.toString());
+        fileInputRef.current.click();
+      }
+    } else {
+      // Desktop: Show custom modal with options
+      setPendingPhotoIndex(index);
+      setShowPhotoOptions(true);
+    }
+  };
+
+  // Desktop modal handlers
+  const handleTakePhoto = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && fileInputRef.current) {
+      // For desktop "take photo", we'll open file input (user can use webcam apps)
+      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleUploadFile = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && fileInputRef.current) {
+      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleSelectFromLibrary = () => {
+    setShowPhotoOptions(false);
+    if (pendingPhotoIndex !== null && fileInputRef.current) {
+      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
       fileInputRef.current.click();
     }
   };
@@ -413,7 +455,7 @@ export default function QuickcardStep2() {
         </div>
       </div>
 
-      {/* File input - triggers iOS native action sheet with camera/library/files options */}
+      {/* File input - triggers iOS native action sheet on mobile, used by modal on desktop */}
       <input
         ref={fileInputRef}
         type="file"
@@ -421,6 +463,16 @@ export default function QuickcardStep2() {
         multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}
+      />
+
+      {/* Desktop Photo Options Modal */}
+      <PhotoOptionsModal
+        isOpen={showPhotoOptions}
+        onClose={() => setShowPhotoOptions(false)}
+        onTakePhoto={handleTakePhoto}
+        onUploadFile={handleUploadFile}
+        onSelectFromLibrary={handleSelectFromLibrary}
+        title="Add Photo"
       />
 
     </div>
