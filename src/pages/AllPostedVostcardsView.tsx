@@ -347,6 +347,9 @@ const AllPostedVostcardsView: React.FC = () => {
   useEffect(() => {
     const fetchAllPostedVostcards = async () => {
       setLoading(true);
+      // Reset pagination state when filter changes
+      setLastDoc(null);
+      setHasMore(true);
       try {
         console.log('🔄 Fetching first', ITEMS_PER_PAGE, 'posted vostcards and quickcards...', showGuidesOnly ? '(guide filter active)' : '');
         
@@ -409,7 +412,7 @@ const AllPostedVostcardsView: React.FC = () => {
     };
 
     fetchAllPostedVostcards();
-  }, [loadData, ITEMS_PER_PAGE]);
+  }, [loadData, ITEMS_PER_PAGE, showGuidesOnly]);
 
   // Load more vostcards for pagination
   const loadMoreVostcards = async () => {
