@@ -15,7 +15,7 @@ const QuickcardStep3: React.FC = () => {
     postQuickcard, // Add this import
     clearVostcard,
   } = useVostcard();
-  const { title = '', description = '', categories = [], photos = [] } = currentVostcard || {};
+  const { title = '', description = '', categories = [], photos = [], photoURLs = [] } = currentVostcard || {};
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
@@ -52,7 +52,7 @@ const QuickcardStep3: React.FC = () => {
     hasTitle: title.trim() !== '',
     hasDescription: description.trim() !== '', // Not required but tracked
     hasCategories: (categories?.length || 0) > 0, // Not required but tracked
-    hasPhotos: (photos?.length || 0) >= 1,  // Should already have photos from step 2
+    hasPhotos: (photos?.length || 0) >= 1 || (photoURLs?.length || 0) >= 1,  // Check both local photos and Firebase URLs
   };
 
   // Check if quickcard is ready for posting (title, description, category required)
@@ -79,6 +79,7 @@ const QuickcardStep3: React.FC = () => {
     categories: categories,
     categoriesValid: validationState.hasCategories,
     photosCount: photos.length,
+    photoURLsCount: photoURLs.length,
     photosValid: validationState.hasPhotos,
     isQuickcard: true,
     isReadyForMapPosting
