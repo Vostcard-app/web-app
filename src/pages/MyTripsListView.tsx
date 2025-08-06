@@ -393,7 +393,7 @@ const MyTripsListView = () => {
                 <div style={{
                   display: 'flex',
                   gap: '16px',
-                  alignItems: 'flex-start'
+                  alignItems: 'flex-end'
                 }}>
                   {/* Single Thumbnail */}
                   <div style={{
