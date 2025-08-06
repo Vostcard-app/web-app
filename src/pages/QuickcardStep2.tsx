@@ -413,11 +413,13 @@ export default function QuickcardStep2() {
         </div>
       </div>
 
-      {/* File input - triggers browser's native photo selection dialog */}
+      {/* File input - triggers iOS native action sheet with camera/library/files options */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        capture
+        multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
