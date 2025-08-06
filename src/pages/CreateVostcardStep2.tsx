@@ -293,11 +293,12 @@ export default function CreateVostcardStep2() {
         onChange={handleFileChange}
       />
       
-      {/* Library input - allows multiple file types */}
+      {/* Library input - native photo gallery */}
       <input
         ref={libraryInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+        multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
