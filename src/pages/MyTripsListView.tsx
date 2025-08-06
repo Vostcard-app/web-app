@@ -445,8 +445,8 @@ const MyTripsListView = () => {
                   {/* Action Buttons */}
                   <div style={{
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
+                    flexDirection: 'row',
+                    gap: '6px',
                     flex: 1
                   }}>
                     <button
@@ -455,18 +455,20 @@ const MyTripsListView = () => {
                         backgroundColor: '#007aff',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
-                        padding: '10px 16px',
-                        fontSize: '14px',
+                        borderRadius: '4px',
+                        padding: '8px 10px',
+                        fontSize: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
-                        fontWeight: '500'
+                        gap: '4px',
+                        fontWeight: '500',
+                        flex: 1,
+                        minWidth: 0
                       }}
                     >
-                      <FaEye size={14} />
+                      <FaEye size={12} />
                       View
                     </button>
                     
@@ -476,19 +478,21 @@ const MyTripsListView = () => {
                         backgroundColor: '#4CAF50',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
-                        padding: '10px 16px',
-                        fontSize: '14px',
+                        borderRadius: '4px',
+                        padding: '8px 10px',
+                        fontSize: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
-                        fontWeight: '500'
+                        gap: '4px',
+                        fontWeight: '500',
+                        flex: 1,
+                        minWidth: 0
                       }}
                       title={trip.isPrivate ? 'Make public and share' : 'Share trip'}
                     >
-                      <FaShare size={14} />
+                      <FaShare size={12} />
                       Share
                     </button>
                     
@@ -498,18 +502,20 @@ const MyTripsListView = () => {
                         backgroundColor: '#FF9500',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '6px',
-                        padding: '10px 16px',
-                        fontSize: '14px',
+                        borderRadius: '4px',
+                        padding: '8px 10px',
+                        fontSize: '12px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '8px',
-                        fontWeight: '500'
+                        gap: '4px',
+                        fontWeight: '500',
+                        flex: 1,
+                        minWidth: 0
                       }}
                     >
-                      <FaEdit size={14} />
+                      <FaEdit size={12} />
                       Edit
                     </button>
                   </div>
