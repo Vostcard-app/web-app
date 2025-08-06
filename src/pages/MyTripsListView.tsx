@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaPlus, FaEdit, FaTrash, FaEye, FaShare, FaMap, FaWrench } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaPlus, FaEdit, FaTrash, FaEye, FaShare, FaMap } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
@@ -592,9 +592,9 @@ const MyTripsListView = () => {
                     </button>
                     
                     <button
-                      onClick={() => handleFixTripThumbnails(trip)}
+                      onClick={() => {/* TODO: Add edit functionality */}}
                       style={{
-                        backgroundColor: '#FF6B35',
+                        backgroundColor: '#FF9500',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -609,10 +609,9 @@ const MyTripsListView = () => {
                         flex: 1,
                         minWidth: 0
                       }}
-                      title="Fix missing thumbnails"
                     >
-                      <FaWrench size={12} />
-                      Fix
+                      <FaEdit size={12} />
+                      Edit
                     </button>
                   </div>
                 </div>
