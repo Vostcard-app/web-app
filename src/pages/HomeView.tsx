@@ -244,22 +244,24 @@ const HomeView = () => {
 
   // Role change logging - removed to prevent excessive re-renders
 
-  // Mobile debugging console - ADMIN ONLY (runs once)
+  // Mobile debugging console - ADMIN ONLY (DISABLED for performance testing)
   useEffect(() => {
-    if (userRole === 'admin' && typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      // Only load if not already loaded
-      if (!(window as any).eruda) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/eruda';
-        document.head.appendChild(script);
-        script.onload = () => {
-          if ((window as any).eruda) {
-            (window as any).eruda.init();
-            console.log('📱 Admin mobile debug console loaded');
-          }
-        };
-      }
-    }
+    // TEMPORARILY DISABLED - This external script load might be causing login delays
+    // if (userRole === 'admin' && typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    //   // Only load if not already loaded
+    //   if (!(window as any).eruda) {
+    //     const script = document.createElement('script');
+    //     script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+    //     document.head.appendChild(script);
+    //     script.onload = () => {
+    //       if ((window as any).eruda) {
+    //         (window as any).eruda.init();
+    //         console.log('📱 Admin mobile debug console loaded');
+    //       }
+    //     };
+    //   }
+    // }
+    console.log('🔧 Admin debug console loading disabled for performance testing');
   }, []); // FIXED: Empty deps - only run once, check userRole inside
 
   // State variables

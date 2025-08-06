@@ -215,9 +215,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else if (userDocSnap?.exists()) {
               const data = userDocSnap.data();
               console.log('📄 Firestore user document found:', data);
-              console.log('✅ Setting userRole to: user');
+              const actualRole = data.userRole || data.role || 'user'; // Check both fields for compatibility
+              console.log('✅ Setting userRole to:', actualRole);
               setUsername(data.username || null);
-              setUserRole(data.userRole || 'user'); // Changed from data.role
+              setUserRole(actualRole);
               setAccountStatus('approved'); // Users are automatically approved
             } else {
               console.warn("❌ No user or advertiser document found for:", currentUser.uid);
