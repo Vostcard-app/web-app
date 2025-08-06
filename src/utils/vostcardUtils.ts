@@ -14,11 +14,18 @@ export const getVostcardStatus = (vostcard: Partial<Vostcard>): string[] => {
   
   // Different photo requirements for vostcards vs quickcards
   const minPhotos = vostcard.isQuickcard ? 1 : 2;
-  if (!vostcard.photos || vostcard.photos.length < minPhotos) {
+  const photoCount = (vostcard.photos?.length || 0) + 
+    ((vostcard as any).photoURLs?.length || 0) + 
+    ((vostcard as any)._firebasePhotoURLs?.length || 0);
+  if (photoCount < minPhotos) {
     missing.push(`Photos (need at least ${minPhotos})`);
   }
   
-  if (!vostcard.geo) missing.push('Location');
+  // Check for location in multiple formats (geo object, or separate lat/lng fields)
+  const hasLocation = vostcard.geo || 
+    (vostcard.latitude && vostcard.longitude) ||
+    ((vostcard as any).latitude && (vostcard as any).longitude);
+  if (!hasLocation) missing.push('Location');
   
   return missing;
 };
@@ -41,9 +48,13 @@ export const getValidationState = (vostcard: Partial<Vostcard>): ValidationState
     hasTitle: (vostcard.title?.trim() || '') !== '',
     hasDescription: (vostcard.description?.trim() || '') !== '',
     hasCategories: (vostcard.categories?.length || 0) > 0,
-    hasPhotos: (vostcard.photos?.length || 0) >= minPhotos,
+    hasPhotos: ((vostcard.photos?.length || 0) + 
+      ((vostcard as any).photoURLs?.length || 0) + 
+      ((vostcard as any)._firebasePhotoURLs?.length || 0)) >= minPhotos,
     hasVideo: isQuickcard ? true : !!vostcard.video, // Quickcards don't need video
-    hasGeo: !!vostcard.geo
+    hasGeo: !!(vostcard.geo || 
+      (vostcard.latitude && vostcard.longitude) ||
+      ((vostcard as any).latitude && (vostcard as any).longitude))
   };
 };
 
