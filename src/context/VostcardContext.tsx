@@ -908,7 +908,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
     } catch (error) {
       console.error('❌ Failed lightweight sync:', error);
-      alert('Failed to load saved Vostcards. Please refresh the page and try again.');
+      console.warn('⚠️ Lightweight sync failed, app will continue with existing data');
+      // Don't show alert - app should continue working
     }
   }, [getDeletionMarkers]);
 
@@ -2336,7 +2337,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     } catch (error) {
       console.error('❌ Failed to open IndexedDB:', error);
-      alert('Failed to load saved Vostcards. Please refresh the page and try again.');
+      console.warn('⚠️ IndexedDB unavailable, app will continue without local storage');
+      // Don't show alert - app should continue working without IndexedDB
+      setSavedVostcards([]); // Set empty array as fallback
     }
   }, []);
 
