@@ -59,6 +59,15 @@ const TripDetailView: React.FC = () => {
       console.log('📋 Loading trip:', id);
       const tripData = await TripService.getTripById(id!);
       setTrip(tripData);
+      
+      // Debug ownership information
+      console.log('🔍 Trip ownership debug:', {
+        tripName: tripData.name,
+        tripCreatedBy: tripData.createdBy,
+        currentUserUid: user.uid,
+        isOwner: user.uid === tripData.createdBy
+      });
+      
       console.log(`✅ Loaded trip: ${tripData.name} with ${tripData.items.length} items`);
 
     } catch (err) {
