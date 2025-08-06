@@ -9,8 +9,9 @@ service cloud.firestore {
     // Allow authenticated users to read and write their own vostcards
     match /vostcards/{vostcardId} {
       allow read: if true; // Allow all users to read vostcards (for the map)
-      allow write: if request.auth != null && request.auth.uid == resource.data.userID;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userID;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userID;
       
       // Allow authenticated users to read and write like counts
       match /likeCount/{document} {
