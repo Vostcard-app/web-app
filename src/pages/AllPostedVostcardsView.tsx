@@ -34,6 +34,7 @@ const AllPostedVostcardsView: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const ITEMS_PER_PAGE = 5;
+  const GUIDE_FILTER_ITEMS_PER_PAGE = 20; // Load more when guide filter is active
   
   // Type filtering state (Offers are never filtered out)
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -348,13 +349,14 @@ const AllPostedVostcardsView: React.FC = () => {
     const fetchAllPostedVostcards = async () => {
       setLoading(true);
       try {
-        console.log('🔄 Fetching first', ITEMS_PER_PAGE, 'posted vostcards and quickcards...');
+        const itemsToLoad = showGuidesOnly ? GUIDE_FILTER_ITEMS_PER_PAGE : ITEMS_PER_PAGE;
+        console.log('🔄 Fetching first', itemsToLoad, 'posted vostcards and quickcards...', showGuidesOnly ? '(guide filter active)' : '');
         
-        // Query with pagination: limit to ITEMS_PER_PAGE (no orderBy to avoid composite index requirement)
+        // Query with pagination: limit based on whether guide filter is active
         const q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
-          limit(ITEMS_PER_PAGE)
+          limit(itemsToLoad)
         );
         const snapshot1 = await getDocs(q1);
         const postedVostcards = snapshot1.docs.map(doc => ({
