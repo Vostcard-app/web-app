@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
-import { useVostcardStorage } from '../context/VostcardStorageContext';
 import { TripService } from '../services/tripService';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
@@ -14,25 +13,19 @@ const TripDetailView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDesktop } = useResponsive();
-  const { savedVostcards } = useVostcardStorage();
   
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [itemsStatus, setItemsStatus] = useState<Map<string, { exists: boolean; loading: boolean }>>(new Map());
   const [cleaning, setCleaning] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingTrip, setEditingTrip] = useState<{name: string; description: string; isPrivate: boolean} | null>(null);
-  const [updating, setUpdating] = useState(false);
+
   
   // View mode states
   type ViewMode = 'list' | 'map' | 'slideshow';
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   
-  // Content management states for edit modal
-  const [userVostcards, setUserVostcards] = useState<any[]>([]);
-  const [loadingUserContent, setLoadingUserContent] = useState(false);
-  const [showAddItemsSection, setShowAddItemsSection] = useState(false);
+
 
   console.log('🔄 TripDetailView rendered', {
     id,
@@ -212,71 +205,7 @@ const TripDetailView: React.FC = () => {
     return { duplicates, deleted };
   };
 
-  // Handle edit trip
-  const handleEditTrip = () => {
-    if (!trip) return;
-    console.log('🎯 Opening edit modal for trip:', trip.name, 'with', trip.items.length, 'items');
-    setEditingTrip({
-      name: trip.name,
-      description: trip.description || '',
-      isPrivate: trip.isPrivate
-    });
-    setShowEditModal(true);
-    loadUserContent();
-  };
 
-  // Load user's vostcards and quickcards for adding to trip
-  const loadUserContent = async () => {
-    console.log('📋 Loading user content for trip editing...');
-    setLoadingUserContent(true);
-    try {
-      // Filter out items that are already in the trip
-      const tripItemIds = new Set(trip?.items.map(item => item.vostcardID) || []);
-      console.log('🔍 Trip item IDs to exclude:', Array.from(tripItemIds));
-      console.log('📱 Total saved vostcards:', savedVostcards.length);
-      
-      const availableContent = savedVostcards.filter(vostcard => 
-        !tripItemIds.has(vostcard.id) && 
-        (vostcard.state === 'posted' || vostcard.state === 'private')
-      );
-      console.log('✅ Available content for adding:', availableContent.length, 'items');
-      setUserVostcards(availableContent);
-    } catch (error) {
-      console.error('Error loading user content:', error);
-    } finally {
-      setLoadingUserContent(false);
-    }
-  };
-
-  // Add item to trip
-  const handleAddItemToTrip = async (vostcard: any) => {
-    if (!trip) return;
-    
-    try {
-      const newItem = await TripService.addItemToTrip(trip.id, {
-        vostcardID: vostcard.id,
-        type: vostcard.isQuickcard ? 'quickcard' : 'vostcard',
-        title: vostcard.title,
-        description: vostcard.description,
-        photoURL: vostcard.photoURLs?.[0] || vostcard.photoURL,
-        latitude: vostcard.geo?.latitude,
-        longitude: vostcard.geo?.longitude
-      });
-      
-      // Update trip with new item
-      setTrip(prev => prev ? {
-        ...prev,
-        items: [...prev.items, newItem]
-      } : null);
-      
-      // Remove from available content
-      setUserVostcards(prev => prev.filter(v => v.id !== vostcard.id));
-      
-    } catch (error) {
-      console.error('Error adding item to trip:', error);
-      alert('Failed to add item to trip. Please try again.');
-    }
-  };
 
   // Remove item from trip
   const handleRemoveItemFromTrip = async (itemId: string) => {
@@ -300,29 +229,7 @@ const TripDetailView: React.FC = () => {
     }
   };
 
-  const handleUpdateTrip = async () => {
-    if (!trip || !editingTrip) return;
-    
-    setUpdating(true);
-    try {
-      const updatedTrip = await TripService.updateTrip(trip.id, {
-        name: editingTrip.name.trim(),
-        description: editingTrip.description.trim() || undefined,
-        isPrivate: editingTrip.isPrivate
-      });
-      
-      setTrip(updatedTrip);
-      setShowEditModal(false);
-      setEditingTrip(null);
-      alert('✅ Trip updated successfully!');
-      
-    } catch (error) {
-      console.error('Error updating trip:', error);
-      alert(`Error updating trip: ${error.message || 'Unknown error'}`);
-    } finally {
-      setUpdating(false);
-    }
-  };
+
 
   // Handle share trip
   const handleShareTrip = async () => {
@@ -624,25 +531,7 @@ const TripDetailView: React.FC = () => {
               return null;
             })()}
             
-            {/* Edit Trip Button */}
-            <button
-              style={{
-                background: 'rgba(255,255,255,0.15)',
-                border: 'none',
-                borderRadius: '50%',
-                width: 36,
-                height: 36,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'white',
-              }}
-              onClick={handleEditTrip}
-              title="Edit Trip"
-            >
-              <FaEdit size={16} />
-            </button>
+
             
             {/* Share Trip Button */}
             <button
@@ -876,15 +765,14 @@ const TripDetailView: React.FC = () => {
                 .map((item, index) => (
                 <div
                   key={item.id}
-                  onClick={() => handleItemClick(item)}
                   style={{
                     background: 'white',
                     border: '1px solid #e0e0e0',
                     borderRadius: '12px',
                     padding: '12px',
-                    cursor: 'pointer',
                     transition: 'all 0.2s ease',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = '#f8f9fa';
@@ -899,11 +787,59 @@ const TripDetailView: React.FC = () => {
                     e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
                   }}
                 >
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    gap: '12px'
-                  }}>
+                  {/* Delete Button */}
+                  {user && trip && user.uid === trip.createdBy && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm('This will remove the item from the trip. Are you sure?')) {
+                          handleRemoveItemFromTrip(item.id);
+                        }
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        color: '#dc3545',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        zIndex: 10,
+                        opacity: 0.7,
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.backgroundColor = '#dc3545';
+                        e.currentTarget.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.7';
+                        e.currentTarget.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                        e.currentTarget.style.color = '#dc3545';
+                      }}
+                      title="Remove from trip"
+                    >
+                      <FaTimes />
+                    </button>
+                  )}
+
+                  <div 
+                    onClick={() => handleItemClick(item)}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
                     {/* Thumbnail */}
                     <div style={{
                       width: '60px',
@@ -1027,385 +963,6 @@ const TripDetailView: React.FC = () => {
         `
       }} />
 
-      {/* Edit Trip Modal */}
-      {showEditModal && editingTrip && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '500px',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{
-                margin: 0,
-                fontSize: '18px',
-                fontWeight: '600',
-                color: '#333'
-              }}>
-                Edit Trip
-              </h3>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingTrip(null);
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <FaTimes style={{ color: '#666' }} />
-              </button>
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#333',
-                marginBottom: '6px'
-              }}>
-                Trip Name *
-              </label>
-              <input
-                type="text"
-                value={editingTrip.name}
-                onChange={(e) => setEditingTrip({
-                  ...editingTrip,
-                  name: e.target.value
-                })}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                maxLength={50}
-                disabled={updating}
-              />
-            </div>
-
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#333',
-                marginBottom: '6px'
-              }}>
-                Description (optional)
-              </label>
-              <textarea
-                value={editingTrip.description}
-                onChange={(e) => setEditingTrip({
-                  ...editingTrip,
-                  description: e.target.value
-                })}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  minHeight: '80px',
-                  resize: 'vertical',
-                  boxSizing: 'border-box'
-                }}
-                maxLength={200}
-                disabled={updating}
-              />
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#333',
-                cursor: 'pointer'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={editingTrip.isPrivate}
-                  onChange={(e) => setEditingTrip({
-                    ...editingTrip,
-                    isPrivate: e.target.checked
-                  })}
-                  style={{ marginRight: '8px' }}
-                  disabled={updating}
-                />
-                Keep trip private
-              </label>
-              <div style={{
-                fontSize: '12px',
-                color: '#666',
-                marginTop: '4px',
-                marginLeft: '20px'
-              }}>
-                {editingTrip.isPrivate 
-                  ? 'Only you can see this trip' 
-                  : 'Trip can be shared with others'
-                }
-              </div>
-            </div>
-
-            {/* Trip Items Management */}
-            <div style={{ 
-              marginBottom: '20px',
-              borderTop: '1px solid #eee',
-              paddingTop: '20px'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '16px'
-              }}>
-                <h4 style={{ 
-                  margin: 0, 
-                  fontSize: '16px', 
-                  fontWeight: '600', 
-                  color: '#333'
-                }}>
-                  Trip Items ({trip?.items.length || 0})
-                </h4>
-              </div>
-
-              {/* Trip Items List - Similar to Detail View */}
-              <div style={{ 
-                maxHeight: '400px', 
-                overflowY: 'auto',
-                marginBottom: '16px'
-              }}>
-                {trip && trip.items.length > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {trip.items
-                      .sort((a, b) => a.order - b.order)
-                      .map((item, index) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          background: 'white',
-                          border: '1px solid #e0e0e0',
-                          borderRadius: '8px',
-                          padding: '12px'
-                        }}
-                      >
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center',
-                          gap: '12px'
-                        }}>
-                          {/* Thumbnail */}
-                          <div style={{
-                            width: '50px',
-                            height: '50px',
-                            borderRadius: '6px',
-                            overflow: 'hidden',
-                            flexShrink: 0,
-                            backgroundColor: '#f0f0f0',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            {item.photoURL ? (
-                              <img
-                                src={item.photoURL}
-                                alt={item.title || 'Post image'}
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover'
-                                }}
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  e.currentTarget.parentElement.innerHTML = item.type === 'quickcard' ? '📷' : '📱';
-                                  e.currentTarget.parentElement.style.fontSize = '20px';
-                                  e.currentTarget.parentElement.style.color = '#999';
-                                }}
-                              />
-                            ) : (
-                              <span style={{ fontSize: '20px', color: '#999' }}>
-                                {item.type === 'quickcard' ? '📷' : '📱'}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Content */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <h4 style={{ 
-                              margin: '0 0 4px 0', 
-                              fontSize: '14px', 
-                              fontWeight: '600',
-                              color: '#333',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {item.title || 'Untitled'}
-                            </h4>
-                            
-                            {item.description && (
-                              <p style={{ 
-                                margin: '0', 
-                                fontSize: '12px', 
-                                color: '#666',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {item.description.split('\n')[0]}
-                              </p>
-                            )}
-                          </div>
-                          
-                          {/* Delete Button */}
-                          <button
-                            onClick={() => {
-                              if (confirm('This will remove the post from the trip. Are you sure?')) {
-                                handleRemoveItemFromTrip(item.id);
-                              }
-                            }}
-                            disabled={updating}
-                            style={{
-                              backgroundColor: 'transparent',
-                              color: '#dc3545',
-                              border: 'none',
-                              borderRadius: '4px',
-                              padding: '6px',
-                              cursor: updating ? 'not-allowed' : 'pointer',
-                              fontSize: '14px',
-                              flexShrink: 0
-                            }}
-                            title="Remove from trip"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{
-                    textAlign: 'center',
-                    padding: '40px 20px',
-                    color: '#666',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '8px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <span style={{ fontSize: '32px', display: 'block', marginBottom: '12px' }}>🗂️</span>
-                    <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>No items in this trip</h4>
-                    <p style={{ margin: 0, fontSize: '14px' }}>
-                      Use the "Add Post" button below to add content to your trip.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Add Post Button */}
-              <button
-                onClick={() => {
-                  // TODO: Wire this to add post functionality
-                  alert('Add Post functionality will be wired later');
-                }}
-                disabled={updating}
-                style={{
-                  width: '100%',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 16px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: updating ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <span style={{ fontSize: '16px' }}>+</span>
-                Add Post
-              </button>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              justifyContent: 'flex-end'
-            }}>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingTrip(null);
-                }}
-                disabled={updating}
-                style={{
-                  backgroundColor: 'transparent',
-                  color: '#666',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '10px 16px',
-                  fontSize: '14px',
-                  cursor: updating ? 'not-allowed' : 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={handleUpdateTrip}
-                disabled={updating || !editingTrip.name.trim()}
-                style={{
-                  backgroundColor: updating || !editingTrip.name.trim() ? '#ccc' : '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px 16px',
-                  fontSize: '14px',
-                  cursor: updating || !editingTrip.name.trim() ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {updating ? 'Updating...' : 'Update Trip'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
