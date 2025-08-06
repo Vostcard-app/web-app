@@ -8,8 +8,6 @@ export default function QuickcardStep2() {
   const navigate = useNavigate();
   const { updateVostcard, currentVostcard } = useVostcard();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const libraryInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos (4 thumbnails for quickcards)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
@@ -63,15 +61,21 @@ export default function QuickcardStep2() {
   // Handle photo option selection
   const handleTakePhoto = () => {
     setShowPhotoOptions(false);
-    if (pendingPhotoIndex !== null && cameraInputRef.current) {
-      cameraInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
-      cameraInputRef.current.click();
+    if (pendingPhotoIndex !== null && fileInputRef.current) {
+      // Configure for camera
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.setAttribute('capture', 'environment');
+      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      fileInputRef.current.click();
     }
   };
 
   const handleUploadFile = () => {
     setShowPhotoOptions(false);
     if (pendingPhotoIndex !== null && fileInputRef.current) {
+      // Configure for file upload
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.removeAttribute('capture');
       fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
       fileInputRef.current.click();
     }
@@ -79,9 +83,12 @@ export default function QuickcardStep2() {
 
   const handleSelectFromLibrary = () => {
     setShowPhotoOptions(false);
-    if (pendingPhotoIndex !== null && libraryInputRef.current) {
-      libraryInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
-      libraryInputRef.current.click();
+    if (pendingPhotoIndex !== null && fileInputRef.current) {
+      // Configure for photo library
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.removeAttribute('capture');
+      fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
+      fileInputRef.current.click();
     }
   };
 
@@ -442,31 +449,11 @@ export default function QuickcardStep2() {
         </div>
       </div>
 
-      {/* Hidden file inputs for different photo sources */}
+      {/* Dynamic file input - configured based on user selection */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-      
-      {/* Camera input - optimized for camera capture */}
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
-      
-      {/* Library input - native photo gallery */}
-      <input
-        ref={libraryInputRef}
-        type="file"
-        accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-        multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
