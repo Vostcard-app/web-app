@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaPlus, FaEdit, FaTrash, FaEye, FaShare, FaMap } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaPlus, FaEdit, FaTrash, FaEye, FaShare, FaMap, FaWrench } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 
 const MyTripsListView = () => {
   const navigate = useNavigate();
@@ -163,6 +165,52 @@ const MyTripsListView = () => {
         ? `${window.location.origin}/trip/${trip.shareableLink}`
         : `${window.location.origin}/trip/${trip.id}`;
       alert(`Share this link:\n\n${shareUrl}`);
+    }
+  };
+
+  // 🔧 Cleanup function to fix existing trip items with 'pending_upload' photoURLs
+  const handleFixTripThumbnails = async (trip: Trip) => {
+    try {
+      console.log('🔧 Fixing trip thumbnails for:', trip.name);
+      if (!trip.items) return;
+
+      let fixedCount = 0;
+      for (const item of trip.items) {
+        if (item.photoURL === 'pending_upload') {
+          console.log('🔧 Fixing item with pending_upload:', item.id, item.title);
+          
+          // Fetch the actual photoURL from the vostcard
+          try {
+            const vostcardDoc = await getDoc(doc(db, 'vostcards', item.vostcardID));
+            if (vostcardDoc.exists()) {
+              const vostcardData = vostcardDoc.data();
+              const actualPhotoURL = (vostcardData.photoURLs && vostcardData.photoURLs[0]) || vostcardData.photoURL;
+              
+              if (actualPhotoURL && actualPhotoURL !== 'pending_upload') {
+                // Update the trip item with the correct photoURL
+                await updateDoc(doc(db, 'trips', trip.id, 'items', item.id), {
+                  photoURL: actualPhotoURL
+                });
+                console.log('✅ Fixed photoURL for:', item.title, actualPhotoURL);
+                fixedCount++;
+              }
+            }
+          } catch (error) {
+            console.warn('⚠️ Could not fix item:', item.id, error);
+          }
+        }
+      }
+      
+      if (fixedCount > 0) {
+        alert(`✅ Fixed ${fixedCount} thumbnail(s)!\n\nRefresh the page to see the images.`);
+        // Reload trips to show the fixes
+        loadTrips();
+      } else {
+        alert('ℹ️ No thumbnails needed fixing.');
+      }
+    } catch (error) {
+      console.error('❌ Error fixing trip thumbnails:', error);
+      alert('Failed to fix thumbnails. Please try again.');
     }
   };
 
@@ -544,9 +592,9 @@ const MyTripsListView = () => {
                     </button>
                     
                     <button
-                      onClick={() => {/* TODO: Add edit functionality */}}
+                      onClick={() => handleFixTripThumbnails(trip)}
                       style={{
-                        backgroundColor: '#FF9500',
+                        backgroundColor: '#FF6B35',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -561,9 +609,10 @@ const MyTripsListView = () => {
                         flex: 1,
                         minWidth: 0
                       }}
+                      title="Fix missing thumbnails"
                     >
-                      <FaEdit size={12} />
-                      Edit
+                      <FaWrench size={12} />
+                      Fix
                     </button>
                   </div>
                 </div>
