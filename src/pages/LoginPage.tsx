@@ -27,48 +27,43 @@ export default function LoginPage() {
     return emailRegex.test(input);
   };
 
-  // Helper function to get email from username
+  // Helper function to get email from username - OPTIMIZED for speed
   const getEmailFromUsername = async (username: string): Promise<string | null> => {
     try {
       const trimmedUsername = username.trim();
       console.log('🔍 Looking up username:', { original: username, trimmed: trimmedUsername });
       
-      // Try exact match first
-      const exactQuery = query(collection(db, "users"), where("username", "==", trimmedUsername));
-      let querySnapshot = await getDocs(exactQuery);
+      // Add timeout to prevent long delays
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('Username lookup timeout')), 3000); // 3 second timeout
+      });
       
-      if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0];
-        const email = userDoc.data().email;
-        console.log('✅ Found exact match:', { username: trimmedUsername, email });
-        return email || null;
-      }
-      
-      // If no exact match, try case-insensitive search by getting all users and filtering
-      console.log('🔍 No exact match, trying case-insensitive search...');
-      const allUsersQuery = query(collection(db, "users"));
-      const allUsersSnapshot = await getDocs(allUsersQuery);
-      
-      const lowerUsername = trimmedUsername.toLowerCase();
-      for (const userDoc of allUsersSnapshot.docs) {
-        const userData = userDoc.data();
-        const storedUsername = userData.username;
+      // Try exact match with timeout
+      const lookupPromise = (async () => {
+        const exactQuery = query(collection(db, "users"), where("username", "==", trimmedUsername));
+        const querySnapshot = await getDocs(exactQuery);
         
-        if (storedUsername && storedUsername.toLowerCase() === lowerUsername) {
-          const email = userData.email;
-          console.log('✅ Found case-insensitive match:', { 
-            searched: trimmedUsername, 
-            found: storedUsername, 
-            email 
-          });
+        if (!querySnapshot.empty) {
+          const userDoc = querySnapshot.docs[0];
+          const email = userDoc.data().email;
+          console.log('✅ Found exact match:', { username: trimmedUsername, email });
           return email || null;
         }
-      }
+        
+        console.log('❌ No exact username match found');
+        return null;
+      })();
       
-      console.log('❌ No username match found');
-      return null;
+      // Race between lookup and timeout
+      const result = await Promise.race([lookupPromise, timeoutPromise]);
+      return result;
+      
     } catch (error) {
-      console.error("Error looking up username:", error);
+      if (error.message === 'Username lookup timeout') {
+        console.warn('⏰ Username lookup timed out - suggest using email instead');
+      } else {
+        console.error("Error looking up username:", error);
+      }
       return null;
     }
   };
@@ -96,7 +91,7 @@ export default function LoginPage() {
         const foundEmail = await getEmailFromUsername(trimmedInput);
         
         if (!foundEmail) {
-          setError("No account found with this username.");
+          setError("No account found with this username. Try using your email address instead for faster login.");
           setLoading(false);
           return;
         }
