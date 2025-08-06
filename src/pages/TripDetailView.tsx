@@ -1253,8 +1253,7 @@ const TripDetailView: React.FC = () => {
                 return null;
               })()}
             </div>
-          )}
-            ))
+          )
           )}
         </div>
       </div>
