@@ -530,7 +530,7 @@ Tap OK to continue.`;
                         {/* Edit Icon */}
                         <div
                           style={{
-                            cursor: (isDeleting || isPosting) ? 'not-allowed' : 'pointer',
+                            cursor: isDeleting ? 'not-allowed' : 'pointer',
                             transition: 'transform 0.1s',
                             display: 'flex',
                             alignItems: 'center',
@@ -539,13 +539,13 @@ Tap OK to continue.`;
                             borderRadius: '8px',
                             backgroundColor: '#f8f9fa',
                             border: '1px solid #dee2e6',
-                            opacity: (isDeleting || isPosting) ? 0.5 : 1
+                            opacity: isDeleting ? 0.5 : 1
                           }}
-                          onClick={() => !(isDeleting || isPosting) && handleEdit(vostcard.id)}
-                          onMouseDown={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(0.95)')}
-                          onMouseUp={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(1)')}
-                          onMouseLeave={(e) => !(isDeleting || isPosting) && (e.currentTarget.style.transform = 'scale(1)')}
-                          title={(isDeleting || isPosting) ? 'Loading...' : 'Edit Vostcard'}
+                          onClick={() => !isDeleting && handleEdit(vostcard.id)}
+                          onMouseDown={(e) => !isDeleting && (e.currentTarget.style.transform = 'scale(0.95)')}
+                          onMouseUp={(e) => !isDeleting && (e.currentTarget.style.transform = 'scale(1)')}
+                          onMouseLeave={(e) => !isDeleting && (e.currentTarget.style.transform = 'scale(1)')}
+                          title={isDeleting ? 'Loading...' : 'Edit Vostcard'}
                         >
                           <FaEdit size={20} color="#002B4D" />
                         </div>
