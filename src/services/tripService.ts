@@ -278,15 +278,26 @@ export const TripService = {
 
       if (!title || !photoURL) {
         try {
+          console.log('🔍 Fetching vostcard data for item:', data.vostcardID);
           const vostcardDoc = await getDoc(doc(db, 'vostcards', data.vostcardID));
           if (vostcardDoc.exists()) {
             const vostcardData = vostcardDoc.data();
+            console.log('📸 Vostcard data:', {
+              title: vostcardData.title,
+              photoURLs: vostcardData.photoURLs,
+              photoURL: vostcardData.photoURL,
+              hasPhotoURLs: !!vostcardData.photoURLs,
+              photoURLsLength: vostcardData.photoURLs?.length
+            });
             title = title || vostcardData.title || 'Untitled';
             description = description || vostcardData.description;
             // Get first photo from photoURLs array
             photoURL = photoURL || (vostcardData.photoURLs && vostcardData.photoURLs[0]) || vostcardData.photoURL;
             latitude = latitude || vostcardData.latitude;
             longitude = longitude || vostcardData.longitude;
+            console.log('✅ Final photoURL for trip item:', photoURL);
+          } else {
+            console.warn('⚠️ Vostcard document does not exist:', data.vostcardID);
           }
         } catch (fetchError) {
           console.warn('⚠️ Could not fetch vostcard data for caching:', fetchError);

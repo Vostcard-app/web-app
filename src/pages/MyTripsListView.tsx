@@ -422,24 +422,32 @@ const MyTripsListView = () => {
                     position: 'relative',
                     flexShrink: 0
                   }}>
-                    {trip.items && trip.items.length > 0 && trip.items[0].photoURL ? (
-                      <img
-                        src={trip.items[0].photoURL}
-                        alt={trip.items[0].title}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          borderRadius: '8px'
-                        }}
-                      />
-                    ) : trip.items && trip.items.length > 0 ? (
-                      <div style={{ fontSize: '20px' }}>
-                        {trip.items[0].type === 'quickcard' ? '📷' : '📱'}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: '20px', color: '#ccc' }}>🧳</div>
-                    )}
+                    {(() => {
+                      console.log('🖼️ Rendering thumbnail for trip:', trip.name, {
+                        hasItems: !!(trip.items && trip.items.length > 0),
+                        firstItemPhotoURL: trip.items?.[0]?.photoURL,
+                        firstItemTitle: trip.items?.[0]?.title,
+                        firstItemType: trip.items?.[0]?.type
+                      });
+                      return trip.items && trip.items.length > 0 && trip.items[0].photoURL ? (
+                        <img
+                          src={trip.items[0].photoURL}
+                          alt={trip.items[0].title}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      ) : trip.items && trip.items.length > 0 ? (
+                        <div style={{ fontSize: '20px' }}>
+                          {trip.items[0].type === 'quickcard' ? '📷' : '📱'}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '20px', color: '#ccc' }}>🧳</div>
+                      );
+                    })()}
                     {trip.items && trip.items.length > 1 && (
                       <div style={{
                         position: 'absolute',
