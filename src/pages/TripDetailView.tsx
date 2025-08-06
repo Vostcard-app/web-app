@@ -867,7 +867,7 @@ const TripDetailView: React.FC = () => {
                     background: 'white',
                     border: '1px solid #e0e0e0',
                     borderRadius: '12px',
-                    padding: '16px',
+                    padding: '12px',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
@@ -887,97 +887,46 @@ const TripDetailView: React.FC = () => {
                 >
                   <div style={{ 
                     display: 'flex', 
-                    alignItems: 'flex-start',
+                    alignItems: 'center',
                     gap: '12px'
                   }}>
-                    {/* Order number */}
+                    {/* Thumbnail */}
                     <div style={{
-                      background: '#f0f0f0',
-                      color: '#666',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      backgroundColor: '#f0f0f0',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      flexShrink: 0
+                      justifyContent: 'center'
                     }}>
-                      {index + 1}
+                      {item.photoURL ? (
+                        <img
+                          src={item.photoURL}
+                          alt={item.title || 'Post image'}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement.innerHTML = item.type === 'quickcard' ? '📷' : '📱';
+                            e.currentTarget.parentElement.style.fontSize = '24px';
+                            e.currentTarget.parentElement.style.color = '#999';
+                          }}
+                        />
+                      ) : (
+                        <span style={{ fontSize: '24px', color: '#999' }}>
+                          {item.type === 'quickcard' ? '📷' : '📱'}
+                        </span>
+                      )}
                     </div>
                     
                     {/* Content */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        marginBottom: '8px'
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {getItemTypeIcon(item)}
-                          <span style={{
-                            background: item.type === 'quickcard' ? '#e8f4fd' : '#e8f5e8',
-                            color: item.type === 'quickcard' ? '#007aff' : '#34c759',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '10px',
-                            fontWeight: '500'
-                          }}>
-                            {getItemTypeLabel(item)}
-                          </span>
-                          
-                          {/* ✅ Status indicators */}
-                          {(() => {
-                            const status = itemsStatus.get(item.vostcardID);
-                            const seen = new Set<string>();
-                            let isDuplicate = false;
-                            
-                            // Check for duplicates by scanning items before this one
-                            for (let i = 0; i < index; i++) {
-                              const prevItem = trip.items[i];
-                              const itemKey = `${prevItem.vostcardID}-${prevItem.type}`;
-                              seen.add(itemKey);
-                            }
-                            
-                            const currentItemKey = `${item.vostcardID}-${item.type}`;
-                            isDuplicate = seen.has(currentItemKey);
-                            
-                            return (
-                              <>
-                                {/* Duplicate indicator */}
-                                {isDuplicate && (
-                                  <span style={{
-                                    background: '#fff8e1',
-                                    color: '#f57c00',
-                                    padding: '2px 6px',
-                                    borderRadius: '4px',
-                                    fontSize: '9px',
-                                    fontWeight: '600'
-                                  }}>
-                                    DUPLICATE
-                                  </span>
-                                )}
-                                
-                                {/* Loading indicator */}
-                                {status && status.loading && (
-                                  <div style={{
-                                    width: '12px',
-                                    height: '12px',
-                                    border: '1px solid #ddd',
-                                    borderTop: '1px solid #007aff',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite'
-                                  }} />
-                                )}
-                              </>
-                            );
-                          })()}
-                        </div>
-                        <FaChevronRight style={{ color: '#007aff', fontSize: '12px' }} />
-                      </div>
-                      
                       <h3 style={{ 
                         margin: '0 0 4px 0', 
                         fontSize: '16px', 
@@ -992,31 +941,25 @@ const TripDetailView: React.FC = () => {
                       
                       {item.description && (
                         <p style={{ 
-                          margin: '0 0 8px 0', 
+                          margin: '0', 
                           fontSize: '14px', 
                           color: '#666',
                           lineHeight: '1.3',
                           overflow: 'hidden',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical'
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
                         }}>
-                          {item.description}
+                          {item.description.split('\n')[0]}
                         </p>
                       )}
-                      
-                      <div style={{ 
-                        fontSize: '12px',
-                        color: '#888'
-                      }}>
-                        {item.username && `by ${item.username}`}
-                        {item.latitude && item.longitude && (
-                          <span style={{ marginLeft: '8px' }}>
-                            📍 Location available
-                          </span>
-                        )}
-                      </div>
                     </div>
+                    
+                    {/* Chevron */}
+                    <FaChevronRight style={{ 
+                      color: '#ccc', 
+                      fontSize: '14px',
+                      flexShrink: 0
+                    }} />
                   </div>
                 </div>
               ))}
