@@ -650,18 +650,28 @@ const AllPostedVostcardsView: React.FC = () => {
           username: profile?.username
         })));
         
-        filtered = filtered.filter(v => {
-          // Check if the post author has userRole='guide' from user profiles
-          const userProfile = userProfiles[v.userID];
-          const isGuideUser = userProfile?.userRole === 'guide';
-          
-          // Debug logging
-          console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}, username=${userProfile?.username}`);
-          
-          return isGuideUser;
-        });
+        // Check if there are any guide users in the system
+        const guideUsers = Object.entries(userProfiles).filter(([id, profile]) => profile?.userRole === 'guide');
+        console.log(`👨‍🏫 Guide users found: ${guideUsers.length}`);
         
-        console.log(`📚 Guide-only filter applied: ${filtered.length} posts from Guide users`);
+        if (guideUsers.length === 0) {
+          console.log(`⚠️ No guide users found in system - temporarily showing all posts`);
+          // If no guides exist, show all posts instead of empty results
+          // This provides better UX until guide users are created
+        } else {
+          filtered = filtered.filter(v => {
+            // Check if the post author has userRole='guide' from user profiles
+            const userProfile = userProfiles[v.userID];
+            const isGuideUser = userProfile?.userRole === 'guide';
+            
+            // Debug logging
+            console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}, username=${userProfile?.username}`);
+            
+            return isGuideUser;
+          });
+          
+          console.log(`📚 Guide-only filter applied: ${filtered.length} posts from Guide users`);
+        }
       }
     }
 
@@ -1072,13 +1082,17 @@ const AllPostedVostcardsView: React.FC = () => {
             <div style={{ fontSize: '18px', marginBottom: '8px' }}>📱</div>
             <div>
               {showGuidesOnly 
-                ? 'No Guide posts found with current filters.' 
+                ? (Object.entries(userProfiles).filter(([id, profile]) => profile?.userRole === 'guide').length === 0
+                   ? 'No Guide users found in the system yet.'
+                   : 'No Guide posts found with current filters.')
                 : 'No posted Vostcards found.'
               }
             </div>
             <div style={{ fontSize: '12px', marginTop: '8px' }}>
               {showGuidesOnly 
-                ? 'Try adjusting your filters or check back later.'
+                ? (Object.entries(userProfiles).filter(([id, profile]) => profile?.userRole === 'guide').length === 0
+                   ? 'Guide accounts need to be created by administrators. Turn off the filter to see all posts.'
+                   : 'Try adjusting your filters or check back later.')
                 : 'Create your first Vostcard from the home screen!'
               }
             </div>
