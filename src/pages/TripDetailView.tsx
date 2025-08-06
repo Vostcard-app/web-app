@@ -911,13 +911,6 @@ const TripDetailView: React.FC = () => {
                         </p>
                       )}
                     </div>
-                    
-                    {/* Chevron */}
-                    <FaChevronRight style={{ 
-                      color: '#ccc', 
-                      fontSize: '14px',
-                      flexShrink: 0
-                    }} />
                   </div>
                 </div>
               ))}
