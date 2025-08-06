@@ -650,28 +650,27 @@ const AllPostedVostcardsView: React.FC = () => {
           username: profile?.username
         })));
         
-        // Check if there are any guide users in the system
-        const guideUsers = Object.entries(userProfiles).filter(([id, profile]) => profile?.userRole === 'guide');
-        console.log(`👨‍🏫 Guide users found: ${guideUsers.length}`);
-        
-        if (guideUsers.length === 0) {
-          console.log(`⚠️ No guide users found in system - temporarily showing all posts`);
-          // If no guides exist, show all posts instead of empty results
-          // This provides better UX until guide users are created
-        } else {
-          filtered = filtered.filter(v => {
-            // Check if the post author has userRole='guide' from user profiles
-            const userProfile = userProfiles[v.userID];
-            const isGuideUser = userProfile?.userRole === 'guide';
-            
-            // Debug logging
-            console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, userRole=${userProfile?.userRole}, isGuide=${isGuideUser}, username=${userProfile?.username}`);
-            
-            return isGuideUser;
-          });
+        // Filter based on the userRole field in the vostcard document itself (same as map pins)
+        filtered = filtered.filter(v => {
+          const isGuidePost = v.userRole === 'guide';
           
-          console.log(`📚 Guide-only filter applied: ${filtered.length} posts from Guide users`);
-        }
+          // Debug logging
+          console.log(`🔍 Guide filter - Post ${v.id}: userID=${v.userID}, vostcard.userRole=${v.userRole}, isGuide=${isGuidePost}, username=${v.username}`);
+          
+          return isGuidePost;
+        });
+        
+        console.log(`📚 Guide-only filter applied: ${filtered.length} guide posts found`);
+        
+        // Also log guide posts found for debugging
+        const guidePosts = filtered.filter(v => v.userRole === 'guide');
+        console.log('📚 Guide posts found:', guidePosts.length, guidePosts.map(p => ({
+          id: p.id,
+          title: p.title,
+          userID: p.userID,
+          username: p.username,
+          userRole: p.userRole
+        })));
       }
     }
 
@@ -1082,17 +1081,13 @@ const AllPostedVostcardsView: React.FC = () => {
             <div style={{ fontSize: '18px', marginBottom: '8px' }}>📱</div>
             <div>
               {showGuidesOnly 
-                ? (Object.entries(userProfiles).filter(([id, profile]) => profile?.userRole === 'guide').length === 0
-                   ? 'No Guide users found in the system yet.'
-                   : 'No Guide posts found with current filters.')
+                ? 'No Guide posts found with current filters.'
                 : 'No posted Vostcards found.'
               }
             </div>
             <div style={{ fontSize: '12px', marginTop: '8px' }}>
               {showGuidesOnly 
-                ? (Object.entries(userProfiles).filter(([id, profile]) => profile?.userRole === 'guide').length === 0
-                   ? 'Guide accounts need to be created by administrators. Turn off the filter to see all posts.'
-                   : 'Try adjusting your filters or check back later.')
+                ? 'Try adjusting your filters or check back later.'
                 : 'Create your first Vostcard from the home screen!'
               }
             </div>
