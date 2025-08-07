@@ -333,9 +333,6 @@ Tap OK to continue.`;
       });
       setTrip(updatedTrip);
       
-      // Wait a moment for the database update to propagate
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       // Generate public share URL
       const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
       
@@ -355,6 +352,8 @@ ${shareUrl}`;
         await navigator.clipboard.writeText(shareText);
         alert('Share link copied to clipboard!');
       }
+      
+      // Database update should propagate shortly (no delay needed)
       
     } catch (error) {
       console.error('Error sharing trip:', error);

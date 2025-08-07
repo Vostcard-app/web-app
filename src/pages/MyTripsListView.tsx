@@ -170,10 +170,6 @@ Tap OK to continue.`;
       // Update the trips list with the updated trip
       setTrips(prev => prev.map(t => t.id === trip.id ? updatedTrip : t));
       
-      // Wait a moment for the database update to propagate
-      console.log('⏳ MyTripsListView: Waiting for database propagation...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       // Generate public share URL (same format as TripDetailView)
       const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
       console.log('📍 MyTripsListView: Generated share URL:', shareUrl);
@@ -196,6 +192,10 @@ ${shareUrl}`;
         await navigator.clipboard.writeText(shareText);
         alert('Share link copied to clipboard!');
       }
+      
+      // Wait a moment for the database update to propagate (after sharing)
+      console.log('⏳ MyTripsListView: Database update should propagate shortly...');
+      // No need to await this since sharing is already done
       
       console.log('✅ MyTripsListView: Share process completed successfully');
       
