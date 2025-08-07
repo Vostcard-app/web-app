@@ -17,13 +17,49 @@ const AuthRedirect = () => {
   });
 
   useEffect(() => {
-    // ✅ COMPLETELY bypass authentication for shared content
+    // 🎯 SMART ROUTING: Handle shared content based on authentication status
     const sharedContentRoutes = ['/share/', '/share-quickcard/', '/share-trip/', '/email/', '/public-map', '/public-trip-map'];
     const isSharedContentRoute = sharedContentRoutes.some(prefix => location.pathname.startsWith(prefix));
     
     if (isSharedContentRoute) {
-      console.log('🔓 Bypassing authentication for shared content route:', location.pathname);
-      return; // No authentication logic at all - both logged-in and anonymous users see same experience
+      // Skip during loading to avoid premature redirects
+      if (loading) {
+        console.log('⏳ AuthRedirect: Still loading, skipping shared content logic');
+        return;
+      }
+
+      // If user is logged in, redirect to private version
+      if (user) {
+        console.log('🔐 AuthRedirect: Logged in user accessing shared content, redirecting to private version');
+        
+        // Extract content ID and redirect to private version
+        if (location.pathname.startsWith('/share-quickcard/')) {
+          const id = location.pathname.replace('/share-quickcard/', '').split('?')[0]; // Remove query params
+          if (id && id.length > 0) {
+            console.log('🎯 Redirecting to private quickcard:', `/quickcard/${id}`);
+            navigate(`/quickcard/${id}`);
+            return;
+          }
+        } else if (location.pathname.startsWith('/share/')) {
+          const id = location.pathname.replace('/share/', '').split('?')[0]; // Remove query params
+          if (id && id.length > 0) {
+            console.log('🎯 Redirecting to private vostcard:', `/vostcard/${id}`);
+            navigate(`/vostcard/${id}`);
+            return;
+          }
+        } else if (location.pathname.startsWith('/share-trip/')) {
+          const id = location.pathname.replace('/share-trip/', '').split('?')[0]; // Remove query params
+          if (id && id.length > 0) {
+            console.log('🎯 Redirecting to private trip:', `/trip/${id}`);
+            navigate(`/trip/${id}`);
+            return;
+          }
+        }
+      }
+      
+      // If user is not logged in, allow public view (no redirect)
+      console.log('🔓 Anonymous user accessing shared content, showing public view:', location.pathname);
+      return;
     }
 
     // Skip redirection if still loading
