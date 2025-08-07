@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaTimes, FaChevronLeft, FaChevronRight, FaPlay, FaPause, FaCast, FaStopCircle } from 'react-icons/fa';
+import { FaTimes, FaChevronLeft, FaChevronRight, FaPlay, FaPause, FaTv, FaStopCircle } from 'react-icons/fa';
 
 interface MultiPhotoModalProps {
   photos: string[];
@@ -389,7 +389,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             }}
             title={casting ? 'Stop Casting' : 'Cast to Device'}
           >
-            {casting ? <FaStopCircle color="white" size={18} /> : <FaCast color="white" size={18} />}
+            {casting ? <FaStopCircle color="white" size={18} /> : <FaTv color="white" size={18} />}
           </button>
         )}
       </div>
