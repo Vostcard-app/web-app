@@ -1792,13 +1792,10 @@ const HomeView = () => {
 
 
 
-        {/* Map Container - Add top margin for fixed header */}
+        {/* Map Container - Directly under header */}
         <div style={{ 
           flex: 1, 
-          position: 'relative', 
-          marginTop: shouldUseContainer 
-            ? '100px' // Desktop: account for 20px container offset + header
-            : '80px'  // Mobile: normal margins
+          position: 'relative'
         }}>
           {/* Error Display */}
           {mapError && (
@@ -2044,7 +2041,7 @@ const HomeView = () => {
           <div
             style={{
               position: 'absolute',
-              top: shouldUseContainer ? '-20px' : '0px', // Desktop: move up to eliminate gap
+              top: shouldUseContainer ? '80px' : '8px', // Desktop: position below header, Mobile: small offset
               left: '8px',
               right: '8px',
               display: 'flex',
