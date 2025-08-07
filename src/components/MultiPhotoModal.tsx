@@ -36,6 +36,9 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   const [casting, setCasting] = useState(false);
   const [presentationRequest, setPresentationRequest] = useState<any>(null);
   const [presentationConnection, setPresentationConnection] = useState<any>(null);
+  
+  // Mobile detection for better casting UX
+  const [isMobile, setIsMobile] = useState(false);
 
   // Calculate optimal interval based on audio duration if provided
   const getAutoPlayInterval = () => {
@@ -68,29 +71,51 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     };
   }, [isOpen, autoPlay, currentIndex, photos.length, isPaused, audioDuration, autoPlayInterval]);
 
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      const isMobileDevice = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+      setIsMobile(isMobileDevice);
+    };
+    
+    checkMobile();
+  }, []);
+
   // Initialize casting capability
   useEffect(() => {
-    if (isOpen && 'PresentationRequest' in window) {
-      try {
-        const request = new (window as any).PresentationRequest([
-          'https://www.youtube.com/tv',
-          'https://cast.google.com/tv'
-        ]);
-        setPresentationRequest(request);
-        
-        // Check if casting is available
-        request.getAvailability().then((availability: any) => {
-          setCastAvailable(availability.value);
-          availability.onchange = () => setCastAvailable(availability.value);
-        }).catch(() => {
-          setCastAvailable(false);
-        });
-      } catch (error) {
-        console.log('Presentation API not supported');
-        setCastAvailable(false);
+    if (isOpen) {
+      // On mobile, always show cast button for better UX
+      if (isMobile) {
+        setCastAvailable(true); // Always show on mobile for testing
+      }
+      
+      // Try to initialize Presentation API if available
+      if ('PresentationRequest' in window) {
+        try {
+          const request = new (window as any).PresentationRequest([
+            'https://www.youtube.com/tv',
+            'https://cast.google.com/tv'
+          ]);
+          setPresentationRequest(request);
+          
+          // Check if casting is available
+          request.getAvailability().then((availability: any) => {
+            setCastAvailable(availability.value || isMobile); // Always true on mobile
+            availability.onchange = () => setCastAvailable(availability.value || isMobile);
+          }).catch(() => {
+            setCastAvailable(isMobile); // Show on mobile even if API fails
+          });
+        } catch (error) {
+          console.log('Presentation API not supported');
+          setCastAvailable(isMobile); // Show on mobile even if not supported
+        }
+      } else {
+        // No Presentation API, but show on mobile anyway
+        setCastAvailable(isMobile);
       }
     }
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   // Reset index when modal opens or photos change
   useEffect(() => {
@@ -200,7 +225,15 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
 
   // Casting functions
   const startCasting = async () => {
-    if (!presentationRequest) return;
+    // If no presentation request available, show helpful message
+    if (!presentationRequest) {
+      if (isMobile) {
+        alert('🎬 Casting Info:\n\nTo cast this slideshow:\n• Make sure you\'re on the same WiFi as your TV/Chromecast\n• Look for cast devices in your device\'s screen mirroring settings\n• Or use Google Home app to cast your screen\n\nNote: Direct casting from this app may not be available on all mobile browsers.');
+      } else {
+        alert('Casting is not supported in this browser. Try using Chrome or Edge for casting support.');
+      }
+      return;
+    }
     
     try {
       const connection = await presentationRequest.start();
@@ -246,7 +279,11 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
       
     } catch (error) {
       console.error('Failed to start casting:', error);
-      alert('Unable to connect to cast device. Please try again.');
+      if (isMobile) {
+        alert('🎬 No cast devices found!\n\nTo cast this slideshow:\n• Make sure your TV/Chromecast is on the same WiFi\n• Try using your phone\'s built-in screen mirroring\n• Or use the Google Home app to cast your screen');
+      } else {
+        alert('Unable to connect to cast device. Make sure your Chromecast or smart TV is on the same network and try again.');
+      }
     }
   };
 
@@ -386,19 +423,23 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         {/* Cast Button - Always show for debugging, with different styles */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Debug: Show casting availability status */}
-          {process.env.NODE_ENV === 'development' && (
-            <div
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                color: 'white',
-                padding: '4px 8px',
-                borderRadius: '12px',
-                fontSize: '10px'
-              }}
-            >
-              Cast: {castAvailable ? 'Available' : 'Not Available'}
-            </div>
-          )}
+          <div
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '12px',
+              fontSize: '10px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px'
+            }}
+          >
+            <div>Cast: {castAvailable ? 'Available' : 'Not Available'}</div>
+            <div>Device: {isMobile ? 'Mobile' : 'Desktop'}</div>
+            <div>API: {'PresentationRequest' in window ? 'Supported' : 'Not Supported'}</div>
+          </div>
           
           {/* Cast Button - Show if available OR in development */}
           {(castAvailable || process.env.NODE_ENV === 'development') && (
