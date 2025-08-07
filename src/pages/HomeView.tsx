@@ -2064,14 +2064,15 @@ const HomeView = () => {
           <div
             style={{
               position: 'absolute',
-              top: '8px',
+              top: '0px',
               left: '8px',
               right: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '4px',
-              zIndex: 1002
+              zIndex: 1002,
+              paddingTop: '4px'
             }}
           >
             {/* Help Button */}
