@@ -521,13 +521,19 @@ const QuickcardStep3: React.FC = () => {
                   <span style={{ fontSize: '14px', fontWeight: '500', textAlign: 'center' }}>{cat}</span>
                 </div>
               ))}
+              <div
+                style={{
+                  ...categoryGridItemStyle,
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: '2px solid #002B4D',
+                  fontWeight: 'bold'
+                }}
+                onClick={() => setIsCategoryModalOpen(false)}
+              >
+                <span style={{ fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>Done</span>
+              </div>
             </div>
-            <button
-              style={doneButtonStyle}
-              onClick={() => setIsCategoryModalOpen(false)}
-            >
-              Done
-            </button>
           </div>
         </div>
       )}
