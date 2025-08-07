@@ -1722,7 +1722,18 @@ const HomeView = () => {
               </button>
             )}
             
-            {/* 9. Settings */}
+            {/* 9. Preferences */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/preferences');
+              }}
+              style={menuItemStyle}
+            >
+              🔧 Preferences
+            </button>
+            
+            {/* 10. Settings */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1733,7 +1744,7 @@ const HomeView = () => {
               ⚙️ Settings
             </button>
             
-            {/* 10. Contact - Parent Menu */}
+            {/* 11. Contact - Parent Menu */}
             <button
               onClick={() => {
                 setOpenSubmenu(openSubmenu === 'contact' ? null : 'contact');

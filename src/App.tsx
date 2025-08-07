@@ -71,6 +71,7 @@ import PublicTripView from "./pages/PublicTripView";
 import PublicTripMapView from "./pages/PublicTripMapView";
 import ShareableTripView from "./pages/ShareableTripView";
 import PublicItineraryView from "./pages/PublicItineraryView";
+import PreferencesView from "./pages/PreferencesView";
 import EmailVostcardView from "./pages/EmailVostcardView";
 import TourView from "./pages/TourView";
 import ToursView from "./pages/ToursView";
@@ -172,6 +173,7 @@ function App() {
 
                   {/* 👤 Profile */}
                   <Route path="/user-settings" element={<UserSettingsView />} />
+                  <Route path="/preferences" element={<PreferencesView />} />
                   <Route path="/settings" element={<SettingsView />} />
                   <Route path="/account-settings" element={<AccountSettingsView />} />
                   <Route path="/user-profile/:userId" element={<UserProfileView />} />
