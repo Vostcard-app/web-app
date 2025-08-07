@@ -18,7 +18,7 @@ const AuthRedirect = () => {
 
   useEffect(() => {
     // 🎯 SMART ROUTING: Handle shared content based on authentication status
-    const sharedContentRoutes = ['/share/', '/share-quickcard/', '/share-trip/', '/email/', '/public-map', '/public-trip-map'];
+    const sharedContentRoutes = ['/share/', '/share-quickcard/', '/share-trip/', '/shared-trip/', '/email/', '/public-map', '/public-trip-map'];
     const isSharedContentRoute = sharedContentRoutes.some(prefix => location.pathname.startsWith(prefix));
     
     if (isSharedContentRoute) {
@@ -52,6 +52,13 @@ const AuthRedirect = () => {
           if (id && id.length > 0) {
             console.log('🎯 Redirecting to private trip:', `/trip/${id}`);
             navigate(`/trip/${id}`);
+            return;
+          }
+        } else if (location.pathname.startsWith('/shared-trip/')) {
+          const id = location.pathname.replace('/shared-trip/', '').split('?')[0]; // Remove query params  
+          if (id && id.length > 0) {
+            console.log('🎯 Redirecting to private tour:', `/tour/${id}`);
+            navigate(`/tour/${id}`);
             return;
           }
         }
