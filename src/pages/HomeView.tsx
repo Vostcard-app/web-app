@@ -1402,29 +1402,7 @@ const HomeView = () => {
         overflow: 'hidden'
       }}>
         
-        {/* Pending Advertiser Notification */}
-        {isPendingAdvertiser && (
-          <div style={{
-            backgroundColor: '#fff3cd',
-            border: '1px solid #ffeaa7',
-            borderRadius: '0',
-            padding: '12px 16px',
-            textAlign: 'center',
-            fontSize: '14px',
-            color: '#856404',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            zIndex: 10000,
-            position: 'fixed',
-            top: shouldUseContainer ? '100px' : '80px',
-            left: shouldUseContainer ? '50%' : '0',
-            right: shouldUseContainer ? 'auto' : '0',
-            width: shouldUseContainer ? '390px' : '100%',
-            transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
-          }}>
-            <strong>Account Pending Approval</strong><br />
-            Your advertiser application is being reviewed by an admin. You'll be contacted once approved.
-          </div>
-        )}
+
         
         {/* Header - Fixed at top */}
         <div 
@@ -1819,8 +1797,8 @@ const HomeView = () => {
           flex: 1, 
           position: 'relative', 
           marginTop: shouldUseContainer 
-            ? (isPendingAdvertiser ? '160px' : '100px') // Desktop: account for 20px container offset + header
-            : (isPendingAdvertiser ? '140px' : '80px')  // Mobile: normal margins
+            ? '100px' // Desktop: account for 20px container offset + header
+            : '80px'  // Mobile: normal margins
         }}>
           {/* Error Display */}
           {mapError && (
