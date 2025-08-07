@@ -37,6 +37,7 @@ const PublicTripView: React.FC = () => {
   const [showSlideshow, setShowSlideshow] = useState(false);
   const [slideshowImages, setSlideshowImages] = useState<Array<{url: string, postTitle: string}>>([]);
   const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Load trip data
   useEffect(() => {
@@ -50,11 +51,12 @@ const PublicTripView: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      // Add timeout to prevent infinite loading
+      // Add timeout to prevent infinite loading (extended for mobile)
       const timeoutId = setTimeout(() => {
-        setError('Loading timed out. Please try again.');
+        console.log('⏰ PublicTripView: Loading timed out after 30 seconds');
+        setError('Loading timed out. Please check your connection and try again.');
         setLoading(false);
-      }, 15000); // 15 second timeout
+      }, 30000); // 30 second timeout for mobile networks
 
       try {
         console.log('🔍 PublicTripView: Loading trip with ID:', id);
@@ -139,14 +141,30 @@ const PublicTripView: React.FC = () => {
         }
       } catch (err) {
         clearTimeout(timeoutId);
-
-        setError('Failed to load trip. Please try again.');
+        console.error('❌ PublicTripView: Error loading trip:', err);
+        
+        // More specific error messages for mobile debugging
+        if (err.code === 'unavailable') {
+          setError('Network connection issue. Please check your internet and try again.');
+        } else if (err.code === 'permission-denied') {
+          setError('Permission denied. This trip may not be shared publicly.');
+        } else {
+          setError('Failed to load trip. Please try again.');
+        }
         setLoading(false);
       }
     };
 
     fetchTrip();
-  }, [id]);
+  }, [id, retryCount]);
+
+  // Manual retry function for mobile users
+  const handleRetry = () => {
+    console.log('🔄 PublicTripView: Manual retry requested');
+    setRetryCount(prev => prev + 1);
+    setError(null);
+    setLoading(true);
+  };
 
   // Load user profile
   useEffect(() => {
@@ -371,7 +389,7 @@ const PublicTripView: React.FC = () => {
         
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button
-            onClick={() => window.location.reload()}
+            onClick={handleRetry}
             style={{
               padding: '12px 24px',
               backgroundColor: '#07345c',
@@ -383,7 +401,7 @@ const PublicTripView: React.FC = () => {
               fontWeight: '500'
             }}
           >
-            Try Again
+            Try Again {retryCount > 0 && `(${retryCount + 1})`}
           </button>
           <button
             onClick={() => {
