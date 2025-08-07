@@ -1413,9 +1413,13 @@ const HomeView = () => {
             fontSize: '14px',
             color: '#856404',
             boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            zIndex: 1000,
-            position: 'relative',
-            flexShrink: 0,
+            zIndex: 10000,
+            position: 'fixed',
+            top: shouldUseContainer ? '100px' : '80px',
+            left: shouldUseContainer ? '50%' : '0',
+            right: shouldUseContainer ? 'auto' : '0',
+            width: shouldUseContainer ? '390px' : '100%',
+            transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
           }}>
             <strong>Account Pending Approval</strong><br />
             Your advertiser application is being reviewed by an admin. You'll be contacted once approved.
@@ -1809,7 +1813,11 @@ const HomeView = () => {
         )}
 
         {/* Map Container - Add top margin for fixed header */}
-        <div style={{ flex: 1, position: 'relative', marginTop: '80px' }}>
+        <div style={{ 
+          flex: 1, 
+          position: 'relative', 
+          marginTop: isPendingAdvertiser ? '140px' : '80px' // Extra margin when notification is shown
+        }}>
           {/* Error Display */}
           {mapError && (
             <div style={{
