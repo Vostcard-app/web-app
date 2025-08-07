@@ -383,7 +383,7 @@ const PublicTripView: React.FC = () => {
               fontWeight: '500'
             }}
           >
-            Login / Register
+            Join (it's free)
           </button>
         </div>
       </div>
@@ -515,7 +515,7 @@ const PublicTripView: React.FC = () => {
           </div>
         </div>
 
-        {/* Login/Register Button */}
+        {/* Join Button */}
         <button
           type="button"
           style={{
@@ -543,7 +543,7 @@ const PublicTripView: React.FC = () => {
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          Login / Register
+          Join (it's free)
         </button>
       </div>
 
@@ -949,7 +949,7 @@ const PublicTripView: React.FC = () => {
             }}
             onClick={() => {
               // Show message for anonymous users
-              alert('❤️ Like saved! Join Vōstcard to sync across devices');
+              alert('❤️ Like saved! Join (it\'s free) to sync across devices');
             }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -967,7 +967,7 @@ const PublicTripView: React.FC = () => {
 
 
 
-          {/* Join Free Button */}
+          {/* Join Button */}
           <button
             type="button"
             style={{
@@ -991,7 +991,7 @@ const PublicTripView: React.FC = () => {
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            Join Free
+            Join (it's free)
           </button>
         </div>
 
@@ -1082,7 +1082,7 @@ const PublicTripView: React.FC = () => {
                   cursor: 'pointer'
                 }}
               >
-                Login / Register
+                Join (it's free)
               </button>
             </div>
           </div>

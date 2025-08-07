@@ -459,7 +459,7 @@ ${privateUrl}`);
               fontWeight: '500'
             }}
           >
-            Join Vōstcard
+            Join (it's free)
           </button>
         </div>
       </div>
@@ -614,7 +614,7 @@ ${privateUrl}`);
         </div>
       </div>
 
-      {/* Login/Register Button Section */}
+      {/* Join Button Section */}
       <div style={{
         padding: '20px',
         borderBottom: '1px solid #e0e0e0',
@@ -644,7 +644,7 @@ ${privateUrl}`);
               boxShadow: '0 2px 8px rgba(0, 122, 255, 0.3)'
             }}
           >
-            Login / Register for Full Experience
+            Join (it's free)
           </button>
         </div>
         <div style={{
@@ -690,7 +690,7 @@ ${privateUrl}`);
                   padding: 0
                 }}
               >
-                Join Vōstcard
+                Join (it's free)
               </button>
               {' '}to sync across devices
             </div>
@@ -839,7 +839,7 @@ ${privateUrl}`);
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                       >
-              Join Free
+              Join (it's free)
             </button>
         </div>
 

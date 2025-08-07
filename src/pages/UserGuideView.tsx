@@ -218,7 +218,7 @@ const UserGuideView: React.FC = () => {
               letterSpacing: '0.01em',
             }}
           >
-            Register/Login
+            Join (it's free)
           </button>
         </div>
       </div>

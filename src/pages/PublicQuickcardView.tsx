@@ -702,7 +702,7 @@ const PublicQuickcardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Login/Register Button with Redirect to Private Version */}
+        {/* Join Button with Redirect to Private Version */}
         <button
           onClick={() => {
             // Redirect to login with returnTo parameter pointing to private version
@@ -721,7 +721,7 @@ const PublicQuickcardView: React.FC = () => {
             transition: 'all 0.2s ease'
           }}
         >
-          Login / Register
+          Join (it's free)
         </button>
       </div>
 
@@ -758,7 +758,7 @@ const PublicQuickcardView: React.FC = () => {
                   padding: 0
                 }}
               >
-                Join Vōstcard
+                Join (it's free)
               </button>
               {' '}to sync across devices
             </div>

@@ -233,7 +233,7 @@ const PublicHomeView: React.FC = () => {
           Back
         </button>
         
-        {/* Register/Login Button - Always the same regardless of auth status */}
+        {/* Join Button - Always the same regardless of auth status */}
         <button
           onClick={() => {
             // Always go to LoginView - public map is separate from authenticated experience
@@ -251,7 +251,7 @@ const PublicHomeView: React.FC = () => {
             fontWeight: 'bold'
           }}
         >
-          Register/Login
+          Join (it's free)
         </button>
         
         {/* User Guide Button */}

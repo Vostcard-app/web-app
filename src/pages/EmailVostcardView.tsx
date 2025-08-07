@@ -166,7 +166,7 @@ const EmailVostcardView: React.FC = () => {
             e.currentTarget.style.transform = 'scale(1)';
           }}
         >
-          Join Vōstcard
+          Join (it's free)
         </button>
       </div>
     );
@@ -506,7 +506,7 @@ const EmailVostcardView: React.FC = () => {
             Want to create your own Vōstcards?
           </div>
           <div style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
-            Join Vōstcard to share your own videos and photos with location
+            Join (it's free) to share your own videos and photos with location
           </div>
           <button
             onClick={handleJoinVostcard}
@@ -530,7 +530,7 @@ const EmailVostcardView: React.FC = () => {
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            Join Vōstcard
+            Join (it's free)
           </button>
         </motion.div>
 
