@@ -168,21 +168,27 @@ service cloud.firestore {
     }
 
     // Allow authenticated users to manage their own trips (personal collections)
+    // Allow unauthenticated users to read shared/public trips
     match /trips/{tripId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == resource.data.userID || // Owner can always read
-        (resource.data.isPrivate == false && resource.data.shareableLink != null) // Public trips with shareable links
+      allow read: if (
+        (request.auth != null && request.auth.uid == resource.data.userID) || // Owner can always read
+        (resource.data.isShared == true) || // Public shared trips (for /share-trip/ URLs)
+        (resource.data.visibility == 'public') || // Public trips
+        (resource.data.isPrivate == false && resource.data.shareableLink != null) // Legacy: Public trips with shareable links
       );
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
       allow update: if request.auth != null && request.auth.uid == resource.data.userID;
       allow delete: if request.auth != null && request.auth.uid == resource.data.userID;
       
       // Allow authenticated users to manage items within their trips
+      // Allow unauthenticated users to read items from shared/public trips
       match /items/{itemId} {
-        allow read: if request.auth != null && (
-          request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID ||
+        allow read: if (
+          (request.auth != null && request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID) ||
+          (get(/databases/$(database)/documents/trips/$(tripId)).data.isShared == true) || // Public shared trips
+          (get(/databases/$(database)/documents/trips/$(tripId)).data.visibility == 'public') || // Public trips
           (get(/databases/$(database)/documents/trips/$(tripId)).data.isPrivate == false && 
-           get(/databases/$(database)/documents/trips/$(tripId)).data.shareableLink != null)
+           get(/databases/$(database)/documents/trips/$(tripId)).data.shareableLink != null) // Legacy
         );
         allow create: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID;
         allow update: if request.auth != null && request.auth.uid == get(/databases/$(database)/documents/trips/$(tripId)).data.userID;
