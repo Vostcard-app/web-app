@@ -1816,7 +1816,9 @@ const HomeView = () => {
         <div style={{ 
           flex: 1, 
           position: 'relative', 
-          marginTop: isPendingAdvertiser ? '140px' : '80px' // Extra margin when notification is shown
+          marginTop: shouldUseContainer 
+            ? (isPendingAdvertiser ? '160px' : '100px') // Desktop: account for 20px container offset + header
+            : (isPendingAdvertiser ? '140px' : '80px')  // Mobile: normal margins
         }}>
           {/* Error Display */}
           {mapError && (
