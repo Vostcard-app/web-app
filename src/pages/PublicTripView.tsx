@@ -599,7 +599,51 @@ ${shareUrl}`;
           </button>
           
           <button
-            onClick={() => alert('Map view coming soon!')}
+            onClick={() => {
+              if (trip && tripPosts.length > 0) {
+                // Filter posts that have location data
+                const postsWithLocation = tripPosts.filter(post => 
+                  post.latitude && post.longitude
+                );
+                
+                if (postsWithLocation.length > 0) {
+                  console.log('📍 Opening trip map view with', postsWithLocation.length, 'posts');
+                  navigate('/public-trip-map', {
+                    replace: false,
+                    state: {
+                      trip: {
+                        id: trip.id,
+                        name: trip.name,
+                        description: trip.description,
+                        username: trip.username
+                      },
+                      tripPosts: postsWithLocation.map(post => ({
+                        id: post.id,
+                        title: post.title,
+                        description: post.description,
+                        latitude: post.latitude,
+                        longitude: post.longitude,
+                        photoURLs: post.photoURLs,
+                        videoURL: post.videoURL,
+                        username: post.username,
+                        userRole: post.userRole,
+                        isOffer: post.isOffer || false,
+                        isQuickcard: post.isQuickcard || false,
+                        offerDetails: post.offerDetails,
+                        categories: post.categories,
+                        createdAt: post.createdAt,
+                        type: post.type,
+                        order: post.order
+                      }))
+                    }
+                  });
+                } else {
+                  alert('No posts in this trip have location data for the map view.');
+                }
+              } else {
+                alert('No posts available for map view.');
+              }
+            }}
             style={{
               backgroundColor: '#f0f0f0',
               color: '#333',

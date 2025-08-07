@@ -68,6 +68,7 @@ import ExampleView from "./pages/ExampleView";
 import PublicVostcardView from "./pages/PublicVostcardView";
 import PublicQuickcardView from "./pages/PublicQuickcardView";
 import PublicTripView from "./pages/PublicTripView";
+import PublicTripMapView from "./pages/PublicTripMapView";
 import EmailVostcardView from "./pages/EmailVostcardView";
 import TourView from "./pages/TourView";
 import ToursView from "./pages/ToursView";
@@ -102,6 +103,7 @@ function App() {
                   <Route path="/share/:id" element={<PublicVostcardView />} />
                   <Route path="/share-quickcard/:id" element={<PublicQuickcardView />} />
                   <Route path="/share-trip/:id" element={<PublicTripView />} />
+            <Route path="/public-trip-map" element={<PublicTripMapView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
                   <Route path="/public-map" element={<PublicHomeView />} />
 
