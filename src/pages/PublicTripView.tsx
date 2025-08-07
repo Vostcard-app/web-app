@@ -112,22 +112,36 @@ const PublicTripView: React.FC = () => {
   // Load trip posts data
   useEffect(() => {
     const fetchTripPosts = async () => {
-      if (!trip?.items) return;
+      console.log('🔄 Fetching trip posts for:', trip?.name);
+      console.log('📋 Trip items:', trip?.items);
+      
+      if (!trip?.items) {
+        console.log('❌ No trip items found');
+        return;
+      }
+
+      if (trip.items.length === 0) {
+        console.log('❌ Trip items array is empty');
+        return;
+      }
 
       try {
         const postsData: VostcardData[] = [];
         
         // Sort items by order to maintain trip sequence
         const sortedItems = [...trip.items].sort((a, b) => a.order - b.order);
+        console.log('📊 Sorted items:', sortedItems.length);
 
         // Fetch full vostcard data for each item
         for (const item of sortedItems) {
+          console.log('🔍 Loading vostcard:', item.vostcardID);
           try {
             const vostcardRef = doc(db, 'vostcards', item.vostcardID);
             const vostcardSnap = await getDoc(vostcardRef);
             
             if (vostcardSnap.exists()) {
               const vostcardData = vostcardSnap.data() as VostcardData;
+              console.log('✅ Loaded vostcard:', vostcardData.title);
               postsData.push({
                 id: vostcardData.id,
                 title: vostcardData.title || 'Untitled',
@@ -138,15 +152,18 @@ const PublicTripView: React.FC = () => {
                 createdAt: vostcardData.createdAt,
                 isQuickcard: vostcardData.isQuickcard
               });
+            } else {
+              console.log('❌ Vostcard not found:', item.vostcardID);
             }
           } catch (error) {
-            console.error(`Error loading post ${item.vostcardID}:`, error);
+            console.error(`❌ Error loading post ${item.vostcardID}:`, error);
           }
         }
 
+        console.log('📱 Final posts data:', postsData.length, postsData);
         setTripPosts(postsData);
       } catch (error) {
-        console.error('Error loading trip posts:', error);
+        console.error('❌ Error loading trip posts:', error);
       }
     };
 
@@ -607,6 +624,18 @@ ${shareUrl}`;
             <FaPlay size={12} />
             Slideshow
           </button>
+        </div>
+
+        {/* Debug Info - Remove after testing */}
+        <div style={{
+          background: '#f0f0f0',
+          padding: '8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          marginBottom: '16px',
+          color: '#666'
+        }}>
+          Debug: Trip has {trip?.items?.length || 0} items, loaded {tripPosts.length} posts
         </div>
 
         {/* List View of Posts */}
