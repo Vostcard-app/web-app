@@ -35,7 +35,7 @@ const PublicTripView: React.FC = () => {
   
   // Slideshow states
   const [showSlideshow, setShowSlideshow] = useState(false);
-  const [slideshowImages, setSlideshowImages] = useState<string[]>([]);
+  const [slideshowImages, setSlideshowImages] = useState<Array<{url: string, postTitle: string}>>([]);
   const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
 
   // Load trip data
@@ -222,28 +222,30 @@ const PublicTripView: React.FC = () => {
     }
   };
 
-  // Slideshow functionality - collect all images from trip posts
-  const collectTripImages = async (): Promise<string[]> => {
+  // Slideshow functionality - collect all images from trip posts with metadata
+  const collectTripImages = async (): Promise<Array<{url: string, postTitle: string}>> => {
     if (!tripPosts || tripPosts.length === 0) return [];
     
     setLoadingSlideshowImages(true);
-    const allImages: string[] = [];
+    const allImages: Array<{url: string, postTitle: string}> = [];
     
     try {
-
-      
       // Get all images from all posts in order
       for (const post of tripPosts) {
         if (post.photoURLs && Array.isArray(post.photoURLs)) {
-
-          allImages.push(...post.photoURLs);
+          const postTitle = post.title || 'Untitled Post';
+          // Add each photo with the post title
+          post.photoURLs.forEach((photoUrl: string) => {
+            allImages.push({
+              url: photoUrl,
+              postTitle: postTitle
+            });
+          });
         }
       }
 
-
       return allImages;
     } catch (error) {
-
       return [];
     } finally {
       setLoadingSlideshowImages(false);

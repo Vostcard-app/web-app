@@ -94,7 +94,7 @@ const TripDetailView: React.FC = () => {
   
   // Slideshow states
   const [showSlideshow, setShowSlideshow] = useState(false);
-  const [slideshowImages, setSlideshowImages] = useState<string[]>([]);
+  const [slideshowImages, setSlideshowImages] = useState<Array<{url: string, postTitle: string}>>([]);
   const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
 
   console.log('🔄 TripDetailView rendered', {
@@ -359,12 +359,12 @@ ${shareUrl}`;
     }
   };
 
-  // Slideshow functionality
-  const collectTripImages = async (): Promise<string[]> => {
+  // Slideshow functionality with metadata
+  const collectTripImages = async (): Promise<Array<{url: string, postTitle: string}>> => {
     if (!trip) return [];
     
     setLoadingSlideshowImages(true);
-    const allImages: string[] = [];
+    const allImages: Array<{url: string, postTitle: string}> = [];
     
     try {
       // Filter out deleted items
@@ -376,7 +376,7 @@ ${shareUrl}`;
       // Sort by order to maintain trip sequence
       const sortedItems = validItems.sort((a, b) => a.order - b.order);
 
-      // Fetch full vostcard data for each item to get all photoURLs
+      // Fetch full vostcard data for each item to get all photoURLs with titles
       for (const item of sortedItems) {
         try {
           const vostcardDoc = await getDoc(doc(db, 'vostcards', item.vostcardID));
@@ -384,7 +384,14 @@ ${shareUrl}`;
             const vostcardData = vostcardDoc.data();
             // Get photoURLs array, excluding videos
             if (vostcardData.photoURLs && Array.isArray(vostcardData.photoURLs)) {
-              allImages.push(...vostcardData.photoURLs);
+              const postTitle = vostcardData.title || 'Untitled Post';
+              // Add each photo with the post title
+              vostcardData.photoURLs.forEach((photoUrl: string) => {
+                allImages.push({
+                  url: photoUrl,
+                  postTitle: postTitle
+                });
+              });
             }
           }
         } catch (error) {

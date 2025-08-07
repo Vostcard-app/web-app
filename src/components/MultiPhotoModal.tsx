@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaPlay, FaPause, FaTv, FaStopCircle } from 'react-icons/fa';
 
+interface PhotoWithMetadata {
+  url: string;
+  title?: string;
+  postTitle?: string;
+  description?: string;
+}
+
 interface MultiPhotoModalProps {
-  photos: string[];
+  photos: string[] | PhotoWithMetadata[];
   initialIndex?: number;
   isOpen: boolean;
   onClose: () => void;
@@ -40,6 +47,21 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   // Mobile detection for better casting UX
   const [isMobile, setIsMobile] = useState(false);
   const [deviceType, setDeviceType] = useState<'ios' | 'android' | 'desktop'>('desktop');
+
+  // Helper functions to handle both string arrays and PhotoWithMetadata arrays
+  const getPhotoUrl = (index: number): string => {
+    const photo = photos[index];
+    return typeof photo === 'string' ? photo : photo.url;
+  };
+
+  const getPhotoMetadata = (index: number): PhotoWithMetadata | null => {
+    const photo = photos[index];
+    return typeof photo === 'string' ? null : photo;
+  };
+
+  const getPhotoUrls = (): string[] => {
+    return photos.map(photo => typeof photo === 'string' ? photo : photo.url);
+  };
 
   // Calculate optimal interval based on audio duration if provided
   const getAutoPlayInterval = () => {
@@ -347,7 +369,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         // Send initial slideshow data to the receiver
         const slideshowData = {
           type: 'SLIDESHOW_START',
-          photos,
+          photos: getPhotoUrls(), // Convert to string array for casting
           currentIndex,
           autoPlay,
           autoPlayInterval: getAutoPlayInterval(),
@@ -598,7 +620,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         onClick={handleImageTap}
       >
         <img
-          src={photos[currentIndex]}
+          src={getPhotoUrl(currentIndex)}
           alt={`Photo ${currentIndex + 1}`}
           style={{
             width: '100vw',
@@ -621,12 +643,12 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
           loading="eager"
           fetchPriority="high"
           onError={(e) => {
-            console.error('Failed to load image:', photos[currentIndex]);
-            (e.target as HTMLImageElement).src = photos[currentIndex] + '?retry=' + Date.now();
+            console.error('Failed to load image:', getPhotoUrl(currentIndex));
+            (e.target as HTMLImageElement).src = getPhotoUrl(currentIndex) + '?retry=' + Date.now();
           }}
           onLoad={(e) => {
             console.log('✅ Image loaded successfully:', {
-              src: photos[currentIndex],
+              src: getPhotoUrl(currentIndex),
               naturalWidth: (e.target as HTMLImageElement).naturalWidth,
               naturalHeight: (e.target as HTMLImageElement).naturalHeight,
               displayWidth: (e.target as HTMLImageElement).width,
@@ -635,6 +657,50 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
           }}
         />
       </div>
+
+      {/* Post Title Overlay */}
+      {(() => {
+        const metadata = getPhotoMetadata(currentIndex);
+        const postTitle = metadata?.postTitle || metadata?.title;
+        
+        if (postTitle) {
+          return (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '140px', // Position above the controls
+                left: '20px',
+                right: '20px',
+                display: 'flex',
+                justifyContent: 'center',
+                zIndex: 2001,
+                opacity: showControls ? 1 : 0.8, // Slightly visible even when controls are hidden
+                transition: 'opacity 0.3s ease',
+                pointerEvents: 'none' // Don't interfere with touch events
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  color: 'white',
+                  padding: '12px 20px',
+                  borderRadius: '25px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  textAlign: 'center',
+                  maxWidth: '90%',
+                  textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                {postTitle}
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {/* Enhanced Bottom Controls */}
       {photos.length > 1 && (
