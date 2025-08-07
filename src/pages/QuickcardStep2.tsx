@@ -2,6 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages, FaTimes } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { TripService } from '../services/tripService';
+import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
 
 export default function QuickcardStep2() {
@@ -16,6 +18,14 @@ export default function QuickcardStep2() {
   // Desktop photo options modal state
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   const [pendingPhotoIndex, setPendingPhotoIndex] = useState<number | null>(null);
+
+  // Trip functionality states
+  const [isTripModalOpen, setIsTripModalOpen] = useState(false);
+  const [userTrips, setUserTrips] = useState<Trip[]>([]);
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const [newTripName, setNewTripName] = useState('');
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
+  const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
 
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -54,6 +64,29 @@ export default function QuickcardStep2() {
       });
     }
   }, [currentVostcard, updateVostcard]);
+
+  // Load user trips and last used trip
+  useEffect(() => {
+    const loadTrips = async () => {
+      try {
+        const trips = await TripService.getUserTrips();
+        setUserTrips(trips);
+        
+        // Load last used trip from localStorage
+        const lastTripId = localStorage.getItem('lastUsedTripId');
+        if (lastTripId) {
+          const lastTrip = trips.find(trip => trip.id === lastTripId);
+          if (lastTrip) {
+            setLastUsedTrip(lastTrip);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading trips:', error);
+      }
+    };
+
+    loadTrips();
+  }, []);
 
   // Handler for when a thumbnail is tapped - mobile uses native action sheet, desktop shows modal
   const handleAddPhoto = (index: number) => {
@@ -136,6 +169,83 @@ export default function QuickcardStep2() {
     const newPhotos = [...selectedPhotos];
     newPhotos[index] = null;
     setSelectedPhotos(newPhotos);
+  };
+
+  // Trip handler functions
+  const handleAddToTrip = () => {
+    // Pre-select the last used trip if available
+    if (lastUsedTrip) {
+      setSelectedTripId(lastUsedTrip.id);
+    }
+    setIsTripModalOpen(true);
+  };
+
+  const handleAddToCurrentTrip = async () => {
+    if (!lastUsedTrip || !currentVostcard) {
+      alert('No current trip available');
+      return;
+    }
+
+    try {
+      await TripService.addVostcardToTrip(lastUsedTrip.id, currentVostcard.id);
+      alert(`Added to "${lastUsedTrip.name}"`);
+    } catch (error) {
+      console.error('Error adding to current trip:', error);
+      alert('Failed to add to trip. Please try again.');
+    }
+  };
+
+  const handleTripSelection = async () => {
+    if (!selectedTripId && !newTripName.trim()) {
+      alert('Please select a trip or enter a new trip name');
+      return;
+    }
+
+    if (!currentVostcard) {
+      alert('No quickcard to add to trip');
+      return;
+    }
+
+    try {
+      setIsCreatingTrip(true);
+      let tripId = selectedTripId;
+
+      // Create new trip if needed
+      if (!tripId && newTripName.trim()) {
+        const newTrip = await TripService.createTrip({
+          name: newTripName.trim(),
+          description: '',
+          isPrivate: true,
+          items: []
+        });
+        tripId = newTrip.id;
+        
+        // Add to trips list
+        setUserTrips(prev => [...prev, newTrip]);
+        setLastUsedTrip(newTrip);
+      }
+
+      if (tripId) {
+        await TripService.addVostcardToTrip(tripId, currentVostcard.id);
+        
+        // Update last used trip
+        const selectedTrip = userTrips.find(trip => trip.id === tripId);
+        if (selectedTrip) {
+          setLastUsedTrip(selectedTrip);
+          localStorage.setItem('lastUsedTripId', tripId);
+        }
+        
+        alert('Successfully added to trip!');
+        setIsTripModalOpen(false);
+        setSelectedTripId('');
+        setNewTripName('');
+      }
+    } catch (error) {
+      console.error('Error adding to trip:', error);
+      alert('Failed to add to trip. Please try again.');
+    } finally {
+      setIsCreatingTrip(false);
+    }
   };
 
   // Styles
@@ -424,10 +534,61 @@ export default function QuickcardStep2() {
           fontSize: 14,
           color: '#666',
           textAlign: 'center',
-          marginBottom: 0,
+          marginBottom: 20,
           paddingTop: '2px'
         }}>
           {photoCount} of 4 photos added
+        </div>
+
+        {/* Add to Trip Section */}
+        <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
+          <label style={{
+            fontSize: 16,
+            fontWeight: 'bold',
+            marginBottom: 8,
+            display: 'block',
+            color: '#333'
+          }}>
+            Add to Trip (Optional)
+          </label>
+          
+          <button
+            onClick={handleAddToTrip}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: '#f0f8ff',
+              border: '2px solid #07345c',
+              borderRadius: '8px',
+              fontSize: '16px',
+              color: '#07345c',
+              cursor: 'pointer',
+              fontWeight: '500',
+              marginBottom: '8px'
+            }}
+          >
+            Add to Trip
+          </button>
+
+          {lastUsedTrip && (
+            <button
+              onClick={handleAddToCurrentTrip}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#e8f5e8',
+                border: '2px solid #28a745',
+                borderRadius: '8px',
+                fontSize: '16px',
+                color: '#28a745',
+                cursor: 'pointer',
+                fontWeight: '500',
+                marginBottom: '8px'
+              }}
+            >
+              Add to {lastUsedTrip.name}
+            </button>
+          )}
         </div>
 
         {/* Continue button */}
@@ -474,6 +635,114 @@ export default function QuickcardStep2() {
         onSelectFromLibrary={handleSelectFromLibrary}
         title="Add Photo"
       />
+
+      {/* Trip Modal */}
+      {isTripModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '400px',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to Trip</h3>
+            
+            {userTrips.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                  Select Existing Trip:
+                </label>
+                <select
+                  value={selectedTripId}
+                  onChange={(e) => setSelectedTripId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '16px',
+                  }}
+                >
+                  <option value="">Choose a trip...</option>
+                  {userTrips.map((trip) => (
+                    <option key={trip.id} value={trip.id}>
+                      {trip.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Or Create New Trip:
+              </label>
+              <input
+                type="text"
+                value={newTripName}
+                onChange={(e) => setNewTripName(e.target.value)}
+                placeholder="Enter trip name"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '16px',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setIsTripModalOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={handleTripSelection}
+                disabled={!selectedTripId && !newTripName.trim() || isCreatingTrip}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: (selectedTripId || newTripName.trim()) && !isCreatingTrip ? '#002B4D' : '#cccccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: (selectedTripId || newTripName.trim()) && !isCreatingTrip ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {isCreatingTrip ? 'Adding...' : 'Add to Trip'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

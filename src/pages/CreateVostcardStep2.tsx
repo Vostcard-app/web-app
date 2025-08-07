@@ -157,6 +157,10 @@ export default function CreateVostcardStep2() {
 
   // Trip handler functions
   const handleAddToTrip = () => {
+    // Pre-select the last used trip if available
+    if (lastUsedTrip) {
+      setSelectedTripId(lastUsedTrip.id);
+    }
     setIsTripModalOpen(true);
   };
 
