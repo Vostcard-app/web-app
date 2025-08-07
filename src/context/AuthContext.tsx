@@ -147,12 +147,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      console.log('🔐 AuthProvider: Auth state changed:', {
-        hasUser: !!currentUser,
-        uid: currentUser?.uid,
-        email: currentUser?.email,
-        isAnonymous: currentUser?.isAnonymous
-      });
+      // Reduced auth logging for performance
+      // console.log('🔐 AuthProvider: Auth state changed:', { hasUser: !!currentUser });
 
       // Clear timeout since we got an auth state change
       clearTimeout(loadingTimeout);
@@ -170,13 +166,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       try {
         if (currentUser) {
-          console.log('🔐 Firebase Auth user object:', {
-            uid: currentUser.uid,
-            email: currentUser.email,
-            displayName: currentUser.displayName,
-            photoURL: currentUser.photoURL,
-            isAnonymous: currentUser.isAnonymous
-          });
+          // Reduced Firebase auth object logging for performance
+          // console.log('🔐 Firebase Auth user object:', { uid: currentUser.uid });
 
           setUser(currentUser);
           setUserID(currentUser.uid);
@@ -206,17 +197,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Prioritize advertiser role
             if (advertiserDocSnap?.exists()) {
               const data = advertiserDocSnap.data();
-              console.log('📄 Firestore advertiser document found:', data);
-              console.log('✅ Setting userRole to: advertiser');
-              console.log('📋 Account status:', data.accountStatus || 'approved');
+              // Reduced Firestore logging for performance
+              console.log('✅ Advertiser role set');
               setUsername(data.businessName || data.name || null);
               setUserRole('advertiser'); // Set as advertiser
               setAccountStatus(data.accountStatus || 'approved'); // Default to approved for existing accounts
             } else if (userDocSnap?.exists()) {
               const data = userDocSnap.data();
-              console.log('📄 Firestore user document found:', data);
+              // Reduced Firestore logging for performance  
               const actualRole = data.userRole || data.role || 'user'; // Check both fields for compatibility
-              console.log('✅ Setting userRole to:', actualRole);
+              console.log('✅ User role set:', actualRole);
               setUsername(data.username || null);
               setUserRole(actualRole);
               setAccountStatus('approved'); // Users are automatically approved
