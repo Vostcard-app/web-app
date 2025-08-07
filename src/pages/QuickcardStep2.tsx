@@ -195,7 +195,7 @@ export default function QuickcardStep2() {
       await TripService.addItemToTrip(lastUsedTrip.id, {
         vostcardID: currentVostcard.id,
         type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-        title: currentVostcard.title || 'Untitled Quickcard',
+        title: currentVostcard.title || `Quickcard ${new Date().toLocaleDateString()}`,
         description: currentVostcard.description,
         latitude: currentVostcard.geo?.latitude,
         longitude: currentVostcard.geo?.longitude
@@ -246,7 +246,7 @@ export default function QuickcardStep2() {
         await TripService.addItemToTrip(tripId, {
           vostcardID: currentVostcard.id,
           type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-          title: currentVostcard.title || 'Untitled Quickcard',
+          title: currentVostcard.title || `Quickcard ${new Date().toLocaleDateString()}`,
           description: currentVostcard.description,
           latitude: currentVostcard.geo?.latitude,
           longitude: currentVostcard.geo?.longitude
