@@ -1792,11 +1792,10 @@ const HomeView = () => {
 
 
 
-        {/* Map Container - Account for fixed header, nav buttons, and see all toggle */}
+        {/* Map Container - Directly under header */}
         <div style={{ 
           flex: 1, 
-          position: 'relative',
-          paddingTop: shouldUseContainer ? '180px' : '160px' // Header + nav buttons + see all toggle + minimal spacing
+          position: 'relative'
         }}>
           {/* Error Display */}
           {mapError && (
