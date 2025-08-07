@@ -17,6 +17,8 @@ const AdminPanel: React.FC = () => {
   const [adminSearchResults, setAdminSearchResults] = useState<any[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
+  const [pendingAdvertisers, setPendingAdvertisers] = useState<any[]>([]);
+  const [advertisersLoading, setAdvertisersLoading] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -24,6 +26,90 @@ const AdminPanel: React.FC = () => {
       navigate('/home');
     }
   }, [isAdmin, navigate]);
+
+  // Load pending advertiser applications on mount
+  useEffect(() => {
+    if (isAdmin) {
+      loadPendingAdvertisers();
+    }
+  }, [isAdmin]);
+
+  const loadPendingAdvertisers = async () => {
+    setAdvertisersLoading(true);
+    try {
+      console.log('🔍 Loading pending advertiser applications...');
+      
+      // Query the advertisers collection for pending applications
+      const advertisersRef = collection(db, 'advertisers');
+      const pendingQuery = query(advertisersRef, where('accountStatus', '==', 'pending'));
+      const querySnapshot = await getDocs(pendingQuery);
+      
+      const pending = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.() || new Date(doc.data().createdAt)
+      }));
+      
+      // Sort by creation date (newest first)
+      pending.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      
+      setPendingAdvertisers(pending);
+      console.log(`✅ Found ${pending.length} pending advertiser applications`);
+      
+    } catch (error) {
+      console.error('❌ Error loading pending advertisers:', error);
+    } finally {
+      setAdvertisersLoading(false);
+    }
+  };
+
+  const handleApproveAdvertiser = async (advertiserId: string, advertiserEmail: string) => {
+    if (!confirm(`Are you sure you want to approve ${advertiserEmail} as an advertiser?`)) {
+      return;
+    }
+    
+    try {
+      // Update the advertiser's account status to approved
+      const advertiserRef = doc(db, 'advertisers', advertiserId);
+      await updateDoc(advertiserRef, {
+        accountStatus: 'approved',
+        approvedAt: new Date(),
+        approvedBy: user?.uid
+      });
+      
+      console.log(`✅ Approved advertiser: ${advertiserEmail}`);
+      alert(`Successfully approved ${advertiserEmail} as an advertiser!`);
+      
+      // Refresh the pending list
+      await loadPendingAdvertisers();
+      
+    } catch (error) {
+      console.error('❌ Error approving advertiser:', error);
+      alert('Failed to approve advertiser. Please try again.');
+    }
+  };
+
+  const handleRejectAdvertiser = async (advertiserId: string, advertiserEmail: string) => {
+    if (!confirm(`Are you sure you want to reject ${advertiserEmail}'s advertiser application? This will delete their application.`)) {
+      return;
+    }
+    
+    try {
+      // Delete the advertiser application
+      const advertiserRef = doc(db, 'advertisers', advertiserId);
+      await deleteDoc(advertiserRef);
+      
+      console.log(`✅ Rejected advertiser application: ${advertiserEmail}`);
+      alert(`Rejected and deleted advertiser application for ${advertiserEmail}.`);
+      
+      // Refresh the pending list
+      await loadPendingAdvertisers();
+      
+    } catch (error) {
+      console.error('❌ Error rejecting advertiser:', error);
+      alert('Failed to reject advertiser application. Please try again.');
+    }
+  };
 
   const handleSearchUsers = async () => {
     if (!searchTerm.trim()) return;
@@ -358,6 +444,128 @@ const AdminPanel: React.FC = () => {
                     ✅ Guide Account
                   </span>
                 )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Pending Advertiser Applications Section */}
+      <div style={{ backgroundColor: '#e8f5e8', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #c3e6c3' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', color: '#155724' }}>
+            🏪 Pending Advertiser Applications
+            {pendingAdvertisers.length > 0 && (
+              <span style={{
+                backgroundColor: '#dc3545',
+                color: 'white',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                marginLeft: '10px'
+              }}>
+                {pendingAdvertisers.length}
+              </span>
+            )}
+          </h2>
+          <button
+            onClick={loadPendingAdvertisers}
+            disabled={advertisersLoading}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: advertisersLoading ? 'not-allowed' : 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            {advertisersLoading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+
+        {advertisersLoading ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            Loading pending applications...
+          </div>
+        ) : pendingAdvertisers.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            ✅ No pending advertiser applications
+          </div>
+        ) : (
+          <div>
+            {pendingAdvertisers.map((advertiser) => (
+              <div 
+                key={advertiser.id}
+                style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  marginBottom: '15px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '8px' }}>
+                      📧 {advertiser.email}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>
+                      <strong>Business:</strong> {advertiser.businessName || 'Not provided'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>
+                      <strong>Name:</strong> {advertiser.firstName && advertiser.lastName 
+                        ? `${advertiser.firstName} ${advertiser.lastName}` 
+                        : 'Not provided'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>
+                      <strong>Applied:</strong> {advertiser.createdAt?.toLocaleDateString?.()} {advertiser.createdAt?.toLocaleTimeString?.()}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#999' }}>
+                      <strong>ID:</strong> {advertiser.id}
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '10px', marginLeft: '20px' }}>
+                    <button
+                      onClick={() => handleApproveAdvertiser(advertiser.id, advertiser.email)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ✅ Approve
+                    </button>
+                    <button
+                      onClick={() => handleRejectAdvertiser(advertiser.id, advertiser.email)}
+                      style={{
+                        padding: '8px 16px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      ❌ Reject
+                    </button>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

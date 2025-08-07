@@ -146,6 +146,35 @@ export default function RegistrationPage() {
           accountStatus: "pending",
           createdAt: new Date(),
         });
+
+        // Send email notification to info@vostcard.com about new advertiser application
+        try {
+          console.log('📧 Sending advertiser application notification...');
+          const response = await fetch('/.netlify/functions/sendAdvertiserNotification', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              firstName,
+              lastName,
+              businessName,
+              email,
+              applicationId: user.uid,
+              timestamp: new Date().toISOString()
+            }),
+          });
+
+          if (response.ok) {
+            console.log('✅ Advertiser application notification sent successfully');
+          } else {
+            console.warn('⚠️ Failed to send advertiser application notification:', await response.text());
+          }
+        } catch (emailError) {
+          console.error('❌ Error sending advertiser application notification:', emailError);
+          // Don't block registration if email fails
+        }
+
         window.alert('Application submitted successfully! Please verify your email, then an admin will review your advertiser application. You will be contacted once approved.');
       }
 
