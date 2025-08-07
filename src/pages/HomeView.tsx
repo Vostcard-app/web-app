@@ -2041,7 +2041,7 @@ const HomeView = () => {
           <div
             style={{
               position: 'absolute',
-              top: shouldUseContainer ? '80px' : '8px', // Desktop: position below header, Mobile: small offset
+              top: shouldUseContainer ? '95px' : '23px', // Desktop: 80px header + 15px spacing, Mobile: 8px + 15px spacing
               left: '8px',
               right: '8px',
               display: 'flex',
