@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaHeart, FaShare, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import type { Trip, TripItem } from '../types/TripTypes';
 import RoundInfoButton from '../assets/RoundInfo_Button.png';
@@ -64,9 +64,46 @@ const PublicTripView: React.FC = () => {
           // Check if trip is shared or public
           // Allow access if: explicitly shared, public visibility, or not private (legacy)
           if (data.isShared || data.visibility === 'public' || data.isPrivate === false) {
-            clearTimeout(timeoutId);
-            setTrip(data);
-            setLoading(false);
+            // Load trip items from subcollection
+            console.log('🔍 Loading trip items from subcollection...');
+            try {
+              const itemsQuery = query(
+                collection(db, 'trips', id, 'items'),
+                orderBy('order', 'asc')
+              );
+              const itemsSnapshot = await getDocs(itemsQuery);
+              const items: TripItem[] = [];
+              
+              itemsSnapshot.forEach((itemDoc) => {
+                const itemData = itemDoc.data() as TripItem;
+                items.push({
+                  id: itemData.id,
+                  vostcardID: itemData.vostcardID,
+                  type: itemData.type,
+                  order: itemData.order,
+                  addedAt: itemData.addedAt,
+                  title: itemData.title,
+                  description: itemData.description,
+                  photoURL: itemData.photoURL,
+                  latitude: itemData.latitude,
+                  longitude: itemData.longitude
+                });
+              });
+              
+              console.log('✅ Loaded trip items:', items.length);
+              
+              // Add items to trip data
+              const tripWithItems = { ...data, items };
+              clearTimeout(timeoutId);
+              setTrip(tripWithItems);
+              setLoading(false);
+            } catch (itemsError) {
+              console.error('❌ Error loading trip items:', itemsError);
+              // Still show the trip even if items fail to load
+              clearTimeout(timeoutId);
+              setTrip({ ...data, items: [] });
+              setLoading(false);
+            }
           } else {
             clearTimeout(timeoutId);
             setError('This trip is not available for public viewing.');
