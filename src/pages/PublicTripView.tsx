@@ -16,6 +16,8 @@ interface VostcardData {
   username: string;
   createdAt: any;
   isQuickcard?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 const PublicTripView: React.FC = () => {
@@ -187,7 +189,10 @@ const PublicTripView: React.FC = () => {
                 videoURL: vostcardData.videoURL,
                 username: vostcardData.username || 'Unknown User',
                 createdAt: vostcardData.createdAt,
-                isQuickcard: vostcardData.isQuickcard
+                isQuickcard: vostcardData.isQuickcard,
+                // ✅ Preserve location data from trip item (this is the key fix!)
+                latitude: item.latitude,
+                longitude: item.longitude
               });
             } else {
               console.log('❌ Vostcard not found:', item.vostcardID);
