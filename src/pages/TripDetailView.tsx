@@ -325,22 +325,7 @@ Tap OK to continue.`;
     }
     
     try {
-      // Generate share URL immediately (before async operations)
-      const shareUrl = `${window.location.origin}/share-trip/${trip.id}`;
-      
-      // Generate share text
-      const shareText = `Check out this trip I created with Vōstcard
-
-"${trip.name || 'My Trip'}"
-
-${trip.description || 'A collection of my favorite places'}
-
-${shareUrl}`;
-      
-      // Use clipboard instead of native share to avoid user gesture issues
-      await navigator.clipboard.writeText(shareText);
-      
-      // Mark trip as shared and public (after sharing to avoid gesture issues)
+      // Mark trip as shared and public
       const updatedTrip = await TripService.updateTrip(trip.id, {
         isShared: true,
         isPrivate: false,
@@ -348,7 +333,25 @@ ${shareUrl}`;
       });
       setTrip(updatedTrip);
       
-      alert('Share link copied to clipboard!');
+      // Generate public share URL
+      const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
+      
+      // Generate share text
+      const shareText = `Check out this trip I created with Vōstcard
+
+"${updatedTrip.name || 'My Trip'}"
+
+${updatedTrip.description || 'A collection of my favorite places'}
+
+${shareUrl}`;
+      
+      // Use native sharing or clipboard
+      if (navigator.share) {
+        await navigator.share({ text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert('Share link copied to clipboard!');
+      }
       
     } catch (error) {
       console.error('Error sharing trip:', error);

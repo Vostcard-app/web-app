@@ -152,24 +152,7 @@ Tap OK to continue.`;
     try {
       console.log('🔄 MyTripsListView: Starting share process for trip:', trip.id, trip.name);
       
-      // Generate share URL immediately (before async operations)
-      const shareUrl = `${window.location.origin}/share-trip/${trip.id}`;
-      console.log('📍 MyTripsListView: Generated share URL:', shareUrl);
-      
-      // Generate share text
-      const shareText = `Check out this trip I created with Vōstcard
-
-"${trip.name || 'My Trip'}"
-
-${shareUrl}`;
-      
-      console.log('📝 MyTripsListView: Generated share text:', shareText);
-      
-      // Use clipboard instead of native share to avoid user gesture issues
-      console.log('📋 MyTripsListView: Using clipboard');
-      await navigator.clipboard.writeText(shareText);
-      
-      // Mark trip as shared and public (after sharing to avoid gesture issues)
+      // Mark trip as shared and public (same as TripDetailView)
       const updatedTrip = await TripService.updateTrip(trip.id, {
         isShared: true,
         isPrivate: false,
@@ -187,7 +170,29 @@ ${shareUrl}`;
       // Update the trips list with the updated trip
       setTrips(prev => prev.map(t => t.id === trip.id ? updatedTrip : t));
       
-      alert('Share link copied to clipboard!');
+      // Generate public share URL (same as TripDetailView)
+      const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
+      console.log('📍 MyTripsListView: Generated share URL:', shareUrl);
+      
+      // Generate share text
+      const shareText = `Check out this trip I created with Vōstcard
+
+"${updatedTrip.name || 'My Trip'}"
+
+${shareUrl}`;
+      
+      console.log('📝 MyTripsListView: Generated share text:', shareText);
+      
+      // Use native sharing or clipboard (same as TripDetailView)
+      if (navigator.share) {
+        console.log('📱 MyTripsListView: Using native share');
+        await navigator.share({ text: shareText });
+      } else {
+        console.log('📋 MyTripsListView: Using clipboard fallback');
+        await navigator.clipboard.writeText(shareText);
+        alert('Share link copied to clipboard!');
+      }
+      
       console.log('✅ MyTripsListView: Share process completed successfully');
       
     } catch (error) {
