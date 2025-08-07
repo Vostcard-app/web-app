@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaRegComment, FaShare, FaUserCircle, FaMap, FaTimes, FaSync, FaFlag, FaArrowLeft, FaVolumeUp, FaPlay, FaPause, FaStar, FaInfo } from 'react-icons/fa';
+import { FaHome, FaHeart, FaShare, FaUserCircle, FaMap, FaTimes, FaSync, FaFlag, FaArrowLeft, FaVolumeUp, FaPlay, FaPause, FaStar, FaInfo } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -73,7 +73,6 @@ const PublicQuickcardView: React.FC = () => {
   const [showRetryButton, setShowRetryButton] = useState(false);
   
   // New states for enhanced shared view
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [userRating, setUserRating] = useState(0);
 
   // ✅ Performance optimization - memoize photo URLs
@@ -988,7 +987,7 @@ const PublicQuickcardView: React.FC = () => {
 
         </div>
 
-        {/* Action Icons Row: Like, Comment, Share, Map View */}
+        {/* Action Icons Row: Like, Share, Map View */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-around',
@@ -1018,29 +1017,7 @@ const PublicQuickcardView: React.FC = () => {
             <FaHeart size={22} />
           </button>
 
-          {/* Comment Button - Login required to comment */}
-          <button
-            onClick={() => {
-              if (user) {
-                // User is logged in, redirect to personal version
-                navigate(`/quickcard/${id}`);
-              } else {
-                // User not logged in, redirect to login page with return URL
-                navigate(`/login?returnTo=${encodeURIComponent(`/quickcard/${id}`)}`);
-              }
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666'
-            }}
-          >
-            <FaRegComment size={22} />
-          </button>
+
 
           {/* Share Button */}
           <button
@@ -1349,91 +1326,7 @@ const PublicQuickcardView: React.FC = () => {
         }
       `}</style>
 
-      {/* Login Modal for Comments */}
-      {showLoginModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '32px',
-            maxWidth: '400px',
-            width: '100%',
-            textAlign: 'center',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-          }}>
-            <FaRegComment size={48} color="#007aff" style={{ marginBottom: '20px' }} />
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: '#333',
-              marginBottom: '16px'
-            }}>
-              Join the Conversation
-            </h2>
-            <p style={{
-              fontSize: '16px',
-              color: '#666',
-              marginBottom: '24px',
-              lineHeight: 1.5
-            }}>
-              To comment on this quickcard, please login or register for a free Vōstcard account.
-            </p>
-            <div style={{
-              display: 'flex',
-              gap: '12px',
-              justifyContent: 'center'
-            }}>
-              <button
-                onClick={() => {
-                  setShowLoginModal(false);
-                  navigate('/login');
-                }}
-                style={{
-                  backgroundColor: '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 24px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  flex: 1
-                }}
-              >
-                Login / Register
-              </button>
-              <button
-                onClick={() => setShowLoginModal(false)}
-                style={{
-                  backgroundColor: '#f8f9fa',
-                  color: '#666',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '12px 24px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  flex: 1
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Description Modal */}
       {showDescriptionModal && (
