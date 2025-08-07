@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaTimes, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaTimes, FaChevronLeft, FaChevronRight, FaPlay, FaPause, FaCast, FaStopCircle } from 'react-icons/fa';
 
 interface MultiPhotoModalProps {
   photos: string[];
@@ -30,6 +30,12 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   const [autoPlayTimer, setAutoPlayTimer] = useState<NodeJS.Timeout | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Casting states
+  const [castAvailable, setCastAvailable] = useState(false);
+  const [casting, setCasting] = useState(false);
+  const [presentationRequest, setPresentationRequest] = useState<any>(null);
+  const [presentationConnection, setPresentationConnection] = useState<any>(null);
 
   // Calculate optimal interval based on audio duration if provided
   const getAutoPlayInterval = () => {
@@ -61,6 +67,30 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
       if (timer) clearTimeout(timer);
     };
   }, [isOpen, autoPlay, currentIndex, photos.length, isPaused, audioDuration, autoPlayInterval]);
+
+  // Initialize casting capability
+  useEffect(() => {
+    if (isOpen && 'PresentationRequest' in window) {
+      try {
+        const request = new (window as any).PresentationRequest([
+          'https://www.youtube.com/tv',
+          'https://cast.google.com/tv'
+        ]);
+        setPresentationRequest(request);
+        
+        // Check if casting is available
+        request.getAvailability().then((availability: any) => {
+          setCastAvailable(availability.value);
+          availability.onchange = () => setCastAvailable(availability.value);
+        }).catch(() => {
+          setCastAvailable(false);
+        });
+      } catch (error) {
+        console.log('Presentation API not supported');
+        setCastAvailable(false);
+      }
+    }
+  }, [isOpen]);
 
   // Reset index when modal opens or photos change
   useEffect(() => {
@@ -123,13 +153,17 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   if (!isOpen || photos.length === 0) return null;
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % photos.length);
+    const newIndex = (currentIndex + 1) % photos.length;
+    setCurrentIndex(newIndex);
     showControlsTemporarily();
+    sendCastUpdate({ type: 'INDEX_CHANGED', index: newIndex });
   };
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    const newIndex = (currentIndex - 1 + photos.length) % photos.length;
+    setCurrentIndex(newIndex);
     showControlsTemporarily();
+    sendCastUpdate({ type: 'INDEX_CHANGED', index: newIndex });
   };
 
   const pauseAutoPlay = () => {
@@ -139,8 +173,10 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   };
 
   const toggleAutoPlay = () => {
-    setIsPaused(!isPaused);
+    const newPausedState = !isPaused;
+    setIsPaused(newPausedState);
     showControlsTemporarily();
+    sendCastUpdate({ type: 'PLAY_STATE_CHANGED', playing: !newPausedState });
   };
 
   const showControlsTemporarily = () => {
@@ -148,6 +184,77 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     if (controlsTimeout) clearTimeout(controlsTimeout);
     const timeout = setTimeout(() => setShowControls(false), 3000);
     setControlsTimeout(timeout);
+  };
+
+  // Casting functions
+  const startCasting = async () => {
+    if (!presentationRequest) return;
+    
+    try {
+      const connection = await presentationRequest.start();
+      setPresentationConnection(connection);
+      setCasting(true);
+      
+      // Send initial slideshow data to the receiver
+      const slideshowData = {
+        type: 'SLIDESHOW_START',
+        photos,
+        currentIndex,
+        autoPlay,
+        autoPlayInterval: getAutoPlayInterval(),
+        title
+      };
+      
+      connection.send(JSON.stringify(slideshowData));
+      
+      // Listen for messages from the receiver
+      connection.onmessage = (event: any) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'INDEX_CHANGED') {
+            setCurrentIndex(message.index);
+          } else if (message.type === 'PLAY_STATE_CHANGED') {
+            setIsPaused(!message.playing);
+          }
+        } catch (error) {
+          console.error('Error parsing cast message:', error);
+        }
+      };
+      
+      // Handle connection close
+      connection.onclose = () => {
+        setCasting(false);
+        setPresentationConnection(null);
+      };
+      
+      connection.onterminate = () => {
+        setCasting(false);
+        setPresentationConnection(null);
+      };
+      
+    } catch (error) {
+      console.error('Failed to start casting:', error);
+      alert('Unable to connect to cast device. Please try again.');
+    }
+  };
+
+  const stopCasting = () => {
+    if (presentationConnection) {
+      presentationConnection.terminate();
+      setCasting(false);
+      setPresentationConnection(null);
+    }
+  };
+
+  // Send updates to cast receiver
+  const sendCastUpdate = (data: any) => {
+    if (casting && presentationConnection) {
+      try {
+        presentationConnection.send(JSON.stringify(data));
+      } catch (error) {
+        console.error('Error sending cast update:', error);
+      }
+    }
   };
 
   const handleImageTap = () => {
@@ -229,30 +336,63 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         <FaTimes color="white" size={20} />
       </button>
 
-      {/* Auto-play indicator */}
-      {autoPlay && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            color: 'white',
-            padding: '8px 12px',
-            borderRadius: '20px',
-            fontSize: '12px',
-            zIndex: 2001,
-            opacity: showControls ? 1 : 0,
-            transition: 'opacity 0.3s ease',
-            pointerEvents: showControls ? 'auto' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-        >
-          {isPaused ? '⏸️' : '▶️'} Slideshow {isPaused ? 'Paused' : 'Playing'}
-        </div>
-      )}
+      {/* Enhanced Control Bar */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          right: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 2001,
+          opacity: showControls ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          pointerEvents: showControls ? 'auto' : 'none'
+        }}
+      >
+        {/* Auto-play indicator */}
+        {autoPlay && (
+          <div
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {casting ? '📺' : (isPaused ? '⏸️' : '▶️')} 
+            {casting ? 'Casting' : `Slideshow ${isPaused ? 'Paused' : 'Playing'}`}
+          </div>
+        )}
+
+        {/* Cast Button */}
+        {castAvailable && (
+          <button
+            onClick={casting ? stopCasting : startCasting}
+            style={{
+              backgroundColor: casting ? 'rgba(255, 59, 48, 0.8)' : 'rgba(0, 122, 255, 0.8)',
+              border: 'none',
+              borderRadius: '20px',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease'
+            }}
+            title={casting ? 'Stop Casting' : 'Cast to Device'}
+          >
+            {casting ? <FaStopCircle color="white" size={18} /> : <FaCast color="white" size={18} />}
+          </button>
+        )}
+      </div>
 
 
 
@@ -314,52 +454,159 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         />
       </div>
 
-      {/* Pagination Dots */}
+      {/* Enhanced Bottom Controls */}
       {photos.length > 1 && (
         <div
           style={{
             position: 'absolute',
-            bottom: '30px',
+            bottom: '20px',
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
-            gap: '8px',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px',
             zIndex: 2001,
             opacity: showControls ? 1 : 0,
             transition: 'opacity 0.3s ease',
             pointerEvents: showControls ? 'auto' : 'none'
           }}
         >
-          {photos.map((_, index) => (
+          {/* Manual Navigation Controls */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '20px',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              borderRadius: '25px',
+              padding: '12px 20px'
+            }}
+          >
+            {/* Previous Button */}
             <button
-              key={index}
-              onClick={() => {
-                pauseAutoPlay();
-                setCurrentIndex(index);
-                showControlsTemporarily();
-              }}
+              onClick={goToPrevious}
               style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
+                backgroundColor: 'transparent',
                 border: 'none',
-                backgroundColor: index === currentIndex ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                color: 'white',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s ease, transform 0.2s ease',
-                transform: index === currentIndex ? 'scale(1.2)' : 'scale(1)'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                transition: 'background-color 0.2s ease'
               }}
-              onMouseEnter={(e) => {
-                if (index !== currentIndex) {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-                }
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              title="Previous Image"
+            >
+              <FaChevronLeft size={16} />
+            </button>
+
+            {/* Play/Pause Button */}
+            {autoPlay && (
+              <button
+                onClick={toggleAutoPlay}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                title={isPaused ? 'Resume Slideshow' : 'Pause Slideshow'}
+              >
+                {isPaused ? <FaPlay size={18} /> : <FaPause size={18} />}
+              </button>
+            )}
+
+            {/* Progress Indicator */}
+            <div
+              style={{
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                minWidth: '60px',
+                textAlign: 'center'
               }}
-              onMouseLeave={(e) => {
-                if (index !== currentIndex) {
-                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
-                }
+            >
+              {currentIndex + 1} / {photos.length}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={goToNext}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                transition: 'background-color 0.2s ease'
               }}
-            />
-          ))}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              title="Next Image"
+            >
+              <FaChevronRight size={16} />
+            </button>
+          </div>
+
+          {/* Pagination Dots */}
+          <div
+            style={{
+              display: 'flex',
+              gap: '8px'
+            }}
+          >
+            {photos.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  pauseAutoPlay();
+                  setCurrentIndex(index);
+                  showControlsTemporarily();
+                  sendCastUpdate({ type: 'INDEX_CHANGED', index });
+                }}
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: index === currentIndex ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease, transform 0.2s ease',
+                  transform: index === currentIndex ? 'scale(1.2)' : 'scale(1)'
+                }}
+                onMouseEnter={(e) => {
+                  if (index !== currentIndex) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (index !== currentIndex) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+                  }
+                }}
+              />
+            ))}
+          </div>
         </div>
       )}
 
