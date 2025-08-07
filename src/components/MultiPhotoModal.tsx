@@ -39,6 +39,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   
   // Mobile detection for better casting UX
   const [isMobile, setIsMobile] = useState(false);
+  const [deviceType, setDeviceType] = useState<'ios' | 'android' | 'desktop'>('desktop');
 
   // Calculate optimal interval based on audio duration if provided
   const getAutoPlayInterval = () => {
@@ -71,15 +72,38 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     };
   }, [isOpen, autoPlay, currentIndex, photos.length, isPaused, audioDuration, autoPlayInterval]);
 
-  // Mobile detection
+  // Enhanced mobile and device detection
   useEffect(() => {
-    const checkMobile = () => {
+    const detectDevice = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      const isMobileDevice = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
-      setIsMobile(isMobileDevice);
+      
+      // iOS Detection
+      if (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream) {
+        setDeviceType('ios');
+        setIsMobile(true);
+        return;
+      }
+      
+      // Android Detection
+      if (/android/i.test(userAgent)) {
+        setDeviceType('android');
+        setIsMobile(true);
+        return;
+      }
+      
+      // Other mobile devices
+      if (/blackberry|iemobile|opera mini/i.test(userAgent)) {
+        setIsMobile(true);
+        setDeviceType('android'); // Default to android-like behavior
+        return;
+      }
+      
+      // Desktop
+      setDeviceType('desktop');
+      setIsMobile(false);
     };
     
-    checkMobile();
+    detectDevice();
   }, []);
 
   // Initialize casting capability
@@ -223,68 +247,149 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     setControlsTimeout(timeout);
   };
 
-  // Casting functions
+  // Platform-specific casting guidance
+  const getCastingInstructions = () => {
+    switch (deviceType) {
+      case 'ios':
+        return {
+          title: '📺 Cast to TV - iOS',
+          instructions: `To cast this slideshow from your iPhone/iPad:
+
+🎯 RECOMMENDED METHODS:
+
+1️⃣ AirPlay (Apple TV/Smart TV):
+   • Swipe down from top-right corner (Control Center)
+   • Tap "Screen Mirroring" 
+   • Select your Apple TV or AirPlay-compatible TV
+   • Return to this slideshow
+
+2️⃣ Google Home App (Chromecast):
+   • Open Google Home app
+   • Tap "Cast my screen"
+   • Select your Chromecast
+   • Return to this slideshow
+
+3️⃣ Smart TV Apps:
+   • Use your TV's native casting app
+   • Look for "Screen Share" or "Mirroring"
+
+💡 TIP: Make sure your device and TV are on the same WiFi network!`
+        };
+      
+      case 'android':
+        return {
+          title: '📺 Cast to TV - Android',
+          instructions: `To cast this slideshow from your Android device:
+
+🎯 RECOMMENDED METHODS:
+
+1️⃣ Built-in Casting:
+   • Swipe down twice (Quick Settings)
+   • Tap "Cast", "Smart View", or "Screen Share"
+   • Select your TV or Chromecast
+   • Return to this slideshow
+
+2️⃣ Google Home App (Chromecast):
+   • Open Google Home app
+   • Tap "Cast my screen"
+   • Select your Chromecast device
+   • Return to this slideshow
+
+3️⃣ Samsung Smart View:
+   • Open Smart View app (Samsung devices)
+   • Select your Samsung TV
+   • Start screen mirroring
+
+4️⃣ Miracast/WiFi Direct:
+   • Settings → Connected devices → Cast
+   • Select your Miracast-compatible TV
+
+💡 TIP: Make sure your device and TV are on the same WiFi network!`
+        };
+      
+      default:
+        return {
+          title: '📺 Cast to TV - Desktop',
+          instructions: `To cast this slideshow from your computer:
+
+🎯 RECOMMENDED METHODS:
+
+1️⃣ Chrome Browser:
+   • Click the three dots menu (⋮)
+   • Select "Cast..."
+   • Choose your Chromecast or smart TV
+   • Select "Cast tab" or "Cast desktop"
+
+2️⃣ Edge Browser:
+   • Click the three dots menu (⋯)
+   • Select "Cast media to device"
+   • Choose your casting device
+
+3️⃣ Windows 10/11:
+   • Press Windows + K
+   • Select your wireless display
+   • Or use "Connect" app
+
+💡 TIP: Make sure your computer and TV are on the same WiFi network!`
+        };
+    }
+  };
+
+  // Enhanced casting function with platform-specific support
   const startCasting = async () => {
-    // If no presentation request available, show helpful message
-    if (!presentationRequest) {
-      if (isMobile) {
-        alert('🎬 Casting Info:\n\nTo cast this slideshow:\n• Make sure you\'re on the same WiFi as your TV/Chromecast\n• Look for cast devices in your device\'s screen mirroring settings\n• Or use Google Home app to cast your screen\n\nNote: Direct casting from this app may not be available on all mobile browsers.');
-      } else {
-        alert('Casting is not supported in this browser. Try using Chrome or Edge for casting support.');
-      }
-      return;
-    }
-    
-    try {
-      const connection = await presentationRequest.start();
-      setPresentationConnection(connection);
-      setCasting(true);
-      
-      // Send initial slideshow data to the receiver
-      const slideshowData = {
-        type: 'SLIDESHOW_START',
-        photos,
-        currentIndex,
-        autoPlay,
-        autoPlayInterval: getAutoPlayInterval(),
-        title
-      };
-      
-      connection.send(JSON.stringify(slideshowData));
-      
-      // Listen for messages from the receiver
-      connection.onmessage = (event: any) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'INDEX_CHANGED') {
-            setCurrentIndex(message.index);
-          } else if (message.type === 'PLAY_STATE_CHANGED') {
-            setIsPaused(!message.playing);
+    // Try Presentation API first (Chrome/Edge)
+    if (presentationRequest) {
+      try {
+        const connection = await presentationRequest.start();
+        setPresentationConnection(connection);
+        setCasting(true);
+        
+        // Send initial slideshow data to the receiver
+        const slideshowData = {
+          type: 'SLIDESHOW_START',
+          photos,
+          currentIndex,
+          autoPlay,
+          autoPlayInterval: getAutoPlayInterval(),
+          title
+        };
+        
+        connection.send(JSON.stringify(slideshowData));
+        
+        // Listen for messages from the receiver
+        connection.onmessage = (event: any) => {
+          try {
+            const message = JSON.parse(event.data);
+            if (message.type === 'INDEX_CHANGED') {
+              setCurrentIndex(message.index);
+            } else if (message.type === 'PLAY_STATE_CHANGED') {
+              setIsPaused(!message.playing);
+            }
+          } catch (error) {
+            console.error('Error parsing cast message:', error);
           }
-        } catch (error) {
-          console.error('Error parsing cast message:', error);
-        }
-      };
-      
-      // Handle connection close
-      connection.onclose = () => {
-        setCasting(false);
-        setPresentationConnection(null);
-      };
-      
-      connection.onterminate = () => {
-        setCasting(false);
-        setPresentationConnection(null);
-      };
-      
-    } catch (error) {
-      console.error('Failed to start casting:', error);
-      if (isMobile) {
-        alert('🎬 No cast devices found!\n\nTo cast this slideshow:\n• Make sure your TV/Chromecast is on the same WiFi\n• Try using your phone\'s built-in screen mirroring\n• Or use the Google Home app to cast your screen');
-      } else {
-        alert('Unable to connect to cast device. Make sure your Chromecast or smart TV is on the same network and try again.');
+        };
+        
+        // Handle connection close
+        connection.onclose = () => {
+          setCasting(false);
+          setPresentationConnection(null);
+        };
+        
+        connection.onterminate = () => {
+          setCasting(false);
+          setPresentationConnection(null);
+        };
+        
+        return; // Success - exit early
+      } catch (error) {
+        console.log('Presentation API failed, showing manual instructions');
       }
     }
+
+    // Fallback: Show platform-specific instructions
+    const castingInfo = getCastingInstructions();
+    alert(castingInfo.instructions);
   };
 
   const stopCasting = () => {
@@ -437,7 +542,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             }}
           >
             <div>Cast: {castAvailable ? 'Available' : 'Not Available'}</div>
-            <div>Device: {isMobile ? 'Mobile' : 'Desktop'}</div>
+            <div>Device: {deviceType.toUpperCase()}</div>
             <div>API: {'PresentationRequest' in window ? 'Supported' : 'Not Supported'}</div>
           </div>
           
@@ -461,7 +566,9 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
                 opacity: castAvailable ? 1 : 0.6
               }}
               title={casting ? 'Stop Casting' : 
-                     castAvailable ? 'Cast to Device' : 'No Cast Devices Available'}
+                     deviceType === 'ios' ? 'Cast via AirPlay or Screen Mirroring' :
+                     deviceType === 'android' ? 'Cast via Google Cast or Screen Share' :
+                     'Cast to Device'}
             >
               {casting ? <FaStopCircle color="white" size={18} /> : <FaTv color="white" size={18} />}
             </button>
