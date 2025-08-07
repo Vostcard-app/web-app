@@ -505,21 +505,23 @@ const QuickcardStep3: React.FC = () => {
       {isCategoryModalOpen && (
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
-            <h3>Select Categories</h3>
-            {availableCategories.map((cat) => (
-              <div
-                key={cat}
-                style={categoryItemStyle}
-                onClick={() => handleCategoryToggle(cat)}
-              >
-                <input
-                  type="checkbox"
-                  checked={categories.includes(cat)}
-                  readOnly
-                />
-                <span style={{ marginLeft: 8 }}>{cat}</span>
-              </div>
-            ))}
+            <h3 style={{ marginBottom: '16px', textAlign: 'center' }}>Select Categories</h3>
+            <div style={categoryGridStyle}>
+              {availableCategories.map((cat) => (
+                <div
+                  key={cat}
+                  style={{
+                    ...categoryGridItemStyle,
+                    backgroundColor: categories.includes(cat) ? '#07345c' : '#f8f9fa',
+                    color: categories.includes(cat) ? 'white' : '#333',
+                    border: categories.includes(cat) ? '2px solid #07345c' : '2px solid #e9ecef'
+                  }}
+                  onClick={() => handleCategoryToggle(cat)}
+                >
+                  <span style={{ fontSize: '14px', fontWeight: '500', textAlign: 'center' }}>{cat}</span>
+                </div>
+              ))}
+            </div>
             <button
               style={doneButtonStyle}
               onClick={() => setIsCategoryModalOpen(false)}
@@ -731,8 +733,10 @@ const modalContentStyle: React.CSSProperties = {
   backgroundColor: 'white',
   padding: 20,
   borderRadius: 12,
-  width: '80%',
-  maxWidth: 400,
+  width: '90%',
+  maxWidth: 600,
+  maxHeight: '80vh',
+  overflowY: 'auto',
   position: 'relative',
   zIndex: 999
 };
@@ -742,6 +746,25 @@ const categoryItemStyle: React.CSSProperties = {
   alignItems: 'center',
   marginBottom: 10,
   cursor: 'pointer',
+};
+
+const categoryGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+  gap: '8px',
+  marginBottom: '20px'
+};
+
+const categoryGridItemStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: '12px 8px',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  minHeight: '44px',
+  textAlign: 'center'
 };
 
 const doneButtonStyle: React.CSSProperties = {
