@@ -1121,13 +1121,38 @@ ${shareUrl}`;
           ) : viewMode === 'map' ? (
             // Map View
             (() => {
+              console.log('🗺️ Map button clicked!');
+              console.log('📊 Trip data:', trip);
+              console.log('📊 Trip posts count:', trip.items.length);
+              console.log('📊 Trip posts data:', trip.items);
+              
+              // Enhanced debugging for location data
+              trip.items.forEach((item, index) => {
+                console.log(`🔍 Checking post for location:`, {
+                  id: item.id,
+                  title: item.title,
+                  latitude: item.latitude,
+                  longitude: item.longitude,
+                  hasLatitude: !!item.latitude,
+                  hasLongitude: !!item.longitude,
+                  latitudeType: typeof item.latitude,
+                  longitudeType: typeof item.longitude
+                });
+              });
+              
               const itemsWithLocation = trip.items.filter((item) => {
                 const status = itemsStatus.get(item.vostcardID);
                 const exists = !status || status.loading || status.exists;
-                return exists && item.latitude && item.longitude;
+                const hasLocation = item.latitude && item.longitude;
+                return exists && hasLocation;
               });
+              
+              console.log(`📍 Posts with location: ${itemsWithLocation.length}`, itemsWithLocation);
 
               if (itemsWithLocation.length === 0) {
+                console.log('❌ No posts with location data found');
+                
+                // Add a refresh button to try to get location data from original posts
                 return (
                   <div style={{
                     height: '100%',
@@ -1141,9 +1166,44 @@ ${shareUrl}`;
                     <div>
                       <FaMapMarkerAlt size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
                       <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No locations to show</h3>
-                      <p style={{ margin: 0, fontSize: '14px' }}>
+                      <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
                         None of the posts in this trip have location data.
                       </p>
+                      <button
+                        onClick={async () => {
+                          // Try to refresh location data from original posts
+                          console.log('🔄 Refreshing location data from original posts...');
+                          for (const item of trip.items) {
+                            try {
+                              const vostcardDoc = await getDoc(doc(db, 'vostcards', item.vostcardID));
+                              if (vostcardDoc.exists()) {
+                                const vostcardData = vostcardDoc.data();
+                                console.log(`📍 Original post ${item.id} location:`, {
+                                  title: vostcardData.title,
+                                  latitude: vostcardData.latitude,
+                                  longitude: vostcardData.longitude,
+                                  hasGeo: !!vostcardData.geo,
+                                  geo: vostcardData.geo
+                                });
+                              }
+                            } catch (error) {
+                              console.error(`❌ Error checking post ${item.id}:`, error);
+                            }
+                          }
+                        }}
+                        style={{
+                          background: '#007aff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '12px 24px',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          marginTop: '8px'
+                        }}
+                      >
+                        🔍 Debug Location Data
+                      </button>
                     </div>
                   </div>
                 );
