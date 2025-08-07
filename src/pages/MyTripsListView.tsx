@@ -150,6 +150,8 @@ Tap OK to continue.`;
     }
     
     try {
+      console.log('🔄 MyTripsListView: Starting share process for trip:', trip.id, trip.name);
+      
       // Mark trip as shared and public
       const updatedTrip = await TripService.updateTrip(trip.id, {
         isShared: true,
@@ -157,14 +159,24 @@ Tap OK to continue.`;
         visibility: 'public'
       });
       
+      console.log('✅ MyTripsListView: Trip updated successfully:', {
+        id: updatedTrip.id,
+        name: updatedTrip.name,
+        isShared: updatedTrip.isShared,
+        isPrivate: updatedTrip.isPrivate,
+        visibility: updatedTrip.visibility
+      });
+      
       // Update the trips list with the updated trip
       setTrips(prev => prev.map(t => t.id === trip.id ? updatedTrip : t));
       
       // Wait a moment for the database update to propagate
+      console.log('⏳ MyTripsListView: Waiting for database propagation...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Generate public share URL (same format as TripDetailView)
       const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
+      console.log('📍 MyTripsListView: Generated share URL:', shareUrl);
       
       // Generate share text
       const shareText = `Check out this trip I created with Vōstcard
@@ -173,16 +185,22 @@ Tap OK to continue.`;
 
 ${shareUrl}`;
       
+      console.log('📝 MyTripsListView: Generated share text:', shareText);
+      
       // Use native sharing or clipboard (same as TripDetailView)
       if (navigator.share) {
+        console.log('📱 MyTripsListView: Using native share');
         await navigator.share({ text: shareText });
       } else {
+        console.log('📋 MyTripsListView: Using clipboard fallback');
         await navigator.clipboard.writeText(shareText);
         alert('Share link copied to clipboard!');
       }
       
+      console.log('✅ MyTripsListView: Share process completed successfully');
+      
     } catch (error) {
-      console.error('Error sharing trip:', error);
+      console.error('❌ MyTripsListView: Error sharing trip:', error);
       alert('Failed to share. Please try again.');
     }
   };

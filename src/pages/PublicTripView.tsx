@@ -57,17 +57,34 @@ const PublicTripView: React.FC = () => {
       }, 15000); // 15 second timeout
 
       try {
+        console.log('🔍 PublicTripView: Loading trip with ID:', id);
 
         const docRef = doc(db, 'trips', id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data() as Trip;
-
+          
+          console.log('✅ PublicTripView: Trip found:', {
+            id: data.id,
+            name: data.name,
+            isShared: data.isShared,
+            isPrivate: data.isPrivate,
+            visibility: data.visibility,
+            userID: data.userID
+          });
           
           // Check if trip is shared or public
           // Allow access if: explicitly shared, public visibility, or not private (legacy)
-          if (data.isShared || data.visibility === 'public' || data.isPrivate === false) {
+          const canAccess = data.isShared || data.visibility === 'public' || data.isPrivate === false;
+          console.log('🔐 PublicTripView: Access check:', {
+            isShared: data.isShared,
+            visibility: data.visibility,
+            isPrivate: data.isPrivate,
+            canAccess: canAccess
+          });
+          
+          if (canAccess) {
             // Load trip items from subcollection
 
             try {
@@ -109,11 +126,13 @@ const PublicTripView: React.FC = () => {
               setLoading(false);
             }
           } else {
+            console.log('❌ PublicTripView: Trip access denied - not shared/public');
             clearTimeout(timeoutId);
             setError('This trip is not available for public viewing.');
             setLoading(false);
           }
         } else {
+          console.log('❌ PublicTripView: Trip document not found');
           clearTimeout(timeoutId);
           setError('Trip not found. It may have been deleted or the link is invalid.');
           setLoading(false);
