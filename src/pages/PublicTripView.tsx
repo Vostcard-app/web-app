@@ -511,63 +511,177 @@ ${shareUrl}`;
           fontSize: '28px',
           fontWeight: 'bold',
           color: '#333',
-          marginBottom: '24px',
+          marginBottom: '16px',
           textAlign: 'center',
           lineHeight: 1.3
         }}>
           {trip.name || 'Untitled Trip'}
         </div>
 
-        {/* Trip Posts with Thumbnails */}
-        {tripPosts.length > 0 && (
+        {/* Trip Description */}
+        {trip.description && (
           <div style={{
-            marginBottom: '32px'
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef'
           }}>
-            <div style={{
-              fontSize: '20px',
-              fontWeight: '600',
-              color: '#333',
-              marginBottom: '16px'
+            <p style={{ 
+              margin: '0',
+              fontSize: '14px', 
+              color: '#555',
+              lineHeight: '1.4',
+              textAlign: 'center'
             }}>
-              Places in this trip ({tripPosts.length})
-            </div>
-            
-            <div style={{
+              {trip.description}
+            </p>
+          </div>
+        )}
+
+        {/* View Mode Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginBottom: '16px',
+          justifyContent: 'center'
+        }}>
+          <button
+            style={{
+              backgroundColor: '#007aff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}>
-              {tripPosts.map((post, index) => (
-                <div
-                  key={post.id}
-                  onClick={() => handlePostClick(post.id, post.isQuickcard)}
-                  style={{
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <FaEye size={12} />
+            List View
+          </button>
+          
+          <button
+            onClick={() => alert('Map view coming soon!')}
+            style={{
+              backgroundColor: '#f0f0f0',
+              color: '#333',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <FaMap size={12} />
+            Map View
+          </button>
+          
+          <button
+            onClick={() => alert('Slideshow coming soon!')}
+            style={{
+              backgroundColor: '#f0f0f0',
+              color: '#333',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <FaPlay size={12} />
+            Slideshow
+          </button>
+        </div>
+
+        {/* List View of Posts */}
+        {tripPosts.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {tripPosts.map((post, index) => (
+              <div
+                key={post.id}
+                onClick={() => handlePostClick(post.id, post.isQuickcard)}
+                style={{
+                  background: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8f9fa';
+                  e.currentTarget.style.borderColor = '#007aff';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white';
+                  e.currentTarget.style.borderColor = '#e0e0e0';
+                  e.currentTarget.style.transform = 'translateY(0px)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                }}
+              >
+                {/* Post Header */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '8px'
+                }}>
+                  <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    border: '1px solid #e0e0e0'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e9ecef';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#f8f9fa';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
-                >
+                    gap: '8px'
+                  }}>
+                    <span style={{
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      color: '#333'
+                    }}>
+                      {index + 1}. {post.title || 'Untitled'}
+                    </span>
+                    
+                    <span style={{
+                      fontSize: '12px',
+                      padding: '2px 6px',
+                      backgroundColor: post.isQuickcard ? '#e3f2fd' : '#f3e5f5',
+                      borderRadius: '8px',
+                      color: post.isQuickcard ? '#1976d2' : '#7b1fa2'
+                    }}>
+                      {post.isQuickcard ? '📸 Quickcard' : '📹 Vostcard'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Post Content */}
+                <div style={{
+                  display: 'flex',
+                  gap: '12px'
+                }}>
                   {/* Thumbnail */}
                   <div style={{
-                    width: '60px',
-                    height: '60px',
+                    width: '80px',
+                    height: '80px',
                     borderRadius: '8px',
                     overflow: 'hidden',
-                    backgroundColor: '#e0e0e0',
+                    backgroundColor: '#f0f0f0',
                     flexShrink: 0,
                     position: 'relative'
                   }}>
@@ -591,7 +705,7 @@ ${shareUrl}`;
                         color: '#999',
                         fontSize: '24px'
                       }}>
-                        📷
+                        {post.isQuickcard ? '📷' : '📱'}
                       </div>
                     )}
                     
@@ -614,55 +728,69 @@ ${shareUrl}`;
                         <FaPlay />
                       </div>
                     )}
+
+                    {/* Multiple photos indicator */}
+                    {post.photoURLs && post.photoURLs.length > 1 && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '4px',
+                        right: '4px',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        color: 'white',
+                        borderRadius: '4px',
+                        padding: '2px 4px',
+                        fontSize: '10px',
+                        fontWeight: '600'
+                      }}>
+                        +{post.photoURLs.length - 1}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Post Info */}
+                  {/* Post Details */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: '#333',
-                      marginBottom: '4px',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {index + 1}. {post.title}
-                    </div>
+                    {post.description && (
+                      <p style={{
+                        margin: '0 0 8px 0',
+                        fontSize: '14px',
+                        color: '#555',
+                        lineHeight: '1.4',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical'
+                      }}>
+                        {post.description}
+                      </p>
+                    )}
                     
                     <div style={{
-                      fontSize: '14px',
-                      color: '#666',
+                      fontSize: '12px',
+                      color: '#888',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
                     }}>
-                      <span style={{
-                        fontSize: '12px',
-                        padding: '2px 6px',
-                        backgroundColor: post.isQuickcard ? '#e3f2fd' : '#f3e5f5',
-                        borderRadius: '8px',
-                        color: post.isQuickcard ? '#1976d2' : '#7b1fa2'
-                      }}>
-                        {post.isQuickcard ? '📸 Quickcard' : '📹 Vostcard'}
-                      </span>
-                      
-                      {post.createdAt && (
-                        <span>{formatDate(post.createdAt)}</span>
-                      )}
+                      <span>{formatDate(post.createdAt)}</span>
+                      <span>•</span>
+                      <span>Tap to view details</span>
                     </div>
                   </div>
-
-                  {/* Arrow indicator */}
-                  <div style={{
-                    color: '#999',
-                    fontSize: '18px'
-                  }}>
-                    →
-                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            textAlign: 'center',
+            padding: '40px 20px',
+            color: '#666'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧳</div>
+            <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Posts Yet</h3>
+            <p style={{ margin: '0', fontSize: '14px' }}>
+              This trip doesn't contain any posts yet.
+            </p>
           </div>
         )}
 
