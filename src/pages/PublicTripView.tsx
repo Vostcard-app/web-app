@@ -57,23 +57,19 @@ const PublicTripView: React.FC = () => {
       }, 15000); // 15 second timeout
 
       try {
-        console.log('📱 Loading trip for sharing:', id);
+
         const docRef = doc(db, 'trips', id);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           const data = docSnap.data() as Trip;
-          console.log('📱 Trip found:', {
-            id: data.id,
-            name: data.name,
-            isShared: data.isShared
-          });
+
           
           // Check if trip is shared or public
           // Allow access if: explicitly shared, public visibility, or not private (legacy)
           if (data.isShared || data.visibility === 'public' || data.isPrivate === false) {
             // Load trip items from subcollection
-            console.log('🔍 Loading trip items from subcollection...');
+
             try {
               const itemsQuery = query(
                 collection(db, 'trips', id, 'items'),
@@ -98,7 +94,7 @@ const PublicTripView: React.FC = () => {
                 });
               });
               
-              console.log('✅ Loaded trip items:', items.length);
+
               
               // Add items to trip data
               const tripWithItems = { ...data, items };
@@ -106,7 +102,7 @@ const PublicTripView: React.FC = () => {
               setTrip(tripWithItems);
               setLoading(false);
             } catch (itemsError) {
-              console.error('❌ Error loading trip items:', itemsError);
+
               // Still show the trip even if items fail to load
               clearTimeout(timeoutId);
               setTrip({ ...data, items: [] });
@@ -124,7 +120,7 @@ const PublicTripView: React.FC = () => {
         }
       } catch (err) {
         clearTimeout(timeoutId);
-        console.error('Error loading trip:', err);
+
         setError('Failed to load trip. Please try again.');
         setLoading(false);
       }
@@ -145,7 +141,7 @@ const PublicTripView: React.FC = () => {
           setUserProfile(userSnap.data());
         }
       } catch (err) {
-        console.error('Failed to load user profile:', err);
+
       }
     };
     
@@ -157,16 +153,15 @@ const PublicTripView: React.FC = () => {
   // Load trip posts data
   useEffect(() => {
     const fetchTripPosts = async () => {
-      console.log('🔄 Fetching trip posts for:', trip?.name);
-      console.log('📋 Trip items:', trip?.items);
+
       
       if (!trip?.items) {
-        console.log('❌ No trip items found');
+
         return;
       }
 
       if (trip.items.length === 0) {
-        console.log('❌ Trip items array is empty');
+
         return;
       }
 
@@ -175,18 +170,18 @@ const PublicTripView: React.FC = () => {
         
         // Sort items by order to maintain trip sequence
         const sortedItems = [...trip.items].sort((a, b) => a.order - b.order);
-        console.log('📊 Sorted items:', sortedItems.length);
+
 
         // Fetch full vostcard data for each item
         for (const item of sortedItems) {
-          console.log('🔍 Loading vostcard:', item.vostcardID);
+
           try {
             const vostcardRef = doc(db, 'vostcards', item.vostcardID);
             const vostcardSnap = await getDoc(vostcardRef);
             
             if (vostcardSnap.exists()) {
               const vostcardData = vostcardSnap.data() as VostcardData;
-              console.log('✅ Loaded vostcard:', vostcardData.title);
+
               postsData.push({
                 id: vostcardData.id,
                 title: vostcardData.title || 'Untitled',
@@ -201,17 +196,17 @@ const PublicTripView: React.FC = () => {
                 longitude: item.longitude
               });
             } else {
-              console.log('❌ Vostcard not found:', item.vostcardID);
+
             }
           } catch (error) {
-            console.error(`❌ Error loading post ${item.vostcardID}:`, error);
+
           }
         }
 
-        console.log('📱 Final posts data:', postsData.length, postsData);
+
         setTripPosts(postsData);
       } catch (error) {
-        console.error('❌ Error loading trip posts:', error);
+
       }
     };
 
@@ -235,20 +230,20 @@ const PublicTripView: React.FC = () => {
     const allImages: string[] = [];
     
     try {
-      console.log(`🎬 Collecting images from ${tripPosts.length} trip posts for slideshow`);
+
       
       // Get all images from all posts in order
       for (const post of tripPosts) {
         if (post.photoURLs && Array.isArray(post.photoURLs)) {
-          console.log(`📷 Adding ${post.photoURLs.length} images from post: ${post.title}`);
+
           allImages.push(...post.photoURLs);
         }
       }
 
-      console.log(`✅ Collected ${allImages.length} images total for slideshow`);
+
       return allImages;
     } catch (error) {
-      console.error('❌ Error collecting trip images:', error);
+
       return [];
     } finally {
       setLoadingSlideshowImages(false);
@@ -257,28 +252,28 @@ const PublicTripView: React.FC = () => {
 
   // Handle slideshow button click
   const handleSlideshowClick = async () => {
-    console.log('🎬 Slideshow button clicked!');
+
     
     if (slideshowImages.length === 0) {
-      console.log('🔄 Collecting images for slideshow...');
+
       const images = await collectTripImages();
       setSlideshowImages(images);
       
       if (images.length > 0) {
-        console.log(`✅ Starting slideshow with ${images.length} images`);
+
         setShowSlideshow(true);
       } else {
-        console.log('❌ No images found for slideshow');
+
         alert('No images found in this trip to display in slideshow.');
       }
     } else {
-      console.log(`✅ Starting slideshow with ${slideshowImages.length} cached images`);
+
       setShowSlideshow(true);
     }
   };
 
   const handleShareTrip = async () => {
-    console.log('🔗 Share button clicked for trip:', trip?.name);
+
     
     try {
       const shareUrl = `${window.location.origin}/share-trip/${id}`;
@@ -290,27 +285,27 @@ ${trip?.description || 'A collection of my favorite places'}
 
 ${shareUrl}`;
       
-      console.log('📱 Checking navigator.share availability:', !!navigator.share);
+
       
       if (navigator.share) {
-        console.log('📱 Using native share API');
+
         await navigator.share({
           title: trip?.name || 'Check out this trip!',
           text: shareText,
           url: shareUrl
         });
-        console.log('✅ Native share completed');
+
       } else {
-        console.log('📋 Falling back to clipboard');
+
         await navigator.clipboard.writeText(shareText);
         alert('✅ Trip link copied to clipboard!\n\nShare this with anyone to let them view your trip.');
       }
     } catch (error) {
-      console.error('❌ Error sharing trip:', error);
+
       
       // If native share fails, try clipboard as fallback
       if (navigator.share && error.name === 'AbortError') {
-        console.log('ℹ️ User cancelled share dialog');
+
         return; // User cancelled, don't show error
       }
       
@@ -321,7 +316,7 @@ ${shareUrl}`;
         await navigator.clipboard.writeText(shareText);
         alert('✅ Trip link copied to clipboard!\n\nShare this with anyone to let them view your trip.');
       } catch (clipboardError) {
-        console.error('❌ Clipboard also failed:', clipboardError);
+
         // Manual fallback
         const shareUrl = `${window.location.origin}/share-trip/${id}`;
         prompt('Copy this link to share the trip:', shareUrl);
@@ -661,31 +656,19 @@ ${shareUrl}`;
           
           <button
             onClick={() => {
-              console.log('🗺️ Map button clicked!');
-              console.log('📊 Trip data:', trip);
-              console.log('📊 Trip posts count:', tripPosts.length);
-              console.log('📊 Trip posts data:', tripPosts);
+
               
               if (trip && tripPosts.length > 0) {
                 // Filter posts that have location data
                 const postsWithLocation = tripPosts.filter(post => {
-                  console.log('🔍 Checking post for location:', {
-                    id: post.id,
-                    title: post.title,
-                    latitude: post.latitude,
-                    longitude: post.longitude,
-                    hasLatitude: !!post.latitude,
-                    hasLongitude: !!post.longitude,
-                    latitudeType: typeof post.latitude,
-                    longitudeType: typeof post.longitude
-                  });
+
                   return post.latitude && post.longitude;
                 });
                 
-                console.log('📍 Posts with location:', postsWithLocation.length, postsWithLocation);
+
                 
                 if (postsWithLocation.length > 0) {
-                  console.log('📍 Opening trip map view with', postsWithLocation.length, 'posts');
+
                   navigate('/public-trip-map', {
                     replace: false,
                     state: {
@@ -716,11 +699,11 @@ ${shareUrl}`;
                     }
                   });
                 } else {
-                  console.log('❌ No posts with location data found');
+
                   alert('No posts in this trip have location data for the map view.');
                 }
               } else {
-                console.log('❌ No trip or posts available');
+
                 alert('No posts available for map view.');
               }
             }}
