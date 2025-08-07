@@ -512,62 +512,20 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         <FaTimes color="white" size={20} />
       </button>
 
-      {/* Enhanced Control Bar */}
+      {/* Left Side - Cast Button */}
       <div
         style={{
           position: 'absolute',
           top: '20px',
           left: '20px',
-          right: '20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
           zIndex: 2001,
           opacity: showControls ? 1 : 0,
           transition: 'opacity 0.3s ease',
           pointerEvents: showControls ? 'auto' : 'none'
         }}
       >
-        {/* Auto-play indicator */}
-        {autoPlay && (
-          <div
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              padding: '8px 12px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            {casting ? '📺' : (isPaused ? '⏸️' : '▶️')} 
-            {casting ? 'Casting' : `Slideshow ${isPaused ? 'Paused' : 'Playing'}`}
-          </div>
-        )}
-
         {/* Cast Button - Always show for debugging, with different styles */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Debug: Show casting availability status */}
-          <div
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              padding: '4px 8px',
-              borderRadius: '12px',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-          >
-            <div>Cast: {castAvailable ? 'Available' : 'Not Available'}</div>
-            <div>Device: {deviceType.toUpperCase()}</div>
-            <div>API: {'PresentationRequest' in window ? 'Supported' : 'Not Supported'}</div>
-          </div>
-          
           {/* Cast Button - Show if available OR in development */}
           {(castAvailable || process.env.NODE_ENV === 'development') && (
             <button
@@ -595,8 +553,61 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
               {casting ? <FaStopCircle color="white" size={18} /> : <FaTv color="white" size={18} />}
             </button>
           )}
+
+          {/* Debug: Show casting availability status (only in development) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '12px',
+                fontSize: '10px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2px'
+              }}
+            >
+              <div>Cast: {castAvailable ? 'Available' : 'Not Available'}</div>
+              <div>Device: {deviceType.toUpperCase()}</div>
+              <div>API: {'PresentationRequest' in window ? 'Supported' : 'Not Supported'}</div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Center - Auto-play indicator */}
+      {autoPlay && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 2001,
+            opacity: showControls ? 1 : 0,
+            transition: 'opacity 0.3s ease',
+            pointerEvents: showControls ? 'auto' : 'none'
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              padding: '8px 12px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {casting ? '📺' : (isPaused ? '⏸️' : '▶️')} 
+            {casting ? 'Casting' : `Slideshow ${isPaused ? 'Paused' : 'Playing'}`}
+          </div>
+        </div>
+      )}
 
 
 
