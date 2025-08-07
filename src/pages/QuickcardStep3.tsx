@@ -374,7 +374,7 @@ const QuickcardStep3: React.FC = () => {
 
         <div>
           <label style={labelStyle}>
-            Description* (Required for Map) {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
+            Description (Required for Map) {validationState.hasDescription && <span style={{color: 'green'}}>✅</span>}
           </label>
           <textarea
             value={description}
@@ -386,7 +386,7 @@ const QuickcardStep3: React.FC = () => {
               touchAction: 'manipulation',
               fontSize: '18px',
               WebkitTextSizeAdjust: '100%',
-              borderColor: validationState.hasDescription ? '#002B4D' : '#ff6b6b'
+              borderColor: validationState.hasDescription ? '#002B4D' : '#ccc' // Use normal border color instead of red
             }}
           />
         </div>
