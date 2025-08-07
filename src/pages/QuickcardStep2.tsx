@@ -187,7 +187,14 @@ export default function QuickcardStep2() {
     }
 
     try {
-      await TripService.addVostcardToTrip(lastUsedTrip.id, currentVostcard.id);
+      await TripService.addItemToTrip(lastUsedTrip.id, {
+        vostcardID: currentVostcard.id,
+        type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
+        title: currentVostcard.title,
+        description: currentVostcard.description,
+        latitude: currentVostcard.geo?.latitude,
+        longitude: currentVostcard.geo?.longitude
+      });
       alert(`Added to "${lastUsedTrip.name}"`);
     } catch (error) {
       console.error('Error adding to current trip:', error);
@@ -226,7 +233,14 @@ export default function QuickcardStep2() {
       }
 
       if (tripId) {
-        await TripService.addVostcardToTrip(tripId, currentVostcard.id);
+        await TripService.addItemToTrip(tripId, {
+          vostcardID: currentVostcard.id,
+          type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
+          title: currentVostcard.title,
+          description: currentVostcard.description,
+          latitude: currentVostcard.geo?.latitude,
+          longitude: currentVostcard.geo?.longitude
+        });
         
         // Update last used trip
         const selectedTrip = userTrips.find(trip => trip.id === tripId);
