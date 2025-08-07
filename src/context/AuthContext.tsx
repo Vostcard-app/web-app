@@ -120,6 +120,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     console.log('🔐 AuthProvider: Setting up Firebase Auth listener...');
     
+    // Prevent duplicate auth listener setup
+    let isCleanedUp = false;
+    
     // Configure Firebase Auth persistence
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
@@ -147,6 +150,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      // Prevent processing if component was cleaned up
+      if (isCleanedUp) {
+        console.log('🚫 Auth state change ignored - component cleaned up');
+        return;
+      }
+      
       // Reduced auth logging for performance
       // console.log('🔐 AuthProvider: Auth state changed:', { hasUser: !!currentUser });
 
@@ -249,6 +258,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       console.log('🔐 AuthProvider: Cleaning up Firebase Auth listener');
+      isCleanedUp = true;
       clearTimeout(loadingTimeout);
       unsubscribe();
     };
