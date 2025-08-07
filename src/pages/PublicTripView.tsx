@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaHeart, FaShare, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay } from 'react-icons/fa';
+import { FaHome, FaHeart, FaShare, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay, FaPhotoVideo } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import type { Trip, TripItem } from '../types/TripTypes';
+import MultiPhotoModal from '../components/MultiPhotoModal';
 import RoundInfoButton from '../assets/RoundInfo_Button.png';
 
 interface VostcardData {
@@ -31,6 +32,11 @@ const PublicTripView: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [tripPosts, setTripPosts] = useState<VostcardData[]>([]);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
+  
+  // Slideshow states
+  const [showSlideshow, setShowSlideshow] = useState(false);
+  const [slideshowImages, setSlideshowImages] = useState<string[]>([]);
+  const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
 
   // Load trip data
   useEffect(() => {
@@ -218,6 +224,56 @@ const PublicTripView: React.FC = () => {
       navigate(`/share-quickcard/${postId}`);
     } else {
       navigate(`/share/${postId}`);
+    }
+  };
+
+  // Slideshow functionality - collect all images from trip posts
+  const collectTripImages = async (): Promise<string[]> => {
+    if (!tripPosts || tripPosts.length === 0) return [];
+    
+    setLoadingSlideshowImages(true);
+    const allImages: string[] = [];
+    
+    try {
+      console.log(`🎬 Collecting images from ${tripPosts.length} trip posts for slideshow`);
+      
+      // Get all images from all posts in order
+      for (const post of tripPosts) {
+        if (post.photoURLs && Array.isArray(post.photoURLs)) {
+          console.log(`📷 Adding ${post.photoURLs.length} images from post: ${post.title}`);
+          allImages.push(...post.photoURLs);
+        }
+      }
+
+      console.log(`✅ Collected ${allImages.length} images total for slideshow`);
+      return allImages;
+    } catch (error) {
+      console.error('❌ Error collecting trip images:', error);
+      return [];
+    } finally {
+      setLoadingSlideshowImages(false);
+    }
+  };
+
+  // Handle slideshow button click
+  const handleSlideshowClick = async () => {
+    console.log('🎬 Slideshow button clicked!');
+    
+    if (slideshowImages.length === 0) {
+      console.log('🔄 Collecting images for slideshow...');
+      const images = await collectTripImages();
+      setSlideshowImages(images);
+      
+      if (images.length > 0) {
+        console.log(`✅ Starting slideshow with ${images.length} images`);
+        setShowSlideshow(true);
+      } else {
+        console.log('❌ No images found for slideshow');
+        alert('No images found in this trip to display in slideshow.');
+      }
+    } else {
+      console.log(`✅ Starting slideshow with ${slideshowImages.length} cached images`);
+      setShowSlideshow(true);
     }
   };
 
@@ -688,24 +744,41 @@ ${shareUrl}`;
           </button>
           
           <button
-            onClick={() => alert('Slideshow coming soon!')}
+            onClick={handleSlideshowClick}
+            disabled={loadingSlideshowImages}
             style={{
-              backgroundColor: '#f0f0f0',
-              color: '#333',
+              backgroundColor: loadingSlideshowImages ? '#ccc' : '#f0f0f0',
+              color: loadingSlideshowImages ? '#666' : '#333',
               border: 'none',
               borderRadius: '8px',
               padding: '8px 16px',
               fontSize: '14px',
               fontWeight: '500',
-              cursor: 'pointer',
+              cursor: loadingSlideshowImages ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               transition: 'all 0.2s ease'
             }}
           >
-            <FaPlay size={12} />
-            Slideshow
+            {loadingSlideshowImages ? (
+              <>
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  border: '2px solid #999',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                Loading...
+              </>
+            ) : (
+              <>
+                <FaPhotoVideo size={12} />
+                Slideshow
+              </>
+            )}
           </button>
         </div>
 
@@ -1099,6 +1172,29 @@ ${shareUrl}`;
           </div>
         </div>
       )}
+
+      {/* Slideshow Modal */}
+      {showSlideshow && (
+        <MultiPhotoModal
+          photos={slideshowImages}
+          initialIndex={0}
+          isOpen={showSlideshow}
+          onClose={() => setShowSlideshow(false)}
+          title={`${trip?.name} - Slideshow`}
+          autoPlay={true}
+          autoPlayInterval={5000}
+        />
+      )}
+
+      {/* CSS Animation for loading spinner */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `
+      }} />
     </div>
   );
 };
