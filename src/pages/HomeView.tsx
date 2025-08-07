@@ -1792,11 +1792,11 @@ const HomeView = () => {
 
 
 
-        {/* Map Container - Account for fixed header and nav buttons */}
+        {/* Map Container - Account for fixed header, nav buttons, and see all toggle */}
         <div style={{ 
           flex: 1, 
           position: 'relative',
-          paddingTop: shouldUseContainer ? '140px' : '135px' // Header + spacing + nav buttons height
+          paddingTop: shouldUseContainer ? '210px' : '190px' // Header + nav buttons + see all toggle + spacing
         }}>
           {/* Error Display */}
           {mapError && (
@@ -2181,53 +2181,54 @@ const HomeView = () => {
             </button>
           </div>
 
-          {/* Guides Only Toggle - positioned under Help button */}
+      {/* See All Toggle - Fixed under navigation buttons */}
+      <div
+        style={{
+          position: 'fixed',
+          top: shouldUseContainer ? '165px' : '145px', // Under nav buttons: Desktop(115px + 40px + 10px), Mobile(95px + 40px + 10px)
+          left: shouldUseContainer ? '50%' : '8px',
+          transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
+          zIndex: 1002,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '4px',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          padding: '6px 8px',
+          borderRadius: '6px',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          backdropFilter: 'blur(10px)'
+        }}
+      >
+        <div
+          onClick={() => setShowGuidesOnly(!showGuidesOnly)}
+          style={{
+            width: '36px',
+            height: '20px',
+            borderRadius: '10px',
+            background: showGuidesOnly ? '#002B4D' : '#e0e0e0',
+            position: 'relative',
+            cursor: 'pointer',
+            transition: 'background 0.2s',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+        >
           <div
             style={{
+              width: '16px',
+              height: '16px',
+              borderRadius: '50%',
+              background: 'white',
               position: 'absolute',
-              top: '98px', // Below the top buttons (8px + 40px button height + 50px gap)
-              left: '8px',
-              zIndex: 1002,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '4px',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              padding: '6px 8px',
-              borderRadius: '6px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(10px)'
+              left: showGuidesOnly ? '2px' : '18px',
+              transition: 'left 0.2s',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
             }}
-          >
-            <div
-              onClick={() => setShowGuidesOnly(!showGuidesOnly)}
-              style={{
-                width: '36px',
-                height: '20px',
-                borderRadius: '10px',
-                background: showGuidesOnly ? '#002B4D' : '#e0e0e0',
-                position: 'relative',
-                cursor: 'pointer',
-                transition: 'background 0.2s',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-            >
-              <div
-                style={{
-                  width: '16px',
-                  height: '16px',
-                  borderRadius: '50%',
-                  background: 'white',
-                  position: 'absolute',
-                  left: showGuidesOnly ? '2px' : '18px',
-                  transition: 'left 0.2s',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                }}
-              />
-            </div>
-            <span style={{ fontSize: '10px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
-          </div>
+          />
+        </div>
+        <span style={{ fontSize: '10px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
+      </div>
 
           {/* Help Menu Dropdown */}
           {showHelpMenu && (
