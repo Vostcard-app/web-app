@@ -345,24 +345,20 @@ ${shareUrl}`;
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100vh',
       backgroundColor: '#ffffff',
-      overflow: 'auto',
-      WebkitOverflowScrolling: 'touch',
-      touchAction: 'pan-y'
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
       {/* Banner */}
       <div style={{
         background: '#07345c',
-        padding: '15px 16px 24px 16px',
-        height: 30,
+        padding: '15px 16px 15px 16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
+        flexShrink: 0,
         zIndex: 1000,
       }}>
         <span 
@@ -400,128 +396,110 @@ ${shareUrl}`;
         </div>
       </div>
 
-      {/* 20% Container with User Info */}
+      {/* User Info Section */}
       <div style={{
-        position: 'relative',
-        width: '100%',
-        paddingTop: '20%', // 20% height
         background: '#f8f9fa',
         borderBottom: '1px solid #e0e0e0',
-        marginTop: '69px', // Account for fixed header height
+        padding: '16px 20px',
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
         <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
           display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '5px 20px 20px 20px'
+          alignItems: 'center',
+          gap: 12
         }}>
-          {/* Avatar and Username - Left Justified */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%'
-          }}>
-            <div style={{
+          <div 
+            style={{ 
+              width: 50, 
+              height: 50, 
+              borderRadius: '50%', 
+              overflow: 'hidden',
+              background: '#f0f0f0',
               display: 'flex',
               alignItems: 'center',
-              gap: 12
-            }}>
-              <div 
-                style={{ 
-                  width: 60, 
-                  height: 60, 
-                  borderRadius: '50%', 
-                  overflow: 'hidden',
-                  background: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  if (trip?.userID) {
-                    navigate(`/user-profile/${trip.userID}`);
-                  }
-                }}
-              >
-                {avatarUrl ? (
-                  <img 
-                    src={avatarUrl} 
-                    alt={trip?.username || 'User'} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-                  />
-                ) : (
-                  <FaUserCircle size={60} color="#ccc" />
-                )}
-              </div>
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start'
-              }}>
-                <div 
-                  style={{ 
-                    fontWeight: 600, 
-                    fontSize: 18,
-                    color: '#333',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => {
-                    if (trip?.userID) {
-                      navigate(`/user-profile/${trip.userID}`);
-                    }
-                  }}
-                >
-                  {trip?.username || 'Unknown User'}
-                </div>
-                <div style={{ fontSize: 14, color: '#666' }}>
-                  Creator
-                </div>
-              </div>
-            </div>
-
-            {/* Login/Register Button */}
-            <button
-              type="button"
-              style={{
-                cursor: 'pointer',
-                transition: 'transform 0.1s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: '#007bff',
-                color: 'white',
-                padding: '10px 16px',
-                borderRadius: '8px',
-                fontSize: 14,
-                fontWeight: 600,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                border: 'none',
-                whiteSpace: 'nowrap'
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              if (trip?.userID) {
+                navigate(`/user-profile/${trip.userID}`);
+              }
+            }}
+          >
+            {avatarUrl ? (
+              <img 
+                src={avatarUrl} 
+                alt={trip?.username || 'User'} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+              />
+            ) : (
+              <FaUserCircle size={50} color="#ccc" />
+            )}
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start'
+          }}>
+            <div 
+              style={{ 
+                fontWeight: 600, 
+                fontSize: 16,
+                color: '#333',
+                cursor: 'pointer'
               }}
-              onClick={() => navigate('/register')}
-              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              onClick={() => {
+                if (trip?.userID) {
+                  navigate(`/user-profile/${trip.userID}`);
+                }
+              }}
             >
-              Login / Register
-            </button>
+              {trip?.username || 'Unknown User'}
+            </div>
+            <div style={{ fontSize: 12, color: '#666' }}>
+              Creator
+            </div>
           </div>
         </div>
+
+        {/* Login/Register Button */}
+        <button
+          type="button"
+          style={{
+            cursor: 'pointer',
+            transition: 'transform 0.1s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#007bff',
+            color: 'white',
+            padding: '8px 12px',
+            borderRadius: '8px',
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            border: 'none',
+            whiteSpace: 'nowrap'
+          }}
+          onClick={() => navigate('/register')}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          Login / Register
+        </button>
       </div>
 
       {/* Scrollable Main Content */}
       <div style={{ 
-        padding: '16px 16px 40px 16px',
-        minHeight: 'calc(100vh - 200px)',
-        boxSizing: 'border-box'
+        flex: 1,
+        overflow: 'auto',
+        padding: '16px',
+        WebkitOverflowScrolling: 'touch'
       }}>
         {/* Trip Title */}
         <div style={{
@@ -926,43 +904,6 @@ ${shareUrl}`;
             Join Free
           </button>
         </div>
-
-        {/* Description Link */}
-        {trip.description && (
-          <div style={{
-            background: '#f8f9fa',
-            padding: '16px',
-            borderRadius: '12px',
-            marginBottom: '24px',
-            border: '1px solid #e0e0e0'
-          }}>
-            <div style={{
-              fontSize: '16px',
-              fontWeight: '600',
-              color: '#333',
-              marginBottom: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              // Toggle description visibility or navigate to full description
-              console.log('Description clicked');
-            }}
-            >
-              <FaEye size={16} />
-              Description
-            </div>
-            <div style={{
-              fontSize: '14px',
-              color: '#666',
-              lineHeight: 1.5
-            }}>
-              {trip.description}
-            </div>
-          </div>
-        )}
 
         {/* Date and Made with Vostcard */}
         <div style={{
