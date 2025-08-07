@@ -2185,8 +2185,7 @@ const HomeView = () => {
         style={{
           position: 'fixed',
           top: shouldUseContainer ? '165px' : '145px', // Under nav buttons: Desktop(115px + 40px + 10px), Mobile(95px + 40px + 10px)
-          left: shouldUseContainer ? '50%' : '8px',
-          transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
+          left: '8px', // Left-aligned on both desktop and mobile
           zIndex: 1002,
           display: 'flex',
           flexDirection: 'column',
