@@ -163,6 +163,8 @@ const PublicTripView: React.FC = () => {
   };
 
   const handleShareTrip = async () => {
+    console.log('🔗 Share button clicked for trip:', trip?.name);
+    
     try {
       const shareUrl = `${window.location.origin}/share-trip/${id}`;
       const shareText = `Check out this trip I created with Vōstcard
@@ -173,18 +175,42 @@ ${trip?.description || 'A collection of my favorite places'}
 
 ${shareUrl}`;
       
+      console.log('📱 Checking navigator.share availability:', !!navigator.share);
+      
       if (navigator.share) {
+        console.log('📱 Using native share API');
         await navigator.share({
           title: trip?.name || 'Check out this trip!',
-          text: shareText
+          text: shareText,
+          url: shareUrl
         });
+        console.log('✅ Native share completed');
       } else {
+        console.log('📋 Falling back to clipboard');
         await navigator.clipboard.writeText(shareText);
-        alert('Trip link copied to clipboard!');
+        alert('✅ Trip link copied to clipboard!\n\nShare this with anyone to let them view your trip.');
       }
     } catch (error) {
-      console.error('Error sharing trip:', error);
-      alert('Failed to share trip. Please try again.');
+      console.error('❌ Error sharing trip:', error);
+      
+      // If native share fails, try clipboard as fallback
+      if (navigator.share && error.name === 'AbortError') {
+        console.log('ℹ️ User cancelled share dialog');
+        return; // User cancelled, don't show error
+      }
+      
+      // Final fallback - try clipboard
+      try {
+        const shareUrl = `${window.location.origin}/share-trip/${id}`;
+        const shareText = `Check out this trip: ${trip?.name || 'My Trip'}\n\n${shareUrl}`;
+        await navigator.clipboard.writeText(shareText);
+        alert('✅ Trip link copied to clipboard!\n\nShare this with anyone to let them view your trip.');
+      } catch (clipboardError) {
+        console.error('❌ Clipboard also failed:', clipboardError);
+        // Manual fallback
+        const shareUrl = `${window.location.origin}/share-trip/${id}`;
+        prompt('Copy this link to share the trip:', shareUrl);
+      }
     }
   };
 
@@ -695,12 +721,23 @@ ${shareUrl}`;
               justifyContent: 'center',
               transition: 'all 0.2s ease',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid #e0e0e0'
+              border: '1px solid #e0e0e0',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent'
             }}
             onClick={handleShareTrip}
+            onTouchStart={(e) => {
+              e.currentTarget.style.transform = 'scale(0.95)';
+            }}
+            onTouchEnd={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
             onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
             onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            role="button"
+            tabIndex={0}
+            title="Share this trip"
           >
             <FaShare size={28} color="#333" />
           </div>
