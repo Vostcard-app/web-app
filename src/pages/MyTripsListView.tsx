@@ -160,13 +160,16 @@ Tap OK to continue.`;
       // Update the trips list with the updated trip
       setTrips(prev => prev.map(t => t.id === trip.id ? updatedTrip : t));
       
+      // Wait a moment for the database update to propagate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Generate public share URL (same format as TripDetailView)
-      const shareUrl = `${window.location.origin}/share-trip/${trip.id}`;
+      const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
       
       // Generate share text
       const shareText = `Check out this trip I created with Vōstcard
 
-"${trip.name || 'My Trip'}"
+"${updatedTrip.name || 'My Trip'}"
 
 ${shareUrl}`;
       

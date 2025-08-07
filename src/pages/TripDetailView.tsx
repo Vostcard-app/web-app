@@ -333,15 +333,18 @@ Tap OK to continue.`;
       });
       setTrip(updatedTrip);
       
+      // Wait a moment for the database update to propagate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Generate public share URL
-      const shareUrl = `${window.location.origin}/share-trip/${trip.id}`;
+      const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
       
       // Generate share text
       const shareText = `Check out this trip I created with Vōstcard
 
-"${trip.name || 'My Trip'}"
+"${updatedTrip.name || 'My Trip'}"
 
-${trip.description || 'A collection of my favorite places'}
+${updatedTrip.description || 'A collection of my favorite places'}
 
 ${shareUrl}`;
       
@@ -350,7 +353,7 @@ ${shareUrl}`;
         await navigator.share({ text: shareText });
       } else {
         await navigator.clipboard.writeText(shareText);
-        alert('✅ Share link copied to clipboard!\n\nAnyone with this link can view your trip.');
+        alert('Share link copied to clipboard!');
       }
       
     } catch (error) {
