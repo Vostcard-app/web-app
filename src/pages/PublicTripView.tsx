@@ -600,11 +600,28 @@ ${shareUrl}`;
           
           <button
             onClick={() => {
+              console.log('🗺️ Map button clicked!');
+              console.log('📊 Trip data:', trip);
+              console.log('📊 Trip posts count:', tripPosts.length);
+              console.log('📊 Trip posts data:', tripPosts);
+              
               if (trip && tripPosts.length > 0) {
                 // Filter posts that have location data
-                const postsWithLocation = tripPosts.filter(post => 
-                  post.latitude && post.longitude
-                );
+                const postsWithLocation = tripPosts.filter(post => {
+                  console.log('🔍 Checking post for location:', {
+                    id: post.id,
+                    title: post.title,
+                    latitude: post.latitude,
+                    longitude: post.longitude,
+                    hasLatitude: !!post.latitude,
+                    hasLongitude: !!post.longitude,
+                    latitudeType: typeof post.latitude,
+                    longitudeType: typeof post.longitude
+                  });
+                  return post.latitude && post.longitude;
+                });
+                
+                console.log('📍 Posts with location:', postsWithLocation.length, postsWithLocation);
                 
                 if (postsWithLocation.length > 0) {
                   console.log('📍 Opening trip map view with', postsWithLocation.length, 'posts');
@@ -638,9 +655,11 @@ ${shareUrl}`;
                     }
                   });
                 } else {
+                  console.log('❌ No posts with location data found');
                   alert('No posts in this trip have location data for the map view.');
                 }
               } else {
+                console.log('❌ No trip or posts available');
                 alert('No posts available for map view.');
               }
             }}
