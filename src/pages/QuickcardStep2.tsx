@@ -8,7 +8,7 @@ import PhotoOptionsModal from '../components/PhotoOptionsModal';
 
 export default function QuickcardStep2() {
   const navigate = useNavigate();
-  const { updateVostcard, currentVostcard } = useVostcard();
+  const { updateVostcard, currentVostcard, saveLocalVostcard } = useVostcard();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos (4 thumbnails for quickcards)
@@ -187,6 +187,11 @@ export default function QuickcardStep2() {
     }
 
     try {
+      // First save the quickcard to make sure it exists in the database
+      console.log('🔄 Saving quickcard before adding to trip...');
+      await saveLocalVostcard();
+      console.log('✅ Quickcard saved, now adding to trip...');
+      
       await TripService.addItemToTrip(lastUsedTrip.id, {
         vostcardID: currentVostcard.id,
         type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
@@ -233,6 +238,11 @@ export default function QuickcardStep2() {
       }
 
       if (tripId) {
+        // First save the quickcard to make sure it exists in the database
+        console.log('🔄 Saving quickcard before adding to trip...');
+        await saveLocalVostcard();
+        console.log('✅ Quickcard saved, now adding to trip...');
+        
         await TripService.addItemToTrip(tripId, {
           vostcardID: currentVostcard.id,
           type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
