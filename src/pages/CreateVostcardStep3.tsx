@@ -480,6 +480,26 @@ const CreateVostcardStep3: React.FC = () => {
           <div style={modalContentStyle}>
             <h3 style={{ marginBottom: '16px', textAlign: 'center' }}>Select Categories</h3>
             <div style={categoryGridStyle}>
+              <div
+                style={{
+                  ...categoryGridItemStyle,
+                  backgroundColor: categories.length > 0 ? '#28a745' : '#6c757d',
+                  color: 'white',
+                  border: categories.length > 0 ? '2px solid #28a745' : '2px solid #6c757d',
+                  fontWeight: 'bold',
+                  opacity: categories.length > 0 ? 1 : 0.7,
+                  cursor: categories.length > 0 ? 'pointer' : 'not-allowed'
+                }}
+                onClick={() => {
+                  if (categories.length > 0) {
+                    setIsCategoryModalOpen(false);
+                  }
+                }}
+              >
+                <span style={{ fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>
+                  Done {categories.length > 0 && `(${categories.length})`}
+                </span>
+              </div>
               {availableCategories.map((cat) => (
                 <div
                   key={cat}
@@ -494,18 +514,6 @@ const CreateVostcardStep3: React.FC = () => {
                   <span style={{ fontSize: '14px', fontWeight: '500', textAlign: 'center' }}>{cat}</span>
                 </div>
               ))}
-              <div
-                style={{
-                  ...categoryGridItemStyle,
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: '2px solid #002B4D',
-                  fontWeight: 'bold'
-                }}
-                onClick={() => setIsCategoryModalOpen(false)}
-              >
-                <span style={{ fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>Done</span>
-              </div>
             </div>
           </div>
         </div>
