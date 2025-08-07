@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
 import { auth } from '../firebase/firebaseConfig';
-import { TripService } from '../services/tripService';
-import type { Trip } from '../types/TripTypes';
+
 
 const QuickcardStep3: React.FC = () => {
   const navigate = useNavigate();
@@ -19,12 +18,7 @@ const QuickcardStep3: React.FC = () => {
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
-  const [isTripModalOpen, setIsTripModalOpen] = useState(false);
-  const [userTrips, setUserTrips] = useState<Trip[]>([]);
-  const [selectedTripId, setSelectedTripId] = useState<string>('');
-  const [newTripName, setNewTripName] = useState('');
-  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
-  const [isAddingToTrip, setIsAddingToTrip] = useState(false);
+
   const [isSaving, setIsSaving] = useState(false);
   
 
@@ -114,106 +108,9 @@ const QuickcardStep3: React.FC = () => {
     }
   };
 
-  // Trip functionality
-  const loadUserTrips = async () => {
-    try {
-      const trips = await TripService.getUserTrips();
-      setUserTrips(trips);
-    } catch (error) {
-      console.error('Error loading trips:', error);
-    }
-  };
 
-  const handleAddToTrip = () => {
-    loadUserTrips();
-    setIsTripModalOpen(true);
-  };
 
-  const handleCreateNewTrip = async () => {
-    if (!newTripName.trim()) return;
-    
-    setIsCreatingTrip(true);
-    try {
-      const newTrip = await TripService.createTrip({
-        name: newTripName.trim(),
-        description: '',
-        isPrivate: true
-      });
-      
-      // ✅ Update state immediately
-      setUserTrips([...userTrips, newTrip]);
-      setSelectedTripId(newTrip.id);
-      setNewTripName('');
-      
-      // ✅ Close modal and add quickcard to the new trip
-      setIsTripModalOpen(false);
-      
-      // ✅ Small delay for smooth transition
-      setTimeout(() => {
-        alert(`✅ Trip "${newTrip.name}" created!\n\nAdding quickcard to your new trip...`);
-        
-        console.log('🔄 Adding quickcard to new trip...');
-        // This will handle the background saving - no navigation
-        handleAddQuickcardToTripOptimized(newTrip.id);
-      }, 100);
-      
-    } catch (error) {
-      console.error('Error creating trip:', error);
-      alert(`Error creating trip: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsCreatingTrip(false);
-    }
-  };
 
-  // ✅ Add quickcard to trip and stay on current page
-  const handleAddQuickcardToTripOptimized = async (tripId: string) => {
-    if (!tripId || !currentVostcard) return;
-    
-    try {
-      // ✅ Close modal and show success immediately
-      setIsTripModalOpen(false);
-      setSelectedTripId('');
-      
-      const tripName = userTrips.find(t => t.id === tripId)?.name || 'your trip';
-      alert(`✅ Quickcard added to "${tripName}"!\n\nYou can now save or post your quickcard.`);
-      
-      // 🔄 Background processing - save quickcard and add to trip
-      console.log('🔄 Background: Saving quickcard and adding to trip...');
-      
-      // ✅ Save quickcard as private post (not public to map)
-      await saveQuickcard();
-      console.log('✅ Background: Quickcard saved privately with ID:', currentVostcard.id);
-      
-      // Add to trip (let the service fetch photoURL from the saved vostcard)
-      await TripService.addItemToTrip(tripId, {
-        vostcardID: currentVostcard.id,
-        type: 'quickcard',
-        title: currentVostcard.title || 'Untitled',
-        description: currentVostcard.description,
-        // Don't pass photoURL - let addItemToTrip fetch it from the saved vostcard
-        latitude: currentVostcard.geo?.latitude,
-        longitude: currentVostcard.geo?.longitude
-      });
-      
-      console.log('✅ Background: Quickcard added to trip successfully');
-      
-    } catch (error) {
-      console.error('Background error adding quickcard to trip:', error);
-      alert('⚠️ There was an issue adding to the trip. Please try again.');
-    }
-  };
-
-  const handleAddQuickcardToTrip = async () => {
-    if (!selectedTripId || !currentVostcard) return;
-    
-    setIsAddingToTrip(true);
-    try {
-      // ✅ Use the optimized version for existing trips too
-      await handleAddQuickcardToTripOptimized(selectedTripId);
-    } finally {
-      setIsAddingToTrip(false);
-    }
-  };
 
   const handleSavePrivately = async () => {
     const user = auth.currentUser;
@@ -425,29 +322,7 @@ const QuickcardStep3: React.FC = () => {
           )}
         </div>
 
-        {/* Add to Trip Section */}
-        <div style={{ marginTop: 20 }}>
-          <label style={labelStyle}>
-            Add to Trip (Not Required)
-          </label>
-          <button
-            onClick={handleAddToTrip}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#f0f8ff',
-              border: '2px solid #07345c',
-              borderRadius: '8px',
-              fontSize: '16px',
-              color: '#07345c',
-              cursor: 'pointer',
-              fontWeight: '500',
-              touchAction: 'manipulation',
-            }}
-          >
-            Add to Trip
-          </button>
-        </div>
+
 
       </div>
 
@@ -546,130 +421,7 @@ const QuickcardStep3: React.FC = () => {
         </div>
       )}
 
-      {/* Trip Modal */}
-      {isTripModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          padding: '20px',
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '400px',
-            maxHeight: '70vh',
-            overflowY: 'auto',
-          }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to Trip</h3>
-            
-                            {userTrips.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                  Select Existing Trip:
-                </label>
-                <select
-                  value={selectedTripId}
-                  onChange={(e) => setSelectedTripId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd',
-                    fontSize: '16px',
-                  }}
-                >
-                  <option value="">Choose a trip...</option>
-                  {userTrips.map((trip) => (
-                    <option key={trip.id} value={trip.id}>
-                      {trip.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                Or Create New Trip:
-              </label>
-              <input
-                type="text"
-                value={newTripName}
-                onChange={(e) => setNewTripName(e.target.value)}
-                placeholder="Enter trip name..."
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '6px',
-                  border: '1px solid #ddd',
-                  fontSize: '16px',
-                  marginBottom: '10px',
-                }}
-              />
-              <button
-                onClick={handleCreateNewTrip}
-                disabled={!newTripName.trim() || isCreatingTrip}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  backgroundColor: isCreatingTrip ? '#ccc' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: isCreatingTrip ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {isCreatingTrip ? 'Creating Trip...' : 'Create New Trip'}
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => setIsTripModalOpen(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddQuickcardToTrip}
-                disabled={!selectedTripId || isAddingToTrip}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: isAddingToTrip ? '#ccc' : (selectedTripId ? '#007bff' : '#ccc'),
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: (isAddingToTrip || !selectedTripId) ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {isAddingToTrip ? 'Adding to Trip...' : 'Add to Trip'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
