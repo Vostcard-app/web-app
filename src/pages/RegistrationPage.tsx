@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { auth, db } from "../firebase/firebaseConfig";
@@ -31,6 +31,8 @@ export default function RegistrationPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
 
   // Helper to check if username is unique (case-insensitive)
   const isUsernameUnique = async (username: string) => {
@@ -181,11 +183,13 @@ export default function RegistrationPage() {
       // ✅ Force logout so they must log in after verifying
       await auth.signOut();
 
-      // Redirect to login page with a success message
+      // Redirect to login page with a success message and returnTo parameter
       const message = formType === "user" 
         ? "Registration successful! Please verify your email before logging in. It may go to spam."
         : "Application submitted! Please verify your email. An admin will review your advertiser application and contact you once approved.";
-      navigate("/login", { state: { message } });
+      
+      const loginUrl = returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login";
+      navigate(loginUrl, { state: { message } });
     } catch (err: any) {
       console.error('Registration error:', err.code, err.message, err);
       setError((err.code ? err.code + ': ' : '') + (err.message || 'Registration failed.'));

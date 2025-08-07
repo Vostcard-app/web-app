@@ -614,6 +614,49 @@ ${privateUrl}`);
         </div>
       </div>
 
+      {/* Login/Register Button Section */}
+      <div style={{
+        padding: '20px',
+        borderBottom: '1px solid #e0e0e0',
+        backgroundColor: '#fff'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <button
+            onClick={() => {
+              // Redirect to login with returnTo parameter pointing to private version
+              const privateUrl = `/vostcard/${id}`;
+              navigate(`/login?returnTo=${encodeURIComponent(privateUrl)}`);
+            }}
+            style={{
+              backgroundColor: '#007aff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0, 122, 255, 0.3)'
+            }}
+          >
+            Login / Register for Full Experience
+          </button>
+        </div>
+        <div style={{
+          textAlign: 'center',
+          fontSize: '14px',
+          color: '#666',
+          marginTop: '8px'
+        }}>
+          Access comments, ratings, and interactive features
+        </div>
+      </div>
+
       {/* Like Message for Anonymous Users */}
       {showLikeMessage && (
         <div style={{

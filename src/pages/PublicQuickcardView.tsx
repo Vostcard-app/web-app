@@ -702,9 +702,13 @@ const PublicQuickcardView: React.FC = () => {
           </div>
         </div>
 
-        {/* Login/Register Button */}
+        {/* Login/Register Button with Redirect to Private Version */}
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            // Redirect to login with returnTo parameter pointing to private version
+            const privateUrl = `/quickcard/${id}`;
+            navigate(`/login?returnTo=${encodeURIComponent(privateUrl)}`);
+          }}
           style={{
             backgroundColor: '#007aff',
             color: 'white',

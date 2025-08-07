@@ -417,7 +417,11 @@ ${shareUrl}`;
             Try Again
           </button>
           <button
-            onClick={() => navigate('/register')}
+            onClick={() => {
+              // Redirect to login with returnTo parameter pointing to private version
+              const privateUrl = `/trip/${id}`;
+              navigate(`/login?returnTo=${encodeURIComponent(privateUrl)}`);
+            }}
             style={{
               padding: '12px 24px',
               backgroundColor: '#007bff',
@@ -429,7 +433,7 @@ ${shareUrl}`;
               fontWeight: '500'
             }}
           >
-            Join Vōstcard
+            Login / Register
           </button>
         </div>
       </div>
@@ -580,7 +584,11 @@ ${shareUrl}`;
             border: 'none',
             whiteSpace: 'nowrap'
           }}
-          onClick={() => navigate('/register')}
+          onClick={() => {
+            // Redirect to login with returnTo parameter pointing to private version
+            const privateUrl = `/trip/${id}`;
+            navigate(`/login?returnTo=${encodeURIComponent(privateUrl)}`);
+          }}
           onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
           onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -1141,7 +1149,11 @@ ${shareUrl}`;
                 Close
               </button>
               <button
-                onClick={() => navigate('/register')}
+                onClick={() => {
+                  // Redirect to login with returnTo parameter pointing to private version
+                  const privateUrl = `/trip/${id}`;
+                  navigate(`/login?returnTo=${encodeURIComponent(privateUrl)}`);
+                }}
                 style={{
                   padding: '12px 24px',
                   backgroundColor: '#007bff',
@@ -1151,7 +1163,7 @@ ${shareUrl}`;
                   cursor: 'pointer'
                 }}
               >
-                Join Free
+                Login / Register
               </button>
             </div>
           </div>
