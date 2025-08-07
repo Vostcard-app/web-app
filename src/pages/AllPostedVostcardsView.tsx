@@ -40,9 +40,9 @@ const AllPostedVostcardsView: React.FC = () => {
   const availableTypes = ['Vostcard', 'Quickcard', 'Guide'];
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [showGuidesOnly, setShowGuidesOnly] = useState(() => {
-    // Load persisted state from localStorage
-    const saved = localStorage.getItem('showGuidesOnly');
-    return saved ? JSON.parse(saved) : false;
+    // Load persisted state from localStorage, default to true (Guides only enabled)
+    const saved = localStorage.getItem('homeView_showGuidesOnly');
+    return saved ? JSON.parse(saved) : true;
   });
   
   // Category filtering state (same as HomeView)
@@ -91,7 +91,7 @@ const AllPostedVostcardsView: React.FC = () => {
 
   // Persist showGuidesOnly state to localStorage
   useEffect(() => {
-    localStorage.setItem('showGuidesOnly', JSON.stringify(showGuidesOnly));
+    localStorage.setItem('homeView_showGuidesOnly', JSON.stringify(showGuidesOnly));
   }, [showGuidesOnly]);
 
   // Real-time location search with debouncing - using same implementation as BrowseAreaView
