@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaShare, FaUserCircle, FaMap, FaTimes, FaSync, FaFlag, FaArrowLeft, FaVolumeUp, FaPlay, FaPause, FaInfo } from 'react-icons/fa';
+import { FaHome, FaHeart, FaUserCircle, FaMap, FaTimes, FaSync, FaFlag, FaArrowLeft, FaVolumeUp, FaPlay, FaPause, FaInfo } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -991,7 +991,7 @@ const PublicQuickcardView: React.FC = () => {
 
         </div>
 
-        {/* Action Icons Row: Like, Share, Map View */}
+        {/* Action Icons Row: Like, Map View */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-around',
@@ -1023,32 +1023,7 @@ const PublicQuickcardView: React.FC = () => {
 
 
 
-          {/* Share Button */}
-          <button
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: title || 'Quickcard',
-                  text: description || 'Check out this quickcard!',
-                  url: window.location.href
-                });
-              } else {
-                navigator.clipboard.writeText(window.location.href);
-                alert('Link copied to clipboard!');
-              }
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666'
-            }}
-          >
-            <FaShare size={22} />
-          </button>
+
 
           {/* Map View Button - Always show if location data exists */}
           {quickcard?.latitude && quickcard?.longitude && (

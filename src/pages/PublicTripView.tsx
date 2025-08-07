@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaHeart, FaShare, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay, FaPhotoVideo } from 'react-icons/fa';
+import { FaHome, FaHeart, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay, FaPhotoVideo } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -274,57 +274,7 @@ const PublicTripView: React.FC = () => {
     }
   };
 
-  const handleShareTrip = async () => {
 
-    
-    try {
-      const shareUrl = `${window.location.origin}/share-trip/${id}`;
-      const shareText = `Check out this trip I created with Vōstcard
-
-"${trip?.name || 'My Trip'}"
-
-${trip?.description || 'A collection of my favorite places'}
-
-${shareUrl}`;
-      
-
-      
-      if (navigator.share) {
-
-        await navigator.share({
-          title: trip?.name || 'Check out this trip!',
-          text: shareText,
-          url: shareUrl
-        });
-
-      } else {
-
-        await navigator.clipboard.writeText(shareText);
-        alert('✅ Trip link copied to clipboard!\n\nShare this with anyone to let them view your trip.');
-      }
-    } catch (error) {
-
-      
-      // If native share fails, try clipboard as fallback
-      if (navigator.share && error.name === 'AbortError') {
-
-        return; // User cancelled, don't show error
-      }
-      
-      // Final fallback - try clipboard
-      try {
-        const shareUrl = `${window.location.origin}/share-trip/${id}`;
-        const shareText = `Check out this trip: ${trip?.name || 'My Trip'}\n\n${shareUrl}`;
-        await navigator.clipboard.writeText(shareText);
-        alert('✅ Trip link copied to clipboard!\n\nShare this with anyone to let them view your trip.');
-      } catch (clipboardError) {
-
-        // Manual fallback
-        const shareUrl = `${window.location.origin}/share-trip/${id}`;
-        prompt('Copy this link to share the trip:', shareUrl);
-      }
-    }
-  };
 
   // Format creation date
   const formatDate = (dateValue: any): string => {
@@ -1015,38 +965,7 @@ ${shareUrl}`;
             </span>
           </div>
 
-          {/* Share Icon */}
-          <div 
-            style={{
-              cursor: 'pointer',
-              padding: '12px',
-              borderRadius: '12px',
-              background: '#f5f5f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid #e0e0e0',
-              userSelect: 'none',
-              WebkitTapHighlightColor: 'transparent'
-            }}
-            onClick={handleShareTrip}
-            onTouchStart={(e) => {
-              e.currentTarget.style.transform = 'scale(0.95)';
-            }}
-            onTouchEnd={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            role="button"
-            tabIndex={0}
-            title="Share this trip"
-          >
-            <FaShare size={28} color="#333" />
-          </div>
+
 
           {/* Join Free Button */}
           <button
