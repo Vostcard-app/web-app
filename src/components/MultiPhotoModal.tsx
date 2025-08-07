@@ -98,11 +98,23 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
       setCurrentIndex(initialIndex);
       setShowControls(true);
       setIsPaused(false);
-      // Auto-hide controls after 3 seconds
-      const timeout = setTimeout(() => setShowControls(false), 3000);
+      // Auto-hide controls after 5 seconds (longer for better accessibility)
+      const timeout = setTimeout(() => setShowControls(false), 5000);
       setControlsTimeout(timeout);
     }
   }, [isOpen, initialIndex]);
+
+  // Always show controls when casting is available (for better accessibility)
+  useEffect(() => {
+    if (castAvailable && isOpen) {
+      setShowControls(true);
+      // Don't auto-hide controls when casting is available
+      if (controlsTimeout) {
+        clearTimeout(controlsTimeout);
+        setControlsTimeout(null);
+      }
+    }
+  }, [castAvailable, isOpen]);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -371,27 +383,49 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
           </div>
         )}
 
-        {/* Cast Button */}
-        {castAvailable && (
-          <button
-            onClick={casting ? stopCasting : startCasting}
-            style={{
-              backgroundColor: casting ? 'rgba(255, 59, 48, 0.8)' : 'rgba(0, 122, 255, 0.8)',
-              border: 'none',
-              borderRadius: '20px',
-              width: '40px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease'
-            }}
-            title={casting ? 'Stop Casting' : 'Cast to Device'}
-          >
-            {casting ? <FaStopCircle color="white" size={18} /> : <FaTv color="white" size={18} />}
-          </button>
-        )}
+        {/* Cast Button - Always show for debugging, with different styles */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Debug: Show casting availability status */}
+          {process.env.NODE_ENV === 'development' && (
+            <div
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '12px',
+                fontSize: '10px'
+              }}
+            >
+              Cast: {castAvailable ? 'Available' : 'Not Available'}
+            </div>
+          )}
+          
+          {/* Cast Button - Show if available OR in development */}
+          {(castAvailable || process.env.NODE_ENV === 'development') && (
+            <button
+              onClick={casting ? stopCasting : startCasting}
+              disabled={!castAvailable}
+              style={{
+                backgroundColor: casting ? 'rgba(255, 59, 48, 0.8)' : 
+                               castAvailable ? 'rgba(0, 122, 255, 0.8)' : 'rgba(128, 128, 128, 0.5)',
+                border: 'none',
+                borderRadius: '20px',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: castAvailable ? 'pointer' : 'not-allowed',
+                transition: 'background-color 0.2s ease',
+                opacity: castAvailable ? 1 : 0.6
+              }}
+              title={casting ? 'Stop Casting' : 
+                     castAvailable ? 'Cast to Device' : 'No Cast Devices Available'}
+            >
+              {casting ? <FaStopCircle color="white" size={18} /> : <FaTv color="white" size={18} />}
+            </button>
+          )}
+        </div>
       </div>
 
 
@@ -459,7 +493,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         <div
           style={{
             position: 'absolute',
-            bottom: '20px',
+            bottom: '60px', // Moved higher to avoid being cut off
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
@@ -469,7 +503,10 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             zIndex: 2001,
             opacity: showControls ? 1 : 0,
             transition: 'opacity 0.3s ease',
-            pointerEvents: showControls ? 'auto' : 'none'
+            pointerEvents: showControls ? 'auto' : 'none',
+            // Ensure controls are always visible on all screen sizes
+            maxWidth: '90vw',
+            minHeight: '80px'
           }}
         >
           {/* Manual Navigation Controls */}
@@ -480,7 +517,11 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
               gap: '20px',
               backgroundColor: 'rgba(0, 0, 0, 0.7)',
               borderRadius: '25px',
-              padding: '12px 20px'
+              padding: '12px 20px',
+              // Better responsive design
+              maxWidth: '90vw',
+              flexWrap: 'wrap',
+              justifyContent: 'center'
             }}
           >
             {/* Previous Button */}
