@@ -179,7 +179,7 @@ export default function CreateVostcardStep2() {
       await TripService.addItemToTrip(lastUsedTrip.id, {
         vostcardID: currentVostcard.id,
         type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-        title: currentVostcard.title,
+        title: currentVostcard.title || 'Untitled Vostcard',
         description: currentVostcard.description,
         latitude: currentVostcard.geo?.latitude,
         longitude: currentVostcard.geo?.longitude
@@ -230,7 +230,7 @@ export default function CreateVostcardStep2() {
         await TripService.addItemToTrip(tripId, {
           vostcardID: currentVostcard.id,
           type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-          title: currentVostcard.title,
+          title: currentVostcard.title || 'Untitled Vostcard',
           description: currentVostcard.description,
           latitude: currentVostcard.geo?.latitude,
           longitude: currentVostcard.geo?.longitude
