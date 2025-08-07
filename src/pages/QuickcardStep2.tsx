@@ -180,32 +180,7 @@ export default function QuickcardStep2() {
     setIsTripModalOpen(true);
   };
 
-  const handleAddToCurrentTrip = async () => {
-    if (!lastUsedTrip || !currentVostcard) {
-      alert('No current trip available');
-      return;
-    }
 
-    try {
-      // First save the quickcard to make sure it exists in the database
-      console.log('🔄 Saving quickcard before adding to trip...');
-      await saveLocalVostcard();
-      console.log('✅ Quickcard saved, now adding to trip...');
-      
-      await TripService.addItemToTrip(lastUsedTrip.id, {
-        vostcardID: currentVostcard.id,
-        type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-        title: currentVostcard.title || `Quickcard ${new Date().toLocaleDateString()}`,
-        description: currentVostcard.description,
-        latitude: currentVostcard.geo?.latitude,
-        longitude: currentVostcard.geo?.longitude
-      });
-      alert(`Added to "${lastUsedTrip.name}"`);
-    } catch (error) {
-      console.error('Error adding to current trip:', error);
-      alert('Failed to add to trip. Please try again.');
-    }
-  };
 
   const handleTripSelection = async () => {
     if (!selectedTripId && !newTripName.trim()) {
@@ -587,32 +562,11 @@ export default function QuickcardStep2() {
               fontSize: '16px',
               color: '#07345c',
               cursor: 'pointer',
-              fontWeight: '500',
-              marginBottom: '8px'
+              fontWeight: '500'
             }}
           >
             Add to Trip
           </button>
-
-          {lastUsedTrip && (
-            <button
-              onClick={handleAddToCurrentTrip}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#e8f5e8',
-                border: '2px solid #28a745',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#28a745',
-                cursor: 'pointer',
-                fontWeight: '500',
-                marginBottom: '8px'
-              }}
-            >
-              Add to {lastUsedTrip.name}
-            </button>
-          )}
         </div>
 
         {/* Continue button */}
