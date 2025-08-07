@@ -39,8 +39,10 @@ const PublicItineraryView: React.FC = () => {
 
       try {
         console.log('🔍 PublicItineraryView: Loading itinerary with shareableLink:', shareableLink);
+        console.log('🔍 PublicItineraryView: Using ItineraryService.getPublicItinerary method');
 
         const itineraryData = await ItineraryService.getPublicItinerary(shareableLink);
+        console.log('🔍 PublicItineraryView: getPublicItinerary returned:', itineraryData);
 
         if (itineraryData) {
           console.log('✅ PublicItineraryView: Itinerary found:', {

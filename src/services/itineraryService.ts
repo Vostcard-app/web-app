@@ -210,6 +210,8 @@ export const ItineraryService = {
    */
   async getPublicItinerary(shareableLink: string): Promise<PublicItinerary | null> {
     try {
+      console.log('🔍 ItineraryService.getPublicItinerary: Searching for shareableLink:', shareableLink);
+      
       const q = query(
         collection(db, 'itineraries'),
         where('shareableLink', '==', shareableLink),
@@ -217,17 +219,34 @@ export const ItineraryService = {
         limit(1)
       );
 
+      console.log('🔍 ItineraryService.getPublicItinerary: Executing query...');
       const snapshot = await getDocs(q);
       
+      console.log('🔍 ItineraryService.getPublicItinerary: Query result:', {
+        empty: snapshot.empty,
+        size: snapshot.size
+      });
+      
       if (snapshot.empty) {
+        console.log('❌ ItineraryService.getPublicItinerary: No itinerary found with shareableLink:', shareableLink);
         return null;
       }
 
       const docSnap = snapshot.docs[0];
       const itineraryData = docSnap.data() as ItineraryFirebaseDoc;
+      
+      console.log('✅ ItineraryService.getPublicItinerary: Found itinerary:', {
+        id: itineraryData.id,
+        name: itineraryData.name,
+        isPublic: itineraryData.isPublic,
+        shareableLink: itineraryData.shareableLink
+      });
+      
+      console.log('🔍 ItineraryService.getPublicItinerary: Loading items for itinerary:', docSnap.id);
       const items = await ItineraryService.getItineraryItems(docSnap.id);
+      console.log('✅ ItineraryService.getPublicItinerary: Loaded items:', items.length);
 
-      return {
+      const result = {
         id: itineraryData.id,
         name: itineraryData.name,
         description: itineraryData.description,
@@ -247,6 +266,9 @@ export const ItineraryService = {
         createdAt: itineraryData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
         updatedAt: itineraryData.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
       };
+      
+      console.log('✅ ItineraryService.getPublicItinerary: Returning result:', result);
+      return result;
     } catch (error) {
       console.error('❌ Error getting public itinerary:', error);
       throw error;

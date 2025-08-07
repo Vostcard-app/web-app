@@ -2225,7 +2225,7 @@ const HomeView = () => {
             }}
           />
         </div>
-        <span style={{ fontSize: '10px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
+        <span style={{ fontSize: '10px', color: '#333', fontWeight: 500 }}>📚 See all</span>
       </div>
 
           {/* Help Menu Dropdown */}
