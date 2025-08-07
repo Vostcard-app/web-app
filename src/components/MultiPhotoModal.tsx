@@ -722,31 +722,79 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '16px',
+            justifyContent: 'space-between',
+            gap: '12px',
             zIndex: 2001,
             opacity: showControls ? 1 : 0,
             transition: 'opacity 0.3s ease',
             pointerEvents: showControls ? 'auto' : 'none',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            borderRadius: '25px',
+            padding: '12px 20px',
             // Ensure controls are always visible on all screen sizes
             maxWidth: '90vw',
-            minHeight: '80px'
+            minHeight: '60px',
+            width: 'auto'
           }}
         >
-          {/* Manual Navigation Controls */}
+          {/* Previous Button */}
+          <button
+            onClick={goToPrevious}
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              transition: 'background-color 0.2s ease',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            title="Previous Image"
+          >
+            <FaChevronLeft size={16} />
+          </button>
+
+          {/* Play/Pause Button */}
+          {autoPlay && (
+            <button
+              onClick={toggleAutoPlay}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'background-color 0.2s ease',
+                flexShrink: 0
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              title={isPaused ? 'Resume Slideshow' : 'Pause Slideshow'}
+            >
+              {isPaused ? <FaPlay size={18} /> : <FaPause size={18} />}
+            </button>
+          )}
+
+          {/* Pagination Dots */}
           <div
             style={{
               display: 'flex',
+              gap: '6px',
               alignItems: 'center',
-              gap: '20px',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              borderRadius: '25px',
-              padding: '12px 20px',
-              // Better responsive design
-              maxWidth: '90vw',
-              flexWrap: 'wrap',
-              justifyContent: 'center'
+              flexShrink: 0
             }}
           >
             {/* Previous Button */}
@@ -797,50 +845,6 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
               </button>
             )}
 
-            {/* Progress Indicator */}
-            <div
-              style={{
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '500',
-                minWidth: '60px',
-                textAlign: 'center'
-              }}
-            >
-              {currentIndex + 1} / {photos.length}
-            </div>
-
-            {/* Next Button */}
-            <button
-              onClick={goToNext}
-              style={{
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '32px',
-                height: '32px',
-                borderRadius: '50%',
-                transition: 'background-color 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              title="Next Image"
-            >
-              <FaChevronRight size={16} />
-            </button>
-          </div>
-
-          {/* Pagination Dots */}
-          <div
-            style={{
-              display: 'flex',
-              gap: '8px'
-            }}
-          >
             {photos.map((_, index) => (
               <button
                 key={index}
@@ -857,22 +861,51 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
                   border: 'none',
                   backgroundColor: index === currentIndex ? 'white' : 'rgba(255, 255, 255, 0.4)',
                   cursor: 'pointer',
-                  transition: 'background-color 0.2s ease, transform 0.2s ease',
-                  transform: index === currentIndex ? 'scale(1.2)' : 'scale(1)'
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0
                 }}
-                onMouseEnter={(e) => {
-                  if (index !== currentIndex) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (index !== currentIndex) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
-                  }
-                }}
+                title={`Go to image ${index + 1}`}
               />
             ))}
           </div>
+
+          {/* Progress Indicator */}
+          <div
+            style={{
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              minWidth: '60px',
+              textAlign: 'center',
+              flexShrink: 0
+            }}
+          >
+            {currentIndex + 1} / {photos.length}
+          </div>
+
+          {/* Next Button */}
+          <button
+            onClick={goToNext}
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              transition: 'background-color 0.2s ease',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            title="Next Image"
+          >
+            <FaChevronRight size={16} />
+          </button>
         </div>
       )}
 
