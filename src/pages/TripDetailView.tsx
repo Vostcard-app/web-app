@@ -10,6 +10,7 @@ import { TripService } from '../services/tripService';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import type { Trip, TripItem } from '../types/TripTypes';
+import MultiPhotoModal from '../components/MultiPhotoModal';
 
 // Import pin assets
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -91,7 +92,10 @@ const TripDetailView: React.FC = () => {
   type ViewMode = 'list' | 'map' | 'slideshow';
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   
-
+  // Slideshow states
+  const [showSlideshow, setShowSlideshow] = useState(false);
+  const [slideshowImages, setSlideshowImages] = useState<string[]>([]);
+  const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
 
   console.log('🔄 TripDetailView rendered', {
     id,
@@ -336,6 +340,79 @@ const TripDetailView: React.FC = () => {
       alert(`Share this link:\n\n${shareUrl}`);
     }
   };
+
+  // Slideshow functionality
+  const collectTripImages = async (): Promise<string[]> => {
+    if (!trip) return [];
+    
+    setLoadingSlideshowImages(true);
+    const allImages: string[] = [];
+    
+    try {
+      // Filter out deleted items
+      const validItems = trip.items.filter((item) => {
+        const status = itemsStatus.get(item.vostcardID);
+        return !status || status.loading || status.exists;
+      });
+
+      // Sort by order to maintain trip sequence
+      const sortedItems = validItems.sort((a, b) => a.order - b.order);
+
+      // Fetch full vostcard data for each item to get all photoURLs
+      for (const item of sortedItems) {
+        try {
+          const vostcardDoc = await getDoc(doc(db, 'vostcards', item.vostcardID));
+          if (vostcardDoc.exists()) {
+            const vostcardData = vostcardDoc.data();
+            // Get photoURLs array, excluding videos
+            if (vostcardData.photoURLs && Array.isArray(vostcardData.photoURLs)) {
+              allImages.push(...vostcardData.photoURLs);
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch images for item ${item.vostcardID}:`, error);
+        }
+      }
+
+      console.log(`✅ Collected ${allImages.length} images from ${sortedItems.length} trip posts`);
+      return allImages;
+    } catch (error) {
+      console.error('Error collecting trip images:', error);
+      return [];
+    } finally {
+      setLoadingSlideshowImages(false);
+    }
+  };
+
+  // Handle slideshow mode
+  const handleSlideshowMode = async () => {
+    if (viewMode !== 'slideshow') return;
+    
+    // Collect images if not already collected
+    if (slideshowImages.length === 0) {
+      const images = await collectTripImages();
+      setSlideshowImages(images);
+      
+      // Start slideshow if images were found
+      if (images.length > 0) {
+        setShowSlideshow(true);
+      } else {
+        // No images found, show message and switch back to list view
+        alert('No images found in this trip to display in slideshow.');
+        setViewMode('list');
+      }
+    } else {
+      // Images already collected, start slideshow
+      setShowSlideshow(true);
+    }
+  };
+
+  // Effect to handle slideshow mode changes
+  useEffect(() => {
+    if (viewMode === 'slideshow') {
+      handleSlideshowMode();
+    }
+  }, [viewMode]);
 
   // Add Post functionality
   const handleOpenAddPostModal = async () => {
@@ -942,13 +1019,88 @@ const TripDetailView: React.FC = () => {
           )}
         </div>
 
-        {/* Content Area - List or Map View */}
+        {/* Content Area - List, Map, or Slideshow View */}
         <div style={{ 
           flex: 1,
-          padding: viewMode === 'map' ? '0' : '0 20px 20px 20px',
-          overflowY: viewMode === 'map' ? 'hidden' : 'auto'
+          padding: (viewMode === 'map' || viewMode === 'slideshow') ? '0' : '0 20px 20px 20px',
+          overflowY: (viewMode === 'map' || viewMode === 'slideshow') ? 'hidden' : 'auto'
         }}>
-          {viewMode === 'map' ? (
+          {viewMode === 'slideshow' ? (
+            // Slideshow View
+            <div style={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: '#666'
+            }}>
+              {loadingSlideshowImages ? (
+                <div>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid #f3f3f3',
+                    borderTop: '4px solid #007aff',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 16px'
+                  }} />
+                  <p style={{ fontSize: '16px', color: '#333' }}>Loading slideshow images...</p>
+                </div>
+              ) : slideshowImages.length === 0 ? (
+                <div>
+                  <FaPhotoVideo size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+                  <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Images Found</h3>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
+                    This trip doesn't contain any images to display in slideshow.
+                  </p>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    style={{
+                      background: '#007aff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 24px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Back to List View
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <FaPhotoVideo size={48} style={{ color: '#007aff', marginBottom: '16px' }} />
+                  <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>Slideshow Ready</h3>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
+                    {slideshowImages.length} images ready to display
+                  </p>
+                  <button
+                    onClick={() => setShowSlideshow(true)}
+                    style={{
+                      background: '#007aff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 24px',
+                      fontSize: '16px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      margin: '0 auto'
+                    }}
+                  >
+                    <FaPlay />
+                    Start Slideshow
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : viewMode === 'map' ? (
             // Map View
             (() => {
               const itemsWithLocation = trip.items.filter((item) => {
@@ -1509,6 +1661,21 @@ const TripDetailView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Slideshow Modal */}
+      <MultiPhotoModal
+        photos={slideshowImages}
+        initialIndex={0}
+        isOpen={showSlideshow}
+        onClose={() => {
+          setShowSlideshow(false);
+          // Switch back to list view after slideshow
+          setViewMode('list');
+        }}
+        title={`${trip?.name} - Slideshow`}
+        autoPlay={true}
+        autoPlayInterval={5000}
+      />
 
       {/* CSS Animation for loading spinner */}
       <style dangerouslySetInnerHTML={{
