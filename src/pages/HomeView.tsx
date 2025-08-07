@@ -1792,10 +1792,11 @@ const HomeView = () => {
 
 
 
-        {/* Map Container - Directly under header */}
+        {/* Map Container - Account for fixed header and nav buttons */}
         <div style={{ 
           flex: 1, 
-          position: 'relative'
+          position: 'relative',
+          paddingTop: shouldUseContainer ? '140px' : '135px' // Header + spacing + nav buttons height
         }}>
           {/* Error Display */}
           {mapError && (
@@ -2040,16 +2041,20 @@ const HomeView = () => {
           {/* Top buttons - horizontal layout with 4 buttons */}
           <div
             style={{
-              position: 'absolute',
-              top: shouldUseContainer ? '95px' : '23px', // Desktop: 80px header + 15px spacing, Mobile: 8px + 15px spacing
-              left: '8px',
-              right: '8px',
+              position: 'fixed',
+              top: shouldUseContainer ? '115px' : '95px', // Desktop: 20px container + 80px header + 15px spacing, Mobile: 80px header + 15px spacing
+              left: shouldUseContainer ? '50%' : '8px',
+              right: shouldUseContainer ? 'auto' : '8px',
+              width: shouldUseContainer ? '374px' : 'auto', // 390px container - 16px padding
+              transform: shouldUseContainer ? 'translateX(-50%)' : 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: '4px',
               zIndex: 1002,
-              paddingTop: '4px'
+              paddingTop: '4px',
+              paddingLeft: shouldUseContainer ? '8px' : '0',
+              paddingRight: shouldUseContainer ? '8px' : '0'
             }}
           >
             {/* Help Button */}
