@@ -471,19 +471,24 @@ const MyTripsListView = () => {
                 <div style={{
                   display: 'flex',
                   gap: '16px',
-                  alignItems: 'flex-end'
+                  alignItems: 'flex-end',
+                  overflow: 'hidden',
+                  width: '100%'
                 }}>
                   {/* Single Thumbnail */}
                   <div style={{
-                    minWidth: '50px',
+                    width: '50px',
                     height: '50px',
+                    minWidth: '50px',
+                    maxWidth: '50px',
                     backgroundColor: '#f0f0f0',
                     borderRadius: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    overflow: 'hidden'
                   }}>
                     {(() => {
                       const hasItems = !!(trip.items && trip.items.length > 0);
@@ -501,19 +506,28 @@ const MyTripsListView = () => {
                         finalCondition: hasItems && !!photoURL
                       });
                       
-                      return hasItems && photoURL ? (
+                      return hasItems && photoURL && photoURL !== 'pending_upload' ? (
                         <img
                           src={photoURL}
                           alt={firstItem?.title || 'Trip item'}
                           style={{
                             width: '100%',
                             height: '100%',
+                            maxWidth: '50px',
+                            maxHeight: '50px',
                             objectFit: 'cover',
-                            borderRadius: '8px'
+                            borderRadius: '8px',
+                            display: 'block'
                           }}
                           onError={(e) => {
                             console.error('🚨 Image failed to load:', photoURL);
-                            e.currentTarget.style.display = 'none';
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            // Show fallback icon
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `<div style="fontSize: 20px">${trip.items[0].type === 'quickcard' ? '📷' : '📱'}</div>`;
+                            }
                           }}
                         />
                       ) : hasItems ? (
