@@ -530,7 +530,7 @@ ${shareUrl}`;
             {avatarUrl ? (
               <img 
                 src={avatarUrl} 
-                alt={trip?.username || 'User'} 
+                alt={userProfile?.username || 'User'} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
               />
@@ -556,7 +556,7 @@ ${shareUrl}`;
                 }
               }}
             >
-              {trip?.username || 'Unknown User'}
+              {userProfile?.username || 'Anonymous'}
             </div>
             <div style={{ fontSize: 12, color: '#666' }}>
               Creator
@@ -693,7 +693,7 @@ ${shareUrl}`;
                         id: trip.id,
                         name: trip.name,
                         description: trip.description,
-                        username: trip.username
+                        username: userProfile?.username || 'Anonymous'
                       },
                       tripPosts: postsWithLocation.map(post => ({
                         id: post.id,
