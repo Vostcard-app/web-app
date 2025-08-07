@@ -1812,13 +1812,156 @@ const HomeView = () => {
           </div>
         )}
 
+        {/* Navigation Buttons - Position between header and map on desktop */}
+        {shouldUseContainer && (
+          <div
+            style={{
+              position: 'fixed',
+              top: isPendingAdvertiser ? '140px' : '100px', // Right after header + container offset
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '390px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '4px',
+              zIndex: 1002,
+              padding: '4px 8px',
+              backgroundColor: '#ffffff'
+            }}
+          >
+            {/* Help Button */}
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '2px',
+                flex: '1',
+                minWidth: '0'
+              }} 
+              onClick={() => {
+                alert('❓ Help button clicked!');
+                setShowHelpMenu(!showHelpMenu);
+              }}
+            >
+              <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
+              <span>Help</span>
+            </button>
+            
+            {/* List View Button */}
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '6px',
+                flex: '1',
+                minWidth: '0'
+              }} 
+              onClick={handleListViewClick}
+            >
+              <img src={VostcardPin} alt="List" style={{ width: '18px', height: '18px' }} />
+              <span>List</span>
+            </button>
+            
+            {/* Offers Button */}
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '6px',
+                flex: '1',
+                minWidth: '0'
+              }} 
+              onClick={handleOffersClick}
+            >
+              <img src={OfferPin} alt="Offers" style={{ width: '18px', height: '18px' }} />
+              <span>Offers</span>
+            </button>
+            
+            {/* Tours Button */}
+            <button 
+              type="button"
+              style={{ 
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 8px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '6px',
+                flex: '1',
+                minWidth: '0'
+              }} 
+              onClick={handleToursClick}
+            >
+              <FaWalking size={18} />
+              <span>Tours</span>
+            </button>
+          </div>
+        )}
+
         {/* Map Container - Add top margin for fixed header */}
         <div style={{ 
           flex: 1, 
           position: 'relative', 
           marginTop: shouldUseContainer 
-            ? (isPendingAdvertiser ? '160px' : '100px') // Desktop: account for 20px container offset + header
-            : (isPendingAdvertiser ? '140px' : '80px')  // Mobile: normal margins
+            ? (isPendingAdvertiser ? '180px' : '140px') // Desktop: account for header + nav buttons
+            : (isPendingAdvertiser ? '140px' : '80px')  // Mobile: normal margins (nav buttons are in map)
         }}>
           {/* Error Display */}
           {mapError && (
@@ -2060,20 +2203,21 @@ const HomeView = () => {
 
           {/* Floating Controls Over Map */}
           
-          {/* Top buttons - horizontal layout with 4 buttons */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '0px',
-              left: '8px',
-              right: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '4px',
-              zIndex: 1002,
-              paddingTop: '4px'
-            }}
+          {/* Top buttons - horizontal layout with 4 buttons (Mobile only) */}
+          {!shouldUseContainer && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '0px',
+                left: '8px',
+                right: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '4px',
+                zIndex: 1002,
+                paddingTop: '4px'
+              }}
           >
             {/* Help Button */}
             <button 
@@ -2198,6 +2342,7 @@ const HomeView = () => {
               <span>Tours</span>
             </button>
           </div>
+          )}
 
           {/* Guides Only Toggle - positioned under Help button */}
           <div
