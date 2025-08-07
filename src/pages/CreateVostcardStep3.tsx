@@ -24,11 +24,7 @@ const CreateVostcardStep3: React.FC = () => {
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
-  const [isTripModalOpen, setIsTripModalOpen] = useState(false);
-  const [userTrips, setUserTrips] = useState<Trip[]>([]);
-  const [selectedTripId, setSelectedTripId] = useState<string>('');
-  const [newTripName, setNewTripName] = useState('');
-  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
+
   
   const availableCategories = [
     'None',
@@ -141,67 +137,7 @@ const CreateVostcardStep3: React.FC = () => {
     }
   };
 
-  const handleAddToTrip = () => {
-    loadUserTrips();
-    setIsTripModalOpen(true);
-  };
 
-  const handleCreateNewTrip = async () => {
-    if (!newTripName.trim()) return;
-    
-    setIsCreatingTrip(true);
-    try {
-      const newTrip = await TripService.createTrip({
-        name: newTripName.trim(),
-        description: '',
-        isPrivate: true
-      });
-      setUserTrips([...userTrips, newTrip]);
-      setSelectedTripId(newTrip.id);
-      setNewTripName('');
-    } catch (error) {
-      console.error('Error creating trip:', error);
-      alert('Error creating trip');
-    } finally {
-      setIsCreatingTrip(false);
-    }
-  };
-
-  const handleAddVostcardToTrip = async () => {
-    if (!selectedTripId || !currentVostcard) return;
-    
-    try {
-      console.log('🔄 Saving vostcard privately first before adding to trip...');
-      
-      // ✅ Save vostcard as private post (not public to map)
-      await saveLocalVostcard();
-      
-      console.log('✅ Vostcard saved privately with ID:', currentVostcard.id);
-      
-      // Now add to trip with the real ID (let the service fetch photoURL from the saved vostcard)
-      await TripService.addItemToTrip(selectedTripId, {
-        vostcardID: currentVostcard.id,
-        type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-        title: currentVostcard.title || 'Untitled',
-        description: currentVostcard.description,
-        // Don't pass photoURL - let addItemToTrip fetch it from the saved vostcard
-        latitude: currentVostcard.geo?.latitude,
-        longitude: currentVostcard.geo?.longitude,
-      });
-      
-      console.log('✅ Added vostcard to trip successfully');
-      alert('Vostcard saved and added to trip successfully!');
-      setIsTripModalOpen(false);
-      setSelectedTripId('');
-      
-      // Navigate back to home or wherever appropriate
-      navigate('/home');
-      
-    } catch (error) {
-      console.error('Error saving vostcard or adding to trip:', error);
-      alert(`Error: ${error.message || 'Failed to save vostcard or add to trip'}`);
-    }
-  };
 
   const handleTitleChange = async (newTitle: string) => {
     // Update the vostcard title
@@ -410,29 +346,7 @@ const CreateVostcardStep3: React.FC = () => {
           )}
         </div>
 
-        {/* Add to Trip Section */}
-        <div style={{ marginTop: 20 }}>
-          <label style={labelStyle}>
-            Add to Trip (Not Required)
-          </label>
-          <button
-            onClick={handleAddToTrip}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#f0f8ff',
-              border: '2px solid #07345c',
-              borderRadius: '8px',
-              fontSize: '16px',
-              color: '#07345c',
-              cursor: 'pointer',
-              fontWeight: '500',
-              touchAction: 'manipulation',
-            }}
-          >
-            Add to Trip
-          </button>
-        </div>
+
       </div>
 
       {/* 🔘 Fixed Bottom Buttons */}
@@ -519,130 +433,7 @@ const CreateVostcardStep3: React.FC = () => {
         </div>
       )}
 
-      {/* Trip Modal */}
-      {isTripModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          padding: '20px',
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '400px',
-            maxHeight: '70vh',
-            overflowY: 'auto',
-          }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to Trip</h3>
-            
-                            {userTrips.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                  Select Existing Trip:
-                </label>
-                <select
-                  value={selectedTripId}
-                  onChange={(e) => setSelectedTripId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd',
-                    fontSize: '16px',
-                  }}
-                >
-                  <option value="">Choose a trip...</option>
-                  {userTrips.map((trip) => (
-                    <option key={trip.id} value={trip.id}>
-                      {trip.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                Or Create New Trip:
-              </label>
-              <input
-                type="text"
-                value={newTripName}
-                onChange={(e) => setNewTripName(e.target.value)}
-                placeholder="Enter trip name..."
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '6px',
-                  border: '1px solid #ddd',
-                  fontSize: '16px',
-                  marginBottom: '10px',
-                }}
-              />
-              <button
-                onClick={handleCreateNewTrip}
-                disabled={!newTripName.trim() || isCreatingTrip}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  backgroundColor: isCreatingTrip ? '#ccc' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: isCreatingTrip ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {isCreatingTrip ? 'Creating...' : 'Create New Trip'}
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => setIsTripModalOpen(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddVostcardToTrip}
-                disabled={!selectedTripId}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: selectedTripId ? '#007bff' : '#ccc',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: selectedTripId ? 'pointer' : 'not-allowed',
-                }}
-              >
-                Add to Trip
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
