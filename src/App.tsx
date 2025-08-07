@@ -70,6 +70,7 @@ import PublicQuickcardView from "./pages/PublicQuickcardView";
 import PublicTripView from "./pages/PublicTripView";
 import PublicTripMapView from "./pages/PublicTripMapView";
 import ShareableTripView from "./pages/ShareableTripView";
+import PublicItineraryView from "./pages/PublicItineraryView";
 import EmailVostcardView from "./pages/EmailVostcardView";
 import TourView from "./pages/TourView";
 import ToursView from "./pages/ToursView";
@@ -105,6 +106,7 @@ function App() {
                   <Route path="/share-quickcard/:id" element={<PublicQuickcardView />} />
                   <Route path="/share-trip/:id" element={<PublicTripView />} />
                   <Route path="/shared-trip/:tourId" element={<ShareableTripView />} />
+                  <Route path="/share-itinerary/:shareableLink" element={<PublicItineraryView />} />
             <Route path="/public-trip-map" element={<PublicTripMapView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
                   <Route path="/public-map" element={<PublicHomeView />} />

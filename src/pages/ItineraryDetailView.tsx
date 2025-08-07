@@ -153,12 +153,32 @@ const ItineraryDetailView: React.FC = () => {
       return;
     }
 
-    const shareUrl = `${window.location.origin}/itinerary/${itinerary.shareableLink}`;
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      alert('Share link copied to clipboard!');
-    }).catch(() => {
-      alert(`Share link: ${shareUrl}`);
-    });
+    const shareUrl = `${window.location.origin}/share-itinerary/${itinerary.shareableLink}`;
+    
+    // Generate share text
+    const shareText = `Check out this itinerary I created with Vōstcard
+
+"${itinerary.name}"
+
+${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
+
+    // Use native sharing or clipboard
+    if (navigator.share) {
+      navigator.share({ text: shareText }).catch(() => {
+        // Fallback to clipboard
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('Share link copied to clipboard!');
+        }).catch(() => {
+          alert(`Share link: ${shareUrl}`);
+        });
+      });
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        alert('Share link copied to clipboard!');
+      }).catch(() => {
+        alert(`Share link: ${shareUrl}`);
+      });
+    }
   };
 
   const moveItem = async (itemId: string, direction: 'up' | 'down') => {
