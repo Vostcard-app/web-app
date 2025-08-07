@@ -62,7 +62,8 @@ const PublicTripView: React.FC = () => {
           });
           
           // Check if trip is shared or public
-          if (data.isShared || data.visibility === 'public') {
+          // Allow access if: explicitly shared, public visibility, or not private (legacy)
+          if (data.isShared || data.visibility === 'public' || data.isPrivate === false) {
             clearTimeout(timeoutId);
             setTrip(data);
             setLoading(false);
