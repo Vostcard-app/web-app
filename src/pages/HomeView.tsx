@@ -1796,7 +1796,7 @@ const HomeView = () => {
         <div style={{ 
           flex: 1, 
           position: 'relative',
-          paddingTop: shouldUseContainer ? '210px' : '190px' // Header + nav buttons + see all toggle + spacing
+          paddingTop: shouldUseContainer ? '180px' : '160px' // Header + nav buttons + see all toggle + minimal spacing
         }}>
           {/* Error Display */}
           {mapError && (
