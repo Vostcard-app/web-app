@@ -138,35 +138,49 @@ const MyTripsListView = () => {
   };
 
   const handleShareTrip = async (trip: Trip) => {
+    // Show public sharing warning
+    const confirmMessage = `⚠️ Attention:
+
+This will create a public link for your trip. Anyone with the link can see it.
+
+Tap OK to continue.`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return; // User cancelled
+    }
+    
     try {
-      let updatedTrip = trip;
+      // Mark trip as shared and public
+      const updatedTrip = await TripService.updateTrip(trip.id, {
+        isShared: true,
+        isPrivate: false,
+        visibility: 'public'
+      });
       
-      // If trip is private, make it public first
-      if (trip.isPrivate) {
-        updatedTrip = await TripService.updateTrip(trip.id, {
-          isPrivate: false
-        });
-        
-        // Update the trips list with the updated trip
-        setTrips(prev => prev.map(t => t.id === trip.id ? updatedTrip : t));
+      // Update the trips list with the updated trip
+      setTrips(prev => prev.map(t => t.id === trip.id ? updatedTrip : t));
+      
+      // Generate public share URL (same format as TripDetailView)
+      const shareUrl = `${window.location.origin}/share-trip/${trip.id}`;
+      
+      // Generate share text
+      const shareText = `Check out this trip I created with Vōstcard
+
+"${trip.name || 'My Trip'}"
+
+${shareUrl}`;
+      
+      // Use native sharing or clipboard (same as TripDetailView)
+      if (navigator.share) {
+        await navigator.share({ text: shareText });
+      } else {
+        await navigator.clipboard.writeText(shareText);
+        alert('Share link copied to clipboard!');
       }
-      
-      // Generate share URL
-      const shareUrl = updatedTrip.shareableLink 
-        ? `${window.location.origin}/trip/${updatedTrip.shareableLink}`
-        : `${window.location.origin}/trip/${updatedTrip.id}`;
-      
-      // Copy to clipboard
-      await navigator.clipboard.writeText(shareUrl);
-      alert('✅ Share link copied to clipboard!\n\nAnyone with this link can view your trip.');
       
     } catch (error) {
       console.error('Error sharing trip:', error);
-      // Fallback for browsers that don't support clipboard API
-      const shareUrl = trip.shareableLink 
-        ? `${window.location.origin}/trip/${trip.shareableLink}`
-        : `${window.location.origin}/trip/${trip.id}`;
-      alert(`Share this link:\n\n${shareUrl}`);
+      alert('Failed to share. Please try again.');
     }
   };
 
