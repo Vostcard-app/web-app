@@ -18,7 +18,7 @@ const AuthRedirect = () => {
 
   useEffect(() => {
     // ✅ COMPLETELY bypass authentication for shared content
-    const sharedContentRoutes = ['/share/', '/share-quickcard/', '/email/', '/public-map'];
+    const sharedContentRoutes = ['/share/', '/share-quickcard/', '/share-trip/', '/email/', '/public-map'];
     const isSharedContentRoute = sharedContentRoutes.some(prefix => location.pathname.startsWith(prefix));
     
     if (isSharedContentRoute) {
