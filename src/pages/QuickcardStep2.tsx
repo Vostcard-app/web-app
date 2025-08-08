@@ -105,7 +105,25 @@ export default function QuickcardStep2() {
       if (!user?.uid) return;
       
       try {
-        // Get user's quickcards from vostcards collection (they're stored there with isQuickcard: true)
+        console.log('🔍 Starting to load quickcards for user:', user.uid);
+        
+        // First, let's try a simpler query to see all user's vostcards
+        const allUserVostcardsQuery = query(
+          collection(db, 'vostcards'),
+          where('userID', '==', user.uid),
+          limit(20)
+        );
+        
+        const allSnapshot = await getDocs(allUserVostcardsQuery);
+        const allUserVostcards = allSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
+        console.log('🔍 Quickcards in all vostcards:', allUserVostcards.filter(v => v.isQuickcard));
+        
+        // Now try the specific quickcard query
         const quickcardsQuery = query(
           collection(db, 'vostcards'),
           where('userID', '==', user.uid),
@@ -121,7 +139,7 @@ export default function QuickcardStep2() {
           type: 'quickcard'
         }));
         
-        console.log('🔍 Loaded quickcards:', quickcards.length, quickcards);
+        console.log('🔍 Filtered quickcards from query:', quickcards.length, quickcards);
         setUserPosts(quickcards);
         
         // Load last used post from localStorage, or default to most recent quickcard
@@ -586,7 +604,7 @@ export default function QuickcardStep2() {
           fontSize: 14,
           color: '#666',
           textAlign: 'center',
-          marginBottom: 20,
+          marginBottom: 2,
           paddingTop: '2px'
         }}>
           {photoCount} of 4 photos added
