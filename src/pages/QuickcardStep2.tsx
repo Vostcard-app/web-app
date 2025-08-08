@@ -5,7 +5,7 @@ import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
-import { db } from '../firebase';
+import { db } from '../firebase/firebaseConfig';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
