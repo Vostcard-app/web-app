@@ -124,11 +124,17 @@ export default function QuickcardStep2() {
         console.log('🔍 All quickcards before sorting:', allQuickcards.map(q => ({
           title: q.title,
           createdAt: q.createdAt,
+          createdAtParsed: q.createdAt?.toDate ? q.createdAt.toDate() : new Date(q.createdAt),
           id: q.id
         })));
         
         const quickcards = allQuickcards
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .sort((a, b) => {
+            // Handle Firebase Timestamps properly
+            const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+            const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+            return bTime - aTime;
+          })
           .slice(0, 1) // Only get the most recent quickcard
           .map(doc => ({
             ...doc,
@@ -138,6 +144,7 @@ export default function QuickcardStep2() {
         console.log('🔍 Most recent quickcard selected:', quickcards[0] ? {
           title: quickcards[0].title,
           createdAt: quickcards[0].createdAt,
+          createdAtParsed: quickcards[0].createdAt?.toDate ? quickcards[0].createdAt.toDate() : new Date(quickcards[0].createdAt),
           id: quickcards[0].id
         } : 'No quickcards found');
         setUserPosts(quickcards);
