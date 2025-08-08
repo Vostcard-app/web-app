@@ -343,15 +343,22 @@ export default function QuickcardStep2() {
     try {
       setIsAddingToPost(true);
       console.log('🔄 Saving quickcard before adding to last quickcard...');
+      console.log('🔍 Current vostcard before save:', currentVostcard?.id, currentVostcard?.title);
       await saveLocalVostcard();
-      console.log('✅ Quickcard saved, now adding to last quickcard:', lastQuickcard.title);
+      console.log('🔍 Current vostcard after save:', currentVostcard?.id, currentVostcard?.title);
+      console.log('✅ Quickcard saved, now adding to last quickcard:', {
+        title: lastQuickcard.title,
+        id: lastQuickcard.id,
+        createdAt: lastQuickcard.createdAt,
+        fullObject: lastQuickcard
+      });
       
       // Logic to add quickcard to the last quickcard (placeholder)
       localStorage.setItem('lastUsedPostId', lastQuickcard.id);
       alert(`Successfully added to "${lastQuickcard.title || 'Last Quickcard'}"!`);
       
-      // Navigate to step 3
-      navigate('/quickcard/step3');
+      // Navigate to step 3 with correct route
+      navigate('/quickcard-step3');
     } catch (error) {
       console.error('Error adding to last quickcard:', error);
       alert('Failed to add to quickcard. Please try again.');
