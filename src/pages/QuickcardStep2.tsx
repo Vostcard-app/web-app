@@ -205,28 +205,7 @@ export default function QuickcardStep2() {
     }
   };
 
-  // Handler for taking a new photo that goes to next available slot
-  const handleTakeNewPhoto = () => {
-    const nextSlot = findNextAvailableSlot();
-    if (nextSlot === null) {
-      alert('Photos are full! You can replace an existing photo by tapping on it.');
-      return;
-    }
-    
-    setActiveThumbnail(nextSlot);
-    
-    if (isMobile) {
-      // Mobile: Use native action sheet directly
-      if (fileInputRef.current) {
-        fileInputRef.current.setAttribute('data-index', nextSlot.toString());
-        fileInputRef.current.click();
-      }
-    } else {
-      // Desktop: Show custom modal with options
-      setPendingPhotoIndex(nextSlot);
-      setShowPhotoOptions(true);
-    }
-  };
+
 
   // Handle file selection from camera/gallery
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -525,24 +504,25 @@ export default function QuickcardStep2() {
         
 
 
-        {/* Photo Grid - 3 across layout for smaller buttons */}
+        {/* Photo Grid - 2x2 layout */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
           gap: '12px',
-          marginBottom: 5,
+          marginBottom: 20,
           width: '100%',
-          maxWidth: 300,
+          maxWidth: 240,
           justifyItems: 'center',
           paddingTop: '5px'
         }}>
-          {selectedPhotos.slice(0, 3).map((photo, idx) => (
+          {selectedPhotos.map((photo, idx) => (
             <button
               key={idx}
               onClick={() => handleAddPhoto(idx)}
               style={{
-                width: 90,
-                height: 90,
+                width: 110,
+                height: 110,
                 borderRadius: 8,
                 border: '2px solid #002B4D',
                 position: 'relative',
@@ -550,7 +530,6 @@ export default function QuickcardStep2() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                marginBottom: 8,
                 overflow: 'hidden',
                 boxShadow: '0 2px 8px rgba(0,43,77,0.1)',
                 backgroundImage: photo ? `url(${URL.createObjectURL(photo)})` : 'none',
@@ -592,84 +571,14 @@ export default function QuickcardStep2() {
                   color: '#002B4D',
                   opacity: 0.7
                 }}>
-                  <FaRegImages size={20} style={{ marginBottom: 4 }} />
-                  <span style={{ fontSize: 10, fontWeight: 600 }}>
+                  <FaRegImages size={24} style={{ marginBottom: 4 }} />
+                  <span style={{ fontSize: 11, fontWeight: 600 }}>
                     Add Photo
                   </span>
                 </div>
               )}
             </button>
           ))}
-        </div>
-
-        {/* Fourth photo button - centered below */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          marginBottom: 5,
-          width: '100%'
-        }}>
-          <button
-            onClick={() => handleAddPhoto(3)}
-            style={{
-              width: 90,
-              height: 90,
-              borderRadius: 8,
-              border: '2px solid #002B4D',
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              marginBottom: 8,
-              overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0,43,77,0.1)',
-              backgroundImage: selectedPhotos[3] ? `url(${URL.createObjectURL(selectedPhotos[3])})` : 'none',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundColor: selectedPhotos[3] ? 'transparent' : '#f8f9fa',
-            }}
-          >
-            {selectedPhotos[3] ? (
-              // Remove button for filled thumbnail
-              <button
-                onClick={(e) => handleRemovePhoto(3, e)}
-                style={{
-                  position: 'absolute',
-                  top: 4,
-                  right: 4,
-                  background: 'rgba(255,255,255,0.9)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: 20,
-                  height: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  fontSize: 10,
-                  color: '#dc3545',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
-                }}
-              >
-                <FaTimes />
-              </button>
-            ) : (
-              // Add photo prompt for empty thumbnail
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                color: '#002B4D',
-                opacity: 0.7
-              }}>
-                <FaRegImages size={20} style={{ marginBottom: 4 }} />
-                <span style={{ fontSize: 10, fontWeight: 600 }}>
-                  Add Photo
-                </span>
-              </div>
-            )}
-          </button>
         </div>
 
         {/* Photo count indicator */}
@@ -683,26 +592,7 @@ export default function QuickcardStep2() {
           {photoCount} of 4 photos added
         </div>
 
-        {/* Take New Photo Button */}
-        <div style={{ marginBottom: 20, width: '100%', maxWidth: 380 }}>
-          <button
-            onClick={handleTakeNewPhoto}
-            disabled={photoCount >= 4}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: photoCount >= 4 ? '#cccccc' : '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              cursor: photoCount >= 4 ? 'not-allowed' : 'pointer',
-              fontWeight: '500'
-            }}
-          >
-            {photoCount >= 4 ? 'Photos are full!' : 'Take New Photo'}
-          </button>
-        </div>
+
 
         {/* Add to Trip Section */}
         <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
