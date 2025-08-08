@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function QuickcardStep2() {
   const navigate = useNavigate();
-  const { updateVostcard, currentVostcard, saveLocalVostcard, loadLocalVostcard, deletePrivateVostcard } = useVostcard();
+  const { updateVostcard, currentVostcard, saveLocalVostcard, loadLocalVostcard, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -389,30 +389,19 @@ export default function QuickcardStep2() {
       setIsAddingToPost(true);
       console.log('🔄 Adding current photos to existing quickcard:', lastQuickcard.id);
       
-      // Load the existing quickcard
-      await loadLocalVostcard(lastQuickcard.id);
-      
-      // Add current photos to the existing quickcard
-      const existingPhotos = currentVostcard?.photos || [];
-      const updatedPhotos = [...existingPhotos];
-      
-      // Add new photos up to 4 total
-      for (const photo of currentPhotos) {
-        if (updatedPhotos.length < 4) {
-          updatedPhotos.push(photo);
-        } else {
-          break; // Maximum 4 photos
-        }
-      }
-      
-      // Update the existing quickcard with the new photos
-      updateVostcard({
-        photos: updatedPhotos,
+      // Switch to the target quickcard and add our photos to it
+      const targetQuickcard = {
+        ...lastQuickcard,
+        photos: [...(lastQuickcard.photos || []), ...currentPhotos].slice(0, 4), // Add photos, max 4 total
         updatedAt: new Date().toISOString()
-      });
+      };
+      
+      console.log('💾 Updating to target quickcard with', targetQuickcard.photos.length, 'photos');
+      
+      // Set the current vostcard to the target quickcard with updated photos
+      setCurrentVostcard(targetQuickcard);
       
       // Save the updated quickcard
-      console.log('💾 Saving updated quickcard with', updatedPhotos.length, 'photos');
       await saveLocalVostcard();
       
       console.log('✅ Photos added to existing quickcard - navigating to Step 3');
