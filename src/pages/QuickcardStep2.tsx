@@ -99,29 +99,13 @@ export default function QuickcardStep2() {
     loadTrips();
   }, []);
 
-  // Load user posts and last used post
+  // Load user quickcards and last used post
   useEffect(() => {
     const loadPosts = async () => {
       if (!user?.uid) return;
       
       try {
-        // Get user's posted vostcards (public posts)
-        const userPostsQuery = query(
-          collection(db, 'vostcards'),
-          where('userID', '==', user.uid),
-          where('state', '==', 'posted'),
-          orderBy('createdAt', 'desc'),
-          limit(10) // Get last 10 posts
-        );
-        
-        const userPostsSnapshot = await getDocs(userPostsQuery);
-        const userPosts = userPostsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'vostcard'
-        }));
-        
-        // Get user's quickcards
+        // Get user's quickcards (personal posts)
         const quickcardsQuery = query(
           collection(db, 'quickcards'),
           where('userID', '==', user.uid),
@@ -136,24 +120,27 @@ export default function QuickcardStep2() {
           type: 'quickcard'
         }));
         
-        // Combine and sort by creation date (most recent first)
-        const allPosts = [...userPosts, ...quickcards].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        setUserPosts(quickcards);
         
-        setUserPosts(allPosts);
-        
-        // Load last used post from localStorage
+        // Load last used post from localStorage, or default to most recent quickcard
         const lastPostId = localStorage.getItem('lastUsedPostId');
+        let defaultPost = null;
+        
         if (lastPostId) {
-          const lastPost = allPosts.find(post => post.id === lastPostId);
-          if (lastPost) {
-            setLastUsedPost(lastPost);
-          }
+          defaultPost = quickcards.find(post => post.id === lastPostId);
+        }
+        
+        // If no last used post found, default to the most recent quickcard
+        if (!defaultPost && quickcards.length > 0) {
+          defaultPost = quickcards[0];
+        }
+        
+        if (defaultPost) {
+          setLastUsedPost(defaultPost);
         }
         
       } catch (error) {
-        console.error('Error loading posts:', error);
+        console.error('Error loading quickcards:', error);
       }
     };
 
@@ -357,9 +344,11 @@ export default function QuickcardStep2() {
 
   // Post handler functions
   const handleAddToPost = () => {
-    // Pre-select the last used post if available
+    // Pre-select the last used post if available, otherwise select the most recent quickcard
     if (lastUsedPost) {
       setSelectedPostId(lastUsedPost.id);
+    } else if (userPosts.length > 0) {
+      setSelectedPostId(userPosts[0].id);
     }
     setIsPostModalOpen(true);
   };
@@ -743,7 +732,7 @@ export default function QuickcardStep2() {
           </button>
         </div>
 
-        {/* Add to a Post Section */}
+        {/* Add to a Quickcard Section */}
         <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
           <label style={{
             fontSize: 16,
@@ -752,7 +741,7 @@ export default function QuickcardStep2() {
             display: 'block',
             color: '#333'
           }}>
-            Add to a Post (Optional)
+            Add to a Quickcard (Optional)
           </label>
           
           <button
@@ -769,7 +758,7 @@ export default function QuickcardStep2() {
               fontWeight: '500'
             }}
           >
-            Add to a Post
+            Add to a Quickcard
           </button>
         </div>
 
@@ -950,12 +939,12 @@ export default function QuickcardStep2() {
             maxHeight: '70vh',
             overflowY: 'auto',
           }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to a Post</h3>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to a Quickcard</h3>
             
             {userPosts.length > 0 ? (
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                  Select Existing Post:
+                  Select Existing Quickcard:
                 </label>
                 <select
                   value={selectedPostId}
@@ -968,10 +957,10 @@ export default function QuickcardStep2() {
                     fontSize: '16px',
                   }}
                 >
-                  <option value="">Choose a post...</option>
+                  <option value="">Choose a quickcard...</option>
                   {userPosts.slice(0, 3).map((post) => (
                     <option key={post.id} value={post.id}>
-                      {post.title || `${post.type} - ${new Date(post.createdAt).toLocaleDateString()}`}
+                      {post.title || `Quickcard - ${new Date(post.createdAt).toLocaleDateString()}`}
                     </option>
                   ))}
                 </select>
@@ -985,7 +974,7 @@ export default function QuickcardStep2() {
                 textAlign: 'center',
                 color: '#666'
               }}>
-                No posts available. Create and publish some posts first!
+                No quickcards available. Create some quickcards first!
               </div>
             )}
 
@@ -1022,7 +1011,7 @@ export default function QuickcardStep2() {
                   cursor: selectedPostId && !isAddingToPost ? 'pointer' : 'not-allowed',
                 }}
               >
-                {isAddingToPost ? 'Adding...' : 'Add to Post'}
+                {isAddingToPost ? 'Adding...' : 'Add to Quickcard'}
               </button>
             </div>
           </div>
