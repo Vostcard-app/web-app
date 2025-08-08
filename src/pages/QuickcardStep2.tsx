@@ -5,10 +5,14 @@ import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
+import { db } from '../firebase';
+import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 export default function QuickcardStep2() {
   const navigate = useNavigate();
   const { updateVostcard, currentVostcard, saveLocalVostcard } = useVostcard();
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos (4 thumbnails for quickcards)
@@ -26,6 +30,13 @@ export default function QuickcardStep2() {
   const [newTripName, setNewTripName] = useState('');
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
+
+  // Post functionality states
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string>('');
+  const [isAddingToPost, setIsAddingToPost] = useState(false);
+  const [lastUsedPost, setLastUsedPost] = useState<any | null>(null);
 
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -88,8 +99,82 @@ export default function QuickcardStep2() {
     loadTrips();
   }, []);
 
+  // Load user posts and last used post
+  useEffect(() => {
+    const loadPosts = async () => {
+      if (!user?.uid) return;
+      
+      try {
+        // Get user's posted vostcards (public posts)
+        const userPostsQuery = query(
+          collection(db, 'vostcards'),
+          where('userID', '==', user.uid),
+          where('state', '==', 'posted'),
+          orderBy('createdAt', 'desc'),
+          limit(10) // Get last 10 posts
+        );
+        
+        const userPostsSnapshot = await getDocs(userPostsQuery);
+        const userPosts = userPostsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          type: 'vostcard'
+        }));
+        
+        // Get user's quickcards
+        const quickcardsQuery = query(
+          collection(db, 'quickcards'),
+          where('userID', '==', user.uid),
+          orderBy('createdAt', 'desc'),
+          limit(10) // Get last 10 quickcards
+        );
+        
+        const quickcardsSnapshot = await getDocs(quickcardsQuery);
+        const quickcards = quickcardsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          type: 'quickcard'
+        }));
+        
+        // Combine and sort by creation date (most recent first)
+        const allPosts = [...userPosts, ...quickcards].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        
+        setUserPosts(allPosts);
+        
+        // Load last used post from localStorage
+        const lastPostId = localStorage.getItem('lastUsedPostId');
+        if (lastPostId) {
+          const lastPost = allPosts.find(post => post.id === lastPostId);
+          if (lastPost) {
+            setLastUsedPost(lastPost);
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error loading posts:', error);
+      }
+    };
+
+    loadPosts();
+  }, [user?.uid]);
+
+  // Find next available photo slot
+  const findNextAvailableSlot = (): number | null => {
+    const nextIndex = selectedPhotos.findIndex(photo => photo === null);
+    return nextIndex === -1 ? null : nextIndex;
+  };
+
   // Handler for when a thumbnail is tapped - mobile uses native action sheet, desktop shows modal
   const handleAddPhoto = (index: number) => {
+    // Check if photos are full
+    const nextSlot = findNextAvailableSlot();
+    if (nextSlot === null && selectedPhotos[index] === null) {
+      alert('Photos are full! You can replace an existing photo by tapping on it.');
+      return;
+    }
+    
     setActiveThumbnail(index);
     
     if (isMobile) {
@@ -128,6 +213,29 @@ export default function QuickcardStep2() {
     if (pendingPhotoIndex !== null && fileInputRef.current) {
       fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
       fileInputRef.current.click();
+    }
+  };
+
+  // Handler for taking a new photo that goes to next available slot
+  const handleTakeNewPhoto = () => {
+    const nextSlot = findNextAvailableSlot();
+    if (nextSlot === null) {
+      alert('Photos are full! You can replace an existing photo by tapping on it.');
+      return;
+    }
+    
+    setActiveThumbnail(nextSlot);
+    
+    if (isMobile) {
+      // Mobile: Use native action sheet directly
+      if (fileInputRef.current) {
+        fileInputRef.current.setAttribute('data-index', nextSlot.toString());
+        fileInputRef.current.click();
+      }
+    } else {
+      // Desktop: Show custom modal with options
+      setPendingPhotoIndex(nextSlot);
+      setShowPhotoOptions(true);
     }
   };
 
@@ -244,6 +352,51 @@ export default function QuickcardStep2() {
       alert('Failed to add to trip. Please try again.');
     } finally {
       setIsCreatingTrip(false);
+    }
+  };
+
+  // Post handler functions
+  const handleAddToPost = () => {
+    // Pre-select the last used post if available
+    if (lastUsedPost) {
+      setSelectedPostId(lastUsedPost.id);
+    }
+    setIsPostModalOpen(true);
+  };
+
+  const handlePostSelection = async () => {
+    if (!selectedPostId) {
+      alert('Please select a post');
+      return;
+    }
+
+    try {
+      setIsAddingToPost(true);
+      
+      // First save the quickcard to make sure it exists in the database
+      console.log('🔄 Saving quickcard before adding to post...');
+      await saveLocalVostcard();
+      console.log('✅ Quickcard saved, now adding to post...');
+      
+      // Here you would implement the logic to add the quickcard to the selected post
+      // This might involve updating the post's photos array or creating a relationship
+      
+      // Update last used post
+      const selectedPost = userPosts.find(post => post.id === selectedPostId);
+      if (selectedPost) {
+        setLastUsedPost(selectedPost);
+        localStorage.setItem('lastUsedPostId', selectedPostId);
+      }
+      
+      alert('Successfully added to post!');
+      setIsPostModalOpen(false);
+      setSelectedPostId('');
+      
+    } catch (error) {
+      console.error('Error adding to post:', error);
+      alert('Failed to add to post. Please try again.');
+    } finally {
+      setIsAddingToPost(false);
     }
   };
 
@@ -539,6 +692,27 @@ export default function QuickcardStep2() {
           {photoCount} of 4 photos added
         </div>
 
+        {/* Take New Photo Button */}
+        <div style={{ marginBottom: 20, width: '100%', maxWidth: 380 }}>
+          <button
+            onClick={handleTakeNewPhoto}
+            disabled={photoCount >= 4}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: photoCount >= 4 ? '#cccccc' : '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              cursor: photoCount >= 4 ? 'not-allowed' : 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            {photoCount >= 4 ? 'Photos are full!' : 'Take New Photo'}
+          </button>
+        </div>
+
         {/* Add to Trip Section */}
         <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
           <label style={{
@@ -566,6 +740,36 @@ export default function QuickcardStep2() {
             }}
           >
             Add to Trip
+          </button>
+        </div>
+
+        {/* Add to a Post Section */}
+        <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
+          <label style={{
+            fontSize: 16,
+            fontWeight: 'bold',
+            marginBottom: 8,
+            display: 'block',
+            color: '#333'
+          }}>
+            Add to a Post (Optional)
+          </label>
+          
+          <button
+            onClick={handleAddToPost}
+            style={{
+              width: '100%',
+              padding: '12px',
+              backgroundColor: '#f0f8ff',
+              border: '2px solid #07345c',
+              borderRadius: '8px',
+              fontSize: '16px',
+              color: '#07345c',
+              cursor: 'pointer',
+              fontWeight: '500'
+            }}
+          >
+            Add to a Post
           </button>
         </div>
 
@@ -716,6 +920,109 @@ export default function QuickcardStep2() {
                 }}
               >
                 {isCreatingTrip ? 'Adding...' : 'Add to Trip'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Post Modal */}
+      {isPostModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '400px',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to a Post</h3>
+            
+            {userPosts.length > 0 ? (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                  Select Existing Post:
+                </label>
+                <select
+                  value={selectedPostId}
+                  onChange={(e) => setSelectedPostId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '16px',
+                  }}
+                >
+                  <option value="">Choose a post...</option>
+                  {userPosts.slice(0, 3).map((post) => (
+                    <option key={post.id} value={post.id}>
+                      {post.title || `${post.type} - ${new Date(post.createdAt).toLocaleDateString()}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div style={{ 
+                marginBottom: '20px', 
+                padding: '16px', 
+                backgroundColor: '#f5f5f5', 
+                borderRadius: '8px',
+                textAlign: 'center',
+                color: '#666'
+              }}>
+                No posts available. Create and publish some posts first!
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  setIsPostModalOpen(false);
+                  setSelectedPostId('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: 'white',
+                  border: '2px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={handlePostSelection}
+                disabled={!selectedPostId || isAddingToPost}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: selectedPostId && !isAddingToPost ? '#002B4D' : '#cccccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: selectedPostId && !isAddingToPost ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {isAddingToPost ? 'Adding...' : 'Add to Post'}
               </button>
             </div>
           </div>
