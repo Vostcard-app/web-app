@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function QuickcardStep2() {
   const navigate = useNavigate();
-  const { updateVostcard, currentVostcard, saveLocalVostcard } = useVostcard();
+  const { updateVostcard, currentVostcard, saveLocalVostcard, loadLocalVostcard, deletePrivateVostcard } = useVostcard();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -104,44 +104,34 @@ export default function QuickcardStep2() {
       try {
         console.log('🔍 Starting to load quickcards for user:', user.uid);
         
-        // First, let's try a simpler query to see all user's vostcards
-        const allUserVostcardsQuery = query(
+        // Query for user's quickcards
+        const quickcardsQuery = query(
           collection(db, 'vostcards'),
           where('userID', '==', user.uid),
-          limit(20)
+          where('isQuickcard', '==', true),
+          orderBy('createdAt', 'desc'),
+          limit(10)
         );
         
-        const allSnapshot = await getDocs(allUserVostcardsQuery);
-        const allUserVostcards = allSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
+        const quickcardsSnapshot = await getDocs(quickcardsQuery);
+        const allQuickcards = quickcardsSnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter(v => v.id !== currentVostcard?.id); // Exclude the current one being created
         
-        console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
-        console.log('🔍 First 5 vostcards details:', allUserVostcards.slice(0, 5).map(v => ({
+        console.log('🔍 Found quickcards:', allQuickcards.length);
+        console.log('🔍 Quickcard details:', allQuickcards.slice(0, 3).map(v => ({
           id: v.id,
           title: v.title || '(no title)',
-          isQuickcard: v.isQuickcard,
-          state: v.state,
-          visibility: v.visibility,
+          hasContent: !!(v.title && v.title.trim() !== ''),
           createdAt: v.createdAt
         })));
-        
-        // Filter quickcards client-side and exclude the current one being created
-        const allQuickcards = allUserVostcards.filter(v => 
-          v.isQuickcard === true && 
-          v.id !== currentVostcard?.id
-        );
 
         
         const quickcards = allQuickcards
-          .sort((a, b) => {
-            // Handle Firebase Timestamps properly
-            const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
-            const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
-            return bTime - aTime;
-          })
-          .slice(0, 5) // Get top 5 recent quickcards so handleAddToPost can find one with content
+          .slice(0, 5) // Get top 5 recent quickcards (already sorted by createdAt desc from query)
           .map(doc => ({
             ...doc,
             type: 'quickcard'
@@ -356,76 +346,46 @@ export default function QuickcardStep2() {
       return;
     }
     
+    // Get the current photos from the selected thumbnails
+    const currentPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
+    
+    if (currentPhotos.length === 0) {
+      alert('No photos to add');
+      return;
+    }
+    
     try {
       setIsAddingToPost(true);
-      console.log('🔄 Adding current photo to existing quickcard:', lastQuickcard.id);
+      console.log('🔄 Adding current photos to existing quickcard:', lastQuickcard.id);
       
-      // Get the current photo from the current vostcard BEFORE loading the other one
-      const newPhoto = currentVostcard?.photos?.[0]; // First photo from current quickcard
-      if (!newPhoto) {
-        alert('No photo to add');
-        return;
-      }
-      
-      console.log('📸 Photo to add captured, loading existing quickcard...');
-      
-      // Store the current quickcard ID to potentially clean it up later
-      const tempQuickcardId = currentVostcard?.id;
-      console.log('🗑️ Temporary quickcard ID to clean up:', tempQuickcardId);
-      
-      // Load the existing quickcard to get its full data including existing photos
-      console.log('📂 Loading existing quickcard data...');
+      // Load the existing quickcard
       await loadLocalVostcard(lastQuickcard.id);
       
-      // Wait a moment for the vostcard to load
-      setTimeout(async () => {
-        try {
-          // Now currentVostcard should be the loaded existing quickcard
-          const existingPhotos = currentVostcard?.photos || [];
-          console.log('📸 Existing quickcard photos:', existingPhotos.length);
-          console.log('📸 Adding new photo to existing quickcard:', lastQuickcard.title);
-          
-          let updatedPhotos;
-          if (existingPhotos.length < 4) {
-            // Add to next available slot
-            updatedPhotos = [...existingPhotos, newPhoto];
-            console.log('✅ Added photo to next available slot (total photos will be:', updatedPhotos.length, ')');
-          } else {
-            // Replace the last photo (slot 4)
-            updatedPhotos = [...existingPhotos.slice(0, 3), newPhoto];
-            console.log('✅ Replaced photo in last slot (total photos remains 4)');
-          }
-          
-          // Update the existing quickcard with the new photo
-          updateVostcard({
-            photos: updatedPhotos,
-            updatedAt: new Date().toISOString()
-          });
-          
-          // Save the updated quickcard
-          console.log('💾 Saving updated quickcard:', lastQuickcard.title);
-          await saveLocalVostcard();
-          
-          // Clean up the temporary quickcard that was created in Step 2
-          if (tempQuickcardId && tempQuickcardId !== lastQuickcard.id) {
-            console.log('🗑️ Cleaning up temporary quickcard:', tempQuickcardId);
-            try {
-              await deletePrivateVostcard(tempQuickcardId);
-              console.log('✅ Temporary quickcard cleaned up');
-            } catch (error) {
-              console.warn('⚠️ Could not clean up temporary quickcard:', error);
-              // Don't fail the whole operation for cleanup issues
-            }
-          }
-          
-          console.log('✅ Photo added to existing quickcard:', lastQuickcard.title, '- navigating to Step 3');
-          navigate('/quickcard-step3');
-          
-        } catch (error) {
-          console.error('Error updating existing quickcard:', error);
-          alert('Failed to add photo to quickcard. Please try again.');
+      // Add current photos to the existing quickcard
+      const existingPhotos = currentVostcard?.photos || [];
+      const updatedPhotos = [...existingPhotos];
+      
+      // Add new photos up to 4 total
+      for (const photo of currentPhotos) {
+        if (updatedPhotos.length < 4) {
+          updatedPhotos.push(photo);
+        } else {
+          break; // Maximum 4 photos
         }
-      }, 200); // Give time for loadLocalVostcard to complete
+      }
+      
+      // Update the existing quickcard with the new photos
+      updateVostcard({
+        photos: updatedPhotos,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Save the updated quickcard
+      console.log('💾 Saving updated quickcard with', updatedPhotos.length, 'photos');
+      await saveLocalVostcard();
+      
+      console.log('✅ Photos added to existing quickcard - navigating to Step 3');
+      navigate('/quickcard-step3');
       
     } catch (error) {
       console.error('Error adding to last quickcard:', error);
