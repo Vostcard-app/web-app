@@ -339,15 +339,36 @@ export default function QuickcardStep2() {
       return;
     }
     
-    // Find the most recent quickcard with actual content, fallback to most recent
-    let lastQuickcard = userPosts.find(q => q.title && q.title.trim() !== '') || userPosts[0];
+    // Find the most recent quickcard with actual content, but exclude current one
+    // Filter out any quickcard that matches the current one (by ID or by being too new)
+    const availableQuickcards = userPosts.filter(q => {
+      // Exclude if IDs match
+      if (q.id === currentVostcard?.id) return false;
+      
+      // Exclude if it was created very recently (within last 30 seconds) as it might be the current one
+      const qTime = q.createdAt?.toDate ? q.createdAt.toDate().getTime() : new Date(q.createdAt).getTime();
+      const now = Date.now();
+      if (now - qTime < 30000) return false; // Exclude if created within last 30 seconds
+      
+      return true;
+    });
+    
+    let lastQuickcard = availableQuickcards.find(q => q.title && q.title.trim() !== '') || availableQuickcards[0];
     
     console.log('🔍 Selected quickcard for adding photo:', {
       selectedId: lastQuickcard?.id,
       selectedTitle: lastQuickcard?.title || '(no title)',
-      allQuickcards: userPosts.length,
+      totalQuickcards: userPosts.length,
+      availableQuickcards: availableQuickcards.length,
+      currentVostcardId: currentVostcard?.id,
       hasContent: !!(lastQuickcard?.title && lastQuickcard.title.trim() !== '')
     });
+    
+    // If no available quickcards after filtering, alert user
+    if (availableQuickcards.length === 0) {
+      alert('No existing quickcards available to add photos to. Complete this quickcard first, then create another one to use this feature.');
+      return;
+    }
     
     // If no quickcard has content, just go to step 3 without pre-populating
     if (!lastQuickcard || (!lastQuickcard.title || lastQuickcard.title.trim() === '')) {
