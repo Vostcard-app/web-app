@@ -105,10 +105,11 @@ export default function QuickcardStep2() {
       if (!user?.uid) return;
       
       try {
-        // Get user's quickcards (personal posts)
+        // Get user's quickcards from vostcards collection (they're stored there with isQuickcard: true)
         const quickcardsQuery = query(
-          collection(db, 'quickcards'),
+          collection(db, 'vostcards'),
           where('userID', '==', user.uid),
+          where('isQuickcard', '==', true),
           orderBy('createdAt', 'desc'),
           limit(10) // Get last 10 quickcards
         );
@@ -120,6 +121,7 @@ export default function QuickcardStep2() {
           type: 'quickcard'
         }));
         
+        console.log('🔍 Loaded quickcards:', quickcards.length, quickcards);
         setUserPosts(quickcards);
         
         // Load last used post from localStorage, or default to most recent quickcard
