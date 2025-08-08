@@ -338,7 +338,22 @@ export default function QuickcardStep2() {
       return;
     }
     
-    const lastQuickcard = userPosts[0]; // Most recent quickcard
+    // Find the most recent quickcard with actual content, fallback to most recent
+    let lastQuickcard = userPosts.find(q => q.title && q.title.trim() !== '') || userPosts[0];
+    
+    console.log('🔍 Selected quickcard for template:', {
+      selectedId: lastQuickcard?.id,
+      selectedTitle: lastQuickcard?.title || '(no title)',
+      allQuickcards: userPosts.length,
+      hasContent: !!(lastQuickcard?.title && lastQuickcard.title.trim() !== '')
+    });
+    
+    // If no quickcard has content, just go to step 3 without pre-populating
+    if (!lastQuickcard || (!lastQuickcard.title || lastQuickcard.title.trim() === '')) {
+      console.log('ℹ️ No quickcards with content found, going to step 3 without pre-population');
+      navigate('/quickcard-step3');
+      return;
+    }
     
     try {
       setIsAddingToPost(true);
@@ -348,10 +363,20 @@ export default function QuickcardStep2() {
       console.log('🔍 Current vostcard after save:', currentVostcard?.id, currentVostcard?.title);
       console.log('✅ Quickcard saved, now adding to last quickcard:', {
         title: lastQuickcard.title,
+        description: lastQuickcard.description,
+        categories: lastQuickcard.categories,
         id: lastQuickcard.id,
         createdAt: lastQuickcard.createdAt,
         fullObject: lastQuickcard
       });
+      
+      console.log('🔍 Available quickcards for selection:', userPosts.map(q => ({
+        id: q.id,
+        title: q.title || '(no title)',
+        description: q.description || '(no description)',
+        categories: q.categories || [],
+        createdAt: q.createdAt
+      })));
       
       // Logic to add quickcard to the last quickcard - populate current quickcard with target data
       localStorage.setItem('lastUsedPostId', lastQuickcard.id);
