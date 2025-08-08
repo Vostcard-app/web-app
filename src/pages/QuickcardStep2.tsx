@@ -353,11 +353,33 @@ export default function QuickcardStep2() {
         fullObject: lastQuickcard
       });
       
-      // Logic to add quickcard to the last quickcard (placeholder)
+      // Logic to add quickcard to the last quickcard - populate current quickcard with target data
       localStorage.setItem('lastUsedPostId', lastQuickcard.id);
-      alert(`Successfully added to "${lastQuickcard.title || 'Last Quickcard'}"!`);
       
-      // Navigate to step 3 with correct route
+      // Update current vostcard with data from the target quickcard
+      const updatedVostcard = {
+        ...currentVostcard,
+        title: lastQuickcard.title || '',
+        description: lastQuickcard.description || '',
+        categories: lastQuickcard.categories || [],
+        // Keep the current photos and other data from the just-created quickcard
+        photos: currentVostcard?.photos || [],
+        photoURLs: currentVostcard?.photoURLs || [],
+        _firebasePhotoURLs: currentVostcard?._firebasePhotoURLs || [],
+        geo: currentVostcard?.geo || { latitude: 0, longitude: 0 },
+        updatedAt: new Date().toISOString()
+      };
+      
+      console.log('🔄 Updating current vostcard with target quickcard data:', {
+        targetTitle: lastQuickcard.title,
+        targetDescription: lastQuickcard.description,
+        targetCategories: lastQuickcard.categories,
+        updatedVostcard
+      });
+      
+      updateVostcard(updatedVostcard);
+      
+      // Navigate to step 3 immediately with pre-populated data
       navigate('/quickcard-step3');
     } catch (error) {
       console.error('Error adding to last quickcard:', error);
