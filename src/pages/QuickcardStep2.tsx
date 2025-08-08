@@ -595,7 +595,7 @@ export default function QuickcardStep2() {
 
 
         {/* Add to Trip Section */}
-        <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
+        <div style={{ marginTop: 2, width: '100%', maxWidth: 380 }}>
           <label style={{
             fontSize: 16,
             fontWeight: 'bold',
