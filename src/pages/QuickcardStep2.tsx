@@ -118,14 +118,26 @@ export default function QuickcardStep2() {
         }));
         
         console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
+        console.log('🔍 First 5 vostcards details:', allUserVostcards.slice(0, 5).map(v => ({
+          id: v.id,
+          title: v.title || '(no title)',
+          isQuickcard: v.isQuickcard,
+          state: v.state,
+          visibility: v.visibility,
+          createdAt: v.createdAt
+        })));
         
-        // Filter quickcards client-side and get just the most recent one
-        const allQuickcards = allUserVostcards.filter(v => v.isQuickcard === true);
+        // Filter quickcards client-side and exclude the current one being created
+        const allQuickcards = allUserVostcards.filter(v => 
+          v.isQuickcard === true && 
+          v.id !== currentVostcard?.id // Exclude the current quickcard being created
+        );
         console.log('🔍 All quickcards before sorting:', allQuickcards.map(q => ({
-          title: q.title,
+          title: q.title || '(no title)',
           createdAt: q.createdAt,
           createdAtParsed: q.createdAt?.toDate ? q.createdAt.toDate() : new Date(q.createdAt),
-          id: q.id
+          id: q.id,
+          isQuickcard: q.isQuickcard
         })));
         
         const quickcards = allQuickcards
