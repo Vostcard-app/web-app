@@ -357,10 +357,9 @@ export default function QuickcardStep2() {
     
     try {
       setIsAddingToPost(true);
-      console.log('🔄 Saving quickcard before adding to last quickcard...');
-      console.log('🔍 Current vostcard before save:', currentVostcard?.id, currentVostcard?.title);
-      await saveLocalVostcard();
-      console.log('🔍 Current vostcard after save:', currentVostcard?.id, currentVostcard?.title);
+      console.log('🔄 Preparing to add to last quickcard (not saving yet)...');
+      console.log('🔍 Current vostcard before update:', currentVostcard?.id, currentVostcard?.title);
+      // Don't save yet - let user complete Step 3 first
       console.log('✅ Quickcard saved, now adding to last quickcard:', {
         title: lastQuickcard.title,
         description: lastQuickcard.description,
