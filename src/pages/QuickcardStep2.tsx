@@ -513,7 +513,7 @@ export default function QuickcardStep2() {
           fontWeight: 700,
           color: '#002B4D',
           textAlign: 'center',
-          marginBottom: 20,
+          marginBottom: 5,
           letterSpacing: '0.01em',
           paddingTop: '5px'
         }}>
@@ -532,7 +532,7 @@ export default function QuickcardStep2() {
           width: '100%',
           maxWidth: 240,
           justifyItems: 'center',
-          paddingTop: '5px'
+          paddingTop: '0px'
         }}>
           {selectedPhotos.map((photo, idx) => (
             <button
