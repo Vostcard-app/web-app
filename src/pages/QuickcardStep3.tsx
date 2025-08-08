@@ -77,7 +77,9 @@ const QuickcardStep3: React.FC = () => {
     firebasePhotoURLsCount: _firebasePhotoURLs.length,
     photosValid: validationState.hasPhotos,
     isQuickcard: true,
-    isReadyForMapPosting
+    isReadyForMapPosting,
+    currentVostcardId: currentVostcard?.id,
+    fullCurrentVostcard: currentVostcard
   });
 
   // Check Firebase Auth

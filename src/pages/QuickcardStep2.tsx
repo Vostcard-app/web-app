@@ -403,8 +403,12 @@ export default function QuickcardStep2() {
       
       updateVostcard(updatedVostcard);
       
-      // Navigate to step 3 immediately with pre-populated data
-      navigate('/quickcard-step3');
+      // Add a small delay to ensure context update completes before navigation
+      console.log('⏳ Waiting for context update to complete...');
+      setTimeout(() => {
+        console.log('✅ Context should be updated, navigating to Step 3');
+        navigate('/quickcard-step3');
+      }, 100);
     } catch (error) {
       console.error('Error adding to last quickcard:', error);
       alert('Failed to add to quickcard. Please try again.');
