@@ -120,8 +120,14 @@ export default function QuickcardStep2() {
         console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
         
         // Filter quickcards client-side and get just the most recent one
-        const quickcards = allUserVostcards
-          .filter(v => v.isQuickcard === true)
+        const allQuickcards = allUserVostcards.filter(v => v.isQuickcard === true);
+        console.log('🔍 All quickcards before sorting:', allQuickcards.map(q => ({
+          title: q.title,
+          createdAt: q.createdAt,
+          id: q.id
+        })));
+        
+        const quickcards = allQuickcards
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 1) // Only get the most recent quickcard
           .map(doc => ({
@@ -129,7 +135,11 @@ export default function QuickcardStep2() {
             type: 'quickcard'
           }));
         
-        console.log('🔍 Filtered quickcards client-side:', quickcards.length, quickcards);
+        console.log('🔍 Most recent quickcard selected:', quickcards[0] ? {
+          title: quickcards[0].title,
+          createdAt: quickcards[0].createdAt,
+          id: quickcards[0].id
+        } : 'No quickcards found');
         setUserPosts(quickcards);
         
       } catch (error) {
@@ -332,6 +342,9 @@ export default function QuickcardStep2() {
       // Logic to add quickcard to the last quickcard (placeholder)
       localStorage.setItem('lastUsedPostId', lastQuickcard.id);
       alert(`Successfully added to "${lastQuickcard.title || 'Last Quickcard'}"!`);
+      
+      // Navigate to step 3
+      navigate('/quickcard/step3');
     } catch (error) {
       console.error('Error adding to last quickcard:', error);
       alert('Failed to add to quickcard. Please try again.');
