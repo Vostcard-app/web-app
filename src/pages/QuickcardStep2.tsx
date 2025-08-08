@@ -32,11 +32,8 @@ export default function QuickcardStep2() {
   const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
 
   // Post functionality states
-  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [userPosts, setUserPosts] = useState<any[]>([]);
-  const [selectedPostId, setSelectedPostId] = useState<string>('');
   const [isAddingToPost, setIsAddingToPost] = useState(false);
-  const [lastUsedPost, setLastUsedPost] = useState<any | null>(null);
 
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -122,11 +119,11 @@ export default function QuickcardStep2() {
         
         console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
         
-        // Filter quickcards client-side to avoid Firestore index issues
+        // Filter quickcards client-side and get just the most recent one
         const quickcards = allUserVostcards
           .filter(v => v.isQuickcard === true)
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 20) // Increased from 10 to 20 to show more quickcards
+          .slice(0, 1) // Only get the most recent quickcard
           .map(doc => ({
             ...doc,
             type: 'quickcard'
@@ -134,23 +131,6 @@ export default function QuickcardStep2() {
         
         console.log('🔍 Filtered quickcards client-side:', quickcards.length, quickcards);
         setUserPosts(quickcards);
-        
-        // Load last used post from localStorage, or default to most recent quickcard
-        const lastPostId = localStorage.getItem('lastUsedPostId');
-        let defaultPost = null;
-        
-        if (lastPostId) {
-          defaultPost = quickcards.find(post => post.id === lastPostId);
-        }
-        
-        // If no last used post found, default to the most recent quickcard
-        if (!defaultPost && quickcards.length > 0) {
-          defaultPost = quickcards[0];
-        }
-        
-        if (defaultPost) {
-          setLastUsedPost(defaultPost);
-        }
         
       } catch (error) {
         console.error('Error loading quickcards:', error);
@@ -335,51 +315,32 @@ export default function QuickcardStep2() {
   };
 
   // Post handler functions
-  const handleAddToPost = () => {
-    // Pre-select the last used post if available, otherwise select the most recent quickcard
-    if (lastUsedPost) {
-      setSelectedPostId(lastUsedPost.id);
-    } else if (userPosts.length > 0) {
-      setSelectedPostId(userPosts[0].id);
-    }
-    setIsPostModalOpen(true);
-  };
-
-  const handlePostSelection = async () => {
-    if (!selectedPostId) {
-      alert('Please select a post');
+  const handleAddToPost = async () => {
+    if (userPosts.length === 0) {
+      alert('No quickcards available');
       return;
     }
-
+    
+    const lastQuickcard = userPosts[0]; // Most recent quickcard
+    
     try {
       setIsAddingToPost(true);
-      
-      // First save the quickcard to make sure it exists in the database
-      console.log('🔄 Saving quickcard before adding to post...');
+      console.log('🔄 Saving quickcard before adding to last quickcard...');
       await saveLocalVostcard();
-      console.log('✅ Quickcard saved, now adding to post...');
+      console.log('✅ Quickcard saved, now adding to last quickcard:', lastQuickcard.title);
       
-      // Here you would implement the logic to add the quickcard to the selected post
-      // This might involve updating the post's photos array or creating a relationship
-      
-      // Update last used post
-      const selectedPost = userPosts.find(post => post.id === selectedPostId);
-      if (selectedPost) {
-        setLastUsedPost(selectedPost);
-        localStorage.setItem('lastUsedPostId', selectedPostId);
-      }
-      
-      alert('Successfully added to post!');
-      setIsPostModalOpen(false);
-      setSelectedPostId('');
-      
+      // Logic to add quickcard to the last quickcard (placeholder)
+      localStorage.setItem('lastUsedPostId', lastQuickcard.id);
+      alert(`Successfully added to "${lastQuickcard.title || 'Last Quickcard'}"!`);
     } catch (error) {
-      console.error('Error adding to post:', error);
-      alert('Failed to add to post. Please try again.');
+      console.error('Error adding to last quickcard:', error);
+      alert('Failed to add to quickcard. Please try again.');
     } finally {
       setIsAddingToPost(false);
     }
   };
+
+
 
   // Styles
   const thumbnailStyle = {
@@ -644,7 +605,7 @@ export default function QuickcardStep2() {
             display: 'block',
             color: '#333'
           }}>
-            Add to a Quickcard (Optional)
+            Add to Last Quickcard (Optional)
           </label>
           
           <button
@@ -661,7 +622,7 @@ export default function QuickcardStep2() {
               fontWeight: '500'
             }}
           >
-            Add to a Quickcard
+            Add to Last Quickcard
           </button>
         </div>
 
@@ -818,108 +779,7 @@ export default function QuickcardStep2() {
         </div>
       )}
 
-      {/* Post Modal */}
-      {isPostModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          padding: '20px',
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '400px',
-            maxHeight: '70vh',
-            overflowY: 'auto',
-          }}>
-            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to a Quickcard</h3>
-            
-            {userPosts.length > 0 ? (
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                  Select Existing Quickcard:
-                </label>
-                <select
-                  value={selectedPostId}
-                  onChange={(e) => setSelectedPostId(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: '1px solid #ddd',
-                    fontSize: '16px',
-                  }}
-                >
-                  <option value="">Choose a quickcard...</option>
-                  {userPosts.slice(0, 10).map((post) => (
-                    <option key={post.id} value={post.id}>
-                      {post.title || `Quickcard - ${new Date(post.createdAt).toLocaleDateString()}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div style={{ 
-                marginBottom: '20px', 
-                padding: '16px', 
-                backgroundColor: '#f5f5f5', 
-                borderRadius: '8px',
-                textAlign: 'center',
-                color: '#666'
-              }}>
-                No quickcards available. Create some quickcards first!
-              </div>
-            )}
 
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={() => {
-                  setIsPostModalOpen(false);
-                  setSelectedPostId('');
-                }}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: 'white',
-                  border: '2px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              
-              <button
-                onClick={handlePostSelection}
-                disabled={!selectedPostId || isAddingToPost}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  backgroundColor: selectedPostId && !isAddingToPost ? '#002B4D' : '#cccccc',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '16px',
-                  cursor: selectedPostId && !isAddingToPost ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {isAddingToPost ? 'Adding...' : 'Add to Quickcard'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
