@@ -121,25 +121,18 @@ export default function QuickcardStep2() {
         }));
         
         console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
-        console.log('🔍 Quickcards in all vostcards:', allUserVostcards.filter(v => v.isQuickcard));
         
-        // Now try the specific quickcard query
-        const quickcardsQuery = query(
-          collection(db, 'vostcards'),
-          where('userID', '==', user.uid),
-          where('isQuickcard', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(10) // Get last 10 quickcards
-        );
+        // Filter quickcards client-side to avoid Firestore index issues
+        const quickcards = allUserVostcards
+          .filter(v => v.isQuickcard === true)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 20) // Increased from 10 to 20 to show more quickcards
+          .map(doc => ({
+            ...doc,
+            type: 'quickcard'
+          }));
         
-        const quickcardsSnapshot = await getDocs(quickcardsQuery);
-        const quickcards = quickcardsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'quickcard'
-        }));
-        
-        console.log('🔍 Filtered quickcards from query:', quickcards.length, quickcards);
+        console.log('🔍 Filtered quickcards client-side:', quickcards.length, quickcards);
         setUserPosts(quickcards);
         
         // Load last used post from localStorage, or default to most recent quickcard
@@ -868,7 +861,7 @@ export default function QuickcardStep2() {
                   }}
                 >
                   <option value="">Choose a quickcard...</option>
-                  {userPosts.slice(0, 3).map((post) => (
+                  {userPosts.slice(0, 10).map((post) => (
                     <option key={post.id} value={post.id}>
                       {post.title || `Quickcard - ${new Date(post.createdAt).toLocaleDateString()}`}
                     </option>
