@@ -104,34 +104,44 @@ export default function QuickcardStep2() {
       try {
         console.log('🔍 Starting to load quickcards for user:', user.uid);
         
-        // Query for user's quickcards
-        const quickcardsQuery = query(
+        // First, let's try a simpler query to see all user's vostcards
+        const allUserVostcardsQuery = query(
           collection(db, 'vostcards'),
           where('userID', '==', user.uid),
-          where('isQuickcard', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(10)
+          limit(20)
         );
         
-        const quickcardsSnapshot = await getDocs(quickcardsQuery);
-        const allQuickcards = quickcardsSnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }))
-          .filter(v => v.id !== currentVostcard?.id); // Exclude the current one being created
+        const allSnapshot = await getDocs(allUserVostcardsQuery);
+        const allUserVostcards = allSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         
-        console.log('🔍 Found quickcards:', allQuickcards.length);
-        console.log('🔍 Quickcard details:', allQuickcards.slice(0, 3).map(v => ({
+        console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
+        console.log('🔍 First 5 vostcards details:', allUserVostcards.slice(0, 5).map(v => ({
           id: v.id,
           title: v.title || '(no title)',
-          hasContent: !!(v.title && v.title.trim() !== ''),
+          isQuickcard: v.isQuickcard,
+          state: v.state,
+          visibility: v.visibility,
           createdAt: v.createdAt
         })));
+        
+        // Filter quickcards client-side and exclude the current one being created
+        const allQuickcards = allUserVostcards.filter(v => 
+          v.isQuickcard === true && 
+          v.id !== currentVostcard?.id
+        );
 
         
         const quickcards = allQuickcards
-          .slice(0, 5) // Get top 5 recent quickcards (already sorted by createdAt desc from query)
+          .sort((a, b) => {
+            // Handle Firebase Timestamps properly
+            const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+            const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+            return bTime - aTime;
+          })
+          .slice(0, 5) // Get top 5 recent quickcards so handleAddToPost can find one with content
           .map(doc => ({
             ...doc,
             type: 'quickcard'
