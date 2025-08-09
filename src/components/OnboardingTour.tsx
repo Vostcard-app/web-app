@@ -22,8 +22,8 @@ interface TourSlide {
 const tourSlides: TourSlide[] = [
   {
     id: 1,
-    title: "Welcome to Vōstcard!",
-    description: "Free Tours!\nWherever you go!",
+    title: "Free Tours!\nWherever you go!",
+    description: "",
     icon: (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
