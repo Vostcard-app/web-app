@@ -332,6 +332,12 @@ const HomeView = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [isLastPostLoading, setIsLastPostLoading] = useState(false);
+  const savedVostcardsRef = useRef(savedVostcards);
+  const postedVostcardsRef = useRef(postedVostcards);
+
+  useEffect(() => { savedVostcardsRef.current = savedVostcards; }, [savedVostcards]);
+  useEffect(() => { postedVostcardsRef.current = postedVostcards; }, [postedVostcards]);
 
   // Pagination and map-based loading state
   const [lastDoc, setLastDoc] = useState<any>(null);
@@ -1207,6 +1213,18 @@ const HomeView = () => {
     console.log('🔍 Loading last post from ALL posts (posted + personal)...');
     
     try {
+      setIsLastPostLoading(true);
+      // Show toast while loading
+      const toastEl = document.createElement('div');
+      toastEl.id = 'last-post-toast';
+      Object.assign(toastEl.style, {
+        position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)',
+        background: 'rgba(0,43,77,0.95)', color: '#fff', padding: '10px 14px', borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)', zIndex: '2002', fontSize: '14px', pointerEvents: 'none'
+      } as CSSStyleDeclaration);
+      toastEl.textContent = 'Loading your most recent post… this may take a moment';
+      document.body.appendChild(toastEl);
+
       // Load both personal and posted vostcards
       console.log('📱 Loading personal vostcards...');
       if (savedVostcards.length === 0) {
@@ -1271,7 +1289,7 @@ const HomeView = () => {
         try {
           const photoBlobs = await Promise.all(
             lastPost.photoURLs.map(async (url: string) => {
-              const response = await fetch(url);
+              const response = await fetch(url, { cache: 'no-store' });
               const blob = await response.blob();
               return blob;
             })
@@ -1300,6 +1318,10 @@ const HomeView = () => {
     } catch (error) {
       console.error('Error loading posts:', error);
       alert('Failed to load posts. Please try again.');
+    } finally {
+      setIsLastPostLoading(false);
+      const toast = document.getElementById('last-post-toast');
+      if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
     }
   };
 
