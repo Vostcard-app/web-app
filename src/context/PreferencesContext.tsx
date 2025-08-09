@@ -5,11 +5,31 @@ export interface UserPreferences {
   allowContactImport: boolean;
   allowGoogleContacts: boolean;
   allowNativeContacts: boolean;
+  // Map Filter Preferences
+  persistentFilters: {
+    enabled: boolean;
+    selectedCategories: string[];
+    selectedTypes: string[];
+    showFriendsOnly: boolean;
+    showCreatorsIFollow: boolean;
+    showGuidesOnly: boolean;
+  };
 }
 
 interface PreferencesContextType {
   preferences: UserPreferences;
   updatePreference: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => void;
+  updateFilterPreference: <K extends keyof UserPreferences['persistentFilters']>(
+    key: K, 
+    value: UserPreferences['persistentFilters'][K]
+  ) => void;
+  saveCurrentFiltersAsDefaults: (filters: {
+    selectedCategories: string[];
+    selectedTypes: string[];
+    showFriendsOnly: boolean;
+    showCreatorsIFollow: boolean;
+    showGuidesOnly: boolean;
+  }) => void;
   resetPreferences: () => void;
 }
 
@@ -18,6 +38,14 @@ const defaultPreferences: UserPreferences = {
   allowContactImport: false,
   allowGoogleContacts: false,
   allowNativeContacts: false,
+  persistentFilters: {
+    enabled: false, // Default to disabled so users opt-in
+    selectedCategories: [],
+    selectedTypes: [],
+    showFriendsOnly: false,
+    showCreatorsIFollow: false,
+    showGuidesOnly: true, // This was the existing default
+  },
 };
 
 const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
@@ -69,6 +97,35 @@ export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({ childr
     }));
   };
 
+  const updateFilterPreference = <K extends keyof UserPreferences['persistentFilters']>(
+    key: K,
+    value: UserPreferences['persistentFilters'][K]
+  ) => {
+    setPreferences(prev => ({
+      ...prev,
+      persistentFilters: {
+        ...prev.persistentFilters,
+        [key]: value
+      }
+    }));
+  };
+
+  const saveCurrentFiltersAsDefaults = (filters: {
+    selectedCategories: string[];
+    selectedTypes: string[];
+    showFriendsOnly: boolean;
+    showCreatorsIFollow: boolean;
+    showGuidesOnly: boolean;
+  }) => {
+    setPreferences(prev => ({
+      ...prev,
+      persistentFilters: {
+        ...prev.persistentFilters,
+        ...filters
+      }
+    }));
+  };
+
   const resetPreferences = () => {
     setPreferences(defaultPreferences);
   };
@@ -78,6 +135,8 @@ export const PreferencesProvider: React.FC<PreferencesProviderProps> = ({ childr
       value={{
         preferences,
         updatePreference,
+        updateFilterPreference,
+        saveCurrentFiltersAsDefaults,
         resetPreferences,
       }}
     >

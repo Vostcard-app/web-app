@@ -1,13 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaAddressBook, FaToggleOn, FaToggleOff, FaGoogle, FaPhone, FaExclamationTriangle } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaAddressBook, FaToggleOn, FaToggleOff, FaGoogle, FaPhone, FaExclamationTriangle, FaFilter, FaSave, FaUndo } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { usePreferences } from '../context/PreferencesContext';
 
 const PreferencesView: React.FC = () => {
   const navigate = useNavigate();
   const { user, username } = useAuth();
-  const { preferences, updatePreference } = usePreferences();
+  const { preferences, updatePreference, updateFilterPreference } = usePreferences();
+
+  // Import category and type constants
+  const AVAILABLE_CATEGORIES = ['Restaurants', 'Attractions', 'Entertainment', 'Shopping', 'Services', 'Outdoors', 'Nightlife', 'Hotels'];
+  const AVAILABLE_TYPES = ['Vostcard', 'Quickcard', 'Guide', 'Offer'];
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -206,6 +210,210 @@ const PreferencesView: React.FC = () => {
                 >
                   {preferences.allowNativeContacts ? <FaToggleOn /> : <FaToggleOff />}
                 </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Persistent Filters Section */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            <FaFilter size={24} color="#07345c" />
+            <h2 style={{ margin: 0, color: '#333', fontSize: '20px' }}>Map Filters</h2>
+          </div>
+
+          <p style={{ 
+            margin: '0 0 20px 0', 
+            color: '#666', 
+            fontSize: '14px',
+            lineHeight: '1.5'
+          }}>
+            Save your preferred map filters so they persist between app sessions.
+          </p>
+
+          {/* Master Filter Toggle */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            marginBottom: '12px'
+          }}>
+            <div>
+              <div style={{ fontWeight: '600', color: '#333', marginBottom: '4px' }}>
+                Enable Persistent Filters
+              </div>
+              <div style={{ fontSize: '13px', color: '#666' }}>
+                Remember your filter preferences when you return to the map
+              </div>
+            </div>
+            <button
+              onClick={() => updateFilterPreference('enabled', !preferences.persistentFilters.enabled)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: preferences.persistentFilters.enabled ? '#28a745' : '#6c757d',
+                fontSize: '24px'
+              }}
+            >
+              {preferences.persistentFilters.enabled ? <FaToggleOn /> : <FaToggleOff />}
+            </button>
+          </div>
+
+          {/* Filter Options (only show if persistent filters are enabled) */}
+          {preferences.persistentFilters.enabled && (
+            <div style={{ paddingLeft: '16px', borderLeft: '3px solid #e9ecef' }}>
+              
+              {/* Content Types */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  Content Types
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                  {AVAILABLE_TYPES.map(type => (
+                    <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id={`pref-type-${type}`}
+                        checked={preferences.persistentFilters.selectedTypes.includes(type)}
+                        onChange={(e) => {
+                          const currentTypes = preferences.persistentFilters.selectedTypes;
+                          if (e.target.checked) {
+                            updateFilterPreference('selectedTypes', [...currentTypes, type]);
+                          } else {
+                            updateFilterPreference('selectedTypes', currentTypes.filter(t => t !== type));
+                          }
+                        }}
+                        style={{ 
+                          width: '16px', 
+                          height: '16px',
+                          minWidth: '16px',
+                          minHeight: '16px',
+                          flexShrink: 0,
+                          margin: 0
+                        }}
+                      />
+                      <label htmlFor={`pref-type-${type}`} style={{ fontSize: '14px', color: '#333' }}>
+                        {type}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Categories */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  Categories
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                  {AVAILABLE_CATEGORIES.map(category => (
+                    <div key={category} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id={`pref-category-${category}`}
+                        checked={preferences.persistentFilters.selectedCategories.includes(category)}
+                        onChange={(e) => {
+                          const currentCategories = preferences.persistentFilters.selectedCategories;
+                          if (e.target.checked) {
+                            updateFilterPreference('selectedCategories', [...currentCategories, category]);
+                          } else {
+                            updateFilterPreference('selectedCategories', currentCategories.filter(c => c !== category));
+                          }
+                        }}
+                        style={{ 
+                          width: '16px', 
+                          height: '16px',
+                          minWidth: '16px',
+                          minHeight: '16px',
+                          flexShrink: 0,
+                          margin: 0
+                        }}
+                      />
+                      <label htmlFor={`pref-category-${category}`} style={{ fontSize: '14px', color: '#333' }}>
+                        {category}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Who Filters */}
+              <div style={{ marginBottom: '12px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  Who
+                </h4>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      id="pref-friends-only"
+                      checked={preferences.persistentFilters.showFriendsOnly}
+                      onChange={(e) => updateFilterPreference('showFriendsOnly', e.target.checked)}
+                      style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        minWidth: '16px',
+                        minHeight: '16px',
+                        flexShrink: 0,
+                        margin: 0
+                      }}
+                    />
+                    <label htmlFor="pref-friends-only" style={{ fontSize: '14px', color: '#333' }}>
+                      Show only friends' posts
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      id="pref-creators-follow"
+                      checked={preferences.persistentFilters.showCreatorsIFollow}
+                      onChange={(e) => updateFilterPreference('showCreatorsIFollow', e.target.checked)}
+                      style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        minWidth: '16px',
+                        minHeight: '16px',
+                        flexShrink: 0,
+                        margin: 0
+                      }}
+                    />
+                    <label htmlFor="pref-creators-follow" style={{ fontSize: '14px', color: '#333' }}>
+                      Creators I follow
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      id="pref-guides-only"
+                      checked={preferences.persistentFilters.showGuidesOnly}
+                      onChange={(e) => updateFilterPreference('showGuidesOnly', e.target.checked)}
+                      style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        minWidth: '16px',
+                        minHeight: '16px',
+                        flexShrink: 0,
+                        margin: 0
+                      }}
+                    />
+                    <label htmlFor="pref-guides-only" style={{ fontSize: '14px', color: '#333' }}>
+                      Show only guides
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -9,6 +9,7 @@ import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { useDriveMode } from '../context/DriveModeContext';
+import { usePreferences } from '../context/PreferencesContext';
 import { db, auth } from '../firebase/firebaseConfig';
 import { collection, getDocs, query, where, doc, updateDoc, getDoc, limit, orderBy, startAfter } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -287,12 +288,26 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [singleVostcard, setSingleVostcard] = useState<any>(null);
   const [browseLocation, setBrowseLocation] = useState<any>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [showFriendsOnly, setShowFriendsOnly] = useState(false);
-  const [showCreatorsIFollow, setShowCreatorsIFollow] = useState(false);
+  const { preferences } = usePreferences();
+  
+  // Initialize filter states from preferences or defaults
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
+    return preferences.persistentFilters.enabled ? preferences.persistentFilters.selectedCategories : [];
+  });
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(() => {
+    return preferences.persistentFilters.enabled ? preferences.persistentFilters.selectedTypes : [];
+  });
+  const [showFriendsOnly, setShowFriendsOnly] = useState(() => {
+    return preferences.persistentFilters.enabled ? preferences.persistentFilters.showFriendsOnly : false;
+  });
+  const [showCreatorsIFollow, setShowCreatorsIFollow] = useState(() => {
+    return preferences.persistentFilters.enabled ? preferences.persistentFilters.showCreatorsIFollow : false;
+  });
   const [showGuidesOnly, setShowGuidesOnly] = useState(() => {
-    // Load persisted state from localStorage, default to true (Guides only enabled)
+    if (preferences.persistentFilters.enabled) {
+      return preferences.persistentFilters.showGuidesOnly;
+    }
+    // Fallback to old localStorage for backward compatibility
     const saved = localStorage.getItem('homeView_showGuidesOnly');
     return saved ? JSON.parse(saved) : true;
   });
@@ -413,6 +428,17 @@ const HomeView = () => {
   useEffect(() => {
     singleVostcardRef.current = singleVostcard;
   }, [singleVostcard]);
+
+  // Update filter states when preferences change
+  useEffect(() => {
+    if (preferences.persistentFilters.enabled) {
+      setSelectedCategories(preferences.persistentFilters.selectedCategories);
+      setSelectedTypes(preferences.persistentFilters.selectedTypes);
+      setShowFriendsOnly(preferences.persistentFilters.showFriendsOnly);
+      setShowCreatorsIFollow(preferences.persistentFilters.showCreatorsIFollow);
+      setShowGuidesOnly(preferences.persistentFilters.showGuidesOnly);
+    }
+  }, [preferences.persistentFilters]);
 
   // Handle target quickcard from navigation - center map but show all content
   useEffect(() => {
