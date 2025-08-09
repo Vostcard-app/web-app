@@ -2222,7 +2222,6 @@ const HomeView = () => {
                 minWidth: '0'
               }} 
               onClick={() => {
-                alert('❓ Help button clicked!');
                 setShowHelpMenu(!showHelpMenu);
               }}
             >
@@ -2445,7 +2444,6 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
-                  alert('🔍 Filters button clicked!');
                   console.log('🔍 Filters button clicked!');
                   setShowHelpMenu(false);
                   console.log('🔍 Navigating to /help/filters');
@@ -2475,7 +2473,6 @@ const HomeView = () => {
               
               <button
                 onClick={() => {
-                  alert('📷 Create Cards button clicked!');
                   console.log('📷 Create Cards button clicked!');
                   setShowHelpMenu(false);
                   console.log('📷 Navigating to /help/create-cards');
