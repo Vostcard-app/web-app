@@ -140,6 +140,27 @@ const TripDetailView: React.FC = () => {
       
       console.log(`✅ Loaded trip: ${tripData.name} with ${tripData.items.length} items`);
 
+      // ✅ Automatically cleanup trip if there are issues (duplicates or deleted items)
+      if (tripData) {
+        const issues = checkTripIssues(tripData);
+        if (issues.duplicates > 0 || issues.deleted > 0) {
+          console.log(`🧹 Auto-cleanup: Found ${issues.duplicates} duplicates and ${issues.deleted} deleted items`);
+          
+          try {
+            await autoCleanupTrip(tripData);
+            console.log('✅ Auto-cleanup completed successfully');
+            
+            // Reload the trip to get the cleaned data
+            const cleanedTripData = await TripService.getTripById(id!);
+            setTrip(cleanedTripData);
+            console.log(`✅ Reloaded cleaned trip: ${cleanedTripData.items.length} items remaining`);
+          } catch (cleanupError) {
+            console.warn('⚠️ Auto-cleanup failed, trip loaded but with issues:', cleanupError);
+            // Don't fail the entire load if cleanup fails, just log the warning
+          }
+        }
+      }
+
     } catch (err) {
       console.error('❌ Error loading trip:', err);
       setError('Failed to load trip. Please try again.');
@@ -262,12 +283,16 @@ const TripDetailView: React.FC = () => {
   // ✅ Check for issues in the trip (for cleanup button)
   const getTripIssues = () => {
     if (!trip) return { duplicates: 0, deleted: 0 };
-    
+    return checkTripIssues(trip);
+  };
+
+  // ✅ Helper function to check trip issues (reusable)
+  const checkTripIssues = (tripData: Trip) => {
     const seen = new Set<string>();
     let duplicates = 0;
     let deleted = 0;
     
-    trip.items.forEach(item => {
+    tripData.items.forEach(item => {
       const itemKey = `${item.vostcardID}-${item.type}`;
       if (seen.has(itemKey)) {
         duplicates++;
@@ -282,6 +307,43 @@ const TripDetailView: React.FC = () => {
     });
     
     return { duplicates, deleted };
+  };
+
+  // ✅ Auto-cleanup function (reusable version of cleanupTrip)
+  const autoCleanupTrip = async (tripData: Trip) => {
+    if (!tripData || !id) return;
+    
+    // Find unique items (remove duplicates) and existing items
+    const seen = new Set<string>();
+    const validItems: TripItem[] = [];
+    
+    for (const item of tripData.items) {
+      const itemKey = `${item.vostcardID}-${item.type}`;
+      
+      // Skip duplicates
+      if (seen.has(itemKey)) {
+        console.log(`🗑️ Auto-cleanup: Removing duplicate ${item.type}: ${item.title}`);
+        continue;
+      }
+      
+      // Skip deleted items  
+      const status = itemsStatus.get(item.vostcardID);
+      if (status && !status.loading && !status.exists) {
+        console.log(`🗑️ Auto-cleanup: Removing deleted ${item.type}: ${item.title}`);
+        continue;
+      }
+      
+      seen.add(itemKey);
+      validItems.push(item);
+    }
+    
+    // Update trip with cleaned items
+    if (validItems.length !== tripData.items.length) {
+      await TripService.updateTrip(id, {
+        items: validItems
+      });
+      console.log(`🧹 Auto-cleanup: Cleaned ${tripData.items.length - validItems.length} items from trip`);
+    }
   };
 
 
@@ -773,10 +835,11 @@ ${shareUrl}`;
           </div>
           
           <div style={{ display: 'flex', gap: '8px' }}>
-            {/* ✅ Cleanup button if there are issues */}
+            {/* ✅ Manual cleanup button (hidden since auto-cleanup is enabled) */}
             {(() => {
               const issues = getTripIssues();
-              if (issues.duplicates > 0 || issues.deleted > 0) {
+              // Hidden since auto-cleanup runs automatically when loading trips
+              if (false && (issues.duplicates > 0 || issues.deleted > 0)) {
                 return (
                   <button
                     onClick={cleanupTrip}
