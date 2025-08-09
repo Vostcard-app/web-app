@@ -1074,32 +1074,6 @@ const VostboxView: React.FC = () => {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Compose Button */}
-          <button
-            onClick={() => setShowComposeModal(true)}
-            style={{
-              backgroundColor: '#6B4D9B',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '600',
-              gap: '6px',
-              boxShadow: '0 2px 6px rgba(107,77,155,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5a4285'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6B4D9B'}
-          >
-            <FaEdit size={14} />
-            Compose
-          </button>
-          
           {/* Home Button */}
         <button
           onClick={() => navigate('/home')}
@@ -1251,6 +1225,37 @@ const VostboxView: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Compose Button below tabs (messages view only) */}
+      {currentView === 'messages' && (
+        <div style={{
+          backgroundColor: 'white',
+          padding: '12px 16px',
+          borderBottom: '1px solid #eee'
+        }}>
+          <button
+            onClick={() => setShowComposeModal(true)}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              width: '100%',
+              justifyContent: 'center'
+            }}
+          >
+            <FaEdit size={14} />
+            Compose
+          </button>
+        </div>
+      )}
 
       {/* Add Friend Button (only show in friends view) */}
       {currentView === 'friends' && (
