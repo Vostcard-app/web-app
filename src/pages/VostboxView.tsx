@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaInbox, FaPaperPlane, FaEnvelope, FaEnvelopeOpen, FaTrash, FaReply, FaPlay, FaImage, FaUser, FaHome } from 'react-icons/fa';
+import { FaArrowLeft, FaInbox, FaPaperPlane, FaEnvelope, FaEnvelopeOpen, FaTrash, FaReply, FaPlay, FaImage, FaUser, FaHome, FaEdit } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import { UserFriendService } from '../services/userFriendService';
 import { type VostboxMessage } from '../types/FriendModels';
+import ComposePrivateMessageModal from '../components/ComposePrivateMessageModal';
 
 const VostboxView: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ const VostboxView: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedMessage, setSelectedMessage] = useState<VostboxMessage | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [showComposeModal, setShowComposeModal] = useState(false);
 
   useEffect(() => {
     if (user?.uid) {
@@ -514,7 +516,34 @@ const VostboxView: React.FC = () => {
           )}
         </div>
         
-        {/* Home Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Compose Button */}
+          <button
+            onClick={() => setShowComposeModal(true)}
+            style={{
+              backgroundColor: '#6B4D9B',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '600',
+              gap: '6px',
+              boxShadow: '0 2px 6px rgba(107,77,155,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5a4285'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6B4D9B'}
+          >
+            <FaEdit size={14} />
+            Compose
+          </button>
+          
+          {/* Home Button */}
         <button
           onClick={() => navigate('/home')}
           style={{
@@ -531,6 +560,7 @@ const VostboxView: React.FC = () => {
         >
           <FaHome size={40} color="white" />
         </button>
+        </div>
       </div>
 
       {/* Tab Navigation */}
@@ -579,6 +609,16 @@ const VostboxView: React.FC = () => {
 
       {/* Message Detail Modal */}
       {renderMessageDetail()}
+      
+      {/* Compose Private Message Modal */}
+      <ComposePrivateMessageModal
+        isOpen={showComposeModal}
+        onClose={() => {
+          setShowComposeModal(false);
+          // Refresh the vostbox data when modal closes (in case messages were sent)
+          loadVostboxData();
+        }}
+      />
     </div>
   );
 };
