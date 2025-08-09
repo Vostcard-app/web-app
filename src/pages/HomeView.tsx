@@ -1305,12 +1305,24 @@ const HomeView = () => {
       if (lastPost.photoURLs && lastPost.photoURLs.length > 0 && (!lastPost.photos || lastPost.photos.length === 0)) {
         console.log('🔄 Converting posted vostcard photoURLs to Blobs for editing...');
         try {
+          const fetchBlobWithRetry = async (url: string, retries = 3): Promise<Blob> => {
+            let lastError: any;
+            for (let attempt = 0; attempt < retries; attempt++) {
+              try {
+                const cacheBust = url.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
+                const response = await fetch(url + cacheBust, { cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.blob();
+              } catch (err) {
+                lastError = err;
+                await new Promise((r) => setTimeout(r, 200 + attempt * 200));
+              }
+            }
+            throw lastError;
+          };
+
           const photoBlobs = await Promise.all(
-            lastPost.photoURLs.map(async (url: string) => {
-              const response = await fetch(url, { cache: 'no-store' });
-              const blob = await response.blob();
-              return blob;
-            })
+            lastPost.photoURLs.map(async (url: string) => fetchBlobWithRetry(url))
           );
           
           lastPost.photos = photoBlobs;
@@ -1323,6 +1335,8 @@ const HomeView = () => {
       
       // Use the same logic as handleEdit from MyVostcardListView
       setCurrentVostcard(lastPost);
+      // Ensure context consumers see the update before navigation
+      await new Promise((resolve) => setTimeout(resolve, 60));
       
       // Route to appropriate editing interface based on content type
       if (lastPost.isQuickcard) {
