@@ -1176,47 +1176,43 @@ const HomeView = () => {
     e.preventDefault();
     console.log('🔍 Loading last post...');
     
-    try {
-      // Query for user's posts (without orderBy to avoid composite index requirement)
-      const userPostsQuery = query(
-        collection(db, 'vostcards'),
-        where('userID', '==', user?.uid),
-        limit(20) // Get recent posts and sort client-side
-      );
-      
-      const snapshot = await getDocs(userPostsQuery);
-      
-      if (snapshot.empty) {
-        alert('No posts found. Create your first post!');
-        return;
-      }
-      
-      // Sort client-side to find most recent
-      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const sortedPosts = posts.sort((a, b) => {
-        const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
-        const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
-        return bTime - aTime; // Most recent first
-      });
-      
-      const lastPost = sortedPosts[0];
-      console.log('🔍 Found last post:', lastPost);
-      
-      // Load the post into context
-      setCurrentVostcard(lastPost);
-      
-      // Route based on post type
-      if (lastPost.isQuickcard) {
-        console.log('📱 Last post is a quickcard, going to photo step');
-        navigate('/quickcard-step2');
-      } else {
-        console.log('🎬 Last post is a vostcard, going to step 2');
-        navigate('/create-step2');
-      }
-      
-    } catch (error) {
-      console.error('Error loading last post:', error);
-      alert('Failed to load last post. Please try again.');
+    // Make sure we have loaded local vostcards first
+    if (savedVostcards.length === 0) {
+      console.log('📱 No saved vostcards loaded, loading them first...');
+      await loadAllLocalVostcardsImmediate();
+    }
+    
+    if (savedVostcards.length === 0) {
+      alert('No posts found. Create your first post!');
+      return;
+    }
+    
+    // Sort savedVostcards by creation date to find most recent
+    const sortedPosts = [...savedVostcards].sort((a, b) => {
+      const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+      const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+      return bTime - aTime; // Most recent first
+    });
+    
+    const lastPost = sortedPosts[0];
+    console.log('🔍 Found last post from savedVostcards:', {
+      id: lastPost.id,
+      title: lastPost.title,
+      isQuickcard: lastPost.isQuickcard,
+      hasPhotos: !!lastPost.photos?.length,
+      photoCount: lastPost.photos?.length || 0
+    });
+    
+    // Use the same logic as handleEdit from MyVostcardListView
+    setCurrentVostcard(lastPost);
+    
+    // Route to appropriate editing interface based on content type
+    if (lastPost.isQuickcard) {
+      console.log('🔄 Editing quickcard:', lastPost.id);
+      navigate('/quickcard-step2'); // Start with photo editing, then proceed to step 3
+    } else {
+      console.log('🔄 Editing regular vostcard:', lastPost.id);
+      navigate('/create-step2'); // Route to video/recording step
     }
   };
 
