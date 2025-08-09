@@ -25,41 +25,14 @@ const tourSlides: TourSlide[] = [
     title: "Welcome to Vōstcard!",
     description: "Free tours wherever you go!",
     icon: (
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px'
-      }}>
-        <img 
-          src={VostcardPin} 
-          alt="Vostcard Pin" 
-          style={{ width: '64px', height: '64px' }} 
-        />
-        <img 
-          src={OfferPin} 
-          alt="Offer Pin" 
-          style={{ width: '64px', height: '64px' }} 
-        />
-        <img 
-          src={GuidePin} 
-          alt="Guide Pin" 
-          style={{ width: '64px', height: '64px' }} 
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img
+          src={GuidePin}
+          alt="Guide Pin"
+          style={{ width: '128px', height: '128px' }}
         />
       </div>
-    ),
-    features: [
-      {
-        icon: (
-          <img 
-            src={GuidePin} 
-            alt="Guide Pin" 
-            style={{ width: '128px', height: '128px', flexShrink: 0 }} 
-          />
-        ),
-        text: "Points of interest made by professionals"
-      }
-    ]
+    )
   },
   {
     id: 2,
