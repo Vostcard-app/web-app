@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaAddressBook, FaToggleOn, FaToggleOff, FaGoogle, FaPhone, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
+import { usePreferences } from '../context/PreferencesContext';
 
 const PreferencesView: React.FC = () => {
   const navigate = useNavigate();
   const { user, username } = useAuth();
+  const { preferences, updatePreference } = usePreferences();
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -62,33 +64,167 @@ const PreferencesView: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div style={{ padding: '20px' }}>
+      <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
+        
+        {/* Contact Access Section */}
         <div style={{
           backgroundColor: 'white',
           borderRadius: '12px',
           padding: '24px',
+          marginBottom: '20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            <FaAddressBook size={24} color="#07345c" />
+            <h2 style={{ margin: 0, color: '#333', fontSize: '20px' }}>Contact Access</h2>
+          </div>
+
+          {/* iOS Notification Warning */}
+          {preferences.contactAccessEnabled && (
+            <div style={{
+              backgroundColor: '#fff3cd',
+              border: '1px solid #ffeaa7',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <FaExclamationTriangle color="#856404" />
+              <div style={{ fontSize: '14px', color: '#856404' }}>
+                <strong>Note:</strong> Enabling contact access may show "From X Contacts" notifications in iOS Safari.
+              </div>
+            </div>
+          )}
+
+          <p style={{ 
+            margin: '0 0 20px 0', 
+            color: '#666', 
+            fontSize: '14px',
+            lineHeight: '1.5'
+          }}>
+            Control whether Vōstcard can access your device contacts for inviting friends and sharing content.
+          </p>
+
+          {/* Master Contact Toggle */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '16px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            marginBottom: '12px'
+          }}>
+            <div>
+              <div style={{ fontWeight: '600', color: '#333', marginBottom: '4px' }}>
+                Enable Contact Access
+              </div>
+              <div style={{ fontSize: '13px', color: '#666' }}>
+                Allow the app to access your contacts for friend invitations
+              </div>
+            </div>
+            <button
+              onClick={() => updatePreference('contactAccessEnabled', !preferences.contactAccessEnabled)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: preferences.contactAccessEnabled ? '#28a745' : '#6c757d',
+                fontSize: '24px'
+              }}
+            >
+              {preferences.contactAccessEnabled ? <FaToggleOn /> : <FaToggleOff />}
+            </button>
+          </div>
+
+          {/* Sub-options (only show if master toggle is enabled) */}
+          {preferences.contactAccessEnabled && (
+            <div style={{ paddingLeft: '16px', borderLeft: '3px solid #e9ecef' }}>
+              
+              {/* Google Contacts */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 0',
+                borderBottom: '1px solid #f0f0f0'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FaGoogle size={16} color="#4285f4" />
+                  <div>
+                    <div style={{ fontWeight: '500', color: '#333', fontSize: '14px' }}>
+                      Google Contacts
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      Import contacts from your Google account
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updatePreference('allowGoogleContacts', !preferences.allowGoogleContacts)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: preferences.allowGoogleContacts ? '#28a745' : '#6c757d',
+                    fontSize: '20px'
+                  }}
+                >
+                  {preferences.allowGoogleContacts ? <FaToggleOn /> : <FaToggleOff />}
+                </button>
+              </div>
+
+              {/* Native Contacts */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 0'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FaPhone size={16} color="#07345c" />
+                  <div>
+                    <div style={{ fontWeight: '500', color: '#333', fontSize: '14px' }}>
+                      Device Contacts
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      Access contacts stored on your device
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => updatePreference('allowNativeContacts', !preferences.allowNativeContacts)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: preferences.allowNativeContacts ? '#28a745' : '#6c757d',
+                    fontSize: '20px'
+                  }}
+                >
+                  {preferences.allowNativeContacts ? <FaToggleOn /> : <FaToggleOff />}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Future Settings Placeholder */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '20px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔧</div>
-          <h2 style={{ margin: '0 0 16px 0', color: '#333' }}>Preferences</h2>
-          <p style={{ 
-            margin: '0 0 24px 0', 
-            color: '#666', 
-            fontSize: '16px',
-            lineHeight: '1.5'
-          }}>
-            Welcome to your preferences, {username || 'User'}! 
-            <br />
-            This section will be wired up with your personalization settings soon.
-          </p>
-          
           <div style={{
             backgroundColor: '#f8f9fa',
             border: '2px dashed #dee2e6',
             borderRadius: '8px',
-            padding: '20px',
-            margin: '20px 0'
+            padding: '20px'
           }}>
             <p style={{ 
               margin: 0, 
@@ -96,10 +232,13 @@ const PreferencesView: React.FC = () => {
               fontSize: '14px',
               fontStyle: 'italic'
             }}>
-              🚧 Coming Soon: User preferences and customization options will be added here
+              🚧 More preferences and customization options coming soon
             </p>
           </div>
+        </div>
 
+        {/* Back Button */}
+        <div style={{ textAlign: 'center' }}>
           <button
             onClick={() => navigate('/home')}
             style={{

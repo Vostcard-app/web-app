@@ -1,5 +1,24 @@
 import { v4 as uuidv4 } from 'uuid';
 
+// Helper to get preferences (since we can't use hooks in a service)
+const getUserPreferences = () => {
+  try {
+    const stored = localStorage.getItem('vostcard_user_preferences');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load user preferences:', error);
+  }
+  
+  // Default to disabled for privacy
+  return {
+    contactAccessEnabled: false,
+    allowGoogleContacts: false,
+    allowNativeContacts: false,
+  };
+};
+
 export interface ImportedContact {
   id: string;
   name: string;
@@ -12,6 +31,12 @@ export class ContactImportService {
   // Google Contacts API integration
   static async importFromGoogle(): Promise<ImportedContact[]> {
     try {
+      // Check user preferences first
+      const preferences = getUserPreferences();
+      if (!preferences.contactAccessEnabled || !preferences.allowGoogleContacts) {
+        throw new Error('Google Contacts access is disabled in user preferences. Please enable it in Settings → Preferences.');
+      }
+
       // Check if credentials are available
       const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -52,6 +77,12 @@ export class ContactImportService {
   // Native Contact Picker API (existing functionality)
   static async importFromNative(): Promise<ImportedContact[]> {
     try {
+      // Check user preferences first
+      const preferences = getUserPreferences();
+      if (!preferences.contactAccessEnabled || !preferences.allowNativeContacts) {
+        throw new Error('Device Contacts access is disabled in user preferences. Please enable it in Settings → Preferences.');
+      }
+
       if ('contacts' in navigator && 'select' in (navigator as any).contacts) {
         const contacts = await (navigator as any).contacts.select(['name', 'email', 'tel'], { multiple: true });
         
