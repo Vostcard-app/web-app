@@ -1202,11 +1202,25 @@ const HomeView = () => {
         return;
       }
       
+      // Debug: Log all posts with their timestamps before sorting
+      console.log('🔍 All posts before sorting:');
+      allPosts.forEach((post, index) => {
+        const timestamp = post.createdAt?.toDate ? post.createdAt.toDate().getTime() : new Date(post.createdAt).getTime();
+        console.log(`  ${index + 1}. ${post.title || 'Untitled'} (${post.isQuickcard ? 'Quickcard' : 'Vostcard'}) - ${new Date(timestamp).toLocaleString()} - ${timestamp}`);
+      });
+      
       // Sort ALL posts by creation date to find the absolute most recent
       const sortedPosts = allPosts.sort((a, b) => {
         const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
         const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
         return bTime - aTime; // Most recent first
+      });
+      
+      // Debug: Log sorted posts
+      console.log('🔍 Posts after sorting (most recent first):');
+      sortedPosts.slice(0, 3).forEach((post, index) => {
+        const timestamp = post.createdAt?.toDate ? post.createdAt.toDate().getTime() : new Date(post.createdAt).getTime();
+        console.log(`  ${index + 1}. ${post.title || 'Untitled'} (${post.isQuickcard ? 'Quickcard' : 'Vostcard'}) - ${new Date(timestamp).toLocaleString()} - ${timestamp}`);
       });
       
       const lastPost = sortedPosts[0];
@@ -1219,7 +1233,8 @@ const HomeView = () => {
         isPosted: lastPost.state === 'posted' || lastPost.visibility === 'public',
         hasPhotos: !!lastPost.photos?.length,
         photoCount: lastPost.photos?.length || 0,
-        createdAt: lastPost.createdAt
+        createdAt: lastPost.createdAt,
+        timestamp: lastPost.createdAt?.toDate ? lastPost.createdAt.toDate().getTime() : new Date(lastPost.createdAt).getTime()
       });
       
       // If this is a posted vostcard, we need to convert photoURLs back to Blob objects for editing
