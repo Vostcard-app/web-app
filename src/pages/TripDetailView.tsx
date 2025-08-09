@@ -895,49 +895,7 @@ ${shareUrl}`;
               return null;
             })()}
             
-            {/* Add Post Button - Only show for trip owner */}
-            {user && trip && user.uid === trip.userID && (
-              <button
-                onClick={handleOpenAddPostModal}
-                style={{
-                  background: 'rgba(76, 175, 80, 0.9)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: 36,
-                  height: 36,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'white',
-                }}
-                title="Add Post to Trip"
-              >
-                <FaPlus size={14} />
-              </button>
-            )}
-            
-            {/* Save Trip Button - Only show for trip owner */}
-            {user && trip && user.uid === trip.userID && (
-              <button
-                onClick={handleSaveTrip}
-                style={{
-                  background: 'rgba(0, 122, 255, 0.9)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: 36,
-                  height: 36,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: 'white',
-                }}
-                title="Save Trip"
-              >
-                <FaSave size={14} />
-              </button>
-            )}
+
             
             {/* Share Trip Button */}
             <button
@@ -1086,6 +1044,54 @@ ${shareUrl}`;
               <FaPhotoVideo size={12} />
               Slideshow
             </button>
+
+            {/* Add Post Button - Only show for trip owner */}
+            {user && trip && user.uid === trip.userID && (
+              <button
+                onClick={handleOpenAddPostModal}
+                style={{
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <FaPlus size={12} />
+                Add Post
+              </button>
+            )}
+
+            {/* Save Trip Button - Only show for trip owner */}
+            {user && trip && user.uid === trip.userID && (
+              <button
+                onClick={handleSaveTrip}
+                style={{
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <FaSave size={12} />
+                Save
+              </button>
+            )}
           </div>
           
           {trip.isPublic && (
