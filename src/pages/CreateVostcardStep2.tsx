@@ -322,6 +322,30 @@ export default function CreateVostcardStep2() {
         </button>
       </div>
 
+      {/* Title Display (if exists) */}
+      {currentVostcard?.title && (
+        <div style={{
+          width: '100%',
+          maxWidth: 380,
+          textAlign: 'center',
+          marginTop: 80,
+          padding: '16px',
+          boxSizing: 'border-box'
+        }}>
+          <h2 style={{
+            margin: 0,
+            fontSize: 18,
+            fontWeight: 600,
+            color: '#002B4D',
+            lineHeight: 1.3,
+            paddingBottom: 12,
+            borderBottom: '1px solid #e0e0e0'
+          }}>
+            "{currentVostcard.title}"
+          </h2>
+        </div>
+      )}
+
       {/* Options - now scrollable */}
       <div style={{
         flex: 1,
@@ -333,7 +357,7 @@ export default function CreateVostcardStep2() {
         boxSizing: 'border-box',
         maxHeight: 'calc(100vh - 120px)',
         overflowY: 'auto',
-        marginTop: '80px', // Account for fixed header
+        marginTop: currentVostcard?.title ? '20px' : '80px', // Adjust spacing based on title presence
       }}>
         {/* Photo selection grid - matching QuickcardStep2 style */}
         <div style={{

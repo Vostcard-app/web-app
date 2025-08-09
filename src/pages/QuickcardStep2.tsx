@@ -405,6 +405,27 @@ export default function QuickcardStep2() {
         }}>
           Add Photos
         </h1>
+
+        {/* Title Display (if exists) */}
+        {currentVostcard?.title && (
+          <div style={{
+            width: '100%',
+            textAlign: 'center',
+            marginBottom: 16,
+            paddingBottom: 12,
+            borderBottom: '1px solid #e0e0e0'
+          }}>
+            <h2 style={{
+              margin: 0,
+              fontSize: 18,
+              fontWeight: 600,
+              color: '#333',
+              lineHeight: 1.3
+            }}>
+              "{currentVostcard.title}"
+            </h2>
+          </div>
+        )}
         
 
 
