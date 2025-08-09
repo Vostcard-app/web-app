@@ -163,7 +163,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 5,
     title: "Join Tours & Adventures",
-    description: "Tap the Tour button or Guide Avatars to see available tours. Experience curated journeys through interesting locations.",
+    description: "Tap the Tour button of Guide avatar to see curated tours.",
     icon: (
       <div style={{
         backgroundColor: '#002B4D',
@@ -189,7 +189,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 6,
     title: "Connect & Share",
-    description: "Follow friends, like posts, and build your community. Your Vōstbox keeps track of all your interactions.",
+    description: "Follow friends, like posts and build you community.",
     icon: <FaUsers size={48} color="#002B4D" />
   },
   {
