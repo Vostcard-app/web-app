@@ -1759,61 +1759,30 @@ const HomeView = () => {
               📋 Itineraries
             </button>
             
-            {/* 5. Social - Parent Menu */}
+            {/* 5. Social - Flattened items */}
             <button
               onClick={() => {
-                setOpenSubmenu(openSubmenu === 'social' ? null : 'social');
+                setIsMenuOpen(false);
+                navigate('/vostbox');
               }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              style={parentMenuItemStyle}
+              style={menuItemStyle}
             >
-              <span>👥 Social</span>
-              <span style={{ fontSize: '12px', color: '#666' }}>
-                {openSubmenu === 'social' ? '▼' : '▶'}
-              </span>
+              👥 Vōstbox
             </button>
             
-            {/* Social Submenu */}
-            {openSubmenu === 'social' && (
-              <>
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate('/vostbox');
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  style={submenuItemStyle}
-                >
-                  Vōstbox
-                </button>
-                
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate('/friends');
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  style={submenuItemStyle}
-                >
-                  Friend List
-                </button>
-                
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate('/following');
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  style={submenuItemStyle}
-                >
-                  Following
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/following');
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              style={menuItemStyle}
+            >
+              👤 Following
+            </button>
 
             {/* 6. Vostcard Studio */}
             {userRole === 'guide' && (
@@ -2690,31 +2659,7 @@ const HomeView = () => {
           Create Quickcard
         </button>
 
-        {/* Compose Button */}
-        <button
-          onClick={() => setShowComposeModal(true)}
-          style={{
-            background: '#6B4D9B', // Purple color for compose
-            color: 'white',
-            border: 'none',
-            borderRadius: 12,
-            padding: '0px 20px',
-            fontSize: 18,
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(107,77,155,0.2)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '23%',
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            textAlign: 'center',
-            lineHeight: '1.2'
-          }}
-        >
-          Compose
-        </button>
+        {/* Compose Button removed: moved to Vostbox messages view */}
 
         {/* Last Post Button */}
         <button

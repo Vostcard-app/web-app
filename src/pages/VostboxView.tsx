@@ -338,7 +338,7 @@ const VostboxView: React.FC = () => {
                 // Could pre-select this friend in the compose modal
               }}
               style={{
-                backgroundColor: '#6B4D9B',
+                backgroundColor: '#002B4D',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
@@ -1267,7 +1267,7 @@ const VostboxView: React.FC = () => {
           <button
             onClick={() => setShowAddFriendModal(true)}
             style={{
-              backgroundColor: '#6B4D9B',
+              backgroundColor: '#002B4D',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
