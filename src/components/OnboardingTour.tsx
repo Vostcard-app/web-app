@@ -163,7 +163,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 5,
     title: "Join Tours & Adventures",
-    description: "Tap the tour button or Guide Avatars to see available tours. Experience curated journeys through interesting locations.",
+    description: "Tap the Tour button or Guide Avatars to see available tours. Experience curated journeys through interesting locations.",
     icon: (
       <div style={{
         backgroundColor: '#002B4D',
@@ -190,23 +190,13 @@ const tourSlides: TourSlide[] = [
     id: 6,
     title: "Connect & Share",
     description: "Follow friends, like posts, and build your community. Your Vōstbox keeps track of all your interactions.",
-    icon: <FaUsers size={48} color="#002B4D" />,
-    features: [
-      "Follow friends and interesting creators",
-      "Like and comment on posts",
-      "Get notifications in your Vōstbox"
-    ]
+    icon: <FaUsers size={48} color="#002B4D" />
   },
   {
     id: 7,
     title: "You're All Set!",
     description: "Ready to start exploring? Create your first post or discover what's around you!",
-    icon: <FaCheck size={48} color="#00C851" />,
-    features: [
-      "Tap 'Create Vostcard' to share something",
-      "Tap 'Create Quickcard' for instant sharing",
-      "Explore the map to see what's nearby"
-    ]
+    icon: <FaCheck size={48} color="#00C851" />
   }
 ];
 
