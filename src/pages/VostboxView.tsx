@@ -1247,24 +1247,7 @@ const VostboxView: React.FC = () => {
               <FaUsers size={16} style={{ marginRight: '8px' }} />
               Requests ({requestCount})
             </button>
-            <button
-              onClick={() => setActiveTab('inbox')}
-              style={{
-                flex: 1,
-                minWidth: '100px',
-                padding: '16px 12px',
-                border: 'none',
-                backgroundColor: activeTab === 'inbox' ? '#002B4D' : 'transparent',
-                color: activeTab === 'inbox' ? 'white' : '#666',
-                cursor: 'pointer',
-                borderBottom: activeTab === 'inbox' ? '2px solid #002B4D' : 'none',
-                fontSize: '16px',
-                fontWeight: '600'
-              }}
-            >
-              <FaInbox size={16} style={{ marginRight: '8px' }} />
-              Inbox ({messages.length})
-            </button>
+            {/* Removed Inbox tab from friends view (Back button covers navigation) */}
           </>
         )}
       </div>
@@ -1313,7 +1296,6 @@ const VostboxView: React.FC = () => {
           <>
             {activeTab === 'friends' && renderFriendsList()}
             {activeTab === 'requests' && renderRequestsList()}
-            {activeTab === 'inbox' && renderMessageList(messages, true)}
           </>
         )}
       </div>
