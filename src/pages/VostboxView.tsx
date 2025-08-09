@@ -1,31 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaInbox, FaPaperPlane, FaEnvelope, FaEnvelopeOpen, FaTrash, FaReply, FaPlay, FaImage, FaUser, FaHome, FaEdit } from 'react-icons/fa';
+import { FaArrowLeft, FaInbox, FaPaperPlane, FaEnvelope, FaEnvelopeOpen, FaTrash, FaReply, FaPlay, FaImage, FaUser, FaHome, FaEdit, FaUserFriends, FaUserPlus, FaSearch, FaUsers, FaCheck, FaTimes, FaEllipsisV, FaSms, FaWhatsapp } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import { UserFriendService } from '../services/userFriendService';
-import { type VostboxMessage } from '../types/FriendModels';
+import { FriendService } from '../services/friendService';
+import { InvitationService } from '../services/invitationService';
+import { type VostboxMessage, type Friend, type FriendRequest, type FriendSearchResult, type InvitationRequest } from '../types/FriendModels';
 import ComposePrivateMessageModal from '../components/ComposePrivateMessageModal';
 
 const VostboxView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'friends' | 'requests' | 'search'>('inbox');
+  
+  // Vostbox state
   const [messages, setMessages] = useState<VostboxMessage[]>([]);
   const [sentMessages, setSentMessages] = useState<VostboxMessage[]>([]);
-  const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedMessage, setSelectedMessage] = useState<VostboxMessage | null>(null);
   const [replyText, setReplyText] = useState('');
   const [showComposeModal, setShowComposeModal] = useState(false);
+  
+  // Friends state  
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<FriendRequest[]>([]);
+  const [friendCount, setFriendCount] = useState(0);
+  const [requestCount, setRequestCount] = useState(0);
+  const [searchResults, setSearchResults] = useState<FriendSearchResult[]>([]);
+  const [sentInvitations, setSentInvitations] = useState<InvitationRequest[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchingUsers, setSearchingUsers] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteMethod, setInviteMethod] = useState<'email' | 'sms' | 'whatsapp'>('email');
+  const [inviteRecipient, setInviteRecipient] = useState('');
+  const [inviteMessage, setInviteMessage] = useState('');
+  const [sendingInvite, setSendingInvite] = useState(false);
+  
+  // Combined loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user?.uid) {
-      loadVostboxData();
+      loadAllData();
     }
   }, [user?.uid]);
 
-  const loadVostboxData = async () => {
+  const loadAllData = async () => {
     if (!user?.uid) return;
 
     try {
@@ -34,7 +55,52 @@ const VostboxView: React.FC = () => {
       // Initialize friend fields if needed
       await UserFriendService.initializeFriendFields(user.uid);
       
-      // Load messages and stats
+      // Load both Vostbox and Friends data in parallel
+      const [
+        inboxMessages, 
+        sentMessages, 
+        unreadCount,
+        friendsList,
+        requests,
+        fCount,
+        rCountDirect,
+        invitations
+      ] = await Promise.all([
+        // Vostbox data
+        VostboxService.getVostboxMessages(user.uid),
+        VostboxService.getSentMessages(user.uid),
+        UserFriendService.getUnreadVostboxCount(user.uid),
+        // Friends data
+        FriendService.getFriendsList(user.uid),
+        FriendService.getPendingRequests(user.uid),
+        UserFriendService.getFriendCount(user.uid),
+        UserFriendService.getPendingRequestCountDirect(user.uid),
+        InvitationService.getSentInvitations(user.uid)
+      ]);
+
+      // Set Vostbox data
+      setMessages(inboxMessages);
+      setSentMessages(sentMessages);
+      setUnreadCount(unreadCount);
+      
+      // Set Friends data
+      setFriends(friendsList);
+      setPendingRequests(requests);
+      setFriendCount(fCount);
+      setRequestCount(rCountDirect);
+      setSentInvitations(invitations);
+    } catch (error) {
+      console.error('Error loading social hub data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Keep the original function for when we only need to refresh Vostbox data
+  const loadVostboxData = async () => {
+    if (!user?.uid) return;
+
+    try {
       const [inboxMessages, sentMessages, unreadCount] = await Promise.all([
         VostboxService.getVostboxMessages(user.uid),
         VostboxService.getSentMessages(user.uid),
@@ -46,8 +112,6 @@ const VostboxView: React.FC = () => {
       setUnreadCount(unreadCount);
     } catch (error) {
       console.error('Error loading vostbox data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -89,6 +153,98 @@ const VostboxView: React.FC = () => {
     }
   };
 
+  // Friends-related handlers
+  const handleAcceptRequest = async (requestId: string) => {
+    if (!user?.uid) return;
+    
+    const result = await FriendService.acceptFriendRequest(requestId, user.uid);
+    if (result.success) {
+      await loadAllData(); // Refresh all data
+    } else {
+      alert(result.error || 'Failed to accept friend request');
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    if (!user?.uid) return;
+    
+    const result = await FriendService.rejectFriendRequest(requestId, user.uid);
+    if (result.success) {
+      await loadAllData(); // Refresh all data
+    } else {
+      alert(result.error || 'Failed to reject friend request');
+    }
+  };
+
+  const handleUserSearch = async (query: string) => {
+    if (!user?.uid || !query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setSearchingUsers(true);
+      const results = await FriendService.searchUsers(query.trim(), user.uid);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  const handleSendFriendRequest = async (targetUID: string) => {
+    if (!user?.uid) return;
+    
+    const result = await FriendService.sendFriendRequest(user.uid, targetUID);
+    if (result.success) {
+      await handleUserSearch(searchQuery); // Refresh search results
+      await loadAllData(); // Refresh data
+    } else {
+      alert(result.error || 'Failed to send friend request');
+    }
+  };
+
+  const handleSendInvitation = async () => {
+    if (!user?.uid || !inviteRecipient.trim()) return;
+
+    try {
+      setSendingInvite(true);
+      const result = await InvitationService.sendInvitation({
+        senderUID: user.uid,
+        inviteMethod,
+        recipient: inviteRecipient.trim(),
+        message: inviteMessage.trim() || `Hey! I'm using Vōstcard to share posts privately with friends. Join me!`
+      });
+
+      if (result.success) {
+        alert('Invitation sent successfully! 🎉');
+        setInviteRecipient('');
+        setInviteMessage('');
+        setShowInviteModal(false);
+        await loadAllData(); // Refresh data to show new invitation
+      } else {
+        alert(result.error || 'Failed to send invitation');
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      alert('Failed to send invitation');
+    } finally {
+      setSendingInvite(false);
+    }
+  };
+
+  // Debounced search effect
+  useEffect(() => {
+    if (activeTab === 'search') {
+      const timer = setTimeout(() => {
+        handleUserSearch(searchQuery);
+      }, 200);
+
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery, user?.uid, activeTab]);
+
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
@@ -98,6 +254,324 @@ const VostboxView: React.FC = () => {
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     if (diffInMinutes < 10080) return `${Math.floor(diffInMinutes / 1440)}d ago`;
     return date.toLocaleDateString();
+  };
+
+  const renderFriendsList = () => {
+    if (loading) {
+      return (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={{ marginBottom: '16px' }}>Loading friends...</div>
+        </div>
+      );
+    }
+
+    if (friends.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <FaUserFriends size={48} color="#ccc" style={{ marginBottom: '16px' }} />
+          <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+            No Friends Yet
+          </div>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            Add friends to start sharing posts privately!
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ padding: '16px' }}>
+        {friends.map((friend) => (
+          <div 
+            key={friend.uid} 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '12px',
+              margin: '8px 0',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              border: '1px solid #f0f0f0'
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: '#e0e0e0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '12px',
+              fontSize: '20px'
+            }}>
+              {friend.avatarURL ? (
+                <img
+                  src={friend.avatarURL}
+                  alt={friend.username}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <FaUser color="#666" />
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: '600', fontSize: '16px', marginBottom: '4px' }}>
+                {friend.username}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                Friends since {new Date(friend.friendsSince).toLocaleDateString()}
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowComposeModal(true);
+                // Could pre-select this friend in the compose modal
+              }}
+              style={{
+                backgroundColor: '#6B4D9B',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Message
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderRequestsList = () => {
+    if (loading) {
+      return (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <div style={{ marginBottom: '16px' }}>Loading requests...</div>
+        </div>
+      );
+    }
+
+    if (pendingRequests.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <FaUsers size={48} color="#ccc" style={{ marginBottom: '16px' }} />
+          <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+            No Pending Requests
+          </div>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            Friend requests will appear here
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ padding: '16px' }}>
+        {pendingRequests.map((request) => (
+          <div 
+            key={request.id} 
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '12px',
+              margin: '8px 0',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              border: '1px solid #f0f0f0'
+            }}
+          >
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: '#e0e0e0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '12px',
+              fontSize: '20px'
+            }}>
+              <FaUser color="#666" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: '600', fontSize: '16px', marginBottom: '4px' }}>
+                {request.senderUsername}
+              </div>
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                Sent {new Date(request.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => handleAcceptRequest(request.id)}
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                <FaCheck style={{ marginRight: '4px' }} />
+                Accept
+              </button>
+              <button
+                onClick={() => handleRejectRequest(request.id)}
+                style={{
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                <FaTimes style={{ marginRight: '4px' }} />
+                Decline
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderSearchTab = () => {
+    return (
+      <div style={{ padding: '16px' }}>
+        {/* Search Input */}
+        <div style={{ marginBottom: '20px' }}>
+          <input
+            type="text"
+            placeholder="Search for friends by username..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              fontSize: '16px'
+            }}
+          />
+        </div>
+
+        {/* Search Results */}
+        {searchingUsers ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            Searching users...
+          </div>
+        ) : searchResults.length > 0 ? (
+          <div>
+            <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
+              Search Results
+            </h3>
+            {searchResults.map((result) => (
+              <div 
+                key={result.uid} 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px',
+                  margin: '8px 0',
+                  backgroundColor: 'white',
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  border: '1px solid #f0f0f0'
+                }}
+              >
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  backgroundColor: '#e0e0e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: '12px',
+                  fontSize: '20px'
+                }}>
+                  <FaUser color="#666" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: '600', fontSize: '16px' }}>
+                    {result.username}
+                  </div>
+                  {result.status && (
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      {result.status}
+                    </div>
+                  )}
+                </div>
+                {!result.isFriend && !result.hasPendingRequest && (
+                  <button
+                    onClick={() => handleSendFriendRequest(result.uid)}
+                    style={{
+                      backgroundColor: '#002B4D',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <FaUserPlus style={{ marginRight: '4px' }} />
+                    Add Friend
+                  </button>
+                )}
+                {result.hasPendingRequest && (
+                  <div style={{
+                    color: '#666',
+                    fontSize: '12px',
+                    fontStyle: 'italic'
+                  }}>
+                    Request Sent
+                  </div>
+                )}
+                {result.isFriend && (
+                  <div style={{
+                    color: '#28a745',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                    ✓ Friends
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : searchQuery.trim() && !searchingUsers ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            No users found matching "{searchQuery}"
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <FaSearch size={48} color="#ccc" style={{ marginBottom: '16px' }} />
+            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+              Find Friends
+            </div>
+            <div style={{ fontSize: '14px', color: '#666' }}>
+              Search for friends by their username
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderMessageList = (messageList: VostboxMessage[], isInbox: boolean) => {
@@ -496,7 +970,7 @@ const VostboxView: React.FC = () => {
           onClick={() => navigate('/home')}
           style={{ margin: 0, fontSize: '24px', cursor: 'pointer' }}
         >
-          Vōstbox
+          Social Hub
         </h1>
           {unreadCount > 0 && (
             <div style={{
@@ -567,37 +1041,100 @@ const VostboxView: React.FC = () => {
       <div style={{
         backgroundColor: 'white',
         borderBottom: '1px solid #eee',
-        display: 'flex'
+        display: 'flex',
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none'
       }}>
         <button
           onClick={() => setActiveTab('inbox')}
           style={{
             flex: 1,
-            padding: '16px',
+            minWidth: '120px',
+            padding: '12px 8px',
             border: 'none',
             backgroundColor: activeTab === 'inbox' ? '#002B4D' : 'transparent',
             color: activeTab === 'inbox' ? 'white' : '#666',
             cursor: 'pointer',
-            borderBottom: activeTab === 'inbox' ? '2px solid #002B4D' : 'none'
+            borderBottom: activeTab === 'inbox' ? '2px solid #002B4D' : 'none',
+            fontSize: '14px',
+            fontWeight: '500'
           }}
         >
-          <FaInbox size={16} style={{ marginRight: '8px' }} />
+          <FaInbox size={14} style={{ marginRight: '6px' }} />
           Inbox ({messages.length})
         </button>
         <button
           onClick={() => setActiveTab('sent')}
           style={{
             flex: 1,
-            padding: '16px',
+            minWidth: '120px',
+            padding: '12px 8px',
             border: 'none',
             backgroundColor: activeTab === 'sent' ? '#002B4D' : 'transparent',
             color: activeTab === 'sent' ? 'white' : '#666',
             cursor: 'pointer',
-            borderBottom: activeTab === 'sent' ? '2px solid #002B4D' : 'none'
+            borderBottom: activeTab === 'sent' ? '2px solid #002B4D' : 'none',
+            fontSize: '14px',
+            fontWeight: '500'
           }}
         >
-          <FaPaperPlane size={16} style={{ marginRight: '8px' }} />
+          <FaPaperPlane size={14} style={{ marginRight: '6px' }} />
           Sent ({sentMessages.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('friends')}
+          style={{
+            flex: 1,
+            minWidth: '120px',
+            padding: '12px 8px',
+            border: 'none',
+            backgroundColor: activeTab === 'friends' ? '#002B4D' : 'transparent',
+            color: activeTab === 'friends' ? 'white' : '#666',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'friends' ? '2px solid #002B4D' : 'none',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}
+        >
+          <FaUserFriends size={14} style={{ marginRight: '6px' }} />
+          Friends ({friendCount})
+        </button>
+        <button
+          onClick={() => setActiveTab('requests')}
+          style={{
+            flex: 1,
+            minWidth: '120px',
+            padding: '12px 8px',
+            border: 'none',
+            backgroundColor: activeTab === 'requests' ? '#002B4D' : 'transparent',
+            color: activeTab === 'requests' ? 'white' : '#666',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'requests' ? '2px solid #002B4D' : 'none',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}
+        >
+          <FaUsers size={14} style={{ marginRight: '6px' }} />
+          Requests ({requestCount})
+        </button>
+        <button
+          onClick={() => setActiveTab('search')}
+          style={{
+            flex: 1,
+            minWidth: '120px',
+            padding: '12px 8px',
+            border: 'none',
+            backgroundColor: activeTab === 'search' ? '#002B4D' : 'transparent',
+            color: activeTab === 'search' ? 'white' : '#666',
+            cursor: 'pointer',
+            borderBottom: activeTab === 'search' ? '2px solid #002B4D' : 'none',
+            fontSize: '14px',
+            fontWeight: '500'
+          }}
+        >
+          <FaSearch size={14} style={{ marginRight: '6px' }} />
+          Add Friends
         </button>
       </div>
 
@@ -605,6 +1142,9 @@ const VostboxView: React.FC = () => {
       <div style={{ flex: 1 }}>
         {activeTab === 'inbox' && renderMessageList(messages, true)}
         {activeTab === 'sent' && renderMessageList(sentMessages, false)}
+        {activeTab === 'friends' && renderFriendsList()}
+        {activeTab === 'requests' && renderRequestsList()}
+        {activeTab === 'search' && renderSearchTab()}
       </div>
 
       {/* Message Detail Modal */}
@@ -615,8 +1155,8 @@ const VostboxView: React.FC = () => {
         isOpen={showComposeModal}
         onClose={() => {
           setShowComposeModal(false);
-          // Refresh the vostbox data when modal closes (in case messages were sent)
-          loadVostboxData();
+          // Refresh all data when modal closes (in case messages were sent)
+          loadVostboxData(); // Only refresh messages, not all friends data
         }}
       />
     </div>
