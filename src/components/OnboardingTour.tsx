@@ -23,7 +23,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 1,
     title: "Welcome to Vōstcard!",
-    description: "Free tours wherever you go!",
+    description: "Free Tours!\nWherever you go!",
     icon: (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <img
