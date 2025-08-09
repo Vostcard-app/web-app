@@ -290,7 +290,7 @@ const VostcardDetailView: React.FC = () => {
       if (!user || !vostcard?.id) return;
       
       try {
-        const rating = await RatingService.getCurrentUserRating(vostcard.id);
+        const rating = await RatingService.getUserRating(vostcard.id);
         setUserRating(rating);
       } catch (error) {
         console.error('Failed to load user rating:', error);

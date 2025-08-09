@@ -227,7 +227,7 @@ const QuickcardDetailView: React.FC = () => {
       if (!user || !quickcard?.id) return;
       
       try {
-        const rating = await RatingService.getCurrentUserRating(quickcard.id);
+        const rating = await RatingService.getUserRating(quickcard.id);
         setUserRating(rating);
       } catch (error) {
         console.error('Failed to load user rating:', error);

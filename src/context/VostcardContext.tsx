@@ -50,7 +50,7 @@ interface VostcardContextProps {
   setupLikeListeners: (vostcardID: string, onLikeCountChange: (count: number) => void, onLikeStatusChange: (isLiked: boolean) => void) => () => void;
   // Rating system
   submitRating: (vostcardID: string, rating: number) => Promise<void>;
-  getCurrentUserRating: (vostcardID: string) => Promise<number>;
+  getUserRating: (vostcardID: string) => Promise<number>;
   getRatingStats: (vostcardID: string) => Promise<RatingStats>;
   setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => () => void;
   // Debug functions
@@ -3044,7 +3044,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setupLikeListeners,
         // Rating system
         submitRating: RatingService.submitRating,
-        getCurrentUserRating: RatingService.getCurrentUserRating,
+        getUserRating: RatingService.getUserRating,
         getRatingStats: RatingService.getRatingStats,
         setupRatingListeners: (vostcardID: string, onStatsChange: (stats: RatingStats) => void, onUserRatingChange: (rating: number) => void) => {
           const unsubscribeStats = RatingService.listenToRatingStats(vostcardID, onStatsChange);
