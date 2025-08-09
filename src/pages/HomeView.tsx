@@ -227,7 +227,8 @@ const HomeView = () => {
     loadLocalVostcard, 
     savedVostcards, 
     loadAllLocalVostcardsImmediate,
-    createQuickcard
+    createQuickcard,
+    setCurrentVostcard
   } = useVostcard();
   const { user, username, userID, userRole, loading, refreshUserRole, isPendingAdvertiser } = useAuth();
   const { isDesktop } = useResponsive();
@@ -1168,6 +1169,47 @@ const HomeView = () => {
     const cameraInput = document.getElementById('quickcard-native-camera') as HTMLInputElement;
     if (cameraInput) {
       cameraInput.click();
+    }
+  };
+
+  const handleLastPost = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('🔍 Loading last post...');
+    
+    try {
+      // Query for user's most recent post (vostcard or quickcard)
+      const userPostsQuery = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user?.uid),
+        orderBy('createdAt', 'desc'),
+        limit(1)
+      );
+      
+      const snapshot = await getDocs(userPostsQuery);
+      
+      if (snapshot.empty) {
+        alert('No posts found. Create your first post!');
+        return;
+      }
+      
+      const lastPost = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+      console.log('🔍 Found last post:', lastPost);
+      
+      // Load the post into context
+      setCurrentVostcard(lastPost);
+      
+      // Route based on post type
+      if (lastPost.isQuickcard) {
+        console.log('📱 Last post is a quickcard, going to photo step');
+        navigate('/quickcard-step2');
+      } else {
+        console.log('🎬 Last post is a vostcard, going to step 2');
+        navigate('/create-step2');
+      }
+      
+    } catch (error) {
+      console.error('Error loading last post:', error);
+      alert('Failed to load last post. Please try again.');
     }
   };
 
@@ -2487,7 +2529,7 @@ const HomeView = () => {
         )}
       </div>
 
-      {/* Bottom Navigation - 2 buttons */}
+      {/* Bottom Navigation - 3 buttons */}
       <div style={{
         position: 'fixed',
         bottom: shouldUseContainer ? 40 : `calc(20px + env(safe-area-inset-bottom, 0px))`,
@@ -2498,7 +2540,7 @@ const HomeView = () => {
         zIndex: 99999,
         display: 'flex',
         justifyContent: 'space-between',
-        gap: '4%',
+        gap: '2%',
         padding: shouldUseContainer ? '0 15px' : '0',
         // Add safe area padding for mobile
         paddingBottom: shouldUseContainer ? 0 : 'env(safe-area-inset-bottom, 0px)',
@@ -2519,7 +2561,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '48%',
+            width: '31%',
             height: '60px',
             display: 'flex',
             alignItems: 'center',
@@ -2548,7 +2590,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '48%',
+            width: '31%',
             height: '60px',
             display: 'flex',
             alignItems: 'center',
@@ -2559,6 +2601,32 @@ const HomeView = () => {
           }}
         >
           Create Quickcard
+        </button>
+
+        {/* Last Post Button */}
+        <button
+          onClick={handleLastPost}
+          style={{
+            background: '#007B4D', // Different green color to distinguish
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '0px 20px',
+            fontSize: 18,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,123,77,0.2)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            width: '31%',
+            height: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            lineHeight: '1.2'
+          }}
+        >
+          Last Post
         </button>
       </div>
 

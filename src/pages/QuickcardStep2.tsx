@@ -31,9 +31,7 @@ export default function QuickcardStep2() {
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
 
-  // Post functionality states
-  const [userPosts, setUserPosts] = useState<any[]>([]);
-  const [isAddingToPost, setIsAddingToPost] = useState(false);
+
 
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -96,67 +94,7 @@ export default function QuickcardStep2() {
     loadTrips();
   }, []);
 
-  // Load user quickcards and last used post
-  useEffect(() => {
-    const loadPosts = async () => {
-      if (!user?.uid) return;
-      
-      try {
-        console.log('🔍 Starting to load quickcards for user:', user.uid);
-        
-        // First, let's try a simpler query to see all user's vostcards
-        const allUserVostcardsQuery = query(
-          collection(db, 'vostcards'),
-          where('userID', '==', user.uid),
-          limit(20)
-        );
-        
-        const allSnapshot = await getDocs(allUserVostcardsQuery);
-        const allUserVostcards = allSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        console.log('🔍 All user vostcards:', allUserVostcards.length, allUserVostcards);
-        console.log('🔍 First 5 vostcards details:', allUserVostcards.slice(0, 5).map(v => ({
-          id: v.id,
-          title: v.title || '(no title)',
-          isQuickcard: v.isQuickcard,
-          state: v.state,
-          visibility: v.visibility,
-          createdAt: v.createdAt
-        })));
-        
-        // Filter quickcards client-side and exclude the current one being created
-        const allQuickcards = allUserVostcards.filter(v => 
-          v.isQuickcard === true && 
-          v.id !== currentVostcard?.id
-        );
 
-        
-        const quickcards = allQuickcards
-          .sort((a, b) => {
-            // Handle Firebase Timestamps properly
-            const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
-            const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
-            return bTime - aTime;
-          })
-          .slice(0, 5) // Get top 5 recent quickcards so handleAddToPost can find one with content
-          .map(doc => ({
-            ...doc,
-            type: 'quickcard'
-          }));
-        
-
-        setUserPosts(quickcards);
-        
-      } catch (error) {
-        console.error('Error loading quickcards:', error);
-      }
-    };
-
-    loadPosts();
-  }, [user?.uid]);
 
   // Find next available photo slot
   const findNextAvailableSlot = (): number | null => {
@@ -332,88 +270,7 @@ export default function QuickcardStep2() {
     }
   };
 
-  // Post handler functions
-  const handleAddToPost = async () => {
-    if (userPosts.length === 0) {
-      alert('No quickcards available');
-      return;
-    }
-    
-    // Find the most recent quickcard with actual content, but exclude current one
-    // Filter out any quickcard that matches the current one (by ID or by being too new)
-    const availableQuickcards = userPosts.filter(q => {
-      // Exclude if IDs match
-      if (q.id === currentVostcard?.id) return false;
-      
-      // Exclude if it was created very recently (within last 30 seconds) as it might be the current one
-      const qTime = q.createdAt?.toDate ? q.createdAt.toDate().getTime() : new Date(q.createdAt).getTime();
-      const now = Date.now();
-      if (now - qTime < 30000) return false; // Exclude if created within last 30 seconds
-      
-      return true;
-    });
-    
-    let lastQuickcard = availableQuickcards.find(q => q.title && q.title.trim() !== '') || availableQuickcards[0];
-    
-    console.log('🔍 Selected quickcard for adding photo:', {
-      selectedId: lastQuickcard?.id,
-      selectedTitle: lastQuickcard?.title || '(no title)',
-      totalQuickcards: userPosts.length,
-      availableQuickcards: availableQuickcards.length,
-      currentVostcardId: currentVostcard?.id,
-      hasContent: !!(lastQuickcard?.title && lastQuickcard.title.trim() !== '')
-    });
-    
-    // If no available quickcards after filtering, alert user
-    if (availableQuickcards.length === 0) {
-      alert('No existing quickcards available to add photos to. Complete this quickcard first, then create another one to use this feature.');
-      return;
-    }
-    
-    // If no quickcard has content, just go to step 3 without pre-populating
-    if (!lastQuickcard || (!lastQuickcard.title || lastQuickcard.title.trim() === '')) {
-      console.log('ℹ️ No quickcards with content found, going to step 3 without pre-population');
-      navigate('/quickcard-step3');
-      return;
-    }
-    
-    // Get the current photos from the selected thumbnails
-    const currentPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
-    
-    if (currentPhotos.length === 0) {
-      alert('No photos to add');
-      return;
-    }
-    
-    try {
-      setIsAddingToPost(true);
-      console.log('🔄 Adding current photos to existing quickcard:', lastQuickcard.id);
-      
-      // Switch to the target quickcard and add our photos to it
-      const targetQuickcard = {
-        ...lastQuickcard,
-        photos: [...(lastQuickcard.photos || []), ...currentPhotos].slice(0, 4), // Add photos, max 4 total
-        updatedAt: new Date().toISOString()
-      };
-      
-      console.log('💾 Updating to target quickcard with', targetQuickcard.photos.length, 'photos');
-      
-      // Set the current vostcard to the target quickcard with updated photos
-      setCurrentVostcard(targetQuickcard);
-      
-      // Save the updated quickcard
-      await saveLocalVostcard();
-      
-      console.log('✅ Photos added to existing quickcard - navigating to Step 3');
-      navigate('/quickcard-step3');
-      
-    } catch (error) {
-      console.error('Error adding to last quickcard:', error);
-      alert('Failed to add to quickcard. Please try again.');
-    } finally {
-      setIsAddingToPost(false);
-    }
-  };
+
 
 
 
@@ -671,35 +528,7 @@ export default function QuickcardStep2() {
           </button>
         </div>
 
-        {/* Add to a Quickcard Section */}
-        <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
-          <label style={{
-            fontSize: 16,
-            fontWeight: 'bold',
-            marginBottom: 8,
-            display: 'block',
-            color: '#333'
-          }}>
-            Add to Last Quickcard (Optional)
-          </label>
-          
-          <button
-            onClick={handleAddToPost}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#f0f8ff',
-              border: '2px solid #07345c',
-              borderRadius: '8px',
-              fontSize: '16px',
-              color: '#07345c',
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
-          >
-            Add to Last Quickcard
-          </button>
-        </div>
+
 
         {/* Continue button */}
         <button
