@@ -12,7 +12,10 @@ import ComposePrivateMessageModal from '../components/ComposePrivateMessageModal
 const VostboxView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  // Navigation state
+  const [currentView, setCurrentView] = useState<'messages' | 'friends'>('messages');
   const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'friends' | 'requests' | 'search'>('inbox');
+  const [showAddFriendModal, setShowAddFriendModal] = useState(false);
   
   // Vostbox state
   const [messages, setMessages] = useState<VostboxMessage[]>([]);
@@ -236,14 +239,14 @@ const VostboxView: React.FC = () => {
 
   // Debounced search effect
   useEffect(() => {
-    if (activeTab === 'search') {
+    if (showAddFriendModal && searchQuery.trim()) {
       const timer = setTimeout(() => {
         handleUserSearch(searchQuery);
       }, 200);
 
       return () => clearTimeout(timer);
     }
-  }, [searchQuery, user?.uid, activeTab]);
+  }, [searchQuery, user?.uid, showAddFriendModal]);
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
@@ -450,126 +453,206 @@ const VostboxView: React.FC = () => {
     );
   };
 
-  const renderSearchTab = () => {
-    return (
-      <div style={{ padding: '16px' }}>
-        {/* Search Input */}
-        <div style={{ marginBottom: '20px' }}>
-          <input
-            type="text"
-            placeholder="Search for friends by username..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              fontSize: '16px'
-            }}
-          />
-        </div>
+  const renderAddFriendModal = () => {
+    if (!showAddFriendModal) return null;
 
-        {/* Search Results */}
-        {searchingUsers ? (
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            Searching users...
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '24px',
+          width: '100%',
+          maxWidth: '400px',
+          maxHeight: '80vh',
+          overflow: 'auto'
+        }}>
+          {/* Header */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px'
+          }}>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
+              Add Friend
+            </h2>
+            <button
+              onClick={() => {
+                setShowAddFriendModal(false);
+                setSearchQuery('');
+                setSearchResults([]);
+              }}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ×
+            </button>
           </div>
-        ) : searchResults.length > 0 ? (
-          <div>
-            <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
-              Search Results
-            </h3>
-            {searchResults.map((result) => (
-              <div 
-                key={result.uid} 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '12px',
-                  margin: '8px 0',
-                  backgroundColor: 'white',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  border: '1px solid #f0f0f0'
-                }}
-              >
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  backgroundColor: '#e0e0e0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: '12px',
-                  fontSize: '20px'
-                }}>
-                  <FaUser color="#666" />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: '600', fontSize: '16px' }}>
-                    {result.username}
+
+          {/* Search Input */}
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              placeholder="Search for friends by username..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '16px'
+              }}
+            />
+          </div>
+
+          {/* Search Results */}
+          {searchingUsers ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              Searching users...
+            </div>
+          ) : searchResults.length > 0 ? (
+            <div>
+              <h3 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '600' }}>
+                Search Results
+              </h3>
+              {searchResults.map((result) => (
+                <div 
+                  key={result.uid} 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '12px',
+                    margin: '8px 0',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '8px',
+                    border: '1px solid #f0f0f0'
+                  }}
+                >
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: '#e0e0e0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '12px',
+                    fontSize: '16px'
+                  }}>
+                    <FaUser color="#666" />
                   </div>
-                  {result.status && (
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {result.status}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: '600', fontSize: '14px' }}>
+                      {result.username}
+                    </div>
+                    {result.status && (
+                      <div style={{ fontSize: '12px', color: '#666' }}>
+                        {result.status}
+                      </div>
+                    )}
+                  </div>
+                  {!result.isFriend && !result.hasPendingRequest && (
+                    <button
+                      onClick={() => handleSendFriendRequest(result.uid)}
+                      style={{
+                        backgroundColor: '#002B4D',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <FaUserPlus style={{ marginRight: '4px' }} />
+                      Add
+                    </button>
+                  )}
+                  {result.hasPendingRequest && (
+                    <div style={{
+                      color: '#666',
+                      fontSize: '12px',
+                      fontStyle: 'italic'
+                    }}>
+                      Sent
+                    </div>
+                  )}
+                  {result.isFriend && (
+                    <div style={{
+                      color: '#28a745',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                      ✓ Friends
                     </div>
                   )}
                 </div>
-                {!result.isFriend && !result.hasPendingRequest && (
-                  <button
-                    onClick={() => handleSendFriendRequest(result.uid)}
-                    style={{
-                      backgroundColor: '#002B4D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <FaUserPlus style={{ marginRight: '4px' }} />
-                    Add Friend
-                  </button>
-                )}
-                {result.hasPendingRequest && (
-                  <div style={{
-                    color: '#666',
-                    fontSize: '12px',
-                    fontStyle: 'italic'
-                  }}>
-                    Request Sent
-                  </div>
-                )}
-                {result.isFriend && (
-                  <div style={{
-                    color: '#28a745',
-                    fontSize: '12px',
-                    fontWeight: '600'
-                  }}>
-                    ✓ Friends
-                  </div>
-                )}
+              ))}
+            </div>
+          ) : searchQuery.trim() && !searchingUsers ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+              No users found matching "{searchQuery}"
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <FaSearch size={48} color="#ccc" style={{ marginBottom: '16px' }} />
+              <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
+                Find Friends
               </div>
-            ))}
-          </div>
-        ) : searchQuery.trim() && !searchingUsers ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-            No users found matching "{searchQuery}"
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <FaSearch size={48} color="#ccc" style={{ marginBottom: '16px' }} />
-            <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-              Find Friends
+              <div style={{ fontSize: '14px', color: '#666' }}>
+                Search for friends by their username
+              </div>
             </div>
-            <div style={{ fontSize: '14px', color: '#666' }}>
-              Search for friends by their username
-            </div>
+          )}
+
+          {/* Invite Section */}
+          <div style={{
+            borderTop: '1px solid #eee',
+            paddingTop: '20px',
+            marginTop: '20px'
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+              Invite Friends
+            </h3>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '16px' }}>
+              Can't find your friend? Send them an invitation to join Vōstcard.
+            </p>
+            <button
+              onClick={() => setShowInviteModal(true)}
+              style={{
+                backgroundColor: '#6B4D9B',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                width: '100%'
+              }}
+            >
+              Send Invitation
+            </button>
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -1046,109 +1129,342 @@ const VostboxView: React.FC = () => {
         scrollbarWidth: 'none',
         msOverflowStyle: 'none'
       }}>
-        <button
-          onClick={() => setActiveTab('inbox')}
-          style={{
-            flex: 1,
-            minWidth: '120px',
-            padding: '12px 8px',
-            border: 'none',
-            backgroundColor: activeTab === 'inbox' ? '#002B4D' : 'transparent',
-            color: activeTab === 'inbox' ? 'white' : '#666',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'inbox' ? '2px solid #002B4D' : 'none',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          <FaInbox size={14} style={{ marginRight: '6px' }} />
-          Inbox ({messages.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('sent')}
-          style={{
-            flex: 1,
-            minWidth: '120px',
-            padding: '12px 8px',
-            border: 'none',
-            backgroundColor: activeTab === 'sent' ? '#002B4D' : 'transparent',
-            color: activeTab === 'sent' ? 'white' : '#666',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'sent' ? '2px solid #002B4D' : 'none',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          <FaPaperPlane size={14} style={{ marginRight: '6px' }} />
-          Sent ({sentMessages.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('friends')}
-          style={{
-            flex: 1,
-            minWidth: '120px',
-            padding: '12px 8px',
-            border: 'none',
-            backgroundColor: activeTab === 'friends' ? '#002B4D' : 'transparent',
-            color: activeTab === 'friends' ? 'white' : '#666',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'friends' ? '2px solid #002B4D' : 'none',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          <FaUserFriends size={14} style={{ marginRight: '6px' }} />
-          Friends ({friendCount})
-        </button>
-        <button
-          onClick={() => setActiveTab('requests')}
-          style={{
-            flex: 1,
-            minWidth: '120px',
-            padding: '12px 8px',
-            border: 'none',
-            backgroundColor: activeTab === 'requests' ? '#002B4D' : 'transparent',
-            color: activeTab === 'requests' ? 'white' : '#666',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'requests' ? '2px solid #002B4D' : 'none',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          <FaUsers size={14} style={{ marginRight: '6px' }} />
-          Requests ({requestCount})
-        </button>
-        <button
-          onClick={() => setActiveTab('search')}
-          style={{
-            flex: 1,
-            minWidth: '120px',
-            padding: '12px 8px',
-            border: 'none',
-            backgroundColor: activeTab === 'search' ? '#002B4D' : 'transparent',
-            color: activeTab === 'search' ? 'white' : '#666',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'search' ? '2px solid #002B4D' : 'none',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}
-        >
-          <FaSearch size={14} style={{ marginRight: '6px' }} />
-          Add Friends
-        </button>
+        {currentView === 'messages' ? (
+          // Level 1: Messages View
+          <>
+            <button
+              onClick={() => setActiveTab('inbox')}
+              style={{
+                flex: 1,
+                minWidth: '120px',
+                padding: '16px 12px',
+                border: 'none',
+                backgroundColor: activeTab === 'inbox' ? '#002B4D' : 'transparent',
+                color: activeTab === 'inbox' ? 'white' : '#666',
+                cursor: 'pointer',
+                borderBottom: activeTab === 'inbox' ? '2px solid #002B4D' : 'none',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}
+            >
+              <FaInbox size={16} style={{ marginRight: '8px' }} />
+              Inbox ({messages.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('sent')}
+              style={{
+                flex: 1,
+                minWidth: '120px',
+                padding: '16px 12px',
+                border: 'none',
+                backgroundColor: activeTab === 'sent' ? '#002B4D' : 'transparent',
+                color: activeTab === 'sent' ? 'white' : '#666',
+                cursor: 'pointer',
+                borderBottom: activeTab === 'sent' ? '2px solid #002B4D' : 'none',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}
+            >
+              <FaPaperPlane size={16} style={{ marginRight: '8px' }} />
+              Sent ({sentMessages.length})
+            </button>
+            <button
+              onClick={() => {
+                setCurrentView('friends');
+                setActiveTab('friends');
+              }}
+              style={{
+                flex: 1,
+                minWidth: '120px',
+                padding: '16px 12px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: '#666',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}
+            >
+              <FaUserFriends size={16} style={{ marginRight: '8px' }} />
+              Friends ({friendCount})
+            </button>
+          </>
+        ) : (
+          // Level 2: Friends View
+          <>
+            <button
+              onClick={() => {
+                setCurrentView('messages');
+                setActiveTab('inbox');
+              }}
+              style={{
+                minWidth: '60px',
+                padding: '16px 12px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: '#002B4D',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}
+            >
+              <FaArrowLeft size={14} style={{ marginRight: '6px' }} />
+              Back
+            </button>
+            <button
+              onClick={() => setActiveTab('friends')}
+              style={{
+                flex: 1,
+                minWidth: '100px',
+                padding: '16px 12px',
+                border: 'none',
+                backgroundColor: activeTab === 'friends' ? '#002B4D' : 'transparent',
+                color: activeTab === 'friends' ? 'white' : '#666',
+                cursor: 'pointer',
+                borderBottom: activeTab === 'friends' ? '2px solid #002B4D' : 'none',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}
+            >
+              <FaUserFriends size={16} style={{ marginRight: '8px' }} />
+              Friends ({friendCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('requests')}
+              style={{
+                flex: 1,
+                minWidth: '100px',
+                padding: '16px 12px',
+                border: 'none',
+                backgroundColor: activeTab === 'requests' ? '#002B4D' : 'transparent',
+                color: activeTab === 'requests' ? 'white' : '#666',
+                cursor: 'pointer',
+                borderBottom: activeTab === 'requests' ? '2px solid #002B4D' : 'none',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}
+            >
+              <FaUsers size={16} style={{ marginRight: '8px' }} />
+              Requests ({requestCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('inbox')}
+              style={{
+                flex: 1,
+                minWidth: '100px',
+                padding: '16px 12px',
+                border: 'none',
+                backgroundColor: activeTab === 'inbox' ? '#002B4D' : 'transparent',
+                color: activeTab === 'inbox' ? 'white' : '#666',
+                cursor: 'pointer',
+                borderBottom: activeTab === 'inbox' ? '2px solid #002B4D' : 'none',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}
+            >
+              <FaInbox size={16} style={{ marginRight: '8px' }} />
+              Inbox ({messages.length})
+            </button>
+          </>
+        )}
       </div>
+
+      {/* Add Friend Button (only show in friends view) */}
+      {currentView === 'friends' && (
+        <div style={{
+          backgroundColor: 'white',
+          padding: '12px 16px',
+          borderBottom: '1px solid #eee'
+        }}>
+          <button
+            onClick={() => setShowAddFriendModal(true)}
+            style={{
+              backgroundColor: '#6B4D9B',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              width: '100%',
+              justifyContent: 'center'
+            }}
+          >
+            <FaUserPlus size={14} />
+            Add Friend
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       <div style={{ flex: 1 }}>
-        {activeTab === 'inbox' && renderMessageList(messages, true)}
-        {activeTab === 'sent' && renderMessageList(sentMessages, false)}
-        {activeTab === 'friends' && renderFriendsList()}
-        {activeTab === 'requests' && renderRequestsList()}
-        {activeTab === 'search' && renderSearchTab()}
+        {currentView === 'messages' ? (
+          // Messages View Content
+          <>
+            {activeTab === 'inbox' && renderMessageList(messages, true)}
+            {activeTab === 'sent' && renderMessageList(sentMessages, false)}
+          </>
+        ) : (
+          // Friends View Content
+          <>
+            {activeTab === 'friends' && renderFriendsList()}
+            {activeTab === 'requests' && renderRequestsList()}
+            {activeTab === 'inbox' && renderMessageList(messages, true)}
+          </>
+        )}
       </div>
 
       {/* Message Detail Modal */}
       {renderMessageDetail()}
+      
+      {/* Add Friend Modal */}
+      {renderAddFriendModal()}
+      
+      {/* Existing Invitation Modal */}
+      {showInviteModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          zIndex: 1100,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '400px'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
+                Send Invitation
+              </h2>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                Invitation Method:
+              </label>
+              <select
+                value={inviteMethod}
+                onChange={(e) => setInviteMethod(e.target.value as 'email' | 'sms' | 'whatsapp')}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                {inviteMethod === 'email' ? 'Email Address:' : 'Phone Number:'}
+              </label>
+              <input
+                type={inviteMethod === 'email' ? 'email' : 'tel'}
+                placeholder={inviteMethod === 'email' ? 'friend@example.com' : '+1234567890'}
+                value={inviteRecipient}
+                onChange={(e) => setInviteRecipient(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                Personal Message (Optional):
+              </label>
+              <textarea
+                placeholder="Hey! I'm using Vōstcard to share posts privately with friends. Join me!"
+                value={inviteMessage}
+                onChange={(e) => setInviteMessage(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  color: '#666',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendInvitation}
+                disabled={sendingInvite || !inviteRecipient.trim()}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: sendingInvite || !inviteRecipient.trim() ? '#ccc' : '#6B4D9B',
+                  color: 'white',
+                  cursor: sendingInvite || !inviteRecipient.trim() ? 'not-allowed' : 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                {sendingInvite ? 'Sending...' : 'Send Invitation'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Compose Private Message Modal */}
       <ComposePrivateMessageModal
