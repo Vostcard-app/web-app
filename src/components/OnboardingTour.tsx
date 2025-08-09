@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaFilter } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -242,6 +242,25 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
     }, 150);
   };
 
+  // Swipe handling
+  const handleSwipe = (event: any, info: any) => {
+    if (isAnimating) return;
+
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    const velocityThreshold = 500; // Minimum velocity for a swipe
+    
+    // Check if it's a significant swipe (either distance or velocity)
+    if (Math.abs(info.offset.x) > swipeThreshold || Math.abs(info.velocity.x) > velocityThreshold) {
+      if (info.offset.x > 0) {
+        // Swipe right - go to previous slide
+        handlePrevious();
+      } else {
+        // Swipe left - go to next slide
+        handleNext();
+      }
+    }
+  };
+
   const currentSlideData = tourSlides[currentSlide];
   const isLastSlide = currentSlide === tourSlides.length - 1;
 
@@ -343,14 +362,20 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.1}
+            onDragEnd={handleSwipe}
             style={{
               padding: '0px 24px 32px 24px',
               textAlign: 'center',
               minHeight: '300px',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              cursor: 'grab'
             }}
+            whileDrag={{ cursor: 'grabbing' }}
           >
             {/* Icon */}
             <div style={{
@@ -424,6 +449,21 @@ const OnboardingTour: React.FC<OnboardingTourProps> = React.memo(({
             )}
           </motion.div>
         </AnimatePresence>
+
+        {/* Swipe Indicator */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '8px 24px 0 24px',
+          fontSize: '12px',
+          color: '#999',
+          gap: '4px'
+        }}>
+          <span>←</span>
+          <span>Swipe to navigate</span>
+          <span>→</span>
+        </div>
 
         {/* Progress Dots */}
         <div style={{
