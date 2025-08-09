@@ -23,6 +23,7 @@ export default function CreateVostcardStep2() {
   // Track selected photos
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
+  const [loadedFlags, setLoadedFlags] = useState<boolean[]>([false, false]);
   
   // Desktop photo options modal state
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
@@ -52,6 +53,8 @@ export default function CreateVostcardStep2() {
         });
         return newPhotos;
       });
+      // reset fade-in flags when photos change
+      setLoadedFlags(flags => flags.map(() => false));
     }
   }, [currentVostcard]);
 
@@ -144,6 +147,11 @@ export default function CreateVostcardStep2() {
         const updated = [...prev];
         updated[index] = file;
         return updated;
+      });
+      setLoadedFlags(prev => {
+        const next = [...prev];
+        next[index] = false; // will fade in on load
+        return next;
       });
     }
     
@@ -378,6 +386,7 @@ export default function CreateVostcardStep2() {
                 <img
                   src={URL.createObjectURL(selectedPhotos[idx]!)}
                   alt={idx === 0 ? "Take Photo" : "Photo Library"}
+                  onLoad={() => setLoadedFlags(prev => { const n=[...prev]; n[idx]=true; return n; })}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -386,6 +395,8 @@ export default function CreateVostcardStep2() {
                     position: 'absolute',
                     top: 0,
                     left: 0,
+                    opacity: loadedFlags[idx] ? 1 : 0,
+                    transition: 'opacity 220ms ease'
                   }}
                 />
               ) : (
