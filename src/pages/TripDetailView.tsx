@@ -1571,6 +1571,28 @@ ${shareUrl}`;
                     Add Post
                   </button>
 
+                  {/* Add Music Button */}
+                  <button
+                    onClick={() => alert('Add music coming soon')}
+                    style={{
+                      backgroundColor: '#6B4D9B',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 24px',
+                      fontSize: '16px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 4px rgba(107, 77, 155, 0.2)'
+                    }}
+                  >
+                    🎵 Add Music
+                  </button>
+
                   <button
                     onClick={handleSaveTrip}
                     style={{
