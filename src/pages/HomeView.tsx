@@ -1234,8 +1234,19 @@ const HomeView = () => {
       console.log('📱 Loading posted vostcards...');
       await loadPostedVostcards();
       
-      // Combine all posts (personal + posted)
-      const allPosts = [...savedVostcards, ...postedVostcards];
+      // Combine all posts (personal + posted) with a brief wait to allow async state to flush
+      const waitForPosts = async (timeoutMs = 3000): Promise<any[]> => {
+        const start = Date.now();
+        // Poll briefly for postedVostcards to populate after loadPostedVostcards
+        while (Date.now() - start < timeoutMs) {
+          const combined = [...savedVostcardsRef.current, ...postedVostcardsRef.current];
+          if (combined.length > 0) return combined;
+          await new Promise((r) => setTimeout(r, 100));
+        }
+        return [...savedVostcardsRef.current, ...postedVostcardsRef.current];
+      };
+
+      const allPosts = await waitForPosts();
       
       console.log('🔍 Total posts found:', {
         personalPosts: savedVostcards.length,
@@ -1244,7 +1255,14 @@ const HomeView = () => {
       });
       
       if (allPosts.length === 0) {
-        alert('No posts found. Create your first post!');
+        // Gracefully inform the user in the toast instead of alert
+        const toast = document.getElementById('last-post-toast');
+        if (toast) toast.textContent = 'No posts found. Create your first post!';
+        // Keep it visible briefly, then remove
+        setTimeout(() => {
+          const t = document.getElementById('last-post-toast');
+          if (t && t.parentNode) t.parentNode.removeChild(t);
+        }, 1800);
         return;
       }
       
