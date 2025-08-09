@@ -223,5 +223,15 @@ service cloud.firestore {
         allow write: if request.auth != null; // Only authenticated users can update stats
       }
     }
+
+    // Public royalty-free music library (metadata only)
+    // Reads are open so users can browse tracks; writes restricted to admins
+    match /musicLibrary/{trackId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+    }
   }
 } 

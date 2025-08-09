@@ -24,7 +24,8 @@ import type {
   AddItemToTripData,
   TripFirebaseDoc,
   TripItemFirebaseDoc,
-  PublicTrip
+  PublicTrip,
+  BackgroundMusic
 } from '../types/TripTypes';
 
 // Generate a unique shareable link ID
@@ -44,7 +45,8 @@ const convertFirebaseToTrip = (doc: TripFirebaseDoc, items: TripItem[]): Trip =>
     isPrivate: doc.isPrivate,
     shareableLink: doc.shareableLink,
     createdAt: doc.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-    updatedAt: doc.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+    updatedAt: doc.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+    backgroundMusic: doc.backgroundMusic
   };
 };
 
@@ -410,6 +412,16 @@ export const TripService = {
           updateData.shareableLink = deleteField();
         } else if (!existingTrip.shareableLink) {
           updateData.shareableLink = generateShareableLink();
+        }
+      }
+
+      // Background music updates
+      if (data.backgroundMusic !== undefined) {
+        if (data.backgroundMusic === null) {
+          // remove field
+          (updateData as any).backgroundMusic = deleteField();
+        } else {
+          (updateData as any).backgroundMusic = data.backgroundMusic as BackgroundMusic;
         }
       }
 

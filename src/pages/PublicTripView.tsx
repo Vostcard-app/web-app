@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaHeart, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay, FaPhotoVideo } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
@@ -35,6 +35,21 @@ const PublicTripView: React.FC = () => {
   
   // Slideshow states
   const [showSlideshow, setShowSlideshow] = useState(false);
+  const bgAudioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    const audio = bgAudioRef.current;
+    if (!audio) return;
+    try {
+      if (showSlideshow && trip?.backgroundMusic?.url) {
+        audio.volume = typeof trip.backgroundMusic.volume === 'number' ? Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        audio.currentTime = 0;
+        const p = audio.play();
+        if (p && p.catch) p.catch(() => {});
+      } else {
+        audio.pause();
+      }
+    } catch {}
+  }, [showSlideshow, trip?.backgroundMusic?.url]);
   const [slideshowImages, setSlideshowImages] = useState<Array<{url: string, postTitle: string}>>([]);
   const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -651,6 +666,8 @@ const PublicTripView: React.FC = () => {
             List View
           </button>
           
+      {/* Music label intentionally omitted on shared list view */}
+
           <button
             onClick={() => {
 
@@ -1137,6 +1154,11 @@ const PublicTripView: React.FC = () => {
           autoPlay={true}
           autoPlayInterval={5000}
         />
+      )}
+
+      {/* Hidden background music for public slideshow */}
+      {trip?.backgroundMusic?.url && (
+        <audio ref={bgAudioRef} src={trip.backgroundMusic.url} loop preload="auto" />
       )}
 
       {/* CSS Animation for loading spinner */}

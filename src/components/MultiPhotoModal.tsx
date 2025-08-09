@@ -577,37 +577,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         </div>
       </div>
 
-      {/* Center - Auto-play indicator */}
-      {autoPlay && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 2001,
-            opacity: showControls ? 1 : 0,
-            transition: 'opacity 0.3s ease',
-            pointerEvents: showControls ? 'auto' : 'none'
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              padding: '8px 12px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
-          >
-            {casting ? '📺' : (isPaused ? '⏸️' : '▶️')} 
-            {casting ? 'Casting' : `Slideshow ${isPaused ? 'Paused' : 'Playing'}`}
-          </div>
-        </div>
-      )}
+      {/* Center - Auto-play indicator removed for cleaner shared view */}
 
 
 

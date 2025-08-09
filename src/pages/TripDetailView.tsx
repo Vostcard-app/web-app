@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus, FaSave } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus, FaSave, FaMusic } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -11,6 +11,8 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import type { Trip, TripItem } from '../types/TripTypes';
 import MultiPhotoModal from '../components/MultiPhotoModal';
+import MusicPickerModal from '../components/MusicPickerModal';
+import type { BackgroundMusic } from '../types/TripTypes';
 
 // Import pin assets
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -86,6 +88,11 @@ const TripDetailView: React.FC = () => {
   const [availablePosts, setAvailablePosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [addingPosts, setAddingPosts] = useState<Set<string>>(new Set());
+
+  // Music picker
+  const [showMusicPicker, setShowMusicPicker] = useState(false);
+  // Background music player for slideshow
+  const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
 
   
   // View mode states
@@ -500,6 +507,26 @@ ${shareUrl}`;
       handleSlideshowMode();
     }
   }, [viewMode]);
+
+  // Play/pause background music when slideshow opens/closes
+  useEffect(() => {
+    const audioEl = backgroundAudioRef.current;
+    if (!audioEl) return;
+    try {
+      if (showSlideshow && trip?.backgroundMusic?.url) {
+        audioEl.volume = typeof trip.backgroundMusic.volume === 'number' ? Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        audioEl.currentTime = 0;
+        const playPromise = audioEl.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.catch(() => {/* ignore autoplay errors */});
+        }
+      } else {
+        audioEl.pause();
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [showSlideshow, trip?.backgroundMusic?.url]);
 
   // Add Post functionality
   const handleOpenAddPostModal = async () => {
@@ -1541,6 +1568,26 @@ ${shareUrl}`;
                 return null;
               })()}
 
+              {/* Background music info (if set) */}
+              {trip.backgroundMusic && (
+                <div style={{
+                  marginTop: '8px',
+                  marginBottom: '4px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  color: '#6c757d',
+                  fontSize: '13px'
+                }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <FaMusic size={12} />
+                    <span>
+                      Music: <strong style={{ color: '#333' }}>{trip.backgroundMusic.title}</strong>
+                      {trip.backgroundMusic.artist ? ` • ${trip.backgroundMusic.artist}` : ''}
+                    </span>
+                  </span>
+                </div>
+              )}
+
               {/* Add Post and Save Buttons - Only show for trip owner */}
               {user && trip && user.uid === trip.userID && (
                 <div style={{
@@ -1573,7 +1620,7 @@ ${shareUrl}`;
 
                   {/* Add Music Button */}
                   <button
-                    onClick={() => alert('Add music coming soon')}
+                    onClick={() => setShowMusicPicker(true)}
                     style={{
                       backgroundColor: '#6B4D9B',
                       color: 'white',
@@ -1590,7 +1637,8 @@ ${shareUrl}`;
                       boxShadow: '0 2px 4px rgba(107, 77, 155, 0.2)'
                     }}
                   >
-                    🎵 Add Music
+                    <FaMusic size={14} />
+                    Add Music
                   </button>
 
                   <button
@@ -1858,6 +1906,31 @@ ${shareUrl}`;
         autoPlay={true}
         autoPlayInterval={5000}
       />
+
+      {/* Hidden audio element to play background music during slideshow */}
+      {trip?.backgroundMusic?.url && (
+        <audio ref={backgroundAudioRef} src={trip.backgroundMusic.url} loop preload="auto" />
+      )}
+
+      {/* Music Picker Modal */}
+      {user && trip && user.uid === trip.userID && (
+        <MusicPickerModal
+          isOpen={showMusicPicker}
+          onClose={() => setShowMusicPicker(false)}
+          onSelect={async (track) => {
+            try {
+              const music: BackgroundMusic = { url: track.url, title: track.title, artist: track.artist, volume: 0.5 };
+              const updated = await TripService.updateTrip(trip.id, { backgroundMusic: music });
+              setTrip(updated);
+              setShowMusicPicker(false);
+              alert(`Background music set: ${track.title}`);
+            } catch (e) {
+              console.error('Failed to set background music', e);
+              alert('Failed to set background music.');
+            }
+          }}
+        />
+      )}
 
       {/* CSS Animation for loading spinner */}
       <style dangerouslySetInnerHTML={{

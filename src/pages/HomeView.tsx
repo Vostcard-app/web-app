@@ -1864,18 +1864,7 @@ const HomeView = () => {
               </button>
             )}
 
-            {/* 8. Admin Dashboard */}
-            {userRole === 'admin' && (
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate('/dashboard');
-                }}
-                style={menuItemStyle}
-              >
-                📊 Admin Dashboard
-              </button>
-            )}
+            {/* 8. Admin Dashboard (disabled - duplicate admin entry) */}
             
             {/* 9. Preferences */}
             <button

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaKey, FaUser, FaSearch } from 'react-icons/fa';
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { FaArrowLeft, FaKey, FaUser, FaSearch, FaHome } from 'react-icons/fa';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
+import { storage } from '../firebase/firebaseConfig';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const AdminPanel: React.FC = () => {
   const { user, userRole, isAdmin, convertUserToGuide, convertUserToAdmin } = useAuth();
@@ -19,6 +21,20 @@ const AdminPanel: React.FC = () => {
   const [adminError, setAdminError] = useState<string | null>(null);
   const [pendingAdvertisers, setPendingAdvertisers] = useState<any[]>([]);
   const [advertisersLoading, setAdvertisersLoading] = useState(false);
+  // Music library admin state
+  const [musicTitle, setMusicTitle] = useState('');
+  const [musicArtist, setMusicArtist] = useState('');
+  const [musicUrl, setMusicUrl] = useState('');
+  const [musicSaving, setMusicSaving] = useState(false);
+  const [musicError, setMusicError] = useState<string | null>(null);
+  const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  // Music manager state
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [tracksLoading, setTracksLoading] = useState(false);
+  const [tracksError, setTracksError] = useState<string | null>(null);
+  const [filter, setFilter] = useState('');
 
   // Redirect if not admin
   useEffect(() => {
@@ -31,8 +47,65 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     if (isAdmin) {
       loadPendingAdvertisers();
+      reloadTracks();
     }
   }, [isAdmin]);
+
+  const reloadTracks = async () => {
+    setTracksLoading(true);
+    setTracksError(null);
+    try {
+      const snap = await getDocs(collection(db, 'musicLibrary'));
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // Newest first if createdAt exists
+      list.sort((a, b) => (String(b.createdAt || '')).localeCompare(String(a.createdAt || '')));
+      setTracks(list);
+    } catch (e: any) {
+      setTracksError(e?.message || 'Failed to load music library');
+    } finally {
+      setTracksLoading(false);
+    }
+  };
+
+  const handleSaveTrack = async (t: any) => {
+    try {
+      await updateDoc(doc(db, 'musicLibrary', t.id), {
+        title: t.title || '',
+        artist: t.artist || null,
+        url: t.url || '',
+        tags: Array.isArray(t.tags)
+          ? t.tags
+          : String(t.tags || '')
+              .split(',')
+              .map((x: string) => x.trim())
+              .filter(Boolean),
+        updatedAt: new Date().toISOString(),
+      });
+      await reloadTracks();
+      alert('Track saved');
+    } catch (e: any) {
+      alert(`Save failed: ${e?.message || e}`);
+    }
+  };
+
+  const handleDeleteTrack = async (t: any) => {
+    if (!confirm(`Delete track "${t.title || t.id}" from library?`)) return;
+    try {
+      await deleteDoc(doc(db, 'musicLibrary', t.id));
+      await reloadTracks();
+    } catch (e: any) {
+      alert(`Delete failed: ${e?.message || e}`);
+    }
+  };
+
+  const filteredTracks = tracks.filter((t) => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      String(t.title || '').toLowerCase().includes(q) ||
+      String(t.artist || '').toLowerCase().includes(q)
+    );
+  });
 
   const loadPendingAdvertisers = async () => {
     setAdvertisersLoading(true);
@@ -298,48 +371,39 @@ const AdminPanel: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-        <FaArrowLeft 
+    <div style={{ padding: '0 0 20px 0', maxWidth: '800px', margin: '0 auto' }}>
+      {/* Header banner */}
+      <div
+        style={{
+          background: '#07345c',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 20px',
+          borderBottomLeftRadius: 16,
+          borderBottomRightRadius: 16
+        }}
+      >
+        <button
           onClick={() => navigate('/home')}
-          style={{ cursor: 'pointer', marginRight: '10px', fontSize: '18px' }}
-        />
-        <h1>Admin Panel</h1>
-        <button
-          onClick={() => navigate('/')}
           style={{
-            marginLeft: '20px',
-            padding: '8px 16px',
-            backgroundColor: '#28a745',
-            color: 'white',
+            background: 'rgba(255,255,255,0.15)',
             border: 'none',
-            borderRadius: '4px',
+            borderRadius: '50%',
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
+            color: 'white'
           }}
+          title="Home"
         >
-          🏠 Root View
+          <FaHome size={16} />
         </button>
-        <button
-          onClick={() => {
-            // Open RootView in a new tab to avoid navigation issues
-            window.open('/', '_blank');
-          }}
-          style={{
-            marginLeft: '10px',
-            padding: '8px 16px',
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold'
-          }}
-        >
-          🗂️ Root View (New Tab)
-        </button>
+        <h1 style={{ color: 'white', margin: 0, fontSize: '20px', fontWeight: 700 }}>Admin Panel</h1>
+        <div style={{ width: 36 }} />
       </div>
 
 
@@ -570,6 +634,163 @@ const AdminPanel: React.FC = () => {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Music Library Management */}
+      <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
+          🎵 Music Library (Admin)
+        </h2>
+        <p style={{ marginTop: 0, color: '#495057', fontSize: 14 }}>
+          Upload an audio file to the music library (used by the Add Music picker).
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+          <input
+            placeholder="Title"
+            value={musicTitle}
+            onChange={(e) => setMusicTitle(e.target.value)}
+            style={{ padding: 10, border: '1px solid #ddd', borderRadius: 6 }}
+          />
+          <input
+            placeholder="Artist (optional)"
+            value={musicArtist}
+            onChange={(e) => setMusicArtist(e.target.value)}
+            style={{ padding: 10, border: '1px solid #ddd', borderRadius: 6 }}
+          />
+          <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 10, alignItems: 'center' }}>
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null;
+                setMusicFile(f);
+                if (f && !musicTitle) setMusicTitle(f.name.replace(/\.[^/.]+$/, ''));
+              }}
+            />
+            <button
+              onClick={async () => {
+                if (!musicFile) {
+                  alert('Choose an audio file first');
+                  return;
+                }
+                try {
+                  setUploading(true);
+                  setUploadProgress(null);
+                  const cleanName = musicFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                  const path = `library/music/${Date.now()}_${cleanName}`;
+                  const ref = storageRef(storage, path);
+                  await uploadBytes(ref, musicFile);
+                  const url = await getDownloadURL(ref);
+                  setMusicUrl(url);
+                  setMusicFile(null);
+                  setUploadProgress(null);
+                  // Auto-create metadata document in Firestore library
+                  const docTitle = (musicTitle && musicTitle.trim()) || cleanName.replace(/\.[^/.]+$/, '');
+                  await addDoc(collection(db, 'musicLibrary'), {
+                    title: docTitle,
+                    artist: musicArtist.trim() || null,
+                    url,
+                    createdAt: new Date().toISOString(),
+                  });
+                  await reloadTracks();
+                  alert('Uploaded and added to music library');
+                } catch (e) {
+                  console.error('Upload failed', e);
+                  alert('Upload failed');
+                } finally {
+                  setUploading(false);
+                }
+              }}
+              disabled={uploading}
+              style={{ padding: '8px 12px', background: '#20c997', color: 'white', border: 'none', borderRadius: 6, cursor: uploading ? 'not-allowed' : 'pointer' }}
+            >
+              {uploading ? 'Uploading…' : 'Upload file to Storage'}
+            </button>
+          </div>
+          
+        </div>
+        {musicError && <div style={{ color: '#dc3545', marginBottom: 10 }}>{musicError}</div>}
+        <div style={{ display: 'flex', gap: 10 }} />
+
+        {/* Library manager list */}
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
+            <input
+              placeholder="Filter by title/artist"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 6 }}
+            />
+            <button
+              onClick={reloadTracks}
+              disabled={tracksLoading}
+              style={{ padding: '8px 12px', background: '#198754', color: 'white', border: 'none', borderRadius: 6, cursor: tracksLoading ? 'not-allowed' : 'pointer' }}
+            >
+              {tracksLoading ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <span style={{ color: '#6c757d', fontSize: 12 }}>Total: {filteredTracks.length}</span>
+          </div>
+          {tracksError && <div style={{ color: '#dc3545' }}>{tracksError}</div>}
+          {tracksLoading ? (
+            <div style={{ padding: 20, color: '#666' }}>Loading library…</div>
+          ) : filteredTracks.length === 0 ? (
+            <div style={{ padding: 20, color: '#666' }}>No tracks yet</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {filteredTracks.map((t) => (
+                <div key={t.id} style={{ border: '1px solid #e9ecef', borderRadius: 8, padding: 10, background: 'white' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <input
+                      value={t.title || ''}
+                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, title: e.target.value } : x))}
+                      placeholder="Title"
+                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6 }}
+                    />
+                    <input
+                      value={t.artist || ''}
+                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, artist: e.target.value } : x))}
+                      placeholder="Artist"
+                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6 }}
+                    />
+                    <input
+                      value={Array.isArray(t.tags) ? t.tags.join(', ') : (t.tags || '')}
+                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, tags: e.target.value } : x))}
+                      placeholder="Tags (comma separated)"
+                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6, gridColumn: '1 / span 2' }}
+                    />
+                    <input
+                      value={t.url || ''}
+                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, url: e.target.value } : x))}
+                      placeholder="URL"
+                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6, gridColumn: '1 / span 2' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+                    <audio src={t.url || undefined} controls style={{ flex: 1 }} />
+                    <button
+                      onClick={() => navigator.clipboard?.writeText(String(t.url || ''))}
+                      style={{ padding: '6px 10px', background: '#6c757d', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                    >
+                      Copy URL
+                    </button>
+                    <button
+                      onClick={() => handleSaveTrack(t)}
+                      style={{ padding: '6px 10px', background: '#0d6efd', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTrack(t)}
+                      style={{ padding: '6px 10px', background: '#dc3545', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Convert User to Admin Section */}

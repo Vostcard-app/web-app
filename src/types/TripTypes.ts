@@ -2,6 +2,13 @@
 
 import { Timestamp } from 'firebase/firestore';
 
+export interface BackgroundMusic {
+  url: string;
+  title: string;
+  artist?: string;
+  volume?: number; // 0.0 - 1.0
+}
+
 // Main Trip interface - personal collection of user's own vostcards/quickcards
 export interface Trip {
   id: string;
@@ -14,6 +21,7 @@ export interface Trip {
   shareableLink?: string; // Only if made shareable
   createdAt: string;
   updatedAt: string;
+  backgroundMusic?: BackgroundMusic;
 }
 
 // Individual item in a trip - only user's own content
@@ -48,6 +56,8 @@ export interface UpdateTripData {
   name?: string;
   description?: string;
   isPrivate?: boolean;
+  // Set to an object to update, set to null to remove, leave undefined to ignore
+  backgroundMusic?: BackgroundMusic | null;
 }
 
 // For adding items to trips - only user's own content
@@ -72,6 +82,7 @@ export interface TripFirebaseDoc {
   shareableLink?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  backgroundMusic?: BackgroundMusic;
 }
 
 // Firebase document structure for trip items
