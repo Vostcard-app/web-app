@@ -2409,7 +2409,7 @@ const HomeView = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                ✨ Quick Start TEST
+                ✨ Quick Start
               </button>
               
               <button
