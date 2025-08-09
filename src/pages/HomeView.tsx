@@ -17,6 +17,7 @@ import './HomeView.css';
 import LocationDebugger from '../components/LocationDebugger';
 import DriveModePlayer from '../components/DriveModePlayer';
 import OnboardingTour from '../components/OnboardingTour';
+import ComposePrivateMessageModal from '../components/ComposePrivateMessageModal';
 
 import { OnboardingService } from '../services/onboardingService';
 import InfoButton from '../assets/Info_button.png';
@@ -317,6 +318,7 @@ const HomeView = () => {
 
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
+  const [showComposeModal, setShowComposeModal] = useState(false);
   const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
   const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
@@ -2646,7 +2648,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '31%',
+            width: '23%',
             height: '60px',
             display: 'flex',
             alignItems: 'center',
@@ -2675,7 +2677,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '31%',
+            width: '23%',
             height: '60px',
             display: 'flex',
             alignItems: 'center',
@@ -2686,6 +2688,32 @@ const HomeView = () => {
           }}
         >
           Create Quickcard
+        </button>
+
+        {/* Compose Button */}
+        <button
+          onClick={() => setShowComposeModal(true)}
+          style={{
+            background: '#6B4D9B', // Purple color for compose
+            color: 'white',
+            border: 'none',
+            borderRadius: 12,
+            padding: '0px 20px',
+            fontSize: 18,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(107,77,155,0.2)',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            width: '23%',
+            height: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            lineHeight: '1.2'
+          }}
+        >
+          Compose
         </button>
 
         {/* Last Post Button */}
@@ -2702,7 +2730,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,123,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '31%',
+            width: '23%',
             height: '60px',
             display: 'flex',
             alignItems: 'center',
@@ -3085,6 +3113,12 @@ const HomeView = () => {
         isOpen={showOnboarding}
         onComplete={handleOnboardingComplete}
         onSkip={handleOnboardingSkip}
+      />
+
+      {/* Compose Private Message Modal */}
+      <ComposePrivateMessageModal
+        isOpen={showComposeModal}
+        onClose={() => setShowComposeModal(false)}
       />
 
 
