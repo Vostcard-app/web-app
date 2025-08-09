@@ -1177,12 +1177,11 @@ const HomeView = () => {
     console.log('🔍 Loading last post...');
     
     try {
-      // Query for user's most recent post (vostcard or quickcard)
+      // Query for user's posts (without orderBy to avoid composite index requirement)
       const userPostsQuery = query(
         collection(db, 'vostcards'),
         where('userID', '==', user?.uid),
-        orderBy('createdAt', 'desc'),
-        limit(1)
+        limit(20) // Get recent posts and sort client-side
       );
       
       const snapshot = await getDocs(userPostsQuery);
@@ -1192,7 +1191,15 @@ const HomeView = () => {
         return;
       }
       
-      const lastPost = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+      // Sort client-side to find most recent
+      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const sortedPosts = posts.sort((a, b) => {
+        const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime();
+        const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime();
+        return bTime - aTime; // Most recent first
+      });
+      
+      const lastPost = sortedPosts[0];
       console.log('🔍 Found last post:', lastPost);
       
       // Load the post into context
