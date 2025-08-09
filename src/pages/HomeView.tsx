@@ -1222,6 +1222,26 @@ const HomeView = () => {
         createdAt: lastPost.createdAt
       });
       
+      // If this is a posted vostcard, we need to convert photoURLs back to Blob objects for editing
+      if (lastPost.photoURLs && lastPost.photoURLs.length > 0 && (!lastPost.photos || lastPost.photos.length === 0)) {
+        console.log('🔄 Converting posted vostcard photoURLs to Blobs for editing...');
+        try {
+          const photoBlobs = await Promise.all(
+            lastPost.photoURLs.map(async (url: string) => {
+              const response = await fetch(url);
+              const blob = await response.blob();
+              return blob;
+            })
+          );
+          
+          lastPost.photos = photoBlobs;
+          console.log('✅ Converted', photoBlobs.length, 'photo URLs to Blobs');
+        } catch (error) {
+          console.error('❌ Failed to convert photo URLs to Blobs:', error);
+          // Continue anyway, user can add new photos
+        }
+      }
+      
       // Use the same logic as handleEdit from MyVostcardListView
       setCurrentVostcard(lastPost);
       
