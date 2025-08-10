@@ -33,11 +33,11 @@
       ]
     },
     {
-      "collectionId": "vostcards",
+      "collectionGroup": "vostcards",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "state", "order": "ASCENDING" },
         { "fieldPath": "userID", "order": "ASCENDING" },
+        { "fieldPath": "state", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" },
         { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
