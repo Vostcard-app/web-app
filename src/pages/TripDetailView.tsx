@@ -537,16 +537,15 @@ ${shareUrl}`;
       // Load user's posts that aren't already in this trip
       const currentItemIds = trip?.items.map(item => item.vostcardID) || [];
       
-      // Get user's posted vostcards (public posts)
-      const userPostsQuery = query(
+      // Get all user's vostcards (both private and public)
+      const userVostcardsQuery = query(
         collection(db, 'vostcards'),
         where('userID', '==', user?.uid),
-        where('state', '==', 'posted'),
         orderBy('createdAt', 'desc')
       );
       
-      const userPostsSnapshot = await getDocs(userPostsQuery);
-      const userPosts = userPostsSnapshot.docs.map(doc => ({
+      const userVostcardsSnapshot = await getDocs(userVostcardsQuery);
+      const userVostcards = userVostcardsSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
         type: 'vostcard'
@@ -567,7 +566,7 @@ ${shareUrl}`;
       }));
       
       // Combine and filter out posts already in trip
-      const allPosts = [...userPosts, ...quickcards].filter(post => 
+      const allPosts = [...userVostcards, ...quickcards].filter(post => 
         !currentItemIds.includes(post.id)
       );
       
@@ -1730,6 +1729,25 @@ ${shareUrl}`;
                 <FaTimes />
               </button>
             </div>
+            
+            {/* Description */}
+            <div style={{
+              marginBottom: '20px',
+              padding: '12px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '8px',
+              border: '1px solid #e9ecef'
+            }}>
+              <p style={{
+                margin: '0',
+                fontSize: '14px',
+                color: '#495057',
+                lineHeight: '1.4'
+              }}>
+                You can add both your <strong>personal posts</strong> (private) and <strong>public posts</strong> to this trip. 
+                Personal posts will remain private and won't be visible to others.
+              </p>
+            </div>
 
             {/* Loading State */}
             {loadingPosts && (
@@ -1840,6 +1858,14 @@ ${shareUrl}`;
                               whiteSpace: 'nowrap'
                             }}>
                               {post.type === 'quickcard' ? 'Quickcard' : 'Vostcard'}
+                              {post.state && (
+                                <span style={{
+                                  color: post.state === 'posted' ? '#28a745' : '#6c757d',
+                                  fontWeight: '500'
+                                }}>
+                                  {post.state === 'posted' ? ' • Public' : ' • Private'}
+                                </span>
+                              )}
                               {post.description && ` • ${post.description}`}
                             </p>
                           </div>
