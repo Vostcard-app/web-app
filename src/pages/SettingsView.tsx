@@ -39,6 +39,12 @@ const SettingsView = () => {
           <h2>Other</h2>
           <button 
             style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}
+            onClick={() => navigate('/music-library')}
+          >
+            Music Library (Adin)
+          </button>
+          <button 
+            style={{ marginRight: '10px', fontSize: '18px', padding: '10px 15px', borderRadius: '6px' }}
             onClick={() => navigate('/suggestion-box')}
           >
             Suggestion Box

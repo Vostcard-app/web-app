@@ -50,6 +50,7 @@ import TripDetailView from "./pages/TripDetailView";
 import ScriptLibraryView from "./pages/ScriptLibraryView";
 import ScriptEditorView from "./pages/ScriptEditorView";
 import ScriptToolView from "./pages/ScriptToolView";
+import MusicLibraryView from "./pages/MusicLibraryView";
 import UserProfileView from "./pages/UserProfileView";
 import BusinessProfileView from "./pages/BusinessProfileView";
 import AdvertiserPortal from "./pages/AdvertiserPortal";
@@ -144,6 +145,9 @@ function App() {
                   <Route path="/scripts" element={<ScriptLibraryView />} />
                   <Route path="/script-editor" element={<ScriptEditorView />} />
                   <Route path="/script-tool" element={<ScriptToolView />} />
+                  
+                  {/* 🎵 Music Library */}
+                  <Route path="/music-library" element={<MusicLibraryView />} />
 
                   {/* 📹 Recording */}
                   <Route path="/camera" element={<CameraView />} />
