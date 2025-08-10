@@ -93,9 +93,6 @@ const TripDetailView: React.FC = () => {
   const [showMusicPicker, setShowMusicPicker] = useState(false);
   // Background music player for slideshow
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null);
-  // Store temporary uploaded music file for slideshow playback
-  const [tempMusicFile, setTempMusicFile] = useState<File | null>(null);
-  const [tempMusicUrl, setTempMusicUrl] = useState<string | null>(null);
 
   
   // View mode states
@@ -516,19 +513,12 @@ ${shareUrl}`;
     const audioEl = backgroundAudioRef.current;
     if (!audioEl) return;
     try {
-      if (showSlideshow && trip?.backgroundMusic) {
-        // Use temporary URL if available, otherwise use the stored URL
-        const musicUrl = tempMusicUrl && trip.backgroundMusic.url === 'temp_upload' 
-          ? tempMusicUrl 
-          : trip.backgroundMusic.url;
-          
-        if (musicUrl && musicUrl !== 'temp_upload') {
-          audioEl.volume = typeof trip.backgroundMusic.volume === 'number' ? Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
-          audioEl.currentTime = 0;
-          const playPromise = audioEl.play();
-          if (playPromise && typeof playPromise.then === 'function') {
-            playPromise.catch(() => {/* ignore autoplay errors */});
-          }
+      if (showSlideshow && trip?.backgroundMusic?.url) {
+        audioEl.volume = typeof trip.backgroundMusic.volume === 'number' ? Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        audioEl.currentTime = 0;
+        const playPromise = audioEl.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise.catch(() => {/* ignore autoplay errors */});
         }
       } else {
         audioEl.pause();
@@ -536,7 +526,7 @@ ${shareUrl}`;
     } catch (e) {
       // ignore
     }
-  }, [showSlideshow, trip?.backgroundMusic?.url, tempMusicUrl]);
+  }, [showSlideshow, trip?.backgroundMusic?.url]);
 
   // Add Post functionality
   const handleOpenAddPostModal = async () => {
@@ -2020,13 +2010,8 @@ ${shareUrl}`;
       />
 
       {/* Hidden audio element to play background music during slideshow */}
-      {trip?.backgroundMusic && (
-        <audio 
-          ref={backgroundAudioRef} 
-          src={tempMusicUrl && trip.backgroundMusic.url === 'temp_upload' ? tempMusicUrl : trip.backgroundMusic.url} 
-          loop 
-          preload="auto" 
-        />
+      {trip?.backgroundMusic?.url && (
+        <audio ref={backgroundAudioRef} src={trip.backgroundMusic.url} loop preload="auto" />
       )}
 
       {/* Music Picker Modal */}
@@ -2036,35 +2021,11 @@ ${shareUrl}`;
           onClose={() => setShowMusicPicker(false)}
           onSelect={async (track) => {
             try {
-              // Check if this is a temporary upload (blob URL)
-              const isTemporaryUpload = track.url.startsWith('blob:') || track.id.startsWith('temp_');
-              
-              if (isTemporaryUpload) {
-                // For temporary uploads, store locally and create a placeholder in the trip
-                const music: BackgroundMusic = { 
-                  url: 'temp_upload', // Placeholder - we'll handle this specially
-                  title: track.title, 
-                  artist: track.artist, 
-                  volume: 0.5 
-                };
-                
-                // Store the original blob URL and create a fresh one for playback
-                setTempMusicUrl(track.url);
-                
-                // Update trip with placeholder
-                const updated = await TripService.updateTrip(trip.id, { backgroundMusic: music });
-                setTrip(updated);
-                setShowMusicPicker(false);
-                alert(`Background music set: ${track.title} (temporary upload)`);
-              } else {
-                // For permanent library tracks, proceed normally
-                const music: BackgroundMusic = { url: track.url, title: track.title, artist: track.artist, volume: 0.5 };
-                const updated = await TripService.updateTrip(trip.id, { backgroundMusic: music });
-                setTrip(updated);
-                setTempMusicUrl(null); // Clear any temporary music
-                setShowMusicPicker(false);
-                alert(`Background music set: ${track.title}`);
-              }
+              const music: BackgroundMusic = { url: track.url, title: track.title, artist: track.artist, volume: 0.5 };
+              const updated = await TripService.updateTrip(trip.id, { backgroundMusic: music });
+              setTrip(updated);
+              setShowMusicPicker(false);
+              alert(`Background music set: ${track.title}`);
             } catch (e) {
               console.error('Failed to set background music', e);
               alert('Failed to set background music.');
