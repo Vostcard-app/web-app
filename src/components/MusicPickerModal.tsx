@@ -1,7 +1,5 @@
-import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { getMusicLibrary, addMusicTrack, type MusicTrack } from '../services/musicLibraryService';
-import { storage } from '../firebase/firebaseConfig';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import React, { useEffect, useState, useRef } from 'react';
+import { getMusicLibrary, type MusicTrack } from '../services/musicLibraryService';
 
 type Props = {
   isOpen: boolean;
@@ -13,11 +11,11 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState('');
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   
-  // Upload functionality
+  // Upload functionality for temporary tracks
   const [uploading, setUploading] = useState(false);
+  const [uploadedTrack, setUploadedTrack] = useState<MusicTrack | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,20 +36,11 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
     return () => {
       mounted = false;
       setPreviewSrc(null);
+      setUploadedTrack(null); // Clear uploaded track when modal closes
     };
   }, [isOpen]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return tracks;
-    return tracks.filter(t =>
-      t.title?.toLowerCase().includes(q) ||
-      t.artist?.toLowerCase().includes(q) ||
-      (t.tags || []).some(tag => tag.toLowerCase().includes(q))
-    );
-  }, [tracks, query]);
-
-  // Handle file upload
+  // Handle file upload (temporary, not persisted)
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -64,45 +53,31 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
 
     setUploading(true);
     try {
-      // Clean filename for Firebase storage
-      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const path = `library/music/user_uploads/${Date.now()}_${cleanName}`;
-      const fileRef = storageRef(storage, path);
+      // Create a blob URL for temporary playback (no Firebase upload)
+      const url = URL.createObjectURL(file);
       
-      // Upload file to Firebase storage
-      await uploadBytes(fileRef, file);
-      const url = await getDownloadURL(fileRef);
-
       // Extract title from filename (remove extension)
       const title = file.name.replace(/\.[^/.]+$/, "");
       
-      // Add to music library
-      const trackId = await addMusicTrack({ 
-        title, 
-        url, 
-        artist: 'User Upload'
-      });
-
-      // Create the new track object
-      const newTrack: MusicTrack = {
-        id: trackId,
+      // Create temporary track object
+      const tempTrack: MusicTrack = {
+        id: `temp_${Date.now()}`,
         title,
         url,
-        artist: 'User Upload'
+        artist: 'Your Upload'
       };
 
-      // Add to local tracks list
-      setTracks(prev => [newTrack, ...prev]);
+      // Set as uploaded track (temporary)
+      setUploadedTrack(tempTrack);
       
       // Clear file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
       
-      alert('✅ Music uploaded successfully!');
     } catch (error) {
-      console.error('❌ Error uploading music:', error);
-      alert('Failed to upload music. Please try again.');
+      console.error('❌ Error processing file:', error);
+      alert('Failed to process music file. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -137,14 +112,41 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tracks (title, artist, tag)"
-            style={{ flex: 1, border: '1px solid #ddd', borderRadius: 8, padding: '8px 10px' }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          {/* Add Your Own Music Button - Now at the top */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            style={{
+              flex: 1,
+              border: '2px dashed #007aff',
+              backgroundColor: uploading ? '#f5f5f5' : 'transparent',
+              color: uploading ? '#666' : '#007aff',
+              borderRadius: 8,
+              padding: '12px 16px',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              fontSize: 14,
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {uploading ? '⏳ Processing...' : '📁 Add Your Own Music'}
+          </button>
+          
           <button onClick={onClose} style={{ border: 'none', background: '#eee', borderRadius: 8, padding: '8px 12px', cursor: 'pointer' }}>Close</button>
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+          />
         </div>
 
         {loading && <div style={{ textAlign: 'center', padding: 24 }}>Loading music...</div>}
@@ -152,10 +154,41 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
 
         {!loading && !error && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {filtered.length === 0 && (
+            {/* Show uploaded track first if it exists */}
+            {uploadedTrack && (
+              <>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#007aff', marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid #eee' }}>
+                  📁 Your Uploaded Music
+                </div>
+                <div style={{ border: '2px solid #007aff', borderRadius: 8, padding: 10, display: 'flex', alignItems: 'center', gap: 10, backgroundColor: '#f8f9ff' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{uploadedTrack.title}</div>
+                    <div style={{ fontSize: 12, color: '#666' }}>{uploadedTrack.artist}</div>
+                  </div>
+                  <button
+                    onClick={() => setPreviewSrc(s => (s === uploadedTrack.url ? null : uploadedTrack.url))}
+                    style={{ border: 'none', background: '#eee', borderRadius: 8, padding: '8px 10px', cursor: 'pointer' }}
+                  >
+                    {previewSrc === uploadedTrack.url ? 'Stop' : 'Preview'}
+                  </button>
+                  <button
+                    onClick={() => onSelect(uploadedTrack)}
+                    style={{ border: 'none', background: '#007aff', color: 'white', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontWeight: 600 }}
+                  >
+                    Select
+                  </button>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#666', marginTop: 16, marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid #eee' }}>
+                  🎵 Music Library
+                </div>
+              </>
+            )}
+            
+            {/* Show library tracks */}
+            {tracks.length === 0 && !uploadedTrack && (
               <div style={{ textAlign: 'center', color: '#666', padding: 24 }}>No tracks found</div>
             )}
-            {filtered.map((t) => (
+            {tracks.map((t) => (
               <div key={t.id} style={{ border: '1px solid #eee', borderRadius: 8, padding: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, color: '#333', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
@@ -185,42 +218,7 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
           </div>
         )}
 
-        {/* Add Your Own Button */}
-        {!loading && (
-          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #eee' }}>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              style={{
-                width: '100%',
-                border: '2px dashed #007aff',
-                backgroundColor: uploading ? '#f5f5f5' : 'transparent',
-                color: uploading ? '#666' : '#007aff',
-                borderRadius: 8,
-                padding: '12px 16px',
-                cursor: uploading ? 'not-allowed' : 'pointer',
-                fontSize: 14,
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {uploading ? '⏳ Uploading...' : '📁 Add Your Own Music'}
-            </button>
-            
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="audio/*"
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-            />
-          </div>
-        )}
+
 
         {/* Audio preview element */}
         <audio src={previewSrc || undefined} autoPlay={!!previewSrc} controls style={{ width: '100%', marginTop: 10 }} onEnded={() => setPreviewSrc(null)} />
