@@ -43,7 +43,7 @@
           ]
         },
     {
-      "collectionId": "quickcards",
+      "collectionGroup": "quickcards",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "userID", "order": "ASCENDING" },
