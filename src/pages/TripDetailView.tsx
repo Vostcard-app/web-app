@@ -537,10 +537,11 @@ ${shareUrl}`;
       // Load user's posts that aren't already in this trip
       const currentItemIds = trip?.items.map(item => item.vostcardID) || [];
       
-      // Get all user's vostcards (both private and public)
+      // Get only user's personal vostcards (private posts)
       const userVostcardsQuery = query(
         collection(db, 'vostcards'),
         where('userID', '==', user?.uid),
+        where('state', '==', 'private'),
         orderBy('createdAt', 'desc')
       );
       
@@ -1744,8 +1745,8 @@ ${shareUrl}`;
                 color: '#495057',
                 lineHeight: '1.4'
               }}>
-                You can add both your <strong>personal posts</strong> (private) and <strong>public posts</strong> to this trip. 
-                Personal posts will remain private and won't be visible to others.
+                You can add your <strong>personal posts</strong> (private) to this trip. 
+                Only personal posts can be added to trips, and they will remain private.
               </p>
             </div>
 
@@ -1858,14 +1859,6 @@ ${shareUrl}`;
                               whiteSpace: 'nowrap'
                             }}>
                               {post.type === 'quickcard' ? 'Quickcard' : 'Vostcard'}
-                              {post.state && (
-                                <span style={{
-                                  color: post.state === 'posted' ? '#28a745' : '#6c757d',
-                                  fontWeight: '500'
-                                }}>
-                                  {post.state === 'posted' ? ' • Public' : ' • Private'}
-                                </span>
-                              )}
                               {post.description && ` • ${post.description}`}
                             </p>
                           </div>
