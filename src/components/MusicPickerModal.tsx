@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { getMusicLibrary, type MusicTrack } from '../services/musicLibraryService';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { getMusicLibrary, addMusicTrack, type MusicTrack } from '../services/musicLibraryService';
+import { storage } from '../firebase/firebaseConfig';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 type Props = {
   isOpen: boolean;
@@ -13,6 +15,10 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+  
+  // Upload functionality
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -44,6 +50,63 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
       (t.tags || []).some(tag => tag.toLowerCase().includes(q))
     );
   }, [tracks, query]);
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Check if it's an audio file
+    if (!file.type.startsWith('audio/')) {
+      alert('Please select an audio file (MP3, WAV, etc.)');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Clean filename for Firebase storage
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `library/music/user_uploads/${Date.now()}_${cleanName}`;
+      const fileRef = storageRef(storage, path);
+      
+      // Upload file to Firebase storage
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+
+      // Extract title from filename (remove extension)
+      const title = file.name.replace(/\.[^/.]+$/, "");
+      
+      // Add to music library
+      const trackId = await addMusicTrack({ 
+        title, 
+        url, 
+        artist: 'User Upload'
+      });
+
+      // Create the new track object
+      const newTrack: MusicTrack = {
+        id: trackId,
+        title,
+        url,
+        artist: 'User Upload'
+      };
+
+      // Add to local tracks list
+      setTracks(prev => [newTrack, ...prev]);
+      
+      // Clear file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      alert('✅ Music uploaded successfully!');
+    } catch (error) {
+      console.error('❌ Error uploading music:', error);
+      alert('Failed to upload music. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -119,6 +182,43 @@ const MusicPickerModal: React.FC<Props> = ({ isOpen, onClose, onSelect }) => {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Add Your Own Button */}
+        {!loading && (
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #eee' }}>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              style={{
+                width: '100%',
+                border: '2px dashed #007aff',
+                backgroundColor: uploading ? '#f5f5f5' : 'transparent',
+                color: uploading ? '#666' : '#007aff',
+                borderRadius: 8,
+                padding: '12px 16px',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                fontSize: 14,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {uploading ? '⏳ Uploading...' : '📁 Add Your Own Music'}
+            </button>
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              onChange={handleFileUpload}
+              style={{ display: 'none' }}
+            />
           </div>
         )}
 
