@@ -403,7 +403,7 @@ export default function QuickcardStep2() {
           letterSpacing: '0.01em',
           paddingTop: '5px'
         }}>
-          Add Photos
+          Take Photos
         </h1>
 
         {/* Title Display (if exists) */}
