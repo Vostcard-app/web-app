@@ -1166,6 +1166,25 @@ ${shareUrl}`;
               Public Trip
             </div>
           )}
+
+          {/* Background Music Display */}
+          {trip.backgroundMusic && (
+            <div style={{
+              marginTop: '12px',
+              display: 'flex',
+              justifyContent: 'center',
+              color: '#6c757d',
+              fontSize: '13px'
+            }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <FaMusic size={12} />
+                <span>
+                  Music: <strong style={{ color: '#333' }}>{trip.backgroundMusic.title}</strong>
+                  {trip.backgroundMusic.artist ? ` • ${trip.backgroundMusic.artist}` : ''}
+                </span>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Content Area - List, Map, or Slideshow View */}
@@ -1724,25 +1743,7 @@ ${shareUrl}`;
                 return null;
               })()}
 
-              {/* Background music info (if set) */}
-              {trip.backgroundMusic && (
-                <div style={{
-                  marginTop: '8px',
-                  marginBottom: '4px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  color: '#6c757d',
-                  fontSize: '13px'
-                }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <FaMusic size={12} />
-                    <span>
-                      Music: <strong style={{ color: '#333' }}>{trip.backgroundMusic.title}</strong>
-                      {trip.backgroundMusic.artist ? ` • ${trip.backgroundMusic.artist}` : ''}
-                    </span>
-                  </span>
-                </div>
-              )}
+
 
               {/* Add Post and Save Buttons - Only show for trip owner */}
               {user && trip && user.uid === trip.userID && (
