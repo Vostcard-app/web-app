@@ -26,6 +26,8 @@ const AdminPanel: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [playingTrack, setPlayingTrack] = useState<string | null>(null);
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
   // Music manager state
   const [tracks, setTracks] = useState<any[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
@@ -104,6 +106,44 @@ const AdminPanel: React.FC = () => {
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handlePreview = (track: any) => {
+    // If this track is already playing, pause it
+    if (playingTrack === track.id && audioRef) {
+      audioRef.pause();
+      setPlayingTrack(null);
+      return;
+    }
+
+    // Stop any currently playing audio
+    if (audioRef) {
+      audioRef.pause();
+    }
+
+    // Create new audio element and play
+    const audio = new Audio(track.url);
+    audio.volume = 0.5; // Set volume to 50%
+    
+    audio.onended = () => {
+      setPlayingTrack(null);
+      setAudioRef(null);
+    };
+
+    audio.onerror = () => {
+      alert('Failed to play audio');
+      setPlayingTrack(null);
+      setAudioRef(null);
+    };
+
+    audio.play().then(() => {
+      setPlayingTrack(track.id);
+      setAudioRef(audio);
+    }).catch(() => {
+      alert('Failed to play audio');
+      setPlayingTrack(null);
+      setAudioRef(null);
+    });
   };
 
 
@@ -723,9 +763,24 @@ const AdminPanel: React.FC = () => {
                       height: '18px'
                     }}
                   />
-                  <span style={{ fontSize: '16px' }}>
+                  <span style={{ fontSize: '16px', flex: 1 }}>
                     {track.title}
                   </span>
+                  <button
+                    onClick={() => handlePreview(track)}
+                    style={{
+                      backgroundColor: playingTrack === track.id ? '#dc3545' : '#007aff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '6px 12px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      marginLeft: '10px'
+                    }}
+                  >
+                    {playingTrack === track.id ? 'Stop' : 'Preview'}
+                  </button>
                 </div>
               ))}
             </div>
