@@ -1419,16 +1419,96 @@ ${shareUrl}`;
             // No items at all in database
             if (totalItems === 0) {
               return (
-                <div style={{
-                  textAlign: 'center',
-                  padding: '40px 20px',
-                  color: '#666'
-                }}>
-                  <FaMapMarkerAlt size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
-                  <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No items yet</h3>
-                  <p style={{ margin: 0, fontSize: '14px' }}>
-                    Add vostcards and quickcards to this trip when creating content!
-                  </p>
+                <div>
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    color: '#666'
+                  }}>
+                    <FaMapMarkerAlt size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+                    <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No items yet</h3>
+                    <p style={{ margin: 0, fontSize: '14px' }}>
+                      Add vostcards and quickcards to this trip when creating content!
+                    </p>
+                  </div>
+                  
+                  {/* Add Post, Music and Save Buttons - Show even when no items */}
+                  {user && trip && user.uid === trip.userID && (
+                    <div style={{
+                      display: 'flex',
+                      gap: '8px',
+                      marginTop: '20px',
+                      justifyContent: 'center',
+                      padding: '0 20px'
+                    }}>
+                      <button
+                        onClick={handleOpenAddPostModal}
+                        style={{
+                          backgroundColor: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '12px 24px',
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 2px 4px rgba(76, 175, 80, 0.2)'
+                        }}
+                      >
+                        <FaPlus size={14} />
+                        Add Post
+                      </button>
+
+                      {/* Add Music Button */}
+                      <button
+                        onClick={() => setShowMusicPicker(true)}
+                        style={{
+                          backgroundColor: '#6B4D9B',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '12px 24px',
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 2px 4px rgba(107, 77, 155, 0.2)'
+                        }}
+                      >
+                        <FaMusic size={14} />
+                        Add Music
+                      </button>
+
+                      <button
+                        onClick={handleSaveTrip}
+                        style={{
+                          backgroundColor: '#007aff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '12px 24px',
+                          fontSize: '16px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 2px 4px rgba(0, 122, 255, 0.2)'
+                        }}
+                      >
+                        <FaSave size={14} />
+                        Save
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             }
