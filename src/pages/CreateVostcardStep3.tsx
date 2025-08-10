@@ -410,7 +410,7 @@ const CreateVostcardStep3: React.FC = () => {
                   }
                 }}
               >
-                <span style={{ fontSize: '14px', fontWeight: '600', textAlign: 'center' }}>
+                <span style={{ fontSize: '16px', fontWeight: '600', textAlign: 'center' }}>
                   Done {categories.length > 0 && `(${categories.length})`}
                 </span>
               </div>
@@ -425,7 +425,7 @@ const CreateVostcardStep3: React.FC = () => {
                   }}
                   onClick={() => handleCategoryToggle(cat)}
                 >
-                  <span style={{ fontSize: '14px', fontWeight: '500', textAlign: 'center' }}>{cat}</span>
+                  <span style={{ fontSize: '16px', fontWeight: '500', textAlign: 'center' }}>{cat}</span>
                 </div>
               ))}
             </div>
@@ -537,7 +537,7 @@ const categoryItemStyle: React.CSSProperties = {
 
 const categoryGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(93px, 1fr))',
   gap: '8px',
   marginBottom: '20px'
 };
@@ -546,11 +546,11 @@ const categoryGridItemStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: '12px 8px',
+  padding: '8px 5px',
   borderRadius: '8px',
   cursor: 'pointer',
   transition: 'all 0.2s ease',
-  minHeight: '44px',
+  minHeight: '29px',
   textAlign: 'center'
 };
 
