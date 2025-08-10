@@ -63,26 +63,7 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleSaveTrack = async (t: any) => {
-    try {
-      await updateDoc(doc(db, 'musicLibrary', t.id), {
-        title: t.title || '',
-        artist: t.artist || null,
-        url: t.url || '',
-        tags: Array.isArray(t.tags)
-          ? t.tags
-          : String(t.tags || '')
-              .split(',')
-              .map((x: string) => x.trim())
-              .filter(Boolean),
-        updatedAt: new Date().toISOString(),
-      });
-      await reloadTracks();
-      alert('Track saved');
-    } catch (e: any) {
-      alert(`Save failed: ${e?.message || e}`);
-    }
-  };
+
 
   const handleTrackSelection = (trackId: string) => {
     const newSelected = new Set(selectedTracks);
@@ -125,14 +106,7 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const filteredTracks = tracks.filter((t) => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      String(t.title || '').toLowerCase().includes(q) ||
-      String(t.artist || '').toLowerCase().includes(q)
-    );
-  });
+
 
   const loadPendingAdvertisers = async () => {
     setAdvertisersLoading(true);
