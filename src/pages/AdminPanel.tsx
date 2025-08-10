@@ -22,19 +22,15 @@ const AdminPanel: React.FC = () => {
   const [pendingAdvertisers, setPendingAdvertisers] = useState<any[]>([]);
   const [advertisersLoading, setAdvertisersLoading] = useState(false);
   // Music library admin state
-  const [musicTitle, setMusicTitle] = useState('');
-  const [musicArtist, setMusicArtist] = useState('');
-  const [musicUrl, setMusicUrl] = useState('');
-  const [musicSaving, setMusicSaving] = useState(false);
-  const [musicError, setMusicError] = useState<string | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [selectedTracks, setSelectedTracks] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
   // Music manager state
   const [tracks, setTracks] = useState<any[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
   const [tracksError, setTracksError] = useState<string | null>(null);
-  const [filter, setFilter] = useState('');
+
 
   // Redirect if not admin
   useEffect(() => {
@@ -88,13 +84,44 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleDeleteTrack = async (t: any) => {
-    if (!confirm(`Delete track "${t.title || t.id}" from library?`)) return;
+  const handleTrackSelection = (trackId: string) => {
+    const newSelected = new Set(selectedTracks);
+    if (newSelected.has(trackId)) {
+      newSelected.delete(trackId);
+    } else {
+      newSelected.add(trackId);
+    }
+    setSelectedTracks(newSelected);
+  };
+
+  const handleDeleteChecked = async () => {
+    if (selectedTracks.size === 0) {
+      alert('No songs selected for deletion');
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete ${selectedTracks.size} selected song(s)? This cannot be undone.`
+    );
+    
+    if (!confirmDelete) return;
+
+    setDeleting(true);
     try {
-      await deleteDoc(doc(db, 'musicLibrary', t.id));
+      const deletePromises = Array.from(selectedTracks).map(trackId => 
+        deleteDoc(doc(db, 'musicLibrary', trackId))
+      );
+      
+      await Promise.all(deletePromises);
+      setSelectedTracks(new Set());
       await reloadTracks();
-    } catch (e: any) {
-      alert(`Delete failed: ${e?.message || e}`);
+      
+      alert('✅ Selected songs deleted successfully!');
+    } catch (error) {
+      console.error('❌ Error deleting songs:', error);
+      alert('Failed to delete songs. Please try again.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -641,156 +668,125 @@ const AdminPanel: React.FC = () => {
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
           🎵 Music Library (Admin)
         </h2>
-        <p style={{ marginTop: 0, color: '#495057', fontSize: 14 }}>
-          Upload an audio file to the music library (used by the Add Music picker).
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+        
+        {/* Choose File and Upload */}
+        <div style={{ marginBottom: '30px' }}>
           <input
-            placeholder="Title"
-            value={musicTitle}
-            onChange={(e) => setMusicTitle(e.target.value)}
-            style={{ padding: 10, border: '1px solid #ddd', borderRadius: 6 }}
+            type="file"
+            accept="audio/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              
+              setUploading(true);
+              try {
+                const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                const path = `library/music/${Date.now()}_${cleanName}`;
+                const ref = storageRef(storage, path);
+                await uploadBytes(ref, file);
+                const url = await getDownloadURL(ref);
+                
+                const title = file.name.replace(/\.[^/.]+$/, "");
+                await addDoc(collection(db, 'musicLibrary'), {
+                  title: title,
+                  artist: null,
+                  url,
+                  createdAt: new Date().toISOString(),
+                });
+                
+                await reloadTracks();
+                e.target.value = '';
+                alert('✅ Music uploaded successfully!');
+              } catch (error) {
+                console.error('❌ Error uploading music:', error);
+                alert('Failed to upload music. Please try again.');
+              } finally {
+                setUploading(false);
+              }
+            }}
+            style={{ marginBottom: '15px', fontSize: '16px' }}
           />
-          <input
-            placeholder="Artist (optional)"
-            value={musicArtist}
-            onChange={(e) => setMusicArtist(e.target.value)}
-            style={{ padding: 10, border: '1px solid #ddd', borderRadius: 6 }}
-          />
-          <div style={{ gridColumn: '1 / span 2', display: 'flex', gap: 10, alignItems: 'center' }}>
-            <input
-              type="file"
-              accept="audio/*"
-              onChange={(e) => {
-                const f = e.target.files?.[0] || null;
-                setMusicFile(f);
-                if (f && !musicTitle) setMusicTitle(f.name.replace(/\.[^/.]+$/, ''));
-              }}
-            />
-            <button
-              onClick={async () => {
-                if (!musicFile) {
-                  alert('Choose an audio file first');
-                  return;
-                }
-                try {
-                  setUploading(true);
-                  setUploadProgress(null);
-                  const cleanName = musicFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-                  const path = `library/music/${Date.now()}_${cleanName}`;
-                  const ref = storageRef(storage, path);
-                  await uploadBytes(ref, musicFile);
-                  const url = await getDownloadURL(ref);
-                  setMusicUrl(url);
-                  setMusicFile(null);
-                  setUploadProgress(null);
-                  // Auto-create metadata document in Firestore library
-                  const docTitle = (musicTitle && musicTitle.trim()) || cleanName.replace(/\.[^/.]+$/, '');
-                  await addDoc(collection(db, 'musicLibrary'), {
-                    title: docTitle,
-                    artist: musicArtist.trim() || null,
-                    url,
-                    createdAt: new Date().toISOString(),
-                  });
-                  await reloadTracks();
-                  alert('Uploaded and added to music library');
-                } catch (e) {
-                  console.error('Upload failed', e);
-                  alert('Upload failed');
-                } finally {
-                  setUploading(false);
-                }
-              }}
-              disabled={uploading}
-              style={{ padding: '8px 12px', background: '#20c997', color: 'white', border: 'none', borderRadius: 6, cursor: uploading ? 'not-allowed' : 'pointer' }}
-            >
-              {uploading ? 'Uploading…' : 'Upload file to Storage'}
-            </button>
-          </div>
-          
+          <br />
+          <button
+            disabled={uploading}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '6px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              opacity: uploading ? 0.6 : 1
+            }}
+          >
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
         </div>
-        {musicError && <div style={{ color: '#dc3545', marginBottom: 10 }}>{musicError}</div>}
-        <div style={{ display: 'flex', gap: 10 }} />
 
-        {/* Library manager list */}
-        <div style={{ marginTop: 20 }}>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
-            <input
-              placeholder="Filter by title/artist"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              style={{ flex: 1, padding: 8, border: '1px solid #ddd', borderRadius: 6 }}
-            />
-            <button
-              onClick={reloadTracks}
-              disabled={tracksLoading}
-              style={{ padding: '8px 12px', background: '#198754', color: 'white', border: 'none', borderRadius: 6, cursor: tracksLoading ? 'not-allowed' : 'pointer' }}
-            >
-              {tracksLoading ? 'Refreshing…' : 'Refresh'}
-            </button>
-            <span style={{ color: '#6c757d', fontSize: 12 }}>Total: {filteredTracks.length}</span>
-          </div>
-          {tracksError && <div style={{ color: '#dc3545' }}>{tracksError}</div>}
+        {/* Songs List */}
+        <div style={{ marginBottom: '30px' }}>
           {tracksLoading ? (
-            <div style={{ padding: 20, color: '#666' }}>Loading library…</div>
-          ) : filteredTracks.length === 0 ? (
-            <div style={{ padding: 20, color: '#666' }}>No tracks yet</div>
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
+            </div>
+          ) : tracks.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+              No songs yet.
+            </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {filteredTracks.map((t) => (
-                <div key={t.id} style={{ border: '1px solid #e9ecef', borderRadius: 8, padding: 10, background: 'white' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <input
-                      value={t.title || ''}
-                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, title: e.target.value } : x))}
-                      placeholder="Title"
-                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6 }}
-                    />
-                    <input
-                      value={t.artist || ''}
-                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, artist: e.target.value } : x))}
-                      placeholder="Artist"
-                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6 }}
-                    />
-                    <input
-                      value={Array.isArray(t.tags) ? t.tags.join(', ') : (t.tags || '')}
-                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, tags: e.target.value } : x))}
-                      placeholder="Tags (comma separated)"
-                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6, gridColumn: '1 / span 2' }}
-                    />
-                    <input
-                      value={t.url || ''}
-                      onChange={(e) => setTracks((prev) => prev.map((x) => x.id === t.id ? { ...x, url: e.target.value } : x))}
-                      placeholder="URL"
-                      style={{ padding: 8, border: '1px solid #ddd', borderRadius: 6, gridColumn: '1 / span 2' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
-                    <audio src={t.url || undefined} controls style={{ flex: 1 }} />
-                    <button
-                      onClick={() => navigator.clipboard?.writeText(String(t.url || ''))}
-                      style={{ padding: '6px 10px', background: '#6c757d', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                    >
-                      Copy URL
-                    </button>
-                    <button
-                      onClick={() => handleSaveTrack(t)}
-                      style={{ padding: '6px 10px', background: '#0d6efd', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTrack(t)}
-                      style={{ padding: '6px 10px', background: '#dc3545', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
-                    >
-                      Delete
-                    </button>
-                  </div>
+            <div>
+              {tracks.map((track) => (
+                <div key={track.id} style={{ display: 'flex', alignItems: 'center', padding: '10px 0' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedTracks.has(track.id)}
+                    onChange={() => handleTrackSelection(track.id)}
+                    style={{
+                      marginRight: '15px',
+                      width: '18px',
+                      height: '18px'
+                    }}
+                  />
+                  <span style={{ fontSize: '16px' }}>
+                    {track.title}
+                  </span>
                 </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Delete Section */}
+        {tracks.length > 0 && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              marginBottom: '15px'
+            }}>
+              Delete Checked Songs
+            </div>
+            <button
+              onClick={handleDeleteChecked}
+              disabled={selectedTracks.size === 0 || deleting}
+              style={{
+                backgroundColor: '#dc3545',
+                color: 'white',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '6px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: selectedTracks.size === 0 || deleting ? 'not-allowed' : 'pointer',
+                opacity: selectedTracks.size === 0 || deleting ? 0.6 : 1
+              }}
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Convert User to Admin Section */}
