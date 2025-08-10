@@ -210,11 +210,20 @@ export default function CreateVostcardStep2() {
         await saveLocalVostcard();
         console.log('✅ Vostcard saved, now adding to trip...');
         
+        // Get the first photo URL for the trip item
+        let photoURL = '';
+        if (selectedPhotos[0]) {
+          photoURL = URL.createObjectURL(selectedPhotos[0]);
+        } else if (selectedPhotos[1]) {
+          photoURL = URL.createObjectURL(selectedPhotos[1]);
+        }
+        
         await TripService.addItemToTrip(tripId, {
           vostcardID: currentVostcard.id,
           type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
           title: currentVostcard.title || `Vostcard ${new Date().toLocaleDateString()}`,
           description: currentVostcard.description,
+          photoURL: photoURL, // Add the missing photoURL parameter
           latitude: currentVostcard.geo?.latitude,
           longitude: currentVostcard.geo?.longitude
         });

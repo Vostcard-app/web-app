@@ -1,331 +1,375 @@
 // VostcardEditContext - Manages the current vostcard being edited
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { useAuth } from './AuthContext';
-import { useVostcardStorage } from './VostcardStorageContext';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { Vostcard } from '../types/VostcardTypes';
-import { getSafeUsername } from '../utils/vostcardUtils';
+import { useVostcardStorage } from './VostcardStorageContext';
+import { useAuth } from './AuthContext';
 
 interface VostcardEditContextProps {
-  // Current vostcard state
+  // Editing state
   currentVostcard: Vostcard | null;
+  isEditing: boolean;
+  hasUnsavedChanges: boolean;
+  editHistory: Vostcard[];
+  editIndex: number;
   
   // Core editing operations
-  createNewVostcard: () => void;
-  loadVostcard: (id: string) => Promise<void>;
-  saveVostcard: () => Promise<void>;
-  clearVostcard: () => void;
+  startEditing: (vostcard: Vostcard) => void;
+  saveChanges: () => Promise<void>;
+  cancelEditing: () => void;
+  discardChanges: () => void;
   
-  // Content updates
-  setVideo: (video: Blob, geoOverride?: { latitude: number; longitude: number }) => void;
-  setGeo: (geo: { latitude: number; longitude: number }) => void;
+  // Field editing
+  updateField: <K extends keyof Vostcard>(field: K, value: Vostcard[K]) => void;
+  updateTitle: (title: string) => void;
+  updateDescription: (description: string) => void;
+  updateCategories: (categories: string[]) => void;
+  updateLocation: (latitude: number, longitude: number) => void;
+  updateVisibility: (visibility: 'private' | 'public') => void;
+  
+  // Media editing
   addPhoto: (photo: Blob) => void;
-  updateContent: (updates: Partial<Vostcard>) => void;
+  removePhoto: (index: number) => void;
+  reorderPhotos: (fromIndex: number, toIndex: number) => void;
+  replacePhoto: (index: number, newPhoto: Blob) => void;
+  updateVideo: (video: Blob | null) => void;
+  addAudioFile: (audio: Blob) => void;
+  removeAudioFile: (index: number) => void;
   
-  // Quickcard operations
-  createQuickcard: (photo: Blob, geo: { latitude: number; longitude: number }) => void;
-  loadQuickcard: (quickcard: Vostcard) => void;
+  // Undo/Redo
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
   
-  // Publishing
-  publishVostcard: () => Promise<void>;
-  
-  // State
-  isDirty: boolean; // Has unsaved changes
-  isValid: boolean; // Ready for publishing
+  // Validation
+  isValid: boolean;
+  validationErrors: string[];
+  validateVostcard: () => boolean;
 }
 
 const VostcardEditContext = createContext<VostcardEditContextProps | undefined>(undefined);
 
+const MAX_EDIT_HISTORY = 20;
+const REQUIRED_FIELDS: (keyof Vostcard)[] = ['title', 'description'];
+
 export const VostcardEditProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, username } = useAuth();
-  const storage = useVostcardStorage();
+  const { user } = useAuth();
+  const { saveToIndexedDB, saveToFirebase } = useVostcardStorage();
+  
+  // Editing state
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
-  const [isDirty, setIsDirty] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [editHistory, setEditHistory] = useState<Vostcard[]>([]);
+  const [editIndex, setEditIndex] = useState(-1);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
-  // Helper to get safe username
-  const getUsernameForVostcard = useCallback(() => {
-    return getSafeUsername(username, user?.displayName, user?.email);
-  }, [username, user]);
+  // Computed properties
+  const canUndo = editIndex > 0;
+  const canRedo = editIndex < editHistory.length - 1;
+  const isValid = validationErrors.length === 0;
 
-  // Create a new vostcard
-  const createNewVostcard = useCallback(() => {
-    if (!user) {
-      console.warn('Cannot create vostcard: no user authenticated');
-      return;
-    }
-
-    const newVostcard: Vostcard = {
-      id: uuidv4(),
-      state: 'private',
-      video: null,
-      title: '',
-      description: '',
-      photos: [],
-      categories: [],
-      geo: null,
-      username: getUsernameForVostcard(),
-      userID: user.uid,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setCurrentVostcard(newVostcard);
-    setIsDirty(true);
-    console.log('✅ Created new vostcard:', newVostcard.id);
-  }, [user, getUsernameForVostcard]);
-
-  // Load an existing vostcard for editing
-  const loadVostcard = useCallback(async (id: string) => {
-    try {
-      // Try IndexedDB first (has full content)
-      let vostcard = await storage.loadFromIndexedDB(id);
-      
-      // Fallback to Firebase (metadata only)
-      if (!vostcard) {
-        vostcard = await storage.loadFromFirebase(id);
-      }
-
-      if (vostcard) {
-        setCurrentVostcard(vostcard);
-        setIsDirty(false);
-        console.log('✅ Loaded vostcard for editing:', id);
-      } else {
-        throw new Error(`Vostcard ${id} not found`);
-      }
-    } catch (err) {
-      console.error('❌ Failed to load vostcard:', err);
-      throw err;
-    }
-  }, [storage]);
-
-  // Save current vostcard
-  const saveVostcard = useCallback(async () => {
-    if (!currentVostcard) {
-      throw new Error('No vostcard to save');
-    }
-
-    try {
-      // Save to both IndexedDB and Firebase
-      await Promise.all([
-        storage.saveToIndexedDB(currentVostcard),
-        storage.saveToFirebase(currentVostcard)
-      ]);
-
-      setIsDirty(false);
-      console.log('✅ Vostcard saved:', currentVostcard.id);
-    } catch (err) {
-      console.error('❌ Failed to save vostcard:', err);
-      throw err;
-    }
-  }, [currentVostcard, storage]);
-
-  // Clear current vostcard
-  const clearVostcard = useCallback(() => {
-    setCurrentVostcard(null);
-    setIsDirty(false);
-    console.log('✅ Cleared current vostcard');
-  }, []);
-
-  // Set video and optionally override geo
-  const setVideo = useCallback((video: Blob, geoOverride?: { latitude: number; longitude: number }) => {
-    if (currentVostcard) {
-      const updatedVostcard = {
-        ...currentVostcard,
-        video,
-        geo: geoOverride || currentVostcard.geo,
-        updatedAt: new Date().toISOString(),
-      };
-      setCurrentVostcard(updatedVostcard);
-      setIsDirty(true);
-    } else {
-      // Create new vostcard if none exists
-      if (user) {
-        const newVostcard: Vostcard = {
-          id: uuidv4(),
-          state: 'private',
-          video,
-          title: '',
-          description: '',
-          photos: [],
-          categories: [],
-          geo: geoOverride || null,
-          username: getUsernameForVostcard(),
-          userID: user.uid,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setCurrentVostcard(newVostcard);
-        setIsDirty(true);
-      }
-    }
-  }, [currentVostcard, user, getUsernameForVostcard]);
-
-  // Set geolocation
-  const setGeo = useCallback((geo: { latitude: number; longitude: number }) => {
-    if (currentVostcard) {
-      const updatedVostcard = {
-        ...currentVostcard,
-        geo,
-        username: getUsernameForVostcard(), // Always ensure correct username
-        updatedAt: new Date().toISOString(),
-      };
-      setCurrentVostcard(updatedVostcard);
-      setIsDirty(true);
-    }
-  }, [currentVostcard, getUsernameForVostcard]);
-
-  // Add a photo
-  const addPhoto = useCallback((photo: Blob) => {
-    if (currentVostcard) {
-      const updatedPhotos = [...currentVostcard.photos, photo];
-      const updatedVostcard = {
-        ...currentVostcard,
-        photos: updatedPhotos,
-        username: getUsernameForVostcard(), // Always ensure correct username
-        updatedAt: new Date().toISOString(),
-      };
-      setCurrentVostcard(updatedVostcard);
-      setIsDirty(true);
-      console.log('✅ Added photo. Total photos:', updatedPhotos.length);
-    }
-  }, [currentVostcard, getUsernameForVostcard]);
-
-  // Update content (title, description, categories, etc.)
-  const updateContent = useCallback((updates: Partial<Vostcard>) => {
-    if (currentVostcard) {
-      const updatedVostcard = {
-        ...currentVostcard,
-        ...updates,
-        username: getUsernameForVostcard(), // Always ensure correct username
-        updatedAt: new Date().toISOString(),
-      };
-      setCurrentVostcard(updatedVostcard);
-      setIsDirty(true);
-    }
-  }, [currentVostcard, getUsernameForVostcard]);
-
-  // Create quickcard (photo + location)
-  const createQuickcard = useCallback((photo: Blob, geo: { latitude: number; longitude: number }) => {
-    if (!user) {
-      console.warn('Cannot create quickcard: no user authenticated');
-      return;
-    }
-
-    const quickcard: Vostcard = {
-      id: uuidv4(),
-      state: 'private',
-      video: null, // Quickcards don't have videos
-      title: '',
-      description: '',
-      photos: [photo],
-      categories: [],
-      geo,
-      username: getUsernameForVostcard(),
-      userID: user.uid,
-      isQuickcard: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setCurrentVostcard(quickcard);
-    setIsDirty(true);
-    console.log('✅ Created quickcard:', quickcard.id);
-  }, [user, getUsernameForVostcard]);
-
-  // Load existing quickcard for editing
-  const loadQuickcard = useCallback((quickcard: Vostcard) => {
-    if (!quickcard.isQuickcard) {
-      console.warn('Attempted to load non-quickcard as quickcard');
-      return;
-    }
-
-    // Create a copy for editing to avoid mutating original
-    const quickcardForEditing: Vostcard = {
-      ...quickcard,
-      state: 'private', // Reset to private when loading for editing
-      updatedAt: new Date().toISOString(),
-    };
-
-    setCurrentVostcard(quickcardForEditing);
-    setIsDirty(false);
-    console.log('✅ Loaded quickcard for editing:', quickcard.id, quickcard.title);
-  }, []);
-
-  // Publish vostcard to public map
-  const publishVostcard = useCallback(async () => {
-    if (!currentVostcard) {
-      throw new Error('No vostcard to publish');
-    }
-
-    // Validate before publishing
-    if (!isValid) {
-      throw new Error('Vostcard is not ready for publishing');
-    }
-
-    try {
-      // Update to posted state
-      const publishedVostcard = {
-        ...currentVostcard,
-        state: 'posted' as const,
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Save with posted state
-      await storage.saveToFirebase(publishedVostcard);
-
-      // Update local state
-      setCurrentVostcard(publishedVostcard);
-      setIsDirty(false);
-
-      console.log('✅ Vostcard published:', currentVostcard.id);
-    } catch (err) {
-      console.error('❌ Failed to publish vostcard:', err);
-      throw err;
-    }
-  }, [currentVostcard, storage]);
-
-  // Check if vostcard is valid for publishing
-  const isValid = useMemo(() => {
-    if (!currentVostcard) return false;
+  // Validation
+  const validateVostcard = useCallback((vostcard: Vostcard): boolean => {
+    const errors: string[] = [];
     
-    return !!currentVostcard.title?.trim() &&
-      !!currentVostcard.description?.trim() &&
-      (currentVostcard.categories?.length || 0) > 0 &&
-      !!currentVostcard.geo &&
-      (
-        // Regular vostcard needs video + 2 photos
-        (!currentVostcard.isQuickcard && !!currentVostcard.video && (currentVostcard.photos?.length || 0) >= 2) ||
-        // Quickcard needs 1 photo (no video)
-        (currentVostcard.isQuickcard && (currentVostcard.photos?.length || 0) >= 1)
-      );
-  }, [currentVostcard]);
+    // Check required fields
+    REQUIRED_FIELDS.forEach(field => {
+      const value = vostcard[field];
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        errors.push(`${field} is required`);
+      }
+    });
+    
+    // Check title length
+    if (vostcard.title && vostcard.title.length > 100) {
+      errors.push('Title must be 100 characters or less');
+    }
+    
+    // Check description length
+    if (vostcard.description && vostcard.description.length > 1000) {
+      errors.push('Description must be 1000 characters or less');
+    }
+    
+    // Check categories
+    if (vostcard.categories && vostcard.categories.length > 10) {
+      errors.push('Maximum 10 categories allowed');
+    }
+    
+    // Check photos
+    if (vostcard.photos && vostcard.photos.length > 20) {
+      errors.push('Maximum 20 photos allowed');
+    }
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
+  }, []);
 
-  const value = {
-    // Current vostcard state
+  // Core editing operations
+  const startEditing = useCallback((vostcard: Vostcard) => {
+    if (isEditing && hasUnsavedChanges) {
+      // Ask user if they want to save changes
+      if (!window.confirm('You have unsaved changes. Do you want to save them before editing a new vostcard?')) {
+        discardChanges();
+      } else {
+        saveChanges();
+      }
+    }
+    
+    // Create a deep copy for editing
+    const editableVostcard = JSON.parse(JSON.stringify(vostcard));
+    
+    setCurrentVostcard(editableVostcard);
+    setIsEditing(true);
+    setHasUnsavedChanges(false);
+    setEditHistory([editableVostcard]);
+    setEditIndex(0);
+    setValidationErrors([]);
+    
+    console.log('✏️ Started editing vostcard:', editableVostcard.id);
+  }, [isEditing, hasUnsavedChanges]);
+
+  const saveChanges = useCallback(async () => {
+    if (!currentVostcard || !user) return;
+    
+    try {
+      // Validate before saving
+      if (!validateVostcard(currentVostcard)) {
+        console.error('❌ Validation failed:', validationErrors);
+        return;
+      }
+      
+      // Update timestamps
+      const updatedVostcard = {
+        ...currentVostcard,
+        updatedAt: new Date().toISOString(),
+        lastEditedAt: new Date().toISOString()
+      };
+      
+      // Save to IndexedDB first
+      await saveToIndexedDB(updatedVostcard);
+      
+      // If it's a posted vostcard, also save to Firebase
+      if (updatedVostcard.state === 'posted') {
+        await saveToFirebase(updatedVostcard);
+      }
+      
+      // Update current vostcard
+      setCurrentVostcard(updatedVostcard);
+      setHasUnsavedChanges(false);
+      
+      // Add to history
+      setEditHistory(prev => {
+        const newHistory = [...prev, updatedVostcard];
+        if (newHistory.length > MAX_EDIT_HISTORY) {
+          newHistory.shift();
+        }
+        return newHistory;
+      });
+      setEditIndex(prev => prev + 1);
+      
+      console.log('✅ Changes saved successfully');
+      
+    } catch (error) {
+      console.error('❌ Failed to save changes:', error);
+      throw error;
+    }
+  }, [currentVostcard, user, validateVostcard, validationErrors, saveToIndexedDB, saveToFirebase]);
+
+  const cancelEditing = useCallback(() => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm('You have unsaved changes. Are you sure you want to cancel?');
+      if (!confirmed) return;
+    }
+    
+    setIsEditing(false);
+    setCurrentVostcard(null);
+    setHasUnsavedChanges(false);
+    setEditHistory([]);
+    setEditIndex(-1);
+    setValidationErrors([]);
+    
+    console.log('❌ Editing cancelled');
+  }, [hasUnsavedChanges]);
+
+  const discardChanges = useCallback(() => {
+    if (editHistory.length > 0) {
+      // Restore to last saved state
+      const lastSaved = editHistory[editIndex];
+      setCurrentVostcard(lastSaved);
+      setHasUnsavedChanges(false);
+      setValidationErrors([]);
+      console.log('🔄 Changes discarded, restored to last saved state');
+    } else {
+      cancelEditing();
+    }
+  }, [editHistory, editIndex, cancelEditing]);
+
+  // Field editing
+  const updateField = useCallback(<K extends keyof Vostcard>(field: K, value: Vostcard[K]) => {
+    if (!currentVostcard) return;
+    
+    const updatedVostcard = {
+      ...currentVostcard,
+      [field]: value
+    };
+    
+    setCurrentVostcard(updatedVostcard);
+    setHasUnsavedChanges(true);
+    
+    // Validate after update
+    validateVostcard(updatedVostcard);
+    
+    console.log(`✏️ Updated ${field}:`, value);
+  }, [currentVostcard, validateVostcard]);
+
+  const updateTitle = useCallback((title: string) => {
+    updateField('title', title);
+  }, [updateField]);
+
+  const updateDescription = useCallback((description: string) => {
+    updateField('description', description);
+  }, [updateField]);
+
+  const updateCategories = useCallback((categories: string[]) => {
+    updateField('categories', categories);
+  }, [updateField]);
+
+  const updateLocation = useCallback((latitude: number, longitude: number) => {
+    updateField('geo', { latitude, longitude });
+  }, [updateField]);
+
+  const updateVisibility = useCallback((visibility: 'private' | 'public') => {
+    updateField('visibility', visibility);
+    // Also update state if changing visibility
+    if (visibility === 'public') {
+      updateField('state', 'posted');
+    } else {
+      updateField('state', 'private');
+    }
+  }, [updateField]);
+
+  // Media editing
+  const addPhoto = useCallback((photo: Blob) => {
+    if (!currentVostcard) return;
+    
+    const updatedPhotos = [...(currentVostcard.photos || []), photo];
+    updateField('photos', updatedPhotos);
+  }, [currentVostcard, updateField]);
+
+  const removePhoto = useCallback((index: number) => {
+    if (!currentVostcard || !currentVostcard.photos) return;
+    
+    const updatedPhotos = currentVostcard.photos.filter((_, i) => i !== index);
+    updateField('photos', updatedPhotos);
+  }, [currentVostcard, updateField]);
+
+  const reorderPhotos = useCallback((fromIndex: number, toIndex: number) => {
+    if (!currentVostcard || !currentVostcard.photos) return;
+    
+    const updatedPhotos = [...currentVostcard.photos];
+    const [movedPhoto] = updatedPhotos.splice(fromIndex, 1);
+    updatedPhotos.splice(toIndex, 0, movedPhoto);
+    
+    updateField('photos', updatedPhotos);
+  }, [currentVostcard, updateField]);
+
+  const replacePhoto = useCallback((index: number, newPhoto: Blob) => {
+    if (!currentVostcard || !currentVostcard.photos) return;
+    
+    const updatedPhotos = [...currentVostcard.photos];
+    updatedPhotos[index] = newPhoto;
+    updateField('photos', updatedPhotos);
+  }, [currentVostcard, updateField]);
+
+  const updateVideo = useCallback((video: Blob | null) => {
+    updateField('video', video);
+  }, [updateField]);
+
+  const addAudioFile = useCallback((audio: Blob) => {
+    if (!currentVostcard) return;
+    
+    const updatedAudioFiles = [...(currentVostcard.audioFiles || []), audio];
+    updateField('audioFiles', updatedAudioFiles);
+  }, [currentVostcard, updateField]);
+
+  const removeAudioFile = useCallback((index: number) => {
+    if (!currentVostcard || !currentVostcard.audioFiles) return;
+    
+    const updatedAudioFiles = currentVostcard.audioFiles.filter((_, i) => i !== index);
+    updateField('audioFiles', updatedAudioFiles);
+  }, [currentVostcard, updateField]);
+
+  // Undo/Redo
+  const undo = useCallback(() => {
+    if (!canUndo) return;
+    
+    const newIndex = editIndex - 1;
+    const previousVostcard = editHistory[newIndex];
+    
+    setCurrentVostcard(previousVostcard);
+    setEditIndex(newIndex);
+    setHasUnsavedChanges(false);
+    setValidationErrors([]);
+    
+    console.log('↶ Undone to previous state');
+  }, [canUndo, editIndex, editHistory]);
+
+  const redo = useCallback(() => {
+    if (!canRedo) return;
+    
+    const newIndex = editIndex + 1;
+    const nextVostcard = editHistory[newIndex];
+    
+    setCurrentVostcard(nextVostcard);
+    setEditIndex(newIndex);
+    setHasUnsavedChanges(false);
+    setValidationErrors([]);
+    
+    console.log('↷ Redone to next state');
+  }, [canRedo, editIndex, editHistory]);
+
+  const value: VostcardEditContextProps = {
+    // Editing state
     currentVostcard,
+    isEditing,
+    hasUnsavedChanges,
+    editHistory,
+    editIndex,
     
     // Core editing operations
-    createNewVostcard,
-    loadVostcard,
-    saveVostcard,
-    clearVostcard,
+    startEditing,
+    saveChanges,
+    cancelEditing,
+    discardChanges,
     
-    // Content updates
-    setVideo,
-    setGeo,
+    // Field editing
+    updateField,
+    updateTitle,
+    updateDescription,
+    updateCategories,
+    updateLocation,
+    updateVisibility,
+    
+    // Media editing
     addPhoto,
-    updateContent,
+    removePhoto,
+    reorderPhotos,
+    replacePhoto,
+    updateVideo,
+    addAudioFile,
+    removeAudioFile,
     
-    // Quickcard operations
-    createQuickcard,
-    loadQuickcard,
+    // Undo/Redo
+    canUndo,
+    canRedo,
+    undo,
+    redo,
     
-    // Publishing
-    publishVostcard,
-    
-    // State
-    isDirty,
-    isValid: isValid as boolean,
+    // Validation
+    isValid,
+    validationErrors,
+    validateVostcard,
   };
 
   return (
@@ -337,7 +381,7 @@ export const VostcardEditProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
 export const useVostcardEdit = () => {
   const context = useContext(VostcardEditContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useVostcardEdit must be used within a VostcardEditProvider');
   }
   return context;

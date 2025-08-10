@@ -1,50 +1,42 @@
-// VostcardStorageContext - Handles all IndexedDB and Firebase storage operations
-import React, { createContext, useContext, useCallback, useState } from 'react';
-import { auth, db, storage } from '../firebase/firebaseConfig';
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  getDoc, 
-  Timestamp 
-} from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Vostcard } from '../types/VostcardTypes';
+import { db, storage } from '../firebase/firebaseConfig';
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, getDoc, query, where, orderBy, limit, setDoc, Timestamp } from 'firebase/firestore';
+import { ref, uploadBytes, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { useAuth } from './AuthContext';
 
 // IndexedDB configuration
 const DB_NAME = 'VostcardDB';
 const DB_VERSION = 3;
 const STORE_NAME = 'privateVostcards';
+const METADATA_STORE_NAME = 'vostcardMetadata';
 
 interface VostcardStorageContextProps {
-  // IndexedDB operations
-  saveToIndexedDB: (vostcard: Vostcard) => Promise<void>;
-  loadFromIndexedDB: (id: string) => Promise<Vostcard | null>;
-  loadAllFromIndexedDB: () => Promise<Vostcard[]>;
-  deleteFromIndexedDB: (id: string) => Promise<void>;
-  clearIndexedDB: () => Promise<void>;
-  
-  // Firebase operations
-  saveToFirebase: (vostcard: Vostcard) => Promise<void>;
-  loadFromFirebase: (id: string) => Promise<Vostcard | null>;
-  deleteFromFirebase: (id: string) => Promise<void>;
-  
-  // Upload operations
-  uploadVideo: (userID: string, vostcardId: string, video: Blob) => Promise<string>;
-  uploadPhoto: (userID: string, vostcardId: string, index: number, photo: Blob) => Promise<string>;
-  
-  // Sync operations
-  syncFromFirebase: () => Promise<Vostcard[]>;
-  
-  // State
+  // Storage state
+  savedVostcards: Vostcard[];
+  postedVostcards: Vostcard[];
+  quickcards: Vostcard[];
   isLoading: boolean;
   error: string | null;
   lastSyncTime: Date | null;
+  
+  // Core storage operations
+  saveToIndexedDB: (vostcard: Vostcard) => Promise<void>;
+  saveToFirebase: (vostcard: Vostcard) => Promise<void>;
+  loadFromIndexedDB: (id: string) => Promise<Vostcard | null>;
+  loadFromFirebase: (id: string) => Promise<Vostcard | null>;
+  deleteFromIndexedDB: (id: string) => Promise<void>;
+  deleteFromFirebase: (id: string) => Promise<void>;
+  
+  // Bulk operations
+  loadAllFromIndexedDB: () => Promise<void>;
+  loadAllFromFirebase: () => Promise<void>;
+  syncFromFirebase: () => Promise<void>;
+  
+  // Utility functions
+  clearAllData: () => Promise<void>;
+  exportData: () => Promise<string>;
+  importData: (data: string) => Promise<void>;
 }
 
 const VostcardStorageContext = createContext<VostcardStorageContextProps | undefined>(undefined);
@@ -62,362 +54,410 @@ const openDB = (): Promise<IDBDatabase> => {
       if (!db.objectStoreNames.contains(STORE_NAME)) {
         db.createObjectStore(STORE_NAME, { keyPath: 'id' });
       }
+      if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
+        db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
+      }
     };
   });
 };
 
+const saveToIndexedDB = async (vostcard: Vostcard): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction([STORE_NAME], 'readwrite');
+  const store = transaction.objectStore(STORE_NAME);
+  
+  return new Promise((resolve, reject) => {
+    const request = store.put(vostcard);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const loadFromIndexedDB = async (id: string): Promise<Vostcard | null> => {
+  const db = await openDB();
+  const transaction = db.transaction([STORE_NAME], 'readonly');
+  const store = transaction.objectStore(STORE_NAME);
+  
+  return new Promise((resolve, reject) => {
+    const request = store.get(id);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const deleteFromIndexedDB = async (id: string): Promise<void> => {
+  const db = await openDB();
+  const transaction = db.transaction([STORE_NAME], 'readwrite');
+  const store = transaction.objectStore(STORE_NAME);
+  
+  return new Promise((resolve, reject) => {
+    const request = store.delete(id);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const getAllFromIndexedDB = async (): Promise<Vostcard[]> => {
+  const db = await openDB();
+  const transaction = db.transaction([STORE_NAME], 'readonly');
+  const store = transaction.objectStore(STORE_NAME);
+  
+  return new Promise((resolve, reject) => {
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+// Firebase utility functions
+const uploadVideo = async (userId: string, vostcardId: string, file: Blob): Promise<string> => {
+  const videoRef = ref(storage, `vostcards/${userId}/${vostcardId}/video.mp4`);
+  const snapshot = await uploadBytes(videoRef, file);
+  return getDownloadURL(snapshot.ref);
+};
+
+const uploadPhoto = async (userId: string, vostcardId: string, idx: number, file: Blob): Promise<string> => {
+  const photoRef = ref(storage, `vostcards/${userId}/${vostcardId}/photo_${idx}.jpg`);
+  const snapshot = await uploadBytes(photoRef, file);
+  return getDownloadURL(snapshot.ref);
+};
+
+const uploadAudio = async (userId: string, vostcardId: string, file: Blob, index?: number): Promise<string> => {
+  const audioRef = ref(storage, `vostcards/${userId}/${vostcardId}/audio_${index || 0}.mp3`);
+  const snapshot = await uploadBytes(audioRef, file);
+  return getDownloadURL(snapshot.ref);
+};
+
 export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { username } = useAuth();
+  const { user } = useAuth();
+  
+  // Storage state
+  const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
+  const [postedVostcards, setPostedVostcards] = useState<Vostcard[]>([]);
+  const [quickcards, setQuickcards] = useState<Vostcard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
-  // ===== IndexedDB Operations =====
-  
-  const saveToIndexedDB = useCallback(async (vostcard: Vostcard): Promise<void> => {
+  // Load all vostcards from IndexedDB on mount
+  useEffect(() => {
+    if (user) {
+      loadAllFromIndexedDB();
+    }
+  }, [user]);
+
+  // Core storage operations
+  const saveToIndexedDB = useCallback(async (vostcard: Vostcard) => {
     try {
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      // Convert Blobs to base64 for storage
-      const storableVostcard = {
-        ...vostcard,
-        _videoBase64: vostcard.video ? await blobToBase64(vostcard.video) : null,
-        _photosBase64: await Promise.all(
-          vostcard.photos.map(photo => blobToBase64(photo))
-        ),
-        // Remove actual Blobs for storage
-        video: null,
-        photos: []
-      };
-
-      await new Promise<void>((resolve, reject) => {
-        const request = store.put(storableVostcard);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
+      await saveToIndexedDB(vostcard);
+      // Update local state
+      setSavedVostcards(prev => {
+        const existing = prev.find(v => v.id === vostcard.id);
+        if (existing) {
+          return prev.map(v => v.id === vostcard.id ? vostcard : v);
+        } else {
+          return [...prev, vostcard];
+        }
       });
-
-      console.log('✅ Saved to IndexedDB:', vostcard.id);
     } catch (err) {
-      console.error('❌ Failed to save to IndexedDB:', err);
+      console.error('Failed to save to IndexedDB:', err);
       throw err;
     }
   }, []);
 
-  const loadFromIndexedDB = useCallback(async (id: string): Promise<Vostcard | null> => {
-    try {
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      const result = await new Promise<any>((resolve, reject) => {
-        const request = store.get(id);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-
-      if (!result) return null;
-
-      // Convert base64 back to Blobs
-      const vostcard: Vostcard = {
-        ...result,
-        video: result._videoBase64 ? base64ToBlob(result._videoBase64) : null,
-        photos: await Promise.all(
-          (result._photosBase64 || []).map((base64: string) => base64ToBlob(base64))
-        )
-      };
-
-      return vostcard;
-    } catch (err) {
-      console.error('❌ Failed to load from IndexedDB:', err);
-      throw err;
-    }
-  }, []);
-
-  const loadAllFromIndexedDB = useCallback(async (): Promise<Vostcard[]> => {
-    try {
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      const results = await new Promise<any[]>((resolve, reject) => {
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result || []);
-        request.onerror = () => reject(request.error);
-      });
-
-      // Convert base64 back to Blobs for all vostcards
-      const vostcards = await Promise.all(
-        results.map(async (result) => ({
-          ...result,
-          video: result._videoBase64 ? base64ToBlob(result._videoBase64) : null,
-          photos: await Promise.all(
-            (result._photosBase64 || []).map((base64: string) => base64ToBlob(base64))
-          )
-        }))
-      );
-
-      return vostcards;
-    } catch (err) {
-      console.error('❌ Failed to load all from IndexedDB:', err);
-      throw err;
-    }
-  }, []);
-
-  const deleteFromIndexedDB = useCallback(async (id: string): Promise<void> => {
-    try {
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      await new Promise<void>((resolve, reject) => {
-        const request = store.delete(id);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-      });
-
-      console.log('✅ Deleted from IndexedDB:', id);
-    } catch (err) {
-      console.error('❌ Failed to delete from IndexedDB:', err);
-      throw err;
-    }
-  }, []);
-
-  const clearIndexedDB = useCallback(async (): Promise<void> => {
-    try {
-      const localDB = await openDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      await new Promise<void>((resolve, reject) => {
-        const request = store.clear();
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-      });
-
-      console.log('✅ Cleared IndexedDB');
-    } catch (err) {
-      console.error('❌ Failed to clear IndexedDB:', err);
-      throw err;
-    }
-  }, []);
-
-  // ===== Firebase Operations =====
-
-  const saveToFirebase = useCallback(async (vostcard: Vostcard): Promise<void> => {
-    const user = auth.currentUser;
+  const saveToFirebase = useCallback(async (vostcard: Vostcard) => {
     if (!user) throw new Error('User not authenticated');
-
-    try {
-      const docRef = doc(db, 'vostcards', vostcard.id);
-      
-      // Upload media if needed
-      let videoURL = vostcard._firebaseVideoURL || '';
-      let photoURLs = vostcard._firebasePhotoURLs || [];
-      
-      if (vostcard.video && vostcard.video instanceof Blob) {
-        videoURL = await uploadVideo(user.uid, vostcard.id, vostcard.video);
-      }
-      
-      if (vostcard.photos.length > 0) {
-        photoURLs = await Promise.all(
-          vostcard.photos.map((photo, idx) => 
-            uploadPhoto(user.uid, vostcard.id, idx, photo)
-          )
-        );
-      }
-
-      await setDoc(docRef, {
-        id: vostcard.id,
-        title: vostcard.title,
-        description: vostcard.description,
-        categories: vostcard.categories,
-        username: vostcard.username,
-        userID: user.uid,
-        userRole: vostcard.userRole || 'user', // 🔧 FIX: Include userRole for Guide_pin logic
-        videoURL,
-        photoURLs,
-        latitude: vostcard.geo?.latitude || null,
-        longitude: vostcard.geo?.longitude || null,
-        avatarURL: user.photoURL || '',
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-        state: vostcard.state,
-        visibility: vostcard.state === 'posted' ? 'public' : 'private',
-        hasVideo: !!vostcard.video,
-        hasPhotos: vostcard.photos.length > 0,
-        isOffer: vostcard.isOffer || false,
-        isQuickcard: vostcard.isQuickcard || false,
-        offerDetails: vostcard.offerDetails || null
-      });
-
-      console.log('✅ Saved to Firebase:', vostcard.id);
-      setLastSyncTime(new Date());
-    } catch (err) {
-      console.error('❌ Failed to save to Firebase:', err);
-      throw err;
-    }
-  }, [username]);
-
-  const loadFromFirebase = useCallback(async (id: string): Promise<Vostcard | null> => {
-    try {
-      const docRef = doc(db, 'vostcards', id);
-      const docSnap = await getDoc(docRef);
-      
-      if (!docSnap.exists()) return null;
-      
-      const data = docSnap.data();
-      
-      // Convert Firebase document to Vostcard (metadata only)
-      const vostcard: Vostcard = {
-        id: data.id,
-        state: data.state,
-        title: data.title || '',
-        description: data.description || '',
-        categories: data.categories || [],
-        geo: data.latitude && data.longitude 
-          ? { latitude: data.latitude, longitude: data.longitude }
-          : null,
-        username: data.username || '',
-        userID: data.userID || '',
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        isOffer: data.isOffer || false,
-        isQuickcard: data.isQuickcard || false,
-        offerDetails: data.offerDetails || undefined,
-        // Media placeholders (will be downloaded separately if needed)
-        video: null,
-        photos: [],
-        _firebaseVideoURL: data.videoURL || null,
-        _firebasePhotoURLs: data.photoURLs || [],
-        _isMetadataOnly: true
-      };
-
-      return vostcard;
-    } catch (err) {
-      console.error('❌ Failed to load from Firebase:', err);
-      throw err;
-    }
-  }, []);
-
-  const deleteFromFirebase = useCallback(async (id: string): Promise<void> => {
-    try {
-      const docRef = doc(db, 'vostcards', id);
-      await deleteDoc(docRef);
-      console.log('✅ Deleted from Firebase:', id);
-      setLastSyncTime(new Date());
-    } catch (err) {
-      console.error('❌ Failed to delete from Firebase:', err);
-      throw err;
-    }
-  }, []);
-
-  // ===== Upload Operations =====
-
-  const uploadVideo = useCallback(async (userID: string, vostcardId: string, video: Blob): Promise<string> => {
-    try {
-      const videoRef = ref(storage, `videos/${userID}/${vostcardId}.mp4`);
-      await uploadBytes(videoRef, video);
-      return await getDownloadURL(videoRef);
-    } catch (err) {
-      console.error('❌ Failed to upload video:', err);
-      throw err;
-    }
-  }, []);
-
-  const uploadPhoto = useCallback(async (userID: string, vostcardId: string, index: number, photo: Blob): Promise<string> => {
-    try {
-      const photoRef = ref(storage, `photos/${userID}/${vostcardId}_${index}.jpg`);
-      await uploadBytes(photoRef, photo);
-      return await getDownloadURL(photoRef);
-    } catch (err) {
-      console.error('❌ Failed to upload photo:', err);
-      throw err;
-    }
-  }, []);
-
-  // ===== Sync Operations =====
-
-  const syncFromFirebase = useCallback(async (): Promise<Vostcard[]> => {
-    const user = auth.currentUser;
-    if (!user) throw new Error('User not authenticated');
-
+    
     try {
       setIsLoading(true);
       setError(null);
-
-      const firebaseQuery = query(
-        collection(db, 'vostcards'),
-        where('userID', '==', user.uid),
-        where('visibility', '==', 'private')
-      );
       
-      const firebaseSnapshot = await getDocs(firebaseQuery);
-      const vostcards = firebaseSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: data.id,
-          state: data.state,
-          title: data.title || '',
-          description: data.description || '',
-          categories: data.categories || [],
-          geo: data.latitude && data.longitude 
-            ? { latitude: data.latitude, longitude: data.longitude }
-            : null,
-          username: data.username || '',
-          userID: data.userID || '',
-          userRole: data.userRole || 'user', // 🔧 FIX: Include userRole when loading from Firebase
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          isOffer: data.isOffer || false,
-          isQuickcard: data.isQuickcard || false,
-          offerDetails: data.offerDetails || undefined,
-          video: null,
-          photos: [],
-          _firebaseVideoURL: data.videoURL || null,
-          _firebasePhotoURLs: data.photoURLs || [],
-          _isMetadataOnly: true
-        } as Vostcard;
-      });
-
+      // Upload media files first
+      let photoURLs: string[] = [];
+      let videoURL: string | null = null;
+      let audioURLs: string[] = [];
+      
+      // Upload photos
+      if (vostcard.photos && vostcard.photos.length > 0) {
+        for (let i = 0; i < vostcard.photos.length; i++) {
+          const photo = vostcard.photos[i];
+          if (photo instanceof Blob) {
+            const url = await uploadPhoto(user.uid, vostcard.id, i, photo);
+            photoURLs.push(url);
+          }
+        }
+      }
+      
+      // Upload video
+      if (vostcard.video instanceof Blob) {
+        videoURL = await uploadVideo(user.uid, vostcard.id, vostcard.video);
+      }
+      
+      // Upload audio files
+      if (vostcard.audioFiles && vostcard.audioFiles.length > 0) {
+        for (let i = 0; i < vostcard.audioFiles.length; i++) {
+          const audio = vostcard.audioFiles[i];
+          if (audio instanceof Blob) {
+            const url = await uploadAudio(user.uid, vostcard.id, audio, i);
+            audioURLs.push(url);
+          }
+        }
+      }
+      
+      // Prepare data for Firebase (without large media files)
+      const firebaseData = {
+        ...vostcard,
+        photoURLs,
+        videoURL,
+        audioURLs,
+        photos: undefined, // Don't store large blobs in Firestore
+        video: undefined,
+        audioFiles: undefined,
+        updatedAt: Timestamp.now()
+      };
+      
+      // Save to Firestore
+      if (vostcard.state === 'posted') {
+        await setDoc(doc(db, 'vostcards', vostcard.id), firebaseData);
+      } else {
+        await setDoc(doc(db, 'privateVostcards', user.uid, 'vostcards', vostcard.id), firebaseData);
+      }
+      
       setLastSyncTime(new Date());
-      console.log(`✅ Synced ${vostcards.length} vostcards from Firebase`);
+      console.log('✅ Vostcard saved to Firebase:', vostcard.id);
       
-      return vostcards;
     } catch (err) {
-      console.error('❌ Failed to sync from Firebase:', err);
-      setError(err instanceof Error ? err.message : 'Sync failed');
+      console.error('Failed to save to Firebase:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
       throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const loadFromIndexedDB = useCallback(async (id: string): Promise<Vostcard | null> => {
+    try {
+      return await loadFromIndexedDB(id);
+    } catch (err) {
+      console.error('Failed to load from IndexedDB:', err);
+      return null;
+    }
+  }, []);
+
+  const loadFromFirebase = useCallback(async (id: string): Promise<Vostcard | null> => {
+    if (!user) return null;
+    
+    try {
+      // Try posted vostcards first
+      let doc = await getDoc(doc(db, 'vostcards', id));
+      
+      if (!doc.exists()) {
+        // Try private vostcards
+        doc = await getDoc(doc(db, 'privateVostcards', user.uid, 'vostcards', id));
+      }
+      
+      if (doc.exists()) {
+        return { id: doc.id, ...doc.data() } as Vostcard;
+      }
+      
+      return null;
+    } catch (err) {
+      console.error('Failed to load from Firebase:', err);
+      return null;
+    }
+  }, [user]);
+
+  const deleteFromIndexedDB = useCallback(async (id: string) => {
+    try {
+      await deleteFromIndexedDB(id);
+      // Update local state
+      setSavedVostcards(prev => prev.filter(v => v.id !== id));
+      setPostedVostcards(prev => prev.filter(v => v.id !== id));
+      setQuickcards(prev => prev.filter(v => v.id !== id));
+    } catch (err) {
+      console.error('Failed to delete from IndexedDB:', err);
+      throw err;
+    }
+  }, []);
+
+  const deleteFromFirebase = useCallback(async (id: string) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    try {
+      // Try to delete from both collections
+      await Promise.allSettled([
+        deleteDoc(doc(db, 'vostcards', id)),
+        deleteDoc(doc(db, 'privateVostcards', user.uid, 'vostcards', id))
+      ]);
+      
+      console.log('✅ Vostcard deleted from Firebase:', id);
+    } catch (err) {
+      console.error('Failed to delete from Firebase:', err);
+      throw err;
+    }
+  }, [user]);
+
+  // Bulk operations
+  const loadAllFromIndexedDB = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const allVostcards = await getAllFromIndexedDB();
+      
+      // Separate by type
+      const saved: Vostcard[] = [];
+      const posted: Vostcard[] = [];
+      const quick: Vostcard[] = [];
+      
+      allVostcards.forEach(vostcard => {
+        if (vostcard.isQuickcard) {
+          quick.push(vostcard);
+        } else if (vostcard.state === 'posted') {
+          posted.push(vostcard);
+        } else {
+          saved.push(vostcard);
+        }
+      });
+      
+      setSavedVostcards(saved);
+      setPostedVostcards(posted);
+      setQuickcards(quick);
+      
+      console.log(`✅ Loaded ${allVostcards.length} vostcards from IndexedDB`);
+      
+    } catch (err) {
+      console.error('Failed to load from IndexedDB:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const value = {
-    // IndexedDB operations
-    saveToIndexedDB,
-    loadFromIndexedDB,
-    loadAllFromIndexedDB,
-    deleteFromIndexedDB,
-    clearIndexedDB,
+  const loadAllFromFirebase = useCallback(async () => {
+    if (!user) return;
     
-    // Firebase operations
-    saveToFirebase,
-    loadFromFirebase,
-    deleteFromFirebase,
-    
-    // Upload operations
-    uploadVideo,
-    uploadPhoto,
-    
-    // Sync operations
-    syncFromFirebase,
-    
-    // State
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Load posted vostcards
+      const postedQuery = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const postedSnapshot = await getDocs(postedQuery);
+      const posted = postedSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vostcard));
+      
+      // Load private vostcards
+      const privateQuery = query(
+        collection(db, 'privateVostcards', user.uid, 'vostcards'),
+        orderBy('createdAt', 'desc')
+      );
+      const privateSnapshot = await getDocs(privateQuery);
+      const privateVostcards = privateSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vostcard));
+      
+      // Load quickcards
+      const quickcardsQuery = query(
+        collection(db, 'quickcards'),
+        where('userID', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      const quickcardsSnapshot = await getDocs(quickcardsQuery);
+      const quick = quickcardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vostcard));
+      
+      setPostedVostcards(posted);
+      setSavedVostcards(privateVostcards);
+      setQuickcards(quick);
+      
+      setLastSyncTime(new Date());
+      console.log(`✅ Loaded ${posted.length + privateVostcards.length + quick.length} vostcards from Firebase`);
+      
+    } catch (err) {
+      console.error('Failed to load from Firebase:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const syncFromFirebase = useCallback(async () => {
+    await loadAllFromFirebase();
+  }, [loadAllFromFirebase]);
+
+  // Utility functions
+  const clearAllData = useCallback(async () => {
+    try {
+      const db = await openDB();
+      const transaction = db.transaction([STORE_NAME, METADATA_STORE_NAME], 'readwrite');
+      
+      await Promise.all([
+        transaction.objectStore(STORE_NAME).clear(),
+        transaction.objectStore(METADATA_STORE_NAME).clear()
+      ]);
+      
+      setSavedVostcards([]);
+      setPostedVostcards([]);
+      setQuickcards([]);
+      
+      console.log('✅ All data cleared');
+    } catch (err) {
+      console.error('Failed to clear data:', err);
+      throw err;
+    }
+  }, []);
+
+  const exportData = useCallback(async (): Promise<string> => {
+    const allVostcards = [...savedVostcards, ...postedVostcards, ...quickcards];
+    return JSON.stringify(allVostcards, null, 2);
+  }, [savedVostcards, postedVostcards, quickcards]);
+
+  const importData = useCallback(async (data: string) => {
+    try {
+      const vostcards: Vostcard[] = JSON.parse(data);
+      
+      // Save each vostcard to IndexedDB
+      for (const vostcard of vostcards) {
+        await saveToIndexedDB(vostcard);
+      }
+      
+      // Reload from IndexedDB
+      await loadAllFromIndexedDB();
+      
+      console.log(`✅ Imported ${vostcards.length} vostcards`);
+    } catch (err) {
+      console.error('Failed to import data:', err);
+      throw err;
+    }
+  }, [saveToIndexedDB, loadAllFromIndexedDB]);
+
+  const value: VostcardStorageContextProps = {
+    // Storage state
+    savedVostcards,
+    postedVostcards,
+    quickcards,
     isLoading,
     error,
-    lastSyncTime
+    lastSyncTime,
+    
+    // Core storage operations
+    saveToIndexedDB,
+    saveToFirebase,
+    loadFromIndexedDB,
+    loadFromFirebase,
+    deleteFromIndexedDB,
+    deleteFromFirebase,
+    
+    // Bulk operations
+    loadAllFromIndexedDB,
+    loadAllFromFirebase,
+    syncFromFirebase,
+    
+    // Utility functions
+    clearAllData,
+    exportData,
+    importData,
   };
 
   return (
@@ -429,34 +469,8 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
 
 export const useVostcardStorage = () => {
   const context = useContext(VostcardStorageContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useVostcardStorage must be used within a VostcardStorageProvider');
   }
   return context;
-};
-
-// ===== Utility Functions =====
-
-const blobToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(',')[1]); // Remove data:mime;base64, prefix
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-};
-
-const base64ToBlob = (base64: string): Blob => {
-  const byteCharacters = atob(base64);
-  const byteNumbers = new Array(byteCharacters.length);
-  
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  
-  const byteArray = new Uint8Array(byteNumbers);
-  return new Blob([byteArray]);
 }; 
