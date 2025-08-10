@@ -1005,19 +1005,20 @@ ${shareUrl}`;
               style={{
                 background: 'rgba(255,255,255,0.15)',
                 border: 'none',
-                borderRadius: '50%',
-                width: 36,
-                height: 36,
+                borderRadius: '8px',
+                padding: '8px 16px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 color: 'white',
+                fontSize: '14px',
+                fontWeight: '600',
               }}
               onClick={handleShareTrip}
               title="Share Trip"
             >
-              <FaShare size={16} />
+              Share
             </button>
             
             <button
