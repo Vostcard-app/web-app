@@ -163,29 +163,18 @@ const MusicLibraryView: React.FC = () => {
       </div>
 
       {/* Upload Section */}
-      <div style={{
-        marginBottom: '40px',
-        padding: '20px',
-        border: '2px solid #002B4D',
-        borderRadius: '8px',
-        background: '#f8f9fa'
-      }}>
-        <div style={{ marginBottom: '15px' }}>
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={handleFileUpload}
-            style={{
-              padding: '10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              marginRight: '15px',
-              background: 'white'
-            }}
-          />
-        </div>
+      <div style={{ marginBottom: '40px' }}>
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={handleFileUpload}
+          style={{
+            marginBottom: '15px',
+            fontSize: '16px'
+          }}
+        />
+        <br />
         <button
-          onClick={() => document.querySelector('input[type="file"]')?.click()}
           disabled={uploading}
           style={{
             backgroundColor: '#002B4D',
@@ -205,44 +194,18 @@ const MusicLibraryView: React.FC = () => {
 
       {/* Songs List */}
       <div style={{ marginBottom: '30px' }}>
-        <h2 style={{
-          color: '#002B4D',
-          fontSize: '20px',
-          marginBottom: '20px'
-        }}>
-          Songs in Library ({musicTracks.length})
-        </h2>
-
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '18px', color: '#666' }}>Loading music library...</div>
+            <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
           </div>
         ) : musicTracks.length === 0 ? (
-          <div style={{
-            textAlign: 'center',
-            padding: '40px',
-            border: '2px dashed #ccc',
-            borderRadius: '8px',
-            color: '#666'
-          }}>
-            No songs in library. Upload some music files to get started!
+          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+            No songs yet.
           </div>
         ) : (
-          <div style={{
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            background: 'white'
-          }}>
-            {musicTracks.map((track, index) => (
-              <div
-                key={track.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '15px 20px',
-                  borderBottom: index < musicTracks.length - 1 ? '1px solid #eee' : 'none'
-                }}
-              >
+          <div>
+            {musicTracks.map((track) => (
+              <div key={track.id} style={{ display: 'flex', alignItems: 'center', padding: '10px 0' }}>
                 <input
                   type="checkbox"
                   checked={selectedTracks.has(track.id)}
@@ -250,28 +213,12 @@ const MusicLibraryView: React.FC = () => {
                   style={{
                     marginRight: '15px',
                     width: '18px',
-                    height: '18px',
-                    cursor: 'pointer'
+                    height: '18px'
                   }}
                 />
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    fontWeight: 'bold',
-                    fontSize: '16px',
-                    color: '#002B4D',
-                    marginBottom: '4px'
-                  }}>
-                    {track.title}
-                  </div>
-                  {track.artist && track.artist !== 'Unknown' && (
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#666'
-                    }}>
-                      by {track.artist}
-                    </div>
-                  )}
-                </div>
+                <span style={{ fontSize: '16px' }}>
+                  {track.title}
+                </span>
               </div>
             ))}
           </div>
@@ -280,22 +227,14 @@ const MusicLibraryView: React.FC = () => {
 
       {/* Delete Section */}
       {musicTracks.length > 0 && (
-        <div style={{
-          padding: '20px',
-          border: '2px solid #dc3545',
-          borderRadius: '8px',
-          background: '#fff5f5',
-          textAlign: 'center'
-        }}>
-          <label style={{
-            display: 'block',
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
             fontSize: '16px',
             fontWeight: 'bold',
-            color: '#dc3545',
             marginBottom: '15px'
           }}>
             Delete Checked Songs
-          </label>
+          </div>
           <button
             onClick={handleDeleteChecked}
             disabled={selectedTracks.size === 0 || deleting}
@@ -311,7 +250,7 @@ const MusicLibraryView: React.FC = () => {
               opacity: selectedTracks.size === 0 || deleting ? 0.6 : 1
             }}
           >
-            {deleting ? 'Deleting...' : `Delete (${selectedTracks.size})`}
+            {deleting ? 'Deleting...' : 'Delete'}
           </button>
         </div>
       )}
