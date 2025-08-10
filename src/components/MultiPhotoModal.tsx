@@ -169,23 +169,13 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
       setCurrentIndex(initialIndex);
       setShowControls(true);
       setIsPaused(false);
-      // Auto-hide controls after 5 seconds (longer for better accessibility)
-      const timeout = setTimeout(() => setShowControls(false), 5000);
+      // Auto-hide controls after 3 seconds for better slideshow experience
+      const timeout = setTimeout(() => setShowControls(false), 3000);
       setControlsTimeout(timeout);
     }
   }, [isOpen, initialIndex]);
 
-  // Always show controls when casting is available (for better accessibility)
-  useEffect(() => {
-    if (castAvailable && isOpen) {
-      setShowControls(true);
-      // Don't auto-hide controls when casting is available
-      if (controlsTimeout) {
-        clearTimeout(controlsTimeout);
-        setControlsTimeout(null);
-      }
-    }
-  }, [castAvailable, isOpen]);
+  // Controls will auto-hide regardless of cast availability for better slideshow experience
 
   // Handle keyboard navigation
   useEffect(() => {
