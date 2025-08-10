@@ -534,10 +534,10 @@ ${shareUrl}`;
     setLoadingPosts(true);
     
     try {
-      // Load user's posts that aren't already in this trip
+      // Load user's posts (both private and public) that aren't already in this trip
       const currentItemIds = trip?.items.map(item => item.vostcardID) || [];
       
-      // Get only user's personal vostcards (private posts)
+      // Get user's vostcards (both private and public posts)
       let userVostcards: any[] = [];
       
       try {
@@ -545,7 +545,6 @@ ${shareUrl}`;
         const userVostcardsQuery = query(
           collection(db, 'vostcards'),
           where('userID', '==', user?.uid),
-          where('visibility', '==', 'private'),
           orderBy('createdAt', 'desc')
         );
         
@@ -564,8 +563,7 @@ ${shareUrl}`;
         try {
           const fallbackQuery = query(
             collection(db, 'vostcards'),
-            where('userID', '==', user?.uid),
-            where('visibility', '==', 'private')
+            where('userID', '==', user?.uid)
           );
           
           const fallbackSnapshot = await getDocs(fallbackQuery);

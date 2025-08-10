@@ -267,11 +267,8 @@ export const TripService = {
         throw new Error('Trip not found or access denied');
       }
 
-      // Verify user owns the content being added
-      const ownsContent = await verifyUserOwnsContent(data.vostcardID, user.uid);
-      if (!ownsContent) {
-        throw new Error('Cannot add content that does not belong to you to a trip');
-      }
+      // Note: Allow adding any accessible content (both owned and public posts)
+      // Users can add both their own posts and other users' public posts to their trips
 
       // Get current items to determine next order
       const currentItems = await TripService.getTripItems(tripId);
