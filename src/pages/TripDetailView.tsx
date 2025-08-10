@@ -545,7 +545,7 @@ ${shareUrl}`;
         const userVostcardsQuery = query(
           collection(db, 'vostcards'),
           where('userID', '==', user?.uid),
-          where('state', '==', 'private'),
+          where('visibility', '==', 'private'),
           orderBy('createdAt', 'desc')
         );
         
@@ -565,7 +565,7 @@ ${shareUrl}`;
           const fallbackQuery = query(
             collection(db, 'vostcards'),
             where('userID', '==', user?.uid),
-            where('state', '==', 'private')
+            where('visibility', '==', 'private')
           );
           
           const fallbackSnapshot = await getDocs(fallbackQuery);

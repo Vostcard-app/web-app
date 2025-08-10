@@ -32,16 +32,16 @@
         }
       ]
     },
-    {
-      "collectionGroup": "vostcards",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "userID", "order": "ASCENDING" },
-        { "fieldPath": "state", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
-      ]
-    },
+            {
+          "collectionGroup": "vostcards",
+          "queryScope": "COLLECTION",
+          "fields": [
+            { "fieldPath": "userID", "order": "ASCENDING" },
+            { "fieldPath": "visibility", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" },
+            { "fieldPath": "__name__", "order": "DESCENDING" }
+          ]
+        },
     {
       "collectionId": "quickcards",
       "queryScope": "COLLECTION",
