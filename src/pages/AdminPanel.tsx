@@ -449,7 +449,100 @@ const AdminPanel: React.FC = () => {
 
 
 
-      {/* Convert User to Guide Section */}
+      {/* 1. Pending Advertiser Applications Section */}
+      <div style={{ backgroundColor: '#e8f5e8', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #c3e6c3' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', color: '#155724' }}>
+            🏪 Pending Advertiser Applications
+            {pendingAdvertisers.length > 0 && (
+              <span style={{
+                backgroundColor: '#dc3545',
+                color: 'white',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                marginLeft: '10px'
+              }}>
+                {pendingAdvertisers.length}
+              </span>
+            )}
+          </h2>
+          <button
+            onClick={loadPendingAdvertisers}
+            disabled={advertisersLoading}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#198754',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: advertisersLoading ? 'not-allowed' : 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            {advertisersLoading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
+
+        {advertisersLoading ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            Loading pending applications...
+          </div>
+        ) : pendingAdvertisers.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+            ✅ No pending advertiser applications
+          </div>
+        ) : (
+          <div>
+            {pendingAdvertisers.map((advertiser) => (
+              <div 
+                key={advertiser.id}
+                style={{
+                  backgroundColor: 'white',
+                  border: '1px solid #c3e6c3',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  marginBottom: '10px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: '0 0 8px 0', color: '#155724' }}>
+                      {advertiser.businessName || 'Business Name Not Provided'}
+                    </h4>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      <strong>Contact:</strong> {advertiser.contactName || 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      <strong>Email:</strong> {advertiser.email || 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      <strong>Phone:</strong> {advertiser.phoneNumber || 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      <strong>Category:</strong> {advertiser.businessCategory || 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      <strong>Description:</strong> {advertiser.businessDescription || 'N/A'}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#999' }}>
+                      <strong>Applied:</strong> {advertiser.createdAt ? new Date(advertiser.createdAt).toLocaleDateString() : 'N/A'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 2. Convert User to Guide Section */}
       <div style={{ backgroundColor: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center' }}>
           <FaKey style={{ marginRight: '10px' }} />
@@ -677,7 +770,7 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
-      {/* Music Library Management */}
+      {/* 4. Music Library Management */}
       <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
           🎵 Music Library (Admin)
@@ -818,7 +911,7 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
-      {/* Convert User to Admin Section */}
+      {/* 3. Convert User to Admin Section */}
       <div style={{ backgroundColor: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeaa7' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#856404' }}>
           <FaKey style={{ marginRight: '10px' }} />
