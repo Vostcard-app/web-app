@@ -648,7 +648,7 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
-      {/* 3. Convert User to Admin Section */}
+      {/* 3. Music Library (Admin) */}
       <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
           🎵 Music Library (Admin)
@@ -789,7 +789,7 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
-      {/* 3. Convert User to Admin Section */}
+      {/* 4. Convert User to Admin Section */}
       <div style={{ backgroundColor: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeaa7' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#856404' }}>
           <FaKey style={{ marginRight: '10px' }} />
