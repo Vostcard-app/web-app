@@ -538,19 +538,56 @@ ${shareUrl}`;
       const currentItemIds = trip?.items.map(item => item.vostcardID) || [];
       
       // Get only user's personal vostcards (private posts)
-      const userVostcardsQuery = query(
-        collection(db, 'vostcards'),
-        where('userID', '==', user?.uid),
-        where('state', '==', 'private'),
-        orderBy('createdAt', 'desc')
-      );
+      let userVostcards: any[] = [];
       
-      const userVostcardsSnapshot = await getDocs(userVostcardsQuery);
-      const userVostcards = userVostcardsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        type: 'vostcard'
-      }));
+      try {
+        // Try with the indexed query first
+        const userVostcardsQuery = query(
+          collection(db, 'vostcards'),
+          where('userID', '==', user?.uid),
+          where('state', '==', 'private'),
+          orderBy('createdAt', 'desc')
+        );
+        
+        const userVostcardsSnapshot = await getDocs(userVostcardsQuery);
+        userVostcards = userVostcardsSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          type: 'vostcard'
+        }));
+        
+        console.log('🔍 Debug: Found userVostcards with index:', userVostcards.length, userVostcards);
+      } catch (indexError) {
+        console.log('🔍 Debug: Index query failed, trying without orderBy:', indexError);
+        
+        // Fallback: query without orderBy if index isn't ready
+        try {
+          const fallbackQuery = query(
+            collection(db, 'vostcards'),
+            where('userID', '==', user?.uid),
+            where('state', '==', 'private')
+          );
+          
+          const fallbackSnapshot = await getDocs(fallbackQuery);
+          userVostcards = fallbackSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            type: 'vostcard'
+          }));
+          
+          // Sort manually
+          userVostcards.sort((a, b) => {
+            const aTime = a.createdAt?.toMillis?.() || a.createdAt || 0;
+            const bTime = b.createdAt?.toMillis?.() || b.createdAt || 0;
+            return bTime - aTime;
+          });
+          
+          console.log('🔍 Debug: Found userVostcards with fallback:', userVostcards.length, userVostcards);
+        } catch (fallbackError) {
+          console.error('🔍 Debug: Both queries failed:', fallbackError);
+          userVostcards = [];
+        }
+      }
       
       // Get user's quickcards
       const quickcardsQuery = query(
@@ -566,10 +603,15 @@ ${shareUrl}`;
         type: 'quickcard'
       }));
       
+      console.log('🔍 Debug: Found quickcards:', quickcards.length, quickcards);
+      console.log('🔍 Debug: Current trip items:', currentItemIds);
+      
       // Combine and filter out posts already in trip
       const allPosts = [...userVostcards, ...quickcards].filter(post => 
         !currentItemIds.includes(post.id)
       );
+      
+      console.log('🔍 Debug: Final available posts:', allPosts.length, allPosts);
       
       setAvailablePosts(allPosts);
       
