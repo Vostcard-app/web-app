@@ -14,7 +14,7 @@ const AdminPanel: React.FC = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [documentId, setDocumentId] = useState('');
+
   const [adminSearchTerm, setAdminSearchTerm] = useState('');
   const [adminSearchResults, setAdminSearchResults] = useState<any[]>([]);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -923,9 +923,7 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
       </div>
-      
-             <div style={{ margin: '20px 0', padding: '20px', border: '2px solid #dc3545', borderRadius: '8px' }}>
-         <h3 style={{ color: '#dc3545', margin: '0 0 15px 0' }}>🔍 Document Troubleshooting</h3>
+
          
          <div style={{ marginBottom: '15px' }}>
            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
