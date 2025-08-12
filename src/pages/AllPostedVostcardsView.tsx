@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
 import { RatingService, type RatingStats } from '../services/ratingService';
 import { LocationService, type LocationResult, type LocationError } from '../utils/locationService';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface Vostcard {
   id: string;
@@ -88,6 +89,18 @@ const AllPostedVostcardsView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+  
+  // Use a higher breakpoint for desktop responsive design
+  const [isDesktopView, setIsDesktopView] = useState(window.innerWidth > 1024);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktopView(window.innerWidth > 1024);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Persist showGuidesOnly state to localStorage
   useEffect(() => {
@@ -711,15 +724,28 @@ const AllPostedVostcardsView: React.FC = () => {
   }
 
   return (
-    <div 
-      style={{ 
-        background: '#f5f5f5', 
-        minHeight: '100vh',
-        height: '100vh',
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktopView ? '#f0f0f0' : '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktopView ? '20px' : '0'
+    }}>
+      {/* Mobile-style container with responsive design */}
+      <div style={{
+        width: isDesktopView ? '390px' : '100%',
+        maxWidth: isDesktopView ? '390px' : 'none',
+        height: isDesktopView ? '844px' : '100vh',
+        backgroundColor: '#f5f5f5',
+        boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktopView ? '16px' : '0',
         display: 'flex',
         flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden'
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease',
+        position: 'relative'
       }}
     >
       {/* Add CSS animation for spinning icon */}
@@ -1637,6 +1663,7 @@ const AllPostedVostcardsView: React.FC = () => {
       )}
 
 
+      </div>
     </div>
   );
 };
