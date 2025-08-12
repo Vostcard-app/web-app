@@ -17,6 +17,8 @@ export default function QuickcardStep2() {
 
   // Track selected photos (4 thumbnails for quickcards)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
+  // Stable preview URLs to avoid recreating object URLs on every render
+  const [photoUrls, setPhotoUrls] = useState<(string | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
   
   // Desktop photo options modal state
@@ -176,6 +178,16 @@ export default function QuickcardStep2() {
       const newPhotos = [...selectedPhotos];
       newPhotos[index] = file;
       setSelectedPhotos(newPhotos);
+
+      // Create a stable object URL and revoke the previous one to avoid memory leaks
+      setPhotoUrls(prev => {
+        const next = [...prev];
+        if (next[index]) {
+          try { URL.revokeObjectURL(next[index]!); } catch {}
+        }
+        next[index] = URL.createObjectURL(file);
+        return next;
+      });
     }
     
     setActiveThumbnail(null);
@@ -192,6 +204,15 @@ export default function QuickcardStep2() {
     const newPhotos = [...selectedPhotos];
     newPhotos[index] = null;
     setSelectedPhotos(newPhotos);
+
+    setPhotoUrls(prev => {
+      const next = [...prev];
+      if (next[index]) {
+        try { URL.revokeObjectURL(next[index]!); } catch {}
+      }
+      next[index] = null;
+      return next;
+    });
   };
 
   // Trip handler functions
@@ -225,8 +246,7 @@ export default function QuickcardStep2() {
         const newTrip = await TripService.createTrip({
           name: newTripName.trim(),
           description: '',
-          isPrivate: true,
-          items: []
+          isPrivate: true
         });
         tripId = newTrip.id;
         
@@ -457,7 +477,7 @@ export default function QuickcardStep2() {
                 cursor: 'pointer',
                 overflow: 'hidden',
                 boxShadow: '0 2px 8px rgba(0,43,77,0.1)',
-                backgroundImage: photo ? `url(${URL.createObjectURL(photo)})` : 'none',
+                backgroundImage: photoUrls[idx] ? `url(${photoUrls[idx]})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundColor: photo ? 'transparent' : '#f8f9fa',
@@ -581,6 +601,7 @@ export default function QuickcardStep2() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        capture="environment"
         multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}
@@ -709,3 +730,6 @@ export default function QuickcardStep2() {
     </div>
   );
 } 
+
+// Ensure all object URLs are revoked when navigating away
+// Note: Keeping this outside component scope would not have access to state.

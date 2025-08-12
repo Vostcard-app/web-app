@@ -22,6 +22,8 @@ export default function CreateVostcardStep2() {
 
   // Track selected photos
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null]);
+  // Stable preview URLs to avoid repeated URL.createObjectURL churn that crashes iOS Safari
+  const [photoUrls, setPhotoUrls] = useState<(string | null)[]>([null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
   const [loadedFlags, setLoadedFlags] = useState<boolean[]>([false, false]);
   
@@ -148,6 +150,17 @@ export default function CreateVostcardStep2() {
         updated[index] = file;
         return updated;
       });
+
+      // Manage object URLs safely
+      setPhotoUrls(prev => {
+        const next = [...prev];
+        if (next[index]) {
+          try { URL.revokeObjectURL(next[index]!); } catch {}
+        }
+        next[index] = URL.createObjectURL(file);
+        return next;
+      });
+
       setLoadedFlags(prev => {
         const next = [...prev];
         next[index] = false; // will fade in on load
@@ -194,8 +207,7 @@ export default function CreateVostcardStep2() {
         const newTrip = await TripService.createTrip({
           name: newTripName.trim(),
           description: '',
-          isPrivate: true,
-          items: []
+          isPrivate: true
         });
         tripId = newTrip.id;
         
@@ -393,7 +405,7 @@ export default function CreateVostcardStep2() {
             >
               {selectedPhotos[idx] ? (
                 <img
-                  src={URL.createObjectURL(selectedPhotos[idx]!)}
+                  src={photoUrls[idx] || ''}
                   alt={idx === 0 ? "Take Photo" : "Photo Library"}
                   onLoad={() => setLoadedFlags(prev => { const n=[...prev]; n[idx]=true; return n; })}
                   style={{
@@ -490,6 +502,7 @@ export default function CreateVostcardStep2() {
         ref={fileInputRef}
         type="file"
         accept="image/*"
+        capture="environment"
         multiple={false}
         style={{ display: 'none' }}
         onChange={handleFileChange}
