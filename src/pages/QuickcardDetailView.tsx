@@ -344,8 +344,8 @@ Tap OK to continue.`;
 
   const handleMapClick = useCallback(() => {
     if (quickcard?.latitude && quickcard?.longitude) {
-      console.log('📍 Opening quickcard location on private map at full zoom');
-      navigate('/home', {
+      console.log('📍 Opening quickcard location on public map for single pin view');
+      navigate('/public-map', {
         replace: false, // Ensure we add to history so back button works
         state: {
           singleVostcard: {

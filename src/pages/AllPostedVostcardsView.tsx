@@ -90,12 +90,12 @@ const AllPostedVostcardsView: React.FC = () => {
   const { user } = useAuth();
   const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
   
-  // Use a higher breakpoint for desktop responsive design
-  const [isDesktopView, setIsDesktopView] = useState(window.innerWidth > 1024);
+  // Use same breakpoint as personal posts for consistency
+  const [isDesktopView, setIsDesktopView] = useState(window.innerWidth > 768);
   
   useEffect(() => {
     const handleResize = () => {
-      setIsDesktopView(window.innerWidth > 1024);
+      setIsDesktopView(window.innerWidth > 768);
     };
     
     window.addEventListener('resize', handleResize);
