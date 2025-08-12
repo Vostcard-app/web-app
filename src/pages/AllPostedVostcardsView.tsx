@@ -95,8 +95,19 @@ const AllPostedVostcardsView: React.FC = () => {
   
   useEffect(() => {
     const handleResize = () => {
-      setIsDesktopView(window.innerWidth > 768);
+      const newIsDesktop = window.innerWidth > 768;
+      console.log('🖥️ AllPostedVostcardsView - Window resize:', { 
+        width: window.innerWidth, 
+        isDesktopView: newIsDesktop 
+      });
+      setIsDesktopView(newIsDesktop);
     };
+    
+    // Log initial state
+    console.log('🖥️ AllPostedVostcardsView - Initial:', { 
+      width: window.innerWidth, 
+      isDesktopView: window.innerWidth > 768 
+    });
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -723,6 +734,9 @@ const AllPostedVostcardsView: React.FC = () => {
     })));
   }
 
+  // Debug responsive state
+  console.log('🔄 AllPostedVostcardsView rendering with isDesktopView:', isDesktopView);
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -735,7 +749,7 @@ const AllPostedVostcardsView: React.FC = () => {
       {/* Mobile-style container with responsive design */}
       <div style={{
         width: isDesktopView ? '390px' : '100%',
-        maxWidth: isDesktopView ? '390px' : 'none',
+        maxWidth: '390px',
         height: isDesktopView ? '844px' : '100vh',
         backgroundColor: '#f5f5f5',
         boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
