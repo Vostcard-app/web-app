@@ -235,8 +235,12 @@ const CameraView: React.FC = () => {
         }
         // Return to Step 2 (video preview) when not in quickcard photo mode
         if (!isQuickcardMode) {
-          // iOS Safari: navigating back to previous page is more reliable post getUserMedia
-          setTimeout(() => navigate(-1), 0);
+          // iOS Safari: give the UI a frame to release the stream, then navigate explicitly
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              navigate('/create/step2', { replace: true });
+            }, 0);
+          });
         }
       };
 
