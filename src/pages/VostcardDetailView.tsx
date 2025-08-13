@@ -1095,27 +1095,28 @@ Tap OK to continue.`;
           }}>
             {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
               <div style={{ 
-                width: '100%',
-                maxWidth: '400px',
-                borderRadius: '16px',
-                  overflow: 'hidden',
+                width: '100px',
+                height: '100px',
+                borderRadius: '12px',
+                overflow: 'hidden',
                 backgroundColor: '#f8f9fa',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                  position: 'relative',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                position: 'relative',
                 cursor: 'pointer'
-                  }}>
+              }}>
                     <img
                       src={vostcard.photoURLs[0]}
                       alt="Quickcard"
                       style={{
-                        width: '100%',
-                    height: 'auto',
-                    display: 'block',
+                        width: '100px',
+                        height: '100px',
+                        display: 'block',
                         cursor: 'pointer',
                         WebkitBackfaceVisibility: 'hidden',
                         backfaceVisibility: 'hidden',
-                    transform: 'translateZ(0)',
-                    filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
+                        objectFit: 'cover',
+                        transform: 'translateZ(0)',
+                        filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
                       } as React.CSSProperties}
                       onClick={() => {
                         const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
@@ -1175,8 +1176,8 @@ Tap OK to continue.`;
           }}>
             {/* Video Thumbnail Section */}
             <div style={{ 
-              width: '150px',
-              height: '150px',
+              width: '100px',
+              height: '100px',
               backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
               borderRadius: '12px',
               overflow: 'hidden',
@@ -1188,8 +1189,8 @@ Tap OK to continue.`;
                   ref={videoRef}
                   src={vostcard.videoURL}
                   style={{
-                    width: '150px',
-                    height: '150px',
+                    width: '100px',
+                    height: '100px',
                     objectFit: 'cover',
                     cursor: 'pointer'
                   }}
@@ -1230,8 +1231,8 @@ Tap OK to continue.`;
                 </>
               ) : (
                 <div style={{ 
-                  width: '150px',
-                  height: '150px',
+                  width: '100px',
+                  height: '100px',
                   backgroundColor: '#f0f0f0',
                   display: 'flex',
                   alignItems: 'center',
@@ -1245,16 +1246,16 @@ Tap OK to continue.`;
 
             {/* Photos Section - 2 photos stacked vertically */}
             <div style={{ 
-              width: '150px',
-              height: '150px',
+              width: '100px',
+              height: '100px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '4px'
             }}>
               {/* First Photo */}
               {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
                 <div style={{ 
-                  height: '71px',
+                  height: '48px',
                   borderRadius: '8px', 
                   overflow: 'hidden'
                 }}>
@@ -1262,8 +1263,8 @@ Tap OK to continue.`;
                     src={vostcard.photoURLs[0]}
                     alt="Photo 1"
                     style={{
-                      width: '150px',
-                      height: '71px',
+                      width: '100px',
+                      height: '48px',
                       objectFit: 'cover',
                       cursor: 'pointer'
                     }}
@@ -1288,7 +1289,7 @@ Tap OK to continue.`;
               {/* Second Photo */}
               {vostcard.photoURLs && vostcard.photoURLs.length > 1 ? (
                 <div style={{ 
-                  height: '71px',
+                  height: '48px',
                   borderRadius: '8px', 
                   overflow: 'hidden'
                 }}>
@@ -1296,8 +1297,8 @@ Tap OK to continue.`;
                     src={vostcard.photoURLs[1]}
                     alt="Photo 2"
                     style={{
-                      width: '150px',
-                      height: '71px',
+                      width: '100px',
+                      height: '48px',
                       objectFit: 'cover',
                       cursor: 'pointer'
                     }}
