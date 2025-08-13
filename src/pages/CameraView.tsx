@@ -221,6 +221,15 @@ const CameraView: React.FC = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
         setVideo(blob);
         console.log('📹 Recording saved:', blob);
+        // Stop camera tracks to avoid black preview overlays
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(t => t.stop());
+          streamRef.current = null;
+        }
+        // Return to Step 2 (video preview) when not in quickcard photo mode
+        if (!isQuickcardMode) {
+          navigate('/create/step2');
+        }
       };
 
       mediaRecorder.start();
