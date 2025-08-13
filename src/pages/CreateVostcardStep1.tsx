@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();
@@ -58,17 +59,21 @@ const CreateVostcardStep1: React.FC = () => {
     console.log('✅ handleSaveAndContinue called');
     console.log('🎥 Video object at save:', video);
 
-    if (!video) {
-      alert('❌ No video found. Please record a video first.');
+    if (!UNIFIED_VOSTCARD_FLOW) {
+      if (!video) {
+        alert('❌ No video found. Please record a video first.');
+        return;
+      }
+      if (videoError) {
+        alert('❌ Video has errors. Please record a new video.');
+        return;
+      }
+      navigate('/create-step2');
       return;
     }
 
-    if (videoError) {
-      alert('❌ Video has errors. Please record a new video.');
-      return;
-    }
-
-    navigate('/create-step2');
+    // Unified flow: video optional, allow continue even without video
+    navigate('/create/step3');
   };
 
   const handleVideoError = (error: React.SyntheticEvent<HTMLVideoElement, Event>) => {
@@ -340,7 +345,7 @@ const CreateVostcardStep1: React.FC = () => {
         )}
       </div>
 
-      {/* 🔘 Buttons */}
+        {/* 🔘 Buttons */}
       <div
         style={{
           padding: '0 16px',
@@ -394,23 +399,27 @@ const CreateVostcardStep1: React.FC = () => {
           Use Script Tool
         </button>
 
-        {/* ✅ Save & Continue */}
+          {/* ✅ Save & Continue (video optional when unified flow is on) */}
         <button
           onClick={handleSaveAndContinue}
-          disabled={!video || !!videoError}
+            disabled={!UNIFIED_VOSTCARD_FLOW && (!video || !!videoError)}
           style={{
-            backgroundColor: (video && !videoError) ? '#002B4D' : '#888',
+              backgroundColor: (UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? '#002B4D' : '#888',
             color: 'white',
             border: 'none',
             width: '100%',
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
-            cursor: (video && !videoError) ? 'pointer' : 'not-allowed',
+              cursor: (UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? 'pointer' : 'not-allowed',
           }}
         >
-          {videoError ? 'Fix Video to Continue' : 'Save & Continue'}
+            {UNIFIED_VOSTCARD_FLOW ? 'Save & Continue' : (videoError ? 'Fix Video to Continue' : 'Save & Continue')}
         </button>
+
+          {UNIFIED_VOSTCARD_FLOW && (
+            <div style={{ color: '#666', fontSize: 13 }}>Video is optional — you can skip this step.</div>
+          )}
         
         {/* Error message */}
         {videoError && (
