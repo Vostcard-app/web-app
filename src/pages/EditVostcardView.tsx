@@ -142,6 +142,50 @@ const EditVostcardView: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Re-hydrate from context when currentVostcard updates (mirrors detail view readiness)
+  useEffect(() => {
+    if (!id || !currentVostcard) return;
+    if (currentVostcard.id !== id) return;
+
+    // Populate fields from the freshly loaded context item
+    setTitle(currentVostcard.title || '');
+    setDescription(currentVostcard.description || '');
+    setCategories(Array.isArray(currentVostcard.categories) ? currentVostcard.categories : []);
+
+    const nextFiles: Array<Nullable<Blob>> = [null, null, null, null];
+    const nextUrls: Array<Nullable<string>> = [null, null, null, null];
+    if (Array.isArray((currentVostcard as any).photos) && (currentVostcard as any).photos.length > 0) {
+      (currentVostcard as any).photos.slice(0, 4).forEach((p: any, idx: number) => {
+        if (p instanceof Blob) {
+          nextFiles[idx] = p;
+          try { nextUrls[idx] = URL.createObjectURL(p); } catch {}
+        }
+      });
+    } else if (Array.isArray((currentVostcard as any).photoURLs) && (currentVostcard as any).photoURLs.length > 0) {
+      (currentVostcard as any).photoURLs.slice(0, 4).forEach((u: string, idx: number) => {
+        nextUrls[idx] = u;
+      });
+    }
+    // Revoke only blob: URLs before swapping
+    setPhotoUrls(prev => {
+      prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
+      return nextUrls;
+    });
+    setPhotoFiles(nextFiles);
+
+    // Video
+    if ((currentVostcard as any).video instanceof Blob) {
+      setVideoFile((currentVostcard as any).video);
+      try { setVideoUrl(URL.createObjectURL((currentVostcard as any).video)); } catch { setVideoUrl(null); }
+    } else if (typeof (currentVostcard as any).videoURL === 'string' && (currentVostcard as any).videoURL) {
+      setVideoUrl((currentVostcard as any).videoURL);
+      setVideoFile(null);
+    } else {
+      setVideoFile(null);
+      setVideoUrl(null);
+    }
+  }, [id, currentVostcard]);
+
   const handlePickPhoto = (index: number) => {
     pendingPhotoIndexRef.current = index;
     photoInputRef.current?.click();
