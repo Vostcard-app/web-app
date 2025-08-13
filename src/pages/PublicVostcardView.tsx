@@ -930,8 +930,8 @@ ${privateUrl}`);
             <>
               <div 
                 style={{ 
-                  width: 180, 
-                  height: 240, 
+                  width: 90, 
+                  height: 120, 
                   background: '#111', 
                   borderRadius: 16, 
                   overflow: 'hidden', 
@@ -968,8 +968,8 @@ ${privateUrl}`);
                       transform: 'translate(-50%, -50%)',
                       background: 'rgba(0,0,0,0.7)',
                       borderRadius: '50%',
-                      width: 48,
-                      height: 48,
+                      width: 24,
+                      height: 24,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -977,10 +977,10 @@ ${privateUrl}`);
                       <div style={{
                         width: 0,
                         height: 0,
-                        borderLeft: '12px solid white',
-                        borderTop: '8px solid transparent',
-                        borderBottom: '8px solid transparent',
-                        marginLeft: 4
+                        borderLeft: '6px solid white',
+                        borderTop: '4px solid transparent',
+                        borderBottom: '4px solid transparent',
+                        marginLeft: 2
                       }} />
                     </div>
                   </>
@@ -1002,8 +1002,8 @@ ${privateUrl}`);
                 display: 'flex', 
                 flexDirection: 'column',
                 gap: 8,
-                width: 180,
-                height: 240
+                width: 90,
+                height: 120
               }}>
                 {photoURLs.slice(0, 2).map((url: string, index: number) => (
                   <div 
@@ -1015,7 +1015,7 @@ ${privateUrl}`);
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      height: '116px',
+                      height: '56px',
                       cursor: 'pointer'
                     }}
                     onClick={() => setSelectedPhoto(url)}

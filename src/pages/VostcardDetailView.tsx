@@ -1172,7 +1172,7 @@ Tap OK to continue.`;
             padding: '20px', 
             display: 'flex', 
             gap: '10px',
-            height: '300px'
+            height: '150px'
           }}>
             {/* Video Thumbnail Section */}
             <div style={{ 
@@ -1204,8 +1204,8 @@ Tap OK to continue.`;
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      width: '60px',
-                      height: '60px',
+                      width: '30px',
+                      height: '30px',
                       backgroundColor: 'rgba(0, 0, 0, 0.7)',
                       borderRadius: '50%',
                       display: 'flex',
@@ -1220,10 +1220,10 @@ Tap OK to continue.`;
                       style={{
                         width: 0,
                         height: 0,
-                        borderLeft: '20px solid white',
-                        borderTop: '12px solid transparent',
-                        borderBottom: '12px solid transparent',
-                        marginLeft: '4px'
+                        borderLeft: '10px solid white',
+                        borderTop: '6px solid transparent',
+                        borderBottom: '6px solid transparent',
+                        marginLeft: '2px'
                       }}
                     />
                   </div>
