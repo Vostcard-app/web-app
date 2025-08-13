@@ -15,7 +15,7 @@ import SharedOptionsModal from '../components/SharedOptionsModal';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, loadAllLocalVostcardsImmediate, syncInBackground, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
+  const { savedVostcards, syncVostcardMetadata, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -77,21 +77,8 @@ const MyVostcardListView = () => {
             return;
           }
 
-          // 🚀 Load immediately from local storage (fast UI)
-          await loadAllLocalVostcardsImmediate();
-
-          // 🛡️ iOS Safari stability: defer background sync to avoid startup spikes
-          const isIosSafari = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-          if (!isIosSafari) {
-            // Defer sync slightly to yield to rendering
-            setTimeout(() => {
-              syncInBackground().catch(error => {
-                console.error('❌ Background sync failed:', error);
-              });
-            }, 500);
-          } else {
-            console.log('🛡️ Skipping immediate background sync on iOS Safari to improve stability');
-          }
+          // ⚡ Lightweight metadata-only sync (no media) to avoid memory spikes on iOS
+          await syncVostcardMetadata();
           
           console.log('✅ Private Posts loaded successfully');
           
@@ -112,19 +99,27 @@ const MyVostcardListView = () => {
   // const getVostcardStatus = (vostcard: any) => { ... }
   // const isReadyToPost = (vostcard: any) => { ... }
 
-  const handleEdit = (vostcardId: string) => {
-    const vostcard = savedVostcards.find((v: Vostcard) => v.id === vostcardId);
-    if (vostcard) {
-      setCurrentVostcard(vostcard);
-      
-      // Route to appropriate editing interface based on content type
-      if (vostcard.isQuickcard) {
-        console.log('🔄 Editing quickcard:', vostcard.id);
-        navigate('/quickcard-step2'); // Start with photo editing, then proceed to step 3
-      } else {
-        console.log('🔄 Editing regular vostcard:', vostcard.id);
-        navigate('/create-step2');
+  const handleEdit = async (vostcardId: string) => {
+    let vostcard = savedVostcards.find((v: Vostcard) => v.id === vostcardId);
+    if (!vostcard) return;
+
+    // If we only have metadata, load full content on-demand
+    if ((vostcard as any)._isMetadataOnly) {
+      try {
+        await downloadVostcardContent(vostcardId);
+        vostcard = (savedVostcards.find((v: Vostcard) => v.id === vostcardId) || vostcard) as Vostcard;
+      } catch (e) {
+        console.error('❌ Failed to load full content for editing:', e);
       }
+    }
+
+    setCurrentVostcard(vostcard);
+    if (vostcard.isQuickcard) {
+      console.log('🔄 Editing quickcard:', vostcard.id);
+      navigate('/quickcard-step2');
+    } else {
+      console.log('🔄 Editing regular vostcard:', vostcard.id);
+      navigate('/create-step2');
     }
   };
 
@@ -260,7 +255,7 @@ Tap OK to continue.`;
       
       // Force refresh the local vostcards list to ensure UI updates
       console.log('🔄 Refreshing vostcard list...');
-      await loadAllLocalVostcardsImmediate();
+      await syncVostcardMetadata();
       
       console.log('✅ Vostcard list refreshed after deletion');
       console.log('✅ Final savedVostcards count:', savedVostcards.length);
