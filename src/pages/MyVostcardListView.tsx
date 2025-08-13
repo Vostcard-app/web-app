@@ -413,7 +413,8 @@ Tap OK to continue.`;
           flex: 1,
           overflowY: 'auto',
           overscrollBehavior: 'none',
-          WebkitOverflowScrolling: 'auto'
+          WebkitOverflowScrolling: 'auto',
+          background: '#f5f5f5'
         }}>
         {/* Error State */}
         {error && (
@@ -470,15 +471,15 @@ Tap OK to continue.`;
                   const isDeleting = deletingIds.has(vostcard.id);
                   
                   return (
-                    <div
+                <div
                       key={vostcard.id}
                       style={{
-                        padding: '20px',
-                        margin: '16px',
+                        padding: '16px',
+                        margin: '12px 8px',
                         backgroundColor: 'white',
                         borderRadius: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        border: '1px solid #e0e0e0',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                        border: '1px solid #ececec',
                         opacity: isDeleting ? 0.5 : 1
                       }}
                     >
