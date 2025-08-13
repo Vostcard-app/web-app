@@ -792,17 +792,15 @@ const AllPostedVostcardsView: React.FC = () => {
 
       {/* Remove search and filter UI to match Personal Posts */}
 
-      {/* Scrollable List */}
+      {/* Scrollable List (match Personal Posts styles) */}
       <div style={{ 
+        padding: '20px', 
         flex: 1,
         overflowY: 'auto',
-        overflowX: 'hidden',
-        padding: '0 0 100px 0',
-        WebkitOverflowScrolling: 'touch',
-        // Prevent bounce scrolling
-        overscrollBehavior: 'contain',
-        touchAction: 'pan-y'
-      } as React.CSSProperties}>
+        overscrollBehavior: 'none',
+        WebkitOverflowScrolling: 'auto',
+        background: '#f5f5f5'
+      }}>
         {loading ? (
           <div style={{ 
             textAlign: 'center', 
@@ -980,8 +978,7 @@ const AllPostedVostcardsView: React.FC = () => {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            padding: '20px',
-            marginBottom: '100px' // Extra space to stay above fixed filter bar
+            padding: '20px'
           }}>
             <button
               onClick={loadMoreVostcards}
@@ -1021,94 +1018,7 @@ const AllPostedVostcardsView: React.FC = () => {
         )}
       </div>
 
-      {/* Filter/Clear Bar - Fixed for mobile visibility */}
-      <div style={{
-        position: 'fixed',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'white',
-        borderTop: '1px solid #e0e0e0',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 24px',
-        zIndex: 1000,
-        boxShadow: '0 -2px 8px rgba(0,0,0,0.1)'
-      }}>
-                      <button
-                onClick={() => {
-                  setSelectedTypes([]);
-                  setSelectedCategories([]);
-                  setShowFriendsOnly(false);
-                }}
-          style={{ 
-            background: '#e0e0e0', 
-            color: '#333', 
-            border: 'none', 
-            borderRadius: 8, 
-            padding: '12px 24px', 
-            fontSize: 16, 
-            fontWeight: 500, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          Clear
-        </button>
-        
-        <button 
-          onClick={() => navigate('/browse-area')}
-          style={{ 
-            background: '#002B4D', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: 8, 
-            padding: '12px 24px', 
-            fontSize: 16, 
-            fontWeight: 500, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          Browse
-        </button>
-        
-        <button 
-          onClick={() => setShowFilterModal(true)}
-          style={{ 
-            background: (
-              selectedTypes.length > 0 || 
-              showFriendsOnly ||
-              (selectedCategories.length > 0 && !selectedCategories.includes('None'))
-            ) ? '#FF6B35' : '#002B4D', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: 8, 
-            padding: '12px 24px', 
-            fontSize: 16, 
-            fontWeight: 500, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          Filter {(
-            selectedTypes.length > 0 || 
-            showFriendsOnly ||
-            (selectedCategories.length > 0 && !selectedCategories.includes('None'))
-          ) && `(${
-            selectedTypes.length + 
-            (showFriendsOnly ? 1 : 0) + 
-            (selectedCategories.length > 0 && !selectedCategories.includes('None') ? selectedCategories.length : 0)
-          })`}
-        </button>
-      </div>
+      {/* Fixed bottom filter bar removed to match Personal Posts */}
 
       {/* Filter Modal */}
       {showFilterModal && (
