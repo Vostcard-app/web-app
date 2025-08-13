@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,6 +6,7 @@ const AuthRedirect = () => {
   const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const loginRedirectTimerRef = useRef<number | null>(null);
 
   // Add this debug logging
   console.log('🔍 AuthRedirect Debug:', {
@@ -94,11 +95,28 @@ const AuthRedirect = () => {
 
     // If not authenticated and trying to access protected route
     if (!user && !isPublicRoute && !isDynamicRoute) {
-      // Redirect unauthenticated users to login with a return path
-      const returnTo = location.pathname + (location.search || '');
-      const target = `/login?returnTo=${encodeURIComponent(returnTo)}`;
-      if (!location.pathname.startsWith('/login')) navigate(target);
+      // Grace delay before redirecting to login to avoid brief null-user windows
+      if (loginRedirectTimerRef.current === null) {
+        loginRedirectTimerRef.current = window.setTimeout(() => {
+          // If still no user after the delay, navigate to login
+          if (!user) {
+            const returnTo = location.pathname + (location.search || '');
+            const target = `/login?returnTo=${encodeURIComponent(returnTo)}`;
+            if (!location.pathname.startsWith('/login')) navigate(target);
+          }
+          if (loginRedirectTimerRef.current) {
+            clearTimeout(loginRedirectTimerRef.current);
+            loginRedirectTimerRef.current = null;
+          }
+        }, 500); // short grace period for Firebase auth to resolve
+      }
       return;
+    } else {
+      // If user exists or route is public, cancel any pending login redirect
+      if (loginRedirectTimerRef.current) {
+        clearTimeout(loginRedirectTimerRef.current);
+        loginRedirectTimerRef.current = null;
+      }
     }
 
     // If authenticated but on a public route (except root and user-guide)

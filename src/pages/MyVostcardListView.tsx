@@ -336,6 +336,17 @@ Tap OK to continue.`;
     );
   }
 
+  // Render immediately with a lightweight skeleton to minimize initial work on iOS 18
+  if (loading && !error) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
+        <div style={{ background: 'white', padding: 24, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+          Loading your posts…
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ 
       minHeight: '100vh', 
@@ -458,6 +469,7 @@ Tap OK to continue.`;
             <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               {[...savedVostcards]
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 10) // render at most first 10 initially to avoid heavy layout on iOS
                 .map((vostcard, index) => {
                   const missingItems = getVostcardStatus(vostcard);
                   const isDeleting = deletingIds.has(vostcard.id);
