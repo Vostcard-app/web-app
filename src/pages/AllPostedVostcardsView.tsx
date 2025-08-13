@@ -734,8 +734,7 @@ const AllPostedVostcardsView: React.FC = () => {
       <div style={{
         width: isDesktopView ? '390px' : '100%',
         maxWidth: '390px',
-        aspectRatio: isDesktopView ? '390 / 844' : 'auto',
-        height: isDesktopView ? undefined : '100vh',
+        height: isDesktopView ? 'min(844px, calc(100vh - 40px))' : '100vh',
         backgroundColor: '#f5f5f5',
         boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
         borderRadius: isDesktopView ? '16px' : '0',
