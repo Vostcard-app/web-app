@@ -20,7 +20,7 @@ import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
 import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
 import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
 import EditVostcardView from "./pages/EditVostcardView";
-import QuickcardStep2 from "./pages/QuickcardStep2";
+import VostcardCreateStep1Photos from "./pages/VostcardCreateStep1Photos";
 import QuickcardStep3 from "./pages/QuickcardStep3";
 import QuickAudio from "./pages/QuickAudio";
 import ListView from "./pages/ListView";
@@ -42,8 +42,8 @@ import LikedVostcardsView from "./pages/LikedVostcardsView";
 import FollowingView from "./pages/FollowingView";
 import FriendListView from "./pages/FriendListView";
 import VostboxView from "./pages/VostboxView";
-import QuickcardListView from "./pages/QuickcardListView";
-import QuickcardDetailView from "./pages/QuickcardDetailView";
+import LegacyQuickcardsListView from "./pages/LegacyQuickcardsListView";
+import LegacyQuickcardDetailView from "./pages/LegacyQuickcardDetailView";
 import ItinerariesListView from "./pages/ItinerariesListView";
 import ItineraryDetailView from "./pages/ItineraryDetailView";
 import MyTripsListView from "./pages/MyTripsListView";
@@ -68,7 +68,7 @@ import DriveModeSettingsView from "./pages/DriveModeSettingsView";
 import VostcardStudioView from "./pages/VostcardStudioView";
 import ExampleView from "./pages/ExampleView";
 import PublicVostcardView from "./pages/PublicVostcardView";
-import PublicQuickcardView from "./pages/PublicQuickcardView";
+import PublicLegacyQuickcardView from "./pages/PublicLegacyQuickcardView";
 import PublicTripView from "./pages/PublicTripView";
 import PublicTripMapView from "./pages/PublicTripMapView";
 import ShareableTripView from "./pages/ShareableTripView";
@@ -107,7 +107,7 @@ function App() {
 
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
-                  <Route path="/share-quickcard/:id" element={<PublicQuickcardView />} />
+                  <Route path="/share-quickcard/:id" element={<PublicLegacyQuickcardView />} />
                   <Route path="/share-trip/:id" element={<PublicTripView />} />
                   <Route path="/shared-trip/:tourId" element={<ShareableTripView />} />
                   <Route path="/share-itinerary/:shareableLink" element={<PublicItineraryView />} />
@@ -131,8 +131,8 @@ function App() {
                   <Route path="/vostbox" element={<VostboxView />} />
 
                   {/* 📱 Quickcard Routes */}
-                  <Route path="/quickcards" element={<QuickcardListView />} />
-                  <Route path="/quickcard/:id" element={<QuickcardDetailView />} />
+                  <Route path="/quickcards" element={<LegacyQuickcardsListView />} />
+                  <Route path="/quickcard/:id" element={<LegacyQuickcardDetailView />} />
 
                   {/* 📋 Itinerary Routes */}
                   <Route path="/itineraries" element={<ItinerariesListView />} />
@@ -159,7 +159,7 @@ function App() {
                   {/* 🛠️ Creation Flow */}
                   {UNIFIED_VOSTCARD_FLOW ? (
                     <>
-                      <Route path="/create/step1" element={<QuickcardStep2 />} />
+                      <Route path="/create/step1" element={<VostcardCreateStep1Photos />} />
                       {/* Step 2 should mirror original Vostcard Step 1 (video optional) */}
                       <Route path="/create/step2" element={<CreateVostcardStep1 />} />
                       <Route path="/create/step3" element={<CreateVostcardStep3 />} />
@@ -173,7 +173,7 @@ function App() {
                   )}
                   {!UNIFIED_VOSTCARD_FLOW && (
                     <>
-                      <Route path="/quickcard-step2" element={<QuickcardStep2 />} />
+                      <Route path="/quickcard-step2" element={<VostcardCreateStep1Photos />} />
                       <Route path="/quickcard-step3" element={<QuickcardStep3 />} />
                     </>
                   )}

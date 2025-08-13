@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe, FaImages, FaEdit } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { drivecardService } from '../services/drivecardService';
-import { QuickcardImporter } from '../components/studio/QuickcardImporter';
+import { QuickcardImporter as LegacyQuickcardImporter } from '../components/studio/LegacyQuickcardImporter';
 import { useVostcard } from '../context/VostcardContext';
 import { useVostcardEdit } from '../context/VostcardEditContext';
 import type { Drivecard, Vostcard } from '../types/VostcardTypes';
