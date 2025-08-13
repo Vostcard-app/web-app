@@ -25,6 +25,7 @@ import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
 import { AVAILABLE_CATEGORIES, AVAILABLE_TYPES } from '../types/VostcardTypes';
+import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 // FIXED: Import pin images from assets folder for better Leaflet compatibility
 const vostcardIcon = new L.Icon({
@@ -1193,19 +1194,13 @@ const HomeView = () => {
   const handleCreateClick = (e: React.MouseEvent) => {
     e.preventDefault();
     clearVostcard();
-    navigate('/create-step1');
+    navigate(UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
   };
 
   const handleCreateQuickcard = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log(' Starting Quickcard creation - opening native camera');
-    clearVostcard();
-    
-    // Open native camera app directly
-    const cameraInput = document.getElementById('quickcard-native-camera') as HTMLInputElement;
-    if (cameraInput) {
-      cameraInput.click();
-    }
+    // Unified: route to create step1 and deprecate quickcard label
+    handleCreateClick(e);
   };
 
   const handleLastPost = async (e: React.MouseEvent) => {
@@ -2644,7 +2639,7 @@ const HomeView = () => {
         // Add safe area padding for mobile
         paddingBottom: shouldUseContainer ? 0 : 'env(safe-area-inset-bottom, 0px)',
       }}>
-        {/* Create Vostcard Button */}
+        {/* Create Vōstcard Button */}
         <button
           onTouchStart={handleCreateTouchStart}
           onTouchEnd={handleCreateTouchEnd}
@@ -2670,10 +2665,10 @@ const HomeView = () => {
             lineHeight: '1.2'
           }}
         >
-          Create Vostcard
+          Create Vōstcard
         </button>
 
-        {/* Create Quickcard Button */}
+        {/* Deprecated: Quickcard → Vōstcard (same flow) */}
         <button
           onTouchStart={handleQuickcardTouchStart}
           onTouchEnd={handleQuickcardTouchEnd}
@@ -2699,7 +2694,7 @@ const HomeView = () => {
             lineHeight: '1.2'
           }}
         >
-          Create Quickcard
+          Create Vōstcard
         </button>
 
         {/* Compose Button removed: moved to Vostbox messages view */}
