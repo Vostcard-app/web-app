@@ -75,8 +75,8 @@ const AuthRedirect = () => {
       return;
     }
 
-    // Routes allowed without auth (render will show its own login CTA if needed)
-    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/all-posted-vostcards', '/my-vostcards'];
+    // Routes allowed without auth (public experience)
+    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/all-posted-vostcards'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
     // Dynamic routes that should be allowed (with any ID) 
@@ -90,7 +90,9 @@ const AuthRedirect = () => {
 
     // If not authenticated and trying to access protected route
     if (!user && !isPublicRoute && !isDynamicRoute) {
-      navigate('/');
+      // Redirect unauthenticated users to login with a return path
+      const returnTo = location.pathname + (location.search || '');
+      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`);
       return;
     }
 
