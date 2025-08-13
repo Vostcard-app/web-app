@@ -159,7 +159,8 @@ function App() {
                   {UNIFIED_VOSTCARD_FLOW ? (
                     <>
                       <Route path="/create/step1" element={<QuickcardStep2 />} />
-                      <Route path="/create/step2" element={<CreateVostcardStep2 />} />
+                      {/* Step 2 should mirror original Vostcard Step 1 (video optional) */}
+                      <Route path="/create/step2" element={<CreateVostcardStep1 />} />
                       <Route path="/create/step3" element={<CreateVostcardStep3 />} />
                     </>
                   ) : (

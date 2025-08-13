@@ -60,6 +60,7 @@ const CreateVostcardStep1: React.FC = () => {
     console.log('🎥 Video object at save:', video);
 
     if (!UNIFIED_VOSTCARD_FLOW) {
+      // Legacy requires video
       if (!video) {
         alert('❌ No video found. Please record a video first.');
         return;
@@ -73,6 +74,7 @@ const CreateVostcardStep1: React.FC = () => {
     }
 
     // Unified flow: video optional, allow continue even without video
+    // Video optional; do not overwrite geo here — geo comes from the first photo
     navigate('/create/step3');
   };
 
