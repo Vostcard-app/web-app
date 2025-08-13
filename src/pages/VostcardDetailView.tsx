@@ -991,34 +991,38 @@ Tap OK to continue.`;
           marginTop: '60px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div 
-              style={{ 
-                width: 50, 
-                height: 50, 
-                borderRadius: '50%', 
-                overflow: 'hidden', 
-                marginRight: 16,
-                background: '#f0f0f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={() => {
-                if (vostcard?.userID) {
-                  navigate(`/user-profile/${vostcard.userID}`);
-                }
-              }}
-            >
-              {userProfile?.avatarURL ? (
-                <img 
-                  src={userProfile.avatarURL} 
-                  alt="User Avatar" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-                />
-              ) : (
-                <FaUserCircle size={50} color="#ccc" />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 16 }}>
+              <div 
+                style={{ 
+                  width: 50, 
+                  height: 50, 
+                  borderRadius: '50%', 
+                  overflow: 'hidden', 
+                  background: '#f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  if (vostcard?.userID) {
+                    navigate(`/user-profile/${vostcard.userID}`);
+                  }
+                }}
+              >
+                {userProfile?.avatarURL ? (
+                  <img 
+                    src={userProfile.avatarURL} 
+                    alt="User Avatar" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+                  />
+                ) : (
+                  <FaUserCircle size={50} color="#ccc" />
+                )}
+              </div>
+              {userProfile?.userRole === 'guide' && (
+                <div style={{ marginTop: 4, fontSize: 11, color: '#666', fontWeight: 600 }}>Guide</div>
               )}
             </div>
             <div 
