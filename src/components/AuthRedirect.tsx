@@ -75,8 +75,8 @@ const AuthRedirect = () => {
       return;
     }
 
-    // Public routes that don't require auth
-    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide'];
+    // Routes allowed without auth (render will show its own login CTA if needed)
+    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/all-posted-vostcards', '/my-vostcards'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
     // Dynamic routes that should be allowed (with any ID) 
