@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaUserPlus, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause } from 'react-icons/fa';
+import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaUserPlus, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause, FaImages } from 'react-icons/fa';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -1282,7 +1282,8 @@ Tap OK to continue.`;
                 <div style={{ 
                   height: '60px',
                   borderRadius: '8px', 
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  position: 'relative'
                 }}>
                   <img
                     src={vostcard.photoURLs[0]}
@@ -1291,10 +1292,30 @@ Tap OK to continue.`;
                       width: '125px',
                       height: '60px',
                       objectFit: 'cover',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      display: 'block'
                     }}
                     onClick={() => handlePhotoClick(vostcard.photoURLs[0])}
                   />
+                  {/* Slideshow/Photos overlay icon */}
+                  {vostcard.photoURLs.length > 1 && (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 4,
+                      right: 4,
+                      background: 'rgba(0,0,0,0.6)',
+                      borderRadius: 12,
+                      padding: '2px 6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      color: 'white',
+                      fontSize: 10
+                    }}>
+                      <FaImages size={10} />
+                      <span>{vostcard.photoURLs.length}</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div style={{ 
@@ -1316,7 +1337,8 @@ Tap OK to continue.`;
                 <div style={{ 
                   height: '60px',
                   borderRadius: '8px', 
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  position: 'relative'
                 }}>
                   <img
                     src={vostcard.photoURLs[1]}
@@ -1325,7 +1347,8 @@ Tap OK to continue.`;
                       width: '125px',
                       height: '60px',
                       objectFit: 'cover',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      display: 'block'
                     }}
                     onClick={() => handlePhotoClick(vostcard.photoURLs[1])}
                   />
