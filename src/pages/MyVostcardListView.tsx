@@ -463,7 +463,7 @@ Tap OK to continue.`;
 
             {/* Private Posts List */}
             <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              {[...savedVostcards]
+              {savedVostcards.length > 0 && [...savedVostcards]
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, 10) // render at most first 10 initially to avoid heavy layout on iOS
                 .map((vostcard, index) => {
