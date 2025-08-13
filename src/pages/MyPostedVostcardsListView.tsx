@@ -15,6 +15,7 @@ const MyPostedVostcardsListView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
   console.log('🔄 MyPostedVostcardsListView rendered', {
     authLoading,
@@ -23,6 +24,12 @@ const MyPostedVostcardsListView = () => {
     error,
     postedVostcardsCount: postedVostcards.length
   });
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     console.log('🔄 Auth state changed:', { authLoading, user: !!user });
@@ -335,51 +342,72 @@ ${getUserFirstName()}`);
   });
 
   return (
-    <div style={{ height: '100vh', width: '100vw', backgroundColor: '#f5f5f5' }}>
-      {/* 🔵 Header with Home Icon */}
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: isDesktop ? '#f0f0f0' : '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      padding: isDesktop ? '20px' : '0'
+    }}>
+      {/* Phone-like container to match Personal Posts */}
       <div style={{
-        backgroundColor: '#07345c',
-        height: '30px',
+        width: isDesktop ? '390px' : '100%',
+        maxWidth: '390px',
+        height: isDesktop ? '844px' : '100vh',
+        backgroundColor: '#f5f5f5',
+        boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
+        borderRadius: isDesktop ? '16px' : '0',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingLeft: '16px',
-        color: 'white',
-        position: 'relative',
-        padding: '15px 0 24px 20px'
-      }}>
-        <h1 style={{ fontSize: '30px', margin: 0 }}>Posted Vōstcards</h1>
-        
-        
-        {/* Home Button */}
-        <FaHome
-          size={48}
-          style={{
-            cursor: 'pointer',
-            position: 'absolute',
-            right: 44,
-            top: 15,
-            background: 'rgba(0,0,0,0.10)',
-            border: 'none',
-            borderRadius: '50%',
-            width: 48,
-            height: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => navigate('/home')}
-        />
-      </div>
-
-      {/* 📋 List of Vostcards */}
-      <div style={{ 
-        padding: '20px', 
-        height: 'calc(100vh - 120px)', 
+        flexDirection: 'column',
         overflowY: 'auto',
-        overscrollBehavior: 'none',
-        WebkitOverflowScrolling: 'auto'
+        overflowX: 'hidden',
+        transition: 'all 0.3s ease'
       }}>
+        {/* 🔵 Header with Home Icon */}
+        <div style={{
+          backgroundColor: '#07345c',
+          height: '30px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingLeft: '16px',
+          color: 'white',
+          position: 'relative',
+          padding: '15px 0 24px 20px',
+          borderRadius: isDesktop ? '16px 16px 0 0' : '0',
+          flexShrink: 0
+        }}>
+          <h1 style={{ fontSize: '30px', margin: 0 }}>Posted Vōstcards</h1>
+          <FaHome
+            size={40}
+            style={{
+              cursor: 'pointer',
+              position: 'absolute',
+              right: 29,
+              top: 15,
+              background: 'rgba(0,0,0,0.10)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={() => navigate('/home')}
+          />
+        </div>
+
+        {/* 📋 List of Vostcards */}
+        <div style={{ 
+          padding: '20px', 
+          flex: 1,
+          overflowY: 'auto',
+          overscrollBehavior: 'none',
+          WebkitOverflowScrolling: 'auto',
+          background: '#f5f5f5'
+        }}>
         {/* Error State */}
         {error && (
           <div style={{
@@ -665,48 +693,13 @@ ${getUserFirstName()}`);
                     </div>
                   </div>
 
-                  {/* Un-post Button */}
-                  <div style={{
-                    marginTop: '12px',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    <button
-                      onClick={(e) => handleUnpost(e, vostcard.id)}
-                      disabled={unpostingIds.has(vostcard.id)}
-                      style={{
-                        backgroundColor: unpostingIds.has(vostcard.id) ? '#6c757d' : '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '12px 24px',
-                        fontSize: '16px',
-                        fontWeight: 'bold',
-                        cursor: unpostingIds.has(vostcard.id) ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'background-color 0.2s'
-                      }}
-                      onMouseOver={(e) => {
-                        if (!unpostingIds.has(vostcard.id)) {
-                          e.currentTarget.style.backgroundColor = '#c82333';
-                        }
-                      }}
-                      onMouseOut={(e) => {
-                        if (!unpostingIds.has(vostcard.id)) {
-                          e.currentTarget.style.backgroundColor = '#dc3545';
-                        }
-                      }}
-                    >
-                      {unpostingIds.has(vostcard.id) ? '⏳ Un-posting...' : '📤 Un-post'}
-                    </button>
-                  </div>
+                  {/* Un-post action removed per request */}
                 </div>
               ))}
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
