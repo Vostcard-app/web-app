@@ -226,9 +226,17 @@ const CameraView: React.FC = () => {
           streamRef.current.getTracks().forEach(t => t.stop());
           streamRef.current = null;
         }
+        if (videoRef.current) {
+          try {
+            videoRef.current.pause();
+            // @ts-ignore
+            videoRef.current.srcObject = null;
+          } catch {}
+        }
         // Return to Step 2 (video preview) when not in quickcard photo mode
         if (!isQuickcardMode) {
-          navigate('/create/step2');
+          // iOS Safari: navigating back to previous page is more reliable post getUserMedia
+          setTimeout(() => navigate(-1), 0);
         }
       };
 
