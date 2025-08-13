@@ -1340,14 +1340,9 @@ const HomeView = () => {
       // Ensure context consumers see the update before navigation
       await new Promise((resolve) => setTimeout(resolve, 60));
       
-      // Route to appropriate editing interface based on content type
-      if (lastPost.isQuickcard) {
-        console.log('🔄 Editing quickcard:', lastPost.id);
-        navigate('/quickcard-step2'); // Start with photo editing, then proceed to step 3
-      } else {
-        console.log('🔄 Editing regular vostcard:', lastPost.id);
-        navigate('/create-step2'); // Route to video/recording step
-      }
+      // Unified: always go to Step 1 with thumbnails populated
+      console.log('🔄 Editing last Vōstcard in unified editor step1:', lastPost.id);
+      navigate('/create/step1');
       
     } catch (error) {
       console.error('Error loading posts:', error);
