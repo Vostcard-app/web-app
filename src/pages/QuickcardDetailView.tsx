@@ -1218,8 +1218,8 @@ Tap OK to continue.`;
       }}>
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
-            width: '75px',
-            height: '75px',
+            width: '100px',
+            height: '100px',
             borderRadius: '16px',
               overflow: 'hidden',
             backgroundColor: '#f8f9fa',
@@ -1231,8 +1231,8 @@ Tap OK to continue.`;
                   src={photoURLs[0]}
                   alt="Quickcard"
                   style={{
-                  width: '75px',
-                  height: '75px',
+                  width: '100px',
+                  height: '100px',
                   objectFit: 'cover',
                     display: 'block',
                     cursor: 'pointer',
