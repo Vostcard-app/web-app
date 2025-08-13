@@ -82,23 +82,58 @@ const DB_VERSION = 3;
 const STORE_NAME = 'privateVostcards';
 const METADATA_STORE_NAME = 'vostcardMetadata';
 
-// IndexedDB utility functions
-const openDB = (): Promise<IDBDatabase> => {
+// IndexedDB utility functions with resilience and retry (helps iOS Safari)
+const openDB = (attempt: number = 1): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-    
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    try {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onerror = () => {
+        const err = request.error as any;
+        const msg = String(err?.message || err || 'unknown');
+        console.warn(`IndexedDB open error (attempt ${attempt}):`, msg);
+        // Retry a few times for transient "Connection to Indexed Database server lost" cases on iOS
+        if (attempt < 3) {
+          setTimeout(() => {
+            openDB(attempt + 1).then(resolve).catch(reject);
+          }, attempt * 250);
+        } else {
+          reject(request.error);
+        }
+      };
+
+      request.onsuccess = () => {
+        const db = request.result;
+        // Attach close listener to surface auto-reconnect next time openDB is called
+        try {
+          (db as any).onclose = () => {
+            console.warn('IndexedDB connection closed by browser');
+          };
+          (db as any).onversionchange = () => {
+            try { db.close(); } catch {}
+          };
+        } catch {}
+        resolve(db);
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
+          db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
+        }
+      };
+    } catch (e) {
+      if (attempt < 3) {
+        setTimeout(() => {
+          openDB(attempt + 1).then(resolve).catch(reject);
+        }, attempt * 250);
+      } else {
+        reject(e);
       }
-      if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
-        db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
-      }
-    };
+    }
   });
 };
 
