@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
-import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 const CreateVostcardStep1: React.FC = () => {
   const navigate = useNavigate();

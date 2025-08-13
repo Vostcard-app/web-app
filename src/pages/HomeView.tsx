@@ -25,7 +25,7 @@ import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
 import { AVAILABLE_CATEGORIES, AVAILABLE_TYPES } from '../types/VostcardTypes';
-import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 // FIXED: Import pin images from assets folder for better Leaflet compatibility
 const vostcardIcon = new L.Icon({
@@ -1200,7 +1200,7 @@ const HomeView = () => {
       cameraInput.click();
     } else {
       // Fallback: route to step1 if input not found
-      navigate(UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
+      navigate(TEMP_UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
     }
   };
 

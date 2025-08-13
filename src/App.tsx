@@ -83,7 +83,7 @@ import TourInProgressView from "./pages/TourInProgressView";
 import AuthRedirect from "./components/AuthRedirect";
 import FiltersHelpView from "./pages/FiltersHelpView";
 import CreateCardsHelpView from "./pages/CreateCardsHelpView";
-import { UNIFIED_VOSTCARD_FLOW } from './utils/flags';
+import { TEMP_UNIFIED_VOSTCARD_FLOW } from './utils/flags';
 
 function App() {
   return (
@@ -157,7 +157,7 @@ function App() {
       
 
                   {/* 🛠️ Creation Flow */}
-                  {UNIFIED_VOSTCARD_FLOW ? (
+                  {TEMP_UNIFIED_VOSTCARD_FLOW ? (
                     <>
                       <Route path="/create/step1" element={<VostcardCreateStep1Photos />} />
                       {/* Step 2 should mirror original Vostcard Step 1 (video optional) */}
@@ -171,7 +171,7 @@ function App() {
                       <Route path="/create-step3" element={<CreateVostcardStep3 />} />
                     </>
                   )}
-                  {!UNIFIED_VOSTCARD_FLOW && (
+                  {!TEMP_UNIFIED_VOSTCARD_FLOW && (
                     <>
                       <Route path="/quickcard-step2" element={<VostcardCreateStep1Photos />} />
                       <Route path="/quickcard-step3" element={<QuickcardStep3 />} />

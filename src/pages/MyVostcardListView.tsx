@@ -8,7 +8,7 @@ import { db } from '../firebase/firebaseConfig';
 
 // ✅ NEW: Import our refactored utilities and types
 import { getVostcardStatus, generateShareText, createErrorMessage } from '../utils/vostcardUtils';
-import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 import { LoadingSpinner, ErrorMessage } from '../components/shared';
 import type { Vostcard } from '../types/VostcardTypes';
 import SharedOptionsModal from '../components/SharedOptionsModal';
@@ -129,7 +129,8 @@ const MyVostcardListView = () => {
 
     // Load from local DB to ensure we have the fully restored object (like detail view)
     try {
-      await loadLocalVostcard(vostcardId);
+      // On iOS, defer heavy Blob restoration if we're just showing thumbnails via URLs in the editor
+      await loadLocalVostcard(vostcardId, { restoreVideo: false, restorePhotos: false });
       // After loadLocalVostcard, currentVostcard in context is replaced with restored media
       // But to be safe, prefer the freshly loaded one for navigation state
       const refreshed = savedVostcards.find((v: Vostcard) => v.id === vostcardId) || vostcard;
@@ -138,7 +139,7 @@ const MyVostcardListView = () => {
       console.warn('⚠️ Could not reload from local before edit, proceeding with current object');
       setCurrentVostcard(vostcard);
     }
-    if (UNIFIED_VOSTCARD_FLOW) {
+    if (TEMP_UNIFIED_VOSTCARD_FLOW) {
       console.log('🔄 Editing in unified flow (one-page editor):', vostcard.id);
       navigate(`/edit/${vostcardId}`);
       return;

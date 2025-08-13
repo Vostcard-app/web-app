@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { MdCameraswitch } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
-import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 import CameraPermissionModal from '../components/CameraPermissionModal';
 import './ScrollingCameraView.css';
 
@@ -345,7 +345,7 @@ const ScrollingCameraView: React.FC = () => {
         const returnTo = params.get('returnTo');
         if (returnTo) {
           setTimeout(() => navigate(returnTo, { replace: true }), 250);
-        } else if (UNIFIED_VOSTCARD_FLOW) {
+        } else if (TEMP_UNIFIED_VOSTCARD_FLOW) {
           setTimeout(() => navigate('/create/step2', { replace: true }), 250);
         } else if (script && script.trim()) {
           navigate(`/script-tool?script=${encodeURIComponent(script)}`);

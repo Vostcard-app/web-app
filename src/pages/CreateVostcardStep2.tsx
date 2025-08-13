@@ -5,7 +5,7 @@ import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
-import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 /*
   📱 CAMERA APPROACH: Currently using Step2CameraView for enhanced orientation handling
@@ -455,7 +455,7 @@ export default function CreateVostcardStep2() {
       )}
 
       {/* Unified Step 2: Optional Video Recorder */}
-      {UNIFIED_VOSTCARD_FLOW && (
+      {TEMP_UNIFIED_VOSTCARD_FLOW && (
         <div style={{ width: '100%', maxWidth: 420, marginTop: 100, padding: '0 16px' }}>
           <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>Optional Video (up to 60s)</h2>
           <p style={{ marginTop: 0, color: '#666' }}>You can skip this step if you don’t want a video.</p>
@@ -509,7 +509,7 @@ export default function CreateVostcardStep2() {
         boxSizing: 'border-box',
         maxHeight: 'calc(100vh - 120px)',
         overflowY: 'auto',
-        marginTop: UNIFIED_VOSTCARD_FLOW ? '20px' : (currentVostcard?.title ? '20px' : '80px'),
+        marginTop: TEMP_UNIFIED_VOSTCARD_FLOW ? '20px' : (currentVostcard?.title ? '20px' : '80px'),
       }}>
         {/* Photo selection grid - matching QuickcardStep2 style */}
         <div style={{
