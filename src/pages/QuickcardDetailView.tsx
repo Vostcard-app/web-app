@@ -1208,7 +1208,7 @@ Tap OK to continue.`;
         </h1>
       </div>
 
-      {/* ✅ UPDATED: Auto-Height Single Photo Display */}
+      {/* ✅ UPDATED: Fixed-size Thumbnail (75x75) */}
       <div style={{ 
         padding: '20px', 
         display: 'flex', 
@@ -1218,8 +1218,8 @@ Tap OK to continue.`;
       }}>
         {photoURLs && photoURLs.length > 0 ? (
           <div style={{ 
-            width: '100%',
-            maxWidth: '75%',
+            width: '75px',
+            height: '75px',
             borderRadius: '16px',
               overflow: 'hidden',
             backgroundColor: '#f8f9fa',
@@ -1231,10 +1231,9 @@ Tap OK to continue.`;
                   src={photoURLs[0]}
                   alt="Quickcard"
                   style={{
-                    width: '100%',
-                    height: 'auto',
-                    aspectRatio: '1',
-                    objectFit: 'cover',
+                  width: '75px',
+                  height: '75px',
+                  objectFit: 'cover',
                     display: 'block',
                     cursor: 'pointer',
                     imageRendering: 'crisp-edges' as any,
@@ -1303,6 +1302,33 @@ Tap OK to continue.`;
         }}>
           Tap Thumbnail to play
         </div>
+
+        {/* ▶️ Play Video (if present) */}
+        {((quickcard as any)?.videoURL || (quickcard as any)?.video instanceof Blob) && (
+          <button
+            onClick={() => {
+              const videoUrl = (quickcard as any)?.videoURL || ((quickcard as any)?.video instanceof Blob ? URL.createObjectURL((quickcard as any).video) : null);
+              if (videoUrl) {
+                window.open(videoUrl, '_blank');
+              } else {
+                alert('No video available');
+              }
+            }}
+            style={{
+              backgroundColor: '#007aff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              marginTop: 8
+            }}
+          >
+            Play Video
+          </button>
+        )}
       </div>
 
       {/* Hidden Audio Element */}
