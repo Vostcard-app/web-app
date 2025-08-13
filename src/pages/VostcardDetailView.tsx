@@ -1095,8 +1095,8 @@ Tap OK to continue.`;
           }}>
             {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
               <div style={{ 
-                width: '100px',
-                height: '100px',
+                width: '125px',
+                height: '125px',
                 borderRadius: '12px',
                 overflow: 'hidden',
                 backgroundColor: '#f8f9fa',
@@ -1108,8 +1108,8 @@ Tap OK to continue.`;
                       src={vostcard.photoURLs[0]}
                       alt="Quickcard"
                       style={{
-                        width: '100px',
-                        height: '100px',
+                        width: '125px',
+                        height: '125px',
                         display: 'block',
                         cursor: 'pointer',
                         WebkitBackfaceVisibility: 'hidden',
@@ -1176,8 +1176,8 @@ Tap OK to continue.`;
           }}>
             {/* Video Thumbnail Section */}
             <div style={{ 
-              width: '100px',
-              height: '100px',
+              width: '125px',
+              height: '125px',
               backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
               borderRadius: '12px',
               overflow: 'hidden',
@@ -1189,8 +1189,8 @@ Tap OK to continue.`;
                   ref={videoRef}
                   src={vostcard.videoURL}
                   style={{
-                    width: '100px',
-                    height: '100px',
+                    width: '125px',
+                    height: '125px',
                     objectFit: 'cover',
                     cursor: 'pointer'
                   }}
@@ -1231,8 +1231,8 @@ Tap OK to continue.`;
                 </>
               ) : (
                 <div style={{ 
-                  width: '100px',
-                  height: '100px',
+                  width: '125px',
+                  height: '125px',
                   backgroundColor: '#f0f0f0',
                   display: 'flex',
                   alignItems: 'center',
@@ -1246,8 +1246,8 @@ Tap OK to continue.`;
 
             {/* Photos Section - 2 photos stacked vertically */}
             <div style={{ 
-              width: '100px',
-              height: '100px',
+              width: '125px',
+              height: '125px',
               display: 'flex',
               flexDirection: 'column',
               gap: '4px'
@@ -1255,7 +1255,7 @@ Tap OK to continue.`;
               {/* First Photo */}
               {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
                 <div style={{ 
-                  height: '48px',
+                  height: '60px',
                   borderRadius: '8px', 
                   overflow: 'hidden'
                 }}>
@@ -1263,8 +1263,8 @@ Tap OK to continue.`;
                     src={vostcard.photoURLs[0]}
                     alt="Photo 1"
                     style={{
-                      width: '100px',
-                      height: '48px',
+                      width: '125px',
+                      height: '60px',
                       objectFit: 'cover',
                       cursor: 'pointer'
                     }}
@@ -1289,7 +1289,7 @@ Tap OK to continue.`;
               {/* Second Photo */}
               {vostcard.photoURLs && vostcard.photoURLs.length > 1 ? (
                 <div style={{ 
-                  height: '48px',
+                  height: '60px',
                   borderRadius: '8px', 
                   overflow: 'hidden'
                 }}>
@@ -1297,8 +1297,8 @@ Tap OK to continue.`;
                     src={vostcard.photoURLs[1]}
                     alt="Photo 2"
                     style={{
-                      width: '100px',
-                      height: '48px',
+                      width: '125px',
+                      height: '60px',
                       objectFit: 'cover',
                       cursor: 'pointer'
                     }}
