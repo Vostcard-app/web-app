@@ -982,15 +982,15 @@ Tap OK to continue.`;
         paddingBottom: '40px', // Extra space at bottom
         minHeight: 'calc(100vh + 100px)' // Ensure content is taller than viewport for scrolling
       }}>
-        {/* User Info */}
+        {/* User Info and Map Button */}
         <div style={{ 
           padding: '15px 20px 5px 20px', 
           display: 'flex', 
           alignItems: 'center',
-          justifyContent: 'space-between', // Changed to space-between for tip button
-          marginTop: '60px', // Proper spacing to clear fixed header
+          justifyContent: 'space-between',
+          marginTop: '60px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div 
               style={{ 
                 width: 50, 
@@ -1038,37 +1038,62 @@ Tap OK to continue.`;
           </div>
         </div>
 
-          {/* ☕ Tip Button for Guides - Right aligned with avatar */}
-        {userProfile?.userRole === 'guide' && 
-         user?.uid !== vostcard.userID && (
-            <button
-              ref={tipButtonRef}
-              onClick={handleTipButtonClick}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
-                height: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                lineHeight: '1',
-                gap: '4px'
-              }}
-            >
-              Leave a Tip
-              <FaChevronDown size={8} />
-            </button>
-        )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Map View button aligned to the right in the header row */}
+            {vostcard?.latitude && vostcard?.longitude && (
+              <button
+                onClick={handleMapClick}
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minWidth: '100px',
+                  boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+              >
+                <FaMap size={12} style={{ marginRight: '6px' }} />
+                Map View
+              </button>
+            )}
+            {/* ☕ Tip Button for Guides */}
+            {userProfile?.userRole === 'guide' && user?.uid !== vostcard.userID && (
+              <button
+                ref={tipButtonRef}
+                onClick={handleTipButtonClick}
+                style={{
+                  backgroundColor: '#002B4D',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                  pointerEvents: 'auto',
+                  transition: 'transform 0.1s ease',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  lineHeight: '1',
+                  gap: '4px'
+                }}
+              >
+                Leave a Tip
+                <FaChevronDown size={8} />
+              </button>
+            )}
+          </div>
         </div>
 
 
@@ -1457,30 +1482,27 @@ Tap OK to continue.`;
               </button>
             )}
 
-            {/* View on Map Button - Always show if location data exists */}
-            {vostcard?.latitude && vostcard?.longitude && (
-              <button
-                onClick={handleMapClick}
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 24px',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  minWidth: '120px',
-                  boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-              >
-                <FaMap size={14} style={{ marginRight: '8px' }} />
-                View on Map
-              </button>
-            )}
+            {/* Add to Itinerary button replaces old Map View spot */}
+            <button
+              onClick={loadUserItineraries}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '120px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              Add to Itinerary
+            </button>
           </div>
         )}
 
