@@ -203,6 +203,20 @@ const EditVostcardView: React.FC = () => {
     }
   }, [id, currentVostcard]);
 
+  // Listen for video updates from recording view and refresh thumbnail promptly
+  useEffect(() => {
+    const handler = () => {
+      if (!currentVostcard) return;
+      if (currentVostcard.video instanceof Blob) {
+        try { setVideoUrl(URL.createObjectURL(currentVostcard.video)); } catch {}
+      } else if ((currentVostcard as any).videoURL) {
+        setVideoUrl((currentVostcard as any).videoURL);
+      }
+    };
+    window.addEventListener('vostcard:video-updated', handler);
+    return () => window.removeEventListener('vostcard:video-updated', handler);
+  }, [currentVostcard]);
+
   const handlePickPhoto = (index: number) => {
     pendingPhotoIndexRef.current = index;
     photoInputRef.current?.click();

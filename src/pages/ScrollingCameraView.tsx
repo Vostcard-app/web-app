@@ -304,12 +304,16 @@ const ScrollingCameraView: React.FC = () => {
         audioTracks: mixedStream.getAudioTracks().length
       });
 
-      // Save the portrait video
+      // Save the portrait video (context)
       if (userLocation) {
         setVideo(blob, userLocation);
       } else {
         setVideo(blob);
       }
+      // Emit a custom event so listeners (e.g., edit view) can refresh their local preview immediately
+      try {
+        window.dispatchEvent(new CustomEvent('vostcard:video-updated', { detail: { size: blob.size, type: blob.type } }));
+      } catch {}
 
       // Thorough cleanup: stop mixed stream and camera tracks, clear DOM elements
       const cleanupAndNavigate = () => {
