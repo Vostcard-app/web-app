@@ -36,29 +36,33 @@ const AuthRedirect = () => {
         if (location.pathname.startsWith('/share-quickcard/')) {
           const id = location.pathname.replace('/share-quickcard/', '').split('?')[0]; // Remove query params
           if (id && id.length > 0) {
-            console.log('🎯 Redirecting to private quickcard:', `/quickcard/${id}`);
-            navigate(`/quickcard/${id}`);
+            const target = `/quickcard/${id}`;
+            console.log('🎯 Redirecting to private quickcard:', target);
+            if (location.pathname !== target) navigate(target);
             return;
           }
         } else if (location.pathname.startsWith('/share/')) {
           const id = location.pathname.replace('/share/', '').split('?')[0]; // Remove query params
           if (id && id.length > 0) {
-            console.log('🎯 Redirecting to private vostcard:', `/vostcard/${id}`);
-            navigate(`/vostcard/${id}`);
+            const target = `/vostcard/${id}`;
+            console.log('🎯 Redirecting to private vostcard:', target);
+            if (location.pathname !== target) navigate(target);
             return;
           }
         } else if (location.pathname.startsWith('/share-trip/')) {
           const id = location.pathname.replace('/share-trip/', '').split('?')[0]; // Remove query params
           if (id && id.length > 0) {
-            console.log('🎯 Redirecting to private trip:', `/trip/${id}`);
-            navigate(`/trip/${id}`);
+            const target = `/trip/${id}`;
+            console.log('🎯 Redirecting to private trip:', target);
+            if (location.pathname !== target) navigate(target);
             return;
           }
         } else if (location.pathname.startsWith('/shared-trip/')) {
           const id = location.pathname.replace('/shared-trip/', '').split('?')[0]; // Remove query params  
           if (id && id.length > 0) {
-            console.log('🎯 Redirecting to private tour:', `/tour/${id}`);
-            navigate(`/tour/${id}`);
+            const target = `/tour/${id}`;
+            console.log('🎯 Redirecting to private tour:', target);
+            if (location.pathname !== target) navigate(target);
             return;
           }
         }
@@ -92,7 +96,8 @@ const AuthRedirect = () => {
     if (!user && !isPublicRoute && !isDynamicRoute) {
       // Redirect unauthenticated users to login with a return path
       const returnTo = location.pathname + (location.search || '');
-      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+      const target = `/login?returnTo=${encodeURIComponent(returnTo)}`;
+      if (!location.pathname.startsWith('/login')) navigate(target);
       return;
     }
 
@@ -101,10 +106,10 @@ const AuthRedirect = () => {
       console.log('🏪 AuthRedirect: Public route redirect check - userRole:', userRole, 'path:', location.pathname);
       if (userRole === 'advertiser') {
         console.log('🏪 AuthRedirect: Redirecting advertiser from public route to advertiser portal');
-        navigate('/advertiser-portal');
+        if (location.pathname !== '/advertiser-portal') navigate('/advertiser-portal');
       } else {
         console.log('🏠 AuthRedirect: Redirecting regular user from public route to home');
-        navigate('/home');
+        if (location.pathname !== '/home') navigate('/home');
       }
       return;
     }
@@ -114,10 +119,10 @@ const AuthRedirect = () => {
       console.log('🏪 AuthRedirect: Root redirect check - userRole:', userRole);
       if (userRole === 'advertiser') {
         console.log('🏪 AuthRedirect: Redirecting advertiser from root to advertiser portal');
-        navigate('/advertiser-portal');
+        if (location.pathname !== '/advertiser-portal') navigate('/advertiser-portal');
       } else {
         console.log('🏠 AuthRedirect: Redirecting regular user from root to home');
-        navigate('/home');
+        if (location.pathname !== '/home') navigate('/home');
       }
       return;
     }
