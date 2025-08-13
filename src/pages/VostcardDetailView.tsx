@@ -1096,7 +1096,7 @@ Tap OK to continue.`;
             {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
               <div style={{ 
                 width: '100%',
-                maxWidth: '800px',
+                maxWidth: '400px',
                 borderRadius: '16px',
                   overflow: 'hidden',
                 backgroundColor: '#f8f9fa',

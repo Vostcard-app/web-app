@@ -882,7 +882,7 @@ ${privateUrl}`);
               width: 180,
               height: 240
             }}>
-              {photoURLs.length > 0 ? (
+            {photoURLs.length > 0 ? (
                 <div 
                   key={0}
                   style={{ 
@@ -892,8 +892,8 @@ ${privateUrl}`);
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '100%',
-                    height: '100%',
+                  width: '90px',
+                  height: '120px',
                     cursor: 'pointer'
                   }}
                   onClick={() => setSelectedPhoto(photoURLs[0])}
@@ -902,8 +902,8 @@ ${privateUrl}`);
                     src={photoURLs[0]} 
                     alt="Quickcard Photo" 
                     style={{ 
-                      width: '100%', 
-                      height: '100%', 
+                    width: '90px', 
+                    height: '120px', 
                       objectFit: 'cover' 
                     }}
                   />
