@@ -8,13 +8,14 @@ const AuthRedirect = () => {
   const location = useLocation();
   const loginRedirectTimerRef = useRef<number | null>(null);
 
-  // Add this debug logging
+  // Add this debug logging (keep list in sync with publicRoutes below)
+  const debugPublicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/public-map', '/all-posted-vostcards'];
   console.log('🔍 AuthRedirect Debug:', {
     loading,
     user: !!user,
     userRole,
     currentPath: location.pathname,
-    isPublicRoute: ['/', '/login', '/register', '/landing', '/user-guide', '/public-map'].includes(location.pathname)
+    isPublicRoute: debugPublicRoutes.includes(location.pathname)
   });
 
   useEffect(() => {
@@ -119,8 +120,8 @@ const AuthRedirect = () => {
       }
     }
 
-    // If authenticated but on a public route (except root and user-guide)
-    if (user && isPublicRoute && location.pathname !== '/' && location.pathname !== '/user-guide') {
+    // If authenticated but on a public route (except root, user-guide, and all-posted-vostcards)
+    if (user && isPublicRoute && !['/', '/user-guide', '/all-posted-vostcards'].includes(location.pathname)) {
       console.log('🏪 AuthRedirect: Public route redirect check - userRole:', userRole, 'path:', location.pathname);
       if (userRole === 'advertiser') {
         console.log('🏪 AuthRedirect: Redirecting advertiser from public route to advertiser portal');
