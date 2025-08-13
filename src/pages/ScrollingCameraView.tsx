@@ -336,8 +336,12 @@ const ScrollingCameraView: React.FC = () => {
           } catch {}
         }
 
-        // Return to Step 2 in unified flow; fallback to legacy routes otherwise
-        if (UNIFIED_VOSTCARD_FLOW) {
+        // Return to caller: honor ?returnTo=, else unified Step 2, else legacy
+        const params = new URLSearchParams(location.search);
+        const returnTo = params.get('returnTo');
+        if (returnTo) {
+          setTimeout(() => navigate(returnTo, { replace: true }), 250);
+        } else if (UNIFIED_VOSTCARD_FLOW) {
           setTimeout(() => navigate('/create/step2', { replace: true }), 250);
         } else if (script && script.trim()) {
           navigate(`/script-tool?script=${encodeURIComponent(script)}`);

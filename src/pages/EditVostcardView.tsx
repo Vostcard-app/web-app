@@ -344,6 +344,15 @@ const EditVostcardView: React.FC = () => {
               <button onClick={handlePickVideo} style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}>
                 <FaUpload style={{ marginRight: 4 }} /> {videoUrl ? 'Replace' : 'Add'} Video
               </button>
+              <button
+                onClick={() => {
+                  const scriptParam = (currentVostcard as any)?.script ? `&script=${encodeURIComponent((currentVostcard as any).script)}` : '';
+                  navigate(`/scrolling-camera?returnTo=${encodeURIComponent(`/edit/${id}`)}${scriptParam}`);
+                }}
+                style={{ background: '#007aff', color: 'white', border: 'none', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}
+              >
+                Record 60s (Script Tool)
+              </button>
               {videoUrl && (
                 <button onClick={handleRemoveVideo} style={{ background: '#eee', color: '#333', border: '1px solid #ccc', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}>
                   <FaTrash style={{ marginRight: 4 }} /> Remove
