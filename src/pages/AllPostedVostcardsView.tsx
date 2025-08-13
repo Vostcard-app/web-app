@@ -734,7 +734,7 @@ const AllPostedVostcardsView: React.FC = () => {
       <div style={{
         width: isDesktopView ? '390px' : '100%',
         maxWidth: '390px',
-        height: isDesktopView ? 'min(844px, calc(100vh - 40px))' : '100vh',
+        height: isDesktopView ? '844px' : '100vh',
         backgroundColor: '#f5f5f5',
         boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
         borderRadius: isDesktopView ? '16px' : '0',
@@ -746,61 +746,314 @@ const AllPostedVostcardsView: React.FC = () => {
         position: 'relative'
       }}
     >
-      {/* Header (match Personal Posts header style) */}
+      {/* Add CSS animation for spinning icon */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      {/* Header */}
       <div style={{
-        backgroundColor: '#07345c',
-        height: '30px',
+        background: '#002B4D',
+        color: 'white',
+        height: 80,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingLeft: '16px',
-        color: 'white',
-        position: 'relative',
-        padding: '15px 0 24px 20px',
-        borderRadius: isDesktopView ? '16px 16px 0 0' : '0',
-        flexShrink: 0
+        padding: '0 20px',
+        flexShrink: 0,
+        zIndex: 1000,
+        position: 'absolute', // <-- changed from 'fixed' to 'absolute'
+        top: 0,
+        left: 0,
+        right: 0,
       }}>
-        <h1 
+        <div 
           onClick={() => navigate('/home')}
-          style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
-        >
-          Public Posts
-        </h1>
-        <FaHome
-          size={40}
-          style={{
-            cursor: 'pointer',
-            position: 'absolute',
-            right: 29,
-            top: 15,
-            background: 'rgba(0,0,0,0.10)',
-            border: 'none',
-            borderRadius: '50%',
-            width: 48,
-            height: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          onClick={() => navigate('/home')}
-        />
+          style={{ fontSize: 28, fontWeight: 'bold', letterSpacing: 1, cursor: 'pointer' }}>Vōstcard</div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <button
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: 'white', 
+              cursor: 'pointer' 
+            }}
+            onClick={() => navigate('/home')}
+          >
+            <FaHome size={40} />
+          </button>
+        </div>
       </div>
 
 
 
-      {/* Remove summary/filter bar to match Personal Posts */}
+      {/* Summary Bar */}
+      <div style={{
+        background: 'white',
+        padding: '16px 20px 8px 20px',
+        borderBottom: '1px solid #e0e0e0',
+        flexShrink: 0,
+        zIndex: 9,
+        marginTop: '80px', // Account for fixed header
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          marginBottom: 4 
+        }}>
+          <div style={{ fontSize: 24, fontWeight: 500 }}>
+            {browseLocation ? `Vōstcards near ${browseLocation.name}` : 'Local Vōstcards'}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: 14, color: '#666' }}>📚 Guides Only</span>
+            <div
+              onClick={() => setShowGuidesOnly(!showGuidesOnly)}
+              style={{
+                width: '44px',
+                height: '24px',
+                borderRadius: '12px',
+                background: showGuidesOnly ? '#007AFF' : '#e0e0e0',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  background: 'white',
+                  position: 'absolute',
+                  left: showGuidesOnly ? '2px' : '22px',
+                  transition: 'left 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', fontSize: 16, color: '#444' }}>
+          <span style={{ fontWeight: 600 }}>
+            {filteredVostcards.length === vostcards.length 
+              ? `Total: ${vostcards.length}`
+              : `Showing: ${filteredVostcards.length} of ${vostcards.length}`
+            }
+          </span>
+          {browseLocation && (
+            <span style={{ marginLeft: '8px', color: '#666', fontSize: '14px' }}>
+              (within 50km)
+            </span>
+          )}
+        </div>
+      </div>
 
-      {/* Remove search and filter UI to match Personal Posts */}
+      {/* Search Section - moved outside modal for better mobile keyboard handling */}
+      <div style={{
+        background: 'white',
+        padding: '16px 20px',
+        borderBottom: '1px solid #e0e0e0',
+        flexShrink: 0,
+        zIndex: 9,
+      }}>
+        <div style={{ position: 'relative', marginBottom: '16px' }}>
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            background: 'white',
+            border: '1px solid #ddd',
+            borderRadius: '12px',
+            padding: '4px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+          }}>
+            <FaMapPin style={{ color: '#666', marginLeft: '12px', marginRight: '8px' }} />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search for any location worldwide..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowDropdown(true);
+              }}
+              onKeyDown={handleKeyDown}
+              autoComplete="off"
+              style={{
+                flex: 1,
+                border: 'none',
+                outline: 'none',
+                padding: '12px 8px',
+                fontSize: '16px',
+                background: 'transparent'
+              }}
+            />
+            {isSearching && (
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                border: '2px solid transparent',
+                borderTop: '2px solid #666',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                marginRight: '12px'
+              }} />
+            )}
+          </div>
+          
+          {/* Search Results Dropdown */}
+          {showDropdown && searchResults.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              background: 'white',
+              border: '2px solid #002B4D',
+              borderRadius: '8px',
+              boxShadow: '0 8px 24px rgba(0, 43, 77, 0.2)',
+              maxHeight: '300px',
+              overflowY: 'auto',
+              zIndex: 9999,
+              marginTop: '4px'
+            }} ref={resultsRef}>
+              {searchResults.map((result, index) => (
+                <div
+                  key={index}
+                  onMouseDown={() => handleLocationSelect(result)}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '14px 16px',
+                    cursor: 'pointer',
+                    borderBottom: index < searchResults.length - 1 ? '1px solid #e9ecef' : 'none',
+                    backgroundColor: index === highlightedIndex ? '#f0f8ff' : 'transparent',
+                    borderLeft: index === highlightedIndex ? '4px solid #002B4D' : '4px solid transparent',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <FaMapPin style={{ marginRight: '12px', color: '#002B4D', fontSize: '14px' }} />
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontWeight: '600' }}>
+                      {result.name}
+                    </span>
+                    {result.displayAddress && result.displayAddress !== result.name ? (
+                      <span style={{ color: '#666', fontWeight: '400', fontSize: 13, display: 'block' }}>
+                        {result.displayAddress}
+                      </span>
+                    ) : null}
+                  </div>
+                  <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
+                    Location
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {searchError && (
+            <div style={{ color: '#d32f2f', fontSize: '14px', marginTop: '8px' }}>
+              {searchError}
+            </div>
+          )}
+        </div>
 
-      {/* Scrollable List (match Personal Posts styles) */}
+        {/* Browse Area Button - appears when location is selected */}
+        {selectedLocation && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '12px',
+              backgroundColor: '#f5f5f5',
+              borderRadius: '8px',
+              marginBottom: '12px'
+            }}>
+              <FaMapPin style={{ color: '#002B4D', marginRight: '8px' }} />
+              <span style={{ fontSize: '14px', fontWeight: '500' }}>
+                View vostcards near {selectedLocation.name}
+              </span>
+            </div>
+            <button
+              onClick={handleBrowseArea}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                width: '100%',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001a33'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              Browse Area
+            </button>
+          </div>
+        )}
+
+        {/* Active Browse Location - shows when location filtering is active */}
+        {browseLocation && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px',
+              backgroundColor: '#e8f4fd',
+              borderRadius: '8px',
+              marginBottom: '12px',
+              border: '1px solid #002B4D'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <FaMapPin style={{ color: '#002B4D', marginRight: '8px' }} />
+                <span style={{ fontSize: '14px', fontWeight: '500', color: '#002B4D' }}>
+                  Showing vostcards near {browseLocation.name}
+                </span>
+              </div>
+              <button
+                onClick={clearBrowseLocation}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#002B4D',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  padding: '4px 8px',
+                  borderRadius: '4px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d1e7ff'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable List */}
       <div style={{ 
-        padding: '20px', 
         flex: 1,
         overflowY: 'auto',
-        overscrollBehavior: 'none',
-        WebkitOverflowScrolling: 'auto',
-        background: '#f5f5f5'
-      }}>
+        overflowX: 'hidden',
+        padding: '0 0 100px 0',
+        WebkitOverflowScrolling: 'touch',
+        // Prevent bounce scrolling
+        overscrollBehavior: 'contain',
+        touchAction: 'pan-y'
+      } as React.CSSProperties}>
         {loading ? (
           <div style={{ 
             textAlign: 'center', 
@@ -896,74 +1149,197 @@ const AllPostedVostcardsView: React.FC = () => {
                   }
                 }}
               >
-                 {/* Title (match Personal Posts) */}
-                 <div style={{
-                   marginBottom: '12px',
-                   display: 'flex',
-                   alignItems: 'center',
-                   gap: '8px'
-                 }}>
-                   <h3 style={{ 
-                     margin: 0, 
-                     color: '#002B4D',
-                     fontSize: '18px'
-                   }}>
-                     {v.title || 'Untitled'}
-                   </h3>
-                 </div>
+                {/* Creator Avatar, Username, and Follow Button - Upper Left */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {userProfiles[v.userID]?.avatarURL ? (
+                      <img 
+                        src={userProfiles[v.userID].avatarURL} 
+                        alt="Creator Avatar" 
+                        style={{ 
+                          width: 32, 
+                          height: 32, 
+                          borderRadius: '50%', 
+                          objectFit: 'cover',
+                          border: '2px solid #e0e0e0',
+                          cursor: 'pointer'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (v.userID) {
+                            navigate(`/user-profile/${v.userID}`);
+                          }
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div 
+                      style={{ 
+                        width: 32, 
+                        height: 32, 
+                        borderRadius: '50%', 
+                        backgroundColor: '#e0e0e0',
+                        display: userProfiles[v.userID]?.avatarURL ? 'none' : 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#666',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        border: '2px solid #e0e0e0',
+                        cursor: 'pointer'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (v.userID) {
+                          navigate(`/user-profile/${v.userID}`);
+                        }
+                      }}
+                    >
+                      <FaUser />
+                    </div>
+                    <div 
+                      style={{ 
+                        color: '#444', 
+                        fontSize: 14, 
+                        fontWeight: 500,
+                        cursor: 'pointer'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (v.userID) {
+                          navigate(`/user-profile/${v.userID}`);
+                        }
+                      }}
+                    >
+                      {v.username || 'Unknown'}
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* View Button - Upper Right */}
+                    <button
+                      style={{
+                        background: '#002B4D',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 8,
+                        padding: '8px 12px',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,43,77,0.15)',
+                        transition: 'all 0.2s ease',
+                        minWidth: '60px',
+                        height: 36
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/vostcard/${v.id}`, {
+                          state: {
+                            vostcardList: vostcards.map(vc => vc.id),
+                            currentIndex: idx
+                          }
+                        });
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#001f35';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,43,77,0.25)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#002B4D';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,43,77,0.15)';
+                      }}
+                    >
+                      View
+                    </button>
 
-                 {/* Description (single-line preview) */}
-                 {v.description && (
-                   <p style={{
-                     margin: '0 0 12px 0',
-                     color: '#666',
-                     fontSize: '14px',
-                     lineHeight: '1.4',
-                     overflow: 'hidden',
-                     textOverflow: 'ellipsis',
-                     whiteSpace: 'nowrap',
-                     display: 'block'
-                   }}>
-                     {String(v.description).split('\n')[0]}
-                   </p>
-                 )}
+                    {/* Follow Button */}
+                    {v.userID && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <FollowButton 
+                          targetUserId={v.userID} 
+                          targetUsername={v.username}
+                          size="small"
+                          variant="secondary"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Enhanced Title Section with Type Indicators */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 2 }}>
+                  <div style={{ fontWeight: 700, fontSize: 20, flex: 1 }}>
+                    {v.title || 'Untitled'}
+                  </div>
+                  
+                  {/* Type Badge with Icon */}
+                  <div style={{
+                    backgroundColor: v.isQuickcard ? '#FF6B6B' : '#4ECDC4',
+                    color: 'white',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    padding: '3px 8px',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    flexShrink: 0
+                  }}>
+                    {v.isQuickcard ? <FaCameraRetro style={{ fontSize: '8px' }} /> : <FaVideo style={{ fontSize: '8px' }} />}
+                    {v.isQuickcard ? 'Quick' : 'Vōst'}
+                  </div>
+                </div>
+                
+                <div style={{ color: '#888', fontSize: 15, marginBottom: 2 }}>{getDistanceToVostcard(v)}</div>
                 
 
                 
-                 {/* Actions (View) */}
-                 <div style={{
-                   display: 'flex',
-                   justifyContent: 'flex-end',
-                   alignItems: 'center',
-                   width: '100%',
-                   marginTop: '8px'
-                 }}>
-                   <div
-                     style={{
-                       cursor: 'pointer',
-                       transition: 'transform 0.1s',
-                       display: 'flex',
-                       alignItems: 'center',
-                       justifyContent: 'center',
-                       padding: '10px',
-                       borderRadius: '8px',
-                       backgroundColor: '#f8f9fa',
-                       border: '1px solid #dee2e6'
-                     }}
-                     onClick={() => navigate(`/vostcard/${v.id}`, {
-                       state: {
-                         vostcardList: filteredVostcards.map(vc => vc.id),
-                         currentIndex: idx
-                       }
-                     })}
-                     onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
-                     onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                     onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                     title="View Vostcard"
-                   >
-                     <FaEye size={20} color="#6c757d" />
-                   </div>
-                 </div>
+                {/* Bottom Row: Star Rating and Like */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'flex-end',
+                  gap: 12,
+                  marginTop: 8
+                }}>
+                  {/* Star Rating */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <FaStar style={{ color: '#FFD700', fontSize: 18 }} />
+                    <span style={{ color: '#888', fontSize: 16, fontWeight: 500 }}>
+                      {ratingStats[v.id]?.averageRating?.toFixed(1) || '0.0'}
+                    </span>
+                  </div>
+                  
+                  {/* Heart Like */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <button 
+                      style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        color: likedStatus[v.id] ? '#ff4444' : '#888', 
+                        fontSize: 22, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        cursor: 'pointer',
+                        transition: 'color 0.2s, transform 0.1s',
+                      }} 
+                      onClick={(e) => handleLikeToggle(v.id, e)}
+                      onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+                      onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <FaHeart />
+                    </button>
+                    <span style={{ color: '#888', fontSize: 16, fontWeight: 500 }}>
+                      {likeCounts[v.id] || 0}
+                    </span>
+                  </div>
+                </div>
               </div>
               {/* Divider */}
               {idx < vostcards.length - 1 && (
@@ -978,7 +1354,8 @@ const AllPostedVostcardsView: React.FC = () => {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            padding: '20px'
+            padding: '20px',
+            marginBottom: '100px' // Extra space to stay above fixed filter bar
           }}>
             <button
               onClick={loadMoreVostcards}
@@ -1018,7 +1395,94 @@ const AllPostedVostcardsView: React.FC = () => {
         )}
       </div>
 
-      {/* Fixed bottom filter bar removed to match Personal Posts */}
+      {/* Filter/Clear Bar - Fixed for mobile visibility */}
+      <div style={{
+        position: 'fixed',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'white',
+        borderTop: '1px solid #e0e0e0',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 24px',
+        zIndex: 1000,
+        boxShadow: '0 -2px 8px rgba(0,0,0,0.1)'
+      }}>
+                      <button
+                onClick={() => {
+                  setSelectedTypes([]);
+                  setSelectedCategories([]);
+                  setShowFriendsOnly(false);
+                }}
+          style={{ 
+            background: '#e0e0e0', 
+            color: '#333', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '12px 24px', 
+            fontSize: 16, 
+            fontWeight: 500, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          Clear
+        </button>
+        
+        <button 
+          onClick={() => navigate('/browse-area')}
+          style={{ 
+            background: '#002B4D', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '12px 24px', 
+            fontSize: 16, 
+            fontWeight: 500, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          Browse
+        </button>
+        
+        <button 
+          onClick={() => setShowFilterModal(true)}
+          style={{ 
+            background: (
+              selectedTypes.length > 0 || 
+              showFriendsOnly ||
+              (selectedCategories.length > 0 && !selectedCategories.includes('None'))
+            ) ? '#FF6B35' : '#002B4D', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '12px 24px', 
+            fontSize: 16, 
+            fontWeight: 500, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          Filter {(
+            selectedTypes.length > 0 || 
+            showFriendsOnly ||
+            (selectedCategories.length > 0 && !selectedCategories.includes('None'))
+          ) && `(${
+            selectedTypes.length + 
+            (showFriendsOnly ? 1 : 0) + 
+            (selectedCategories.length > 0 && !selectedCategories.includes('None') ? selectedCategories.length : 0)
+          })`}
+        </button>
+      </div>
 
       {/* Filter Modal */}
       {showFilterModal && (
