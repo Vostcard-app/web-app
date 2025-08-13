@@ -106,12 +106,16 @@ const CreateVostcardStep1: React.FC = () => {
     setVideoError(null);
   };
 
-  // Force a re-render on mount after navigation from camera to avoid iOS black frame
+  // Force a re-render when video changes to avoid iOS black frame
   useEffect(() => {
-    if (UNIFIED_VOSTCARD_FLOW) {
-      requestAnimationFrame(() => setIsVideoLoading(false));
+    if (UNIFIED_VOSTCARD_FLOW && video) {
+      setIsVideoLoading(true);
+      requestAnimationFrame(() => {
+        setIsVideoLoading(false);
+        setVideoError(null);
+      });
     }
-  }, []);
+  }, [video, UNIFIED_VOSTCARD_FLOW]);
 
   const handleVideoCanPlay = () => {
     console.log('📹 Video can play');

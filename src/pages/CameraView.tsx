@@ -235,10 +235,10 @@ const CameraView: React.FC = () => {
         }
         // Return to Step 2 (video preview) when not in quickcard photo mode
         if (!isQuickcardMode) {
-          // iOS Safari: force complete page reload to clear camera state
+          // iOS Safari: ensure camera is fully released before navigating
           setTimeout(() => {
-            window.location.href = '/create/step2';
-          }, 100);
+            navigate('/create/step2', { replace: true });
+          }, 200);
         }
       };
 
