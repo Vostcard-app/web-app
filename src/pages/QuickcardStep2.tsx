@@ -60,18 +60,33 @@ export default function QuickcardStep2() {
       });
     } else if (currentVostcard?.photos) {
       // Load existing photos if quickcard already exists
-      const photos = currentVostcard.photos;
-      setSelectedPhotos(prevPhotos => {
-        const newPhotos = [...prevPhotos];
-        photos.forEach((photo, index) => {
-          if (index < 4) { // Use first four photos
-            newPhotos[index] = photo as File;
-          }
-        });
-        return newPhotos;
+      const photos = currentVostcard.photos as (File | null)[];
+      const newPhotos: (File | null)[] = [null, null, null, null];
+      const newUrls: (string | null)[] = [null, null, null, null];
+      photos.forEach((photo, index) => {
+        if (index < 4 && photo) {
+          newPhotos[index] = photo as File;
+          try {
+            newUrls[index] = URL.createObjectURL(photo as File);
+          } catch {}
+        }
+      });
+      setSelectedPhotos(newPhotos);
+      // Revoke old urls before setting new
+      setPhotoUrls(prev => {
+        prev.forEach(u => { if (u) { try { URL.revokeObjectURL(u); } catch {} } });
+        return newUrls;
       });
     }
   }, [currentVostcard, updateVostcard]);
+
+  // Cleanup created object URLs on unmount
+  useEffect(() => {
+    return () => {
+      photoUrls.forEach(u => { if (u) { try { URL.revokeObjectURL(u); } catch {} } });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load user trips and last used trip
   useEffect(() => {
