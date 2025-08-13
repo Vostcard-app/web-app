@@ -222,24 +222,39 @@ const CameraView: React.FC = () => {
         setVideo(blob);
         console.log('📹 Recording saved:', blob);
         // Stop camera tracks to avoid black preview overlays
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(t => t.stop());
-          streamRef.current = null;
-        }
-        if (videoRef.current) {
-          try {
-            videoRef.current.pause();
-            // @ts-ignore
-            videoRef.current.srcObject = null;
-          } catch {}
-        }
-        // Return to Step 2 (video preview) when not in quickcard photo mode
-        if (!isQuickcardMode) {
-          // iOS Safari: ensure camera is fully released before navigating
-          setTimeout(() => {
-            navigate('/create/step2', { replace: true });
-          }, 200);
-        }
+        // Comprehensive camera cleanup before navigation
+        const cleanupAndNavigate = () => {
+          // Stop all media tracks
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => {
+              track.stop();
+              console.log('🛑 Stopped track:', track.kind, track.readyState);
+            });
+            streamRef.current = null;
+          }
+          
+          // Clear video element completely
+          if (videoRef.current) {
+            try {
+              videoRef.current.pause();
+              videoRef.current.srcObject = null;
+              videoRef.current.load(); // Force reload to clear any cached frames
+            } catch (error) {
+              console.log('Video cleanup error (expected):', error);
+            }
+          }
+          
+          // Return to Step 2 (video preview) when not in quickcard photo mode
+          if (!isQuickcardMode) {
+            // Give iOS Safari extra time to fully release camera
+            setTimeout(() => {
+              navigate('/create/step2', { replace: true });
+            }, 300);
+          }
+        };
+        
+        // Delay cleanup to allow recording to complete first
+        setTimeout(cleanupAndNavigate, 100);
       };
 
       mediaRecorder.start();
