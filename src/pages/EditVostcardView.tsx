@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash, FaUpload, FaSave } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
+import { db } from '../firebase/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 type Nullable<T> = T | null;
 
@@ -67,16 +69,31 @@ const EditVostcardView: React.FC = () => {
         // Always ensure hydrated like detail view
         await downloadVostcardContent(id);
         await loadLocalVostcard(id);
-        // Use freshly loaded currentVostcard from context
-        const v = (currentVostcard && currentVostcard.id === id) ? currentVostcard : undefined;
-        const base = v || currentVostcard;
-        if (!base) {
-          // If not immediately available, give the event loop a tick
-          setTimeout(() => {
-            initializeFromContext();
-          }, 0);
-        } else {
-          initializeFromVostcard(base);
+        // After async calls, try to initialize from context; otherwise direct fetch
+        const tryInit = async () => {
+          if (currentVostcard && currentVostcard.id === id) {
+            initializeFromVostcard(currentVostcard);
+            return true;
+          }
+          // Fallback: direct Firestore fetch (like detail view)
+          try {
+            const ref = doc(db, 'vostcards', id);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+              const data = snap.data();
+              initializeFromVostcard({ id: snap.id, ...data });
+              return true;
+            }
+          } catch (e) {
+            console.warn('⚠️ Direct fetch fallback failed:', e);
+          }
+          return false;
+        };
+        const ok = await tryInit();
+        if (!ok) {
+          // Give one more tick to allow context state propagation
+          await new Promise(r => setTimeout(r, 0));
+          await tryInit();
         }
       } catch (e: any) {
         console.error('❌ Edit hydrate failed:', e);
