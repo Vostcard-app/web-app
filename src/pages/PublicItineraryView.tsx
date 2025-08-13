@@ -227,27 +227,18 @@ const PublicItineraryView: React.FC = () => {
           alignItems: 'center',
           zIndex: 10
         }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: 'none',
-              borderRadius: '50%',
-              width: 36,
-              height: 36,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'white',
-            }}
-          >
-            <FaHome size={16} />
-          </button>
+          <div />
           
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
-              onClick={() => navigate('/home')}
+              onClick={() => {
+                if (!user) {
+                  const returnTo = `/itinerary/${itinerary?.id || shareableLink}`;
+                  navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+                } else {
+                  navigate('/home');
+                }
+              }}
               style={{
                 background: 'rgba(255,255,255,0.15)',
                 border: 'none',
@@ -280,12 +271,17 @@ const PublicItineraryView: React.FC = () => {
               height: '40px',
               borderRadius: '50%',
               backgroundColor: 'rgba(255,255,255,0.2)',
+              overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0
             }}>
-              <FaUserCircle size={24} color="white" />
+              {itinerary?.creatorAvatarURL ? (
+                <img src={itinerary.creatorAvatarURL} alt="Creator Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <FaUserCircle size={24} color="white" />
+              )}
             </div>
             
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -311,6 +307,15 @@ const PublicItineraryView: React.FC = () => {
                 <span>{formatDate(itinerary.createdAt)}</span>
               </div>
             </div>
+          </div>
+
+          {/* Promo line under banner */}
+          <div style={{
+            marginTop: '8px',
+            fontSize: '13px',
+            opacity: 0.9
+          }}>
+            Made with Vōstcard, a free app. It's free to join and free to use.
           </div>
 
           {itinerary.description && (
@@ -444,16 +449,7 @@ const PublicItineraryView: React.FC = () => {
                       alignItems: 'center',
                       gap: '8px'
                     }}>
-                      <span style={{
-                        backgroundColor: item.type === 'quickcard' ? '#e3f2fd' : '#f3e5f5',
-                        color: item.type === 'quickcard' ? '#1976d2' : '#7b1fa2',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        fontWeight: '500'
-                      }}>
-                        {item.type === 'quickcard' ? 'Quickcard' : 'Vostcard'}
-                      </span>
+                      {/* Type badge removed per request */}
                       {item.latitude && item.longitude && (
                         <>
                           <span>•</span>
