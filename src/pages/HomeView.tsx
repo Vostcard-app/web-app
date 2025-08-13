@@ -2639,36 +2639,7 @@ const HomeView = () => {
         // Add safe area padding for mobile
         paddingBottom: shouldUseContainer ? 0 : 'env(safe-area-inset-bottom, 0px)',
       }}>
-        {/* Create Vōstcard Button */}
-        <button
-          onTouchStart={handleCreateTouchStart}
-          onTouchEnd={handleCreateTouchEnd}
-          onClick={handleCreateClick}
-          style={{
-            background: '#002B4D',
-            color: 'white',
-            border: 'none',
-            borderRadius: 12,
-            padding: '0px 20px',
-            fontSize: 18,
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '30%',
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transform: isCreatePressed ? 'scale(0.95)' : 'scale(1)',
-            textAlign: 'center',
-            lineHeight: '1.2'
-          }}
-        >
-          Create Vōstcard
-        </button>
-
-        {/* Deprecated: Quickcard → Vōstcard (same flow) */}
+        {/* Create Vōstcard Button (single CTA) */}
         <button
           onTouchStart={handleQuickcardTouchStart}
           onTouchEnd={handleQuickcardTouchEnd}
@@ -2684,7 +2655,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '30%',
+            width: shouldUseContainer ? '80%' : '60%',
             height: '60px',
             display: 'flex',
             alignItems: 'center',

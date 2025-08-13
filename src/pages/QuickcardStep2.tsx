@@ -337,14 +337,15 @@ export default function QuickcardStep2() {
       return;
     }
     
-    // Save photos to context
+    // Save photos to context and route into unified step 2
     updateVostcard({ photos: validPhotos });
     
     console.log('📱 Quickcard photos saved:', {
       photoCount: validPhotos.length
     });
     
-    navigate('/quickcard-step3');
+    // Unified flow: go to Step 2 (optional video), otherwise legacy step3
+    navigate('/create/step2');
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
