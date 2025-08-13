@@ -1194,7 +1194,14 @@ const HomeView = () => {
   const handleCreateClick = (e: React.MouseEvent) => {
     e.preventDefault();
     clearVostcard();
-    navigate(UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
+    // Open native camera immediately (required for iOS Safari user-gesture policy)
+    const cameraInput = document.getElementById('quickcard-native-camera') as HTMLInputElement | null;
+    if (cameraInput) {
+      cameraInput.click();
+    } else {
+      // Fallback: route to step1 if input not found
+      navigate(UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
+    }
   };
 
   const handleCreateQuickcard = (e: React.MouseEvent) => {
