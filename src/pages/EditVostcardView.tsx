@@ -18,6 +18,7 @@ const EditVostcardView: React.FC = () => {
     loadLocalVostcard,
     updateVostcard,
     saveLocalVostcard,
+    postVostcard,
   } = useVostcard();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -347,7 +348,7 @@ const EditVostcardView: React.FC = () => {
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, maxWidth: 420, width: '100%', margin: '0 auto', padding: 16 }}>
+      <div style={{ flex: 1, maxWidth: 390, width: '100%', margin: '0 auto', padding: '16px 16px 80px', boxSizing: 'border-box' }}>
         {/* Photos */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>Photos</div>
@@ -404,24 +405,50 @@ const EditVostcardView: React.FC = () => {
         {/* Text fields */}
         <div style={{ marginBottom: 12 }}>
           <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Title</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a title" style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6 }} />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a title" style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6, boxSizing: 'border-box' }} />
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Description</label>
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add a description" style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6, minHeight: 80, resize: 'vertical' }} />
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Add a description" style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6, minHeight: 80, resize: 'vertical', boxSizing: 'border-box' }} />
         </div>
         <div style={{ marginBottom: 20 }}>
           <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Category</label>
-          <select value={categories[0] || 'None'} onChange={(e) => setCategories([e.target.value])} style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6 }}>
+          <select value={categories[0] || 'None'} onChange={(e) => setCategories([e.target.value])} style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6, boxSizing: 'border-box' }}>
             {availableCategories.map(c => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
 
-        <button onClick={handleSave} style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 8, padding: '12px 16px', fontWeight: 700, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <FaSave /> Save Changes
-        </button>
+        {/* Footer actions */}
+        {(() => {
+          const photoCount = photoUrls.filter(Boolean).length + photoFiles.filter(Boolean).length;
+          const ready = photoCount > 0 && title.trim().length > 0 && description.trim().length > 0 && (categories[0] && categories[0] !== 'None');
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <button onClick={handleSave} style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 8, padding: '12px 16px', fontWeight: 700 }}>
+                <FaSave /> Save Changes
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const photosBlobs = photoFiles.filter(Boolean) as Blob[];
+                    updateVostcard({ title, description, categories, photos: photosBlobs, video: videoFile || currentVostcard?.video || null });
+                    await saveLocalVostcard();
+                    await postVostcard();
+                    alert('Posted to the map!');
+                  } catch (e) {
+                    alert('Failed to post. Please try again.');
+                  }
+                }}
+                disabled={!ready}
+                style={{ background: ready ? '#0a8f54' : '#9bb7a9', color: 'white', border: 'none', borderRadius: 8, padding: '12px 16px', fontWeight: 700, cursor: ready ? 'pointer' : 'not-allowed' }}
+              >
+                Post to Map
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Hidden inputs */}
