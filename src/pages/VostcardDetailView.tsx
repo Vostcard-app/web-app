@@ -1425,10 +1425,17 @@ Tap OK to continue.`;
               </button>
             )}
 
-            {/* Play Video (optional) */}
-            {vostcard?.videoURL && (
+            {/* Play Video (optional) - support URL or Blob */}
+            {((vostcard as any)?.videoURL || (vostcard as any)?.video instanceof Blob) && (
               <button
-                onClick={() => window.open(vostcard.videoURL!, '_blank')}
+                onClick={() => {
+                  const videoUrl = (vostcard as any)?.videoURL || (vostcard as any)?.videoURLFromBlob || ((vostcard as any)?.video instanceof Blob ? URL.createObjectURL((vostcard as any).video) : null);
+                  if (videoUrl) {
+                    window.open(videoUrl, '_blank');
+                  } else {
+                    alert('No video available');
+                  }
+                }}
                 style={{
                   backgroundColor: '#007aff',
                   color: 'white',

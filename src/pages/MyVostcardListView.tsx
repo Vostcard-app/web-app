@@ -483,7 +483,7 @@ Tap OK to continue.`;
                         opacity: isDeleting ? 0.5 : 1
                       }}
                     >
-                      {/* Title with Type Indicator */}
+                      {/* Title */}
                       <div style={{
                         marginBottom: '12px',
                         display: 'flex',
@@ -497,18 +497,6 @@ Tap OK to continue.`;
                         }}>
                           {vostcard.title || 'Untitled'}
                         </h3>
-                        {/* Type Badge */}
-                        <span style={{
-                          backgroundColor: vostcard.isQuickcard ? '#ff9800' : '#2196f3',
-                          color: 'white',
-                          padding: '4px 8px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          textTransform: 'uppercase'
-                        }}>
-                          {vostcard.isQuickcard ? 'Quickcard' : 'Vostcard'}
-                        </span>
                       </div>
 
                       {/* Description */}
