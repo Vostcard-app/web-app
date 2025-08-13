@@ -341,11 +341,8 @@ const EditVostcardView: React.FC = () => {
           <div style={{ width: '100%', height: 180, borderRadius: 8, border: '2px solid #002B4D', position: 'relative', overflow: 'hidden', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc' }}>
             {videoUrl ? 'Video attached' : 'No video'}
             <div style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => navigate('/script-tool')}
-                style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}
-              >
-                Open Script Tool
+              <button onClick={handlePickVideo} style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}>
+                <FaUpload style={{ marginRight: 4 }} /> {videoUrl ? 'Replace' : 'Add'} Video
               </button>
               <button
                 onClick={() => {
@@ -363,6 +360,14 @@ const EditVostcardView: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <button
+            onClick={() => navigate('/script-tool')}
+            style={{ background: '#5755d9', color: 'white', border: 'none', borderRadius: 6, padding: '10px 12px', fontSize: 14, cursor: 'pointer' }}
+          >
+            Open Script Tool
+          </button>
         </div>
 
         {/* Text fields */}
