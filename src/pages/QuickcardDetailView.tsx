@@ -1199,7 +1199,7 @@ Tap OK to continue.`;
       <div style={{ padding: '0 20px' }}>
         <h1 style={{ 
           margin: 0, 
-          fontSize: '18px', 
+          fontSize: '22px', 
           fontWeight: 'bold', 
           color: '#333',
           textAlign: 'center'
@@ -1208,127 +1208,89 @@ Tap OK to continue.`;
         </h1>
       </div>
 
-      {/* ✅ UPDATED: Fixed-size Thumbnail (75x75) */}
+      {/* ✅ UPDATED: Side-by-side thumbnails (Photo + Video) */}
       <div style={{ 
         padding: '20px', 
         display: 'flex', 
-        flexDirection: 'column',
         alignItems: 'center',
-        gap: '8px'
+        justifyContent: 'center',
+        gap: '16px'
       }}>
-        {photoURLs && photoURLs.length > 0 ? (
+        {/* Photo thumbnail */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
           <div style={{ 
             width: '125px',
             height: '125px',
-            borderRadius: '16px',
-              overflow: 'hidden',
+            borderRadius: '12px',
+            overflow: 'hidden',
             backgroundColor: '#f8f9fa',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-              position: 'relative',
-            cursor: 'pointer'
-              }}>
-                <img
-                  src={photoURLs[0]}
-                  alt="Quickcard"
-                style={{
-                  width: '125px',
-                  height: '125px',
-                  objectFit: 'cover',
-                    display: 'block',
-                    cursor: 'pointer',
-                    imageRendering: 'crisp-edges' as any,
-                    WebkitBackfaceVisibility: 'hidden',
-                    backfaceVisibility: 'hidden',
-                    transform: 'translateZ(0)',
-                    filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
-                  } as React.CSSProperties}
-                  onClick={() => {
-                console.log('🖼️ Main photo clicked - launching audio and showing slideshow');
-                // Play intro audio if available
-                if (hasAudio) {
-                  handleIntroAudioPlayback();
-                }
-                // Show photo slideshow starting with first photo WITH AUTO-PLAY
-                if (photoURLs && photoURLs.length > 0) {
-                      setSelectedPhotoIndex(0);
-                      setShowMultiPhotoModal(true);
-                    }
-              }}
-              loading="eager"
-              fetchPriority="high"
-                />
-                
-                  {photoURLs.length > 1 && (
-                    <div style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                      color: 'white',
-                padding: '6px 12px',
-                borderRadius: '16px',
-                fontSize: '14px',
-                      fontWeight: 'bold',
-                backdropFilter: 'blur(4px)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.4)'
-                    }}>
-                      1/{photoURLs.length}
-                    </div>
-                  )}
+            boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+            cursor: 'pointer',
+            position: 'relative'
+          }}
+          onClick={() => {
+            if (hasAudio) handleIntroAudioPlayback();
+            if (photoURLs && photoURLs.length > 0) {
+              setSelectedPhotoIndex(0);
+              setShowMultiPhotoModal(true);
+            }
+          }}
+          >
+            {photoURLs && photoURLs.length > 0 ? (
+              <img
+                src={photoURLs[0]}
+                alt="Photos"
+                style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
+                loading="eager"
+                fetchPriority="high"
+              />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
+                <FaMap size={28} color="#bbb" />
+              </div>
+            )}
+            {photoURLs && photoURLs.length > 1 && (
+              <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', color: 'white', borderRadius: 12, fontSize: 12, padding: '2px 6px' }}>
+                1/{photoURLs.length}
+              </div>
+            )}
           </div>
-        ) : (
-          <div style={{ 
-            width: '100%',
-            maxWidth: '75%',
-            aspectRatio: '1',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px dashed #dee2e6'
-          }}>
-            <FaMap size={48} color="#ccc" />
-          </div>
-        )}
-        
-        {/* ✅ ADDED: "Tap Thumbnail to play" text */}
-        <div style={{
-          fontSize: '22px',
-          color: '#666',
-          textAlign: 'center',
-          fontStyle: 'italic',
-          fontWeight: 'bold'
-        }}>
-          Tap Thumbnail to play
+          <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Photos</div>
         </div>
 
-        {/* ▶️ Play Video (if present) */}
-        {((quickcard as any)?.videoURL || (quickcard as any)?.video instanceof Blob) && (
-          <button
+        {/* Video thumbnail */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          <div
+            style={{ 
+              width: '125px',
+              height: '125px',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              backgroundColor: '#111',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+              position: 'relative',
+              cursor: (quickcard as any)?.videoURL || (quickcard as any)?.video ? 'pointer' : 'default'
+            }}
             onClick={() => {
               const videoUrl = (quickcard as any)?.videoURL || ((quickcard as any)?.video instanceof Blob ? URL.createObjectURL((quickcard as any).video) : null);
               if (videoUrl) {
                 window.open(videoUrl, '_blank');
-              } else {
-                alert('No video available');
               }
             }}
-            style={{
-              backgroundColor: '#007aff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              marginTop: 8
-            }}
           >
-            Play Video
-          </button>
-        )}
+            {((quickcard as any)?.videoURL || (quickcard as any)?.video) ? (
+              <div style={{ width: '100%', height: '100%' }}>
+                {/* Static black preview with play overlay */}
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 0, height: 0, borderLeft: '14px solid white', borderTop: '9px solid transparent', borderBottom: '9px solid transparent', marginLeft: 4 }} />
+                </div>
+              </div>
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777' }}>No Video</div>
+            )}
+          </div>
+          <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Video</div>
+        </div>
       </div>
 
       {/* Hidden Audio Element */}
