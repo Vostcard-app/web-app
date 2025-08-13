@@ -1372,8 +1372,8 @@ const HomeView = () => {
         longitude: userLocation[1]
       });
       
-      // Navigate to photo thumbnails step
-      navigate('/quickcard-step2');
+      // Navigate to unified 4-thumbnail step
+      navigate('/create/step1');
     } else if (!userLocation) {
       alert('Location not available. Please enable location services.');
     }
