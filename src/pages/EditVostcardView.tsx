@@ -358,8 +358,9 @@ const EditVostcardView: React.FC = () => {
 
         {/* Video */}
         <div style={{ marginBottom: 16 }}>
-          <div style={{ fontWeight: 700, marginBottom: 8 }}>Video (optional)</div>
-          <div style={{ width: '100%', borderRadius: 8, border: '2px solid #002B4D', overflow: 'hidden', background: '#111' }}>
+          <div style={{ fontWeight: 700, marginBottom: 8, textAlign: 'left' }}>Video (optional)</div>
+          {/* Match photo grid width (2 x 110 + 12 gap = 232; grid maxWidth is 240 for padding) */}
+          <div style={{ width: '100%', maxWidth: 240, margin: '0 auto', borderRadius: 8, border: '2px solid #002B4D', overflow: 'hidden', background: '#111' }}>
             {videoUrl ? (
               <video
                 src={videoUrl}
@@ -376,7 +377,7 @@ const EditVostcardView: React.FC = () => {
               </div>
             )}
           </div>
-          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+          <div style={{ marginTop: 8, display: 'flex', gap: 8, justifyContent: 'center' }}>
             <button
               onClick={() => {
                 const scriptParam = (currentVostcard as any)?.script ? `&script=${encodeURIComponent((currentVostcard as any).script)}` : '';
