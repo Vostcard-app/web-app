@@ -2500,7 +2500,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const firebaseMetadata = firebaseSnapshot.docs.map(doc => {
         const data = doc.data();
         return {
-          id: data.id,
+          id: data.id || doc.id,
           title: data.title || '',
           description: data.description || '',
           categories: data.categories || [],
@@ -2509,6 +2509,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           state: 'private' as const,
+          // Preserve quickcard type for correct UI labeling
+          isQuickcard: data.isQuickcard === true,
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
           isOffer: data.isOffer || false,
