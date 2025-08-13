@@ -114,7 +114,30 @@ const MyVostcardListView = () => {
       }
     }
 
-    setCurrentVostcard(vostcard);
+    // Ensure we hydrate like detail views: require resolved photoURLs/videoURL when Files aren't present
+    try {
+      const hasFiles = Array.isArray((vostcard as any).photos) && (vostcard as any).photos.length > 0;
+      const hasUrls = Array.isArray((vostcard as any).photoURLs) && (vostcard as any).photoURLs.length > 0;
+      const hasVideo = !!((vostcard as any).video || (vostcard as any).videoURL);
+      if (!hasFiles && (!hasUrls || !hasVideo)) {
+        await downloadVostcardContent(vostcardId);
+        vostcard = (savedVostcards.find((v: Vostcard) => v.id === vostcardId) || vostcard) as Vostcard;
+      }
+    } catch (e) {
+      console.warn('⚠️ Non-fatal: could not fully hydrate content before edit:', e);
+    }
+
+    // Load from local DB to ensure we have the fully restored object (like detail view)
+    try {
+      await loadLocalVostcard(vostcardId);
+      // After loadLocalVostcard, currentVostcard in context is replaced with restored media
+      // But to be safe, prefer the freshly loaded one for navigation state
+      const refreshed = savedVostcards.find((v: Vostcard) => v.id === vostcardId) || vostcard;
+      setCurrentVostcard(refreshed);
+    } catch (e) {
+      console.warn('⚠️ Could not reload from local before edit, proceeding with current object');
+      setCurrentVostcard(vostcard);
+    }
     if (UNIFIED_VOSTCARD_FLOW) {
       console.log('🔄 Editing in unified flow:', vostcard.id);
       // Route to unified Step 1 (photo grid)
