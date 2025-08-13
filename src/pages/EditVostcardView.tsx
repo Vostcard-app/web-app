@@ -66,9 +66,16 @@ const EditVostcardView: React.FC = () => {
       }
       try {
         setIsLoading(true);
-        // Always ensure hydrated like detail view
-        await downloadVostcardContent(id);
-        await loadLocalVostcard(id);
+        // Always ensure hydrated like detail view, but never hang the UI
+        const task = (async () => {
+          await downloadVostcardContent(id);
+          await loadLocalVostcard(id);
+        })();
+        // Give up waiting after 2000ms and proceed with whatever is available
+        await Promise.race([
+          task,
+          new Promise<void>(resolve => setTimeout(() => resolve(), 2000))
+        ]);
         // After async calls, try to initialize from context; otherwise direct fetch
         const tryInit = async () => {
           if (currentVostcard && currentVostcard.id === id) {
@@ -362,7 +369,11 @@ const EditVostcardView: React.FC = () => {
                 controls
               />
             ) : (
-              <div style={{ height: 180, color: '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>No video</div>
+              <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111' }}>
+                <div style={{ width: 96, height: 96, borderRadius: 12, border: '2px dashed #555', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: 12 }}>
+                  No video
+                </div>
+              </div>
             )}
           </div>
           <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
