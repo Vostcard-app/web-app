@@ -8,6 +8,7 @@ import { db } from '../firebase/firebaseConfig';
 
 // ✅ NEW: Import our refactored utilities and types
 import { getVostcardStatus, generateShareText, createErrorMessage } from '../utils/vostcardUtils';
+import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 import { LoadingSpinner, ErrorMessage } from '../components/shared';
 import type { Vostcard } from '../types/VostcardTypes';
 import SharedOptionsModal from '../components/SharedOptionsModal';
@@ -114,11 +115,17 @@ const MyVostcardListView = () => {
     }
 
     setCurrentVostcard(vostcard);
+    if (UNIFIED_VOSTCARD_FLOW) {
+      console.log('🔄 Editing in unified flow:', vostcard.id);
+      // Route to unified Step 1 (photo grid)
+      navigate('/create/step1');
+      return;
+    }
     if (vostcard.isQuickcard) {
-      console.log('🔄 Editing quickcard:', vostcard.id);
+      console.log('🔄 Editing quickcard (legacy routes):', vostcard.id);
       navigate('/quickcard-step2');
     } else {
-      console.log('🔄 Editing regular vostcard:', vostcard.id);
+      console.log('🔄 Editing regular vostcard (legacy routes):', vostcard.id);
       navigate('/create-step2');
     }
   };
