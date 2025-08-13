@@ -1284,7 +1284,7 @@ Tap OK to continue.`;
                   borderRadius: '8px', 
                   overflow: 'hidden',
                   position: 'relative'
-                }}>
+                }} onClick={() => handlePhotoClick(vostcard.photoURLs[0])}>
                   <img
                     src={vostcard.photoURLs[0]}
                     alt="Photo 1"
@@ -1295,27 +1295,36 @@ Tap OK to continue.`;
                       cursor: 'pointer',
                       display: 'block'
                     }}
-                    onClick={() => handlePhotoClick(vostcard.photoURLs[0])}
                   />
-                  {/* Slideshow/Photos overlay icon */}
-                  {vostcard.photoURLs.length > 1 && (
-                    <div style={{
+                  {/* Play overlay for photo thumbnail to indicate slideshow */}
+                  <div
+                    style={{
                       position: 'absolute',
-                      bottom: 4,
-                      right: 4,
-                      background: 'rgba(0,0,0,0.6)',
-                      borderRadius: 12,
-                      padding: '2px 6px',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '26px',
+                      height: '26px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                      borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 4,
-                      color: 'white',
-                      fontSize: 10
-                    }}>
-                      <FaImages size={10} />
-                      <span>{vostcard.photoURLs.length}</span>
-                    </div>
-                  )}
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      zIndex: 2
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '9px solid white',
+                        borderTop: '5px solid transparent',
+                        borderBottom: '5px solid transparent',
+                        marginLeft: '2px'
+                      }}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div style={{ 
@@ -1339,7 +1348,7 @@ Tap OK to continue.`;
                   borderRadius: '8px', 
                   overflow: 'hidden',
                   position: 'relative'
-                }}>
+                }} onClick={() => handlePhotoClick(vostcard.photoURLs[1])}>
                   <img
                     src={vostcard.photoURLs[1]}
                     alt="Photo 2"
@@ -1350,8 +1359,36 @@ Tap OK to continue.`;
                       cursor: 'pointer',
                       display: 'block'
                     }}
-                    onClick={() => handlePhotoClick(vostcard.photoURLs[1])}
                   />
+                  {/* Play overlay for photo thumbnail to indicate slideshow */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: '26px',
+                      height: '26px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      zIndex: 2
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '9px solid white',
+                        borderTop: '5px solid transparent',
+                        borderBottom: '5px solid transparent',
+                        marginLeft: '2px'
+                      }}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div style={{ 
