@@ -72,6 +72,8 @@ interface VostcardContextProps {
   createQuickcard: (photo: Blob, geo: { latitude: number; longitude: number }) => void;
   saveQuickcard: () => Promise<void>;
   postQuickcard: (quickcardToPost?: Vostcard) => Promise<void>; // Add this line
+  // Migration: unify legacy quickcards and posted/private into unified private Vostcards
+  migrateToUnifiedVostcards: () => Promise<{ migrated: number; skipped: number; errors: number }>
 }
 
 // IndexedDB configuration
@@ -2616,6 +2618,94 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return savedVostcards.filter(v => v._isMetadataOnly);
   }, [savedVostcards]);
 
+  // ===== Migration: unify legacy posts into private Vostcards =====
+  const migrateToUnifiedVostcards = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Not authenticated');
+
+    let migrated = 0, skipped = 0, errors = 0;
+    try {
+      // 1) Load legacy quickcards
+      const quickcardsQ = query(collection(db, 'quickcards'), where('userID', '==', user.uid));
+      const quickSnap = await getDocs(quickcardsQ);
+      const quickItems = quickSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      // 2) Load private vostcards (already unified targets)
+      const privQ = collection(db, 'privateVostcards', user.uid, 'vostcards');
+      const privSnap = await getDocs(privQ);
+      const existingIds = new Set(privSnap.docs.map(d => d.id));
+
+      // 3) Build upsert batch into private collection
+      for (const item of quickItems) {
+        try {
+          const targetId = item.id || item.vostcardID || doc(collection(db, 'tmp')).id;
+          if (existingIds.has(targetId)) {
+            skipped++;
+            continue;
+          }
+
+          // Normalize
+          const norm: any = {
+            id: targetId,
+            title: item.title || '',
+            description: item.description || '',
+            categories: item.categories || [],
+            username: item.username || '',
+            userID: user.uid,
+            userRole: authContext.userRole || 'user',
+            state: 'private',
+            visibility: 'private',
+            createdAt: item.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            hasVideo: !!(item.videoURL),
+            videoURL: item.videoURL || null,
+            isOffer: item.isOffer || false,
+            offerDetails: item.offerDetails || null,
+            script: item.script || null,
+            scriptId: item.scriptId || null,
+            isQuickcard: true, // legacy marker retained
+          };
+
+          // Location
+          if (item.geo?.latitude && item.geo?.longitude) {
+            norm.geo = { latitude: item.geo.latitude, longitude: item.geo.longitude };
+          } else if (item.latitude && item.longitude) {
+            norm.geo = { latitude: item.latitude, longitude: item.longitude };
+          } else {
+            norm.geo = null;
+          }
+
+          // Media references
+          if (Array.isArray(item.photoURLs) && item.photoURLs.length > 0) {
+            norm.photoURLs = item.photoURLs;
+            norm.hasPhotos = true;
+          } else if (Array.isArray(item.photos) && item.photos.length > 0) {
+            norm.photos = item.photos; // base64/local if present
+            norm.hasPhotos = true;
+          } else {
+            norm.photoURLs = [];
+            norm.hasPhotos = false;
+          }
+
+          await setDoc(doc(db, 'privateVostcards', user.uid, 'vostcards', targetId), norm, { merge: true });
+          migrated++;
+        } catch (e) {
+          console.error('Migration item failed:', e);
+          errors++;
+        }
+      }
+
+      console.log('✅ Migration complete', { migrated, skipped, errors });
+      // Refresh local index with lightweight sync to reflect new items
+      await syncVostcardMetadata();
+    } catch (e) {
+      console.error('Migration failed:', e);
+      throw e;
+    }
+
+    return { migrated, skipped, errors };
+  }, [authContext.userRole, savedVostcards, syncVostcardMetadata]);
+
   // Clean up old deletion markers from Firebase (older than 30 days)
   const cleanupDeletionMarkers = useCallback(async () => {
     const user = auth.currentUser;
@@ -3067,6 +3157,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         syncVostcardMetadata,
         downloadVostcardContent,
         getVostcardMetadata,
+        migrateToUnifiedVostcards,
         // Deletion marker management
         cleanupDeletionMarkers,
         clearDeletionMarkers,
