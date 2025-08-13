@@ -38,7 +38,7 @@ export default function QuickcardStep2() {
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  // Initialize empty quickcard or load saved photos when component mounts
+  // Initialize empty quickcard or load saved photos/URLs when component mounts
   useEffect(() => {
     if (!currentVostcard) {
       // Create empty quickcard when arriving at this step
@@ -58,32 +58,51 @@ export default function QuickcardStep2() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       });
-    } else if (currentVostcard?.photos) {
-      // Load existing photos if quickcard already exists
-      const photos = currentVostcard.photos as (File | null)[];
+      return;
+    }
+
+    // Prefer Files if present
+    if (currentVostcard?.photos && Array.isArray(currentVostcard.photos) && currentVostcard.photos.length > 0) {
+      const photos = currentVostcard.photos as (File | Blob | null)[];
       const newPhotos: (File | null)[] = [null, null, null, null];
       const newUrls: (string | null)[] = [null, null, null, null];
-      photos.forEach((photo, index) => {
-        if (index < 4 && photo) {
-          newPhotos[index] = photo as File;
+      photos.slice(0, 4).forEach((photo, index) => {
+        if (photo instanceof File || photo instanceof Blob) {
           try {
-            newUrls[index] = URL.createObjectURL(photo as File);
+            newPhotos[index] = photo as File;
+            newUrls[index] = URL.createObjectURL(photo);
           } catch {}
         }
       });
       setSelectedPhotos(newPhotos);
-      // Revoke old urls before setting new
+      // Revoke previous blob: URLs only
       setPhotoUrls(prev => {
-        prev.forEach(u => { if (u) { try { URL.revokeObjectURL(u); } catch {} } });
+        prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
         return newUrls;
       });
+      return;
+    }
+
+    // Fallback: use remote photoURLs if available (edit from saved metadata)
+    if (currentVostcard?.photoURLs && Array.isArray(currentVostcard.photoURLs) && currentVostcard.photoURLs.length > 0) {
+      const urls = (currentVostcard.photoURLs as string[]).slice(0, 4);
+      const paddedUrls: (string | null)[] = [null, null, null, null];
+      urls.forEach((u, i) => { paddedUrls[i] = u; });
+      // Keep selectedPhotos as null; backgroundImage uses photoUrls for display
+      setSelectedPhotos([null, null, null, null]);
+      setPhotoUrls(prev => {
+        // Revoke only blob: URLs from previous state
+        prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
+        return paddedUrls;
+      });
+      return;
     }
   }, [currentVostcard, updateVostcard]);
 
   // Cleanup created object URLs on unmount
   useEffect(() => {
     return () => {
-      photoUrls.forEach(u => { if (u) { try { URL.revokeObjectURL(u); } catch {} } });
+      photoUrls.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
