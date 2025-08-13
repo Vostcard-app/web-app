@@ -1303,46 +1303,16 @@ const HomeView = () => {
         timestamp: lastPost.createdAt?.toDate ? lastPost.createdAt.toDate().getTime() : new Date(lastPost.createdAt).getTime()
       });
       
-      // If this is a posted vostcard, we need to convert photoURLs back to Blob objects for editing
-      if (lastPost.photoURLs && lastPost.photoURLs.length > 0 && (!lastPost.photos || lastPost.photos.length === 0)) {
-        console.log('🔄 Converting posted vostcard photoURLs to Blobs for editing...');
-        try {
-          const fetchBlobWithRetry = async (url: string, retries = 3): Promise<Blob> => {
-            let lastError: any;
-            for (let attempt = 0; attempt < retries; attempt++) {
-              try {
-                const cacheBust = url.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
-                const response = await fetch(url + cacheBust, { cache: 'no-store' });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return await response.blob();
-              } catch (err) {
-                lastError = err;
-                await new Promise((r) => setTimeout(r, 200 + attempt * 200));
-              }
-            }
-            throw lastError;
-          };
-
-          const photoBlobs = await Promise.all(
-            lastPost.photoURLs.map(async (url: string) => fetchBlobWithRetry(url))
-          );
-          
-          lastPost.photos = photoBlobs;
-          console.log('✅ Converted', photoBlobs.length, 'photo URLs to Blobs');
-        } catch (error) {
-          console.error('❌ Failed to convert photo URLs to Blobs:', error);
-          // Continue anyway, user can add new photos
-        }
-      }
+      // Do NOT convert URLs to blobs here to avoid iOS memory pressure. Editor will hydrate lazily.
       
       // Use the same logic as handleEdit from MyVostcardListView
       setCurrentVostcard(lastPost);
       // Ensure context consumers see the update before navigation
       await new Promise((resolve) => setTimeout(resolve, 60));
       
-      // Unified: always go to Step 1 with thumbnails populated
-      console.log('🔄 Editing last Vōstcard in unified editor step1:', lastPost.id);
-      navigate('/create/step1');
+      // Open one-page editor for the last post (hydrates from id and uses URLs for thumbnails)
+      console.log('🔄 Opening last Vōstcard in edit view:', lastPost.id);
+      navigate(`/edit/${lastPost.id}`);
       
     } catch (error) {
       console.error('Error loading posts:', error);
