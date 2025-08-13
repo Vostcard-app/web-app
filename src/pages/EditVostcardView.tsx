@@ -325,7 +325,7 @@ const EditVostcardView: React.FC = () => {
       )}
       <div style={{ position: 'absolute', bottom: 6, left: 6, display: 'flex', gap: 6 }}>
         <button onClick={() => handlePickPhoto(idx)} style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 6, padding: '6px 8px', fontSize: 12, cursor: 'pointer' }}>
-          <FaUpload style={{ marginRight: 4 }} /> Replace
+          <FaUpload style={{ marginRight: 4 }} /> Add Photo
         </button>
         {photoUrls[idx] && (
           <button onClick={() => handleRemovePhoto(idx)} style={{ background: '#eee', color: '#333', border: '1px solid #ccc', borderRadius: 6, padding: '6px 8px', fontSize: 12, cursor: 'pointer' }}>
@@ -352,7 +352,7 @@ const EditVostcardView: React.FC = () => {
         {/* Photos */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>Photos</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, maxWidth: 240, margin: '0 auto', justifyItems: 'center' }}>
             {[0,1,2,3].map(photoCell)}
           </div>
         </div>
