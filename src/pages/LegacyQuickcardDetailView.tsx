@@ -1266,13 +1266,19 @@ Tap OK to continue.`;
             }}
             >
               {photoURLs && photoURLs.length > 0 ? (
-                <img
-                  src={photoURLs[0]}
-                  alt="Photos"
-                  style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                <>
+                  <img
+                    src={photoURLs[0]}
+                    alt="Photos"
+                    style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                  {/* Centered play overlay to signal tap-to-view */}
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 0, height: 0, borderLeft: '12px solid white', borderTop: '7px solid transparent', borderBottom: '7px solid transparent', marginLeft: 3 }} />
+                  </div>
+                </>
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
                   <FaMap size={28} color="#bbb" />
@@ -1344,13 +1350,19 @@ Tap OK to continue.`;
             }}
             >
               {photoURLs && photoURLs.length > 0 ? (
-                <img
-                  src={photoURLs[0]}
-                  alt="Photos"
-                  style={{ width: '200px', height: '200px', objectFit: 'cover', display: 'block' }}
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                <>
+                  <img
+                    src={photoURLs[0]}
+                    alt="Photos"
+                    style={{ width: '200px', height: '200px', objectFit: 'cover', display: 'block' }}
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                  {/* Centered play overlay to signal tap-to-view */}
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 0, height: 0, borderLeft: '14px solid white', borderTop: '9px solid transparent', borderBottom: '9px solid transparent', marginLeft: 4 }} />
+                  </div>
+                </>
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
                   <FaMap size={40} color="#bbb" />
