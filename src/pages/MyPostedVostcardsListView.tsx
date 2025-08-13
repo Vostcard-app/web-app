@@ -180,7 +180,7 @@ const MyPostedVostcardsListView = () => {
     }
   };
 
-  // Navigate to edit view - go directly to step 2 since video can't be edited
+  // Navigate to unified one-page editor for posted Vōstcards
   const handleEdit = async (vostcardId: string) => {
     try {
       console.log('📝 Edit clicked for posted vostcard:', vostcardId);
@@ -191,8 +191,8 @@ const MyPostedVostcardsListView = () => {
       // Load the vostcard for editing
       await loadPostedVostcardForEdit(vostcardId);
       
-      // Navigate directly to step 2 (skip video step)
-      navigate('/create-step2');
+      // Navigate to the unified editor
+      navigate(`/edit/${vostcardId}`);
       
     } catch (error) {
       console.error('❌ Failed to load vostcard for editing:', error);
