@@ -69,10 +69,11 @@ const MyVostcardListView = () => {
           setLoading(true);
           setError(null);
           
+          // Avoid auto-redirect loops on iOS Safari; render lightweight CTA instead
           if (!user) {
             console.log('❌ No user authenticated');
             setError('Please log in to view your private posts.');
-            navigate('/login');
+            setLoading(false);
             return;
           }
 
@@ -303,6 +304,30 @@ Tap OK to continue.`;
     error,
     savedVostcardsCount: savedVostcards.length
   });
+
+  // If user is not authenticated, show a light UI with a Login button
+  if (!user) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: '#f5f5f5', padding: 20
+      }}>
+        <div style={{ background: 'white', padding: 24, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', maxWidth: 420, width: '100%', textAlign: 'center' }}>
+          <h2 style={{ marginTop: 0, color: '#002B4D' }}>Private Posts</h2>
+          <p style={{ color: '#555' }}>Please log in to view your personal posts.</p>
+          <button
+            onClick={() => navigate('/login')}
+            style={{
+              backgroundColor: '#007aff', color: 'white', border: 'none', borderRadius: 8,
+              padding: '12px 20px', cursor: 'pointer', fontWeight: 600
+            }}
+          >
+            Log In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ 
