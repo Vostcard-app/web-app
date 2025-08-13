@@ -93,7 +93,7 @@ const MyVostcardListView = () => {
 
       loadData();
     }
-  }, [authLoading, user, loadAllLocalVostcardsImmediate, syncInBackground, navigate]);
+  }, [authLoading, user, syncVostcardMetadata, navigate]);
 
   // ✅ REMOVED: Replaced with imported utility functions
   // const getVostcardStatus = (vostcard: any) => { ... }
@@ -289,8 +289,8 @@ Tap OK to continue.`;
 
 
   const handleRetry = () => {
-    console.log('🔄 Retrying to load private posts...');
-    loadAllLocalVostcardsImmediate();
+    console.log('🔄 Retrying to load private posts (metadata sync)...');
+    syncVostcardMetadata();
   };
 
   if (authLoading) {
