@@ -139,9 +139,8 @@ const MyVostcardListView = () => {
       setCurrentVostcard(vostcard);
     }
     if (UNIFIED_VOSTCARD_FLOW) {
-      console.log('🔄 Editing in unified flow:', vostcard.id);
-      // Route to unified Step 1 (photo grid)
-      navigate('/create/step1');
+      console.log('🔄 Editing in unified flow (one-page editor):', vostcard.id);
+      navigate(`/edit/${vostcardId}`);
       return;
     }
     if (vostcard.isQuickcard) {

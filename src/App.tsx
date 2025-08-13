@@ -19,6 +19,7 @@ import BrowseAreaView from "./pages/BrowseAreaView";
 import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
 import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
 import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
+import EditVostcardView from "./pages/EditVostcardView";
 import QuickcardStep2 from "./pages/QuickcardStep2";
 import QuickcardStep3 from "./pages/QuickcardStep3";
 import QuickAudio from "./pages/QuickAudio";
@@ -178,6 +179,7 @@ function App() {
                   )}
                   <Route path="/quick-audio" element={<QuickAudio />} />
                   <Route path="/step2-camera" element={<Step2CameraView />} />
+                  <Route path="/edit/:id" element={<EditVostcardView />} />
 
                   {/* 📍 Location */}
                   <Route path="/pin-placer" element={<PinPlacerTool />} />
