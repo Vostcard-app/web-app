@@ -352,25 +352,40 @@ const EditVostcardView: React.FC = () => {
         {/* Video */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>Video (optional)</div>
-          <div style={{ width: '100%', height: 180, borderRadius: 8, border: '2px solid #002B4D', position: 'relative', overflow: 'hidden', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc' }}>
-            {videoUrl ? 'Video attached' : 'No video'}
-            <div style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => {
-                  const scriptParam = (currentVostcard as any)?.script ? `&script=${encodeURIComponent((currentVostcard as any).script)}` : '';
-                  navigate(`/scrolling-camera?returnTo=${encodeURIComponent(`/edit/${id}`)}${scriptParam}`);
-                }}
-                style={{ background: '#007aff', color: 'white', border: 'none', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}
-              >
-                Record 60s
+          <div style={{ width: '100%', borderRadius: 8, border: '2px solid #002B4D', overflow: 'hidden', background: '#111' }}>
+            {videoUrl ? (
+              <video
+                src={videoUrl}
+                style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }}
+                playsInline
+                muted
+                controls
+              />
+            ) : (
+              <div style={{ height: 180, color: '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>No video</div>
+            )}
+          </div>
+          <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => {
+                const scriptParam = (currentVostcard as any)?.script ? `&script=${encodeURIComponent((currentVostcard as any).script)}` : '';
+                navigate(`/scrolling-camera?returnTo=${encodeURIComponent(`/edit/${id}`)}${scriptParam}`);
+              }}
+              style={{ background: '#007aff', color: 'white', border: 'none', borderRadius: 6, padding: '10px 12px', fontSize: 14, cursor: 'pointer' }}
+            >
+              Record 60s
+            </button>
+            <button
+              onClick={() => navigate('/script-tool')}
+              style={{ background: '#5755d9', color: 'white', border: 'none', borderRadius: 6, padding: '10px 12px', fontSize: 14, cursor: 'pointer' }}
+            >
+              Open Script Tool
+            </button>
+            {videoUrl && (
+              <button onClick={handleRemoveVideo} style={{ background: '#eee', color: '#333', border: '1px solid #ccc', borderRadius: 6, padding: '10px 12px', fontSize: 14, cursor: 'pointer' }}>
+                <FaTrash style={{ marginRight: 4 }} /> Remove
               </button>
-              <button
-                onClick={() => navigate('/script-tool')}
-                style={{ background: '#5755d9', color: 'white', border: 'none', borderRadius: 6, padding: '8px 10px', fontSize: 12, cursor: 'pointer' }}
-              >
-                Open Script Tool
-              </button>
-            </div>
+            )}
           </div>
         </div>
 
