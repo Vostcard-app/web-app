@@ -82,6 +82,7 @@ import TourInProgressView from "./pages/TourInProgressView";
 import AuthRedirect from "./components/AuthRedirect";
 import FiltersHelpView from "./pages/FiltersHelpView";
 import CreateCardsHelpView from "./pages/CreateCardsHelpView";
+import { UNIFIED_VOSTCARD_FLOW } from './utils/flags';
 
 function App() {
   return (
@@ -155,11 +156,25 @@ function App() {
       
 
                   {/* 🛠️ Creation Flow */}
-                  <Route path="/create-step1" element={<CreateVostcardStep1 />} />
-                  <Route path="/create-step2" element={<CreateVostcardStep2 />} />
-                  <Route path="/create-step3" element={<CreateVostcardStep3 />} />
-                  <Route path="/quickcard-step2" element={<QuickcardStep2 />} />
-                  <Route path="/quickcard-step3" element={<QuickcardStep3 />} />
+                  {UNIFIED_VOSTCARD_FLOW ? (
+                    <>
+                      <Route path="/create/step1" element={<QuickcardStep2 />} />
+                      <Route path="/create/step2" element={<CreateVostcardStep2 />} />
+                      <Route path="/create/step3" element={<CreateVostcardStep3 />} />
+                    </>
+                  ) : (
+                    <>
+                      <Route path="/create-step1" element={<CreateVostcardStep1 />} />
+                      <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+                      <Route path="/create-step3" element={<CreateVostcardStep3 />} />
+                    </>
+                  )}
+                  {!UNIFIED_VOSTCARD_FLOW && (
+                    <>
+                      <Route path="/quickcard-step2" element={<QuickcardStep2 />} />
+                      <Route path="/quickcard-step3" element={<QuickcardStep3 />} />
+                    </>
+                  )}
                   <Route path="/quick-audio" element={<QuickAudio />} />
                   <Route path="/step2-camera" element={<Step2CameraView />} />
 

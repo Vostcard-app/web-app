@@ -1425,6 +1425,29 @@ Tap OK to continue.`;
               </button>
             )}
 
+            {/* Play Video (optional) */}
+            {vostcard?.videoURL && (
+              <button
+                onClick={() => window.open(vostcard.videoURL!, '_blank')}
+                style={{
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minWidth: '120px',
+                  boxShadow: '0 2px 8px rgba(0,122,255,0.2)',
+                  transition: 'all 0.2s ease',
+                  marginRight: 8
+                }}
+              >
+                Play Video
+              </button>
+            )}
+
             {/* View on Map Button - Always show if location data exists */}
             {vostcard?.latitude && vostcard?.longitude && (
               <button

@@ -540,7 +540,7 @@ ${privateUrl}`);
         </div>
       </div>
 
-      {/* 20% Container with User Info */}
+        {/* 20% Container with User Info */}
       <div style={{
         position: 'relative',
         width: '100%',
@@ -561,7 +561,7 @@ ${privateUrl}`);
           padding: '5px 20px 20px 20px'
         }}>
           {/* Avatar and Username - Left Justified */}
-          <div style={{
+            <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: 12
@@ -611,6 +611,24 @@ ${privateUrl}`);
               {vostcardUsername || 'Unknown User'}
             </div>
           </div>
+          {/* Play Video if available */}
+          {vostcard?.videoURL && (
+            <button
+              onClick={() => window.open(vostcard.videoURL!, '_blank')}
+              style={{
+                backgroundColor: '#007aff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Play Video
+            </button>
+          )}
         </div>
       </div>
 
