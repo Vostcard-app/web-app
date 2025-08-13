@@ -38,7 +38,7 @@ const AllPostedVostcardsView: React.FC = () => {
   
   // Type filtering state (Offers are never filtered out)
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const availableTypes = ['Vostcard', 'Quickcard', 'Guide'];
+  const availableTypes = ['Vostcard', 'Guide'];
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [showGuidesOnly, setShowGuidesOnly] = useState(() => {
     // Load persisted state from localStorage, default to true (Guides only enabled)
@@ -401,19 +401,10 @@ const AllPostedVostcardsView: React.FC = () => {
           ...doc.data()
         })) as Vostcard[];
         
-        // Combine and filter: Include regular vostcards + posted quickcards, exclude offers
-        const allContent = postedVostcards.filter(v => 
-          !v.isOffer && // Exclude offers
-          (
-            !v.isQuickcard || // Include regular vostcards
-            (v.isQuickcard && v.state === 'posted') // Include posted quickcards
-          )
-        );
+        // Combine and filter: Vōstcards only (exclude offers)
+        const allContent = postedVostcards.filter(v => !v.isOffer);
         
-        console.log('📋 Loaded vostcards and quickcards:', allContent.length, {
-          regular: allContent.filter(v => !v.isQuickcard).length,
-          quickcards: allContent.filter(v => v.isQuickcard).length
-        });
+        console.log('📋 Loaded posted Vōstcards:', allContent.length);
         
         setVostcards(allContent);
         setLastUpdated(new Date());
@@ -472,14 +463,8 @@ const AllPostedVostcardsView: React.FC = () => {
         ...doc.data()
       })) as Vostcard[];
       
-      // Filter the new content
-      const newContent = newVostcards.filter(v => 
-        !v.isOffer && // Exclude offers
-        (
-          !v.isQuickcard || // Include regular vostcards
-          (v.isQuickcard && v.state === 'posted') // Include posted quickcards
-        )
-      );
+      // Filter the new content: Vōstcards only (exclude offers)
+      const newContent = newVostcards.filter(v => !v.isOffer);
       
       console.log('📋 Loaded', newContent.length, 'more vostcards');
       
@@ -623,8 +608,7 @@ const AllPostedVostcardsView: React.FC = () => {
       const userProfile = userProfiles[v.userID];
       const isGuideUser = userProfile?.userRole === 'guide';
       
-      if (selectedTypes.includes('Vostcard') && !v.isQuickcard && !v.isOffer && !isGuideUser) return true;
-      if (selectedTypes.includes('Quickcard') && v.isQuickcard) return true;
+      if (selectedTypes.includes('Vostcard') && !v.isOffer && !isGuideUser) return true;
       if (selectedTypes.includes('Guide') && isGuideUser && !v.isOffer) return true;
       
       return false;
