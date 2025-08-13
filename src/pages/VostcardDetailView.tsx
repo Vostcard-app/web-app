@@ -1158,6 +1158,47 @@ Tap OK to continue.`;
                   loading="eager"
                   fetchPriority="high"
                     />
+
+                    {/* Play overlay to indicate tap-to-view/slideshow */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '34px',
+                        height: '34px',
+                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        zIndex: 2
+                      }}
+                      onClick={() => {
+                        const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
+                        if (hasAudio) {
+                          handleAudioPlayback();
+                        } else if (vostcard.photoURLs.length > 1) {
+                          setSelectedPhotoIndex(0);
+                          setShowMultiPhotoModal(true);
+                        } else {
+                          handlePhotoClick(vostcard.photoURLs[0]);
+                        }
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 0,
+                          height: 0,
+                          borderLeft: '12px solid white',
+                          borderTop: '7px solid transparent',
+                          borderBottom: '7px solid transparent',
+                          marginLeft: '3px'
+                        }}
+                      />
+                    </div>
                     
                       {vostcard.photoURLs.length > 1 && (
                         <div style={{
