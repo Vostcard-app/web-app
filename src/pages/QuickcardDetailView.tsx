@@ -1109,15 +1109,15 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* User Info */}
+      {/* User Info + Map View button on right */}
       <div style={{ 
         padding: '15px 20px 5px 20px',
         display: 'flex', 
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: '0px', // Header is now inline with content
+        marginTop: '0px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div 
             style={{ 
               width: 50, 
@@ -1165,37 +1165,62 @@ Tap OK to continue.`;
         </div>
       </div>
 
-        {/* ☕ Tip Button for Guides - Right side of avatar row */}
-      {userProfile?.userRole === 'guide' && 
-       user?.uid !== quickcard.userID && (
-          <button
-            ref={tipButtonRef}
-            onClick={handleTipButtonClick}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-              pointerEvents: 'auto',
-              transition: 'transform 0.1s ease',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              lineHeight: '1',
-              gap: '4px'
-            }}
-          >
-            Leave a Tip
-            <FaChevronDown size={8} />
-          </button>
-      )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Map View button in header row */}
+          {quickcard?.latitude && quickcard?.longitude && (
+            <button
+              onClick={handleMapClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '100px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              <FaMap size={12} style={{ marginRight: '6px' }} />
+              Map View
+            </button>
+          )}
+          {/* ☕ Tip Button for Guides */}
+          {userProfile?.userRole === 'guide' && user?.uid !== quickcard.userID && (
+            <button
+              ref={tipButtonRef}
+              onClick={handleTipButtonClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '4px'
+              }}
+            >
+              Leave a Tip
+              <FaChevronDown size={8} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Title */}
@@ -1466,30 +1491,37 @@ Tap OK to continue.`;
           <FaShare size={22} />
         </button>
 
-        {/* Map View Button - Always show if location data exists */}
-        {quickcard?.latitude && quickcard?.longitude && (
-          <button
-            onClick={handleMapClick}
-            style={{
-              backgroundColor: '#002B4D',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              minWidth: '60px',
-              boxShadow: '0 2px 6px rgba(0,43,77,0.2)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-          >
-            <FaMap size={12} style={{ marginRight: '4px' }} />
-            Map View
-          </button>
-        )}
+        {/* Replace spot with Add to Itinerary */}
+        <button
+          onClick={async () => {
+            if (!user) {
+              alert('Please log in to add items to itineraries');
+              return;
+            }
+            await loadUserItineraries();
+            setShowItineraryModal(true);
+          }}
+          style={{
+            backgroundColor: '#002B4D',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 2px 8px rgba(0,43,77,0.2)'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = '#001f35';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = '#002B4D';
+          }}
+        >
+          Add to Itinerary
+        </button>
       </div>
 
       {/* Description Link, Flag Icon, and Refresh Button */}
