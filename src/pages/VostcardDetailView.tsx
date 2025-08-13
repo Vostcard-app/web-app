@@ -1171,12 +1171,12 @@ Tap OK to continue.`;
           <div style={{ 
             padding: '20px', 
             display: 'flex', 
-            gap: '10px',
-            height: '150px'
+            gap: '10px'
           }}>
             {/* Video Thumbnail Section */}
             <div style={{ 
-              flex: 1,
+              width: '150px',
+              height: '150px',
               backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
               borderRadius: '12px',
               overflow: 'hidden',
@@ -1188,8 +1188,8 @@ Tap OK to continue.`;
                   ref={videoRef}
                   src={vostcard.videoURL}
                   style={{
-                    width: '100%',
-                    height: '100%',
+                    width: '150px',
+                    height: '150px',
                     objectFit: 'cover',
                     cursor: 'pointer'
                   }}
@@ -1230,8 +1230,8 @@ Tap OK to continue.`;
                 </>
               ) : (
                 <div style={{ 
-                  width: '100%',
-                  height: '100%',
+                  width: '150px',
+                  height: '150px',
                   backgroundColor: '#f0f0f0',
                   display: 'flex',
                   alignItems: 'center',
@@ -1245,15 +1245,16 @@ Tap OK to continue.`;
 
             {/* Photos Section - 2 photos stacked vertically */}
             <div style={{ 
-              flex: 1,
+              width: '150px',
+              height: '150px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '5px'
+              gap: '8px'
             }}>
               {/* First Photo */}
               {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
                 <div style={{ 
-                  flex: 1,
+                  height: '71px',
                   borderRadius: '8px', 
                   overflow: 'hidden'
                 }}>
@@ -1261,8 +1262,8 @@ Tap OK to continue.`;
                     src={vostcard.photoURLs[0]}
                     alt="Photo 1"
                     style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '150px',
+                      height: '71px',
                       objectFit: 'cover',
                       cursor: 'pointer'
                     }}
@@ -1287,7 +1288,7 @@ Tap OK to continue.`;
               {/* Second Photo */}
               {vostcard.photoURLs && vostcard.photoURLs.length > 1 ? (
                 <div style={{ 
-                  flex: 1,
+                  height: '71px',
                   borderRadius: '8px', 
                   overflow: 'hidden'
                 }}>
@@ -1295,8 +1296,8 @@ Tap OK to continue.`;
                     src={vostcard.photoURLs[1]}
                     alt="Photo 2"
                     style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '150px',
+                      height: '71px',
                       objectFit: 'cover',
                       cursor: 'pointer'
                     }}

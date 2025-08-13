@@ -930,8 +930,8 @@ ${privateUrl}`);
             <>
               <div 
                 style={{ 
-                  width: 90, 
-                  height: 120, 
+                  width: 150, 
+                  height: 150, 
                   background: '#111', 
                   borderRadius: 16, 
                   overflow: 'hidden', 
@@ -968,8 +968,8 @@ ${privateUrl}`);
                       transform: 'translate(-50%, -50%)',
                       background: 'rgba(0,0,0,0.7)',
                       borderRadius: '50%',
-                      width: 24,
-                      height: 24,
+                      width: 30,
+                      height: 30,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
@@ -977,9 +977,9 @@ ${privateUrl}`);
                       <div style={{
                         width: 0,
                         height: 0,
-                        borderLeft: '6px solid white',
-                        borderTop: '4px solid transparent',
-                        borderBottom: '4px solid transparent',
+                        borderLeft: '10px solid white',
+                        borderTop: '6px solid transparent',
+                        borderBottom: '6px solid transparent',
                         marginLeft: 2
                       }} />
                     </div>
@@ -989,7 +989,7 @@ ${privateUrl}`);
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    height: '100%',
+                    height: '150px',
                     color: '#666'
                   }}>
                     No Video
@@ -1002,8 +1002,8 @@ ${privateUrl}`);
                 display: 'flex', 
                 flexDirection: 'column',
                 gap: 8,
-                width: 90,
-                height: 120
+                width: 150,
+                height: 150
               }}>
                 {photoURLs.slice(0, 2).map((url: string, index: number) => (
                   <div 
@@ -1015,7 +1015,7 @@ ${privateUrl}`);
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      height: '56px',
+                      height: '71px',
                       cursor: 'pointer'
                     }}
                     onClick={() => setSelectedPhoto(url)}
@@ -1024,8 +1024,8 @@ ${privateUrl}`);
                       src={url} 
                       alt={`Photo ${index + 1}`} 
                       style={{ 
-                        width: '100%', 
-                        height: '100%', 
+                        width: '150px', 
+                        height: '71px', 
                         objectFit: 'cover' 
                       }}
                     />
@@ -1041,7 +1041,7 @@ ${privateUrl}`);
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#ccc',
-                      height: '116px'
+                      height: '71px'
                     }}
                   >
                     <FaMap size={20} />
