@@ -1,10 +1,11 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
+import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 /*
   📱 CAMERA APPROACH: Currently using Step2CameraView for enhanced orientation handling
@@ -38,6 +39,84 @@ export default function CreateVostcardStep2() {
   const [newTripName, setNewTripName] = useState('');
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
+
+  // ---------- Unified Step 2: Optional 60s Video Recorder ----------
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const videoUrl = useMemo(() => (recordedBlob ? URL.createObjectURL(recordedBlob) : ''), [recordedBlob]);
+
+  const stopAllTracks = () => {
+    mediaStreamRef.current?.getTracks().forEach(t => t.stop());
+    mediaStreamRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      stopAllTracks();
+      if (videoUrl) URL.revokeObjectURL(videoUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
+      mediaStreamRef.current = stream;
+      const chunks: BlobPart[] = [];
+      const mr = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
+      mediaRecorderRef.current = mr;
+      setElapsed(0);
+      setRecordedBlob(null);
+      setRecording(true);
+      mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+      mr.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        setRecordedBlob(blob);
+        stopAllTracks();
+        setRecording(false);
+      };
+      mr.start();
+      // 60s cap
+      const started = Date.now();
+      timerRef.current = window.setInterval(() => {
+        const sec = Math.floor((Date.now() - started) / 1000);
+        setElapsed(sec);
+        if (sec >= 60 && mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+          if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+        }
+      }, 250) as unknown as number;
+    } catch (e) {
+      alert('Unable to access camera/microphone. Please check permissions.');
+      console.error(e);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+    }
+  };
+
+  const saveVideoAndContinue = () => {
+    if (recordedBlob) {
+      // Persist in context; upload will happen later in posting flow
+      // setVideo will attach blob + preserve geo if present
+      (window as any).console?.log?.('Saving recorded video blob, size:', recordedBlob.size);
+      // @ts-ignore setVideo is available from context
+      // Types: VostcardContext has setVideo(video: Blob, geoOverride?)
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      setVideo(recordedBlob);
+    }
+    navigate('/create/step3');
+  };
 
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -375,6 +454,50 @@ export default function CreateVostcardStep2() {
         </div>
       )}
 
+      {/* Unified Step 2: Optional Video Recorder */}
+      {UNIFIED_VOSTCARD_FLOW && (
+        <div style={{ width: '100%', maxWidth: 420, marginTop: 100, padding: '0 16px' }}>
+          <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>Optional Video (up to 60s)</h2>
+          <p style={{ marginTop: 0, color: '#666' }}>You can skip this step if you don’t want a video.</p>
+          <div style={{
+            background: '#f8f9fa',
+            border: '1px solid #e5e5e5',
+            borderRadius: 10,
+            padding: 12
+          }}>
+            {videoUrl ? (
+              <video src={videoUrl} controls style={{ width: '100%', borderRadius: 8 }} />
+            ) : recording && mediaStreamRef.current ? (
+              <video
+                autoPlay
+                muted
+                playsInline
+                style={{ width: '100%', borderRadius: 8 }}
+                ref={(el) => {
+                  if (el && mediaStreamRef.current) {
+                    // @ts-ignore - assign srcObject for live preview
+                    el.srcObject = mediaStreamRef.current;
+                  }
+                }}
+              />
+            ) : (
+              <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No video recorded</div>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              {!recording && (
+                <button onClick={startRecording} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#007aff', color: 'white', fontWeight: 600 }}>Record</button>
+              )}
+              {recording && (
+                <button onClick={stopRecording} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#dc3545', color: 'white', fontWeight: 600 }}>Stop ({elapsed}s)</button>
+              )}
+              <button onClick={() => { setRecordedBlob(null); stopAllTracks(); }} style={{ padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white', color: '#333' }}>Re-record</button>
+              <button onClick={saveVideoAndContinue} style={{ padding: '12px', borderRadius: 8, border: 'none', background: '#07345c', color: 'white', fontWeight: 600 }}>Continue</button>
+              <button onClick={() => navigate('/create/step3')} style={{ padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white' }}>Skip</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Options - now scrollable */}
       <div style={{
         flex: 1,
@@ -386,7 +509,7 @@ export default function CreateVostcardStep2() {
         boxSizing: 'border-box',
         maxHeight: 'calc(100vh - 120px)',
         overflowY: 'auto',
-        marginTop: currentVostcard?.title ? '20px' : '80px', // Adjust spacing based on title presence
+        marginTop: UNIFIED_VOSTCARD_FLOW ? '20px' : (currentVostcard?.title ? '20px' : '80px'),
       }}>
         {/* Photo selection grid - matching QuickcardStep2 style */}
         <div style={{
