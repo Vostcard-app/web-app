@@ -90,6 +90,9 @@ const QuickcardDetailView: React.FC = () => {
   const [addingToItinerary, setAddingToItinerary] = useState(false);
   const [creatingItinerary, setCreatingItinerary] = useState(false);
 
+  // Determine if this quickcard has a video attached
+  const hasVideoMedia = Boolean((quickcard as any)?.videoURL || (quickcard as any)?.video);
+
   // Swipe gesture state for navigation
   const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ y: number; x: number; time: number } | null>(null);
@@ -1208,90 +1211,136 @@ Tap OK to continue.`;
         </h1>
       </div>
 
-      {/* ✅ UPDATED: Side-by-side thumbnails (Photo + Video) */}
-      <div style={{ 
-        padding: '20px', 
-        display: 'flex', 
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '16px'
-      }}>
-        {/* Photo thumbnail */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          <div style={{ 
-            width: '125px',
-            height: '125px',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            backgroundColor: '#f8f9fa',
-            boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
-            cursor: 'pointer',
-            position: 'relative'
-          }}
-          onClick={() => {
-            if (hasAudio) handleIntroAudioPlayback();
-            if (photoURLs && photoURLs.length > 0) {
-              setSelectedPhotoIndex(0);
-              setShowMultiPhotoModal(true);
-            }
-          }}
-          >
-            {photoURLs && photoURLs.length > 0 ? (
-              <img
-                src={photoURLs[0]}
-                alt="Photos"
-                style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
-                loading="eager"
-                fetchPriority="high"
-              />
-            ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
-                <FaMap size={28} color="#bbb" />
-              </div>
-            )}
-            {photoURLs && photoURLs.length > 1 && (
-              <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', color: 'white', borderRadius: 12, fontSize: 12, padding: '2px 6px' }}>
-                1/{photoURLs.length}
-              </div>
-            )}
-          </div>
-          <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Photos</div>
-        </div>
-
-        {/* Video thumbnail */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          <div
-            style={{ 
+      {/* ✅ UPDATED: Side-by-side thumbnails (or single large photo when no video) */}
+      {hasVideoMedia ? (
+        <div style={{ 
+          padding: '20px', 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px'
+        }}>
+          {/* Photo thumbnail */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ 
               width: '125px',
               height: '125px',
               borderRadius: '12px',
               overflow: 'hidden',
-              backgroundColor: '#111',
+              backgroundColor: '#f8f9fa',
               boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
-              position: 'relative',
-              cursor: (quickcard as any)?.videoURL || (quickcard as any)?.video ? 'pointer' : 'default'
+              cursor: 'pointer',
+              position: 'relative'
             }}
             onClick={() => {
-              const videoUrl = (quickcard as any)?.videoURL || ((quickcard as any)?.video instanceof Blob ? URL.createObjectURL((quickcard as any).video) : null);
-              if (videoUrl) {
-                window.open(videoUrl, '_blank');
+              if (hasAudio) handleIntroAudioPlayback();
+              if (photoURLs && photoURLs.length > 0) {
+                setSelectedPhotoIndex(0);
+                setShowMultiPhotoModal(true);
               }
             }}
-          >
-            {((quickcard as any)?.videoURL || (quickcard as any)?.video) ? (
+            >
+              {photoURLs && photoURLs.length > 0 ? (
+                <img
+                  src={photoURLs[0]}
+                  alt="Photos"
+                  style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
+                  loading="eager"
+                  fetchPriority="high"
+                />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
+                  <FaMap size={28} color="#bbb" />
+                </div>
+              )}
+              {photoURLs && photoURLs.length > 1 && (
+                <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', color: 'white', borderRadius: 12, fontSize: 12, padding: '2px 6px' }}>
+                  1/{photoURLs.length}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Photos</div>
+          </div>
+
+          {/* Video thumbnail */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div
+              style={{ 
+                width: '125px',
+                height: '125px',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                backgroundColor: '#111',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+                position: 'relative',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                const videoUrl = (quickcard as any)?.videoURL || ((quickcard as any)?.video instanceof Blob ? URL.createObjectURL((quickcard as any).video) : null);
+                if (videoUrl) {
+                  window.open(videoUrl, '_blank');
+                }
+              }}
+            >
               <div style={{ width: '100%', height: '100%' }}>
                 {/* Static black preview with play overlay */}
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ width: 0, height: 0, borderLeft: '14px solid white', borderTop: '9px solid transparent', borderBottom: '9px solid transparent', marginLeft: 4 }} />
                 </div>
               </div>
-            ) : (
-              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777' }}>No Video</div>
-            )}
+            </div>
+            <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Video</div>
           </div>
-          <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Video</div>
         </div>
-      </div>
+      ) : (
+        <div style={{ 
+          padding: '20px', 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ 
+              width: '200px',
+              height: '200px',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              backgroundColor: '#f8f9fa',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+              cursor: 'pointer',
+              position: 'relative'
+            }}
+            onClick={() => {
+              if (hasAudio) handleIntroAudioPlayback();
+              if (photoURLs && photoURLs.length > 0) {
+                setSelectedPhotoIndex(0);
+                setShowMultiPhotoModal(true);
+              }
+            }}
+            >
+              {photoURLs && photoURLs.length > 0 ? (
+                <img
+                  src={photoURLs[0]}
+                  alt="Photos"
+                  style={{ width: '200px', height: '200px', objectFit: 'cover', display: 'block' }}
+                  loading="eager"
+                  fetchPriority="high"
+                />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
+                  <FaMap size={40} color="#bbb" />
+                </div>
+              )}
+              {photoURLs && photoURLs.length > 1 && (
+                <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'white', borderRadius: 12, fontSize: 14, padding: '3px 8px' }}>
+                  1/{photoURLs.length}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Photos</div>
+          </div>
+        </div>
+      )}
 
       {/* Hidden Audio Element */}
       {hasAudio && (
