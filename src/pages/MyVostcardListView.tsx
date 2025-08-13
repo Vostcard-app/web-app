@@ -77,14 +77,21 @@ const MyVostcardListView = () => {
             return;
           }
 
-          // 🚀 PERFORMANCE IMPROVEMENT: Load immediately from local storage
+          // 🚀 Load immediately from local storage (fast UI)
           await loadAllLocalVostcardsImmediate();
-          
-          // 🔄 Sync in background without blocking UI (deletion markers will use localStorage fallback)
-          syncInBackground().catch(error => {
-            console.error('❌ Background sync failed:', error);
-            // Don't show error to user since local data is already loaded
-          });
+
+          // 🛡️ iOS Safari stability: defer background sync to avoid startup spikes
+          const isIosSafari = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+          if (!isIosSafari) {
+            // Defer sync slightly to yield to rendering
+            setTimeout(() => {
+              syncInBackground().catch(error => {
+                console.error('❌ Background sync failed:', error);
+              });
+            }, 500);
+          } else {
+            console.log('🛡️ Skipping immediate background sync on iOS Safari to improve stability');
+          }
           
           console.log('✅ Private Posts loaded successfully');
           
