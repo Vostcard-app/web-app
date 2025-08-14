@@ -1212,7 +1212,7 @@ Tap OK to continue.`;
       {/* ✅ UPDATED: Side-by-side thumbnails (or single large photo when no video) */}
       {hasVideoMedia ? (
         <div style={{ 
-          padding: '20px', 
+          padding: '5px', 
           display: 'flex', 
           alignItems: 'center',
           justifyContent: 'center',
@@ -1298,7 +1298,7 @@ Tap OK to continue.`;
         </div>
       ) : (
         <div style={{ 
-          padding: '20px', 
+          padding: '5px', 
           display: 'flex', 
           alignItems: 'center',
           justifyContent: 'center'
@@ -1428,7 +1428,7 @@ Tap OK to continue.`;
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        padding: '20px 40px',
+        padding: '5px 40px',
         borderBottom: '1px solid #eee'
       }}>
         <button
@@ -1497,7 +1497,7 @@ Tap OK to continue.`;
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '20px',
+        padding: '5px',
         gap: '16px',
         borderBottom: '1px solid #eee'
       }}>
