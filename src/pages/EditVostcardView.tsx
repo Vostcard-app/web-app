@@ -54,6 +54,9 @@ const EditVostcardView: React.FC = () => {
       'Drive Mode Event',
       'Wish you were here',
       'Made for kids',
+      'Pub',
+      'Plaque',
+      'Monument',
     ],
     []
   );

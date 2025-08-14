@@ -34,6 +34,9 @@ const VostcardStudioView: React.FC = () => {
     'Drive Mode Event',
     'Wish you were here',
     'Made for kids',
+    'Pub',
+    'Plaque',
+    'Monument',
   ];
   
   const canAccessDrivecard = userRole === 'guide' || userRole === 'admin';
