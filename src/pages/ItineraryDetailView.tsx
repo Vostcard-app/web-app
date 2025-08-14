@@ -392,63 +392,6 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {itinerary.items.length >= 2 && (
-            <button
-              onClick={handleOptimizeRoute}
-              disabled={optimizingRoute}
-              style={{
-                background: 'rgba(0,0,0,0.10)',
-                border: 'none',
-                borderRadius: '50%',
-                width: 40,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: optimizingRoute ? 'not-allowed' : 'pointer',
-                opacity: optimizingRoute ? 0.7 : 1
-              }}
-              title="Suggest Route"
-            >
-              <FaRoute color="#fff" size={18} />
-            </button>
-          )}
-          <button
-            style={{
-              background: 'rgba(0,0,0,0.10)',
-              border: 'none',
-              borderRadius: '50%',
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-            onClick={() => setShowEditModal(true)}
-          >
-            <FaEdit color="#fff" size={18} />
-          </button>
-          
-          {itinerary.isPublic && (
-            <button
-              style={{
-                background: 'rgba(0,0,0,0.10)',
-                border: 'none',
-                borderRadius: '50%',
-                width: 40,
-                height: 40,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={handleShareItinerary}
-            >
-              <FaShare color="#fff" size={18} />
-            </button>
-          )}
-          
           <button
             style={{
               background: 'rgba(0,0,0,0.10)',
@@ -501,6 +444,84 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
               Created {formatDate(itinerary.createdAt)}
             </div>
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '12px'
+        }}>
+          <button
+            onClick={() => setShowEditModal(true)}
+            style={{
+              backgroundColor: '#007AFF',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '14px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            <FaEdit size={14} />
+            Edit Details
+          </button>
+
+          {itinerary.items.length >= 2 && (
+            <button
+              onClick={handleOptimizeRoute}
+              disabled={optimizingRoute}
+              style={{
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: optimizingRoute ? 'not-allowed' : 'pointer',
+                opacity: optimizingRoute ? 0.7 : 1
+              }}
+            >
+              <FaRoute size={14} />
+              Suggest Route
+            </button>
+          )}
+
+          {itinerary.isPublic && (
+            <button
+              onClick={handleShareItinerary}
+              style={{
+                backgroundColor: '#FF9500',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              <FaShare size={14} />
+              Share
+            </button>
+          )}
         </div>
 
         {/* Items List */}
