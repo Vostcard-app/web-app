@@ -11,9 +11,6 @@ const ItineraryDetailView: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  // Responsive design state - default to mobile for better compatibility
-  const [isDesktopView, setIsDesktopView] = useState(false);
-  
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,27 +26,8 @@ const ItineraryDetailView: React.FC = () => {
     user: !!user,
     loading,
     error,
-    itinerary: itinerary?.name,
-    isDesktopView
+    itinerary: itinerary?.name
   });
-
-  // Handle window resize for responsive design
-  useEffect(() => {
-    const handleResize = () => {
-      const newIsDesktop = window.innerWidth > 768;
-      console.log('🖥️ ItineraryDetailView - Window resize:', { 
-        width: window.innerWidth, 
-        isDesktopView: newIsDesktop 
-      });
-      setIsDesktopView(newIsDesktop);
-    };
-    
-    // Set initial state
-    handleResize();
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   useEffect(() => {
     if (id) {
@@ -273,31 +251,20 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
 
   if (loading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: isDesktopView ? '#f0f0f0' : '#f5f5f5',
-        display: isDesktopView ? 'flex' : 'block',
-        justifyContent: isDesktopView ? 'center' : 'initial',
-        alignItems: isDesktopView ? 'flex-start' : 'initial',
-        padding: isDesktopView ? '20px' : '0',
-        fontFamily: 'system-ui, sans-serif'
+      <div style={{
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        fontFamily: 'system-ui, sans-serif',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: 0,
+        padding: 0
       }}>
-        <div style={{
-          width: isDesktopView ? '390px' : '100%',
-          maxWidth: isDesktopView ? '390px' : 'none',
-          height: isDesktopView ? '844px' : '100vh',
-          backgroundColor: '#f5f5f5',
-          boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
-          borderRadius: isDesktopView ? '16px' : '0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.3s ease'
-        }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', marginBottom: '10px' }}>📋</div>
-            <div>Loading itinerary...</div>
-          </div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '20px', marginBottom: '10px' }}>📋</div>
+          <div>Loading itinerary...</div>
         </div>
       </div>
     );
@@ -305,44 +272,33 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
 
   if (error) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        backgroundColor: isDesktopView ? '#f0f0f0' : '#f5f5f5',
-        display: isDesktopView ? 'flex' : 'block',
-        justifyContent: isDesktopView ? 'center' : 'initial',
-        alignItems: isDesktopView ? 'flex-start' : 'initial',
-        padding: isDesktopView ? '20px' : '0',
-        fontFamily: 'system-ui, sans-serif'
+      <div style={{
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        fontFamily: 'system-ui, sans-serif',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin: 0,
+        padding: 0
       }}>
-        <div style={{
-          width: isDesktopView ? '390px' : '100%',
-          maxWidth: isDesktopView ? '390px' : 'none',
-          height: isDesktopView ? '844px' : '100vh',
-          backgroundColor: '#f5f5f5',
-          boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
-          borderRadius: isDesktopView ? '16px' : '0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          transition: 'all 0.3s ease'
-        }}>
-          <div style={{ textAlign: 'center', maxWidth: '300px', padding: '20px' }}>
-            <div style={{ fontSize: '20px', marginBottom: '10px' }}>❌</div>
-            <div style={{ marginBottom: '20px' }}>{error}</div>
-            <button
-              onClick={() => navigate('/itineraries')}
-              style={{
-                backgroundColor: '#007aff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                cursor: 'pointer'
-              }}
-            >
-              Back to Itineraries
-            </button>
-          </div>
+        <div style={{ textAlign: 'center', maxWidth: '300px', padding: '20px' }}>
+          <div style={{ fontSize: '20px', marginBottom: '10px' }}>❌</div>
+          <div style={{ marginBottom: '20px' }}>{error}</div>
+          <button
+            onClick={() => navigate('/itineraries')}
+            style={{
+              backgroundColor: '#007aff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              cursor: 'pointer'
+            }}
+          >
+            Back to Itineraries
+          </button>
         </div>
       </div>
     );
@@ -353,30 +309,14 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: isDesktopView ? '#f0f0f0' : '#f5f5f5',
-      display: isDesktopView ? 'flex' : 'block',
-      justifyContent: isDesktopView ? 'center' : 'initial',
-      alignItems: isDesktopView ? 'flex-start' : 'initial',
-      padding: isDesktopView ? '20px' : '0',
-      fontFamily: 'system-ui, sans-serif'
+    <div style={{
+      backgroundColor: '#f5f5f5',
+      minHeight: '100vh',
+      fontFamily: 'system-ui, sans-serif',
+      width: '100%',
+      margin: 0,
+      padding: 0
     }}>
-      {/* Mobile-style container with responsive design */}
-      <div style={{
-        width: isDesktopView ? '390px' : '100%',
-        maxWidth: isDesktopView ? '390px' : 'none',
-        height: isDesktopView ? '844px' : '100vh',
-        backgroundColor: '#f5f5f5',
-        boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
-        borderRadius: isDesktopView ? '16px' : '0',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        transition: 'all 0.3s ease',
-        position: 'relative'
-      }}>
         {/* Header */}
         <div style={{
           background: '#07345c',
@@ -877,7 +817,6 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 };
