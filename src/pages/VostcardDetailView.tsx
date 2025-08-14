@@ -1560,7 +1560,7 @@ Tap OK to continue.`;
 
       {/* Description Link - Always visible and locked */}
       <div style={{ 
-        padding: '20px',
+        padding: '5px',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -1587,7 +1587,7 @@ Tap OK to continue.`;
       {/* Worth Seeing Rating Widget - Always visible and locked */}
       <div style={{
         textAlign: 'center',
-        padding: '20px',
+        padding: '5px',
         borderBottom: '1px solid #eee',
         maxWidth: '900px',
         margin: '0 auto'
