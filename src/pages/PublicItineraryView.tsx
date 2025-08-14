@@ -206,139 +206,93 @@ const PublicItineraryView: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header with gradient background */}
+      {/* Banner/Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #07345c 0%, #0a4a73 100%)',
-        minHeight: '200px',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        color: 'white'
+        background: '#07345c',
+        color: 'white',
+        padding: '16px 20px 20px 20px'
       }}>
-        {/* Top navigation */}
-        <div style={{
-          position: 'absolute',
-          top: '12px',
-          left: '12px',
-          right: '12px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          zIndex: 10
-        }}>
-          <div />
-          
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={() => {
-                if (!user) {
-                  const returnTo = `/itinerary/${itinerary?.id || shareableLink}`;
-                  navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`);
-                } else {
-                  navigate('/home');
-                }
-              }}
-              style={{
-                background: 'rgba(255,255,255,0.15)',
-                border: 'none',
-                borderRadius: '50%',
-                width: 36,
-                height: 36,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'white',
-              }}
-            >
-              <FaHome size={16} />
-            </button>
+        {/* Top line: Vōstcard label, left-justified */}
+        <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: 1 }}>Vōstcard</div>
+
+        {/* Line 2: Avatar + Itinerary name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+          <div style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)',
+            overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            {(itinerary?.creatorAvatarURL || (itinerary as any)?.avatarURL || (itinerary as any)?.userAvatarURL) ? (
+              <img
+                src={itinerary?.creatorAvatarURL || (itinerary as any)?.avatarURL || (itinerary as any)?.userAvatarURL}
+                alt="Creator Avatar"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <FaUserCircle size={24} color="white" />
+            )}
           </div>
+          <div style={{ fontSize: 22, fontWeight: 700 }}>{itinerary.name}</div>
         </div>
 
-        {/* Itinerary Info */}
-        <div style={{ padding: '20px 20px 16px 20px' }}>
-          
-          <div style={{ 
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '12px',
-            marginBottom: '12px'
-          }}>
-            <div style={{ 
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              {itinerary?.creatorAvatarURL ? (
-                <img src={itinerary.creatorAvatarURL} alt="Creator Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <FaUserCircle size={24} color="white" />
-              )}
-            </div>
-            
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h1 style={{
-                margin: 0,
-                fontSize: '24px',
-                fontWeight: 'bold',
-                lineHeight: '1.2',
-                marginBottom: '4px'
-              }}>
-                {itinerary.name}
-              </h1>
-              
-              <div style={{
-                fontSize: '14px',
-                opacity: 0.9,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}>
-                <span>by {itinerary.username}</span>
-                <span>•</span>
-                <span>{formatDate(itinerary.createdAt)}</span>
-              </div>
-            </div>
-          </div>
+        {/* Line 3: Creator name */}
+        <div style={{ marginTop: 6, fontSize: 14 }}>by {itinerary.username}</div>
 
-          {/* Promo line under banner */}
-          <div style={{
-            marginTop: '8px',
-            fontSize: '13px',
-            opacity: 0.9
-          }}>
-            Made with Vōstcard, a free app. It's free to join and free to use.
-          </div>
-
-          {itinerary.description && (
-            <p style={{
-              margin: '0 0 12px 0',
-              fontSize: '16px',
-              lineHeight: '1.4',
-              opacity: 0.9
-            }}>
-              {itinerary.description}
-            </p>
-          )}
-
-          <div style={{
-            fontSize: '14px',
-            opacity: 0.8,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px'
-          }}>
-            <span>{itinerary.items.length} {itinerary.items.length === 1 ? 'stop' : 'stops'}</span>
-          </div>
+        {/* Line 4: Promo */}
+        <div style={{ marginTop: 6, fontSize: 13, opacity: 0.95 }}>
+          Made with Vōstcard
         </div>
+
+        {/* Line 5: Description */}
+        {itinerary.description && (
+          <div style={{ marginTop: 8, fontSize: 15, lineHeight: 1.4 }}>
+            {itinerary.description}
+          </div>
+        )}
+      </div>
+
+      {/* CTA row under banner */}
+      <div style={{
+        padding: '12px 20px',
+        display: 'flex',
+        gap: 10,
+        justifyContent: 'center'
+      }}>
+        <button
+          onClick={() => {
+            const dest = `/itinerary/${itinerary.id}`;
+            if (user) {
+              navigate(dest);
+            } else {
+              navigate(`/register?returnTo=${encodeURIComponent(dest)}`);
+            }
+          }}
+          style={{
+            background: '#007aff', color: 'white', border: 'none', borderRadius: 8,
+            padding: '10px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+          }}
+        >
+          Join (it's free)
+        </button>
+        <button
+          onClick={() => {
+            const dest = `/itinerary/${itinerary.id}`;
+            if (user) {
+              navigate(dest);
+            } else {
+              navigate(`/login?returnTo=${encodeURIComponent(dest)}`);
+            }
+          }}
+          style={{
+            background: 'white', color: '#07345c', border: '1px solid #07345c', borderRadius: 8,
+            padding: '10px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+          }}
+        >
+          Login
+        </button>
       </div>
 
       {/* Content */}
