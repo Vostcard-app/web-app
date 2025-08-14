@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaEdit, FaTrash, FaShare, FaPlus, FaGripVertical, FaEye, FaMapMarkerAlt, FaClock, FaRoute } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaEdit, FaTrash, FaShare, FaPlus, FaGripVertical, FaEye, FaMapMarkerAlt, FaClock, FaRoute, FaMap } from 'react-icons/fa';
 import { optimizeRoute } from '../utils/routeOptimizer';
 import { useAuth } from '../context/AuthContext';
 import { ItineraryService } from '../services/itineraryService';
@@ -22,6 +22,7 @@ const ItineraryDetailView: React.FC = () => {
   const [updating, setUpdating] = useState(false);
   const [removingItemIds, setRemovingItemIds] = useState<Set<string>>(new Set());
   const [optimizingRoute, setOptimizingRoute] = useState(false);
+  const [showingRouteMap, setShowingRouteMap] = useState(false);
 
   console.log('🔄 ItineraryDetailView rendered', {
     id,
@@ -392,6 +393,25 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {itinerary.isPublic && (
+            <button
+              style={{
+                background: 'rgba(0,0,0,0.10)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+              onClick={handleShareItinerary}
+              title="Share Itinerary"
+            >
+              <FaShare color="#fff" size={18} />
+            </button>
+          )}
           <button
             style={{
               background: 'rgba(0,0,0,0.10)',
@@ -501,11 +521,11 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
             </button>
           )}
 
-          {itinerary.isPublic && (
+          {itinerary.items.length >= 2 && (
             <button
-              onClick={handleShareItinerary}
+              onClick={() => setShowingRouteMap(true)}
               style={{
-                backgroundColor: '#FF9500',
+                backgroundColor: '#5856D6',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -518,8 +538,8 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                 cursor: 'pointer'
               }}
             >
-              <FaShare size={14} />
-              Share
+              <FaMap size={14} />
+              View Route Map
             </button>
           )}
         </div>
@@ -747,6 +767,126 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
       </div>
 
       {/* Edit Itinerary Modal */}
+      {/* Route Map Modal */}
+      {showingRouteMap && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setShowingRouteMap(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid #eee',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Route Map</h3>
+              <button
+                onClick={() => setShowingRouteMap(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Map Container */}
+            <div style={{
+              padding: '20px',
+              flex: 1,
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}>
+              <div style={{
+                backgroundColor: '#f5f5f5',
+                borderRadius: '8px',
+                padding: '16px',
+                flex: 1,
+                minHeight: '300px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#666',
+                textAlign: 'center'
+              }}>
+                Map integration coming soon!<br/>
+                Will show route between all locations.
+              </div>
+
+              {/* Route Points List */}
+              <div style={{
+                backgroundColor: '#f5f5f5',
+                borderRadius: '8px',
+                padding: '16px'
+              }}>
+                <h4 style={{ margin: '0 0 12px 0', color: '#333' }}>Route Points:</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {itinerary.items.map((item, index) => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        backgroundColor: '#5856D6',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: '600'
+                      }}>
+                        {index + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        {item.title || 'Untitled'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showEditModal && (
         <div
           style={{
