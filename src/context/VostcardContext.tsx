@@ -20,7 +20,7 @@ interface VostcardContextProps {
   updateVostcard: (updates: Partial<Vostcard>) => void;
   addPhoto: (photo: Blob) => void;
   saveLocalVostcard: () => void;
-  loadLocalVostcard: (id: string) => Promise<void>;
+  loadLocalVostcard: (id: string, opts?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
   clearVostcard: () => void;
   clearLocalStorage: () => void; // For testing
   postVostcard: (vostcard?: Vostcard) => Promise<void>;
@@ -1359,7 +1359,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [currentVostcard, loadAllLocalVostcards, authContext]);
 
   // ✅ Load from IndexedDB
-  const loadLocalVostcard = useCallback(async (id: string) => {
+  const loadLocalVostcard = useCallback(async (id: string, opts?: { restoreVideo?: boolean; restorePhotos?: boolean }) => {
     console.log('📂 loadLocalVostcard: Attempting to load Vostcard with ID:', id);
     
     try {
@@ -1395,7 +1395,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             };
 
             // Convert video base64 back to Blob
-            if (found._videoBase64) {
+            if (found._videoBase64 && (opts?.restoreVideo ?? true)) {
               try {
                 console.log('📂 Converting video base64 back to Blob...');
                 const videoBase64 = found._videoBase64;
@@ -1412,7 +1412,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             }
 
             // Convert photos base64 back to Blobs
-            if (found._photosBase64 && found._photosBase64.length > 0) {
+            if (found._photosBase64 && found._photosBase64.length > 0 && (opts?.restorePhotos ?? true)) {
               try {
                 console.log('📂 Converting photos base64 back to Blobs...');
                 const photoBlobs = found._photosBase64.map((photoBase64: string, index: number) => {

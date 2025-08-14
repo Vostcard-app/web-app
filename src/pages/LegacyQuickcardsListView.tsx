@@ -66,7 +66,8 @@ const QuickcardListView = () => {
     const quickcard = quickcards.find(q => q.id === quickcardId);
     if (quickcard) {
       setCurrentVostcard(quickcard);
-      navigate('/quickcard-step3');
+      // Unified edit route
+      navigate(`/edit/${quickcardId}`);
     }
   };
 
