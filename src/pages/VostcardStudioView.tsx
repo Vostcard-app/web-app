@@ -1437,7 +1437,7 @@ const VostcardStudioView: React.FC = () => {
               cursor: 'pointer'
             }}
           >
-            📝 Quickcard
+            📝 Vōstcard
           </button>
 
           {canAccessDrivecard && (
