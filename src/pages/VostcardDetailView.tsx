@@ -1043,6 +1043,34 @@ Tap OK to continue.`;
         </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Add to Itinerary button aligned to the right in the header row */}
+            {user && (
+              <button
+                onClick={() => {
+                  // TODO: Implement add to itinerary functionality
+                  console.log('Add to Itinerary clicked for vostcard:', vostcard?.id);
+                  alert('Add to Itinerary functionality coming soon!');
+                }}
+                style={{
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minWidth: '100px',
+                  boxShadow: '0 2px 8px rgba(76,175,80,0.2)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
+              >
+                <FaUserPlus size={12} style={{ marginRight: '6px' }} />
+                Add to Itinerary
+              </button>
+            )}
             {/* Map View button aligned to the right in the header row */}
             {vostcard?.latitude && vostcard?.longitude && (
               <button
