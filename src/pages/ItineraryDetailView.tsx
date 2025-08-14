@@ -490,7 +490,7 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                 {/* Item Image */}
                 <div
                   style={{
-                    minWidth: '80px',
+                    width: '80px',
                     height: '80px',
                     backgroundColor: '#f0f0f0',
                     borderRadius: '8px',
@@ -498,7 +498,8 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    flexShrink: 0
                   }}
                   onClick={() => handleItemClick(item)}
                 >
