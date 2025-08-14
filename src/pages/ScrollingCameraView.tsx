@@ -24,6 +24,7 @@ const ScrollingCameraView: React.FC = () => {
   const [scrollSpeed, setScrollSpeed] = useState(1);
   const [cameraReady, setCameraReady] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(true);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunks = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -68,6 +69,11 @@ const ScrollingCameraView: React.FC = () => {
       try {
         console.log('📱 Starting camera with audio...');
         
+        // Check if getUserMedia is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('getUserMedia not supported');
+        }
+        
         // Get camera stream with explicit audio constraints
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -102,22 +108,59 @@ const ScrollingCameraView: React.FC = () => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.muted = true; // Keep muted to prevent feedback
+          
+          // Add multiple event handlers to ensure camera is ready
+          const handleVideoReady = () => {
+            console.log('📱 Video is ready to play');
+            setCameraReady(true);
+            setCameraLoading(false);
+          };
+          
           videoRef.current.onloadedmetadata = () => {
             console.log('📱 Video metadata loaded');
-            setCameraReady(true);
+            handleVideoReady();
           };
+          
+          videoRef.current.oncanplay = () => {
+            console.log('📱 Video can play');
+            handleVideoReady();
+          };
+          
+          videoRef.current.onloadeddata = () => {
+            console.log('📱 Video data loaded');
+            handleVideoReady();
+          };
+          
+          // Force video to play on mobile devices
+          try {
+            await videoRef.current.play();
+            console.log('📱 Video play started');
+          } catch (playError) {
+            console.warn('⚠️ Video play failed (this is often normal):', playError);
+          }
         }
 
       } catch (err) {
         console.error('❌ Camera/Audio failed:', err);
         const error = err as Error;
+        
+        // More detailed error handling
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          console.log('📱 Permission denied - showing modal');
           setShowPermissionModal(true);
         } else if (error.name === 'NotFoundError') {
-          alert('No camera or microphone found. Please check your device.');
+          console.log('📱 No camera/microphone found');
+          alert('No camera or microphone found. Please check your device and try again.');
+        } else if (error.message === 'getUserMedia not supported') {
+          console.log('📱 getUserMedia not supported');
+          alert('Your browser does not support camera access. Please use a modern browser.');
         } else {
+          console.log('📱 Other camera error - showing modal');
           setShowPermissionModal(true);
         }
+        
+        // Always stop loading on error
+        setCameraLoading(false);
       }
     };
 
@@ -133,7 +176,14 @@ const ScrollingCameraView: React.FC = () => {
 
   // Canvas animation loop - ALWAYS renders portrait 9:16
   useEffect(() => {
-    if (!cameraReady || !videoRef.current || !canvasRef.current) return;
+    if (!cameraReady || !videoRef.current || !canvasRef.current) {
+      console.log('📱 Canvas animation not ready:', {
+        cameraReady,
+        hasVideo: !!videoRef.current,
+        hasCanvas: !!canvasRef.current
+      });
+      return;
+    }
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -144,7 +194,18 @@ const ScrollingCameraView: React.FC = () => {
     canvas.height = PORTRAIT_HEIGHT;
 
     const animate = () => {
-      if (!ctx || !video || video.videoWidth === 0 || video.videoHeight === 0) {
+      if (!ctx || !video) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      
+      // Check if video is actually loaded and has dimensions
+      if (video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 2) {
+        console.log('📱 Video not ready yet:', {
+          videoWidth: video.videoWidth,
+          videoHeight: video.videoHeight,
+          readyState: video.readyState
+        });
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
@@ -404,6 +465,7 @@ const ScrollingCameraView: React.FC = () => {
 
   const handleSwitchCamera = () => {
     setCameraReady(false);
+    setCameraLoading(true);
     setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
   };
 
@@ -496,6 +558,50 @@ const ScrollingCameraView: React.FC = () => {
         style={{ display: 'none' }}
       />
 
+      {/* Camera Loading Indicator */}
+      {cameraLoading && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'black',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 5,
+          color: 'white'
+        }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '3px solid rgba(255,255,255,0.3)',
+            borderTop: '3px solid white',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '20px'
+          }} />
+          <div style={{
+            fontSize: '18px',
+            fontWeight: 'bold',
+            textAlign: 'center'
+          }}>
+            📹 Starting camera...
+          </div>
+          <div style={{
+            fontSize: '14px',
+            color: 'rgba(255,255,255,0.8)',
+            textAlign: 'center',
+            marginTop: '10px',
+            maxWidth: '300px'
+          }}>
+            Please allow camera and microphone access when prompted
+          </div>
+        </div>
+      )}
+
       {/* Canvas - PORTRAIT 9:16 display and recording */}
       <canvas
         ref={canvasRef}
@@ -506,7 +612,9 @@ const ScrollingCameraView: React.FC = () => {
           width: '100%',
           height: '100%',
           backgroundColor: 'black',
-          objectFit: 'contain' // Show full portrait video
+          objectFit: 'contain', // Show full portrait video
+          opacity: cameraLoading ? 0 : 1,
+          transition: 'opacity 0.3s ease'
         }}
       />
 
