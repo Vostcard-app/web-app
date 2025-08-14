@@ -1,20 +1,33 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaUserPlus, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause, FaImages } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
-import MultiPhotoModal from '../components/MultiPhotoModal';
+import QuickcardPin from '../assets/quickcard_pin.png';
+import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import { LikeService } from '../services/likeService';
 import { RatingService } from '../services/ratingService';
-import { type Friend } from '../types/FriendModels';
+import { ItineraryService } from '../services/itineraryService';
+import type { Itinerary } from '../types/ItineraryTypes';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
+import MultiPhotoModal from '../components/MultiPhotoModal';
 import { generateShareText } from '../utils/vostcardUtils';
 import TipDropdownMenu from '../components/TipDropdownMenu';
+
+// Custom quickcard icon for the map
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
+  iconSize: [75, 75],
+  iconAnchor: [37.5, 75],
+  popupAnchor: [0, -75],
+});
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +43,7 @@ const VostcardDetailView: React.FC = () => {
   
   // Debug navigation state on load and scroll to top
   useEffect(() => {
-    console.log('🔍 VostcardDetailView loaded:', {
+    console.log('🔍 QuickcardDetailView loaded:', {
       vostcardList: vostcardList.length,
       currentIndex,
       id,
@@ -40,148 +53,78 @@ const VostcardDetailView: React.FC = () => {
     
     // Ensure page loads at top with avatar visible under banner
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [id]); // Only log when ID changes
-  
-  // ✅ Handle window resize for responsive banner positioning
-  useEffect(() => {
-    const handleResize = () => {
-      setIsDesktop(window.innerWidth > 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [id]); // Only log when ID changes, not on every render
   
   const [vostcard, setVostcard] = useState<any>(null);
-  const [availableVostcards, setAvailableVostcards] = useState<string[]>([]);
-  const [currentVostcardIndex, setCurrentVostcardIndex] = useState(0);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  
-  // Multi-Photo Modal state - ENHANCED FOR SWIPE FUNCTIONALITY
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(0);
   const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
-
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
-  const [userRating, setUserRating] = useState(0);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [showSharedOptions, setShowSharedOptions] = useState(false);
-  
-  // Audio state
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+
+  // ✅ Enhanced audio player state
+  const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
-  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
+  const tipButtonRef = useRef<HTMLButtonElement>(null);
   
-  // ✅ NEW: Swipe gesture state
+  // Itinerary modal state
+  const [showItineraryModal, setShowItineraryModal] = useState(false);
+  const [existingItineraries, setExistingItineraries] = useState<Itinerary[]>([]);
+  const [loadingItineraries, setLoadingItineraries] = useState(false);
+  const [showCreateItineraryModal, setShowCreateItineraryModal] = useState(false);
+  const [showSelectItineraryModal, setShowSelectItineraryModal] = useState(false);
+  const [newItineraryName, setNewItineraryName] = useState('');
+  const [newItineraryDescription, setNewItineraryDescription] = useState('');
+  const [addingToItinerary, setAddingToItinerary] = useState(false);
+  const [creatingItinerary, setCreatingItinerary] = useState(false);
+
+  // Determine if this vostcard has a video attached
+  const hasVideoMedia = Boolean((vostcard as any)?.videoURL || (vostcard as any)?.video);
+
+  // Swipe gesture state for navigation
   const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
   const [touchEnd, setTouchEnd] = useState<{ y: number; x: number; time: number } | null>(null);
   const [isScrolling, setIsScrolling] = useState(false);
-  
-  // ✅ Desktop detection for responsive banner positioning
-  const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const tipButtonRef = useRef<HTMLButtonElement>(null);
+  // ✅ Performance optimization - memoize photo URLs and audio detection
+  const photoURLs = useMemo(() => vostcard?.photoURLs || [], [vostcard?.photoURLs]);
+  const hasAudio = useMemo(() => {
+    const audioExists = !!(
+      vostcard?.audioURL || 
+      vostcard?.audioURLs?.length > 0 || 
+      vostcard?.audio || 
+      vostcard?._firebaseAudioURL ||
+      vostcard?._firebaseAudioURLs?.length > 0 ||
+      vostcard?.audioFiles?.length > 0
+    );
+    console.log('🔍 Audio detection:', {
+      audioExists,
+      audioURL: vostcard?.audioURL,
+      audioURLs: vostcard?.audioURLs,
+      audio: vostcard?.audio,
+      _firebaseAudioURL: vostcard?._firebaseAudioURL,
+      _firebaseAudioURLs: vostcard?._firebaseAudioURLs,
+      audioFiles: vostcard?.audioFiles
+    });
+    return audioExists;
+  }, [vostcard?.audioURL, vostcard?.audioURLs, vostcard?.audio, vostcard?._firebaseAudioURL, vostcard?._firebaseAudioURLs, vostcard?.audioFiles]);
 
-  // ✅ Audio playback functionality for quickcards
-  const handleAudioPlayback = async () => {
-    if (!vostcard) return;
-    
-    try {
-      // Stop any existing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      if (isPlayingAudio) {
-        setIsPlayingAudio(false);
-        return;
-      }
-
-      // Create new audio element
-      const audio = new Audio();
-      audioRef.current = audio;
-
-      // Get audio source - check multiple possible fields
-      const audioSource = vostcard.audioURL || 
-                         vostcard.audioURLs?.[0] || 
-                         vostcard.audio || 
-                         vostcard._firebaseAudioURL;
-
-      if (!audioSource) {
-        console.error('No audio source available');
-        return;
-      }
-
-      // Set audio source
-      audio.src = audioSource;
-      console.log('🎵 Playing audio from:', audioSource);
-
-      // Audio event listeners
-      audio.addEventListener('loadedmetadata', () => {
-        setAudioDuration(audio.duration);
-        console.log('🎵 Audio duration:', audio.duration);
-      });
-
-      audio.addEventListener('ended', () => {
-        setIsPlayingAudio(false);
-        console.log('🎵 Audio playback ended');
-      });
-
-      audio.addEventListener('error', (e) => {
-        console.error('🎵 Audio playback error:', e);
-        setIsPlayingAudio(false);
-        alert('Failed to play audio. Please try again.');
-      });
-
-      // Start playback
-      await audio.play();
-      setIsPlayingAudio(true);
-      console.log('🎵 Audio playback started');
-
-    } catch (error) {
-      console.error('🎵 Failed to play audio:', error);
-      setIsPlayingAudio(false);
-      alert('Failed to play audio. Please try again.');
-    }
-  };
-
-  // Fetch available vostcards for navigation
-  const fetchAvailableVostcards = async () => {
-    try {
-      const vostcardsQuery = query(
-        collection(db, 'vostcards'),
-        orderBy('createdAt', 'desc')
-      );
-      const vostcardSnapshot = await getDocs(vostcardsQuery);
-      const allVostcardIds = vostcardSnapshot.docs.map(doc => doc.id);
-      
-      setAvailableVostcards(allVostcardIds);
-      
-      // If no navigation state provided, find current vostcard index in fetched list
-      if (!vostcardList.length && id) {
-        const currentIndex = allVostcardIds.findIndex(vostcardId => vostcardId === id);
-        setCurrentVostcardIndex(currentIndex !== -1 ? currentIndex : 0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch available vostcards:', error);
-    }
-  };
+  // Removed redundant navigation state logging
 
   useEffect(() => {
-    fetchAvailableVostcards();
-  }, [id]);
-
-  useEffect(() => {
-    const fetchVostcard = async () => {
+    const fetchQuickcard = async () => {
       if (!id) {
         setError('No vostcard ID provided');
         setLoading(false);
@@ -196,52 +139,49 @@ const VostcardDetailView: React.FC = () => {
         
         if (docSnap.exists()) {
           const data = docSnap.data();
-          console.log('📱 Vostcard found:', data);
+          console.log('📱 Quickcard found:', data);
           
-          // If this is a quickcard, redirect to the dedicated QuickcardDetailView
+          // Verify it's actually a vostcard
           if (data.isQuickcard) {
-            console.log('📱 Redirecting quickcard to dedicated component');
-            console.log('🔍 VostcardDetailView navigation state:', navigationState);
-            navigate(`/quickcard/${id}`, { 
-              replace: true,
-              state: navigationState // Pass along the navigation state
-            });
-            return;
+            setQuickcard(data);
+            setLoading(false);
+          } else {
+            setError('This is not a vostcard.');
+            setLoading(false);
           }
-          
-          setVostcard(data);
-          setLoading(false);
         } else {
-          console.log('📱 Vostcard not found, trying to fix...');
+          console.log('📱 Quickcard not found, trying to fix...');
           
           try {
             const fixed = await fixBrokenSharedVostcard(id);
             if (fixed) {
-              console.log('📱 Vostcard fixed, retrying load...');
+              console.log('📱 Quickcard fixed, retrying load...');
               
               const retryDocSnap = await getDoc(docRef);
               if (retryDocSnap.exists()) {
                 const retryData = retryDocSnap.data();
-                setVostcard(retryData);
-                setLoading(false);
-                return;
+                if (retryData.isQuickcard) {
+                  setQuickcard(retryData);
+                  setLoading(false);
+                  return;
+                }
               }
             }
           } catch (fixError) {
             console.error('📱 Failed to fix vostcard:', fixError);
           }
           
-          setError('Vostcard not found. It may have been deleted or the link is invalid.');
+          setError('Quickcard not found. It may have been deleted or the link is invalid.');
           setLoading(false);
         }
       } catch (err) {
         console.error('📱 Error loading vostcard:', err);
-        setError('Failed to load Vostcard. Please check your internet connection and try again.');
+        setError('Failed to load Quickcard. Please check your internet connection and try again.');
         setLoading(false);
       }
     };
 
-    fetchVostcard();
+    fetchQuickcard();
   }, [id, fixBrokenSharedVostcard]);
 
   // Fetch user profile when vostcard is loaded
@@ -254,8 +194,8 @@ const VostcardDetailView: React.FC = () => {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          console.log('🔍 VostcardDetailView Debug - Creator userRole:', userData.userRole);
-          console.log('🔍 VostcardDetailView Debug - Creator buyMeACoffeeURL:', userData.buyMeACoffeeURL);
+          console.log('🔍 QuickcardDetailView Debug - Creator userRole:', userData.userRole);
+          console.log('🔍 QuickcardDetailView Debug - Creator buyMeACoffeeURL:', userData.buyMeACoffeeURL);
           setUserProfile(userData);
         }
       } catch (err) {
@@ -300,71 +240,48 @@ const VostcardDetailView: React.FC = () => {
     loadUserRating();
   }, [user, vostcard?.id]);
 
-  // ENHANCED AUDIO DETECTION - Support both regular vostcards and quickcards
+  // ✅ Enhanced audio player effects
   useEffect(() => {
-    const detectAudio = async () => {
-      const vostcardWithAudio = vostcard as any;
-      
-      // Check for audio in different formats:
-      // - Regular vostcards: .audio, ._firebaseAudioURL
-      // - Quickcards: .audioURL, .audioURLs
-      const audioSource = vostcardWithAudio?.audio || 
-                         vostcardWithAudio?._firebaseAudioURL || 
-                         vostcardWithAudio?.audioURL || 
-                         vostcardWithAudio?.audioURLs?.[0];
-                         
-      console.log('🎵 Audio detection:', {
-        hasAudio: !!audioSource,
-        isQuickcard: vostcardWithAudio?.isQuickcard,
-        audioSource: audioSource ? 'found' : 'none',
-        audioFields: {
-          audio: !!vostcardWithAudio?.audio,
-          _firebaseAudioURL: !!vostcardWithAudio?._firebaseAudioURL,
-          audioURL: !!vostcardWithAudio?.audioURL,
-          audioURLs: !!vostcardWithAudio?.audioURLs
-        }
-      });
-      
-      if (audioSource) {
-        try {
-          // Create temporary audio element to get duration
-          const audio = new Audio();
-          
-          if (vostcardWithAudio.audio instanceof Blob) {
-            audio.src = URL.createObjectURL(vostcardWithAudio.audio);
-          } else if (audioSource) {
-            audio.src = audioSource;
-          }
-          
-          audio.onloadedmetadata = () => {
-            setAudioDuration(audio.duration);
-            // Clean up
-            if (vostcardWithAudio.audio instanceof Blob) {
-              URL.revokeObjectURL(audio.src);
-            }
-          };
-        } catch (error) {
-          console.error('Error detecting audio:', error);
-        }
-      }
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleLoadedMetadata = () => {
+      setAudioDuration(audio.duration);
     };
 
-    if (vostcard) {
-      detectAudio();
-    }
-  }, [vostcard]);
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
 
-  // Cleanup audio on unmount
-  useEffect(() => {
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      audioRef.current = null;
+    };
+
+    const handleError = () => {
+      console.error('Audio failed to load');
+      setIsPlaying(false);
+      audioRef.current = null;
+    };
+
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
     };
-  }, []);
-
-
+  }, [vostcard?.audioURL, vostcard?.audioURLs]);
 
   const handleShareClick = async () => {
     if (!vostcard) return;
@@ -389,7 +306,7 @@ Tap OK to continue.`;
       // Generate public share URL
       const isQuickcard = vostcard.isQuickcard === true;
       const shareUrl = isQuickcard 
-        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
+        ? `${window.location.origin}/share-vostcard/${vostcard.id}`
         : `${window.location.origin}/share/${vostcard.id}`;
       
       // Generate share text using utility
@@ -408,39 +325,7 @@ Tap OK to continue.`;
     }
   };
 
-    const handleMapClick = () => {
-    if (vostcard?.latitude && vostcard?.longitude) {
-      // Navigate to public map view for single pin display (like shared views)
-      console.log('📍 Opening vostcard location on public map for single pin view');
-      navigate('/public-map', {
-        replace: false, // Ensure we add to history so back button works
-        state: {
-          singleVostcard: {
-            id: vostcard.id,
-            title: vostcard.title,
-            description: vostcard.description,
-            latitude: vostcard.latitude,
-            longitude: vostcard.longitude,
-            videoURL: vostcard.videoURL,
-            photoURLs: vostcard.photoURLs,
-            username: vostcard.username,
-            userRole: vostcard.userRole,
-            isOffer: vostcard.isOffer || false,
-            isQuickcard: vostcard.isQuickcard || false,
-            offerDetails: vostcard.offerDetails,
-            categories: vostcard.categories,
-            createdAt: vostcard.createdAt,
-            visibility: 'public',
-            state: 'posted'
-          }
-        }
-      });
-    } else {
-      alert('No location data available for this vostcard');
-    }
-  };
-
-  const handleLikeClick = async () => {
+  const handleLikeClick = useCallback(async () => {
     if (!user) {
       alert('Please log in to like this vostcard');
       return;
@@ -458,141 +343,385 @@ Tap OK to continue.`;
       console.error('Error toggling like:', error);
       alert('Failed to update like status. Please try again.');
     }
-  };
+  }, [user, vostcard?.id]);
 
-  // ENHANCED AUDIO PLAY FUNCTION - Support both formats
-  const playAudio = async () => {
-    const vostcardWithAudio = vostcard as any;
+  const handleMapClick = useCallback(() => {
+    if (vostcard?.latitude && vostcard?.longitude) {
+      console.log('📍 Opening vostcard location on public map for single pin view');
+      navigate('/public-map', {
+        replace: false, // Ensure we add to history so back button works
+        state: {
+          singleVostcard: {
+            id: vostcard.id,
+            title: vostcard.title,
+            description: vostcard.description,
+            latitude: vostcard.latitude,
+            longitude: vostcard.longitude,
+            photoURLs: vostcard.photoURLs,
+            username: vostcard.username,
+            userRole: vostcard.userRole,
+            isOffer: false,
+            isQuickcard: true,
+            categories: vostcard.categories,
+            createdAt: vostcard.createdAt,
+            visibility: 'public',
+            state: 'posted'
+          }
+        }
+      });
+    } else {
+      alert('No location data available for this vostcard');
+    }
+  }, [vostcard, navigate]);
+
+  // ✅ Enhanced audio playback function - MOVED FIRST
+  const handlePlayPause = useCallback(async () => {
+    console.log('🎵 handlePlayPause called!', { hasAudio, isPlaying });
     
-    // Check for audio in different formats
-    const audioSource = vostcardWithAudio?.audio || 
-                       vostcardWithAudio?._firebaseAudioURL || 
-                       vostcardWithAudio?.audioURL || 
-                       vostcardWithAudio?.audioURLs?.[0];
-                       
-    if (!audioSource) {
-      console.error('No audio source available');
+    if (!hasAudio) {
+      console.log('❌ No audio detected, returning early');
       return;
     }
-    
+
     try {
       // Stop any existing audio
       if (audioRef.current) {
         audioRef.current.pause();
-        audioRef.current = null;
+      }
+
+      if (isPlaying) {
+        setIsPlaying(false);
+        return;
       }
 
       // Create new audio element
       const audio = new Audio();
-      audioRef.current = audio;
+      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
 
-      // Set audio source
-      if (vostcardWithAudio.audio instanceof Blob) {
-        audio.src = URL.createObjectURL(vostcardWithAudio.audio);
-      } else {
-        audio.src = audioSource;
+      // Get audio source - check multiple possible fields
+      const audioSource = vostcard?.audioURL || 
+                         vostcard?.audioURLs?.[0] || 
+                         vostcard?.audio || 
+                         vostcard?._firebaseAudioURL;
+
+      if (!audioSource) {
+        console.error('No audio source available');
+        return;
       }
 
-      // Set up event listeners
-      audio.onloadedmetadata = () => {
-        setAudioDuration(audio.duration);
-      };
-
-      audio.onplay = () => {
-        setIsPlayingAudio(true);
-      };
-
-      audio.onpause = () => {
-        setIsPlayingAudio(false);
-      };
-
-      audio.onended = () => {
-        setIsPlayingAudio(false);
-        audioRef.current = null;
-      };
+      // Set audio source
+      if (audioSource instanceof Blob) {
+        audio.src = URL.createObjectURL(audioSource);
+      } else if (typeof audioSource === 'string') {
+        audio.src = audioSource;
+      } else {
+        console.error('Invalid audio source type:', typeof audioSource);
+        return;
+      }
 
       // Play audio
       await audio.play();
       
     } catch (error) {
       console.error('Error playing audio:', error);
-      setIsPlayingAudio(false);
-    }
-  };
-
-  const handleAudioClick = () => {
-    const vostcardWithAudio = vostcard as any;
-    
-    // Check for audio in different formats
-    const hasAudio = vostcardWithAudio?.audio || 
-                    vostcardWithAudio?._firebaseAudioURL || 
-                    vostcardWithAudio?.audioURL || 
-                    vostcardWithAudio?.audioURLs?.[0];
-                    
-    if (hasAudio) {
-      if (isPlayingAudio) {
-        // Stop audio
-        if (audioRef.current) {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-        }
-        setIsPlayingAudio(false);
-      } else {
-        // Play audio
-        playAudio();
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
       }
+      alert('Failed to play audio. Please try again.');
     }
-  };
+  }, [hasAudio, isPlaying, vostcard]);
 
-  // ENHANCED PHOTO CLICK HANDLER - Use MultiPhotoModal for swipe functionality
-  const handlePhotoClick = (photoUrl: string) => {
-    if (vostcard.photoURLs && vostcard.photoURLs.length > 1) {
-      // Multiple photos - use MultiPhotoModal with swipe
-      const index = vostcard.photoURLs.indexOf(photoUrl);
+  // ✅ Enhanced photo click handler for thumbnails (not main photo)
+  const handlePhotoClick = useCallback((photoUrl: string) => {
+    if (photoURLs && photoURLs.length > 1) {
+      const index = photoURLs.indexOf(photoUrl);
       setSelectedPhotoIndex(index >= 0 ? index : 0);
       setShowMultiPhotoModal(true);
     } else {
-      // Single photo - use simple modal
       setSelectedPhoto(photoUrl);
     }
-  };
+  }, [photoURLs]);
 
-  const formatAudioDuration = (duration: number) => {
-    if (duration < 60) {
-      return `${Math.round(duration)}s`;
-    } else {
-      const minutes = Math.floor(duration / 60);
-      const seconds = Math.round(duration % 60);
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  // ✅ NEW: Thumbnail click handler - launches audio and shows clicked photo
+  const handleThumbnailClick = useCallback((photoUrl: string) => {
+    console.log('🖼️ Thumbnail clicked - launching audio and showing clicked photo:', photoUrl);
+    
+    // Start audio if available
+    if (hasAudio) {
+      handlePlayPause();
     }
-  };
+    
+    // Show the specific photo that was clicked
+    setSelectedPhoto(photoUrl);
+  }, [hasAudio, handlePlayPause]);
 
-  const handleRatingClick = async (rating: number) => {
+  // ✅ Main photo click handler - triggers audio and shows main photo (same as thumbnails)
+  const handleMainPhotoClick = useCallback(() => {
+    console.log('🚨 CLICK DETECTED ON MAIN PHOTO! 🚨');
+    console.log('🖼️ Main photo clicked - launching audio and showing main photo');
+    
+    // Start audio if available
+    if (hasAudio) {
+      handlePlayPause();
+    }
+    
+    // Show main photo in full screen (same behavior as thumbnails)
+    if (photoURLs[0]) {
+      setSelectedPhoto(photoURLs[0]);
+    }
+  }, [hasAudio, photoURLs, handlePlayPause]);
+
+  // ✅ NEW: Enhanced audio playback functions for Intro and Detail
+  const handleIntroAudioPlayback = useCallback(async () => {
+    console.log('🎵 Playing intro audio');
+    
+    if (!hasAudio) {
+      console.log('❌ No audio detected');
+      return;
+    }
+
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      if (isPlaying) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create new audio element
+      const audio = new Audio();
+      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
+
+      // Get intro audio source - prioritize intro-specific fields
+      const introAudioSource = vostcard?.introAudioURL || 
+                              vostcard?.audioURL || 
+                              vostcard?.audioURLs?.[0] || 
+                              vostcard?.audio || 
+                              vostcard?._firebaseAudioURL;
+
+      if (!introAudioSource) {
+        console.error('No intro audio source available');
+        return;
+      }
+
+      // Set audio source
+      if (introAudioSource instanceof Blob) {
+        audio.src = URL.createObjectURL(introAudioSource);
+      } else if (typeof introAudioSource === 'string') {
+        audio.src = introAudioSource;
+      } else {
+        console.error('Invalid audio source type:', typeof introAudioSource);
+        return;
+      }
+
+      // Audio event listeners
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        console.log('🎵 Intro audio playback ended');
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('🎵 Intro audio playback error:', e);
+        setIsPlaying(false);
+      });
+
+      // Play audio
+      await audio.play();
+      setIsPlaying(true);
+      
+    } catch (error) {
+      console.error('Error playing intro audio:', error);
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
+      }
+    }
+  }, [hasAudio, isPlaying, vostcard]);
+
+  const handleDetailAudioPlayback = useCallback(async () => {
+    console.log('🎵 Playing detail audio');
+    
+    try {
+      // Stop any existing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
+      if (isPlaying) {
+        setIsPlaying(false);
+        return;
+      }
+
+      // Create new audio element
+      const audio = new Audio();
+      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
+
+      // Get detail audio source
+      const detailAudioSource = 
+        // Check for explicit detail audio
+        vostcard?.detailAudioURL ||
+        // Check for labeled audio
+        (vostcard?.audioLabels && vostcard.audioFiles && 
+         vostcard.audioLabels.includes('detail')) ? 
+         vostcard.audioFiles[vostcard.audioLabels.indexOf('detail')] :
+        // Check for second audio in arrays
+        vostcard?.audioURLs?.[1] || 
+        vostcard?._firebaseAudioURLs?.[1] || 
+        vostcard?.audioFiles?.[1] ||
+        // Fallback to first audio
+        vostcard?.audioURL ||
+        vostcard?.audioURLs?.[0] ||
+        vostcard?.audio ||
+        vostcard?._firebaseAudioURL;
+
+      if (!detailAudioSource) {
+        console.error('No detail audio source available');
+        return;
+      }
+
+      // Set audio source
+      if (detailAudioSource instanceof Blob) {
+        audio.src = URL.createObjectURL(detailAudioSource);
+      } else if (typeof detailAudioSource === 'string') {
+        audio.src = detailAudioSource;
+      } else {
+        console.error('Invalid audio source type:', typeof detailAudioSource);
+        return;
+      }
+
+      // Audio event listeners
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        console.log('🎵 Detail audio playback ended');
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('🎵 Detail audio playback error:', e);
+        setIsPlaying(false);
+      });
+
+      // Play audio
+      await audio.play();
+      setIsPlaying(true);
+      
+    } catch (error) {
+      console.error('Error playing detail audio:', error);
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
+      }
+    }
+  }, [isPlaying, vostcard]);
+
+  // Load user's existing itineraries
+  const loadUserItineraries = async () => {
     if (!user) {
-      alert('Please log in to rate this vostcard');
+      alert('Please log in to use itineraries');
       return;
     }
     
-    if (!vostcard?.id) {
-      alert('Unable to rate this vostcard');
+    try {
+      setLoadingItineraries(true);
+      console.log('📋 Loading user itineraries...');
+      const itineraries = await ItineraryService.getUserItineraries();
+      setExistingItineraries(itineraries);
+      console.log(`✅ Loaded ${itineraries.length} user itineraries`);
+    } catch (error) {
+      console.error('❌ Error loading itineraries:', error);
+      
+      let errorMessage = 'Failed to load itineraries. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('Permission denied')) {
+          errorMessage = 'Permission denied. Please log out and log back in.';
+        } else if (error.message.includes('Database configuration')) {
+          errorMessage = 'Service temporarily unavailable. Please try again in a few minutes.';
+        } else if (error.message.includes('not authenticated')) {
+          errorMessage = 'Please log in to use itineraries.';
+        }
+      }
+      
+      alert(errorMessage);
+      setShowItineraryModal(false);
+    } finally {
+      setLoadingItineraries(false);
+    }
+  };
+
+  // Handle adding vostcard to existing itinerary
+  const handleAddToExistingItinerary = async (itinerary: Itinerary) => {
+    if (!vostcard) return;
+
+    try {
+      setAddingToItinerary(true);
+      
+      await ItineraryService.addItemToItinerary(itinerary.id, {
+        vostcardID: vostcard.id,
+        type: 'vostcard',
+        title: vostcard.title,
+        description: vostcard.description,
+        photoURL: vostcard.photoURLs?.[0],
+        latitude: vostcard.latitude,
+        longitude: vostcard.longitude,
+        username: vostcard.username
+      });
+
+      setShowSelectItineraryModal(false);
+      setShowItineraryModal(false);
+      alert(`Added to "${itinerary.name}" itinerary!`);
+      console.log('✅ Added vostcard to existing itinerary:', itinerary.id);
+    } catch (error) {
+      console.error('❌ Error adding to itinerary:', error);
+      alert('Failed to add to itinerary. Please try again.');
+    } finally {
+      setAddingToItinerary(false);
+    }
+  };
+
+  // Handle creating new itinerary with this vostcard
+  const handleCreateNewItinerary = async () => {
+    if (!newItineraryName.trim() || !vostcard) {
+      alert('Please enter an itinerary name');
       return;
     }
 
-    const newRating = userRating === rating ? 0 : rating;
-
     try {
-      if (newRating > 0) {
-        await RatingService.submitRating(vostcard.id, newRating);
-      } else {
-        // Remove rating when user clicks same star
-        await RatingService.removeRating(vostcard.id);
+      setCreatingItinerary(true);
+      
+      const newItinerary = await ItineraryService.createItinerary({
+        name: newItineraryName.trim(),
+        description: newItineraryDescription.trim() || undefined,
+        isPublic: true,
+        firstItem: {
+          vostcardID: vostcard.id,
+          type: 'vostcard'
+        }
+      });
+
+      // Also add the cached data for the item
+      if (newItinerary.items.length > 0) {
+        // The service creates the item, but we can update it with cached data
+        // This is optional since the service will fetch this data when viewing
       }
-      setUserRating(newRating);
+
+      setShowCreateItineraryModal(false);
+      setShowItineraryModal(false);
+      setNewItineraryName('');
+      setNewItineraryDescription('');
+      
+      alert(`Created "${newItinerary.name}" itinerary with this vostcard!`);
+      console.log('✅ Created new itinerary with vostcard:', newItinerary.id);
     } catch (error) {
-      console.error('Error submitting rating:', error);
-      alert('Failed to submit rating. Please try again.');
+      console.error('❌ Error creating itinerary:', error);
+      alert('Failed to create itinerary. Please try again.');
+    } finally {
+      setCreatingItinerary(false);
     }
   };
+
 
   const handleRefresh = () => {
     window.location.reload();
@@ -602,7 +731,7 @@ Tap OK to continue.`;
     navigate('/flag-form', {
       state: {
         vostcardId: vostcard?.id,
-        vostcardTitle: vostcard?.title || 'Untitled Vostcard',
+        vostcardTitle: vostcard?.title || 'Untitled Quickcard',
         username: vostcard?.username || 'Anonymous'
       }
     });
@@ -619,70 +748,62 @@ Tap OK to continue.`;
     }
   };
 
+  // Navigation functions for swipe gestures
+  const canGoToPrevious = vostcardList.length > 0 && currentIndex > 0;
+  const canGoToNext = vostcardList.length > 0 && currentIndex < vostcardList.length - 1;
 
-
-  // Navigation functions
-  const handlePreviousVostcard = () => {
+  const handlePreviousQuickcard = () => {
     // Scroll to top before navigation to show avatar under banner
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    if (vostcardList.length > 0) {
-      // Use provided list navigation
-      if (currentIndex > 0) {
-        const previousId = vostcardList[currentIndex - 1];
+    console.log('🔄 handlePreviousQuickcard called:', { canGoToPrevious, currentIndex, vostcardList: vostcardList.length });
+    if (canGoToPrevious) {
+      const previousId = vostcardList[currentIndex - 1];
+      console.log('📱 Navigating to previous:', previousId, 'index:', currentIndex - 1);
+      try {
         navigate(`/vostcard/${previousId}`, {
           state: {
             vostcardList,
             currentIndex: currentIndex - 1
           }
         });
+        console.log('✅ Navigation to previous completed successfully');
+      } catch (error) {
+        console.error('🚨 ERROR during navigation to previous:', error);
       }
     } else {
-      // Use fetched vostcards navigation
-      if (currentVostcardIndex > 0 && availableVostcards.length > 0) {
-        const previousId = availableVostcards[currentVostcardIndex - 1];
-        navigate(`/vostcard/${previousId}`);
-      }
+      console.log('❌ Cannot navigate to previous:', { canGoToPrevious, currentIndex });
     }
   };
 
-  const handleNextVostcard = () => {
+  const handleNextQuickcard = () => {
     // Scroll to top before navigation to show avatar under banner
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    if (vostcardList.length > 0) {
-      // Use provided list navigation
-      if (currentIndex < vostcardList.length - 1) {
-        const nextId = vostcardList[currentIndex + 1];
+    console.log('🔄 handleNextQuickcard called:', { canGoToNext, currentIndex, vostcardList: vostcardList.length });
+    if (canGoToNext) {
+      const nextId = vostcardList[currentIndex + 1];
+      console.log('📱 Navigating to next:', nextId, 'index:', currentIndex + 1);
+      try {
         navigate(`/vostcard/${nextId}`, {
           state: {
             vostcardList,
             currentIndex: currentIndex + 1
           }
         });
+        console.log('✅ Navigation to next completed successfully');
+      } catch (error) {
+        console.error('🚨 ERROR during navigation to next:', error);
       }
     } else {
-      // Use fetched vostcards navigation
-      if (currentVostcardIndex < availableVostcards.length - 1 && availableVostcards.length > 0) {
-        const nextId = availableVostcards[currentVostcardIndex + 1];
-        navigate(`/vostcard/${nextId}`);
-      }
+      console.log('❌ Cannot navigate to next:', { canGoToNext, currentIndex, listLength: vostcardList.length });
     }
   };
 
-  // Check if navigation is available
-  const canGoToPrevious = vostcardList.length > 0 
-    ? currentIndex > 0 
-    : currentVostcardIndex > 0 && availableVostcards.length > 0;
-  
-  const canGoToNext = vostcardList.length > 0 
-    ? currentIndex < vostcardList.length - 1 
-    : currentVostcardIndex < availableVostcards.length - 1 && availableVostcards.length > 0;
-
-  // ✅ NEW: Swipe gesture handlers
+  // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
-    console.log('🔍 VostcardDetailView Touch START detected:', { 
+    console.log('🔍 Touch START detected:', { 
       y: touch.clientY, 
       x: touch.clientX,
       currentIndex,
@@ -716,7 +837,7 @@ Tap OK to continue.`;
   };
 
   const handleTouchEnd = () => {
-    console.log('🔍 VostcardDetailView Touch END detected:', { 
+    console.log('🔍 Touch END detected:', { 
       touchStart: !!touchStart, 
       touchEnd: !!touchEnd, 
       isScrolling,
@@ -726,19 +847,19 @@ Tap OK to continue.`;
     });
     
     try {
-    if (!touchStart || !touchEnd || isScrolling) {
-      // Reset and allow normal scrolling
-        console.log('🔍 VostcardDetailView Touch END - Early return:', { 
+      if (!touchStart || !touchEnd || isScrolling) {
+        // Reset and allow normal scrolling
+        console.log('🔍 Touch END - Early return:', { 
           touchStart: !!touchStart, 
           touchEnd: !!touchEnd, 
           isScrolling,
           reason: !touchStart ? 'no touchStart' : !touchEnd ? 'no touchEnd' : 'isScrolling'
         });
-      setTouchStart(null);
-      setTouchEnd(null);
-      setIsScrolling(false);
-      return;
-    }
+        setTouchStart(null);
+        setTouchEnd(null);
+        setIsScrolling(false);
+        return;
+      }
 
     const distance = touchStart.y - touchEnd.y;
     const horizontalDistance = Math.abs(touchStart.x - touchEnd.x);
@@ -755,7 +876,7 @@ Tap OK to continue.`;
                         timeDiff < timeThreshold && 
                         !isScrolling;
     
-    console.log('🔍 VostcardDetailView Swipe Debug:', {
+    console.log('🔍 QuickcardDetailView Swipe Debug:', {
       distance,
       horizontalDistance,
       timeDiff,
@@ -772,21 +893,23 @@ Tap OK to continue.`;
     if (isValidSwipe) {
       if (distance > 0) {
         // Swipe up - go to next vostcard
-        console.log('📱 VostcardDetailView: Swiping up to next item...', { distance, canGoToNext, currentIndex, listLength: vostcardList.length });
+        console.log('📱 Swiping up to next item...', { distance, canGoToNext, currentIndex, listLength: vostcardList.length });
         if (canGoToNext) {
-          handleNextVostcard();
+          handleNextQuickcard();
         } else {
           console.log('❌ Cannot go to next - at end of list');
         }
       } else {
         // Swipe down - go to previous vostcard
-        console.log('📱 VostcardDetailView: Swiping down to previous item...', { distance, canGoToPrevious, currentIndex, listLength: vostcardList.length });
+        console.log('📱 Swiping down to previous item...', { distance, canGoToPrevious, currentIndex, listLength: vostcardList.length });
         if (canGoToPrevious) {
-          handlePreviousVostcard();
+          handlePreviousQuickcard();
         } else {
           console.log('❌ Cannot go to previous - at start of list', { currentIndex, canGoToPrevious });
         }
       }
+    } else {
+      console.log('❌ Invalid swipe gesture');
     }
     
     // Reset touch state
@@ -795,13 +918,29 @@ Tap OK to continue.`;
     setIsScrolling(false);
     
     } catch (error) {
-      console.error('🚨 ERROR in VostcardDetailView handleTouchEnd:', error);
-      console.log('🔧 VostcardDetailView resetting touch state after error');
+      console.error('🚨 ERROR in handleTouchEnd:', error);
+      console.log('🔧 Resetting touch state after error');
       setTouchStart(null);
       setTouchEnd(null);
       setIsScrolling(false);
     }
   };
+
+  // Debug logging for audio detection
+  useEffect(() => {
+    if (vostcard) {
+      console.log('🎵 AUDIO DEBUG - Quickcard data:', {
+        id: vostcard.id,
+        title: vostcard.title,
+        hasAudioURL: !!vostcard.audioURL,
+        hasAudioURLs: !!vostcard.audioURLs,
+        audioURL: vostcard.audioURL,
+        audioURLs: vostcard.audioURLs,
+        hasAudioCalculated: hasAudio,
+        allKeys: Object.keys(vostcard)
+      });
+    }
+  }, [vostcard, hasAudio]);
 
   if (loading) {
     return (
@@ -813,7 +952,7 @@ Tap OK to continue.`;
         backgroundColor: 'white'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>Loading Vostcard...</div>
+          <div style={{ fontSize: '18px', color: '#666' }}>Loading Quickcard...</div>
         </div>
       </div>
     );
@@ -858,7 +997,7 @@ Tap OK to continue.`;
         backgroundColor: 'white'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>No Vostcard data</div>
+          <div style={{ fontSize: '18px', color: '#666' }}>No Quickcard data</div>
         </div>
       </div>
     );
@@ -869,12 +1008,12 @@ Tap OK to continue.`;
       style={{
         background: '#fff',
         minHeight: '100vh',
-        height: 'auto',
         overflowY: 'auto',
         overflowX: 'hidden',
         fontFamily: 'system-ui, sans-serif',
         WebkitOverflowScrolling: 'touch',
         position: 'relative',
+        overscrollBehavior: 'contain',
         touchAction: 'manipulation'
       }}
       onTouchStart={handleTouchStart}
@@ -885,18 +1024,12 @@ Tap OK to continue.`;
       <div style={{ 
         background: '#07345c', 
         padding: '15px 16px 9px 16px',
-        position: 'fixed', 
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
+        position: 'relative', 
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
       }}>
-        <span 
-          onClick={() => navigate('/home')}
-          style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem', cursor: 'pointer' }}>
+        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
           Vōstcard
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -936,7 +1069,7 @@ Tap OK to continue.`;
         </div>
       </div>
 
-      {/* ✅ Enhanced swipe indicator with navigation info */}
+      {/* Swipe navigation indicators */}
       {(canGoToPrevious || canGoToNext) && (
         <div style={{
           position: 'fixed',
@@ -976,60 +1109,26 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* ✅ Scrollable content area */}
-      <div style={{
-        paddingTop: '20px', // Minimal top spacing
-        paddingBottom: '40px', // Extra space at bottom
-        minHeight: 'calc(100vh + 100px)' // Ensure content is taller than viewport for scrolling
+      {/* User Info + Map View button on right */}
+      <div style={{ 
+        padding: '15px 20px 5px 20px',
+        display: 'flex', 
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: '0px',
       }}>
-        {/* User Info and Map Button */}
-        <div style={{ 
-          padding: '15px 20px 5px 20px', 
-          display: 'flex', 
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginTop: '60px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 16 }}>
-              <div 
-                style={{ 
-                  width: 50, 
-                  height: 50, 
-                  borderRadius: '50%', 
-                  overflow: 'hidden', 
-                  background: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  if (vostcard?.userID) {
-                    navigate(`/user-profile/${vostcard.userID}`);
-                  }
-                }}
-              >
-                {userProfile?.avatarURL ? (
-                  <img 
-                    src={userProfile.avatarURL} 
-                    alt="User Avatar" 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-                  />
-                ) : (
-                  <FaUserCircle size={50} color="#ccc" />
-                )}
-              </div>
-              {userProfile?.userRole === 'guide' && (
-                <div style={{ marginTop: 4, fontSize: 11, color: '#666', fontWeight: 600 }}>Guide</div>
-              )}
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 16 }}>
             <div 
               style={{ 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                color: '#333',
+                width: 50, 
+                height: 50, 
+                borderRadius: '50%', 
+                overflow: 'hidden', 
+                background: '#f0f0f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 cursor: 'pointer'
               }}
               onClick={() => {
@@ -1038,466 +1137,271 @@ Tap OK to continue.`;
                 }
               }}
             >
-              {vostcard.username || 'Anonymous'}
-          </div>
-        </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Add to Itinerary button aligned to the right in the header row */}
-            {user && (
-              <button
-                onClick={() => {
-                  // TODO: Implement add to itinerary functionality
-                  console.log('Add to Itinerary clicked for vostcard:', vostcard?.id);
-                  alert('Add to Itinerary functionality coming soon!');
-                }}
-                style={{
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  minWidth: '100px',
-                  boxShadow: '0 2px 8px rgba(76,175,80,0.2)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
-              >
-                <FaUserPlus size={12} style={{ marginRight: '6px' }} />
-                Add to Itinerary
-              </button>
-            )}
-            {/* Map View button aligned to the right in the header row */}
-            {vostcard?.latitude && vostcard?.longitude && (
-              <button
-                onClick={handleMapClick}
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  minWidth: '100px',
-                  boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-              >
-                <FaMap size={12} style={{ marginRight: '6px' }} />
-                Map View
-              </button>
-            )}
-            {/* ☕ Tip Button for Guides */}
-            {userProfile?.userRole === 'guide' && user?.uid !== vostcard.userID && (
-              <button
-                ref={tipButtonRef}
-                onClick={handleTipButtonClick}
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                  pointerEvents: 'auto',
-                  transition: 'transform 0.1s ease',
-                  height: '28px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  lineHeight: '1',
-                  gap: '4px'
-                }}
-              >
-                Leave a Tip
-                <FaChevronDown size={8} />
-              </button>
+              {userProfile?.avatarURL ? (
+                <img 
+                  src={userProfile.avatarURL} 
+                  alt="User Avatar" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
+                />
+              ) : (
+                <FaUserCircle size={50} color="#ccc" />
+              )}
+            </div>
+            {userProfile?.userRole === 'guide' && (
+              <div style={{ marginTop: 4, fontSize: 11, color: '#666', fontWeight: 600 }}>Guide</div>
             )}
           </div>
+          <div 
+            style={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#333',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              if (vostcard?.userID) {
+                navigate(`/user-profile/${vostcard.userID}`);
+              }
+            }}
+          >
+            {vostcard.username || 'Anonymous'}
         </div>
+      </div>
 
-
-
-        {/* Title */}
-        <div style={{ padding: '0 20px' }}>
-          <h1 style={{ 
-            margin: 0, 
-            fontSize: '32px', 
-            fontWeight: 'bold', 
-            color: '#333',
-            textAlign: 'center'
-          }}>
-            {vostcard.title || 'Untitled Vostcard'}
-          </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* ☕ Tip Button for Guides */}
+          {userProfile?.userRole === 'guide' && user?.uid !== vostcard.userID && (
+            <button
+              ref={tipButtonRef}
+              onClick={handleTipButtonClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                pointerEvents: 'auto',
+                transition: 'transform 0.1s ease',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '4px'
+              }}
+            >
+              Leave a Tip
+              <FaChevronDown size={8} />
+            </button>
+          )}
         </div>
+      </div>
 
-        {/* Media Section */}
-        {vostcard.isQuickcard ? (
-          <div style={{ 
-            padding: '20px', 
-            display: 'flex', 
-            justifyContent: 'center'
-          }}>
-            {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
-              <div style={{ 
+      {/* Title */}
+      <div style={{ padding: '0 20px' }}>
+        <h1 style={{ 
+          margin: 0, 
+          fontSize: '22px', 
+          fontWeight: 'bold', 
+          color: '#333',
+          textAlign: 'center'
+        }}>
+          {vostcard.title || 'Untitled Quickcard'}
+        </h1>
+      </div>
+
+      {/* ✅ UPDATED: Side-by-side thumbnails (or single large photo when no video) */}
+      {hasVideoMedia ? (
+        <div style={{ 
+          padding: '20px', 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '16px'
+        }}>
+          {/* Photo thumbnail */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div style={{ 
+              width: '125px',
+              height: '125px',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              backgroundColor: '#f8f9fa',
+              boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
+              cursor: 'pointer',
+              position: 'relative'
+            }}
+            onClick={() => {
+              if (hasAudio) handleIntroAudioPlayback();
+              if (photoURLs && photoURLs.length > 0) {
+                setSelectedPhotoIndex(0);
+                setShowMultiPhotoModal(true);
+              }
+            }}
+            >
+              {photoURLs && photoURLs.length > 0 ? (
+                <>
+                  <img
+                    src={photoURLs[0]}
+                    alt="Photos"
+                    style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                  {/* Centered play overlay to signal tap-to-view */}
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 0, height: 0, borderLeft: '12px solid white', borderTop: '7px solid transparent', borderBottom: '7px solid transparent', marginLeft: 3 }} />
+                  </div>
+                </>
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
+                  <FaMap size={28} color="#bbb" />
+                </div>
+              )}
+              {photoURLs && photoURLs.length > 1 && (
+                <div style={{ position: 'absolute', top: 6, right: 6, background: 'rgba(0,0,0,0.7)', color: 'white', borderRadius: 12, fontSize: 12, padding: '2px 6px' }}>
+                  1/{photoURLs.length}
+                </div>
+              )}
+            </div>
+            <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Photos</div>
+          </div>
+
+          {/* Video thumbnail */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div
+              style={{ 
                 width: '125px',
                 height: '125px',
                 borderRadius: '12px',
                 overflow: 'hidden',
-                backgroundColor: '#f8f9fa',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                backgroundColor: '#111',
+                boxShadow: '0 6px 18px rgba(0,0,0,0.12)',
                 position: 'relative',
                 cursor: 'pointer'
-              }}>
-                    <img
-                      src={vostcard.photoURLs[0]}
-                      alt="Quickcard"
-                      style={{
-                        width: '125px',
-                        height: '125px',
-                        display: 'block',
-                        cursor: 'pointer',
-                        WebkitBackfaceVisibility: 'hidden',
-                        backfaceVisibility: 'hidden',
-                        objectFit: 'cover',
-                        transform: 'translateZ(0)',
-                        filter: 'contrast(1.03) saturate(1.08) brightness(1.02)'
-                      } as React.CSSProperties}
-                      onClick={() => {
-                        const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
-                        
-                        if (hasAudio) {
-                          handleAudioPlayback();
-                        } else if (vostcard.photoURLs.length > 1) {
-                          setSelectedPhotoIndex(0);
-                          setShowMultiPhotoModal(true);
-                        } else {
-                          handlePhotoClick(vostcard.photoURLs[0]);
-                        }
-                      }}
-                  loading="eager"
-                  fetchPriority="high"
-                    />
-
-                    {/* Play overlay to indicate tap-to-view/slideshow */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: '34px',
-                        height: '34px',
-                        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        zIndex: 2
-                      }}
-                      onClick={() => {
-                        const hasAudio = !!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0);
-                        if (hasAudio) {
-                          handleAudioPlayback();
-                        } else if (vostcard.photoURLs.length > 1) {
-                          setSelectedPhotoIndex(0);
-                          setShowMultiPhotoModal(true);
-                        } else {
-                          handlePhotoClick(vostcard.photoURLs[0]);
-                        }
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: 0,
-                          height: 0,
-                          borderLeft: '12px solid white',
-                          borderTop: '7px solid transparent',
-                          borderBottom: '7px solid transparent',
-                          marginLeft: '3px'
-                        }}
-                      />
-                    </div>
-                    
-                      {vostcard.photoURLs.length > 1 && (
-                        <div style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          color: 'white',
-                    padding: '6px 12px',
-                    borderRadius: '16px',
-                    fontSize: '14px',
-                          fontWeight: 'bold',
-                    backdropFilter: 'blur(8px)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                        }}>
-                          1/{vostcard.photoURLs.length}
-                        </div>
-                      )}
+              }}
+              onClick={() => {
+                const videoUrl = (vostcard as any)?.videoURL || ((vostcard as any)?.video instanceof Blob ? URL.createObjectURL((vostcard as any).video) : null);
+                if (videoUrl) {
+                  window.open(videoUrl, '_blank');
+                }
+              }}
+            >
+              <div style={{ width: '100%', height: '100%' }}>
+                {/* Static black preview with play overlay */}
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 0, height: 0, borderLeft: '14px solid white', borderTop: '9px solid transparent', borderBottom: '9px solid transparent', marginLeft: 4 }} />
+                </div>
               </div>
-            ) : (
-              <div style={{ 
-                width: '100%',
-                backgroundColor: '#f0f0f0',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#999',
-                fontSize: '18px'
-              }}>
-                No photos available
-              </div>
-            )}
+            </div>
+            <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Video</div>
           </div>
-        ) : (
-          // Regular vostcard layout - video thumbnail on left, 2 photos stacked on right
-          <div style={{ 
-            padding: '20px', 
-            display: 'flex', 
-            gap: '10px'
-          }}>
-            {/* Video Thumbnail Section */}
+        </div>
+      ) : (
+        <div style={{ 
+          padding: '20px', 
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             <div style={{ 
-              width: '125px',
-              height: '125px',
-              backgroundColor: vostcard.videoURL ? 'transparent' : '#000',
+              width: '200px',
+              height: '200px',
               borderRadius: '12px',
               overflow: 'hidden',
+              backgroundColor: '#f8f9fa',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+              cursor: 'pointer',
               position: 'relative'
-            }}>
-              {vostcard.videoURL ? (
+            }}
+            onClick={() => {
+              if (hasAudio) handleIntroAudioPlayback();
+              if (photoURLs && photoURLs.length > 0) {
+                setSelectedPhotoIndex(0);
+                setShowMultiPhotoModal(true);
+              }
+            }}
+            >
+              {photoURLs && photoURLs.length > 0 ? (
                 <>
-                <video
-                  ref={videoRef}
-                  src={vostcard.videoURL}
-                  style={{
-                    width: '125px',
-                    height: '125px',
-                    objectFit: 'cover',
-                    cursor: 'pointer'
-                  }}
-                  playsInline
-                    muted
-                  onClick={() => setShowVideoModal(true)}
-                />
-                  {/* Play Button Overlay */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '30px',
-                      height: '30px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      zIndex: 2
-                    }}
-                    onClick={() => setShowVideoModal(true)}
-                  >
-                    <div
-                      style={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '10px solid white',
-                        borderTop: '6px solid transparent',
-                        borderBottom: '6px solid transparent',
-                        marginLeft: '2px'
-                      }}
-                    />
+                  <img
+                    src={photoURLs[0]}
+                    alt="Photos"
+                    style={{ width: '200px', height: '200px', objectFit: 'cover', display: 'block' }}
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                  {/* Centered play overlay to signal tap-to-view */}
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 0, height: 0, borderLeft: '14px solid white', borderTop: '9px solid transparent', borderBottom: '9px solid transparent', marginLeft: 4 }} />
                   </div>
                 </>
               ) : (
-                <div style={{ 
-                  width: '125px',
-                  height: '125px',
-                  backgroundColor: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#999'
-                }}>
-                  No video
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0' }}>
+                  <FaMap size={40} color="#bbb" />
+                </div>
+              )}
+              {photoURLs && photoURLs.length > 1 && (
+                <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.7)', color: 'white', borderRadius: 12, fontSize: 14, padding: '3px 8px' }}>
+                  1/{photoURLs.length}
                 </div>
               )}
             </div>
-
-            {/* Photos Section - 2 photos stacked vertically */}
-            <div style={{ 
-              width: '125px',
-              height: '125px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px'
-            }}>
-              {/* First Photo */}
-              {vostcard.photoURLs && vostcard.photoURLs.length > 0 ? (
-                <div style={{ 
-                  height: '60px',
-                  borderRadius: '8px', 
-                  overflow: 'hidden',
-                  position: 'relative'
-                }} onClick={() => handlePhotoClick(vostcard.photoURLs[0])}>
-                  <img
-                    src={vostcard.photoURLs[0]}
-                    alt="Photo 1"
-                    style={{
-                      width: '125px',
-                      height: '60px',
-                      objectFit: 'cover',
-                      cursor: 'pointer',
-                      display: 'block'
-                    }}
-                  />
-                  {/* Play overlay for photo thumbnail to indicate slideshow */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '26px',
-                      height: '26px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      zIndex: 2
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '9px solid white',
-                        borderTop: '5px solid transparent',
-                        borderBottom: '5px solid transparent',
-                        marginLeft: '2px'
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div style={{ 
-                  flex: 1,
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#999',
-                  fontSize: '14px'
-                }}>
-                  No photo
-                </div>
-              )}
-              
-              {/* Second Photo */}
-              {vostcard.photoURLs && vostcard.photoURLs.length > 1 ? (
-                <div style={{ 
-                  height: '60px',
-                  borderRadius: '8px', 
-                  overflow: 'hidden',
-                  position: 'relative'
-                }} onClick={() => handlePhotoClick(vostcard.photoURLs[1])}>
-                  <img
-                    src={vostcard.photoURLs[1]}
-                    alt="Photo 2"
-                    style={{
-                      width: '125px',
-                      height: '60px',
-                      objectFit: 'cover',
-                      cursor: 'pointer',
-                      display: 'block'
-                    }}
-                  />
-                  {/* Play overlay for photo thumbnail to indicate slideshow */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      width: '26px',
-                      height: '26px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      zIndex: 2
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '9px solid white',
-                        borderTop: '5px solid transparent',
-                        borderBottom: '5px solid transparent',
-                        marginLeft: '2px'
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div style={{ 
-                  flex: 1,
-                  backgroundColor: '#f0f0f0',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#999',
-                  fontSize: '14px'
-                }}>
-                  No photo
-                </div>
-              )}
-            </div>
+            <div style={{ fontSize: '18px', color: '#333', fontWeight: 600 }}>Photos</div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Intro/Detail/Map Buttons - Show if there are recordings OR location data */}
-        {vostcard.isQuickcard && (!!(vostcard.audioURL || vostcard.audioURLs?.length > 0 || vostcard.audio || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.length > 0 || vostcard.audioFiles?.length > 0) || !!(vostcard?.geo?.latitude && vostcard?.geo?.longitude)) && (
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '20px',
-            gap: '16px'
-          }}>
-            {/* Intro Button - Always show if there's any audio */}
+      {/* Hidden Audio Element */}
+      {hasAudio && (
+        <audio
+          ref={audioRef}
+          src={vostcard.audioURL || vostcard.audioURLs?.[0]}
+          preload="metadata"
+          style={{ display: 'none' }}
+        />
+      )}
+
+      {/* Intro/Detail/Map Buttons - Only show if there are recordings */}
+      {(hasAudio || (vostcard?.latitude && vostcard?.longitude)) && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '0px',
+          gap: '5px',
+          flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
+        }}>
+          {/* Detail Button - Show ONLY if there's a second recording */}
+          {(() => {
+            const hasDetailAudio = (
+              // Multiple audio files exist
+              (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
+              (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
+              (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
+              (vostcard?.audioLabels && vostcard.audioLabels.includes('detail')) ||
+              // Explicit detail audio field exists
+              (vostcard?.detailAudioURL) ||
+              // Both intro and detail audio fields exist
+              (vostcard?.introAudioURL && vostcard?.detailAudioURL)
+            );
+            
+            return hasDetailAudio;
+          })() && (
             <button
               onClick={() => {
-                console.log('🎵 Intro button clicked - playing audio and showing swipeable photo gallery');
-                // Play audio
-                handleAudioPlayback();
-                // Show swipeable photo gallery starting with first photo
-                if (vostcard.photoURLs && vostcard.photoURLs.length > 0) {
+                console.log('🎵 Detail button clicked - playing detail audio and showing slideshow');
+                // Play detail audio
+                handleDetailAudioPlayback();
+                // Show photo slideshow starting with first photo WITH AUTO-PLAY
+                if (photoURLs && photoURLs.length > 0) {
                   setSelectedPhotoIndex(0);
                   setShowMultiPhotoModal(true);
                 }
@@ -1519,519 +1423,890 @@ Tap OK to continue.`;
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
               <FaPlay size={14} style={{ marginRight: '8px' }} />
-              Intro
+              More
             </button>
+          )}
 
-            {/* Detail Button - Show ONLY if there's a second recording */}
-            {(() => {
-              const hasDetailAudio = (
-                // Multiple audio files exist in any format
-                (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) ||
-                (vostcard?._firebaseAudioURLs && vostcard._firebaseAudioURLs.length >= 2) ||
-                (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) ||
-                // Check if audioLabels includes 'detail' (indicates 2+ audio files)
-                (vostcard?.audioLabels && vostcard.audioLabels.includes('detail')) ||
-                // Explicit detail audio field exists
-                (vostcard?.detailAudioURL) ||
-                // Both intro and detail audio fields exist
-                (vostcard?.introAudioURL && vostcard?.detailAudioURL)
-              );
-              
-              return hasDetailAudio;
-            })() && (
-              <button
-                onClick={() => {
-                  console.log('🎵 More button clicked - playing detail audio and showing slideshow');
-                  
-                  // Play detail audio if available
-                  if (vostcard?.audioURLs && vostcard.audioURLs.length >= 2) {
-                    // Play second audio file (detail audio)
-                    if (audioRef.current) {
-                      audioRef.current.src = vostcard.audioURLs[1];
-                      audioRef.current.play();
-                    }
-                  } else if (vostcard?.audioFiles && vostcard.audioFiles.length >= 2) {
-                    // Play second audio file from audioFiles
-                    if (audioRef.current) {
-                      audioRef.current.src = URL.createObjectURL(vostcard.audioFiles[1]);
-                      audioRef.current.play();
-                    }
-                  }
-                  
-                  // Show swipeable photo gallery starting with first photo
-                  if (vostcard.photoURLs && vostcard.photoURLs.length > 0) {
-                    setSelectedPhotoIndex(0);
-                    setShowMultiPhotoModal(true);
-                  }
-                }}
-                style={{
-                  backgroundColor: '#002B4D',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 24px',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  minWidth: '100px',
-                  boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-              >
-                <FaPlay size={14} style={{ marginRight: '8px' }} />
-                More
-              </button>
-            )}
+        </div>
+      )}
 
-            {/* Play Video (optional) - support URL or Blob */}
-            {((vostcard as any)?.videoURL || (vostcard as any)?.video instanceof Blob) && (
-              <button
-                onClick={() => {
-                  const videoUrl = (vostcard as any)?.videoURL || (vostcard as any)?.videoURLFromBlob || ((vostcard as any)?.video instanceof Blob ? URL.createObjectURL((vostcard as any).video) : null);
-                  if (videoUrl) {
-                    window.open(videoUrl, '_blank');
-                  } else {
-                    alert('No video available');
-                  }
-                }}
-                style={{
-                  backgroundColor: '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '12px 24px',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  minWidth: '120px',
-                  boxShadow: '0 2px 8px rgba(0,122,255,0.2)',
-                  transition: 'all 0.2s ease',
-                  marginRight: 8
-                }}
-              >
-                Play Video
-              </button>
-            )}
+      {/* Action Icons Row - Under photo thumbnail */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        padding: '20px 40px',
+        borderBottom: '1px solid #eee'
+      }}>
+        <button
+          onClick={handleLikeClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isLiked ? '#ff3b30' : '#666'
+          }}
+        >
+          <FaHeart size={22} />
+        </button>
 
-            {/* Removed Add to Itinerary button per request */}
-          </div>
+        <button
+          onClick={() => setShowCommentsModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaRegComment size={22} />
+        </button>
+
+        <button
+          onClick={handleShareClick}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#666'
+          }}
+        >
+          <FaShare size={22} />
+        </button>
+
+        <button
+          onClick={handleFlag}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ff3b30'
+          }}
+        >
+          <FaFlag size={22} />
+        </button>
+      </div>
+
+      {/* Map View and Add to Itinerary Buttons - Under action icons */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+        gap: '16px',
+        borderBottom: '1px solid #eee'
+      }}>
+        {/* Map View button */}
+        {vostcard?.latitude && vostcard?.longitude && (
+          <button
+            onClick={handleMapClick}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              minWidth: '120px',
+              boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+          >
+            <FaMap size={14} style={{ marginRight: '8px' }} />
+            Map View
+          </button>
         )}
 
-        {/* Action Icons Row - Under photo thumbnail */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          padding: '20px 40px',
-          borderBottom: '1px solid #eee'
-        }}>
+        {/* Add to Itinerary button */}
+        {user && (
           <button
-            onClick={handleLikeClick}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isLiked ? '#ff3b30' : '#666'
+            onClick={async () => {
+              if (!user) {
+                alert('Please log in to add items to itineraries');
+                return;
+              }
+              await loadUserItineraries();
+              setShowItineraryModal(true);
             }}
+            style={{
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              minWidth: '120px',
+              boxShadow: '0 2px 8px rgba(76,175,80,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
           >
-            <FaHeart size={22} />
+            Add to Itinerary
           </button>
+        )}
+      </div>
 
-          <button
-            onClick={() => setShowCommentsModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666'
-            }}
-          >
-            <FaRegComment size={22} />
-          </button>
-
-          <button
-            onClick={handleShareClick}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#666'
-            }}
-          >
-            <FaShare size={22} />
-          </button>
-
-          <button
-            onClick={handleFlag}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ff3b30'
-            }}
-          >
-            <FaFlag size={22} />
-          </button>
+      {/* Description Link - Always visible and locked */}
+      <div style={{ 
+        padding: '20px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottom: '1px solid #eee'
+      }}>
+        <div
+          onClick={() => setShowDescriptionModal(true)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#007aff',
+            fontSize: '22px',
+            fontWeight: 'bold',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            fontFamily: 'system-ui, sans-serif',
+            display: 'inline-block'
+          }}
+        >
+          Description
         </div>
+      </div>
 
-        {/* Map View and Add to Itinerary Buttons - Under action icons */}
+      {/* Worth Seeing Rating Widget - Always visible and locked */}
+      <div style={{
+        textAlign: 'center',
+        padding: '20px',
+        borderBottom: '1px solid #eee',
+        maxWidth: '900px',
+        margin: '0 auto'
+      }}>
+        <div style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          color: '#333',
+          marginBottom: '15px'
+        }}>
+          Worth seeing?
+        </div>
         <div style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '20px',
-          gap: '16px',
-          borderBottom: '1px solid #eee'
+          gap: '8px'
         }}>
-          {/* Add to Itinerary button - First position */}
-          {user && (
+          {[1, 2, 3, 4, 5].map((star) => (
             <button
-              onClick={() => {
-                // TODO: Implement add to itinerary functionality
-                console.log('Add to Itinerary clicked for vostcard:', vostcard?.id);
-                alert('Add to Itinerary functionality coming soon!');
+              key={star}
+              onClick={async () => {
+                if (!user) {
+                  alert('Please log in to rate this vostcard');
+                  return;
+                }
+                
+                if (!vostcard?.id) {
+                  alert('Unable to rate this vostcard');
+                  return;
+                }
+
+                const newRating = userRating === star ? 0 : star;
+                
+                try {
+                  if (newRating > 0) {
+                    await RatingService.submitRating(vostcard.id, newRating);
+                  } else {
+                    // Remove rating when user clicks same star
+                    await RatingService.removeRating(vostcard.id);
+                  }
+                  setUserRating(newRating);
+                } catch (error) {
+                  console.error('Error submitting rating:', error);
+                  alert('Failed to submit rating. Please try again.');
+                }
               }}
               style={{
-                backgroundColor: '#4CAF50',
-                color: 'white',
+                background: 'none',
                 border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: 600,
                 cursor: 'pointer',
-                minWidth: '120px',
-                boxShadow: '0 2px 8px rgba(76,175,80,0.2)',
-                transition: 'all 0.2s ease'
+                color: star <= userRating ? '#ffd700' : '#ccc',
+                padding: '4px',
+                transition: 'color 0.2s ease'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
             >
-              Add to Itinerary
+              <FaStar size={24} />
             </button>
-          )}
-
-          {/* Map View button - Second position */}
-          {vostcard?.latitude && vostcard?.longitude && (
-            <button
-              onClick={handleMapClick}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                minWidth: '120px',
-                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-            >
-              <FaMap size={14} style={{ marginRight: '8px' }} />
-              Map View
-            </button>
-          )}
-        </div>
-
-        {/* Counts Row */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          padding: '10px 40px',
-          fontSize: '18px',
-          color: '#666'
-        }}>
-          <span>0</span>
-          <span>0.0</span>
-          <span>0</span>
-          <span></span>
-          {/* Audio duration - ENHANCED for both vostcard types */}
-          {(((vostcard as any)?.audio || (vostcard as any)?._firebaseAudioURL || (vostcard as any)?.audioURL || (vostcard as any)?.audioURLs?.[0]) && (
-            <span>{audioDuration ? formatAudioDuration(audioDuration) : '...'}</span>
           ))}
         </div>
+      </div>
 
-        {/* Description Link - Always visible and locked */}
-        <div style={{ 
-          padding: '20px',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderBottom: '1px solid #eee'
-        }}>
+      {/* Removed green Add to Itinerary button from detail view per request */}
+
+      {/* Itinerary Modal */}
+      {showItineraryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setShowItineraryModal(false)}
+        >
           <div
-            onClick={() => setShowDescriptionModal(true)}
             style={{
-              background: 'none',
-              border: 'none',
-              color: '#007aff',
-              fontSize: '22px',
-              fontWeight: 'bold',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              fontFamily: 'system-ui, sans-serif',
-              display: 'inline-block'
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              minWidth: '320px',
+              maxWidth: '400px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            Description
+            <h3 style={{
+              margin: '0 0 20px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#333',
+              textAlign: 'center'
+            }}>
+              Add to Itinerary
+            </h3>
+            
+            {loadingItineraries ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <div style={{ fontSize: '20px', marginBottom: '10px' }}>📋</div>
+                <div>Loading itineraries...</div>
+              </div>
+            ) : existingItineraries.length > 0 ? (
+              // Show both options when there are existing itineraries
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    setShowItineraryModal(false);
+                    setShowSelectItineraryModal(true);
+                  }}
+                  style={{
+                    backgroundColor: '#007aff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                >
+                  📋 Add to Existing Itinerary
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowItineraryModal(false);
+                    setShowCreateItineraryModal(true);
+                  }}
+                  style={{
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                >
+                  ➕ Create New Itinerary
+                </button>
+              </div>
+            ) : (
+              // Show only create option when no existing itineraries
+              <div>
+                <p style={{
+                  margin: '0 0 16px 0',
+                  fontSize: '14px',
+                  color: '#666',
+                  textAlign: 'center'
+                }}>
+                  You don't have any itineraries yet.
+                </p>
+                
+                <button
+                  onClick={() => {
+                    setShowItineraryModal(false);
+                    setShowCreateItineraryModal(true);
+                  }}
+                  style={{
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease',
+                    width: '100%'
+                  }}
+                >
+                  ➕ Create New Itinerary
+                </button>
+              </div>
+            )}
+            
+            <button
+              onClick={() => setShowItineraryModal(false)}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                marginTop: '12px',
+                width: '100%'
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
+      )}
 
-        {/* Worth Seeing Rating Widget - Always visible and locked */}
-        <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          borderBottom: '1px solid #eee',
-          maxWidth: '900px',
-          margin: '0 auto'
-        }}>
-          <div style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            color: '#333',
-            marginBottom: '15px'
-          }}>
-            Worth seeing?
-          </div>
-          <div style={{
+      {/* Select Existing Itinerary Modal */}
+      {showSelectItineraryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
             display: 'flex',
-            justifyContent: 'center',
             alignItems: 'center',
-            gap: '8px'
-          }}>
-            {[1, 2, 3, 4, 5].map((star) => (
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => !addingToItinerary && setShowSelectItineraryModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              minWidth: '320px',
+              maxWidth: '400px',
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{
+              margin: '0 0 20px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#333',
+              textAlign: 'center'
+            }}>
+              Select Itinerary
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {existingItineraries.map((itinerary) => (
+                <button
+                  key={itinerary.id}
+                  onClick={() => handleAddToExistingItinerary(itinerary)}
+                  disabled={addingToItinerary}
+                  style={{
+                    backgroundColor: addingToItinerary ? '#f0f0f0' : 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    textAlign: 'left',
+                    cursor: addingToItinerary ? 'not-allowed' : 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseOver={(e) => {
+                    if (!addingToItinerary) {
+                      e.currentTarget.style.backgroundColor = '#f5f5f5';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!addingToItinerary) {
+                      e.currentTarget.style.backgroundColor = 'white';
+                    }
+                  }}
+                >
+                  <div style={{
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    color: '#333',
+                    marginBottom: '4px'
+                  }}>
+                    {itinerary.name}
+                  </div>
+                  
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#666',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>{itinerary.items.length} item{itinerary.items.length !== 1 ? 's' : ''}</span>
+                    {itinerary.isPublic && (
+                      <span style={{
+                        backgroundColor: '#e3f2fd',
+                        color: '#1976d2',
+                        padding: '1px 4px',
+                        borderRadius: '3px',
+                        fontSize: '10px',
+                        fontWeight: '500'
+                      }}>
+                        Public
+                      </span>
+                    )}
+                  </div>
+                  
+                  {itinerary.description && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#888',
+                      marginTop: '4px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {itinerary.description}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={() => setShowSelectItineraryModal(false)}
+              disabled={addingToItinerary}
+              style={{
+                backgroundColor: 'transparent',
+                color: '#666',
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: addingToItinerary ? 'not-allowed' : 'pointer',
+                marginTop: '12px',
+                width: '100%'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Create New Itinerary Modal */}
+      {showCreateItineraryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => !creatingItinerary && setShowCreateItineraryModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '24px',
+              minWidth: '320px',
+              maxWidth: '400px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{
+              margin: '0 0 20px 0',
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#333',
+              textAlign: 'center'
+            }}>
+              Create New Itinerary
+            </h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                marginBottom: '6px'
+              }}>
+                Name *
+              </label>
+              <input
+                type="text"
+                value={newItineraryName}
+                onChange={(e) => setNewItineraryName(e.target.value)}
+                placeholder="Enter itinerary name"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+                maxLength={50}
+                disabled={creatingItinerary}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                marginBottom: '6px'
+              }}>
+                Description (optional)
+              </label>
+              <textarea
+                value={newItineraryDescription}
+                onChange={(e) => setNewItineraryDescription(e.target.value)}
+                placeholder="Enter description"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  minHeight: '80px',
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
+                }}
+                maxLength={200}
+                disabled={creatingItinerary}
+              />
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              justifyContent: 'flex-end'
+            }}>
               <button
-                key={star}
-                onClick={() => handleRatingClick(star)}
+                onClick={() => setShowCreateItineraryModal(false)}
+                disabled={creatingItinerary}
+                style={{
+                  backgroundColor: 'transparent',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  cursor: creatingItinerary ? 'not-allowed' : 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={handleCreateNewItinerary}
+                disabled={creatingItinerary || !newItineraryName.trim()}
+                style={{
+                  backgroundColor: creatingItinerary || !newItineraryName.trim() ? '#ccc' : '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  cursor: creatingItinerary || !newItineraryName.trim() ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {creatingItinerary ? 'Creating...' : 'Create & Add'}
+              </button>
+            </div>
+            
+            <div style={{
+              fontSize: '12px',
+              color: '#666',
+              marginTop: '12px',
+              textAlign: 'center'
+            }}>
+              This vostcard will be added to your new itinerary
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      <CommentsModal
+        isOpen={showCommentsModal}
+        onClose={() => setShowCommentsModal(false)}
+        vostcardID={id!}
+        vostcardTitle={vostcard?.title}
+      />
+
+      {/* Map Modal */}
+      {showMapModal && vostcard?.latitude && vostcard?.longitude && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={() => setShowMapModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '500px',
+              height: '70vh',
+              maxHeight: '600px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              background: '#07345c',
+              color: 'white',
+              padding: '16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Quickcard Location</h3>
+              <button
+                onClick={() => setShowMapModal(false)}
                 style={{
                   background: 'none',
                   border: 'none',
+                  color: 'white',
                   cursor: 'pointer',
-                  color: star <= userRating ? '#ffd700' : '#ccc',
-                  padding: '4px',
-                  transition: 'color 0.2s ease'
+                  fontSize: '20px'
                 }}
               >
-                <FaStar size={24} />
+                <FaTimes />
               </button>
-            ))}
+            </div>
+
+            <div style={{ height: 'calc(100% - 68px)', width: '100%' }}>
+              <MapContainer
+                center={[vostcard.latitude, vostcard.longitude]}
+                zoom={16}
+                style={{ height: '100%', width: '100%' }}
+                zoomControl={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  maxZoom={22}
+                />
+                <Marker
+                  position={[vostcard.latitude, vostcard.longitude]}
+                  icon={vostcardIcon}
+                />
+              </MapContainer>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Modals */}
-        <CommentsModal
-          isOpen={showCommentsModal}
-          onClose={() => setShowCommentsModal(false)}
-          vostcardID={id!}
-          vostcardTitle={vostcard?.title}
-        />
-
-        {/* Description Modal */}
-        {showDescriptionModal && (
+      {/* Description Modal */}
+      {showDescriptionModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowDescriptionModal(false)}
+        >
           <div
             style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
+              background: 'white',
+              padding: '24px',
+              borderRadius: '12px',
+              maxWidth: '90vw',
+              maxHeight: '80vh',
+              overflow: 'auto',
             }}
-            onClick={() => setShowDescriptionModal(false)}
+            onClick={e => e.stopPropagation()}
           >
-            <div
-              style={{
-                background: 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                maxWidth: '90vw',
-                maxHeight: '80vh',
-                overflow: 'auto',
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
-                <button
-                  onClick={() => setShowDescriptionModal(false)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    fontSize: '24px',
-                    cursor: 'pointer',
-                    color: '#666'
-                  }}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
-                {(() => {
-                  const description = vostcard.description || 'No description available.';
-                  // Auto-detect URLs and make them clickable
-                  const urlRegex = /(https?:\/\/[^\s]+)/g;
-                  const parts = description.split(urlRegex);
-                  
-                  return parts.map((part: string, index: number) => {
-                    if (urlRegex.test(part)) {
-                      return (
-                        <a
-                          key={index}
-                          href={part}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            color: '#007aff',
-                            textDecoration: 'underline',
-                            wordBreak: 'break-all'
-                          }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(part, '_blank');
-                          }}
-                        >
-                          {part}
-                        </a>
-                      );
-                    }
-                    return part;
-                  });
-                })()}
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>Description</h3>
+              <button
+                onClick={() => setShowDescriptionModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div style={{ fontSize: '16px', lineHeight: 1.6, color: '#555' }}>
+              {(() => {
+                const description = vostcard.description || 'No description available.';
+                // Auto-detect URLs and make them clickable
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const parts = description.split(urlRegex);
+                
+                return parts.map((part: string, index: number) => {
+                  if (urlRegex.test(part)) {
+                    return (
+                      <a
+                        key={index}
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: '#007aff',
+                          textDecoration: 'underline',
+                          wordBreak: 'break-all'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(part, '_blank');
+                        }}
+                      >
+                        {part}
+                      </a>
+                    );
+                  }
+                  return part;
+                });
+              })()}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Enhanced Multi-Photo Modal with Swipe */}
-        {showMultiPhotoModal && vostcard.photoURLs && (
-          <MultiPhotoModal
-            photos={vostcard.photoURLs}
-            initialIndex={selectedPhotoIndex}
-            isOpen={showMultiPhotoModal}
-            onClose={() => setShowMultiPhotoModal(false)}
-            title={vostcard.title}
-          />
-        )}
-
-        {/* Single Photo Modal (fallback) */}
-        {selectedPhoto && (
-          <div
+      {/* ✅ Photo Modal - Shows first photo when thumbnails are clicked */}
+      {selectedPhoto && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.95)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            cursor: 'zoom-out',
+          }}
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <img
+            src={selectedPhoto}
+            alt="Full size"
             style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
               width: '100%',
               height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.9)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1001
-            }}
-            onClick={() => setSelectedPhoto(null)}
-          >
-            <img
-              src={selectedPhoto}
-              alt="Full size"
-              style={{ 
-                width: '100vw', 
-                height: '100vh', 
-                objectFit: 'contain',
-                cursor: 'pointer'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </div>
-        )}
+              objectFit: 'contain',
+              userSelect: 'none',
+              // ✅ High-quality full-screen rendering
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+              filter: 'contrast(1.03) saturate(1.08) brightness(1.02)', // ✅ Enhanced quality
+            } as React.CSSProperties}
+            draggable={false}
+          />
+        </div>
+      )}
 
-        {/* Video Modal */}
-        {showVideoModal && vostcard.videoURL && (
-          <div
-            style={{
-              position: 'absolute',
-              top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.9)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              padding: '20px'
-            }}
-            onClick={() => setShowVideoModal(false)}
-          >
-            <div
-              style={{
-                position: 'relative',
-                maxWidth: '90vw',
-                maxHeight: '90vh',
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onClick={e => e.stopPropagation()}
-            >
-              <video
-                src={vostcard.videoURL}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'contain',
-                  borderRadius: 8,
-                  backgroundColor: '#000'
-                }}
-                controls
-                autoPlay
-                playsInline
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Multi Photo Modal */}
-        {/* Share Options Modal */}
-        {/* <SharedOptionsModal
-          isOpen={showSharedOptions}
-          onClose={() => setShowSharedOptions(false)}
-          item={{
-            id: id || '',
-            title: vostcard?.title,
-            description: vostcard?.description,
-            isQuickcard: vostcard?.isQuickcard
+      {/* MultiPhotoModal with AUTO-PLAY - 7 SECOND INTERVALS */}
+      {showMultiPhotoModal && (
+      <MultiPhotoModal
+          photos={photoURLs}
+        initialIndex={selectedPhotoIndex}
+        isOpen={showMultiPhotoModal}
+          onClose={() => {
+            setShowMultiPhotoModal(false);
+            // Stop audio when slideshow is closed
+            if (audioRef.current) {
+              audioRef.current.pause();
+              setIsPlaying(false);
+            }
           }}
-        /> */}
+          title={vostcard?.title}
+          autoPlay={true}
+          autoPlayInterval={7000}
+          audioDuration={vostcard?.audioDuration}
+      />
+      )}
 
-        {/* Tip Dropdown Menu */}
-        <TipDropdownMenu
-          userProfile={userProfile}
-          isVisible={showTipDropdown}
-          onClose={() => setShowTipDropdown(false)}
-          position={tipDropdownPosition}
-        />
-      </div>
+      {/* Share Options Modal */}
+      <SharedOptionsModal
+        isOpen={showSharedOptions}
+        onClose={() => setShowSharedOptions(false)}
+        item={{
+          id: id || '',
+          title: vostcard?.title,
+          description: vostcard?.description,
+          isQuickcard: true
+        }}
+      />
+
+      {/* Tip Dropdown Menu */}
+      <TipDropdownMenu
+        userProfile={userProfile}
+        isVisible={showTipDropdown}
+        onClose={() => setShowTipDropdown(false)}
+        position={tipDropdownPosition}
+      />
     </div>
   );
 };
 
-export default VostcardDetailView;
+export default VostcardDetailView; 

@@ -43,7 +43,6 @@ import FollowingView from "./pages/FollowingView";
 import FriendListView from "./pages/FriendListView";
 import VostboxView from "./pages/VostboxView";
 import LegacyQuickcardsListView from "./pages/LegacyQuickcardsListView";
-import LegacyQuickcardDetailView from "./pages/LegacyQuickcardDetailView";
 import ItinerariesListView from "./pages/ItinerariesListView";
 import ItineraryDetailView from "./pages/ItineraryDetailView";
 import MyTripsListView from "./pages/MyTripsListView";
@@ -132,7 +131,7 @@ function App() {
 
                   {/* 📱 Quickcard Routes */}
                   <Route path="/quickcards" element={<LegacyQuickcardsListView />} />
-                  <Route path="/quickcard/:id" element={<LegacyQuickcardDetailView />} />
+                  <Route path="/quickcard/:id" element={<VostcardDetailView />} />
 
                   {/* 📋 Itinerary Routes */}
                   <Route path="/itineraries" element={<ItinerariesListView />} />
