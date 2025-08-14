@@ -1170,30 +1170,6 @@ Tap OK to continue.`;
       </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Map View button in header row */}
-          {quickcard?.latitude && quickcard?.longitude && (
-            <button
-              onClick={handleMapClick}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 14px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                minWidth: '100px',
-                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
-            >
-              <FaMap size={12} style={{ marginRight: '6px' }} />
-              Map View
-            </button>
-          )}
           {/* ☕ Tip Button for Guides */}
           {userProfile?.userRole === 'guide' && user?.uid !== quickcard.userID && (
             <button
@@ -1454,7 +1430,7 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* Action Icons Row */}
+      {/* Action Icons Row - Under photo thumbnail */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-around',
@@ -1507,68 +1483,103 @@ Tap OK to continue.`;
           <FaShare size={22} />
         </button>
 
-        {/* Replace spot with Add to Itinerary */}
-        <button
-          onClick={async () => {
-            if (!user) {
-              alert('Please log in to add items to itineraries');
-              return;
-            }
-            await loadUserItineraries();
-            setShowItineraryModal(true);
-          }}
-          style={{
-            backgroundColor: '#002B4D',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 24px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 8px rgba(0,43,77,0.2)'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.backgroundColor = '#001f35';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.backgroundColor = '#002B4D';
-          }}
-        >
-          Add to Itinerary
-        </button>
-      </div>
-
-      {/* Description Link, Flag Icon, and Refresh Button */}
-      <div style={{ 
-        padding: '2px 20px 5px 20px',
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
         <button
           onClick={handleFlag}
           style={{
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#ff3b30',
-            position: 'absolute',
-            left: '15px'
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ff3b30'
           }}
         >
-          <FaFlag size={24} />
+          <FaFlag size={22} />
         </button>
-        
+      </div>
+
+      {/* Map View and Add to Itinerary Buttons - Under action icons */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+        gap: '16px',
+        borderBottom: '1px solid #eee'
+      }}>
+        {/* Map View button */}
+        {quickcard?.latitude && quickcard?.longitude && (
+          <button
+            onClick={handleMapClick}
+            style={{
+              backgroundColor: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              minWidth: '120px',
+              boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+          >
+            <FaMap size={14} style={{ marginRight: '8px' }} />
+            Map View
+          </button>
+        )}
+
+        {/* Add to Itinerary button */}
+        {user && (
+          <button
+            onClick={async () => {
+              if (!user) {
+                alert('Please log in to add items to itineraries');
+                return;
+              }
+              await loadUserItineraries();
+              setShowItineraryModal(true);
+            }}
+            style={{
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px 24px',
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              minWidth: '120px',
+              boxShadow: '0 2px 8px rgba(76,175,80,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
+          >
+            Add to Itinerary
+          </button>
+        )}
+      </div>
+
+      {/* Description Link - Always visible and locked */}
+      <div style={{ 
+        padding: '20px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottom: '1px solid #eee'
+      }}>
         <div
           onClick={() => setShowDescriptionModal(true)}
           style={{
             background: 'none',
             border: 'none',
             color: '#007aff',
-                          fontSize: '22px',
+            fontSize: '22px',
             fontWeight: 'bold',
             textDecoration: 'underline',
             cursor: 'pointer',
@@ -1578,26 +1589,12 @@ Tap OK to continue.`;
         >
           Description
         </div>
-
-        <button
-          onClick={handleRefresh}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: '#007aff',
-            position: 'absolute',
-            right: '20px'
-          }}
-        >
-          <FaSync size={24} />
-        </button>
       </div>
 
-      {/* Worth Seeing Rating Widget */}
+      {/* Worth Seeing Rating Widget - Always visible and locked */}
       <div style={{
         textAlign: 'center',
-        padding: '0px 20px 20px 20px',
+        padding: '20px',
         borderBottom: '1px solid #eee',
         maxWidth: '900px',
         margin: '0 auto'
@@ -1606,7 +1603,7 @@ Tap OK to continue.`;
           fontSize: '18px',
           fontWeight: '600',
           color: '#333',
-          marginBottom: '5px'
+          marginBottom: '15px'
         }}>
           Worth seeing?
         </div>
