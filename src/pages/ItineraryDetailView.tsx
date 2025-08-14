@@ -410,19 +410,6 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
               <FaClock size={12} />
               Created {formatDate(itinerary.createdAt)}
             </div>
-            
-            {itinerary.isPublic && (
-              <div style={{
-                backgroundColor: '#e3f2fd',
-                color: '#1976d2',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: '500'
-              }}>
-                Public
-              </div>
-            )}
           </div>
         </div>
 
@@ -533,16 +520,7 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                         gap: '8px',
                         marginBottom: '4px'
                       }}>
-                        <span style={{
-                          backgroundColor: item.type === 'quickcard' ? '#e8f5e8' : '#e3f2fd',
-                          color: item.type === 'quickcard' ? '#2e7d32' : '#1976d2',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: '500'
-                        }}>
-                          {item.type === 'quickcard' ? 'Quickcard' : 'Vostcard'}
-                        </span>
+                        {/* Type labels removed per request */}
                         
                         {item.username && (
                           <span>by {item.username}</span>
