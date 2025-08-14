@@ -1271,27 +1271,10 @@ const AllPostedVostcardsView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Enhanced Title Section with Type Indicators */}
+                {/* Title Section */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: 2 }}>
                   <div style={{ fontWeight: 700, fontSize: 20, flex: 1 }}>
                     {v.title || 'Untitled'}
-                  </div>
-                  
-                  {/* Type Badge with Icon */}
-                  <div style={{
-                    backgroundColor: '#4ECDC4',
-                    color: 'white',
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    padding: '3px 8px',
-                    borderRadius: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    flexShrink: 0
-                  }}>
-                    <FaVideo style={{ fontSize: '8px' }} />
-                    Vōst
                   </div>
                 </div>
                 
