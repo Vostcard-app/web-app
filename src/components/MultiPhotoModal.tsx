@@ -655,7 +655,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
                   backgroundColor: 'rgba(0, 0, 0, 0.8)',
                   color: 'white',
                   padding: '12px 20px',
-                  borderRadius: '25px',
+                  borderRadius: '8px',
                   fontSize: '16px',
                   fontWeight: '500',
                   textAlign: 'center',
