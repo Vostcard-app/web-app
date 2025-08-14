@@ -138,6 +138,7 @@ export const AVAILABLE_CATEGORIES = [
   'Drive Mode Event',
   'Wish you were here',
   'Made for kids',
+  'Mural',
 ] as const;
 
 // Available types constant  
