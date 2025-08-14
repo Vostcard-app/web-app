@@ -4,6 +4,7 @@ import { useVostcard } from '../context/VostcardContext';
 import { FaArrowLeft } from 'react-icons/fa';
 import { db, auth, storage } from '../firebase/firebaseConfig';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { AVAILABLE_CATEGORIES } from '../types/VostcardTypes';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
@@ -26,26 +27,7 @@ const CreateVostcardStep3: React.FC = () => {
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
 
   
-  const availableCategories = [
-    'None',
-    'View',
-    'Landmark',
-    'Fun Fact',
-    'Macabre',
-    'Architecture',
-    'Historical',
-    'Museum',
-    'Gallery',
-    'Restaurant',
-    'Nature',
-    'Park',
-    'Drive Mode Event',
-    'Wish you were here',
-    'Made for kids',
-    'Pub',
-    'Plaque',
-    'Monument',
-  ]
+  const availableCategories = [...AVAILABLE_CATEGORIES]
   
   // Debug validation state
   const isQuickcard = currentVostcard?.isQuickcard || false;

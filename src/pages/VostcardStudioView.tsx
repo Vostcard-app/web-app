@@ -7,6 +7,7 @@ import { QuickcardImporter as LegacyQuickcardImporter } from '../components/stud
 import { useVostcard } from '../context/VostcardContext';
 import { useVostcardEdit } from '../context/VostcardEditContext';
 import type { Drivecard, Vostcard } from '../types/VostcardTypes';
+import { AVAILABLE_CATEGORIES } from '../types/VostcardTypes';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
 
@@ -17,27 +18,8 @@ const VostcardStudioView: React.FC = () => {
   const { loadQuickcard } = useVostcardEdit();
   const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcardsImmediate, loadAllLocalVostcards } = useVostcard();
   
-  // Categories from step 3
-  const availableCategories = [
-    'None',
-    'View',
-    'Landmark',
-    'Fun Fact',
-    'Macabre',
-    'Architecture',
-    'Historical',
-    'Museum',
-    'Gallery',
-    'Restaurant',
-    'Nature',
-    'Park',
-    'Drive Mode Event',
-    'Wish you were here',
-    'Made for kids',
-    'Pub',
-    'Plaque',
-    'Monument',
-  ];
+  // Categories from central AVAILABLE_CATEGORIES
+  const availableCategories = ['None', ...AVAILABLE_CATEGORIES];
   
   const canAccessDrivecard = userRole === 'guide' || userRole === 'admin';
   

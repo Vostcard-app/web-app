@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, doc, getDoc, limit, orderBy, startAf
 import { db } from '../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaGlobe, FaHeart, FaStar, FaInfoCircle, FaFilter, FaTimes, FaUser, FaCameraRetro, FaVideo, FaMapPin } from 'react-icons/fa';
+import { AVAILABLE_CATEGORIES } from '../types/VostcardTypes';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
 import FollowButton from '../components/FollowButton';
@@ -46,24 +47,8 @@ const AllPostedVostcardsView: React.FC = () => {
     return saved ? JSON.parse(saved) : true;
   });
   
-  // Category filtering state (same as HomeView)
-  const availableCategories = [
-    'None',
-    'View',
-    'Landmark',
-    'Fun Fact',
-    'Macabre',
-    'Architecture',
-    'Historical',
-    'Museum',
-    'Gallery',
-    'Restaurant',
-    'Nature',
-    'Park',
-    'Drive Mode Event',
-    'Wish you were here',
-    'Made for kids',
-  ];
+  // Category filtering state (using central AVAILABLE_CATEGORIES)
+  const availableCategories = ['None', ...AVAILABLE_CATEGORIES];
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   // Friends filtering state
