@@ -1619,7 +1619,7 @@ Tap OK to continue.`;
           </div>
         )}
 
-        {/* Action Icons Row */}
+        {/* Action Icons Row - Under photo thumbnail */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-around',
@@ -1641,20 +1641,7 @@ Tap OK to continue.`;
           >
             <FaHeart size={22} />
           </button>
-          <button
-            onClick={() => {/* Handle star action */}}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffd700'
-            }}
-          >
-            <FaStar size={22} />
-          </button>
+
           <button
             onClick={() => setShowCommentsModal(true)}
             style={{
@@ -1669,6 +1656,7 @@ Tap OK to continue.`;
           >
             <FaRegComment size={22} />
           </button>
+
           <button
             onClick={handleShareClick}
             style={{
@@ -1683,8 +1671,84 @@ Tap OK to continue.`;
           >
             <FaShare size={22} />
           </button>
-          {/* REMOVED: Map Button - map icon */}
-          {/* REMOVED: Audio Button - speaker icon */}
+
+          <button
+            onClick={handleFlag}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ff3b30'
+            }}
+          >
+            <FaFlag size={22} />
+          </button>
+        </div>
+
+        {/* Map View and Add to Itinerary Buttons - Under action icons */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px',
+          gap: '16px',
+          borderBottom: '1px solid #eee'
+        }}>
+          {/* Add to Itinerary button - First position */}
+          {user && (
+            <button
+              onClick={() => {
+                // TODO: Implement add to itinerary functionality
+                console.log('Add to Itinerary clicked for vostcard:', vostcard?.id);
+                alert('Add to Itinerary functionality coming soon!');
+              }}
+              style={{
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '120px',
+                boxShadow: '0 2px 8px rgba(76,175,80,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#45a049'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#4CAF50'}
+            >
+              Add to Itinerary
+            </button>
+          )}
+
+          {/* Map View button - Second position */}
+          {vostcard?.latitude && vostcard?.longitude && (
+            <button
+              onClick={handleMapClick}
+              style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minWidth: '120px',
+                boxShadow: '0 2px 8px rgba(0,43,77,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
+            >
+              <FaMap size={14} style={{ marginRight: '8px' }} />
+              Map View
+            </button>
+          )}
         </div>
 
         {/* Counts Row */}
@@ -1706,61 +1770,14 @@ Tap OK to continue.`;
           ))}
         </div>
 
-        {/* Worth Seeing Rating */}
-        <div style={{
-          padding: '0',
-          textAlign: 'center'
-        }}>
-          <div style={{ 
-            fontSize: '18px', 
-            fontWeight: 'bold', 
-            marginBottom: '5px',
-            color: '#333'
-          }}>
-            Worth Seeing?
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                onClick={() => handleRatingClick(star)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: star <= userRating ? '#ffd700' : '#ddd'
-                }}
-              >
-                <FaStar size={24} />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Description Link, Flag Icon, and Refresh Button */}
+        {/* Description Link - Always visible and locked */}
         <div style={{ 
           padding: '20px',
-          position: 'relative',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center'
+          alignItems: 'center',
+          borderBottom: '1px solid #eee'
         }}>
-          {/* Flag Icon - px from left */}
-          <button
-            onClick={handleFlag}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#ff3b30',
-              position: 'absolute',
-              left: '15px'
-            }}
-          >
-            <FaFlag size={24} />
-          </button>
-          
-          {/* Description Link - Centered */}
           <div
             onClick={() => setShowDescriptionModal(true)}
             style={{
@@ -1777,21 +1794,47 @@ Tap OK to continue.`;
           >
             Description
           </div>
+        </div>
 
-          {/* Refresh Button - 20px from right */}
-          <button
-            onClick={handleRefresh}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#007aff',
-              position: 'absolute',
-              right: '20px'
-            }}
-          >
-            <FaSync size={24} />
-          </button>
+        {/* Worth Seeing Rating Widget - Always visible and locked */}
+        <div style={{
+          textAlign: 'center',
+          padding: '20px',
+          borderBottom: '1px solid #eee',
+          maxWidth: '900px',
+          margin: '0 auto'
+        }}>
+          <div style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#333',
+            marginBottom: '15px'
+          }}>
+            Worth seeing?
+          </div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => handleRatingClick(star)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: star <= userRating ? '#ffd700' : '#ccc',
+                  padding: '4px',
+                  transition: 'color 0.2s ease'
+                }}
+              >
+                <FaStar size={24} />
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Modals */}
