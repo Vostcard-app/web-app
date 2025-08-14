@@ -28,7 +28,9 @@ const ItineraryDetailView: React.FC = () => {
     user: !!user,
     loading,
     error,
-    itinerary: itinerary?.name
+    itinerary: itinerary?.name,
+    itemCount: itinerary?.items?.length || 0,
+    shouldShowRouteButton: itinerary?.items?.length >= 2
   });
 
   useEffect(() => {
@@ -390,25 +392,27 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            onClick={handleOptimizeRoute}
-            disabled={optimizingRoute}
-            style={{
-              background: 'rgba(0,0,0,0.10)',
-              border: 'none',
-              borderRadius: '50%',
-              width: 40,
-              height: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: optimizingRoute ? 'not-allowed' : 'pointer',
-              opacity: optimizingRoute ? 0.7 : 1
-            }}
-            title="Suggest Route"
-          >
-            <FaRoute color="#fff" size={18} />
-          </button>
+          {itinerary.items.length >= 2 && (
+            <button
+              onClick={handleOptimizeRoute}
+              disabled={optimizingRoute}
+              style={{
+                background: 'rgba(0,0,0,0.10)',
+                border: 'none',
+                borderRadius: '50%',
+                width: 40,
+                height: 40,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: optimizingRoute ? 'not-allowed' : 'pointer',
+                opacity: optimizingRoute ? 0.7 : 1
+              }}
+              title="Suggest Route"
+            >
+              <FaRoute color="#fff" size={18} />
+            </button>
+          )}
           <button
             style={{
               background: 'rgba(0,0,0,0.10)',
