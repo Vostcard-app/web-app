@@ -59,7 +59,7 @@ const CreateVostcardStep1: React.FC = () => {
     console.log('✅ handleSaveAndContinue called');
     console.log('🎥 Video object at save:', video);
 
-    if (!UNIFIED_VOSTCARD_FLOW) {
+    if (!TEMP_UNIFIED_VOSTCARD_FLOW) {
       // Legacy requires video
       if (!video) {
         alert('❌ No video found. Please record a video first.');
@@ -108,14 +108,14 @@ const CreateVostcardStep1: React.FC = () => {
 
   // Force a re-render when video changes to avoid iOS black frame
   useEffect(() => {
-    if (UNIFIED_VOSTCARD_FLOW && video) {
+    if (TEMP_UNIFIED_VOSTCARD_FLOW && video) {
       setIsVideoLoading(true);
       requestAnimationFrame(() => {
         setIsVideoLoading(false);
         setVideoError(null);
       });
     }
-  }, [video, UNIFIED_VOSTCARD_FLOW]);
+  }, [video, TEMP_UNIFIED_VOSTCARD_FLOW]);
 
   const handleVideoCanPlay = () => {
     console.log('📹 Video can play');
@@ -415,22 +415,22 @@ const CreateVostcardStep1: React.FC = () => {
           {/* ✅ Save & Continue (video optional when unified flow is on) */}
         <button
           onClick={handleSaveAndContinue}
-            disabled={!UNIFIED_VOSTCARD_FLOW && (!video || !!videoError)}
+            disabled={!TEMP_UNIFIED_VOSTCARD_FLOW && (!video || !!videoError)}
           style={{
-              backgroundColor: (UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? '#002B4D' : '#888',
+              backgroundColor: (TEMP_UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? '#002B4D' : '#888',
             color: 'white',
             border: 'none',
             width: '100%',
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
-              cursor: (UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? 'pointer' : 'not-allowed',
+              cursor: (TEMP_UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? 'pointer' : 'not-allowed',
           }}
         >
-            {UNIFIED_VOSTCARD_FLOW ? 'Save & Continue' : (videoError ? 'Fix Video to Continue' : 'Save & Continue')}
+            {TEMP_UNIFIED_VOSTCARD_FLOW ? 'Save & Continue' : (videoError ? 'Fix Video to Continue' : 'Save & Continue')}
         </button>
 
-          {UNIFIED_VOSTCARD_FLOW && (
+          {TEMP_UNIFIED_VOSTCARD_FLOW && (
             <div style={{ color: '#666', fontSize: 13 }}>Video is optional — you can skip this step.</div>
           )}
         
