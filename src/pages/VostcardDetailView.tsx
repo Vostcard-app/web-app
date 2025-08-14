@@ -124,7 +124,7 @@ const VostcardDetailView: React.FC = () => {
   // Removed redundant navigation state logging
 
   useEffect(() => {
-    const fetchQuickcard = async () => {
+    const fetchVostcard = async () => {
       if (!id) {
         setError('No vostcard ID provided');
         setLoading(false);
@@ -139,49 +139,42 @@ const VostcardDetailView: React.FC = () => {
         
         if (docSnap.exists()) {
           const data = docSnap.data();
-          console.log('📱 Quickcard found:', data);
+          console.log('📱 Vostcard found:', data);
           
-          // Verify it's actually a vostcard
-          if (data.isQuickcard) {
-            setQuickcard(data);
-            setLoading(false);
-          } else {
-            setError('This is not a vostcard.');
-            setLoading(false);
-          }
+          // Accept both quickcards and regular vostcards
+          setVostcard(data);
+          setLoading(false);
         } else {
-          console.log('📱 Quickcard not found, trying to fix...');
+          console.log('📱 Vostcard not found, trying to fix...');
           
           try {
             const fixed = await fixBrokenSharedVostcard(id);
             if (fixed) {
-              console.log('📱 Quickcard fixed, retrying load...');
+              console.log('📱 Vostcard fixed, retrying load...');
               
               const retryDocSnap = await getDoc(docRef);
               if (retryDocSnap.exists()) {
                 const retryData = retryDocSnap.data();
-                if (retryData.isQuickcard) {
-                  setQuickcard(retryData);
-                  setLoading(false);
-                  return;
-                }
+                setVostcard(retryData);
+                setLoading(false);
+                return;
               }
             }
           } catch (fixError) {
             console.error('📱 Failed to fix vostcard:', fixError);
           }
           
-          setError('Quickcard not found. It may have been deleted or the link is invalid.');
+          setError('Vostcard not found. It may have been deleted or the link is invalid.');
           setLoading(false);
         }
       } catch (err) {
         console.error('📱 Error loading vostcard:', err);
-        setError('Failed to load Quickcard. Please check your internet connection and try again.');
+        setError('Failed to load Vostcard. Please check your internet connection and try again.');
         setLoading(false);
       }
     };
 
-    fetchQuickcard();
+    fetchVostcard();
   }, [id, fixBrokenSharedVostcard]);
 
   // Fetch user profile when vostcard is loaded
@@ -952,7 +945,7 @@ Tap OK to continue.`;
         backgroundColor: 'white'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>Loading Quickcard...</div>
+          <div style={{ fontSize: '18px', color: '#666' }}>Loading Vostcard...</div>
         </div>
       </div>
     );
@@ -997,7 +990,7 @@ Tap OK to continue.`;
         backgroundColor: 'white'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>No Quickcard data</div>
+          <div style={{ fontSize: '18px', color: '#666' }}>No Vostcard data</div>
         </div>
       </div>
     );
