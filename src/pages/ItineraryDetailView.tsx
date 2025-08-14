@@ -148,12 +148,31 @@ const ItineraryDetailView: React.FC = () => {
   };
 
   const handleShareItinerary = () => {
-    if (!itinerary?.shareableLink) {
-      alert('This itinerary is not public and cannot be shared.');
-      return;
-    }
+    if (!itinerary) return;
 
-    const shareUrl = `${window.location.origin}/share-itinerary/${itinerary.shareableLink}`;
+    const ensurePublicAndLink = async () => {
+      let shareableLink = itinerary.shareableLink;
+      if (!shareableLink) {
+        shareableLink = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      }
+      if (!itinerary.isPublic || itinerary.shareableLink !== shareableLink) {
+        try {
+          await ItineraryService.updateItinerary(itinerary.id, {
+            isPublic: true,
+            // @ts-ignore allow updating
+            shareableLink
+          } as any);
+          setItinerary(prev => prev ? { ...prev, isPublic: true, shareableLink } : prev);
+        } catch (e) {
+          alert('Failed to enable public sharing for this itinerary.');
+        }
+      }
+      return shareableLink!;
+    };
+
+    (async () => {
+      const link = await ensurePublicAndLink();
+      const shareUrl = `${window.location.origin}/share-itinerary/${link}`;
     
     // Generate share text
     const shareText = `Check out this itinerary I created with Vōstcard
@@ -162,23 +181,23 @@ const ItineraryDetailView: React.FC = () => {
 
 ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
 
-    // Use native sharing or clipboard
-    if (navigator.share) {
-      navigator.share({ text: shareText }).catch(() => {
-        // Fallback to clipboard
+      // Use native sharing or clipboard
+      if (navigator.share) {
+        navigator.share({ text: shareText }).catch(() => {
+          navigator.clipboard.writeText(shareText).then(() => {
+            alert('Share link copied to clipboard!');
+          }).catch(() => {
+            alert(`Share link: ${shareUrl}`);
+          });
+        });
+      } else {
         navigator.clipboard.writeText(shareText).then(() => {
           alert('Share link copied to clipboard!');
         }).catch(() => {
           alert(`Share link: ${shareUrl}`);
         });
-      });
-    } else {
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert('Share link copied to clipboard!');
-      }).catch(() => {
-        alert(`Share link: ${shareUrl}`);
-      });
-    }
+      }
+    })();
   };
 
   const moveItem = async (itemId: string, direction: 'up' | 'down') => {
