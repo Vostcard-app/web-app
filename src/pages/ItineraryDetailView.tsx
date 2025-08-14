@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaEdit, FaTrash, FaShare, FaPlus, FaGripVertical, FaEye, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaEdit, FaTrash, FaShare, FaPlus, FaGripVertical, FaEye, FaMapMarkerAlt, FaClock, FaRoute } from 'react-icons/fa';
+import { optimizeRoute } from '../utils/routeOptimizer';
 import { useAuth } from '../context/AuthContext';
 import { ItineraryService } from '../services/itineraryService';
 import type { Itinerary, ItineraryItem } from '../types/ItineraryTypes';
@@ -20,6 +21,7 @@ const ItineraryDetailView: React.FC = () => {
   const [editIsPublic, setEditIsPublic] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [removingItemIds, setRemovingItemIds] = useState<Set<string>>(new Set());
+  const [optimizingRoute, setOptimizingRoute] = useState(false);
 
   console.log('🔄 ItineraryDetailView rendered', {
     id,
@@ -75,6 +77,40 @@ const ItineraryDetailView: React.FC = () => {
       setError('Failed to load itinerary. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOptimizeRoute = async () => {
+    if (!itinerary || optimizingRoute) return;
+
+    try {
+      setOptimizingRoute(true);
+      
+      // Optimize the route
+      const optimized = optimizeRoute(itinerary.items);
+      
+      // Show warning if items are missing location data
+      if (optimized.itemsWithoutLocation.length > 0) {
+        const missingCount = optimized.itemsWithoutLocation.length;
+        const totalCount = itinerary.items.length;
+        alert(`Note: ${missingCount} out of ${totalCount} items don't have location data. They will be added at the end of the route.`);
+      }
+
+      // Update the order in Firebase
+      const itemIds = optimized.items.map(item => item.id);
+      await ItineraryService.reorderItineraryItems(itinerary.id, itemIds);
+
+      // Show success message with distance info
+      if (optimized.totalDistance > 0) {
+        alert(`Route optimized! Total distance: ${optimized.totalDistance.toFixed(1)} km`);
+      } else {
+        alert('Route optimized!');
+      }
+    } catch (error) {
+      console.error('Error optimizing route:', error);
+      alert('Failed to optimize route. Please try again.');
+    } finally {
+      setOptimizingRoute(false);
     }
   };
 
@@ -354,6 +390,25 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            onClick={handleOptimizeRoute}
+            disabled={optimizingRoute}
+            style={{
+              background: 'rgba(0,0,0,0.10)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 40,
+              height: 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: optimizingRoute ? 'not-allowed' : 'pointer',
+              opacity: optimizingRoute ? 0.7 : 1
+            }}
+            title="Suggest Route"
+          >
+            <FaRoute color="#fff" size={18} />
+          </button>
           <button
             style={{
               background: 'rgba(0,0,0,0.10)',
