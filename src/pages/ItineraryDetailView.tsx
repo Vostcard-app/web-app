@@ -11,8 +11,8 @@ const ItineraryDetailView: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  // Responsive design state
-  const [isDesktopView, setIsDesktopView] = useState(window.innerWidth > 768);
+  // Responsive design state - default to mobile for better compatibility
+  const [isDesktopView, setIsDesktopView] = useState(false);
   
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +43,9 @@ const ItineraryDetailView: React.FC = () => {
       });
       setIsDesktopView(newIsDesktop);
     };
+    
+    // Set initial state
+    handleResize();
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -273,15 +276,15 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
       <div style={{ 
         minHeight: '100vh', 
         backgroundColor: isDesktopView ? '#f0f0f0' : '#f5f5f5',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
+        display: isDesktopView ? 'flex' : 'block',
+        justifyContent: isDesktopView ? 'center' : 'initial',
+        alignItems: isDesktopView ? 'flex-start' : 'initial',
         padding: isDesktopView ? '20px' : '0',
         fontFamily: 'system-ui, sans-serif'
       }}>
         <div style={{
           width: isDesktopView ? '390px' : '100%',
-          maxWidth: '390px',
+          maxWidth: isDesktopView ? '390px' : 'none',
           height: isDesktopView ? '844px' : '100vh',
           backgroundColor: '#f5f5f5',
           boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
@@ -305,15 +308,15 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
       <div style={{ 
         minHeight: '100vh', 
         backgroundColor: isDesktopView ? '#f0f0f0' : '#f5f5f5',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
+        display: isDesktopView ? 'flex' : 'block',
+        justifyContent: isDesktopView ? 'center' : 'initial',
+        alignItems: isDesktopView ? 'flex-start' : 'initial',
         padding: isDesktopView ? '20px' : '0',
         fontFamily: 'system-ui, sans-serif'
       }}>
         <div style={{
           width: isDesktopView ? '390px' : '100%',
-          maxWidth: '390px',
+          maxWidth: isDesktopView ? '390px' : 'none',
           height: isDesktopView ? '844px' : '100vh',
           backgroundColor: '#f5f5f5',
           boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
@@ -353,16 +356,16 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
     <div style={{ 
       minHeight: '100vh', 
       backgroundColor: isDesktopView ? '#f0f0f0' : '#f5f5f5',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
+      display: isDesktopView ? 'flex' : 'block',
+      justifyContent: isDesktopView ? 'center' : 'initial',
+      alignItems: isDesktopView ? 'flex-start' : 'initial',
       padding: isDesktopView ? '20px' : '0',
       fontFamily: 'system-ui, sans-serif'
     }}>
       {/* Mobile-style container with responsive design */}
       <div style={{
         width: isDesktopView ? '390px' : '100%',
-        maxWidth: '390px',
+        maxWidth: isDesktopView ? '390px' : 'none',
         height: isDesktopView ? '844px' : '100vh',
         backgroundColor: '#f5f5f5',
         boxShadow: isDesktopView ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
