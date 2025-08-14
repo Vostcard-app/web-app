@@ -1279,7 +1279,7 @@ const AllPostedVostcardsView: React.FC = () => {
                   
                   {/* Type Badge with Icon */}
                   <div style={{
-                    backgroundColor: v.isQuickcard ? '#FF6B6B' : '#4ECDC4',
+                    backgroundColor: '#4ECDC4',
                     color: 'white',
                     fontSize: '10px',
                     fontWeight: 600,
@@ -1290,8 +1290,8 @@ const AllPostedVostcardsView: React.FC = () => {
                     gap: '4px',
                     flexShrink: 0
                   }}>
-                    {v.isQuickcard ? <FaCameraRetro style={{ fontSize: '8px' }} /> : <FaVideo style={{ fontSize: '8px' }} />}
-                    {v.isQuickcard ? 'Quick' : 'Vōst'}
+                    <FaVideo style={{ fontSize: '8px' }} />
+                    Vōst
                   </div>
                 </div>
                 
