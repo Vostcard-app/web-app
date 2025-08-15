@@ -11,7 +11,11 @@ service cloud.firestore {
       allow read: if true; // Allow all users to read vostcards (for the map)
       allow update: if request.auth != null && request.auth.uid == resource.data.userID;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userID;
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.userID ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
       
       // Allow authenticated users to read and write like counts
       match /likeCount/{document} {
