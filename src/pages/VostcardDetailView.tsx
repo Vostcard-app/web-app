@@ -2410,6 +2410,21 @@ Tap OK to continue.`;
         vostcardTitle={vostcard?.title}
       />
 
+      {/* Printed Directions */}
+      {showDirections && directions.length > 0 && (
+        <div className="printed-directions" style={{ margin: '20px' }}>
+          <h3>Directions to {vostcard.title}</h3>
+          <ol>
+            {directions.map((instruction, index) => (
+              <li key={index}>
+                {instruction.text} 
+                {instruction.distance && ` (${(instruction.distance / 1609.34).toFixed(1)} mi)`}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       {/* Map Modal */}
       {showMapModal && vostcard?.latitude && vostcard?.longitude && (
         <div
@@ -2481,41 +2496,26 @@ Tap OK to continue.`;
                   icon={createIcons().vostcardIcon}
                 />
                                   {showDirections && (
-                    <>
-                      <div style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        backgroundColor: 'white',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        width: '400px',
-                        maxHeight: '70vh',
-                        overflowY: 'auto',
-                        zIndex: 1000,
-                        fontSize: '16px'
-                      }}>
-                        <RoutingMachine 
-                          destination={[vostcard.latitude, vostcard.longitude]}
-                          showDirections={true}
-                          onDirectionsLoaded={(instructions) => setDirections(instructions)}
-                        />
-                      </div>
-                      {directions.length > 0 && (
-                        <div className="printed-directions">
-                          <h3>Directions to {vostcard.title}</h3>
-                          <ol>
-                            {directions.map((instruction, index) => (
-                              <li key={index}>
-                                {instruction.text} 
-                                {instruction.distance && ` (${(instruction.distance / 1609.34).toFixed(1)} mi)`}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      )}
-                    </>
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      backgroundColor: 'white',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      width: '400px',
+                      maxHeight: '70vh',
+                      overflowY: 'auto',
+                      zIndex: 1000,
+                      fontSize: '16px'
+                    }}>
+                      <RoutingMachine 
+                        destination={[vostcard.latitude, vostcard.longitude]}
+                        showDirections={true}
+                        onDirectionsLoaded={(instructions) => setDirections(instructions)}
+                      />
+                    </div>
                   )}
               </MapContainer>
             </div>
