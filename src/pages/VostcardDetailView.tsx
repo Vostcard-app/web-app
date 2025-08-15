@@ -310,7 +310,6 @@ const VostcardDetailView: React.FC = () => {
               }
             }
           }, 100);
-          }
         },
         (error) => {
           console.error('Error getting location:', error);
