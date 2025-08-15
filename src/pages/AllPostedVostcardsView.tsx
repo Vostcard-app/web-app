@@ -401,13 +401,41 @@ const AllPostedVostcardsView: React.FC = () => {
             username: p.username,
             userRole: p.userRole,
             state: p.state,
-            userID: p.userID
+            userID: p.userID,
+            isQuickcard: p.isQuickcard,
+            hasValidData: !!(p.id && p.title),
+            hasLocation: !!(p.latitude && p.longitude),
+            createdAt: p.createdAt?.toDate ? p.createdAt.toDate().toISOString() : p.createdAt
           })));
         }
         
-        // Filter out any quickcard IDs that might be stale references
-        const validVostcards = allContent.filter(v => v.id && !v.id.toLowerCase().includes('quickcard_'));
-        console.log('🧹 Filtered out quickcard references:', allContent.length - validVostcards.length);
+        // Additional validation: Check for posts with missing critical data
+        const invalidPosts = allContent.filter(v => 
+          !v.id || 
+          !v.title || 
+          !v.userID || 
+          (!v.latitude && !v.longitude)
+        );
+        if (invalidPosts.length > 0) {
+          console.warn('⚠️ Found posts with invalid/missing data:', invalidPosts.length);
+          console.warn('📋 Invalid posts:', invalidPosts.map(p => ({
+            id: p.id || 'NO_ID',
+            title: p.title || 'NO_TITLE',
+            userID: p.userID || 'NO_USER_ID',
+            hasLocation: !!(p.latitude && p.longitude),
+            username: p.username
+          })));
+        }
+        
+        // Filter out any quickcard IDs that might be stale references AND invalid posts
+        const validVostcards = allContent.filter(v => 
+          v.id && 
+          !v.id.toLowerCase().includes('quickcard_') &&
+          v.title &&
+          v.userID &&
+          (v.latitude || v.longitude) // At least some location data
+        );
+        console.log('🧹 Filtered out invalid posts:', allContent.length - validVostcards.length, 'removed');
         
         setVostcards(validVostcards);
         setLastUpdated(new Date());
@@ -466,8 +494,15 @@ const AllPostedVostcardsView: React.FC = () => {
         ...doc.data()
       })) as Vostcard[];
       
-      // Filter the new content: Vōstcards only (exclude offers and quickcard references)
-      const newContent = newVostcards.filter(v => !v.isOffer && !v.id.toLowerCase().includes('quickcard_'));
+      // Filter the new content: Vōstcards only (exclude offers, quickcard references, and invalid posts)
+      const newContent = newVostcards.filter(v => 
+        !v.isOffer && 
+        !v.id.toLowerCase().includes('quickcard_') &&
+        v.id &&
+        v.title &&
+        v.userID &&
+        (v.latitude || v.longitude)
+      );
       
       // Debug: Log Jay Bond posts in pagination
       const jayBondPosts = newVostcards.filter(v => v.username === 'Jay Bond' || v.userID === '9byLf32ls0gF2nzF17vnv9RhLiJ2');

@@ -36,6 +36,8 @@ const AdminPanel: React.FC = () => {
   const [tracksError, setTracksError] = useState<string | null>(null);
   // Quickcard cleanup state
   const [cleanupLoading, setCleanupLoading] = useState(false);
+  // Invalid posts cleanup state
+  const [invalidPostsCleanupLoading, setInvalidPostsCleanupLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -359,6 +361,71 @@ const AdminPanel: React.FC = () => {
       alert('❌ Quickcard cleanup failed. Check console for details.');
     } finally {
       setCleanupLoading(false);
+    }
+  };
+
+  const handleCleanupInvalidPosts = async () => {
+    if (!window.confirm('⚠️ This will delete all posts missing critical data (no title, userID, or location). Are you sure?')) {
+      return;
+    }
+
+    setInvalidPostsCleanupLoading(true);
+    let deleted = 0;
+    let errors = 0;
+
+    try {
+      console.log('🗑️ Starting invalid posts cleanup...');
+      
+      // Query for all posted vostcards
+      const q = query(
+        collection(db, 'vostcards'),
+        where('state', '==', 'posted')
+      );
+      
+      const snapshot = await getDocs(q);
+      console.log(`📋 Found ${snapshot.docs.length} posted vostcards to check`);
+      
+      // Check each post for validity
+      for (const docSnapshot of snapshot.docs) {
+        try {
+          const data = docSnapshot.data();
+          
+          // Check if post is invalid (missing critical data)
+          const isInvalid = !data.id || 
+                           !data.title || 
+                           !data.userID || 
+                           (!data.latitude && !data.longitude);
+          
+          if (isInvalid) {
+            console.log(`🗑️ Deleting invalid post: "${data.title || 'NO_TITLE'}" (${docSnapshot.id})`);
+            console.log('   Missing:', {
+              id: !data.id,
+              title: !data.title,
+              userID: !data.userID,
+              location: !data.latitude && !data.longitude
+            });
+            
+            await deleteDoc(docSnapshot.ref);
+            deleted++;
+          }
+        } catch (error) {
+          console.error(`❌ Failed to process post ${docSnapshot.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`✅ Invalid posts cleanup completed! Deleted: ${deleted}, Errors: ${errors}`);
+      
+      if (errors > 0) {
+        alert(`⚠️ Cleanup completed with some errors. Deleted: ${deleted}, Errors: ${errors}. Check console for details.`);
+      } else {
+        alert(`✅ Invalid posts cleanup successful! Deleted ${deleted} invalid posts.`);
+      }
+    } catch (error) {
+      console.error('❌ Invalid posts cleanup failed:', error);
+      alert('❌ Invalid posts cleanup failed. Check console for details.');
+    } finally {
+      setInvalidPostsCleanupLoading(false);
     }
   };
 
@@ -717,7 +784,54 @@ const AdminPanel: React.FC = () => {
         </button>
       </div>
 
-      {/* 4. Music Library (Admin) */}
+      {/* 4. Invalid Posts Cleanup (Admin) */}
+      <div style={{ backgroundColor: '#ffe6e6', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffb3b3' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#cc0000' }}>
+          🧹 Invalid Posts Cleanup
+        </h2>
+        
+        <div style={{ marginBottom: '15px', color: '#cc0000' }}>
+          <p style={{ margin: '0 0 10px 0' }}>
+            <strong>Warning:</strong> This will delete all posts that are missing critical data.
+          </p>
+          <p style={{ margin: '0 0 10px 0' }}>
+            Posts will be deleted if they're missing: title, userID, or location data.
+          </p>
+          <p style={{ margin: '0 0 10px 0' }}>
+            This should fix "vostcard not found" errors caused by corrupted posts.
+          </p>
+        </div>
+        
+        <button
+          onClick={handleCleanupInvalidPosts}
+          disabled={invalidPostsCleanupLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: invalidPostsCleanupLoading ? '#6c757d' : '#ff4444',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: invalidPostsCleanupLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!invalidPostsCleanupLoading) {
+              e.currentTarget.style.backgroundColor = '#cc0000';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!invalidPostsCleanupLoading) {
+              e.currentTarget.style.backgroundColor = '#ff4444';
+            }
+          }}
+        >
+          {invalidPostsCleanupLoading ? '🔄 Cleaning up...' : '🧹 Delete Invalid Posts'}
+        </button>
+      </div>
+
+      {/* 5. Music Library (Admin) */}
       <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
           🎵 Music Library (Admin)
