@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaEdit, FaTrash, FaShare, FaPlus, FaGripVertical, FaEye, FaMapMarkerAlt, FaClock, FaRoute, FaMap } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { optimizeRoute } from '../utils/routeOptimizer';
 import { useAuth } from '../context/AuthContext';
 import { ItineraryService } from '../services/itineraryService';
@@ -23,6 +26,54 @@ const ItineraryDetailView: React.FC = () => {
   const [removingItemIds, setRemovingItemIds] = useState<Set<string>>(new Set());
   const [optimizingRoute, setOptimizingRoute] = useState(false);
   const [showingRouteMap, setShowingRouteMap] = useState(false);
+
+  // Map bounds updater component
+  const MapBoundsUpdater = ({ items }: { items: ItineraryItem[] }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+      const points = items.filter(item => item.latitude && item.longitude);
+      if (points.length > 0) {
+        const bounds = L.latLngBounds(
+          points.map(item => [item.latitude || 0, item.longitude || 0])
+        );
+        
+        // Add padding and fit bounds
+        map.fitBounds(bounds, { 
+          padding: [20, 20],
+          maxZoom: 15 
+        });
+      }
+    }, [map, items]);
+
+    return null;
+  };
+  
+  // Helper function to get map center from all points
+  const getMapCenter = useCallback(() => {
+    const points = itinerary.items.filter(item => item.latitude && item.longitude);
+    if (points.length === 0) {
+      return { lat: 0, lng: 0 }; // Default center
+    }
+    
+    const totalLat = points.reduce((sum, item) => sum + (item.latitude || 0), 0);
+    const totalLng = points.reduce((sum, item) => sum + (item.longitude || 0), 0);
+    
+    return {
+      lat: totalLat / points.length,
+      lng: totalLng / points.length
+    };
+  }, [itinerary.items]);
+
+  // Helper function to get route path for polyline
+  const getRoutePath = useCallback(() => {
+    return itinerary.items
+      .filter(item => item.latitude && item.longitude)
+      .map(item => ({
+        lat: item.latitude || 0,
+        lng: item.longitude || 0
+      }));
+  }, [itinerary.items]);
 
   console.log('🔄 ItineraryDetailView rendered', {
     id,
@@ -840,15 +891,77 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                 borderRadius: '8px',
                 padding: '16px',
                 flex: 1,
-                minHeight: '300px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#666',
-                textAlign: 'center'
+                minHeight: '400px',
+                position: 'relative'
               }}>
-                Map integration coming soon!<br/>
-                Will show route between all locations.
+                <MapContainer
+                  center={getMapCenter()}
+                  zoom={12}
+                  style={{
+                    height: '100%',
+                    width: '100%',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    borderRadius: '8px'
+                  }}
+                  zoomControl={true}
+                  scrollWheelZoom={true}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maxZoom={22}
+                  />
+
+                  <MapBoundsUpdater items={itinerary.items} />
+
+                  {/* Add markers for each location */}
+                  {itinerary.items.map((item, index) => (
+                    item.latitude && item.longitude ? (
+                      <Marker
+                        key={item.id}
+                        position={[item.latitude, item.longitude]}
+                        icon={L.divIcon({
+                          className: 'custom-marker',
+                          html: `<div style="background-color: #5856D6; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">${index + 1}</div>`,
+                          iconSize: [24, 24],
+                          iconAnchor: [12, 12]
+                        })}
+                      >
+                        <Popup>
+                          <div style={{ textAlign: 'center', minWidth: '200px' }}>
+                            <div style={{
+                              backgroundColor: '#5856D6',
+                              color: 'white',
+                              borderRadius: '12px',
+                              padding: '2px 8px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              display: 'inline-block',
+                              marginBottom: '8px'
+                            }}>
+                              Stop #{index + 1}
+                            </div>
+                            <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
+                              {item.title || 'Untitled'}
+                            </h3>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ) : null
+                  ))}
+
+                  {/* Add route line between points */}
+                  <Polyline
+                    positions={getRoutePath().map(point => [point.lat, point.lng])}
+                    pathOptions={{
+                      color: '#5856D6',
+                      opacity: 0.8,
+                      weight: 3
+                    }}
+                  />
+                </MapContainer>
               </div>
 
               {/* Route Points List */}
