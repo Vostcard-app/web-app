@@ -839,7 +839,7 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
               borderRadius: '12px',
               width: '100%',
               maxWidth: '600px',
-              maxHeight: '90vh',
+              maxHeight: '80vh',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -888,7 +888,7 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                 borderRadius: '8px',
                 padding: '16px',
                 flex: 1,
-                minHeight: '500px',
+                height: '350px',
                 position: 'relative'
               }}>
                 <MapContainer
@@ -968,7 +968,7 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                 backgroundColor: '#f5f5f5',
                 borderRadius: '8px',
                 padding: '16px',
-                maxHeight: '200px',
+                maxHeight: '150px',
                 overflow: 'auto'
               }}>
                 <h4 style={{ margin: '0 0 12px 0', color: '#333', position: 'sticky', top: 0, backgroundColor: '#f5f5f5', paddingBottom: '8px' }}>Route Points:</h4>
