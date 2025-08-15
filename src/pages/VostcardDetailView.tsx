@@ -18,6 +18,7 @@ import { ItineraryService } from '../services/itineraryService';
 import type { Itinerary } from '../types/ItineraryTypes';
 import FriendPickerModal from '../components/FriendPickerModal';
 import SharedOptionsModal from '../components/SharedOptionsModal';
+import { NavigationService, NavigationStep } from '../services/navigationService';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import { generateShareText } from '../utils/vostcardUtils';
 import TipDropdownMenu from '../components/TipDropdownMenu';
@@ -61,8 +62,12 @@ const VostcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
-  const [directions, setDirections] = useState<any[]>([]);
+  const [directions, setDirections] = useState<NavigationStep[]>([]);
   const [showDirectionsOverlay, setShowDirectionsOverlay] = useState(false);
+  const [liveNavigation, setLiveNavigation] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [distanceToNext, setDistanceToNext] = useState<number>(0);
 
   // Create custom icons
   const createIcons = () => {
@@ -460,6 +465,110 @@ const VostcardDetailView: React.FC = () => {
 
     fetchVostcard();
   }, [id, fixBrokenSharedVostcard]);
+
+  // Live GPS tracking for navigation
+  useEffect(() => {
+    let watchId: number | null = null;
+    
+    if (liveNavigation && directions.length > 0) {
+      console.log('🧭 Starting live GPS tracking for navigation');
+      
+      // Watch position for live updates
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const newLocation: [number, number] = [position.coords.latitude, position.coords.longitude];
+          setCurrentLocation(newLocation);
+          
+          // Calculate distance to next waypoint
+          if (directions[currentStepIndex]) {
+            const distance = calculateDistance(
+              newLocation[0], newLocation[1],
+              vostcard.latitude, vostcard.longitude
+            );
+            setDistanceToNext(distance);
+            
+            // Voice guidance when close to turns (less than 50m)
+            if (distance < 0.05 && currentStepIndex < directions.length - 1) { // 50 meters
+              speakDirection(directions[currentStepIndex].text);
+            }
+          }
+        },
+        (error) => {
+          console.error('❌ GPS tracking error:', error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 1000
+        }
+      );
+    }
+    
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        console.log('🛑 Stopped GPS tracking');
+      }
+    };
+  }, [liveNavigation, directions, currentStepIndex, vostcard?.latitude, vostcard?.longitude]);
+
+  // Voice synthesis for turn-by-turn directions
+  const speakDirection = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      utterance.volume = 0.8;
+      utterance.pitch = 1.0;
+      
+      console.log('🔊 Speaking:', text);
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Calculate distance between two coordinates (in km)
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  // Get real turn-by-turn directions
+  const fetchRealDirections = async (userLocation: [number, number]) => {
+    if (!vostcard) return;
+
+    console.log('🗺️ Fetching real turn-by-turn directions...');
+    setDirections([]); // Clear old directions
+    
+    try {
+      const route = await NavigationService.getDirections(
+        userLocation,
+        [vostcard.latitude, vostcard.longitude]
+      );
+
+      if (route && route.steps.length > 0) {
+        console.log('✅ Real directions loaded:', route.steps.length, 'steps');
+        setDirections(route.steps);
+        setShowDirectionsOverlay(true);
+        
+        // Announce first direction
+        if (route.steps[0]) {
+          speakDirection(`Starting navigation. ${route.steps[0].instruction}`);
+        }
+      } else {
+        console.warn('❌ No directions received from navigation service');
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch directions:', error);
+    }
+  };
 
   // Fetch user profile when vostcard is loaded
   useEffect(() => {
@@ -1748,27 +1857,30 @@ Tap OK to continue.`;
         {/* Directions button */}
         {vostcard?.latitude && vostcard?.longitude && (
           <button
-            onClick={() => {
-              console.log('🧭 Directions button clicked');
-              setShowDirections(true);
+            onClick={async () => {
+              console.log('🧭 Real directions button clicked');
               setShowMapModal(true);
-              setShowDirectionsOverlay(true);
               
-              // Immediate fallback in case routing fails completely
-              setTimeout(() => {
-                console.log('⚡ Immediate fallback check - directions length:', directions.length);
-                if (directions.length === 0) {
-                  console.log('🔧 Triggering immediate fallback directions');
-                  const immediateDirections = [
-                    { text: '📍 Navigate to the destination shown on the map', distance: 0, time: 0, type: 'start' },
-                    { text: '🗺️ Follow the route line displayed on this map', distance: 0, time: 0, type: 'straight' },
-                    { text: '📱 For detailed turn-by-turn directions, use the "Open in Maps App" button below', distance: 0, time: 0, type: 'straight' },
-                    { text: '🎯 Arrive at your destination', distance: 0, time: 0, type: 'destination' }
-                  ];
-                  setDirections(immediateDirections);
-                  setShowDirectionsOverlay(true);
-                }
-              }, 1000);
+              // Get user's current location
+              if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                  async (position) => {
+                    const userLocation: [number, number] = [
+                      position.coords.latitude,
+                      position.coords.longitude
+                    ];
+                    console.log('📍 User location obtained:', userLocation);
+                    await fetchRealDirections(userLocation);
+                  },
+                  (error) => {
+                    console.error('❌ Geolocation error:', error);
+                    alert('Location access denied. Please enable location to get directions.');
+                  },
+                  { enableHighAccuracy: true, timeout: 10000 }
+                );
+              } else {
+                alert('Geolocation is not supported by this browser.');
+              }
             }}
             style={{
               background: 'none',
@@ -2487,6 +2599,13 @@ Tap OK to continue.`;
                   position={[vostcard.latitude, vostcard.longitude]}
                   icon={createIcons().vostcardIcon}
                 />
+                {/* Current location marker during live navigation */}
+                {liveNavigation && currentLocation && (
+                  <Marker
+                    position={currentLocation}
+                    icon={createIcons().currentLocationIcon}
+                  />
+                )}
                                   {showDirections && (
                     <RoutingMachine 
                       destination={[vostcard.latitude, vostcard.longitude]}
@@ -2503,7 +2622,7 @@ Tap OK to continue.`;
                       }}
                     />
                   )}
-                  {showDirections && console.log('🗺️ RoutingMachine should be rendering...')}
+                  {showDirections && (() => console.log('🗺️ RoutingMachine should be rendering...'))()}
               </MapContainer>
             </div>
             
@@ -2535,8 +2654,13 @@ Tap OK to continue.`;
                   borderBottom: '1px solid #e0e0e0'
                 }}>
                   <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
-                    Turn-by-Turn Directions
+                    {liveNavigation ? '🧭 Live Navigation' : 'Turn-by-Turn Directions'}
                   </h4>
+                  {liveNavigation && distanceToNext > 0 && (
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                      📍 {(distanceToNext * 1000).toFixed(0)}m to destination
+                    </div>
+                  )}
                   <button
                     onClick={() => setShowDirectionsOverlay(false)}
                     style={{
@@ -2588,11 +2712,14 @@ Tap OK to continue.`;
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: index === 0 ? 'bold' : 'normal', color: '#333' }}>
-                          {direction.text}
+                          {direction.instruction || direction.text}
                         </div>
                         {direction.distance && (
-                          <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                            {(direction.distance / 1000).toFixed(1)} km
+                          <div style={{ fontSize: '12px', color: '#666', marginTop: '2px', display: 'flex', gap: '8px' }}>
+                            <span>📏 {NavigationService.formatDistance(direction.distance)}</span>
+                            {direction.duration && (
+                              <span>⏱️ {NavigationService.formatDuration(direction.duration)}</span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -2600,8 +2727,58 @@ Tap OK to continue.`;
                   ))}
                 </div>
                 
-                {/* Open in Maps App Button */}
-                <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                {/* Navigation Controls */}
+                <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  {!liveNavigation ? (
+                    <button
+                      onClick={() => {
+                        console.log('🚀 Starting live navigation');
+                        setLiveNavigation(true);
+                        speakDirection('Starting navigation to your destination');
+                      }}
+                      style={{
+                        backgroundColor: '#34C759',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        padding: '12px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      🚀 Start Live Navigation
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        console.log('🛑 Stopping live navigation');
+                        setLiveNavigation(false);
+                        window.speechSynthesis.cancel();
+                      }}
+                      style={{
+                        backgroundColor: '#FF3B30',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '20px',
+                        padding: '12px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      🛑 Stop Navigation
+                    </button>
+                  )}
+                  
                   <button
                     onClick={() => {
                       const lat = vostcard.latitude;
@@ -2629,18 +2806,17 @@ Tap OK to continue.`;
                       color: 'white',
                       border: 'none',
                       borderRadius: '20px',
-                      padding: '10px 20px',
+                      padding: '12px 20px',
                       fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      margin: '0 auto'
+                      gap: '8px'
                     }}
                   >
-                    🧭 Open in Maps App
+                    📱 External Maps
                   </button>
                 </div>
               </div>
