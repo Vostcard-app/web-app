@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar } from 'react-icons/fa';
+import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar, FaDirections } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -1460,6 +1460,28 @@ Tap OK to continue.`;
         >
           <FaRegComment size={22} />
         </button>
+
+        {/* Directions button */}
+        {vostcard?.latitude && vostcard?.longitude && (
+          <button
+            onClick={() => {
+              // Open in Google Maps
+              const url = `https://www.google.com/maps/dir/?api=1&destination=${vostcard.latitude},${vostcard.longitude}`;
+              window.open(url, '_blank');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#5856D6'
+            }}
+          >
+            <FaDirections size={22} />
+          </button>
+        )}
 
         <button
           onClick={handleShareClick}
