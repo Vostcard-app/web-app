@@ -874,16 +874,16 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
               </button>
             </div>
 
-            {/* Map and List Container */}
+            {/* Map Container */}
             <div style={{
               display: 'flex',
+              flexDirection: 'column',
               height: '70vh',
               gap: '20px',
               padding: '20px'
             }}>
-              {/* Map Container */}
               <div style={{
-                flex: '1 1 60%',
+                flex: 1,
                 backgroundColor: '#f5f5f5',
                 borderRadius: '8px',
                 position: 'relative',
@@ -959,10 +959,10 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
 
               {/* Route Points List */}
               <div style={{
-                flex: '1 1 40%',
                 backgroundColor: '#f5f5f5',
                 borderRadius: '8px',
                 padding: '16px',
+                maxHeight: '200px',
                 overflowY: 'auto'
               }}>
                 <h4 style={{ margin: '0 0 12px 0', color: '#333', position: 'sticky', top: 0, backgroundColor: '#f5f5f5', paddingBottom: '8px' }}>Route Points:</h4>
