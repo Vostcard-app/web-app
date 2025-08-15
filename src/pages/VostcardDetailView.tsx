@@ -166,7 +166,7 @@ const VostcardDetailView: React.FC = () => {
                 padding: 16px;
                 border-radius: 12px;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                max-width: 300px;
+                max-width: 400px;
                 max-height: 70vh;
                 overflow-y: auto;
                 font-family: system-ui, -apple-system, sans-serif;
@@ -192,16 +192,25 @@ const VostcardDetailView: React.FC = () => {
                 border: none !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                display: block !important;
               }
               .leaflet-routing-alt table {
-                font-size: 14px !important;
+                font-size: 16px !important;
+                width: 100% !important;
+              }
+              .leaflet-routing-alt tr {
+                padding: 8px 0 !important;
+                display: table-row !important;
               }
               .leaflet-routing-alt tr:hover {
                 background-color: #f5f5f5;
                 cursor: pointer;
               }
+              .leaflet-routing-alt td {
+                padding: 12px 8px !important;
+              }
               .leaflet-routing-alt-minimized {
-                display: none;
+                display: block !important;
               }
               .leaflet-routing-container {
                 position: relative !important;
@@ -226,15 +235,18 @@ const VostcardDetailView: React.FC = () => {
                 font-size: 14px !important;
               }
               .leaflet-routing-instructions {
-                font-size: 14px !important;
+                font-size: 16px !important;
+                margin-top: 16px !important;
               }
               .leaflet-routing-instruction-text {
-                font-size: 14px !important;
-                padding: 8px 0 !important;
+                font-size: 16px !important;
+                padding: 12px 0 !important;
+                line-height: 1.4 !important;
               }
               .leaflet-routing-instruction-distance {
-                font-size: 14px !important;
+                font-size: 16px !important;
                 color: #666 !important;
+                padding-left: 12px !important;
               }
               .leaflet-routing-summary {
                 font-size: 14px !important;
