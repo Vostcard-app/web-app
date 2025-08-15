@@ -1112,12 +1112,33 @@ const AllPostedVostcardsView: React.FC = () => {
                   transition: 'background 0.2s',
                   flexShrink: 0
                 }}
-                onClick={() => navigate(`/vostcard/${v.id}`, {
-                  state: {
-                                                vostcardList: filteredVostcards.map(vc => vc.id),
-                    currentIndex: idx
+                onClick={() => {
+                  // If it's a quickcard ID, try to find the corresponding vostcard
+                  const isQuickcard = v.id.toLowerCase().includes('quickcard');
+                  if (isQuickcard) {
+                    // Find the corresponding vostcard by matching title
+                    const vostcardTitle = v.title.replace(/quickcard/i, 'vostcard');
+                    const matchingVostcard = filteredVostcards.find(vc => 
+                      vc.title === vostcardTitle && !vc.id.toLowerCase().includes('quickcard')
+                    );
+                    if (matchingVostcard) {
+                      navigate(`/vostcard/${matchingVostcard.id}`, {
+                        state: {
+                          vostcardList: filteredVostcards.map(vc => vc.id),
+                          currentIndex: idx
+                        }
+                      });
+                      return;
+                    }
                   }
-                })}
+                  // Default navigation if not a quickcard or no match found
+                  navigate(`/vostcard/${v.id}`, {
+                    state: {
+                      vostcardList: filteredVostcards.map(vc => vc.id),
+                      currentIndex: idx
+                    }
+                  });
+                }}
                 onMouseEnter={e => e.currentTarget.style.background = '#f5faff'}
                 onMouseLeave={e => e.currentTarget.style.background = 'white'}
                 tabIndex={0}
@@ -1223,12 +1244,31 @@ const AllPostedVostcardsView: React.FC = () => {
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/vostcard/${v.id}`, {
+                                            // If it's a quickcard ID, try to find the corresponding vostcard
+                    const isQuickcard = v.id.toLowerCase().includes('quickcard');
+                    if (isQuickcard) {
+                      // Find the corresponding vostcard by matching title
+                      const vostcardTitle = v.title.replace(/quickcard/i, 'vostcard');
+                      const matchingVostcard = vostcards.find(vc => 
+                        vc.title === vostcardTitle && !vc.id.toLowerCase().includes('quickcard')
+                      );
+                      if (matchingVostcard) {
+                        navigate(`/vostcard/${matchingVostcard.id}`, {
                           state: {
                             vostcardList: vostcards.map(vc => vc.id),
                             currentIndex: idx
                           }
                         });
+                        return;
+                      }
+                    }
+                    // Default navigation if not a quickcard or no match found
+                    navigate(`/vostcard/${v.id}`, {
+                      state: {
+                        vostcardList: vostcards.map(vc => vc.id),
+                        currentIndex: idx
+                      }
+                    });
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = '#001f35';
