@@ -16,7 +16,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { loadQuickcard } = useVostcardEdit();
-  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcardsImmediate, loadAllLocalVostcards } = useVostcard();
+  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcardsImmediate, loadAllLocalVostcards, postedVostcards, loadPostedVostcards } = useVostcard();
   
   // Categories from central AVAILABLE_CATEGORIES
   const availableCategories = ['None', ...AVAILABLE_CATEGORIES];
@@ -35,6 +35,7 @@ const VostcardStudioView: React.FC = () => {
   const [showQuickcardImporter, setShowQuickcardImporter] = useState(false);
   const [showQuickcardCreator, setShowQuickcardCreator] = useState(false);
   const [showQuickcardLoader, setShowQuickcardLoader] = useState(false);
+  const [loaderViewMode, setLoaderViewMode] = useState<'saved' | 'posted'>('saved');
   
   // Quickcard creation state - ENHANCED FOR MULTIPLE PHOTOS
   const [quickcardTitle, setQuickcardTitle] = useState('');
@@ -2584,7 +2585,7 @@ const VostcardStudioView: React.FC = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
-                  📂 Load Quickcard for Editing
+                  📂 Load Vostcard for Editing
                 </h3>
                 <button
                   onClick={() => setShowQuickcardLoader(false)}
@@ -2600,18 +2601,60 @@ const VostcardStudioView: React.FC = () => {
                 </button>
               </div>
 
+              {/* View Mode Toggle */}
+              <div style={{ display: 'flex', marginBottom: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px', padding: '4px' }}>
+                <button
+                  onClick={() => setLoaderViewMode('saved')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    backgroundColor: loaderViewMode === 'saved' ? '#007bff' : 'transparent',
+                    color: loaderViewMode === 'saved' ? 'white' : '#666',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: loaderViewMode === 'saved' ? 'bold' : 'normal'
+                  }}
+                >
+                  💾 Saved Cards ({savedVostcards.length})
+                </button>
+                <button
+                  onClick={() => {
+                    setLoaderViewMode('posted');
+                    loadPostedVostcards(); // Load posted cards when switching
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '8px 16px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    backgroundColor: loaderViewMode === 'posted' ? '#007bff' : 'transparent',
+                    color: loaderViewMode === 'posted' ? 'white' : '#666',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: loaderViewMode === 'posted' ? 'bold' : 'normal'
+                  }}
+                >
+                  🌐 Posted Cards ({postedVostcards.length})
+                </button>
+              </div>
+
                              {/* Debug Button */}
                <div style={{ marginBottom: '16px', textAlign: 'center' }}>
                  <button
                    onClick={() => {
-                     console.log('🔧 DEBUG: Checking savedVostcards for quickcards');
+                     console.log('🔧 DEBUG: Checking savedVostcards for all cards');
                      console.log('🔧 Total savedVostcards:', savedVostcards.length);
                      console.log('🔧 All savedVostcards:', savedVostcards.map(v => ({
                        id: v.id,
                        title: v.title || 'Untitled',
                        isQuickcard: v.isQuickcard,
                        state: v.state,
-                       visibility: (v as any).visibility
+                       userID: v.userID,
+                       latitude: v.latitude,
+                       longitude: v.longitude,
+                       hasValidData: !!(v.id && v.title && v.userID && (v.latitude || v.longitude))
                      })));
                      const quickcards = savedVostcards.filter(card => card.isQuickcard);
                      console.log('🔧 Filtered quickcards:', quickcards.length);
@@ -2637,17 +2680,17 @@ const VostcardStudioView: React.FC = () => {
                      marginRight: '8px'
                    }}
                  >
-                   🔧 Debug Quickcards
+                   🔧 Debug All Cards
                  </button>
                  
                  <button
                    onClick={async () => {
-                     console.log('🔄 Manually reloading quickcards with full sync...');
+                     console.log('🔄 Manually reloading vostcards with full sync...');
                      setIsLoadingQuickcards(true);
                      try {
                        // Use full sync to get both IndexedDB and Firebase data
                        await loadAllLocalVostcards();
-                       console.log('✅ Quickcards reloaded successfully with full sync');
+                       console.log('✅ Vostcards reloaded successfully with full sync');
                      } catch (error) {
                        console.error('❌ Failed to reload quickcards:', error);
                      } finally {
@@ -2665,7 +2708,7 @@ const VostcardStudioView: React.FC = () => {
                      cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer'
                    }}
                  >
-                   {isLoadingQuickcards ? '🔄 Loading...' : '🔄 Reload Quickcards'}
+                   {isLoadingQuickcards ? '🔄 Loading...' : '🔄 Reload Vostcards'}
                  </button>
                </div>
 
@@ -2673,23 +2716,27 @@ const VostcardStudioView: React.FC = () => {
                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                  {isLoadingQuickcards ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                     <div style={{ fontSize: '16px', marginBottom: '8px' }}>🔄 Loading quickcards...</div>
+                     <div style={{ fontSize: '16px', marginBottom: '8px' }}>🔄 Loading vostcards...</div>
                      <div style={{ fontSize: '12px', color: '#999' }}>Refreshing saved vostcards from storage</div>
                    </div>
-                 ) : savedVostcards.filter(card => card.isQuickcard).length === 0 ? (
+                 ) : (loaderViewMode === 'saved' ? savedVostcards : postedVostcards).length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                     <p>No quickcards found.</p>
-                     <p style={{ fontSize: '14px' }}>Create a quickcard first, then you can load it for editing.</p>
+                     <p>No {loaderViewMode === 'saved' ? 'saved' : 'posted'} vostcards found.</p>
+                     <p style={{ fontSize: '14px' }}>
+                       {loaderViewMode === 'saved' 
+                         ? 'Create a vostcard first, then you can load it for editing.'
+                         : 'Post some vostcards first, then you can load them for editing.'
+                       }
+                     </p>
                      <p style={{ fontSize: '12px', color: '#999', marginTop: '16px' }}>
-                       Total saved cards: {savedVostcards.length}<br/>
-                       Cards with isQuickcard=true: {savedVostcards.filter(card => card.isQuickcard === true).length}
+                       Total {loaderViewMode === 'saved' ? 'saved' : 'posted'} cards: {(loaderViewMode === 'saved' ? savedVostcards : postedVostcards).length}
                      </p>
                    </div>
                  ) : (
-                   savedVostcards.filter(card => card.isQuickcard).map((quickcard) => (
+                   (loaderViewMode === 'saved' ? savedVostcards : postedVostcards).map((vostcard) => (
                      <div
-                       key={quickcard.id}
-                       onClick={() => !isLoadingQuickcards && loadQuickcardForEditing(quickcard)}
+                       key={vostcard.id}
+                       onClick={() => !isLoadingQuickcards && loadQuickcardForEditing(vostcard)}
                        style={{
                          display: 'flex',
                          alignItems: 'center',
@@ -2707,16 +2754,21 @@ const VostcardStudioView: React.FC = () => {
                      >
                        <div style={{ flex: 1 }}>
                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                           {quickcard.title || 'Untitled Quickcard'}
+                           {vostcard.title || 'Untitled Vostcard'}
+                           {vostcard.isQuickcard && <span style={{ color: '#007bff', fontSize: '10px', marginLeft: '6px' }}>[QUICKCARD]</span>}
+                           {!vostcard.title && <span style={{ color: '#dc3545', fontSize: '10px', marginLeft: '6px' }}>[MISSING TITLE]</span>}
                          </div>
                          <div style={{ fontSize: '12px', color: '#666' }}>
-                           {quickcard.description && quickcard.description.length > 50 
-                             ? quickcard.description.substring(0, 50) + '...'
-                             : quickcard.description || 'No description'
+                           {vostcard.description && vostcard.description.length > 50 
+                             ? vostcard.description.substring(0, 50) + '...'
+                             : vostcard.description || 'No description'
                            }
                          </div>
                          <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-                           Created: {new Date(quickcard.createdAt).toLocaleDateString()}
+                           Created: {new Date(vostcard.createdAt).toLocaleDateString()}
+                           {(!vostcard.userID || (!vostcard.latitude && !vostcard.longitude)) && 
+                             <span style={{ color: '#dc3545', marginLeft: '8px' }}>[MISSING DATA]</span>
+                           }
                          </div>
                        </div>
                        <div style={{ marginLeft: '12px', color: '#28a745' }}>
