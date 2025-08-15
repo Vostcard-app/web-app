@@ -22,13 +22,7 @@ import MultiPhotoModal from '../components/MultiPhotoModal';
 import { generateShareText } from '../utils/vostcardUtils';
 import TipDropdownMenu from '../components/TipDropdownMenu';
 
-// Custom quickcard icon for the map
-const quickcardIcon = new L.Icon({
-  iconUrl: QuickcardPin,
-  iconSize: [75, 75],
-  iconAnchor: [37.5, 75],
-  popupAnchor: [0, -75],
-});
+// Icons will be created in component
 
 const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -67,6 +61,27 @@ const VostcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
+
+  // Create custom icons
+  const createIcons = () => {
+    // Vostcard location icon
+    const vostcardIcon = new L.Icon({
+      iconUrl: QuickcardPin,
+      iconSize: [75, 75],
+      iconAnchor: [37.5, 75],
+      popupAnchor: [0, -75],
+    });
+
+    // Current location icon
+    const currentLocationIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="background-color: #5856D6; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">📍</div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    return { vostcardIcon, currentLocationIcon };
+  };
 
   // Function to load routing machine resources
   const loadRoutingMachine = async () => {
@@ -115,6 +130,7 @@ const VostcardDetailView: React.FC = () => {
           
           // Make sure L.Routing is available
           if (L.Routing) {
+            const { currentLocationIcon, vostcardIcon } = createIcons();
             routingControl = L.Routing.control({
               waypoints: [
                 L.latLng(latitude, longitude),
@@ -127,6 +143,11 @@ const VostcardDetailView: React.FC = () => {
               showAlternatives: false,
               lineOptions: {
                 styles: [{ color: '#5856D6', weight: 4 }]
+              },
+              createMarker: function(i: number, waypoint: any) {
+                return L.marker(waypoint.latLng, {
+                  icon: i === 0 ? currentLocationIcon : vostcardIcon
+                });
               }
             }).addTo(map);
           }
@@ -2249,7 +2270,7 @@ Tap OK to continue.`;
                 />
                 <Marker
                   position={[vostcard.latitude, vostcard.longitude]}
-                  icon={vostcardIcon}
+                  icon={createIcons().vostcardIcon}
                 />
                 {showDirections && (
                   <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
