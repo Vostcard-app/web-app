@@ -2,8 +2,9 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar, FaDirections } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import 'leaflet-routing-machine';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+// @ts-ignore
+import * as LeafletRouting from 'leaflet-routing-machine';
+import 'leaflet-routing-machine/dist/leaflet-routing.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';

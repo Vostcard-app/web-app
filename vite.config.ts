@@ -22,7 +22,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: [],
+      external: ['leaflet-routing-machine'],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
@@ -40,6 +40,7 @@ export default defineConfig({
       'react-icons',
       'leaflet',
       'react-leaflet',
+      'leaflet-routing-machine',
       'jszip',
       'file-saver',
       'uuid'
