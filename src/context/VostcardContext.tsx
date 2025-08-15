@@ -2870,15 +2870,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('👤 Current user:', user.uid);
       
       // Query for all quickcards in the main vostcards collection (posted quickcards)
-      // Only query for quickcards belonging to the current user
+      // Admin can delete quickcards from any user
       const postedQuickcardsQuery = query(
         collection(db, 'vostcards'),
-        where('isQuickcard', '==', true),
-        where('userID', '==', user.uid)
+        where('isQuickcard', '==', true)
       );
       
       const postedSnapshot = await getDocs(postedQuickcardsQuery);
-      console.log(`📋 Found ${postedSnapshot.docs.length} posted quickcards to delete for user ${user.uid}`);
+      console.log(`📋 Found ${postedSnapshot.docs.length} posted quickcards to delete from all users`);
       
       // Delete posted quickcards
       for (const docSnapshot of postedSnapshot.docs) {
@@ -2894,16 +2893,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
       
-      // Query for private quickcards in user's private collection
+      // Query for private quickcards in current user's private collection only
+      // Note: Private quickcards from other users are not accessible due to security rules
       const privateQuickcardsQuery = query(
         collection(db, 'privateVostcards', user.uid, 'vostcards'),
         where('isQuickcard', '==', true)
       );
       
       const privateSnapshot = await getDocs(privateQuickcardsQuery);
-      console.log(`📋 Found ${privateSnapshot.docs.length} private quickcards to delete`);
+      console.log(`📋 Found ${privateSnapshot.docs.length} private quickcards to delete for current user`);
       
-      // Delete private quickcards
+      // Delete private quickcards (current user only)
       for (const docSnapshot of privateSnapshot.docs) {
         try {
           const data = docSnapshot.data();
