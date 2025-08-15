@@ -448,8 +448,8 @@ const AllPostedVostcardsView: React.FC = () => {
         ...doc.data()
       })) as Vostcard[];
       
-      // Filter the new content: Vōstcards only (exclude offers)
-      const newContent = newVostcards.filter(v => !v.isOffer);
+      // Filter the new content: Vōstcards only (exclude offers and quickcards)
+      const newContent = newVostcards.filter(v => !v.isOffer && !v.isQuickcard);
       
       console.log('📋 Loaded', newContent.length, 'more vostcards');
       
