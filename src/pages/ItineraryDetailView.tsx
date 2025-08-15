@@ -541,11 +541,9 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
               fontWeight: '600',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
               cursor: 'pointer'
             }}
           >
-            <FaEdit size={14} />
             Edit Details
           </button>
 
@@ -568,7 +566,6 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                 opacity: optimizingRoute ? 0.7 : 1
               }}
             >
-              <FaRoute size={14} />
               Suggest Route
             </button>
           )}
@@ -590,8 +587,7 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                 cursor: 'pointer'
               }}
             >
-              <FaMap size={14} />
-              View Route Map
+              Route Map
             </button>
           )}
         </div>
