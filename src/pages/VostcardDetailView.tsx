@@ -113,13 +113,12 @@ const VostcardDetailView: React.FC = () => {
   // Routing control component
   const RoutingMachine = ({ destination }: { destination: [number, number] }) => {
     const map = useMap();
-    const [routingControl, setRoutingControl] = useState<any>(null);
     
     useEffect(() => {
-      if (!map) return;
+      if (!map || !showDirections) return;
       
-      let control: any = null;
-      
+      let routingControl: any = null;
+
       // Get user's current location
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -127,7 +126,7 @@ const VostcardDetailView: React.FC = () => {
           const { currentLocationIcon, vostcardIcon } = createIcons();
           
           // Create routing control
-          control = L.Routing.control({
+          routingControl = L.Routing.control({
             waypoints: [
               L.latLng(latitude, longitude),
               L.latLng(destination[0], destination[1])
@@ -147,29 +146,16 @@ const VostcardDetailView: React.FC = () => {
             draggableWaypoints: false,
             fitSelectedRoutes: true,
             showAlternatives: false,
-            show: true,
-            containerClassName: 'routing-instructions-content',
-            formatter: L.Routing.Formatter({
-              units: 'metric',
-              roundingSensitivity: 1,
-              distanceTemplate: '{value} {unit}'
-            })
+            show: true
           });
 
           // Add control to map
-          control.addTo(map);
-          setRoutingControl(control);
-
-          // Move the routing container to our custom div
-          const container = document.querySelector('.routing-instructions');
-          if (container && control._container) {
-            container.appendChild(control._container);
-          }
+          routingControl.addTo(map);
 
           // Add cleanup
           return () => {
-            if (control) {
-              map.removeControl(control);
+            if (routingControl) {
+              map.removeControl(routingControl);
             }
           };
 
@@ -2477,22 +2463,22 @@ Tap OK to continue.`;
                   icon={createIcons().vostcardIcon}
                 />
                                   {showDirections && (
-                    <>
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      backgroundColor: 'white',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      width: '400px',
+                      maxHeight: '70vh',
+                      overflowY: 'auto',
+                      zIndex: 1000,
+                      fontSize: '16px'
+                    }}>
                       <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
-                      <div className="routing-instructions" style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        backgroundColor: 'white',
-                        padding: '16px',
-                        borderRadius: '12px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                        width: '400px',
-                        maxHeight: '70vh',
-                        overflowY: 'auto',
-                        zIndex: 1000
-                      }} />
-                    </>
+                    </div>
                   )}
               </MapContainer>
             </div>
