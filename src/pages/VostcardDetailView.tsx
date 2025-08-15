@@ -167,68 +167,29 @@ const VostcardDetailView: React.FC = () => {
           // Inject custom styles for the routing container after the control is added
           const style = document.createElement('style');
           style.textContent = `
-            .routing-instructions-content {
-              width: 100% !important;
-              font-family: system-ui, -apple-system, sans-serif !important;
-            }
-            .routing-instructions-content .leaflet-routing-container {
-              width: 100% !important;
-              background: none !important;
-              border: none !important;
-              box-shadow: none !important;
-            }
-            .routing-instructions-content .leaflet-routing-alt {
-              font-size: 16px !important;
-              border: none !important;
+            .leaflet-routing-container {
+              position: absolute !important;
+              top: 10px !important;
+              right: 10px !important;
               margin: 0 !important;
-              padding: 0 !important;
-            }
-            .routing-instructions-content .leaflet-routing-alt table {
-              width: 100% !important;
-              border-collapse: collapse !important;
-            }
-            .routing-instructions-content .leaflet-routing-alt tr {
-              border-bottom: 1px solid #eee !important;
-            }
-            .routing-instructions-content .leaflet-routing-alt tr:hover {
-              background-color: #f5f5f5 !important;
-            }
-            .routing-instructions-content .leaflet-routing-alt td {
-              padding: 12px 8px !important;
+              padding: 16px !important;
+              width: 400px !important;
+              background: white !important;
+              border-radius: 12px !important;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+              z-index: 1000 !important;
+              font-family: system-ui, -apple-system, sans-serif !important;
               font-size: 16px !important;
             }
-            .routing-instructions-content .leaflet-routing-icon {
-              background-size: 240px 20px !important;
-              margin: 0 8px !important;
-            }
-            .routing-instructions-content h2 {
+            .leaflet-routing-container h2 {
               font-size: 18px !important;
-              margin: 0 0 16px 0 !important;
+              margin: 0 0 12px 0 !important;
               padding-bottom: 8px !important;
               border-bottom: 1px solid #eee !important;
             }
-            .routing-instructions-content h3 {
+            .leaflet-routing-container h3 {
               font-size: 16px !important;
               margin: 16px 0 8px 0 !important;
-            }
-            .leaflet-routing-container-hide {
-              display: block !important;
-            }
-            .leaflet-routing-collapsible {
-              display: block !important;
-            }
-            .custom-routing-container h2 {
-              font-size: 18px;
-              margin: 0 0 12px 0;
-              padding-bottom: 8px;
-              border-bottom: 1px solid #eee;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-            }
-            .custom-routing-container h3 {
-              font-size: 16px;
-              margin: 16px 0 8px 0;
             }
             .leaflet-routing-alt {
               border: none !important;
@@ -254,66 +215,11 @@ const VostcardDetailView: React.FC = () => {
             .leaflet-routing-alt-minimized {
               display: block !important;
             }
-            .leaflet-routing-alt h2 {
-              font-size: 18px !important;
-              margin-bottom: 16px !important;
-            }
-            .leaflet-routing-alt h3 {
-              font-size: 16px !important;
-              margin: 16px 0 8px 0 !important;
-            }
-            .leaflet-routing-container {
-              position: absolute !important;
-              top: 10px !important;
-              right: 10px !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              width: 400px !important;
-              background: white !important;
-              border-radius: 12px !important;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-              z-index: 1000 !important;
-            }
-            .leaflet-routing-container.leaflet-routing-container-hide {
+            .leaflet-routing-container-hide {
               display: block !important;
             }
-            .leaflet-routing-container h2 {
-              font-size: 18px !important;
-              margin: 0 0 12px 0 !important;
-            }
-            .leaflet-routing-container h3 {
-              font-size: 16px !important;
-              margin: 16px 0 8px 0 !important;
-            }
-            .leaflet-routing-icon {
-              background-size: 240px 20px !important;
-              margin: 0 8px !important;
-            }
-            .leaflet-routing-alternatives-container {
-              font-size: 16px !important;
+            .leaflet-routing-collapsible {
               display: block !important;
-              max-height: none !important;
-              padding: 16px !important;
-            }
-            .leaflet-routing-instructions {
-              font-size: 16px !important;
-              margin-top: 16px !important;
-            }
-            .leaflet-routing-instruction-text {
-              font-size: 16px !important;
-              padding: 12px 0 !important;
-              line-height: 1.4 !important;
-            }
-            .leaflet-routing-instruction-distance {
-              font-size: 16px !important;
-              color: #666 !important;
-              padding-left: 12px !important;
-            }
-            .leaflet-routing-summary {
-              font-size: 14px !important;
-              padding: 8px 0 !important;
-              border-bottom: 1px solid #eee !important;
-              margin-bottom: 12px !important;
             }
             .leaflet-routing-geocoder {
               display: none !important;
@@ -324,9 +230,9 @@ const VostcardDetailView: React.FC = () => {
           // Add close button if showing directions
           if (showDirections) {
             setTimeout(() => {
-              const container = document.querySelector('.routing-instructions') as HTMLElement | null;
+              const container = document.querySelector('.leaflet-routing-container') as HTMLElement | null;
               if (container) {
-                const header = container.querySelector('.leaflet-routing-container h2') as HTMLElement | null;
+                const header = container.querySelector('h2') as HTMLElement | null;
                 if (header) {
                   const closeButton = document.createElement('button');
                   closeButton.innerHTML = '×';
