@@ -51,6 +51,8 @@ const ItineraryDetailView: React.FC = () => {
   
   // Helper function to get map center from all points
   const getMapCenter = useCallback(() => {
+    if (!itinerary?.items) return { lat: 0, lng: 0 }; // Default center if no data
+
     const points = itinerary.items.filter(item => item.latitude && item.longitude);
     if (points.length === 0) {
       return { lat: 0, lng: 0 }; // Default center
@@ -63,17 +65,19 @@ const ItineraryDetailView: React.FC = () => {
       lat: totalLat / points.length,
       lng: totalLng / points.length
     };
-  }, [itinerary.items]);
+  }, [itinerary?.items]);
 
   // Helper function to get route path for polyline
   const getRoutePath = useCallback(() => {
+    if (!itinerary?.items) return [];
+
     return itinerary.items
       .filter(item => item.latitude && item.longitude)
       .map(item => ({
         lat: item.latitude || 0,
         lng: item.longitude || 0
       }));
-  }, [itinerary.items]);
+  }, [itinerary?.items]);
 
   console.log('🔄 ItineraryDetailView rendered', {
     id,
@@ -914,10 +918,10 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                     maxZoom={22}
                   />
 
-                  <MapBoundsUpdater items={itinerary.items} />
+                  {itinerary?.items && <MapBoundsUpdater items={itinerary.items} />}
 
                   {/* Add markers for each location */}
-                  {itinerary.items.map((item, index) => (
+                  {itinerary?.items?.map((item, index) => (
                     item.latitude && item.longitude ? (
                       <Marker
                         key={item.id}
