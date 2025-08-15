@@ -149,8 +149,14 @@ const VostcardDetailView: React.FC = () => {
           // Add directions callback
           if (onDirectionsLoaded) {
             routingControl.on('routesfound', function(e) {
-              if (e.routes && e.routes[0] && e.routes[0].instructions) {
-                onDirectionsLoaded(e.routes[0].instructions);
+              if (e.routes && e.routes[0]) {
+                const instructions = e.routes[0].instructions.map((instruction: any) => ({
+                  text: instruction.text,
+                  distance: instruction.distance,
+                  time: instruction.time,
+                  type: instruction.type
+                }));
+                onDirectionsLoaded(instructions);
               }
             });
           }
