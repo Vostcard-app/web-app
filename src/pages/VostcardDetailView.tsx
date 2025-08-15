@@ -312,13 +312,12 @@ const VostcardDetailView: React.FC = () => {
           }, 100);
         },
         (error) => {
-          console.error('Error getting location:', error);
+                    console.error('Error getting location:', error);
           alert('Could not get your current location. Please enable location services.');
         }
       );
-    };
 
-    // Initialize routing
+      // Initialize routing
     initRouting();
 
     // Cleanup
