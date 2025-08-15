@@ -147,7 +147,13 @@ const VostcardDetailView: React.FC = () => {
             draggableWaypoints: false,
             fitSelectedRoutes: true,
             showAlternatives: false,
-            show: true
+            show: true,
+            containerClassName: 'routing-instructions-content',
+            formatter: L.Routing.Formatter({
+              units: 'metric',
+              roundingSensitivity: 1,
+              distanceTemplate: '{value} {unit}'
+            })
           });
 
           // Add control to map
@@ -170,19 +176,49 @@ const VostcardDetailView: React.FC = () => {
             // Add custom styles for the routing container
             const style = document.createElement('style');
             style.textContent = `
-              .leaflet-routing-container {
-                background-color: white !important;
-                padding: 16px !important;
-                border-radius: 12px !important;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
-                width: 400px !important;
-                max-height: 70vh !important;
-                overflow-y: auto !important;
+              .routing-instructions-content {
+                width: 100% !important;
                 font-family: system-ui, -apple-system, sans-serif !important;
-                position: absolute !important;
-                top: 10px !important;
-                right: 10px !important;
-                z-index: 1000 !important;
+              }
+              .routing-instructions-content .leaflet-routing-container {
+                width: 100% !important;
+                background: none !important;
+                border: none !important;
+                box-shadow: none !important;
+              }
+              .routing-instructions-content .leaflet-routing-alt {
+                font-size: 16px !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              .routing-instructions-content .leaflet-routing-alt table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+              }
+              .routing-instructions-content .leaflet-routing-alt tr {
+                border-bottom: 1px solid #eee !important;
+              }
+              .routing-instructions-content .leaflet-routing-alt tr:hover {
+                background-color: #f5f5f5 !important;
+              }
+              .routing-instructions-content .leaflet-routing-alt td {
+                padding: 12px 8px !important;
+                font-size: 16px !important;
+              }
+              .routing-instructions-content .leaflet-routing-icon {
+                background-size: 240px 20px !important;
+                margin: 0 8px !important;
+              }
+              .routing-instructions-content h2 {
+                font-size: 18px !important;
+                margin: 0 0 16px 0 !important;
+                padding-bottom: 8px !important;
+                border-bottom: 1px solid #eee !important;
+              }
+              .routing-instructions-content h3 {
+                font-size: 16px !important;
+                margin: 16px 0 8px 0 !important;
               }
               .leaflet-routing-container-hide {
                 display: block !important;
@@ -2440,21 +2476,23 @@ Tap OK to continue.`;
                   position={[vostcard.latitude, vostcard.longitude]}
                   icon={createIcons().vostcardIcon}
                 />
-                                  <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
-                  {showDirections && (
-                    <div className="routing-instructions" style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      backgroundColor: 'white',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      width: '400px',
-                      maxHeight: '70vh',
-                      overflowY: 'auto',
-                      zIndex: 1000
-                    }} />
+                                  {showDirections && (
+                    <>
+                      <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
+                      <div className="routing-instructions" style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        backgroundColor: 'white',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        width: '400px',
+                        maxHeight: '70vh',
+                        overflowY: 'auto',
+                        zIndex: 1000
+                      }} />
+                    </>
                   )}
               </MapContainer>
             </div>
