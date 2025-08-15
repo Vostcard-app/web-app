@@ -9,7 +9,11 @@ service cloud.firestore {
     // Allow authenticated users to read and write their own vostcards
     match /vostcards/{vostcardId} {
       allow read: if true; // Allow all users to read vostcards (for the map)
-      allow update: if request.auth != null && request.auth.uid == resource.data.userID;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userID ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
       allow delete: if request.auth != null && (
         request.auth.uid == resource.data.userID ||
@@ -156,8 +160,16 @@ service cloud.firestore {
         resource.data.isPublic == true // Anyone can read public itineraries
       );
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
-      allow update: if request.auth != null && request.auth.uid == resource.data.userID;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userID;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userID ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.userID ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
       
       // Allow authenticated users to manage items within their itineraries
       match /items/{itemId} {
@@ -181,8 +193,16 @@ service cloud.firestore {
         (resource.data.isPrivate == false && resource.data.shareableLink != null) // Legacy: Public trips with shareable links
       );
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userID;
-      allow update: if request.auth != null && request.auth.uid == resource.data.userID;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userID;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userID ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.userID ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
       
       // Allow authenticated users to manage items within their trips
       // Allow unauthenticated users to read items from shared/public trips
@@ -204,8 +224,16 @@ service cloud.firestore {
     match /tours/{tourId} {
       allow read: if true; // Allow all users to read tours (for public sharing)
       allow create: if request.auth != null && request.auth.uid == request.resource.data.creatorId;
-      allow update: if request.auth != null && request.auth.uid == resource.data.creatorId;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.creatorId;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.creatorId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.creatorId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
       
       // Allow authenticated users to manage tour reviews
       match /reviews/{reviewId} {
