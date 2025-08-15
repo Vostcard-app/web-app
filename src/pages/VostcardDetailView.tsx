@@ -131,55 +131,59 @@ const VostcardDetailView: React.FC = () => {
           // Make sure L.Routing is available
           if (L.Routing) {
             const { currentLocationIcon, vostcardIcon } = createIcons();
+            
+            // Create a basic routing control first
             routingControl = L.Routing.control({
               waypoints: [
                 L.latLng(latitude, longitude),
                 L.latLng(destination[0], destination[1])
               ],
-              routeWhileDragging: false,
-              addWaypoints: false,
-              draggableWaypoints: false,
-              fitSelectedRoutes: true,
-              showAlternatives: false,
+              router: L.Routing.osrm({
+                serviceUrl: 'https://router.project-osrm.org/route/v1'
+              }),
+              plan: L.Routing.plan([
+                L.latLng(latitude, longitude),
+                L.latLng(destination[0], destination[1])
+              ], {
+                createMarker: function(i: number, waypoint: any) {
+                  return L.marker(waypoint.latLng, {
+                    icon: i === 0 ? currentLocationIcon : vostcardIcon
+                  });
+                },
+                draggableWaypoints: false,
+                addWaypoints: false
+              }),
               lineOptions: {
                 styles: [{ color: '#5856D6', weight: 4 }]
               },
-              createMarker: function(i: number, waypoint: any) {
-                return L.marker(waypoint.latLng, {
-                  icon: i === 0 ? currentLocationIcon : vostcardIcon
-                });
-              },
-              // Customize the directions panel
-              containerClassName: 'custom-routing-container',
               show: true,
               collapsible: false,
               showAlternatives: false,
-              formatter: L.Routing.Formatter({
-                units: 'metric',
-                roundingSensitivity: 1,
-                distanceTemplate: '{value} {unit}'
-              }),
-              router: L.Routing.osrm({
-                serviceUrl: 'https://router.project-osrm.org/route/v1'
-              })
+              containerClassName: 'custom-routing-container'
             }).addTo(map);
 
             // Add custom styles for the routing container
             const style = document.createElement('style');
             style.textContent = `
-              .custom-routing-container {
-                background-color: white;
-                padding: 16px;
-                border-radius: 12px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                max-width: 400px;
-                max-height: 70vh;
-                overflow-y: auto;
-                font-family: system-ui, -apple-system, sans-serif;
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                z-index: 1000;
+              .leaflet-routing-container {
+                background-color: white !important;
+                padding: 16px !important;
+                border-radius: 12px !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+                width: 400px !important;
+                max-height: 70vh !important;
+                overflow-y: auto !important;
+                font-family: system-ui, -apple-system, sans-serif !important;
+                position: absolute !important;
+                top: 10px !important;
+                right: 10px !important;
+                z-index: 1000 !important;
+              }
+              .leaflet-routing-container-hide {
+                display: block !important;
+              }
+              .leaflet-routing-collapsible {
+                display: block !important;
               }
               .custom-routing-container h2 {
                 font-size: 18px;
@@ -199,24 +203,32 @@ const VostcardDetailView: React.FC = () => {
                 margin: 0 !important;
                 padding: 0 !important;
                 display: block !important;
+                font-size: 16px !important;
               }
               .leaflet-routing-alt table {
-                font-size: 16px !important;
                 width: 100% !important;
+                border-collapse: collapse !important;
               }
               .leaflet-routing-alt tr {
-                padding: 8px 0 !important;
-                display: table-row !important;
+                border-bottom: 1px solid #eee !important;
               }
               .leaflet-routing-alt tr:hover {
-                background-color: #f5f5f5;
-                cursor: pointer;
+                background-color: #f5f5f5 !important;
               }
               .leaflet-routing-alt td {
                 padding: 12px 8px !important;
+                font-size: 16px !important;
               }
               .leaflet-routing-alt-minimized {
                 display: block !important;
+              }
+              .leaflet-routing-alt h2 {
+                font-size: 18px !important;
+                margin-bottom: 16px !important;
+              }
+              .leaflet-routing-alt h3 {
+                font-size: 16px !important;
+                margin: 16px 0 8px 0 !important;
               }
               .leaflet-routing-container {
                 position: absolute !important;
