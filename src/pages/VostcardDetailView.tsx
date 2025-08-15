@@ -84,32 +84,20 @@ const VostcardDetailView: React.FC = () => {
     return { vostcardIcon, currentLocationIcon };
   };
 
-  // Function to load routing machine resources
-  const loadRoutingMachine = async () => {
-    // Load CSS
-    const cssId = 'leaflet-routing-machine-styles';
-    if (!document.getElementById(cssId)) {
-      const link = document.createElement('link');
-      link.id = cssId;
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css';
-      document.head.appendChild(link);
-    }
-
-    // Load JS
-    const scriptId = 'leaflet-routing-machine-script';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js';
-      document.head.appendChild(script);
-      
-      // Wait for script to load
-      await new Promise((resolve) => {
-        script.onload = resolve;
-      });
-    }
-  };
+  // Import routing machine
+  useEffect(() => {
+    const loadRoutingMachine = async () => {
+      try {
+        // Import the CSS
+        await import('leaflet-routing-machine/dist/leaflet-routing-machine.css');
+        // Import the JS
+        await import('leaflet-routing-machine');
+      } catch (error) {
+        console.error('Failed to load routing machine:', error);
+      }
+    };
+    loadRoutingMachine();
+  }, []);
 
   // Routing control component
   const RoutingMachine = ({ 
