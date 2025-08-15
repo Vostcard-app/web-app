@@ -465,12 +465,28 @@ const AdminPanel: React.FC = () => {
           if (isOrphaned) {
             console.log(`🔧 Fixing orphaned post: "${data.title || 'NO_TITLE'}" (${docSnapshot.id})`);
             
-            // Update the post with Jay Bond's info
-            await updateDoc(docSnapshot.ref, {
+            // Get current timestamp
+            const now = new Date();
+            const timestamp = now.toISOString();
+            
+            // Update the post with Jay Bond's info and proper dates
+            const updateData: any = {
               userID: JAY_BOND_USER_ID,
               username: 'Jay Bond',
-              updatedAt: new Date().toISOString()
-            });
+              updatedAt: timestamp
+            };
+            
+            // Add missing dates if they don't exist
+            if (!data.createdAt) {
+              updateData.createdAt = timestamp;
+              console.log(`  📅 Adding missing createdAt: ${timestamp}`);
+            }
+            if (!data.postedAt) {
+              updateData.postedAt = timestamp;
+              console.log(`  📅 Adding missing postedAt: ${timestamp}`);
+            }
+            
+            await updateDoc(docSnapshot.ref, updateData);
             
             fixed++;
           }
@@ -906,7 +922,7 @@ const AdminPanel: React.FC = () => {
           🔧 Fix Orphaned Jay Bond Posts
         </h2>
         <p style={{ marginBottom: '15px', color: '#555' }}>
-          <strong>Found 11 posts with invalid data?</strong> This will assign all orphaned vostcards (missing userID) to Jay Bond so they show up properly.
+          <strong>Found 11 posts with invalid data?</strong> This will assign all orphaned vostcards (missing userID) to Jay Bond and add missing dates so they show up properly.
         </p>
         <button
           onClick={handleFixOrphanedJayBondPosts}
