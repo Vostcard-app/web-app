@@ -73,7 +73,7 @@ const MyVostcardListView = () => {
           // Avoid auto-redirect loops on iOS Safari; render lightweight CTA instead
           if (!user) {
             console.log('❌ No user authenticated');
-            setError('Please log in to view your private posts.');
+            setError('Please log in to view your personal posts.');
             setLoading(false);
             return;
           }
@@ -81,12 +81,12 @@ const MyVostcardListView = () => {
           // ⚡ Lightweight metadata-only sync (no media) to avoid memory spikes on iOS
           await syncVostcardMetadata();
           
-          console.log('✅ Private Posts loaded successfully');
+          console.log('✅ Personal Posts loaded successfully');
           
         } catch (error) {
-          console.error('❌ Error loading private posts:', error);
+          console.error('❌ Error loading personal posts:', error);
           // ✅ NEW: Use utility for consistent error handling
-          setError(createErrorMessage(error, 'Failed to load private posts'));
+          setError(createErrorMessage(error, 'Failed to load personal posts'));
         } finally {
           setLoading(false);
         }
@@ -319,7 +319,7 @@ Tap OK to continue.`;
 
 
   const handleRetry = () => {
-    console.log('🔄 Retrying to load private posts (metadata sync)...');
+    console.log('🔄 Retrying to load personal posts (metadata sync)...');
     syncVostcardMetadata();
   };
 
@@ -345,7 +345,7 @@ Tap OK to continue.`;
         background: '#f5f5f5', padding: 20
       }}>
         <div style={{ background: 'white', padding: 24, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.08)', maxWidth: 420, width: '100%', textAlign: 'center' }}>
-          <h2 style={{ marginTop: 0, color: '#002B4D' }}>Private Posts</h2>
+          <h2 style={{ marginTop: 0, color: '#002B4D' }}>Personal Posts</h2>
           <p style={{ color: '#555' }}>Please log in to view your personal posts.</p>
           <button
             onClick={() => navigate('/login')}
@@ -460,8 +460,8 @@ Tap OK to continue.`;
             textAlign: 'center',
             color: '#666'
           }}>
-            <h2>No Private Posts Found</h2>
-            <p>You haven't created any private posts yet.</p>
+            <h2>No Personal Posts Found</h2>
+            <p>You haven't created any personal posts yet.</p>
             <button
               onClick={() => navigate('/home')}
               style={{
@@ -488,10 +488,10 @@ Tap OK to continue.`;
               fontSize: '14px',
               color: '#495057'
             }}>
-              {savedVostcards.length} Private Post{savedVostcards.length !== 1 ? 's' : ''}
+              {savedVostcards.length} Personal Post{savedVostcards.length !== 1 ? 's' : ''}
             </div>
 
-            {/* Private Posts List */}
+            {/* Personal Posts List */}
             <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               {savedVostcards.length > 0 && [...savedVostcards]
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
