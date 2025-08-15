@@ -2,9 +2,8 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar, FaDirections } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-// @ts-ignore
-import * as LeafletRouting from 'leaflet-routing-machine';
-import 'leaflet-routing-machine/dist/leaflet-routing.css';
+// Import Leaflet Routing Machine
+import 'leaflet-routing-machine';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
@@ -70,12 +69,27 @@ const VostcardDetailView: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
 
+  // Function to load routing CSS
+  const loadRoutingStyles = () => {
+    const id = 'leaflet-routing-machine-styles';
+    if (!document.getElementById(id)) {
+      const link = document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css';
+      document.head.appendChild(link);
+    }
+  };
+
   // Routing control component
   const RoutingMachine = ({ destination }: { destination: [number, number] }) => {
     const map = useMap();
     
     useEffect(() => {
       if (!map || !showDirections) return;
+      
+      // Load routing styles
+      loadRoutingStyles();
 
       // Get user's current location
       navigator.geolocation.getCurrentPosition(

@@ -22,7 +22,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: ['leaflet-routing-machine'],
+      external: [
+        'leaflet-routing-machine',
+        'leaflet-routing-machine/dist/leaflet-routing.css'
+      ],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
