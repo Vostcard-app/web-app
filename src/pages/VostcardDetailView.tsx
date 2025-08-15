@@ -62,6 +62,7 @@ const VostcardDetailView: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
   const [directions, setDirections] = useState<any[]>([]);
+  const [showDirectionsOverlay, setShowDirectionsOverlay] = useState(false);
 
   // Create custom icons
   const createIcons = () => {
@@ -148,13 +149,13 @@ const VostcardDetailView: React.FC = () => {
 
           // Add directions callback
           if (onDirectionsLoaded) {
-            routingControl.on('routesfound', function(e) {
-              if (e.routes && e.routes[0]) {
+            routingControl.on('routesfound', function(e: any) {
+              if (e.routes && e.routes[0] && e.routes[0].instructions) {
                 const instructions = e.routes[0].instructions.map((instruction: any) => ({
-                  text: instruction.text,
-                  distance: instruction.distance,
-                  time: instruction.time,
-                  type: instruction.type
+                  text: instruction.text || instruction.instruction || 'Continue',
+                  distance: instruction.distance || 0,
+                  time: instruction.time || 0,
+                  type: instruction.type || 'straight'
                 }));
                 onDirectionsLoaded(instructions);
               }
@@ -1708,6 +1709,7 @@ Tap OK to continue.`;
             onClick={() => {
               setShowDirections(true);
               setShowMapModal(true);
+              setShowDirectionsOverlay(true);
             }}
             style={{
               background: 'none',
@@ -2367,6 +2369,7 @@ Tap OK to continue.`;
           onClick={() => {
             setShowMapModal(false);
             setShowDirections(false);
+            setShowDirectionsOverlay(false);
           }}
         >
           <div
@@ -2392,7 +2395,11 @@ Tap OK to continue.`;
             }}>
               <h3 style={{ margin: 0, fontSize: '18px' }}>{showDirections ? 'Directions to Location' : 'Quickcard Location'}</h3>
               <button
-                onClick={() => setShowMapModal(false)}
+                onClick={() => {
+                  setShowMapModal(false);
+                  setShowDirections(false);
+                  setShowDirectionsOverlay(false);
+                }}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -2428,12 +2435,136 @@ Tap OK to continue.`;
                       onDirectionsLoaded={(route) => {
                         if (route && route.instructions) {
                           setDirections(route.instructions);
+                          setShowDirectionsOverlay(true);
                         }
                       }}
                     />
                   )}
               </MapContainer>
             </div>
+            
+            {/* Turn-by-Turn Directions Overlay */}
+            {showDirectionsOverlay && directions.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '80px',
+                  left: '20px',
+                  right: '20px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  maxHeight: '60%',
+                  overflowY: 'auto',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  zIndex: 1001
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header with dismiss button */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px',
+                  paddingBottom: '8px',
+                  borderBottom: '1px solid #e0e0e0'
+                }}>
+                  <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#333' }}>
+                    Turn-by-Turn Directions
+                  </h4>
+                  <button
+                    onClick={() => setShowDirectionsOverlay(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#666',
+                      fontSize: '18px',
+                      padding: '4px'
+                    }}
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+                
+                {/* Directions list */}
+                <div style={{ fontSize: '14px' }}>
+                  {directions.map((direction, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        marginBottom: '8px',
+                        padding: '8px',
+                        backgroundColor: index === 0 ? '#f0f8ff' : 'transparent',
+                        borderRadius: '6px',
+                        border: index === 0 ? '1px solid #e3f2fd' : 'none'
+                      }}
+                    >
+                      <div
+                        style={{
+                          backgroundColor: '#5856D6',
+                          color: 'white',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          marginRight: '10px',
+                          flexShrink: 0,
+                          marginTop: '2px'
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: index === 0 ? 'bold' : 'normal', color: '#333' }}>
+                          {direction.text}
+                        </div>
+                        {direction.distance && (
+                          <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                            {(direction.distance / 1000).toFixed(1)} km
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Toggle directions button (when directions are loaded but overlay is hidden) */}
+            {directions.length > 0 && !showDirectionsOverlay && (
+              <button
+                onClick={() => setShowDirectionsOverlay(true)}
+                style={{
+                  position: 'absolute',
+                  bottom: '20px',
+                  right: '20px',
+                  backgroundColor: '#5856D6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '25px',
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  zIndex: 1001
+                }}
+              >
+                <FaDirections size={14} />
+                Show Directions
+              </button>
+            )}
           </div>
         </div>
       )}
