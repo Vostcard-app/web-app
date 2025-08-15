@@ -151,10 +151,16 @@ const VostcardDetailView: React.FC = () => {
               },
               // Customize the directions panel
               containerClassName: 'custom-routing-container',
+              show: true,
+              collapsible: false,
+              showAlternatives: false,
               formatter: L.Routing.Formatter({
                 units: 'metric',
                 roundingSensitivity: 1,
                 distanceTemplate: '{value} {unit}'
+              }),
+              router: L.Routing.osrm({
+                serviceUrl: 'https://router.project-osrm.org/route/v1'
               })
             }).addTo(map);
 
@@ -213,11 +219,19 @@ const VostcardDetailView: React.FC = () => {
                 display: block !important;
               }
               .leaflet-routing-container {
-                position: relative !important;
-                float: none !important;
+                position: absolute !important;
+                top: 10px !important;
+                right: 10px !important;
                 margin: 0 !important;
                 padding: 0 !important;
-                width: 100% !important;
+                width: 400px !important;
+                background: white !important;
+                border-radius: 12px !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+                z-index: 1000 !important;
+              }
+              .leaflet-routing-container.leaflet-routing-container-hide {
+                display: block !important;
               }
               .leaflet-routing-container h2 {
                 font-size: 18px !important;
@@ -232,7 +246,10 @@ const VostcardDetailView: React.FC = () => {
                 margin: 0 8px !important;
               }
               .leaflet-routing-alternatives-container {
-                font-size: 14px !important;
+                font-size: 16px !important;
+                display: block !important;
+                max-height: none !important;
+                padding: 16px !important;
               }
               .leaflet-routing-instructions {
                 font-size: 16px !important;
