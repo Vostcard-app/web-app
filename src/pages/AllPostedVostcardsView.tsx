@@ -391,6 +391,20 @@ const AllPostedVostcardsView: React.FC = () => {
         
         console.log('📋 Loaded posted Vōstcards:', allContent.length);
         
+        // Debug: Log all Jay Bond posts found
+        const jayBondPosts = allContent.filter(v => v.username === 'Jay Bond' || v.userID === '9byLf32ls0gF2nzF17vnv9RhLiJ2');
+        console.log('🔍 Jay Bond posts found in query:', jayBondPosts.length);
+        if (jayBondPosts.length > 0) {
+          console.log('📝 Jay Bond posts details:', jayBondPosts.map(p => ({
+            id: p.id,
+            title: p.title,
+            username: p.username,
+            userRole: p.userRole,
+            state: p.state,
+            userID: p.userID
+          })));
+        }
+        
         // Filter out any quickcard IDs that might be stale references
         const validVostcards = allContent.filter(v => v.id && !v.id.toLowerCase().includes('quickcard_'));
         console.log('🧹 Filtered out quickcard references:', allContent.length - validVostcards.length);
@@ -454,6 +468,12 @@ const AllPostedVostcardsView: React.FC = () => {
       
       // Filter the new content: Vōstcards only (exclude offers and quickcard references)
       const newContent = newVostcards.filter(v => !v.isOffer && !v.id.toLowerCase().includes('quickcard_'));
+      
+      // Debug: Log Jay Bond posts in pagination
+      const jayBondPosts = newVostcards.filter(v => v.username === 'Jay Bond' || v.userID === '9byLf32ls0gF2nzF17vnv9RhLiJ2');
+      if (jayBondPosts.length > 0) {
+        console.log('🔍 Jay Bond posts found in pagination:', jayBondPosts.length);
+      }
       
       console.log('📋 Loaded', newContent.length, 'more vostcards');
       
