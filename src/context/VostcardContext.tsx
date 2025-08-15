@@ -1991,15 +1991,42 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
       
       const querySnapshot = await getDocs(q);
-      console.log(`📊 Found ${querySnapshot.docs.length} posted Vostcards in Firebase`);
+      console.log(`📊 Found ${querySnapshot.docs.length} posted Vostcards in Firebase for current user`);
       
-      const vostcards = querySnapshot.docs.map(doc => {
+      let vostcards = querySnapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
           ...data
         };
       });
+
+      // For admin users, also load vostcards with missing userID that might be corrupted
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      const userRole = userDoc.data()?.role || userDoc.data()?.userRole;
+      
+      if (userRole === 'admin' || userRole === 'guide') {
+        console.log('👨‍💼 Admin user detected - also loading vostcards with missing userID...');
+        
+        // Query for posted vostcards with missing or null userID
+        const orphanQuery = query(
+          collection(db, 'vostcards'),
+          where('state', '==', 'posted')
+        );
+        
+        const orphanSnapshot = await getDocs(orphanQuery);
+        const orphanVostcards = orphanSnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter(v => !v.userID || v.userID === ''); // Only get ones with missing userID
+        
+        console.log(`🔧 Found ${orphanVostcards.length} orphaned vostcards (missing userID)`);
+        
+        // Add orphaned vostcards to the list
+        vostcards = [...vostcards, ...orphanVostcards];
+      }
       
       setPostedVostcards(vostcards);
       console.log('✅ Posted Vostcards synced successfully:', vostcards.length);
