@@ -2501,7 +2501,11 @@ Tap OK to continue.`;
                       <RoutingMachine 
                         destination={[vostcard.latitude, vostcard.longitude]}
                         showDirections={true}
-                        onDirectionsLoaded={(instructions) => setDirections(instructions)}
+                        onDirectionsLoaded={(route) => {
+                          if (route && route.instructions) {
+                            setDirections(route.instructions);
+                          }
+                        }}
                       />
                     </div>
                   )}
