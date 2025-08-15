@@ -40,6 +40,8 @@ const AdminPanel: React.FC = () => {
   const [invalidPostsCleanupLoading, setInvalidPostsCleanupLoading] = useState(false);
   // Orphaned posts fix state
   const [orphanedPostsFixLoading, setOrphanedPostsFixLoading] = useState(false);
+  // Quickcard to vostcard migration state
+  const [quickcardMigrationLoading, setQuickcardMigrationLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -514,6 +516,95 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Global quickcard to vostcard migration
+  const handleQuickcardToVostcardMigration = async () => {
+    if (!window.confirm('🔄 This will convert ALL quickcard references to vostcard format globally. This includes:\n\n• Removing isQuickcard flags\n• Converting quickcard_ IDs to vostcard format\n• Updating all quickcard references\n\nThis is a MAJOR database change. Continue?')) {
+      return;
+    }
+
+    setQuickcardMigrationLoading(true);
+    let migrated = 0;
+    let errors = 0;
+
+    try {
+      console.log('🔄 Starting global quickcard to vostcard migration...');
+      
+      // Query for all documents with quickcard references
+      const q = query(collection(db, 'vostcards'));
+      const snapshot = await getDocs(q);
+      console.log(`📋 Found ${snapshot.docs.length} total vostcards to check`);
+      
+      // Process each document
+      for (const docSnapshot of snapshot.docs) {
+        try {
+          const data = docSnapshot.data();
+          let needsUpdate = false;
+          const updateData: any = {};
+          
+          // Check if this is a quickcard that needs migration
+          if (data.isQuickcard === true) {
+            console.log(`🔄 Migrating quickcard: "${data.title || 'NO_TITLE'}" (${docSnapshot.id})`);
+            
+            // Remove quickcard flag
+            updateData.isQuickcard = false;
+            needsUpdate = true;
+            console.log(`  ✅ Removing isQuickcard flag`);
+          }
+          
+          // Convert quickcard_ ID to proper vostcard ID
+          if (data.id && data.id.includes('quickcard_')) {
+            const newId = data.id.replace('quickcard_', 'vostcard_');
+            updateData.id = newId;
+            needsUpdate = true;
+            console.log(`  🔄 Converting ID: ${data.id} → ${newId}`);
+          }
+          
+          // Ensure it has proper vostcard properties
+          if (needsUpdate) {
+            // Set as regular vostcard
+            updateData.type = 'vostcard';
+            updateData.migrated = true;
+            updateData.migratedAt = new Date().toISOString();
+            
+            // Ensure proper dates exist
+            if (!data.createdAt) {
+              updateData.createdAt = new Date().toISOString();
+              console.log(`  📅 Adding missing createdAt`);
+            }
+            if (!data.postedAt && data.state === 'posted') {
+              updateData.postedAt = new Date().toISOString();
+              console.log(`  📅 Adding missing postedAt`);
+            }
+            
+            // Update the document
+            await updateDoc(docSnapshot.ref, updateData);
+            migrated++;
+            console.log(`  ✅ Migration completed for ${docSnapshot.id}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to migrate document ${docSnapshot.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`✅ Global migration completed! Migrated: ${migrated}, Errors: ${errors}`);
+      
+      if (migrated > 0) {
+        alert(`✅ Successfully migrated ${migrated} quickcards to vostcard format! All quickcard references have been converted.`);
+      } else if (errors > 0) {
+        alert(`⚠️ Migration completed with ${errors} errors. Check console for details.`);
+      } else {
+        alert('ℹ️ No quickcards found that needed migration.');
+      }
+      
+    } catch (error) {
+      console.error('❌ Global quickcard migration failed:', error);
+      alert('❌ Global quickcard migration failed. Check console for details.');
+    } finally {
+      setQuickcardMigrationLoading(false);
+    }
+  };
+
   const searchForDocument = async (docId: string) => {
     try {
       console.log(`🔍 Searching for document: ${docId}`);
@@ -950,6 +1041,49 @@ const AdminPanel: React.FC = () => {
           }}
         >
           {orphanedPostsFixLoading ? '🔄 Fixing...' : '🔧 Fix Jay Bond Posts'}
+        </button>
+      </div>
+
+      {/* 4.6. Global Quickcard to Vostcard Migration */}
+      <div style={{ backgroundColor: '#f3e5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #9c27b0' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#7b1fa2' }}>
+          🔄 Global Quickcard Migration
+        </h2>
+        <p style={{ marginBottom: '15px', color: '#555' }}>
+          <strong>⚠️ MAJOR DATABASE CHANGE:</strong> This will globally convert ALL quickcard references to proper vostcard format:
+        </p>
+        <ul style={{ marginBottom: '15px', color: '#555', paddingLeft: '20px' }}>
+          <li>Remove <code>isQuickcard: true</code> flags</li>
+          <li>Convert <code>quickcard_</code> IDs to <code>vostcard_</code> format</li>
+          <li>Add missing dates (createdAt, postedAt)</li>
+          <li>Set proper vostcard properties</li>
+        </ul>
+        <button
+          onClick={handleQuickcardToVostcardMigration}
+          disabled={quickcardMigrationLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: quickcardMigrationLoading ? '#6c757d' : '#9c27b0',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: quickcardMigrationLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!quickcardMigrationLoading) {
+              e.currentTarget.style.backgroundColor = '#7b1fa2';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!quickcardMigrationLoading) {
+              e.currentTarget.style.backgroundColor = '#9c27b0';
+            }
+          }}
+        >
+          {quickcardMigrationLoading ? '🔄 Migrating...' : '🔄 Migrate All Quickcards'}
         </button>
       </div>
 
