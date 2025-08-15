@@ -391,7 +391,11 @@ const AllPostedVostcardsView: React.FC = () => {
         
         console.log('📋 Loaded posted Vōstcards:', allContent.length);
         
-        setVostcards(allContent);
+        // Filter out any quickcard IDs that might be stale references
+        const validVostcards = allContent.filter(v => v.id && !v.id.toLowerCase().includes('quickcard_'));
+        console.log('🧹 Filtered out quickcard references:', allContent.length - validVostcards.length);
+        
+        setVostcards(validVostcards);
         setLastUpdated(new Date());
         
         // Set pagination state
@@ -448,8 +452,8 @@ const AllPostedVostcardsView: React.FC = () => {
         ...doc.data()
       })) as Vostcard[];
       
-      // Filter the new content: Vōstcards only (exclude offers and quickcards)
-      const newContent = newVostcards.filter(v => !v.isOffer && !v.isQuickcard);
+      // Filter the new content: Vōstcards only (exclude offers and quickcard references)
+      const newContent = newVostcards.filter(v => !v.isOffer && !v.id.toLowerCase().includes('quickcard_'));
       
       console.log('📋 Loaded', newContent.length, 'more vostcards');
       
