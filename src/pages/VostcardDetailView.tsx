@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar, FaDirections } from 'react-icons/fa';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import 'leaflet-routing-machine';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
@@ -65,6 +67,45 @@ const VostcardDetailView: React.FC = () => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showDirections, setShowDirections] = useState(false);
+
+  // Routing control component
+  const RoutingMachine = ({ destination }: { destination: [number, number] }) => {
+    const map = useMap();
+    
+    useEffect(() => {
+      if (!map || !showDirections) return;
+
+      // Get user's current location
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const routingControl = L.Routing.control({
+            waypoints: [
+              L.latLng(latitude, longitude),
+              L.latLng(destination[0], destination[1])
+            ],
+            routeWhileDragging: false,
+            addWaypoints: false,
+            draggableWaypoints: false,
+            fitSelectedRoutes: true,
+            showAlternatives: false,
+            lineOptions: {
+              styles: [{ color: '#5856D6', weight: 4 }]
+            }
+          }).addTo(map);
+
+          return () => map.removeControl(routingControl);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          alert('Could not get your current location. Please enable location services.');
+        }
+      );
+    }, [map, destination, showDirections]);
+
+    return null;
+  };
   const [isLiked, setIsLiked] = useState(false);
   const [showSharedOptions, setShowSharedOptions] = useState(false);
   const [userRating, setUserRating] = useState(0);
@@ -1465,9 +1506,8 @@ Tap OK to continue.`;
         {vostcard?.latitude && vostcard?.longitude && (
           <button
             onClick={() => {
-              // Open in Google Maps
-              const url = `https://www.google.com/maps/dir/?api=1&destination=${vostcard.latitude},${vostcard.longitude}`;
-              window.open(url, '_blank');
+              setShowDirections(true);
+              setShowMapModal(true);
             }}
             style={{
               background: 'none',
@@ -2109,7 +2149,10 @@ Tap OK to continue.`;
             zIndex: 1000,
             padding: '20px'
           }}
-          onClick={() => setShowMapModal(false)}
+          onClick={() => {
+            setShowMapModal(false);
+            setShowDirections(false);
+          }}
         >
           <div
             style={{
@@ -2132,7 +2175,7 @@ Tap OK to continue.`;
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h3 style={{ margin: 0, fontSize: '18px' }}>Quickcard Location</h3>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>{showDirections ? 'Directions to Location' : 'Quickcard Location'}</h3>
               <button
                 onClick={() => setShowMapModal(false)}
                 style={{
@@ -2163,6 +2206,9 @@ Tap OK to continue.`;
                   position={[vostcard.latitude, vostcard.longitude]}
                   icon={vostcardIcon}
                 />
+                {showDirections && (
+                  <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
+                )}
               </MapContainer>
             </div>
           </div>
