@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useVostcard } from '../context/VostcardContext';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaKey, FaUser, FaSearch, FaHome } from 'react-icons/fa';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
@@ -9,6 +10,7 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
 
 const AdminPanel: React.FC = () => {
   const { user, userRole, isAdmin, convertUserToGuide, convertUserToAdmin } = useAuth();
+  const { cleanupAllQuickcards } = useVostcard();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -32,6 +34,8 @@ const AdminPanel: React.FC = () => {
   const [tracks, setTracks] = useState<any[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
   const [tracksError, setTracksError] = useState<string | null>(null);
+  // Quickcard cleanup state
+  const [cleanupLoading, setCleanupLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -335,7 +339,28 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleCleanupQuickcards = async () => {
+    if (!window.confirm('⚠️ This will permanently delete ALL quickcards from Firebase. This action cannot be undone. Are you sure?')) {
+      return;
+    }
 
+    setCleanupLoading(true);
+    try {
+      console.log('🗑️ Starting quickcard cleanup from Admin Panel...');
+      const result = await cleanupAllQuickcards();
+      
+      if (result.errors > 0) {
+        alert(`⚠️ Cleanup completed with some errors. Deleted: ${result.deleted}, Errors: ${result.errors}. Check console for details.`);
+      } else {
+        alert(`✅ Quickcard cleanup successful! Deleted ${result.deleted} quickcards.`);
+      }
+    } catch (error) {
+      console.error('❌ Cleanup failed:', error);
+      alert('❌ Quickcard cleanup failed. Check console for details.');
+    } finally {
+      setCleanupLoading(false);
+    }
+  };
 
   const searchForDocument = async (docId: string) => {
     try {
@@ -648,7 +673,51 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
-      {/* 3. Music Library (Admin) */}
+      {/* 3. Quickcard Cleanup (Admin) */}
+      <div style={{ backgroundColor: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffeaa7' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#856404' }}>
+          🗑️ Quickcard Cleanup
+        </h2>
+        
+        <div style={{ marginBottom: '15px', color: '#856404' }}>
+          <p style={{ margin: '0 0 10px 0' }}>
+            <strong>Warning:</strong> This action will permanently delete ALL remaining quickcards from the Firebase database.
+          </p>
+          <p style={{ margin: '0 0 10px 0' }}>
+            Use this only if quickcards have been migrated to vostcards and should no longer exist.
+          </p>
+        </div>
+        
+        <button
+          onClick={handleCleanupQuickcards}
+          disabled={cleanupLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: cleanupLoading ? '#6c757d' : '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: cleanupLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!cleanupLoading) {
+              e.currentTarget.style.backgroundColor = '#c82333';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!cleanupLoading) {
+              e.currentTarget.style.backgroundColor = '#dc3545';
+            }
+          }}
+        >
+          {cleanupLoading ? '🔄 Cleaning up...' : '🗑️ Delete All Quickcards'}
+        </button>
+      </div>
+
+      {/* 4. Music Library (Admin) */}
       <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
           🎵 Music Library (Admin)

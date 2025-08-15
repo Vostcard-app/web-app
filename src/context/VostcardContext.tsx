@@ -74,6 +74,8 @@ interface VostcardContextProps {
   postQuickcard: (quickcardToPost?: Vostcard) => Promise<void>; // Add this line
   // Migration: unify legacy quickcards and posted/private into unified private Vostcards
   migrateToUnifiedVostcards: () => Promise<{ migrated: number; skipped: number; errors: number }>
+  // Cleanup: remove all remaining quickcards from Firebase
+  cleanupAllQuickcards: () => Promise<{ deleted: number; errors: number }>
 }
 
 // IndexedDB configuration
@@ -2852,6 +2854,111 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [setLastSyncTimestamp, loadAllLocalVostcards]);
 
+  // Function to cleanup all remaining quickcards from Firebase
+  const cleanupAllQuickcards = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('🔍 No user logged in');
+      return { deleted: 0, errors: 0 };
+    }
+
+    let deleted = 0;
+    let errors = 0;
+
+    try {
+      console.log('🗑️ Starting quickcard cleanup...');
+      
+      // Query for all quickcards in the main vostcards collection (posted quickcards)
+      const postedQuickcardsQuery = query(
+        collection(db, 'vostcards'),
+        where('isQuickcard', '==', true)
+      );
+      
+      const postedSnapshot = await getDocs(postedQuickcardsQuery);
+      console.log(`📋 Found ${postedSnapshot.docs.length} posted quickcards to delete`);
+      
+      // Delete posted quickcards
+      for (const docSnapshot of postedSnapshot.docs) {
+        try {
+          const data = docSnapshot.data();
+          console.log(`🗑️ Deleting posted quickcard: "${data.title}" (${data.id})`);
+          await deleteDoc(docSnapshot.ref);
+          deleted++;
+        } catch (error) {
+          console.error(`❌ Failed to delete posted quickcard ${docSnapshot.id}:`, error);
+          errors++;
+        }
+      }
+      
+      // Query for private quickcards in user's private collection
+      const privateQuickcardsQuery = query(
+        collection(db, 'privateVostcards', user.uid, 'vostcards'),
+        where('isQuickcard', '==', true)
+      );
+      
+      const privateSnapshot = await getDocs(privateQuickcardsQuery);
+      console.log(`📋 Found ${privateSnapshot.docs.length} private quickcards to delete`);
+      
+      // Delete private quickcards
+      for (const docSnapshot of privateSnapshot.docs) {
+        try {
+          const data = docSnapshot.data();
+          console.log(`🗑️ Deleting private quickcard: "${data.title}" (${data.id})`);
+          await deleteDoc(docSnapshot.ref);
+          deleted++;
+        } catch (error) {
+          console.error(`❌ Failed to delete private quickcard ${docSnapshot.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`✅ Quickcard cleanup completed! Deleted: ${deleted}, Errors: ${errors}`);
+      
+      // Clear local IndexedDB to force fresh sync
+      try {
+        const localDB = await openDB();
+        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        await new Promise<void>((resolve, reject) => {
+          const request = store.clear();
+          request.onsuccess = () => {
+            console.log('🗑️ Cleared IndexedDB for fresh sync after quickcard cleanup');
+            resolve();
+          };
+          request.onerror = () => reject(request.error);
+        });
+        
+        // Also clear metadata store
+        const metadataTransaction = localDB.transaction([METADATA_STORE_NAME], 'readwrite');
+        const metadataStore = metadataTransaction.objectStore(METADATA_STORE_NAME);
+        await new Promise<void>((resolve, reject) => {
+          const request = metadataStore.clear();
+          request.onsuccess = () => {
+            console.log('🗑️ Cleared metadata IndexedDB for fresh sync');
+            resolve();
+          };
+          request.onerror = () => reject(request.error);
+        });
+      } catch (dbError) {
+        console.error('❌ Failed to clear IndexedDB:', dbError);
+      }
+      
+      // Refresh the UI
+      setSavedVostcards([]);
+      setPostedVostcards([]);
+      
+      // Trigger fresh sync
+      await loadAllLocalVostcards();
+      
+      return { deleted, errors };
+      
+    } catch (error) {
+      console.error('❌ Error in quickcard cleanup:', error);
+      errors++;
+      return { deleted, errors };
+    }
+  }, [setLastSyncTimestamp, loadAllLocalVostcards]);
+
   // Quickcard-specific methods
 
   const createQuickcard = useCallback((photo: Blob, geo: { latitude: number; longitude: number }) => {
@@ -3197,6 +3304,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         cleanupDeletionMarkers,
         clearDeletionMarkers,
         manualCleanupFirebase,
+        cleanupAllQuickcards,
         // Quickcard-specific methods
         quickcards,
         createQuickcard,
