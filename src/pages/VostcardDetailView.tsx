@@ -61,6 +61,7 @@ const VostcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
+  const [directions, setDirections] = useState<any[]>([]);
 
   // Create custom icons
   const createIcons = () => {
@@ -111,7 +112,15 @@ const VostcardDetailView: React.FC = () => {
   };
 
   // Routing control component
-  const RoutingMachine = ({ destination }: { destination: [number, number] }) => {
+  const RoutingMachine = ({ 
+    destination,
+    showDirections = true,
+    onDirectionsLoaded
+  }: { 
+    destination: [number, number],
+    showDirections?: boolean,
+    onDirectionsLoaded?: (instructions: any) => void
+  }) => {
     const map = useMap();
     
     useEffect(() => {
@@ -148,6 +157,15 @@ const VostcardDetailView: React.FC = () => {
             showAlternatives: false,
             show: true
           });
+
+          // Add directions callback
+          if (onDirectionsLoaded) {
+            routingControl.on('routesfound', function(e) {
+              if (e.routes && e.routes[0] && e.routes[0].instructions) {
+                onDirectionsLoaded(e.routes[0].instructions);
+              }
+            });
+          }
 
           // Add control to map
           routingControl.addTo(map);
@@ -2463,22 +2481,41 @@ Tap OK to continue.`;
                   icon={createIcons().vostcardIcon}
                 />
                                   {showDirections && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      backgroundColor: 'white',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      width: '400px',
-                      maxHeight: '70vh',
-                      overflowY: 'auto',
-                      zIndex: 1000,
-                      fontSize: '16px'
-                    }}>
-                      <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
-                    </div>
+                    <>
+                      <div style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        backgroundColor: 'white',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        width: '400px',
+                        maxHeight: '70vh',
+                        overflowY: 'auto',
+                        zIndex: 1000,
+                        fontSize: '16px'
+                      }}>
+                        <RoutingMachine 
+                          destination={[vostcard.latitude, vostcard.longitude]}
+                          showDirections={true}
+                          onDirectionsLoaded={(instructions) => setDirections(instructions)}
+                        />
+                      </div>
+                      {directions.length > 0 && (
+                        <div className="printed-directions">
+                          <h3>Directions to {vostcard.title}</h3>
+                          <ol>
+                            {directions.map((instruction, index) => (
+                              <li key={index}>
+                                {instruction.text} 
+                                {instruction.distance && ` (${(instruction.distance / 1609.34).toFixed(1)} mi)`}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+                    </>
                   )}
               </MapContainer>
             </div>
