@@ -113,10 +113,12 @@ const VostcardDetailView: React.FC = () => {
   // Routing control component
   const RoutingMachine = ({ destination }: { destination: [number, number] }) => {
     const map = useMap();
-    const routingControlRef = useRef<any>(null);
+    const [routingControl, setRoutingControl] = useState<any>(null);
     
     useEffect(() => {
       if (!map) return;
+      
+      let control: any = null;
       
       // Get user's current location
       navigator.geolocation.getCurrentPosition(
@@ -124,46 +126,46 @@ const VostcardDetailView: React.FC = () => {
           const { latitude, longitude } = position.coords;
           const { currentLocationIcon, vostcardIcon } = createIcons();
           
-          // Create routing control if it doesn't exist
-          if (!routingControlRef.current) {
-            routingControlRef.current = L.Routing.control({
-              waypoints: [
-                L.latLng(latitude, longitude),
-                L.latLng(destination[0], destination[1])
-              ],
-              router: L.Routing.osrm({
-                serviceUrl: 'https://router.project-osrm.org/route/v1'
-              }),
-              createMarker: function(i: number, waypoint: any) {
-                return L.marker(waypoint.latLng, {
-                  icon: i === 0 ? currentLocationIcon : vostcardIcon
-                });
-              },
-              lineOptions: {
-                styles: [{ color: '#5856D6', weight: 4 }]
-              },
-              addWaypoints: false,
-              draggableWaypoints: false,
-              fitSelectedRoutes: true,
-              showAlternatives: false,
-              show: showDirections
-            });
+          // Create routing control
+          control = L.Routing.control({
+            waypoints: [
+              L.latLng(latitude, longitude),
+              L.latLng(destination[0], destination[1])
+            ],
+            router: L.Routing.osrm({
+              serviceUrl: 'https://router.project-osrm.org/route/v1'
+            }),
+            createMarker: function(i: number, waypoint: any) {
+              return L.marker(waypoint.latLng, {
+                icon: i === 0 ? currentLocationIcon : vostcardIcon
+              });
+            },
+            lineOptions: {
+              styles: [{ color: '#5856D6', weight: 4 }]
+            },
+            addWaypoints: false,
+            draggableWaypoints: false,
+            fitSelectedRoutes: true,
+            showAlternatives: false,
+            show: true
+          });
 
-            // Add control to map
-            routingControlRef.current.addTo(map);
+          // Add control to map
+          control.addTo(map);
+          setRoutingControl(control);
+
+          // Move the routing container to our custom div
+          const container = document.querySelector('.routing-instructions');
+          if (container && control._container) {
+            container.appendChild(control._container);
           }
 
-          // Update visibility based on showDirections
-          if (showDirections) {
-            // Move the routing container to our custom div
-            const container = document.querySelector('.routing-instructions');
-            if (container && routingControlRef.current._container) {
-              container.appendChild(routingControlRef.current._container);
+          // Add cleanup
+          return () => {
+            if (control) {
+              map.removeControl(control);
             }
-          } else if (routingControlRef.current) {
-            map.removeControl(routingControlRef.current);
-            routingControlRef.current = null;
-          }
+          };
 
             // Add custom styles for the routing container
             const style = document.createElement('style');
@@ -326,8 +328,7 @@ const VostcardDetailView: React.FC = () => {
         }
       );
 
-      // Initialize routing
-    initRouting();
+            // Initialize routing is handled in the useEffect
 
     // Cleanup
     return () => {
