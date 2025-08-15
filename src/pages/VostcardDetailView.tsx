@@ -150,14 +150,44 @@ const VostcardDetailView: React.FC = () => {
           // Add directions callback
           if (onDirectionsLoaded) {
             routingControl.on('routesfound', function(e: any) {
-              if (e.routes && e.routes[0] && e.routes[0].instructions) {
-                const instructions = e.routes[0].instructions.map((instruction: any) => ({
-                  text: instruction.text || instruction.instruction || 'Continue',
-                  distance: instruction.distance || 0,
-                  time: instruction.time || 0,
-                  type: instruction.type || 'straight'
-                }));
+              console.log('🗺️ Route found event:', e);
+              
+              if (e.routes && e.routes[0]) {
+                const route = e.routes[0];
+                console.log('📍 Route details:', route);
+                
+                // Try multiple ways to extract instructions
+                let instructions = [];
+                
+                if (route.instructions && route.instructions.length > 0) {
+                  console.log('✅ Found instructions in route.instructions');
+                  instructions = route.instructions.map((instruction: any, index: number) => ({
+                    text: instruction.text || instruction.instruction || `Step ${index + 1}`,
+                    distance: instruction.distance || 0,
+                    time: instruction.time || 0,
+                    type: instruction.type || 'straight'
+                  }));
+                } else if (route.itinerary && route.itinerary.length > 0) {
+                  console.log('✅ Found instructions in route.itinerary');
+                  instructions = route.itinerary.map((step: any, index: number) => ({
+                    text: step.text || step.instruction || `Step ${index + 1}`,
+                    distance: step.distance || 0,
+                    time: step.time || 0,
+                    type: step.type || 'straight'
+                  }));
+                } else {
+                  console.log('⚠️ No instructions found, creating basic directions');
+                  instructions = [
+                    { text: 'Start navigation to destination', distance: route.summary?.totalDistance || 0, time: 0, type: 'start' },
+                    { text: 'Follow the route on the map', distance: 0, time: 0, type: 'straight' },
+                    { text: 'Arrive at destination', distance: 0, time: 0, type: 'destination' }
+                  ];
+                }
+                
+                console.log('📋 Final instructions:', instructions);
                 onDirectionsLoaded(instructions);
+              } else {
+                console.log('❌ No route found in event');
               }
             });
           }
@@ -2433,9 +2463,13 @@ Tap OK to continue.`;
                       destination={[vostcard.latitude, vostcard.longitude]}
                       showDirections={true}
                       onDirectionsLoaded={(route) => {
-                        if (route && route.instructions) {
-                          setDirections(route.instructions);
+                        console.log('🧭 Directions loaded:', route);
+                        if (route && route.length > 0) {
+                          console.log('✅ Setting directions:', route);
+                          setDirections(route);
                           setShowDirectionsOverlay(true);
+                        } else {
+                          console.log('❌ No directions found in route');
                         }
                       }}
                     />
@@ -2444,6 +2478,14 @@ Tap OK to continue.`;
             </div>
             
             {/* Turn-by-Turn Directions Overlay */}
+            {(() => {
+              console.log('🎯 Overlay render check:', {
+                showDirectionsOverlay,
+                directionsLength: directions.length,
+                directions: directions
+              });
+              return null;
+            })()}
             {showDirectionsOverlay && directions.length > 0 && (
               <div
                 style={{
@@ -2535,6 +2577,34 @@ Tap OK to continue.`;
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            
+            {/* Debug overlay - shows if directions overlay should be visible */}
+            {showDirections && directions.length === 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '80px',
+                  left: '20px',
+                  right: '20px',
+                  backgroundColor: 'rgba(255, 0, 0, 0.9)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  color: 'white',
+                  zIndex: 1001,
+                  textAlign: 'center'
+                }}
+              >
+                <h4>🔍 Debug: Waiting for directions...</h4>
+                <p>Directions array length: {directions.length}</p>
+                <p>Show overlay: {showDirectionsOverlay ? 'Yes' : 'No'}</p>
+                <button 
+                  onClick={() => setShowDirectionsOverlay(false)}
+                  style={{ background: 'white', color: 'red', border: 'none', padding: '8px', borderRadius: '4px' }}
+                >
+                  Hide Debug
+                </button>
               </div>
             )}
             
