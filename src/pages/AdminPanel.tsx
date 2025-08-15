@@ -38,6 +38,8 @@ const AdminPanel: React.FC = () => {
   const [cleanupLoading, setCleanupLoading] = useState(false);
   // Invalid posts cleanup state
   const [invalidPostsCleanupLoading, setInvalidPostsCleanupLoading] = useState(false);
+  // Orphaned posts fix state
+  const [orphanedPostsFixLoading, setOrphanedPostsFixLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -426,6 +428,73 @@ const AdminPanel: React.FC = () => {
       alert('❌ Invalid posts cleanup failed. Check console for details.');
     } finally {
       setInvalidPostsCleanupLoading(false);
+    }
+  };
+
+  // Fix orphaned Jay Bond posts
+  const handleFixOrphanedJayBondPosts = async () => {
+    if (!window.confirm('🔧 This will assign all orphaned vostcards (missing userID) to Jay Bond. Continue?')) {
+      return;
+    }
+
+    setOrphanedPostsFixLoading(true);
+    let fixed = 0;
+    let errors = 0;
+    const JAY_BOND_USER_ID = '9byLf32ls0gF2nzF17vnv9RhLiJ2';
+
+    try {
+      console.log('🔧 Starting orphaned Jay Bond posts fix...');
+      
+      // Query for all posted vostcards
+      const q = query(
+        collection(db, 'vostcards'),
+        where('state', '==', 'posted')
+      );
+      
+      const snapshot = await getDocs(q);
+      console.log(`📋 Found ${snapshot.docs.length} posted vostcards to check`);
+      
+      // Check each post for missing userID
+      for (const docSnapshot of snapshot.docs) {
+        try {
+          const data = docSnapshot.data();
+          
+          // Check if post is orphaned (missing userID)
+          const isOrphaned = !data.userID || data.userID === '';
+          
+          if (isOrphaned) {
+            console.log(`🔧 Fixing orphaned post: "${data.title || 'NO_TITLE'}" (${docSnapshot.id})`);
+            
+            // Update the post with Jay Bond's info
+            await updateDoc(docSnapshot.ref, {
+              userID: JAY_BOND_USER_ID,
+              username: 'Jay Bond',
+              updatedAt: new Date().toISOString()
+            });
+            
+            fixed++;
+          }
+        } catch (error) {
+          console.error(`❌ Failed to process post ${docSnapshot.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`✅ Orphaned posts fix completed! Fixed: ${fixed}, Errors: ${errors}`);
+      
+      if (fixed > 0) {
+        alert(`✅ Successfully fixed ${fixed} orphaned posts! They should now show up for Jay Bond.`);
+      } else if (errors > 0) {
+        alert(`⚠️ Fix completed with ${errors} errors. Check console for details.`);
+      } else {
+        alert('ℹ️ No orphaned posts found to fix.');
+      }
+      
+    } catch (error) {
+      console.error('❌ Orphaned posts fix failed:', error);
+      alert('❌ Orphaned posts fix failed. Check console for details.');
+    } finally {
+      setOrphanedPostsFixLoading(false);
     }
   };
 
@@ -828,6 +897,43 @@ const AdminPanel: React.FC = () => {
           }}
         >
           {invalidPostsCleanupLoading ? '🔄 Cleaning up...' : '🧹 Delete Invalid Posts'}
+        </button>
+      </div>
+
+      {/* 4.5. Fix Orphaned Jay Bond Posts */}
+      <div style={{ backgroundColor: '#fff8e1', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ffcc02' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#f57c00' }}>
+          🔧 Fix Orphaned Jay Bond Posts
+        </h2>
+        <p style={{ marginBottom: '15px', color: '#555' }}>
+          <strong>Found 11 posts with invalid data?</strong> This will assign all orphaned vostcards (missing userID) to Jay Bond so they show up properly.
+        </p>
+        <button
+          onClick={handleFixOrphanedJayBondPosts}
+          disabled={orphanedPostsFixLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: orphanedPostsFixLoading ? '#6c757d' : '#ff9800',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: orphanedPostsFixLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!orphanedPostsFixLoading) {
+              e.currentTarget.style.backgroundColor = '#f57c00';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!orphanedPostsFixLoading) {
+              e.currentTarget.style.backgroundColor = '#ff9800';
+            }
+          }}
+        >
+          {orphanedPostsFixLoading ? '🔄 Fixing...' : '🔧 Fix Jay Bond Posts'}
         </button>
       </div>
 
