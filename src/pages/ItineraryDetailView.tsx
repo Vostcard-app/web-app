@@ -874,33 +874,27 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
               </button>
             </div>
 
-            {/* Map Container */}
+            {/* Map and List Container */}
             <div style={{
-              padding: '20px',
-              flex: 1,
-              minHeight: '400px',
               display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
+              height: '70vh',
+              gap: '20px',
+              padding: '20px'
             }}>
+              {/* Map Container */}
               <div style={{
+                flex: '1 1 60%',
                 backgroundColor: '#f5f5f5',
                 borderRadius: '8px',
-                padding: '16px',
-                flex: 1,
-                height: '350px',
-                position: 'relative'
+                position: 'relative',
+                overflow: 'hidden'
               }}>
                 <MapContainer
                   center={getMapCenter()}
                   zoom={12}
                   style={{
                     height: '100%',
-                    width: '100%',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    borderRadius: '8px'
+                    width: '100%'
                   }}
                   zoomControl={true}
                   scrollWheelZoom={true}
@@ -965,11 +959,11 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
 
               {/* Route Points List */}
               <div style={{
+                flex: '1 1 40%',
                 backgroundColor: '#f5f5f5',
                 borderRadius: '8px',
                 padding: '16px',
-                maxHeight: '150px',
-                overflow: 'auto'
+                overflowY: 'auto'
               }}>
                 <h4 style={{ margin: '0 0 12px 0', color: '#333', position: 'sticky', top: 0, backgroundColor: '#f5f5f5', paddingBottom: '8px' }}>Route Points:</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
