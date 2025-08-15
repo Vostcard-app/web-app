@@ -119,48 +119,44 @@ const VostcardDetailView: React.FC = () => {
       
       let routingControl: any = null;
 
-      // Load routing machine and initialize
-      const initRouting = async () => {
-        await loadRoutingMachine();
-
       // Get user's current location
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          const { currentLocationIcon, vostcardIcon } = createIcons();
           
-          // Make sure L.Routing is available
-          if (L.Routing) {
-            const { currentLocationIcon, vostcardIcon } = createIcons();
-            
-            // Create a basic routing control first
-            routingControl = L.Routing.control({
-              waypoints: [
-                L.latLng(latitude, longitude),
-                L.latLng(destination[0], destination[1])
-              ],
-              router: L.Routing.osrm({
-                serviceUrl: 'https://router.project-osrm.org/route/v1'
-              }),
-              plan: L.Routing.plan([
-                L.latLng(latitude, longitude),
-                L.latLng(destination[0], destination[1])
-              ], {
-                createMarker: function(i: number, waypoint: any) {
-                  return L.marker(waypoint.latLng, {
-                    icon: i === 0 ? currentLocationIcon : vostcardIcon
-                  });
-                },
-                draggableWaypoints: false,
-                addWaypoints: false
-              }),
-              lineOptions: {
-                styles: [{ color: '#5856D6', weight: 4 }]
-              },
-              show: true,
-              collapsible: false,
-              showAlternatives: false,
-              containerClassName: 'custom-routing-container'
-            }).addTo(map);
+          // Create routing control
+          routingControl = L.Routing.control({
+            waypoints: [
+              L.latLng(latitude, longitude),
+              L.latLng(destination[0], destination[1])
+            ],
+            router: L.Routing.osrm({
+              serviceUrl: 'https://router.project-osrm.org/route/v1'
+            }),
+            createMarker: function(i: number, waypoint: any) {
+              return L.marker(waypoint.latLng, {
+                icon: i === 0 ? currentLocationIcon : vostcardIcon
+              });
+            },
+            lineOptions: {
+              styles: [{ color: '#5856D6', weight: 4 }]
+            },
+            addWaypoints: false,
+            draggableWaypoints: false,
+            fitSelectedRoutes: true,
+            showAlternatives: false,
+            show: true
+          });
+
+          // Add control to map
+          routingControl.addTo(map);
+
+          // Move the routing container to our custom div
+          const container = document.querySelector('.routing-instructions');
+          if (container && routingControl._container) {
+            container.appendChild(routingControl._container);
+          }
 
             // Add custom styles for the routing container
             const style = document.createElement('style');
@@ -289,33 +285,31 @@ const VostcardDetailView: React.FC = () => {
             `;
             document.head.appendChild(style);
 
-            // Add close button to the container
-            setTimeout(() => {
-              const container = document.querySelector('.custom-routing-container');
-              if (container) {
-                const header = container.querySelector('h2');
-                if (header) {
-                  const closeButton = document.createElement('button');
-                  closeButton.innerHTML = '×';
-                  closeButton.style.cssText = `
-                    background: none;
-                    border: none;
-                    font-size: 24px;
-                    color: #666;
-                    cursor: pointer;
-                    padding: 0;
-                    margin-left: 8px;
-                  `;
-                  closeButton.onclick = () => {
-                    if (routingControl) {
-                      map.removeControl(routingControl);
-                      routingControl = null;
-                    }
-                  };
-                  header.appendChild(closeButton);
-                }
+            // Add close button
+          setTimeout(() => {
+            const container = document.querySelector('.routing-instructions');
+            if (container) {
+              const header = container.querySelector('.leaflet-routing-container h2');
+              if (header) {
+                const closeButton = document.createElement('button');
+                closeButton.innerHTML = '×';
+                closeButton.style.cssText = `
+                  background: none;
+                  border: none;
+                  font-size: 24px;
+                  color: #666;
+                  cursor: pointer;
+                  padding: 0;
+                  margin-left: 8px;
+                  float: right;
+                `;
+                closeButton.onclick = () => {
+                  setShowDirections(false);
+                };
+                header.appendChild(closeButton);
               }
-            }, 100);
+            }
+          }, 100);
           }
         },
         (error) => {
@@ -2438,9 +2432,24 @@ Tap OK to continue.`;
                   position={[vostcard.latitude, vostcard.longitude]}
                   icon={createIcons().vostcardIcon}
                 />
-                {showDirections && (
-                  <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
-                )}
+                                  {showDirections && (
+                    <>
+                      <RoutingMachine destination={[vostcard.latitude, vostcard.longitude]} />
+                      <div className="routing-instructions" style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        backgroundColor: 'white',
+                        padding: '16px',
+                        borderRadius: '12px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                        width: '400px',
+                        maxHeight: '70vh',
+                        overflowY: 'auto',
+                        zIndex: 1000
+                      }} />
+                    </>
+                  )}
               </MapContainer>
             </div>
           </div>
