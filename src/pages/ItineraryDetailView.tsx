@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaEdit, FaTrash, FaShare, FaPlus, FaGripVertical, FaEye, FaMapMarkerAlt, FaClock, FaRoute, FaMap } from 'react-icons/fa';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { optimizeRoute } from '../utils/routeOptimizer';
@@ -73,10 +73,7 @@ const ItineraryDetailView: React.FC = () => {
 
     return itinerary.items
       .filter(item => item.latitude && item.longitude)
-      .map(item => ({
-        lat: item.latitude || 0,
-        lng: item.longitude || 0
-      }));
+      .map(item => [item.latitude || 0, item.longitude || 0]);
   }, [itinerary?.items]);
 
   console.log('🔄 ItineraryDetailView rendered', {
@@ -957,14 +954,16 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                   ))}
 
                   {/* Add route line between points */}
-                  <Polyline
-                    positions={getRoutePath().map(point => [point.lat, point.lng])}
-                    pathOptions={{
-                      color: '#5856D6',
-                      opacity: 0.8,
-                      weight: 3
-                    }}
-                  />
+                  {getRoutePath().length > 0 && (
+                    <Polyline
+                      positions={getRoutePath()}
+                      pathOptions={{
+                        color: '#5856D6',
+                        opacity: 0.8,
+                        weight: 3
+                      }}
+                    />
+                  )}
                 </MapContainer>
               </div>
 
