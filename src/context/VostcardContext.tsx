@@ -2867,25 +2867,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     try {
       console.log('🗑️ Starting quickcard cleanup...');
+      console.log('👤 Current user:', user.uid);
       
       // Query for all quickcards in the main vostcards collection (posted quickcards)
+      // Only query for quickcards belonging to the current user
       const postedQuickcardsQuery = query(
         collection(db, 'vostcards'),
-        where('isQuickcard', '==', true)
+        where('isQuickcard', '==', true),
+        where('userID', '==', user.uid)
       );
       
       const postedSnapshot = await getDocs(postedQuickcardsQuery);
-      console.log(`📋 Found ${postedSnapshot.docs.length} posted quickcards to delete`);
+      console.log(`📋 Found ${postedSnapshot.docs.length} posted quickcards to delete for user ${user.uid}`);
       
       // Delete posted quickcards
       for (const docSnapshot of postedSnapshot.docs) {
         try {
           const data = docSnapshot.data();
-          console.log(`🗑️ Deleting posted quickcard: "${data.title}" (${data.id})`);
+          console.log(`🗑️ Deleting posted quickcard: "${data.title}" (${docSnapshot.id})`);
           await deleteDoc(docSnapshot.ref);
           deleted++;
         } catch (error) {
           console.error(`❌ Failed to delete posted quickcard ${docSnapshot.id}:`, error);
+          console.error('Error details:', error);
           errors++;
         }
       }
@@ -2903,11 +2907,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       for (const docSnapshot of privateSnapshot.docs) {
         try {
           const data = docSnapshot.data();
-          console.log(`🗑️ Deleting private quickcard: "${data.title}" (${data.id})`);
+          console.log(`🗑️ Deleting private quickcard: "${data.title}" (${docSnapshot.id})`);
           await deleteDoc(docSnapshot.ref);
           deleted++;
         } catch (error) {
           console.error(`❌ Failed to delete private quickcard ${docSnapshot.id}:`, error);
+          console.error('Error details:', error);
           errors++;
         }
       }
