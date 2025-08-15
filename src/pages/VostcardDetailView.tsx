@@ -191,7 +191,7 @@ const VostcardDetailView: React.FC = () => {
               }
             });
             
-            // Fallback: If no route is found after 3 seconds, provide helpful directions
+            // Fallback: If no route is found after 2 seconds, provide helpful directions
             setTimeout(() => {
               console.log('⏰ Routing timeout - providing helpful fallback directions');
               const fallbackInstructions = [
@@ -201,7 +201,7 @@ const VostcardDetailView: React.FC = () => {
                 { text: '🎯 Arrive at your destination', distance: 0, time: 0, type: 'destination' }
               ];
               onDirectionsLoaded(fallbackInstructions);
-            }, 3000);
+            }, 2000);
           }
 
           // Add control to map
@@ -1749,9 +1749,26 @@ Tap OK to continue.`;
         {vostcard?.latitude && vostcard?.longitude && (
           <button
             onClick={() => {
+              console.log('🧭 Directions button clicked');
               setShowDirections(true);
               setShowMapModal(true);
               setShowDirectionsOverlay(true);
+              
+              // Immediate fallback in case routing fails completely
+              setTimeout(() => {
+                console.log('⚡ Immediate fallback check - directions length:', directions.length);
+                if (directions.length === 0) {
+                  console.log('🔧 Triggering immediate fallback directions');
+                  const immediateDirections = [
+                    { text: '📍 Navigate to the destination shown on the map', distance: 0, time: 0, type: 'start' },
+                    { text: '🗺️ Follow the route line displayed on this map', distance: 0, time: 0, type: 'straight' },
+                    { text: '📱 For detailed turn-by-turn directions, use the "Open in Maps App" button below', distance: 0, time: 0, type: 'straight' },
+                    { text: '🎯 Arrive at your destination', distance: 0, time: 0, type: 'destination' }
+                  ];
+                  setDirections(immediateDirections);
+                  setShowDirectionsOverlay(true);
+                }
+              }, 1000);
             }}
             style={{
               background: 'none',
@@ -2475,17 +2492,18 @@ Tap OK to continue.`;
                       destination={[vostcard.latitude, vostcard.longitude]}
                       showDirections={true}
                       onDirectionsLoaded={(route) => {
-                        console.log('🧭 Directions loaded:', route);
+                        console.log('🧭 Directions loaded callback triggered:', route);
                         if (route && route.length > 0) {
                           console.log('✅ Setting directions:', route);
                           setDirections(route);
                           setShowDirectionsOverlay(true);
                         } else {
-                          console.log('❌ No directions found in route');
+                          console.log('❌ No directions found in route, route length:', route?.length);
                         }
                       }}
                     />
                   )}
+                  {showDirections && console.log('🗺️ RoutingMachine should be rendering...')}
               </MapContainer>
             </div>
             
