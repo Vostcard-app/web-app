@@ -29,10 +29,7 @@ export default defineConfig({
       input: {
         main: '/index.html'
       },
-      external: [
-        'leaflet-routing-machine',
-        'leaflet-routing-machine/dist/leaflet-routing.css'
-      ],
+      external: [],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
