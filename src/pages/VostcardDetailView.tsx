@@ -2493,30 +2493,15 @@ Tap OK to continue.`;
                   icon={createIcons().vostcardIcon}
                 />
                                   {showDirections && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      backgroundColor: 'white',
-                      padding: '16px',
-                      borderRadius: '12px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                      width: '400px',
-                      maxHeight: '70vh',
-                      overflowY: 'auto',
-                      zIndex: 1000,
-                      fontSize: '16px'
-                    }}>
-                      <RoutingMachine 
-                        destination={[vostcard.latitude, vostcard.longitude]}
-                        showDirections={true}
-                        onDirectionsLoaded={(route) => {
-                          if (route && route.instructions) {
-                            setDirections(route.instructions);
-                          }
-                        }}
-                      />
-                    </div>
+                    <RoutingMachine 
+                      destination={[vostcard.latitude, vostcard.longitude]}
+                      showDirections={true}
+                      onDirectionsLoaded={(route) => {
+                        if (route && route.instructions) {
+                          setDirections(route.instructions);
+                        }
+                      }}
+                    />
                   )}
               </MapContainer>
             </div>
