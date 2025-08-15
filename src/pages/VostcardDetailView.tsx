@@ -6,7 +6,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
 import QuickcardPin from '../assets/quickcard_pin.png';
@@ -352,6 +352,7 @@ const VostcardDetailView: React.FC = () => {
       try {
         console.log('📱 Loading vostcard:', id);
         
+        // First try to load by Firebase document ID
         const docRef = doc(db, 'vostcards', id);
         const docSnap = await getDoc(docRef);
         
@@ -380,6 +381,28 @@ const VostcardDetailView: React.FC = () => {
             }
           } catch (fixError) {
             console.error('📱 Failed to fix vostcard:', fixError);
+          }
+          
+          // Try to find by internal id field (for migrated vostcards)
+          console.log('📱 Trying to find by internal ID field...');
+          try {
+            const q = query(
+              collection(db, 'vostcards'),
+              where('id', '==', id)
+            );
+            const querySnapshot = await getDocs(q);
+            
+            if (!querySnapshot.empty) {
+              const data = querySnapshot.docs[0].data();
+              console.log('📱 Vostcard found by internal ID:', data);
+              setVostcard(data);
+              setLoading(false);
+              return;
+            } else {
+              console.log('📱 No vostcard found with internal ID:', id);
+            }
+          } catch (searchError) {
+            console.error('❌ Error searching by internal ID:', searchError);
           }
           
           setError('Vostcard not found. It may have been deleted or the link is invalid.');
