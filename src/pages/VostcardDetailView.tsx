@@ -191,16 +191,17 @@ const VostcardDetailView: React.FC = () => {
               }
             });
             
-            // Fallback: If no route is found after 5 seconds, provide basic directions
+            // Fallback: If no route is found after 3 seconds, provide helpful directions
             setTimeout(() => {
-              console.log('⏰ Routing timeout - providing fallback directions');
+              console.log('⏰ Routing timeout - providing helpful fallback directions');
               const fallbackInstructions = [
-                { text: 'Navigate to the destination shown on the map', distance: 0, time: 0, type: 'start' },
-                { text: 'Follow your preferred navigation app for detailed directions', distance: 0, time: 0, type: 'straight' },
-                { text: 'Arrive at your destination', distance: 0, time: 0, type: 'destination' }
+                { text: '📍 Start navigation from your current location', distance: 0, time: 0, type: 'start' },
+                { text: '🗺️ Follow the route line shown on this map', distance: 0, time: 0, type: 'straight' },
+                { text: '📱 For detailed turn-by-turn directions, open this location in your preferred maps app', distance: 0, time: 0, type: 'straight' },
+                { text: '🎯 Arrive at your destination', distance: 0, time: 0, type: 'destination' }
               ];
               onDirectionsLoaded(fallbackInstructions);
-            }, 5000);
+            }, 3000);
           }
 
           // Add control to map
@@ -2489,14 +2490,6 @@ Tap OK to continue.`;
             </div>
             
             {/* Turn-by-Turn Directions Overlay */}
-            {(() => {
-              console.log('🎯 Overlay render check:', {
-                showDirectionsOverlay,
-                directionsLength: directions.length,
-                directions: directions
-              });
-              return null;
-            })()}
             {showDirectionsOverlay && directions.length > 0 && (
               <div
                 style={{
@@ -2588,52 +2581,54 @@ Tap OK to continue.`;
                     </div>
                   ))}
                 </div>
+                
+                {/* Open in Maps App Button */}
+                <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                  <button
+                    onClick={() => {
+                      const lat = vostcard.latitude;
+                      const lng = vostcard.longitude;
+                      const title = encodeURIComponent(vostcard.title || 'Vostcard Location');
+                      
+                      // Try to detect device and open appropriate maps app
+                      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                      const isAndroid = /Android/.test(navigator.userAgent);
+                      
+                      let mapsUrl;
+                      if (isIOS) {
+                        mapsUrl = `maps://maps.apple.com/?q=${title}&ll=${lat},${lng}`;
+                      } else if (isAndroid) {
+                        mapsUrl = `geo:${lat},${lng}?q=${lat},${lng}(${title})`;
+                      } else {
+                        mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+                      }
+                      
+                      console.log('🗺️ Opening maps URL:', mapsUrl);
+                      window.open(mapsUrl, '_blank');
+                    }}
+                    style={{
+                      backgroundColor: '#007AFF',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '20px',
+                      padding: '10px 20px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      margin: '0 auto'
+                    }}
+                  >
+                    🧭 Open in Maps App
+                  </button>
+                </div>
               </div>
             )}
             
-            {/* Debug overlay - shows if directions overlay should be visible */}
-            {showDirections && directions.length === 0 && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '80px',
-                  left: '20px',
-                  right: '20px',
-                  backgroundColor: 'rgba(255, 0, 0, 0.9)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  color: 'white',
-                  zIndex: 1001,
-                  textAlign: 'center'
-                }}
-              >
-                <h4>🔍 Debug: Waiting for directions...</h4>
-                <p>Directions array length: {directions.length}</p>
-                <p>Show overlay: {showDirectionsOverlay ? 'Yes' : 'No'}</p>
-                <button 
-                  onClick={() => setShowDirectionsOverlay(false)}
-                  style={{ background: 'white', color: 'red', border: 'none', padding: '8px', borderRadius: '4px', marginRight: '8px' }}
-                >
-                  Hide Debug
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log('🔧 Manual directions trigger');
-                    const manualDirections = [
-                      { text: 'Navigate to the destination shown on the map', distance: 0, time: 0, type: 'start' },
-                      { text: 'Use your preferred navigation app for turn-by-turn directions', distance: 0, time: 0, type: 'straight' },
-                      { text: 'Follow the route displayed on this map', distance: 0, time: 0, type: 'straight' },
-                      { text: 'Arrive at your destination', distance: 0, time: 0, type: 'destination' }
-                    ];
-                    setDirections(manualDirections);
-                    setShowDirectionsOverlay(true);
-                  }}
-                  style={{ background: 'white', color: 'green', border: 'none', padding: '8px', borderRadius: '4px' }}
-                >
-                  Test Directions
-                </button>
-              </div>
-            )}
+
             
             {/* Toggle directions button (when directions are loaded but overlay is hidden) */}
             {directions.length > 0 && !showDirectionsOverlay && (
