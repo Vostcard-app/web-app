@@ -7,7 +7,8 @@ import type { Vostcard, ValidationState, FirebaseVostcard } from '../types/Vostc
 export const getVostcardStatus = (vostcard: Partial<Vostcard>): string[] => {
   const missing: string[] = [];
   
-  if (!vostcard.video && !vostcard.isQuickcard) missing.push('Video');
+  // Video is optional for all vostcards - remove video requirement
+  // if (!vostcard.video && !vostcard.isQuickcard) missing.push('Video');
   if (!vostcard.title) missing.push('Title');
   if (!vostcard.description) missing.push('Description');
   if (!vostcard.categories || vostcard.categories.length === 0) missing.push('Categories');
@@ -51,7 +52,7 @@ export const getValidationState = (vostcard: Partial<Vostcard>): ValidationState
     hasPhotos: ((vostcard.photos?.length || 0) + 
       ((vostcard as any).photoURLs?.length || 0) + 
       ((vostcard as any)._firebasePhotoURLs?.length || 0)) >= minPhotos,
-    hasVideo: isQuickcard ? true : !!vostcard.video, // Quickcards don't need video
+    hasVideo: true, // Video is always optional for all vostcards
     hasGeo: !!(vostcard.geo || 
       (vostcard.latitude && vostcard.longitude) ||
       ((vostcard as any).latitude && (vostcard as any).longitude))
