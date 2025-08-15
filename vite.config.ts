@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  root: '.',
   plugins: [react()],
   server: {
     port: 5173,
@@ -21,7 +22,13 @@ export default defineConfig({
     }
   },
   build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    sourcemap: true,
     rollupOptions: {
+      input: {
+        main: '/index.html'
+      },
       external: [
         'leaflet-routing-machine',
         'leaflet-routing-machine/dist/leaflet-routing.css'
