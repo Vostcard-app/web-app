@@ -2,8 +2,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar, FaDirections } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-// Import Leaflet Routing Machine
-import 'leaflet-routing-machine';
+// Leaflet Routing Machine will be imported dynamically
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
@@ -69,15 +68,30 @@ const VostcardDetailView: React.FC = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
 
-  // Function to load routing CSS
-  const loadRoutingStyles = () => {
-    const id = 'leaflet-routing-machine-styles';
-    if (!document.getElementById(id)) {
+  // Function to load routing machine resources
+  const loadRoutingMachine = async () => {
+    // Load CSS
+    const cssId = 'leaflet-routing-machine-styles';
+    if (!document.getElementById(cssId)) {
       const link = document.createElement('link');
-      link.id = id;
+      link.id = cssId;
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css';
       document.head.appendChild(link);
+    }
+
+    // Load JS
+    const scriptId = 'leaflet-routing-machine-script';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js';
+      document.head.appendChild(script);
+      
+      // Wait for script to load
+      await new Promise((resolve) => {
+        script.onload = resolve;
+      });
     }
   };
 
@@ -88,36 +102,52 @@ const VostcardDetailView: React.FC = () => {
     useEffect(() => {
       if (!map || !showDirections) return;
       
-      // Load routing styles
-      loadRoutingStyles();
+      let routingControl: any = null;
+
+      // Load routing machine and initialize
+      const initRouting = async () => {
+        await loadRoutingMachine();
 
       // Get user's current location
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const routingControl = L.Routing.control({
-            waypoints: [
-              L.latLng(latitude, longitude),
-              L.latLng(destination[0], destination[1])
-            ],
-            routeWhileDragging: false,
-            addWaypoints: false,
-            draggableWaypoints: false,
-            fitSelectedRoutes: true,
-            showAlternatives: false,
-            lineOptions: {
-              styles: [{ color: '#5856D6', weight: 4 }]
-            }
-          }).addTo(map);
-
-          return () => map.removeControl(routingControl);
+          
+          // Make sure L.Routing is available
+          if (L.Routing) {
+            routingControl = L.Routing.control({
+              waypoints: [
+                L.latLng(latitude, longitude),
+                L.latLng(destination[0], destination[1])
+              ],
+              routeWhileDragging: false,
+              addWaypoints: false,
+              draggableWaypoints: false,
+              fitSelectedRoutes: true,
+              showAlternatives: false,
+              lineOptions: {
+                styles: [{ color: '#5856D6', weight: 4 }]
+              }
+            }).addTo(map);
+          }
         },
         (error) => {
           console.error('Error getting location:', error);
           alert('Could not get your current location. Please enable location services.');
         }
       );
-    }, [map, destination, showDirections]);
+    };
+
+    // Initialize routing
+    initRouting();
+
+    // Cleanup
+    return () => {
+      if (routingControl) {
+        map.removeControl(routingControl);
+      }
+    };
+  }, [map, destination, showDirections]);
 
     return null;
   };
