@@ -190,6 +190,17 @@ const VostcardDetailView: React.FC = () => {
                 console.log('❌ No route found in event');
               }
             });
+            
+            // Fallback: If no route is found after 5 seconds, provide basic directions
+            setTimeout(() => {
+              console.log('⏰ Routing timeout - providing fallback directions');
+              const fallbackInstructions = [
+                { text: 'Navigate to the destination shown on the map', distance: 0, time: 0, type: 'start' },
+                { text: 'Follow your preferred navigation app for detailed directions', distance: 0, time: 0, type: 'straight' },
+                { text: 'Arrive at your destination', distance: 0, time: 0, type: 'destination' }
+              ];
+              onDirectionsLoaded(fallbackInstructions);
+            }, 5000);
           }
 
           // Add control to map
@@ -2601,9 +2612,25 @@ Tap OK to continue.`;
                 <p>Show overlay: {showDirectionsOverlay ? 'Yes' : 'No'}</p>
                 <button 
                   onClick={() => setShowDirectionsOverlay(false)}
-                  style={{ background: 'white', color: 'red', border: 'none', padding: '8px', borderRadius: '4px' }}
+                  style={{ background: 'white', color: 'red', border: 'none', padding: '8px', borderRadius: '4px', marginRight: '8px' }}
                 >
                   Hide Debug
+                </button>
+                <button 
+                  onClick={() => {
+                    console.log('🔧 Manual directions trigger');
+                    const manualDirections = [
+                      { text: 'Navigate to the destination shown on the map', distance: 0, time: 0, type: 'start' },
+                      { text: 'Use your preferred navigation app for turn-by-turn directions', distance: 0, time: 0, type: 'straight' },
+                      { text: 'Follow the route displayed on this map', distance: 0, time: 0, type: 'straight' },
+                      { text: 'Arrive at your destination', distance: 0, time: 0, type: 'destination' }
+                    ];
+                    setDirections(manualDirections);
+                    setShowDirectionsOverlay(true);
+                  }}
+                  style={{ background: 'white', color: 'green', border: 'none', padding: '8px', borderRadius: '4px' }}
+                >
+                  Test Directions
                 </button>
               </div>
             )}
