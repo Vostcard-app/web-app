@@ -1118,14 +1118,15 @@ const AllPostedVostcardsView: React.FC = () => {
                   if (isQuickcard) {
                     // Find the corresponding vostcard by matching title
                     const vostcardTitle = v.title.replace(/quickcard/i, 'vostcard');
-                    const matchingVostcard = filteredVostcards.find(vc => 
-                      vc.title === vostcardTitle && !vc.id.toLowerCase().includes('quickcard')
+                    const matchingVostcard = vostcards.find(vc => 
+                      !vc.id.toLowerCase().includes('quickcard') && 
+                      (vc.title === vostcardTitle || vc.originalQuickcardId === v.id)
                     );
                     if (matchingVostcard) {
                       navigate(`/vostcard/${matchingVostcard.id}`, {
                         state: {
-                          vostcardList: filteredVostcards.map(vc => vc.id),
-                          currentIndex: idx
+                          vostcardList: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).map(vc => vc.id),
+                          currentIndex: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).findIndex(vc => vc.id === matchingVostcard.id)
                         }
                       });
                       return;
@@ -1134,8 +1135,8 @@ const AllPostedVostcardsView: React.FC = () => {
                   // Default navigation if not a quickcard or no match found
                   navigate(`/vostcard/${v.id}`, {
                     state: {
-                      vostcardList: filteredVostcards.map(vc => vc.id),
-                      currentIndex: idx
+                      vostcardList: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).map(vc => vc.id),
+                      currentIndex: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).findIndex(vc => vc.id === v.id)
                     }
                   });
                 }}
@@ -1250,13 +1251,14 @@ const AllPostedVostcardsView: React.FC = () => {
                       // Find the corresponding vostcard by matching title
                       const vostcardTitle = v.title.replace(/quickcard/i, 'vostcard');
                       const matchingVostcard = vostcards.find(vc => 
-                        vc.title === vostcardTitle && !vc.id.toLowerCase().includes('quickcard')
+                        !vc.id.toLowerCase().includes('quickcard') && 
+                        (vc.title === vostcardTitle || vc.originalQuickcardId === v.id)
                       );
                       if (matchingVostcard) {
                         navigate(`/vostcard/${matchingVostcard.id}`, {
                           state: {
-                            vostcardList: vostcards.map(vc => vc.id),
-                            currentIndex: idx
+                            vostcardList: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).map(vc => vc.id),
+                            currentIndex: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).findIndex(vc => vc.id === matchingVostcard.id)
                           }
                         });
                         return;
@@ -1265,8 +1267,8 @@ const AllPostedVostcardsView: React.FC = () => {
                     // Default navigation if not a quickcard or no match found
                     navigate(`/vostcard/${v.id}`, {
                       state: {
-                        vostcardList: vostcards.map(vc => vc.id),
-                        currentIndex: idx
+                        vostcardList: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).map(vc => vc.id),
+                        currentIndex: vostcards.filter(vc => !vc.id.toLowerCase().includes('quickcard')).findIndex(vc => vc.id === v.id)
                       }
                     });
                       }}
