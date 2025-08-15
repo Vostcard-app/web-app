@@ -148,8 +148,133 @@ const VostcardDetailView: React.FC = () => {
                 return L.marker(waypoint.latLng, {
                   icon: i === 0 ? currentLocationIcon : vostcardIcon
                 });
-              }
+              },
+              // Customize the directions panel
+              containerClassName: 'custom-routing-container',
+              formatter: L.Routing.Formatter({
+                units: 'metric',
+                roundingSensitivity: 1,
+                distanceTemplate: '{value} {unit}'
+              })
             }).addTo(map);
+
+            // Add custom styles for the routing container
+            const style = document.createElement('style');
+            style.textContent = `
+              .custom-routing-container {
+                background-color: white;
+                padding: 16px;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                max-width: 300px;
+                max-height: 70vh;
+                overflow-y: auto;
+                font-family: system-ui, -apple-system, sans-serif;
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 1000;
+              }
+              .custom-routing-container h2 {
+                font-size: 18px;
+                margin: 0 0 12px 0;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              .custom-routing-container h3 {
+                font-size: 16px;
+                margin: 16px 0 8px 0;
+              }
+              .leaflet-routing-alt {
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              .leaflet-routing-alt table {
+                font-size: 14px !important;
+              }
+              .leaflet-routing-alt tr:hover {
+                background-color: #f5f5f5;
+                cursor: pointer;
+              }
+              .leaflet-routing-alt-minimized {
+                display: none;
+              }
+              .leaflet-routing-container {
+                position: relative !important;
+                float: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+              }
+              .leaflet-routing-container h2 {
+                font-size: 18px !important;
+                margin: 0 0 12px 0 !important;
+              }
+              .leaflet-routing-container h3 {
+                font-size: 16px !important;
+                margin: 16px 0 8px 0 !important;
+              }
+              .leaflet-routing-icon {
+                background-size: 240px 20px !important;
+                margin: 0 8px !important;
+              }
+              .leaflet-routing-alternatives-container {
+                font-size: 14px !important;
+              }
+              .leaflet-routing-instructions {
+                font-size: 14px !important;
+              }
+              .leaflet-routing-instruction-text {
+                font-size: 14px !important;
+                padding: 8px 0 !important;
+              }
+              .leaflet-routing-instruction-distance {
+                font-size: 14px !important;
+                color: #666 !important;
+              }
+              .leaflet-routing-summary {
+                font-size: 14px !important;
+                padding: 8px 0 !important;
+                border-bottom: 1px solid #eee !important;
+                margin-bottom: 12px !important;
+              }
+              .leaflet-routing-geocoder {
+                display: none !important;
+              }
+            `;
+            document.head.appendChild(style);
+
+            // Add close button to the container
+            setTimeout(() => {
+              const container = document.querySelector('.custom-routing-container');
+              if (container) {
+                const header = container.querySelector('h2');
+                if (header) {
+                  const closeButton = document.createElement('button');
+                  closeButton.innerHTML = '×';
+                  closeButton.style.cssText = `
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    color: #666;
+                    cursor: pointer;
+                    padding: 0;
+                    margin-left: 8px;
+                  `;
+                  closeButton.onclick = () => {
+                    if (routingControl) {
+                      map.removeControl(routingControl);
+                      routingControl = null;
+                    }
+                  };
+                  header.appendChild(closeButton);
+                }
+              }
+            }, 100);
           }
         },
         (error) => {
