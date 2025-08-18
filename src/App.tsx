@@ -106,6 +106,7 @@ function App() {
 
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
+                  <Route path="/share-vostcard/:id" element={<PublicVostcardView />} />
                   <Route path="/share-quickcard/:id" element={<PublicLegacyQuickcardView />} />
                   <Route path="/share-trip/:id" element={<PublicTripView />} />
                   <Route path="/shared-trip/:tourId" element={<ShareableTripView />} />
