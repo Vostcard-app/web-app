@@ -19,26 +19,16 @@ export interface Vostcard {
   createdAt: string;
   updatedAt: string;
   isOffer?: boolean;
-  isQuickcard?: boolean;
+  // Removed isQuickcard field
   offerDetails?: OfferDetails;
   script?: string;
   scriptId?: string;
   hasVideo?: boolean;
   hasPhotos?: boolean;
-  hasAudio?: boolean; // NEW: Indicates if quickcard has audio content
-  audio?: Blob | null; // NEW: Audio blob for quickcards (optional) - LEGACY: for backward compatibility
-  // NEW: Multiple audio support for intro/detail recordings
-  audioFiles?: Blob[] | null; // Array of audio blobs [intro, detail, ...]
-  audioLabels?: string[] | null; // Labels for each audio file ['intro', 'detail', ...]
   _videoBase64?: string | null;
   _photosBase64?: string[];
-  _audioBase64?: string | null; // NEW: For IndexedDB serialization - LEGACY
-  _audioFilesBase64?: string[] | null; // NEW: For IndexedDB serialization of multiple audio files
   _firebaseVideoURL?: string | null;
   _firebasePhotoURLs?: string[];
-  _firebaseAudioURL?: string | null; // NEW: Firebase audio URL for synced quickcards - LEGACY
-  _firebaseAudioURLs?: string[] | null; // NEW: Firebase audio URLs for multiple audio files
-  audioURLs?: string[]; // NEW: Runtime audio URLs (used by viewing components)
   _isMetadataOnly?: boolean;
 }
 
@@ -66,7 +56,7 @@ export interface FirebaseVostcard {
   state: 'private' | 'posted';
   visibility: 'private' | 'public';
   isOffer?: boolean;
-  isQuickcard?: boolean;
+  // Removed isQuickcard field
   offerDetails?: OfferDetails;
   userRole?: string;
   avatarURL?: string;
@@ -142,7 +132,7 @@ export const AVAILABLE_CATEGORIES = [
 ] as const;
 
 // Available types constant  
-export const AVAILABLE_TYPES = ['Vostcard', 'Quickcard', 'Guide'] as const;
+export const AVAILABLE_TYPES = ['Vostcard', 'Guide'] as const;
 
 export type CategoryType = typeof AVAILABLE_CATEGORIES[number];
 export type PostType = typeof AVAILABLE_TYPES[number];
