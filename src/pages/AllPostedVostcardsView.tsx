@@ -488,6 +488,23 @@ const AllPostedVostcardsView: React.FC = () => {
 
         // Sort by distance if we have user location
         if (userLocation) {
+          console.log('📍 Sorting vostcards by distance from:', userLocation);
+          validVostcards.sort((a, b) => {
+            const distanceA = getDistanceForSorting(a);
+            const distanceB = getDistanceForSorting(b);
+            console.log(`📏 Distance comparison: ${a.title} (${distanceA.toFixed(2)}km) vs ${b.title} (${distanceB.toFixed(2)}km)`);
+            return distanceA - distanceB;
+          });
+          console.log('📍 First 3 vostcards after sorting:', validVostcards.slice(0, 3).map(v => ({
+            title: v.title,
+            distance: getDistanceForSorting(v).toFixed(2) + 'km'
+          })));
+        } else {
+          console.log('❌ No user location available for distance sorting');
+        }
+
+        // Sort by distance if we have user location
+        if (userLocation) {
           console.log('📍 Sorting vostcards by distance from user location:', userLocation);
           validVostcards.sort((a, b) => {
             const distanceA = getDistanceForSorting(a);
