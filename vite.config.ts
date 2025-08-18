@@ -29,10 +29,7 @@ export default defineConfig({
       input: {
         main: '/index.html'
       },
-      external: [
-        '@sapper/app', // Explicitly mark as external to prevent build errors
-        'nodemailer' // Server-side only
-      ],
+      external: ['nodemailer'], // Server-side only
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
@@ -60,10 +57,7 @@ export default defineConfig({
       'firebase/firestore',
       'firebase/storage'
     ],
-    exclude: [
-      '@sapper/app', // Prevent Vite from trying to optimize this module
-      'nodemailer'   // Server-side only
-    ]
+    exclude: ['nodemailer'] // Server-side only
   },
   resolve: {
     alias: {

@@ -1,10 +1,10 @@
 {
-  "name": "B&B Keeper",
-  "short_name": "B&B Keeper",
-  "description": "Bed & Breakfast Property Management",
+  "name": "Vōstcard",
+  "short_name": "Vōstcard",
+  "description": "Share Your World",
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#2563eb",
+  "theme_color": "#002B4D",
   "background_color": "#ffffff",
   "orientation": "portrait",
   "scope": "/",
@@ -16,7 +16,7 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "productivity", "utilities"],
+  "categories": ["social", "photography", "travel"],
   "lang": "en",
   "dir": "ltr"
-} 
+}
