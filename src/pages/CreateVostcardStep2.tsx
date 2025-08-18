@@ -56,7 +56,14 @@ export default function CreateVostcardStep2() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: true
+      });
       mediaStreamRef.current = stream;
       const chunks: BlobPart[] = [];
       const mr = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
@@ -65,14 +72,16 @@ export default function CreateVostcardStep2() {
       setRecordedBlob(null);
       setRecording(true);
       mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-      mr.onstop = () => {
+      mr.onstop = async () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         setRecordedBlob(blob);
         stopAllTracks();
         setRecording(false);
         // Save video and return to step 2 to show preview
         setVideo(blob);
-        navigate('/create/step2', { replace: true });
+        // Navigate to home and back to step 2 to ensure clean remount
+        navigate('/home');
+        setTimeout(() => navigate('/create/step2'), 0);
       };
       mr.start();
       // 60s cap
