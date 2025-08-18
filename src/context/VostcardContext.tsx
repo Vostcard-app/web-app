@@ -345,16 +345,25 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
       console.log('🔍 Query built:', q);
 
-      // Also search for specific post
-      const gregsQuery = query(
-        collection(db, 'vostcards'),
-        where('title', '==', 'Gregs')
-      );
+      // Search for the specific post in all states
+      console.log('🔍 Searching for post titled "Gregs"...');
+      const gregsQuery = query(collection(db, 'vostcards'));
       const gregsSnapshot = await getDocs(gregsQuery);
-      console.log('🔍 Found Gregs posts:', gregsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })));
+      const gregsPost = gregsSnapshot.docs
+        .filter(doc => {
+          const data = doc.data();
+          return data.title && data.title.includes('Gregs');
+        })
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      
+      if (gregsPost.length > 0) {
+        console.log('✅ Found posts with "Gregs" in title:', gregsPost);
+      } else {
+        console.log('❌ No posts found with "Gregs" in title');
+      }
       
       const querySnapshot = await getDocs(q);
       console.log('📊 Query results:', querySnapshot.docs.map(doc => ({
