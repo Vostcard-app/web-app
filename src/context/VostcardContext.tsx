@@ -291,15 +291,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // First try to get all posted vostcards
       console.log('🔍 Building Firebase query for user:', user.uid);
-      // Remove orderBy to avoid index requirement for now
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
-        where('state', '==', 'posted')
+        where('state', '==', 'posted'),
+        orderBy('createdAt', 'desc')
       );
       console.log('🔍 Query built:', q);
       
       const querySnapshot = await getDocs(q);
+      console.log('📊 Query results:', querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })));
       console.log('📊 Found', querySnapshot.docs.length, 'posted vostcards in Firebase');
       
       console.log('🔄 Processing vostcard documents...');
@@ -453,7 +457,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         latitude: currentVostcard.geo?.latitude,
         longitude: currentVostcard.geo?.longitude
       });
-      await setDoc(doc(db, 'vostcards', currentVostcard.id), {
+      
+      if (!currentVostcard.geo?.latitude || !currentVostcard.geo?.longitude) {
+        throw new Error('Vostcard must have geo location to be posted');
+      }
+
+      const docData = {
         id: currentVostcard.id,
         title: currentVostcard.title,
         description: currentVostcard.description,
@@ -463,8 +472,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         userRole: authContext.userRole,
         photoURLs: photoURLs,
         videoURL: videoURL,
-        latitude: currentVostcard.geo?.latitude,
-        longitude: currentVostcard.geo?.longitude,
+        latitude: currentVostcard.geo.latitude,
+        longitude: currentVostcard.geo.longitude,
+        geo: {
+          latitude: currentVostcard.geo.latitude,
+          longitude: currentVostcard.geo.longitude
+        },
         avatarURL: user.photoURL || '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -475,7 +488,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isOffer: currentVostcard.isOffer || false,
         offerDetails: currentVostcard.offerDetails || null,
         visibility: 'public'
-      });
+      };
+
+      console.log('📝 Saving vostcard to Firebase:', docData);
+      await setDoc(doc(db, 'vostcards', currentVostcard.id), docData);
 
       // Update local copy
       try {
