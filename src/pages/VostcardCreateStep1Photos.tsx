@@ -97,24 +97,26 @@ export default function VostcardCreateStep1Photos() {
       }
     };
 
-    initVostcardAndPhotos();
-  }
+    const initAll = async () => {
+      await initVostcardAndPhotos();
 
-    // Fallback: use remote photoURLs if available (edit from saved metadata)
-    if (currentVostcard?.photoURLs && Array.isArray(currentVostcard.photoURLs) && currentVostcard.photoURLs.length > 0) {
-      const urls = (currentVostcard.photoURLs as string[]).slice(0, 4);
-      const paddedUrls: (string | null)[] = [null, null, null, null];
-      urls.forEach((u, i) => { paddedUrls[i] = u; });
-      // Keep selectedPhotos as null; backgroundImage uses photoUrls for display
-      setSelectedPhotos([null, null, null, null]);
-      setPhotoUrls(prev => {
-        // Revoke only blob: URLs from previous state
-        prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
-        return paddedUrls;
-      });
-      return;
-    }
-  }, [currentVostcard, setCurrentVostcard]);
+      // Fallback: use remote photoURLs if available (edit from saved metadata)
+      if (currentVostcard?.photoURLs && Array.isArray(currentVostcard.photoURLs) && currentVostcard.photoURLs.length > 0) {
+        const urls = (currentVostcard.photoURLs as string[]).slice(0, 4);
+        const paddedUrls: (string | null)[] = [null, null, null, null];
+        urls.forEach((u, i) => { paddedUrls[i] = u; });
+        // Keep selectedPhotos as null; backgroundImage uses photoUrls for display
+        setSelectedPhotos([null, null, null, null]);
+        setPhotoUrls(prev => {
+          // Revoke only blob: URLs from previous state
+          prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
+          return paddedUrls;
+        });
+      }
+    };
+
+    initAll();
+  }, [currentVostcard, setCurrentVostcard, setSelectedPhotos, setPhotoUrls]);
 
   // Auto-open camera if coming from Create button
   useEffect(() => {
