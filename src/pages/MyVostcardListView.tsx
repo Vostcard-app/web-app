@@ -38,7 +38,7 @@ const MyVostcardListView = () => {
     console.log('📱 Personal posts found:', savedVostcards.map(v => ({
       id: v.id,
       title: v.title,
-      isQuickcard: v.isQuickcard,
+      // Removed isQuickcard field
       createdAt: v.createdAt,
       state: v.state
     })));
@@ -139,18 +139,8 @@ const MyVostcardListView = () => {
       console.warn('⚠️ Could not reload from local before edit, proceeding with current object');
       setCurrentVostcard(vostcard);
     }
-    if (TEMP_UNIFIED_VOSTCARD_FLOW) {
-      console.log('🔄 Editing in unified flow (one-page editor):', vostcard.id);
-      navigate(`/edit/${vostcardId}`);
-      return;
-    }
-    if (vostcard.isQuickcard) {
-      console.log('🔄 Editing quickcard (legacy routes):', vostcard.id);
-      navigate('/quickcard-step2');
-    } else {
-      console.log('🔄 Editing regular vostcard (legacy routes):', vostcard.id);
-      navigate('/create-step2');
-    }
+    console.log('🔄 Editing in unified flow:', vostcard.id);
+    navigate(`/edit/${vostcardId}`);
   };
 
   const handleView = (vostcardId: string) => {
@@ -189,10 +179,7 @@ Tap OK to continue.`;
       }
       
       // Generate public share URL
-      const isQuickcard = vostcard.isQuickcard === true;
-      const shareUrl = isQuickcard 
-        ? `${window.location.origin}/share-quickcard/${vostcard.id}`
-        : `${window.location.origin}/share/${vostcard.id}`;
+      const shareUrl = `${window.location.origin}/share/${vostcard.id}`;
       
       console.log('📍 Generated share URL:', shareUrl);
       
@@ -759,7 +746,7 @@ Tap OK to continue.`;
             id: selectedVostcard.id,
             title: selectedVostcard.title,
             description: selectedVostcard.description,
-            isQuickcard: selectedVostcard.isQuickcard
+            type: 'vostcard'
           }}
         />
       )}
