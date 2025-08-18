@@ -393,6 +393,26 @@ const AllPostedVostcardsView: React.FC = () => {
         
         console.log('📋 Loaded posted Vōstcards:', allContent.length);
         
+        // Debug: Check for specific vostcard
+        const specificVostcard = allContent.find(v => v.id === 'vostcard_1753956138356');
+        if (specificVostcard) {
+          console.log('🎯 Found specific vostcard vostcard_1753956138356:', specificVostcard);
+        } else {
+          console.log('❌ Specific vostcard vostcard_1753956138356 not found in query results');
+          // Check if it was in the raw results before filtering
+          const specificInRaw = postedVostcards.find(v => v.id === 'vostcard_1753956138356');
+          if (specificInRaw) {
+            console.log('🔍 Found in raw results but filtered out:', {
+              id: specificInRaw.id,
+              isOffer: specificInRaw.isOffer,
+              state: specificInRaw.state,
+              userRole: specificInRaw.userRole
+            });
+          } else {
+            console.log('❌ Not found in raw Firebase query results either');
+          }
+        }
+        
         // Debug: Log all Jay Bond posts found
         const jayBondPosts = allContent.filter(v => v.username === 'Jay Bond' || v.userID === '9byLf32ls0gF2nzF17vnv9RhLiJ2');
         console.log('🔍 Jay Bond posts found in query:', jayBondPosts.length);
@@ -515,6 +535,12 @@ const AllPostedVostcardsView: React.FC = () => {
       }
       
       console.log('📋 Loaded', newContent.length, 'more vostcards');
+      
+      // Debug: Check for specific vostcard in load more
+      const specificVostcard = newContent.find(v => v.id === 'vostcard_1753956138356');
+      if (specificVostcard) {
+        console.log('🎯 Found specific vostcard vostcard_1753956138356 in load more:', specificVostcard);
+      }
       
       // Append to existing vostcards
       setVostcards(prev => [...prev, ...newContent]);
