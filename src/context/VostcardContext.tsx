@@ -29,6 +29,7 @@ interface VostcardContextType {
   cleanupDeletionMarkers: () => Promise<void>;
   clearDeletionMarkers: () => void;
   manualCleanupFirebase: () => Promise<void>;
+  loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
 }
 
 // Create context
@@ -426,6 +427,54 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.removeItem('deletion_timestamps');
   }, []);
 
+  // Load local vostcard
+  const loadLocalVostcard = useCallback(async (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => {
+    try {
+      const localDB = await openUserDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      const vostcard = await new Promise<Vostcard | null>((resolve, reject) => {
+        const request = store.get(vostcardId);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+
+      if (!vostcard) {
+        throw new Error('Vostcard not found in local storage');
+      }
+
+      // If we have URLs but no files, try to restore them
+      if (vostcard._firebasePhotoURLs?.length > 0 && (!vostcard.photos || vostcard.photos.length === 0)) {
+        if (options?.restorePhotos !== false) {
+          console.log('🔄 Restoring photos from URLs...');
+          const photoBlobs = await Promise.all(
+            vostcard._firebasePhotoURLs.map(async url => {
+              const response = await fetch(url);
+              return response.blob();
+            })
+          );
+          vostcard.photos = photoBlobs;
+        }
+      }
+
+      if (vostcard._firebaseVideoURL && !vostcard.video) {
+        if (options?.restoreVideo !== false) {
+          console.log('🔄 Restoring video from URL...');
+          const response = await fetch(vostcard._firebaseVideoURL);
+          vostcard.video = await response.blob();
+        }
+      }
+
+      setCurrentVostcard(vostcard);
+      console.log('✅ Local vostcard loaded:', vostcard.id);
+      
+    } catch (error) {
+      console.error('Error loading local vostcard:', error);
+      throw error;
+    }
+  }, [openUserDB]);
+
   // Manual cleanup of Firebase
   const manualCleanupFirebase = useCallback(async () => {
     const user = auth.currentUser;
@@ -482,7 +531,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     downloadVostcardContent,
     cleanupDeletionMarkers,
     clearDeletionMarkers,
-    manualCleanupFirebase
+    manualCleanupFirebase,
+    loadLocalVostcard
   };
 
   return (
