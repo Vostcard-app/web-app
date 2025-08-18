@@ -351,11 +351,11 @@ export default function VostcardCreateStep1Photos() {
 
   // Save and continue handler
   const handleSaveAndContinue = () => {
-    // Filter out null photos - need at least 2 photos
+    // Filter out null photos - need at least 1 photo
     const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
     
-    if (validPhotos.length < 2) {
-      alert('Please add at least two photos for your Vostcard.');
+    if (validPhotos.length < 1) {
+      alert('Please add at least one photo for your Vostcard.');
       return;
     }
     
@@ -373,7 +373,7 @@ export default function VostcardCreateStep1Photos() {
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
-  const isFormComplete = photoCount >= 2;
+  const isFormComplete = photoCount >= 1;
   
   // Debug logging
   console.log('📸 Photo state:', {
