@@ -7,15 +7,6 @@ import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
 import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
-/*
-  📱 CAMERA APPROACH: Currently using Step2CameraView for enhanced orientation handling
-  
-  🔄 TO REVERT TO FILE INPUT:
-  1. Replace handleAddPhoto with handleAddPhotoFallback
-  2. Remove the camera mode indicator
-  3. The file input code is already there and ready to use
-*/
-
 export default function CreateVostcardStep2() {
   const navigate = useNavigate();
   const { updateVostcard, currentVostcard, saveLocalVostcard } = useVostcard();
@@ -264,8 +255,6 @@ export default function CreateVostcardStep2() {
     setIsTripModalOpen(true);
   };
 
-
-
   const handleTripSelection = async () => {
     if (!selectedTripId && !newTripName.trim()) {
       alert('Please select a trip or enter a new trip name');
@@ -311,10 +300,10 @@ export default function CreateVostcardStep2() {
         
         await TripService.addItemToTrip(tripId, {
           vostcardID: currentVostcard.id,
-          type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
+          type: 'vostcard',
           title: currentVostcard.title || `Vostcard ${new Date().toLocaleDateString()}`,
           description: currentVostcard.description,
-          photoURL: photoURL, // Add the missing photoURL parameter
+          photoURL: photoURL,
           latitude: currentVostcard.geo?.latitude,
           longitude: currentVostcard.geo?.longitude
         });
@@ -339,7 +328,7 @@ export default function CreateVostcardStep2() {
     }
   };
 
-  // Smaller square thumbnail style to match QuickcardStep2
+  // Styles
   const optionStyle = {
     background: '#f4f6f8',
     borderRadius: 8,
@@ -381,7 +370,7 @@ export default function CreateVostcardStep2() {
     // Filter out null photos but allow saving even with just one photo
     const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
     updateVostcard({ photos: validPhotos });
-    navigate('/create-step3');
+    navigate('/create/step3');
   };
 
   return (
@@ -458,7 +447,7 @@ export default function CreateVostcardStep2() {
       {TEMP_UNIFIED_VOSTCARD_FLOW && (
         <div style={{ width: '100%', maxWidth: 420, marginTop: 100, padding: '0 16px' }}>
           <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>Optional Video (up to 60s)</h2>
-          <p style={{ marginTop: 0, color: '#666' }}>You can skip this step if you don’t want a video.</p>
+          <p style={{ marginTop: 0, color: '#666' }}>You can skip this step if you don't want a video.</p>
           <div style={{
             background: '#f8f9fa',
             border: '1px solid #e5e5e5',
@@ -511,7 +500,7 @@ export default function CreateVostcardStep2() {
         overflowY: 'auto',
         marginTop: TEMP_UNIFIED_VOSTCARD_FLOW ? '20px' : (currentVostcard?.title ? '20px' : '80px'),
       }}>
-        {/* Photo selection grid - matching QuickcardStep2 style */}
+        {/* Photo selection grid */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
