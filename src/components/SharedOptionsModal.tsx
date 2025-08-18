@@ -12,7 +12,7 @@ interface SharedOptionsModalProps {
     id: string;
     title?: string;
     description?: string;
-    isQuickcard?: boolean;
+    type?: 'vostcard' | 'guide';
   };
 }
 
@@ -27,10 +27,7 @@ const SharedOptionsModal: React.FC<SharedOptionsModalProps> = ({
   const handlePublicShare = async () => {
     try {
       // Generate public share URL
-      const isQuickcard = item.isQuickcard === true;
-      const shareUrl = isQuickcard 
-        ? `${window.location.origin}/share-quickcard/${item.id}`
-        : `${window.location.origin}/share/${item.id}`;
+      const shareUrl = `${window.location.origin}/share/${item.id}`;
       
       // Generate share text using utility
       const shareText = generateShareText(item, shareUrl);
@@ -58,27 +55,15 @@ const SharedOptionsModal: React.FC<SharedOptionsModalProps> = ({
     if (!user?.uid) return;
     
     try {
-      const isQuickcard = item.isQuickcard === true;
-      let result;
-      
-      if (isQuickcard) {
-        result = await VostboxService.sendQuickcardToFriend({
-          senderUID: user.uid,
-          receiverUID: friendUID,
-          quickcardID: item.id,
-          message
-        });
-      } else {
-        result = await VostboxService.sendVostcardToFriend({
-          senderUID: user.uid,
-          receiverUID: friendUID,
-          vostcardID: item.id,
-          message
-        });
-      }
+      const result = await VostboxService.sendVostcardToFriend({
+        senderUID: user.uid,
+        receiverUID: friendUID,
+        vostcardID: item.id,
+        message
+      });
       
       if (result.success) {
-        alert(`${isQuickcard ? 'Quickcard' : 'Vostcard'} sent to friend via Vōstbox!`);
+        alert('Vostcard sent to friend via Vōstbox!');
         onClose();
       } else {
         alert(result.error || 'Failed to send to friend');
@@ -122,7 +107,7 @@ const SharedOptionsModal: React.FC<SharedOptionsModalProps> = ({
             justifyContent: 'space-between'
           }}>
             <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
-              Share {item.isQuickcard ? 'Quickcard' : 'Vostcard'}
+              Share Vostcard
             </h3>
             <button
               onClick={onClose}
@@ -141,7 +126,7 @@ const SharedOptionsModal: React.FC<SharedOptionsModalProps> = ({
           {/* Content Info */}
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #eee' }}>
             <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-              {item.title || `Untitled ${item.isQuickcard ? 'Quickcard' : 'Vostcard'}`}
+              {item.title || 'Untitled Vostcard'}
             </div>
             {item.description && (
               <div style={{ fontSize: '14px', color: '#666' }}>
@@ -244,11 +229,11 @@ const SharedOptionsModal: React.FC<SharedOptionsModalProps> = ({
         isOpen={showFriendPicker}
         onClose={() => setShowFriendPicker(false)}
         onSendToFriend={handleSendToFriend}
-        title={`Send ${item.isQuickcard ? 'Quickcard' : 'Vostcard'} to Friend`}
-        itemType={item.isQuickcard ? 'quickcard' : 'vostcard'}
+        title="Send Vostcard to Friend"
+        itemType="vostcard"
       />
     </>
   );
 };
 
-export default SharedOptionsModal; 
+export default SharedOptionsModal;
