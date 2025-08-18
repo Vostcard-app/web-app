@@ -640,6 +640,7 @@ const HomeView = () => {
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
+          where('visibility', '==', 'public'),
           startAfter(lastDoc),
           limit(MAX_POSTS)
         );
@@ -648,6 +649,7 @@ const HomeView = () => {
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
+          where('visibility', '==', 'public'),
           limit(MAX_POSTS)
         );
       }
