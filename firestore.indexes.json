@@ -38,8 +38,7 @@
           "fields": [
             { "fieldPath": "userID", "order": "ASCENDING" },
             { "fieldPath": "state", "order": "ASCENDING" },
-            { "fieldPath": "createdAt", "order": "DESCENDING" },
-            { "fieldPath": "__name__", "order": "DESCENDING" }
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
           ]
         },
         {
@@ -56,7 +55,6 @@
           "queryScope": "COLLECTION",
           "fields": [
             { "fieldPath": "state", "order": "ASCENDING" },
-            { "fieldPath": "visibility", "order": "ASCENDING" },
             { "fieldPath": "userRole", "order": "ASCENDING" },
             { "fieldPath": "createdAt", "order": "DESCENDING" }
           ]
