@@ -277,7 +277,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         request.onerror = () => reject(request.error);
       });
 
-      // Filter out any invalid vostcards and ensure they belong to current user
+      // Filter for personal posts (not posted and belong to current user)
       const validVostcards = vostcards.filter(vostcard => {
         try {
           // Check required fields and user ownership
@@ -287,6 +287,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               hasUserID: !!vostcard.userID,
               isCurrentUser: vostcard.userID === user.uid
             });
+            return false;
+          }
+
+          // Only include non-posted vostcards
+          if (vostcard.state === 'posted') {
+            console.log('📝 Skipping posted vostcard:', vostcard.id);
             return false;
           }
 
@@ -330,7 +336,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return dateB.getTime() - dateA.getTime();
       });
 
-      console.log('✅ Loaded', sortedVostcards.length, 'valid local vostcards');
+      console.log('✅ Loaded', sortedVostcards.length, 'valid personal vostcards');
       console.log('📅 First 3 vostcards:', sortedVostcards.slice(0, 3).map(v => ({
         id: v.id,
         title: v.title,
