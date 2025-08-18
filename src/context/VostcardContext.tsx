@@ -290,6 +290,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return false;
           }
 
+          // Handle legacy quickcards
+          const isLegacyQuickcard = vostcard.type === 'quickcard' || vostcard.id.includes('quickcard_');
+          if (isLegacyQuickcard) {
+            console.log('📦 Found legacy quickcard:', vostcard.id);
+            // Treat all legacy quickcards as posted
+            vostcard.state = 'posted';
+            vostcard.type = 'vostcard';
+          }
+
           // Only include non-posted vostcards
           if (vostcard.state === 'posted') {
             console.log('📝 Skipping posted vostcard:', vostcard.id);
@@ -320,6 +329,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           if (!vostcard.state || !['private', 'posted'].includes(vostcard.state)) {
             console.warn('⚠️ Vostcard has invalid state:', vostcard.id, vostcard.state);
             vostcard.state = 'private';
+          }
+
+          // Ensure type is set
+          if (!vostcard.type) {
+            console.warn('⚠️ Missing type, defaulting to vostcard:', vostcard.id);
+            vostcard.type = 'vostcard';
           }
 
           return true;
@@ -521,6 +536,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.warn('⚠️ Found null vostcard entry');
           return false;
         }
+
+        // Basic validation
         if (!v.id || !v.userID) {
           console.warn('⚠️ Invalid vostcard:', {
             id: v?.id,
@@ -528,6 +545,28 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           });
           return false;
         }
+
+        // Handle migrated quickcards
+        const isLegacyQuickcard = v.type === 'quickcard' || v.id.includes('quickcard_');
+        if (isLegacyQuickcard) {
+          console.log('📦 Found legacy quickcard:', v.id);
+          // Treat all legacy quickcards as posted
+          v.state = 'posted';
+          v.type = 'vostcard';
+        }
+
+        // Ensure state is valid
+        if (!v.state) {
+          console.warn('⚠️ Missing state, defaulting to private:', v.id);
+          v.state = 'private';
+        }
+
+        // Ensure type is set
+        if (!v.type) {
+          console.warn('⚠️ Missing type, defaulting to vostcard:', v.id);
+          v.type = 'vostcard';
+        }
+
         return true;
       });
 
