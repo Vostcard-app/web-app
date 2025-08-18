@@ -165,8 +165,8 @@ const CreateVostcardStep3: React.FC = () => {
       return;
     }
 
-    if (!currentVostcard.photos || currentVostcard.photos.length < 2) {
-      alert("❌ At least 2 photos are required. Please go back and add photos.");
+    if (!currentVostcard.photos || currentVostcard.photos.length < 1) {
+      alert("❌ At least 1 photo is required. Please go back and add a photo.");
       return;
     }
     
@@ -218,7 +218,7 @@ const CreateVostcardStep3: React.FC = () => {
   if (!validationState.hasDescription) missingItems.push('Description');
   if (!validationState.hasCategories) missingItems.push('Categories');
   if (!validationState.hasPhotos) {
-    missingItems.push('Photos (need at least 2)');
+    missingItems.push('Photos (need at least 1)');
   }
 
   return (
