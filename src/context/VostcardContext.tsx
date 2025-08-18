@@ -79,16 +79,19 @@ interface VostcardContextProps {
 }
 
 // IndexedDB configuration
-const DB_NAME = 'VostcardDB';
+const getDBName = (userId?: string) => `VostcardDB_${userId || 'anonymous'}`;
 const DB_VERSION = 3;
 const STORE_NAME = 'privateVostcards';
 const METADATA_STORE_NAME = 'vostcardMetadata';
 
 // IndexedDB utility functions with resilience and retry (helps iOS Safari)
 const openDB = (attempt: number = 1): Promise<IDBDatabase> => {
+  const { user } = useAuth();
   return new Promise((resolve, reject) => {
     try {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      const dbName = getDBName(user?.uid);
+      console.log('📂 Opening IndexedDB:', dbName);
+      const request = indexedDB.open(dbName, DB_VERSION);
 
       request.onerror = () => {
         const err = request.error as any;
