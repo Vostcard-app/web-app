@@ -60,8 +60,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': '/src',
-      './components/SavedVostcardsListView': './src/pages/SavedVostcardsListView'
-    }
+      '@': '/src'
+    },
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
   }
 });
