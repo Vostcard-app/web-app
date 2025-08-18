@@ -767,7 +767,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
         mediaUploadStatus: 'complete',
         isOffer: localVostcard.isOffer || false,
-        isQuickcard: localVostcard.isQuickcard || false,
+        // Removed isQuickcard field
         offerDetails: localVostcard.offerDetails || null,
         script: localVostcard.script || null,
         scriptId: localVostcard.scriptId || null
@@ -825,7 +825,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       createdAt: firebaseVostcard.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       updatedAt: firebaseVostcard.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       isOffer: firebaseVostcard.isOffer || false,
-      isQuickcard: firebaseVostcard.isQuickcard || false,
+      // Removed isQuickcard field
       offerDetails: firebaseVostcard.offerDetails || null,
       script: firebaseVostcard.script || null,
       scriptId: firebaseVostcard.scriptId || null,
@@ -896,7 +896,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             hasVideo: data.hasVideo || false,
             hasPhotos: data.hasPhotos || false,
             isOffer: data.isOffer || false,
-            isQuickcard: data.isQuickcard || false, // Preserve isQuickcard flag
+            // Removed isQuickcard field
             offerDetails: data.offerDetails || null,
             script: data.script || null,
             scriptId: data.scriptId || null,
@@ -1379,7 +1379,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: (currentVostcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
-        isQuickcard: currentVostcard.isQuickcard || false,
+        // Removed isQuickcard field
         offerDetails: currentVostcard.offerDetails || null,
         script: currentVostcard.script || null,
         scriptId: currentVostcard.scriptId || null
@@ -1836,7 +1836,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: (vostcard.photos?.length || 0) > 0,
         mediaUploadStatus: 'complete',
         isOffer: vostcard.isOffer || false,
-        isQuickcard: vostcard.isQuickcard || false,
+        // Removed isQuickcard field
         offerDetails: vostcard.offerDetails || null,
         visibility: 'public'
       });
@@ -2395,7 +2395,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 hasPhotos: (localVostcard._photosBase64?.length || 0) > 0,
                 mediaUploadStatus: 'complete',
                 isOffer: localVostcard.isOffer || false,
-                isQuickcard: localVostcard.isQuickcard || false,
+                // Removed isQuickcard field
                 offerDetails: localVostcard.offerDetails || null,
                 script: localVostcard.script || null,
                 scriptId: localVostcard.scriptId || null
