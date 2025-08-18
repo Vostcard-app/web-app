@@ -376,11 +376,10 @@ const AllPostedVostcardsView: React.FC = () => {
             limit(ITEMS_PER_PAGE)
           );
         } else {
-          // Normal query for all posts
+          // Normal query for all posts (temporarily remove orderBy to avoid index requirement)
           q1 = query(
             collection(db, 'vostcards'), 
             where('state', '==', 'posted'),
-            orderBy('createdAt', 'desc'),
             limit(ITEMS_PER_PAGE)
           );
         }
@@ -505,11 +504,10 @@ const AllPostedVostcardsView: React.FC = () => {
           limit(ITEMS_PER_PAGE)
         );
       } else {
-        // Normal query for all posts
+        // Normal query for all posts (temporarily remove visibility to avoid index requirement)
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
-          where('visibility', '==', 'public'),
           startAfter(lastDoc),
           limit(ITEMS_PER_PAGE)
         );
