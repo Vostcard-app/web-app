@@ -11,7 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function VostcardCreateStep1Photos() {
   const navigate = useNavigate();
-  const { updateVostcard, currentVostcard, saveLocalVostcard, loadLocalVostcard, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
+  const { currentVostcard, saveLocalVostcard, loadLocalVostcard, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,7 +41,7 @@ export default function VostcardCreateStep1Photos() {
     if (!currentVostcard) {
       // Create empty vostcard when arriving at this step
       console.log('📱 Initializing empty vostcard for photo selection');
-      updateVostcard({
+      setCurrentVostcard({
         id: `vostcard_${Date.now()}`,
         title: '',
         description: '',
@@ -95,7 +95,7 @@ export default function VostcardCreateStep1Photos() {
       });
       return;
     }
-  }, [currentVostcard, updateVostcard]);
+  }, [currentVostcard, setCurrentVostcard]);
 
   // Cleanup created object URLs on unmount
   useEffect(() => {
@@ -360,7 +360,9 @@ export default function VostcardCreateStep1Photos() {
     }
     
     // Save photos to context and route into unified step 2
-    updateVostcard({ photos: validPhotos });
+    if (currentVostcard) {
+      setCurrentVostcard({ ...currentVostcard, photos: validPhotos });
+    }
     
     console.log('📱 Vostcard photos saved:', {
       photoCount: validPhotos.length
