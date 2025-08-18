@@ -300,11 +300,11 @@ const AllPostedVostcardsView: React.FC = () => {
     
     for (const id of vostcardIds) {
       try {
-        const [count, liked, stats] = await Promise.all([
-          getLikeCount(id),
-          isLiked(id),
-          RatingService.getRatingStats(id)
-        ]);
+        // Load like count and status sequentially to avoid race conditions
+        const count = await getLikeCount(id);
+        const liked = await isLiked(id);
+        const stats = await RatingService.getRatingStats(id);
+        
         counts[id] = count;
         statuses[id] = liked;
         ratings[id] = stats;
@@ -539,25 +539,40 @@ const AllPostedVostcardsView: React.FC = () => {
     const unsubscribers: (() => void)[] = [];
 
     vostcards.forEach(vostcard => {
-      // Like listeners
-      const unsubscribeLikes = setupLikeListeners(
-        vostcard.id,
-        (count) => {
-          setLikeCounts(prev => ({ ...prev, [vostcard.id]: count }));
-        },
-        (liked) => {
-          setLikedStatus(prev => ({ ...prev, [vostcard.id]: liked }));
+      try {
+        // Like listeners
+        const unsubscribeLikes = setupLikeListeners(
+          vostcard.id,
+          (count: number) => {
+            console.log('👍 Like count updated:', vostcard.id, count);
+            setLikeCounts(prev => ({ ...prev, [vostcard.id]: count }));
+          },
+          (liked: boolean) => {
+            console.log('❤️ Like status updated:', vostcard.id, liked);
+            setLikedStatus(prev => ({ ...prev, [vostcard.id]: liked }));
+          }
+        );
+        
+        if (typeof unsubscribeLikes === 'function') {
+          unsubscribers.push(unsubscribeLikes);
+        } else {
+          console.warn('⚠️ Invalid unsubscribe function for:', vostcard.id);
         }
-      );
-      unsubscribers.push(unsubscribeLikes);
-
-      // Rating listeners removed - using one-time fetch instead
+      } catch (error) {
+        console.error('❌ Error setting up like listeners for:', vostcard.id, error);
+      }
     });
 
     return () => {
-      unsubscribers.forEach(unsubscribe => unsubscribe());
+      unsubscribers.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('❌ Error unsubscribing:', error);
+        }
+      });
     };
-  }, [vostcards.map(v => v.id).join(','), setupLikeListeners]); // Use stable dependency
+  }, [vostcards, setupLikeListeners]); // Simplified dependencies
 
   // Fetch user friends list
   useEffect(() => {
