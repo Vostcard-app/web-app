@@ -374,6 +374,13 @@ export default function VostcardCreateStep1Photos() {
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
   const isFormComplete = photoCount >= 2;
+  
+  // Debug logging
+  console.log('📸 Photo state:', {
+    selectedPhotos: selectedPhotos.map((p, i) => p ? `Photo ${i+1}: ${p.name}` : `Slot ${i+1}: empty`),
+    photoCount,
+    isFormComplete
+  });
 
   return (
     <div style={{
