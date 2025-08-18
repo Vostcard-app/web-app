@@ -972,12 +972,73 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Load all Vostcards only when user is authenticated (heavily deferred to not block login)
   useEffect(() => {
     if (authContext.user && !authContext.loading) {
+      console.log('👤 Loading vostcards for user:', {
+        uid: authContext.user.uid,
+        username: getCorrectUsername(authContext),
+        dbName: getDBName(authContext.user.uid)
+      });
+
       // Much longer delay to completely unblock login experience
-      setTimeout(() => {
-        loadAllLocalVostcards().catch(error => {
-          console.warn('⚠️ Background vostcard loading failed:', error);
-        });
+      const timeoutId = setTimeout(async () => {
+        try {
+          // First try to clear any corrupted data
+          const localDB = await openUserDB();
+          const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(STORE_NAME);
+          
+          // Get all records to check for corruption
+          const request = store.getAll();
+          request.onsuccess = async () => {
+            const records = request.result;
+            console.log(`📊 Found ${records.length} records in IndexedDB`);
+            
+            // Check for and remove any corrupted records
+            const corrupted = records.filter(r => !r.id || !r.title);
+            if (corrupted.length > 0) {
+              console.warn(`⚠️ Found ${corrupted.length} corrupted records, cleaning up...`);
+              for (const record of corrupted) {
+                await store.delete(record.id || '');
+              }
+            }
+
+            // Now load the clean data
+            await loadAllLocalVostcards();
+            console.log('✅ Successfully loaded local vostcards');
+          };
+          
+          request.onerror = (error) => {
+            console.error('❌ Error checking IndexedDB records:', error);
+            // Try to load anyway
+            loadAllLocalVostcards().catch(e => {
+              console.error('❌ Failed to load vostcards after DB check:', e);
+            });
+          };
+        } catch (error) {
+          console.error('❌ Error during vostcard loading:', error);
+          // If there's an error, try to delete the database and start fresh
+          try {
+            const dbName = getDBName(authContext.user.uid);
+            console.log('🔄 Attempting to delete corrupted database:', dbName);
+            await new Promise<void>((resolve, reject) => {
+              const deleteRequest = indexedDB.deleteDatabase(dbName);
+              deleteRequest.onsuccess = () => {
+                console.log('✅ Successfully deleted corrupted database');
+                resolve();
+              };
+              deleteRequest.onerror = () => {
+                console.error('❌ Failed to delete corrupted database');
+                reject(deleteRequest.error);
+              };
+            });
+            // Try loading again after database deletion
+            await loadAllLocalVostcards();
+          } catch (e) {
+            console.error('❌ Complete failure in vostcard loading:', e);
+          }
+        }
       }, 2000); // 2 second delay to let login UI fully load
+
+      return () => clearTimeout(timeoutId);
     }
   }, [authContext.user, authContext.loading]);
   
