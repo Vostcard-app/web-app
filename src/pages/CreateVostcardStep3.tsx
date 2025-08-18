@@ -158,6 +158,17 @@ const CreateVostcardStep3: React.FC = () => {
       navigate('/home');
       return;
     }
+
+    // Additional validation
+    if (!currentVostcard.geo) {
+      alert("❌ Location is required. Please go back and set a location.");
+      return;
+    }
+
+    if (!currentVostcard.photos || currentVostcard.photos.length < 2) {
+      alert("❌ At least 2 photos are required. Please go back and add photos.");
+      return;
+    }
     
     // Show success message immediately
     alert('Your Vōstcard will appear on the map in a minute or two.');
@@ -172,6 +183,14 @@ const CreateVostcardStep3: React.FC = () => {
     
     try {
       console.log('📥 Starting vostcard post process...');
+      
+      // Set the vostcard state to 'posted' before posting
+      if (currentVostcard) {
+        setCurrentVostcard({
+          ...currentVostcard,
+          state: 'posted'
+        });
+      }
       
       await postVostcard();
       
