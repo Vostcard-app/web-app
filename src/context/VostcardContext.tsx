@@ -19,6 +19,7 @@ interface VostcardContextType {
   currentVostcard: Vostcard | null;
   setCurrentVostcard: (vostcard: Vostcard | null) => void;
   clearVostcard: () => void;
+  createNewVostcard: () => void;
   saveLocalVostcard: () => Promise<void>;
   postVostcard: () => Promise<void>;
   deletePrivateVostcard: (vostcardId: string) => Promise<void>;
@@ -161,6 +162,41 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const clearVostcard = useCallback(() => {
     setCurrentVostcard(null);
   }, []);
+
+  // Create new vostcard
+  const createNewVostcard = useCallback(() => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.error('No user authenticated');
+      return;
+    }
+
+    const newVostcard: Vostcard = {
+      id: crypto.randomUUID(),
+      title: '',
+      description: '',
+      photos: [],
+      categories: [],
+      username: user.displayName || user.email?.split('@')[0] || 'Unknown',
+      userID: user.uid,
+      userRole: authContext.userRole || 'user',
+      state: 'private',
+      video: null,
+      type: 'vostcard',
+      hasVideo: false,
+      hasPhotos: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('🆕 Creating new vostcard:', {
+      id: newVostcard.id,
+      username: newVostcard.username,
+      userID: newVostcard.userID
+    });
+
+    setCurrentVostcard(newVostcard);
+  }, [authContext.userRole]);
 
   // Save vostcard locally
   const saveLocalVostcard = useCallback(async () => {
@@ -844,6 +880,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     currentVostcard,
     setCurrentVostcard,
     clearVostcard,
+    createNewVostcard,
     saveLocalVostcard,
     postVostcard,
     deletePrivateVostcard,
