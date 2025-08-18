@@ -30,6 +30,7 @@ interface VostcardContextType {
   clearDeletionMarkers: () => void;
   manualCleanupFirebase: () => Promise<void>;
   loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
+  setVideo: (video: Blob) => void;
 }
 
 // Create context
@@ -788,23 +789,32 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadInitialData();
   }, [authContext.loading, authContext.user, loadAllLocalVostcards, loadPostedVostcards, syncVostcardMetadata]);
 
+  const setVideo = useCallback((video: Blob) => {
+    if (!currentVostcard) return;
+    setCurrentVostcard({
+      ...currentVostcard,
+      video
+    });
+  }, [currentVostcard]);
+
   const value = {
     savedVostcards,
     postedVostcards,
-        currentVostcard,
-        setCurrentVostcard,
-        clearVostcard,
+    currentVostcard,
+    setCurrentVostcard,
+    clearVostcard,
     saveLocalVostcard,
-        postVostcard,
-        deletePrivateVostcard,
+    postVostcard,
+    deletePrivateVostcard,
     loadAllLocalVostcards,
-        loadPostedVostcards,
-        syncVostcardMetadata,
-        downloadVostcardContent,
-        cleanupDeletionMarkers,
-        clearDeletionMarkers,
-        manualCleanupFirebase,
-    loadLocalVostcard
+    loadPostedVostcards,
+    syncVostcardMetadata,
+    downloadVostcardContent,
+    cleanupDeletionMarkers,
+    clearDeletionMarkers,
+    manualCleanupFirebase,
+    loadLocalVostcard,
+    setVideo
   };
 
   return (
