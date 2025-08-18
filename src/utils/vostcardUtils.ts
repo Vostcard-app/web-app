@@ -7,19 +7,15 @@ import type { Vostcard, ValidationState, FirebaseVostcard } from '../types/Vostc
 export const getVostcardStatus = (vostcard: Partial<Vostcard>): string[] => {
   const missing: string[] = [];
   
-  // Video is optional for all vostcards - remove video requirement
-  // if (!vostcard.video && !vostcard.isQuickcard) missing.push('Video');
   if (!vostcard.title) missing.push('Title');
   if (!vostcard.description) missing.push('Description');
   if (!vostcard.categories || vostcard.categories.length === 0) missing.push('Categories');
   
-  // Different photo requirements for vostcards vs quickcards
-  const minPhotos = vostcard.isQuickcard ? 1 : 2;
   const photoCount = (vostcard.photos?.length || 0) + 
     ((vostcard as any).photoURLs?.length || 0) + 
     ((vostcard as any)._firebasePhotoURLs?.length || 0);
-  if (photoCount < minPhotos) {
-    missing.push(`Photos (need at least ${minPhotos})`);
+  if (photoCount < 2) {
+    missing.push('Photos (need at least 2)');
   }
   
   // Check for location in multiple formats (geo object, or separate lat/lng fields)
@@ -42,17 +38,14 @@ export const isReadyToPost = (vostcard: Partial<Vostcard>): boolean => {
  * Gets validation state for a vostcard
  */
 export const getValidationState = (vostcard: Partial<Vostcard>): ValidationState => {
-  const isQuickcard = vostcard.isQuickcard || false;
-  const minPhotos = isQuickcard ? 1 : 2;
-  
   return {
     hasTitle: (vostcard.title?.trim() || '') !== '',
     hasDescription: (vostcard.description?.trim() || '') !== '',
     hasCategories: (vostcard.categories?.length || 0) > 0,
     hasPhotos: ((vostcard.photos?.length || 0) + 
       ((vostcard as any).photoURLs?.length || 0) + 
-      ((vostcard as any)._firebasePhotoURLs?.length || 0)) >= minPhotos,
-    hasVideo: true, // Video is always optional for all vostcards
+      ((vostcard as any)._firebasePhotoURLs?.length || 0)) >= 2,
+    hasVideo: true, // Video is always optional
     hasGeo: !!(vostcard.geo || 
       (vostcard.latitude && vostcard.longitude) ||
       ((vostcard as any).latitude && (vostcard as any).longitude))
@@ -108,14 +101,7 @@ export const formatTimeAgo = (timestamp: number): string => {
  */
 export const getVostcardIconType = (vostcard: Partial<Vostcard | FirebaseVostcard>): string => {
   if (vostcard.isOffer) return 'offer';
-  // For quickcards, check user role first to determine correct pin
-  if (vostcard.isQuickcard) {
-    // If the quickcard is posted by a guide or admin, use guide pin
-    if (vostcard.userRole === 'guide' || vostcard.userRole === 'admin') return 'guide';
-    // Otherwise, use regular vostcard pin for user quickcards
-    return 'vostcard';
-  }
-  if (vostcard.userRole === 'guide') return 'guide';
+  if (vostcard.userRole === 'guide' || vostcard.userRole === 'admin') return 'guide';
   return 'vostcard';
 };
 
@@ -137,12 +123,10 @@ export const getSafeUsername = (
  * Generates share text for a vostcard
  */
 export const generateShareText = (vostcard: Partial<Vostcard>, shareUrl: string): string => {
-  const itemType = vostcard.isQuickcard ? 'Quickcard' : 'Vostcard';
-  
   return `Check it out I made this with Vōstcard
 
 
-"${vostcard.title || `Untitled ${itemType}`}"
+"${vostcard.title || 'Untitled Vostcard'}"
 
 
 "${vostcard.description || 'No description'}"
@@ -172,4 +156,4 @@ export const createErrorMessage = (error: unknown, fallback: string): string => 
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
   return fallback;
-}; 
+};
