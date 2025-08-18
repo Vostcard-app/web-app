@@ -540,8 +540,8 @@ const VostcardStudioView: React.FC = () => {
       }
       
       // If no sessionStorage data, check currentVostcard context
-      if (currentVostcard?.isQuickcard && quickcardTitle === '' && quickcardDescription === '') {
-        console.log('📱 Loading quickcard data from context:', currentVostcard);
+      if (currentVostcard && quickcardTitle === '' && quickcardDescription === '') {
+        console.log('📱 Loading vostcard data from context:', currentVostcard);
         
         // Populate fields from context
         setQuickcardTitle(currentVostcard.title || '');
@@ -859,7 +859,7 @@ const VostcardStudioView: React.FC = () => {
           latitude: quickcardLocation?.latitude || 40.7128,
           longitude: quickcardLocation?.longitude || -74.0060,
           isOffer: false,
-          isQuickcard: true
+          type: 'vostcard'
         }
       }
     });
@@ -910,7 +910,7 @@ const VostcardStudioView: React.FC = () => {
         userRole: userRole || 'user',
         state: 'private',
         video: null,
-        isQuickcard: true,
+        type: 'vostcard',
         hasVideo: false,
         hasPhotos: quickcardPhotos.length > 0,
         hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
@@ -986,7 +986,7 @@ const VostcardStudioView: React.FC = () => {
         userRole: userRole || 'user',
         state: 'private',
         video: null,
-        isQuickcard: true,
+        type: 'vostcard',
         hasVideo: false,
         hasPhotos: quickcardPhotos.length > 0,
         hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
@@ -1073,7 +1073,7 @@ const VostcardStudioView: React.FC = () => {
         userRole: userRole || 'user',
         state: 'private',
         video: null,
-        isQuickcard: true,
+        type: 'vostcard',
         hasVideo: false,
         hasPhotos: quickcardPhotos.length > 0,
         hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
@@ -2627,22 +2627,20 @@ const VostcardStudioView: React.FC = () => {
                      console.log('🔧 All savedVostcards:', savedVostcards.map(v => ({
                        id: v.id,
                        title: v.title || 'Untitled',
-                       isQuickcard: v.isQuickcard,
+                       type: 'vostcard',
                        state: v.state,
                        userID: v.userID,
                        latitude: v.latitude,
                        longitude: v.longitude,
                        hasValidData: !!(v.id && v.title && v.userID && (v.latitude || v.longitude))
                      })));
-                     const quickcards = savedVostcards.filter(card => card.isQuickcard);
-                     console.log('🔧 Filtered quickcards:', quickcards.length);
-                     console.log('🔧 Quickcard details:', quickcards.map(q => ({
-                       id: q.id,
-                       title: q.title || 'Untitled',
-                       isQuickcard: q.isQuickcard,
-                       state: q.state,
-                       visibility: (q as any).visibility
-                     })));
+                                         console.log('🔧 All vostcards:', savedVostcards.map(q => ({
+                      id: q.id,
+                      title: q.title || 'Untitled',
+                      type: 'vostcard',
+                      state: q.state,
+                      visibility: (q as any).visibility
+                    })));
                      
 
                    }}
@@ -2733,7 +2731,7 @@ const VostcardStudioView: React.FC = () => {
                        <div style={{ flex: 1 }}>
                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                            {vostcard.title || 'Untitled Vostcard'}
-                           {vostcard.isQuickcard && <span style={{ color: '#007bff', fontSize: '10px', marginLeft: '6px' }}>[QUICKCARD]</span>}
+ 
                            {!vostcard.title && <span style={{ color: '#dc3545', fontSize: '10px', marginLeft: '6px' }}>[MISSING TITLE]</span>}
                          </div>
                          <div style={{ fontSize: '12px', color: '#666' }}>
