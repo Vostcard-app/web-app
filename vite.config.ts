@@ -55,7 +55,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': '/src'
+      '@': '/src',
+      './components/SavedVostcardsListView': './src/pages/SavedVostcardsListView'
     }
   }
 });
