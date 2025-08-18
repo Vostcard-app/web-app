@@ -356,8 +356,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       console.log('🔄 Loading posted vostcards for user:', user.uid);
       
-      // First try to get all posted vostcards
-      console.log('🔍 Building Firebase query for user:', user.uid);
+      // Simple query for user's posted vostcards, sorted by date
+      console.log('🔍 Loading personal vostcards for user:', user.uid);
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
@@ -400,9 +400,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       const querySnapshot = await getDocs(q);
-      console.log('📊 Query results:', querySnapshot.docs.map(doc => ({
+      const results = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
+      }));
+      console.log('📊 Personal vostcards found:', results.map(v => ({
+        id: v.id,
+        title: v.title,
+        createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt,
+        state: v.state
       })));
       console.log('📊 Found', querySnapshot.docs.length, 'posted vostcards in Firebase');
       
