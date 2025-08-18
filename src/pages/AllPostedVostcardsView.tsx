@@ -42,11 +42,9 @@ const AllPostedVostcardsView: React.FC = () => {
   const availableTypes = ['Vostcard', 'Guide'];
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [showGuidesOnly, setShowGuidesOnly] = useState(() => {
-    // Temporarily force to false to avoid index issues
-    return false;
     // Load persisted state from localStorage, default to true (Guides only enabled)
-    // const saved = localStorage.getItem('homeView_showGuidesOnly');
-    // return saved ? JSON.parse(saved) : true;
+    const saved = localStorage.getItem('homeView_showGuidesOnly');
+    return saved ? JSON.parse(saved) : true;
   });
   
   // Category filtering state (using central AVAILABLE_CATEGORIES)
@@ -376,10 +374,11 @@ const AllPostedVostcardsView: React.FC = () => {
             limit(ITEMS_PER_PAGE)
           );
         } else {
-          // Normal query for all posts (temporarily remove orderBy to avoid index requirement)
+          // Normal query for all posts
           q1 = query(
             collection(db, 'vostcards'), 
             where('state', '==', 'posted'),
+            orderBy('createdAt', 'desc'),
             limit(ITEMS_PER_PAGE)
           );
         }
@@ -498,16 +497,17 @@ const AllPostedVostcardsView: React.FC = () => {
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
-          where('visibility', '==', 'public'),
           where('userRole', '==', 'guide'),
+          orderBy('createdAt', 'desc'),
           startAfter(lastDoc),
           limit(ITEMS_PER_PAGE)
         );
       } else {
-        // Normal query for all posts (temporarily remove visibility to avoid index requirement)
+        // Normal query for all posts
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
+          orderBy('createdAt', 'desc'),
           startAfter(lastDoc),
           limit(ITEMS_PER_PAGE)
         );
