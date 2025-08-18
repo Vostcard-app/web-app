@@ -85,11 +85,10 @@ const STORE_NAME = 'privateVostcards';
 const METADATA_STORE_NAME = 'vostcardMetadata';
 
 // IndexedDB utility functions with resilience and retry (helps iOS Safari)
-const openDB = (attempt: number = 1): Promise<IDBDatabase> => {
-  const { user } = useAuth();
+const openDB = (userId?: string, attempt: number = 1): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     try {
-      const dbName = getDBName(user?.uid);
+      const dbName = getDBName(userId);
       console.log('📂 Opening IndexedDB:', dbName);
       const request = indexedDB.open(dbName, DB_VERSION);
 
@@ -266,6 +265,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [scripts, setScripts] = useState<Script[]>([]);
   const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
   const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
+
+  // Helper function to safely open IndexedDB with current user's ID
+  const openUserDB = useCallback(async (attempt: number = 1): Promise<IDBDatabase> => {
+    return openDB(authContext.user?.uid, attempt);
+  }, [authContext.user?.uid]);
   // Scripts Firestore CRUD
   const loadScripts = useCallback(async () => {
     console.log('📜 Starting loadScripts...');
@@ -537,7 +541,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log(`🗑️ Found ${deletedVostcards.length} deletion markers from Firebase`);
       
       // 1. Get all local vostcards from IndexedDB
-      const localDB = await openDB();
+      const localDB = await openUserDB();
       const localTransaction = localDB.transaction([STORE_NAME], 'readonly');
       const localStore = localTransaction.objectStore(STORE_NAME);
       const localVostcards = await new Promise<any[]>((resolve, reject) => {
@@ -678,7 +682,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (downloadedVostcards.length > 0) {
           console.log(`💾 Saving ${downloadedVostcards.length} vostcards to IndexedDB...`);
           
-          const writeDB = await openDB(); // Fresh database connection
+          const writeDB = await openUserDB(); // Fresh database connection
           const writeTransaction = writeDB.transaction([STORE_NAME], 'readwrite');
           const writeStore = writeTransaction.objectStore(STORE_NAME);
           
@@ -1192,7 +1196,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Save to IndexedDB
-      const localDB = await openDB();
+      const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       
@@ -1368,7 +1372,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     console.log('📂 loadLocalVostcard: Attempting to load Vostcard with ID:', id);
     
     try {
-      const db = await openDB();
+      const db = await openUserDB();
       const transaction = db.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.get(id);
@@ -1525,7 +1529,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // 3. Delete from IndexedDB (graceful failure - don't fail the whole operation)
       try {
         console.log('🔍 DEBUG: Attempting IndexedDB deletion...');
-        const localDB = await openDB();
+        const localDB = await openUserDB();
         const transaction = localDB.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         
@@ -1588,7 +1592,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // ✅ Clear IndexedDB (for testing)
   const clearLocalStorage = useCallback(async () => {
     try {
-      const db = await openDB();
+      const db = await openUserDB();
       const transaction = db.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.clear();
@@ -1747,7 +1751,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Update the IndexedDB entry to mark it as posted so it gets filtered out of My Vostcards
       try {
-        const localDB = await openDB();
+        const localDB = await openUserDB();
         const transaction = localDB.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         
@@ -1892,7 +1896,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const debugLocalVostcards = useCallback(async () => {
     try {
       console.log('🔍 DEBUG: Checking IndexedDB...');
-      const localDB = await openDB();
+      const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAll();
@@ -2115,7 +2119,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.log('❌ NOT FOUND in Firebase');
         
         // Check IndexedDB
-        const localDB = await openDB();
+        const localDB = await openUserDB();
         const transaction = localDB.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.get(vostcardId);
@@ -2173,7 +2177,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       } else {
         // Vostcard doesn't exist in Firebase, try to find it locally and upload
-        const localDB = await openDB();
+        const localDB = await openUserDB();
         const transaction = localDB.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
         const request = store.get(vostcardId);
@@ -2328,7 +2332,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     console.log('⚡ loadAllLocalVostcardsImmediate called');
     console.log('⚡ Current user:', authContext.user?.uid, authContext.username);
     try {
-      const localDB = await openDB();
+      const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
       const request = store.getAll();
@@ -2601,7 +2605,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log(`⚡ Found ${firebaseMetadata.length} vostcards metadata from Firebase`);
 
       // Save metadata to IndexedDB
-      const localDB = await openDB();
+      const localDB = await openUserDB();
       const transaction = localDB.transaction([METADATA_STORE_NAME], 'readwrite');
       const store = transaction.objectStore(METADATA_STORE_NAME);
       
@@ -2657,7 +2661,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const fullVostcard = await downloadFirebaseVostcardToLocal(firebaseVostcard);
       
       // Save to full IndexedDB store
-      const localDB = await openDB();
+      const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       
@@ -2857,7 +2861,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('✅ Manual cleanup completed!');
       
       // Clear local IndexedDB to force fresh sync
-      const localDB = await openDB();
+      const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       await new Promise<void>((resolve, reject) => {
@@ -2951,7 +2955,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // Clear local IndexedDB to force fresh sync
       try {
-        const localDB = await openDB();
+        const localDB = await openUserDB();
         const transaction = localDB.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         await new Promise<void>((resolve, reject) => {
@@ -3233,7 +3237,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Update the IndexedDB entry to mark it as posted
       try {
-        const localDB = await openDB();
+        const localDB = await openUserDB();
         const transaction = localDB.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
         
