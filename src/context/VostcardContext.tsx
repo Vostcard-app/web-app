@@ -212,6 +212,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Load all local vostcards
   const loadAllLocalVostcards = useCallback(async () => {
     try {
+      console.log('🔄 Loading local vostcards...');
       const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
@@ -222,49 +223,170 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         request.onerror = () => reject(request.error);
       });
 
-      setSavedVostcards(vostcards);
+      // Filter out any invalid vostcards
+      const validVostcards = vostcards.filter(vostcard => {
+        try {
+          // Check required fields
+          if (!vostcard.id || !vostcard.userID) {
+            console.warn('⚠️ Vostcard missing required fields:', {
+              id: vostcard.id,
+              hasUserID: !!vostcard.userID
+            });
+            return false;
+          }
+
+          // Ensure arrays are actually arrays
+          if (vostcard.photos && !Array.isArray(vostcard.photos)) {
+            console.warn('⚠️ Vostcard photos is not an array:', vostcard.id);
+            vostcard.photos = [];
+          }
+          if (vostcard.categories && !Array.isArray(vostcard.categories)) {
+            console.warn('⚠️ Vostcard categories is not an array:', vostcard.id);
+            vostcard.categories = [];
+          }
+
+          // Ensure timestamps are valid
+          if (!vostcard.createdAt) {
+            console.warn('⚠️ Vostcard missing createdAt:', vostcard.id);
+            vostcard.createdAt = new Date().toISOString();
+          }
+          if (!vostcard.updatedAt) {
+            console.warn('⚠️ Vostcard missing updatedAt:', vostcard.id);
+            vostcard.updatedAt = new Date().toISOString();
+          }
+
+          // Ensure state is valid
+          if (!vostcard.state || !['private', 'posted'].includes(vostcard.state)) {
+            console.warn('⚠️ Vostcard has invalid state:', vostcard.id, vostcard.state);
+            vostcard.state = 'private';
+          }
+
+          return true;
+        } catch (error) {
+          console.error('❌ Error validating vostcard:', vostcard.id, error);
+          return false;
+        }
+      });
+
+      console.log('✅ Loaded', validVostcards.length, 'valid local vostcards');
+      setSavedVostcards(validVostcards);
     } catch (error) {
-      console.error('Error loading local vostcards:', error);
-      throw error;
+      console.error('❌ Error loading local vostcards:', error);
+      // Don't throw, just log the error and return empty array
+      setSavedVostcards([]);
     }
   }, [openUserDB]);
 
   // Load posted vostcards
   const loadPostedVostcards = useCallback(async () => {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) {
+      console.log('No user authenticated, skipping loadPostedVostcards');
+      return;
+    }
 
     try {
-      const q = query(collection(db, 'vostcards'), where('userID', '==', user.uid));
-      const querySnapshot = await getDocs(q);
+      console.log('🔄 Loading posted vostcards for user:', user.uid);
       
-      const vostcards = querySnapshot.docs.map(doc => {
-        const data = doc.data() as FirebaseVostcard;
-        return {
-          id: doc.id,
-          title: data.title,
-          description: data.description,
-          categories: data.categories,
-          username: data.username,
-          userID: data.userID,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          state: 'posted' as const,
-          isOffer: data.isOffer || false,
-          offerDetails: data.offerDetails || null,
-          geo: data.latitude && data.longitude ? { latitude: data.latitude, longitude: data.longitude } : null,
-          video: null,
-          photos: [],
-          _firebaseVideoURL: data.videoURL,
-          _firebasePhotoURLs: data.photoURLs,
-          _isMetadataOnly: true
-        };
-      });
+      // First try to get all vostcards
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      console.log('📊 Found', querySnapshot.docs.length, 'posted vostcards');
+      
+      const vostcards = await Promise.all(querySnapshot.docs.map(async doc => {
+        try {
+          const data = doc.data() as FirebaseVostcard;
+          console.log('📄 Processing vostcard:', doc.id, {
+            title: data.title,
+            username: data.username,
+            createdAt: data.createdAt
+          });
+          
+          // Handle missing or invalid timestamps
+          let createdAt = new Date().toISOString();
+          let updatedAt = new Date().toISOString();
+          
+          try {
+            if (data.createdAt) {
+              if (typeof data.createdAt === 'string') {
+                createdAt = data.createdAt;
+              } else if (data.createdAt.toDate) {
+                createdAt = data.createdAt.toDate().toISOString();
+              }
+            }
+            if (data.updatedAt) {
+              if (typeof data.updatedAt === 'string') {
+                updatedAt = data.updatedAt;
+              } else if (data.updatedAt.toDate) {
+                updatedAt = data.updatedAt.toDate().toISOString();
+              }
+            }
+          } catch (timeError) {
+            console.warn('⚠️ Error parsing timestamps for vostcard:', doc.id, timeError);
+          }
 
-      setPostedVostcards(vostcards);
+          // Handle missing or invalid geo data
+          let geo = null;
+          if (data.latitude !== undefined && data.longitude !== undefined) {
+            geo = {
+              latitude: Number(data.latitude),
+              longitude: Number(data.longitude)
+            };
+          } else if (data.geo) {
+            geo = {
+              latitude: Number(data.geo.latitude),
+              longitude: Number(data.geo.longitude)
+            };
+          }
+
+          // Validate required fields
+          if (!data.title || !data.userID || !geo) {
+            console.warn('⚠️ Vostcard missing required fields:', doc.id, {
+              hasTitle: !!data.title,
+              hasUserID: !!data.userID,
+              hasGeo: !!geo
+            });
+          }
+
+          return {
+            id: doc.id,
+            title: data.title || 'Untitled',
+            description: data.description || '',
+            categories: Array.isArray(data.categories) ? data.categories : [],
+            username: data.username || user.displayName || user.email?.split('@')[0] || 'Unknown',
+            userID: data.userID || user.uid,
+            createdAt,
+            updatedAt,
+            state: 'posted' as const,
+            isOffer: !!data.isOffer,
+            offerDetails: data.offerDetails || null,
+            geo,
+            video: null,
+            photos: [],
+            _firebaseVideoURL: data.videoURL || null,
+            _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+            _isMetadataOnly: true
+          };
+        } catch (docError) {
+          console.error('❌ Error processing vostcard:', doc.id, docError);
+          return null;
+        }
+      }));
+
+      // Filter out any null entries from errors
+      const validVostcards = vostcards.filter((v): v is NonNullable<typeof v> => v !== null);
+      console.log('✅ Successfully loaded', validVostcards.length, 'valid vostcards');
+      
+      setPostedVostcards(validVostcards);
     } catch (error) {
-      console.error('Error loading posted vostcards:', error);
-      throw error;
+      console.error('❌ Error loading posted vostcards:', error);
+      // Don't throw, just log the error and return empty array
+      setPostedVostcards([]);
     }
   }, []);
 
