@@ -70,8 +70,9 @@ export default function CreateVostcardStep2() {
         setRecordedBlob(blob);
         stopAllTracks();
         setRecording(false);
-        // Save video but don't navigate since we're already on step 2
+        // Save video and return to step 2 to show preview
         setVideo(blob);
+        navigate('/create/step2', { replace: true });
       };
       mr.start();
       // 60s cap
