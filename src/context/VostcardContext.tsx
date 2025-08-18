@@ -366,9 +366,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('🔍 Loading personal vostcards for user:', user.uid);
       const q = query(
         collection(db, 'vostcards'),
-        where('userID', '==', user.uid),
-        where('state', '==', 'posted'),
-        orderBy('createdAt', 'desc')
+        where('userID', '==', user.uid)
       );
       console.log('🔍 Query built:', q);
       
@@ -406,17 +404,32 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       const querySnapshot = await getDocs(q);
-      const results = querySnapshot.docs.map(doc => ({
+      const allVostcards = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      console.log('📊 Personal vostcards found:', results.map(v => ({
+      
+      // Filter for posted vostcards and sort by date
+      const postedVostcards = allVostcards
+        .filter(v => v.state === 'posted')
+        .sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+      console.log('📊 Found vostcards:', {
+        total: allVostcards.length,
+        posted: postedVostcards.length,
+        nonPosted: allVostcards.length - postedVostcards.length
+      });
+      
+      console.log('📊 First 3 posted vostcards:', postedVostcards.slice(0, 3).map(v => ({
         id: v.id,
         title: v.title,
         createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt,
         state: v.state
       })));
-      console.log('📊 Found', querySnapshot.docs.length, 'posted vostcards in Firebase');
       
       console.log('🔄 Processing vostcard documents...');
       const vostcards = await Promise.all(querySnapshot.docs.map(async doc => {
