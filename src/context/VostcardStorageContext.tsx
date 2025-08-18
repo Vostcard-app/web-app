@@ -1,3 +1,4 @@
+// VostcardStorageContext.tsx - Unified Vostcard Storage Context
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { Vostcard } from '../types/VostcardTypes';
 import { db, storage } from '../firebase/firebaseConfig';
@@ -15,7 +16,6 @@ interface VostcardStorageContextProps {
   // Storage state
   savedVostcards: Vostcard[];
   postedVostcards: Vostcard[];
-  quickcards: Vostcard[];
   isLoading: boolean;
   error: string | null;
   lastSyncTime: Date | null;
@@ -134,7 +134,6 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
   // Storage state
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
   const [postedVostcards, setPostedVostcards] = useState<Vostcard[]>([]);
-  const [quickcards, setQuickcards] = useState<Vostcard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
@@ -273,7 +272,6 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
       // Update local state
       setSavedVostcards(prev => prev.filter(v => v.id !== id));
       setPostedVostcards(prev => prev.filter(v => v.id !== id));
-      setQuickcards(prev => prev.filter(v => v.id !== id));
     } catch (err) {
       console.error('Failed to delete from IndexedDB:', err);
       throw err;
@@ -308,12 +306,9 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
       // Separate by type
       const saved: Vostcard[] = [];
       const posted: Vostcard[] = [];
-      const quick: Vostcard[] = [];
       
       allVostcards.forEach(vostcard => {
-        if (vostcard.isQuickcard) {
-          quick.push(vostcard);
-        } else if (vostcard.state === 'posted') {
+        if (vostcard.state === 'posted') {
           posted.push(vostcard);
         } else {
           saved.push(vostcard);
@@ -322,7 +317,6 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
       
       setSavedVostcards(saved);
       setPostedVostcards(posted);
-      setQuickcards(quick);
       
       console.log(`✅ Loaded ${allVostcards.length} vostcards from IndexedDB`);
       
@@ -358,21 +352,11 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
       const privateSnapshot = await getDocs(privateQuery);
       const privateVostcards = privateSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vostcard));
       
-      // Load quickcards
-      const quickcardsQuery = query(
-        collection(db, 'quickcards'),
-        where('userID', '==', user.uid),
-        orderBy('createdAt', 'desc')
-      );
-      const quickcardsSnapshot = await getDocs(quickcardsQuery);
-      const quick = quickcardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vostcard));
-      
       setPostedVostcards(posted);
       setSavedVostcards(privateVostcards);
-      setQuickcards(quick);
       
       setLastSyncTime(new Date());
-      console.log(`✅ Loaded ${posted.length + privateVostcards.length + quick.length} vostcards from Firebase`);
+      console.log(`✅ Loaded ${posted.length + privateVostcards.length} vostcards from Firebase`);
       
     } catch (err) {
       console.error('Failed to load from Firebase:', err);
@@ -399,7 +383,6 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
       
       setSavedVostcards([]);
       setPostedVostcards([]);
-      setQuickcards([]);
       
       console.log('✅ All data cleared');
     } catch (err) {
@@ -409,9 +392,9 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
   }, []);
 
   const exportData = useCallback(async (): Promise<string> => {
-    const allVostcards = [...savedVostcards, ...postedVostcards, ...quickcards];
+    const allVostcards = [...savedVostcards, ...postedVostcards];
     return JSON.stringify(allVostcards, null, 2);
-  }, [savedVostcards, postedVostcards, quickcards]);
+  }, [savedVostcards, postedVostcards]);
 
   const importData = useCallback(async (data: string) => {
     try {
@@ -436,7 +419,6 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
     // Storage state
     savedVostcards,
     postedVostcards,
-    quickcards,
     isLoading,
     error,
     lastSyncTime,
@@ -473,4 +455,4 @@ export const useVostcardStorage = () => {
     throw new Error('useVostcardStorage must be used within a VostcardStorageProvider');
   }
   return context;
-}; 
+};
