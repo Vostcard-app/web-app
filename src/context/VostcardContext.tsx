@@ -344,6 +344,17 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         orderBy('createdAt', 'desc')
       );
       console.log('🔍 Query built:', q);
+
+      // Also search for specific post
+      const gregsQuery = query(
+        collection(db, 'vostcards'),
+        where('title', '==', 'Gregs')
+      );
+      const gregsSnapshot = await getDocs(gregsQuery);
+      console.log('🔍 Found Gregs posts:', gregsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })));
       
       const querySnapshot = await getDocs(q);
       console.log('📊 Query results:', querySnapshot.docs.map(doc => ({
