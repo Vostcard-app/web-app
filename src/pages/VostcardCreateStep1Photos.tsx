@@ -9,13 +9,13 @@ import { db } from '../firebase/firebaseConfig';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
-export default function QuickcardStep2() {
+export default function VostcardCreateStep1Photos() {
   const navigate = useNavigate();
   const { updateVostcard, currentVostcard, saveLocalVostcard, loadLocalVostcard, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Track selected photos (4 thumbnails for quickcards)
+  // Track selected photos (4 thumbnails)
   const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   // Stable preview URLs to avoid recreating object URLs on every render
   const [photoUrls, setPhotoUrls] = useState<(string | null)[]>([null, null, null, null]);
@@ -33,24 +33,22 @@ export default function QuickcardStep2() {
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
 
-
-
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  // Initialize empty quickcard or load saved photos/URLs when component mounts
+  // Initialize empty vostcard or load saved photos/URLs when component mounts
   useEffect(() => {
     if (!currentVostcard) {
-      // Create empty quickcard when arriving at this step
-      console.log('📱 Initializing empty quickcard for photo selection');
+      // Create empty vostcard when arriving at this step
+      console.log('📱 Initializing empty vostcard for photo selection');
       updateVostcard({
-        id: `quickcard_${Date.now()}`,
+        id: `vostcard_${Date.now()}`,
         title: '',
         description: '',
         photos: [],
         categories: [],
         geo: { latitude: 0, longitude: 0 }, // Default location, user can set later
-        isQuickcard: true,
+        type: 'vostcard',
         hasVideo: false,
         hasPhotos: false,
         video: null,
@@ -130,8 +128,6 @@ export default function QuickcardStep2() {
     loadTrips();
   }, []);
 
-
-
   // Find next available photo slot
   const findNextAvailableSlot = (): number | null => {
     const nextIndex = selectedPhotos.findIndex(photo => photo === null);
@@ -187,8 +183,6 @@ export default function QuickcardStep2() {
       fileInputRef.current.click();
     }
   };
-
-
 
   // Handle file selection from camera/gallery
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -258,8 +252,6 @@ export default function QuickcardStep2() {
     setIsTripModalOpen(true);
   };
 
-
-
   const handleTripSelection = async () => {
     if (!selectedTripId && !newTripName.trim()) {
       alert('Please select a trip or enter a new trip name');
@@ -267,7 +259,7 @@ export default function QuickcardStep2() {
     }
 
     if (!currentVostcard) {
-      alert('No quickcard to add to trip');
+      alert('No vostcard to add to trip');
       return;
     }
 
@@ -290,15 +282,15 @@ export default function QuickcardStep2() {
       }
 
       if (tripId) {
-        // First save the quickcard to make sure it exists in the database
-        console.log('🔄 Saving quickcard before adding to trip...');
+        // First save the vostcard to make sure it exists in the database
+        console.log('🔄 Saving vostcard before adding to trip...');
         await saveLocalVostcard();
-        console.log('✅ Quickcard saved, now adding to trip...');
+        console.log('✅ Vostcard saved, now adding to trip...');
         
         await TripService.addItemToTrip(tripId, {
           vostcardID: currentVostcard.id,
-          type: currentVostcard.isQuickcard ? 'quickcard' : 'vostcard',
-          title: currentVostcard.title || `Quickcard ${new Date().toLocaleDateString()}`,
+          type: 'vostcard',
+          title: currentVostcard.title || `Vostcard ${new Date().toLocaleDateString()}`,
           description: currentVostcard.description,
           latitude: currentVostcard.geo?.latitude,
           longitude: currentVostcard.geo?.longitude
@@ -323,10 +315,6 @@ export default function QuickcardStep2() {
       setIsCreatingTrip(false);
     }
   };
-
-
-
-
 
   // Styles
   const thumbnailStyle = {
@@ -363,27 +351,27 @@ export default function QuickcardStep2() {
 
   // Save and continue handler
   const handleSaveAndContinue = () => {
-    // Filter out null photos - quickcards need at least 1 photo
+    // Filter out null photos - need at least 2 photos
     const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
     
-    if (validPhotos.length === 0) {
-      alert('Please add at least one photo for your Quickcard.');
+    if (validPhotos.length < 2) {
+      alert('Please add at least two photos for your Vostcard.');
       return;
     }
     
     // Save photos to context and route into unified step 2
     updateVostcard({ photos: validPhotos });
     
-    console.log('📱 Quickcard photos saved:', {
+    console.log('📱 Vostcard photos saved:', {
       photoCount: validPhotos.length
     });
     
-    // Unified flow: go to Step 2 (optional video), otherwise legacy step3
+    // Go to Step 2 (optional video)
     navigate('/create/step2');
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
-  const isFormComplete = photoCount > 0;
+  const isFormComplete = photoCount >= 2;
 
   return (
     <div style={{
@@ -481,8 +469,6 @@ export default function QuickcardStep2() {
             </h2>
           </div>
         )}
-        
-
 
         {/* Photo Grid - 2x2 layout */}
         <div style={{
@@ -572,8 +558,6 @@ export default function QuickcardStep2() {
           {photoCount} of 4 photos added
         </div>
 
-
-
         {/* Add to Trip Section */}
         <div style={{ marginTop: 2, width: '100%', maxWidth: 380 }}>
           <label style={{
@@ -603,8 +587,6 @@ export default function QuickcardStep2() {
             Add to Trip
           </button>
         </div>
-
-
 
         {/* Continue button */}
         <button
@@ -759,12 +741,6 @@ export default function QuickcardStep2() {
           </div>
         </div>
       )}
-
-
-
     </div>
   );
-} 
-
-// Ensure all object URLs are revoked when navigating away
-// Note: Keeping this outside component scope would not have access to state.
+}
