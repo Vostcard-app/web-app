@@ -381,11 +381,10 @@ const AllPostedVostcardsView: React.FC = () => {
             limit(ITEMS_PER_PAGE)
           );
         } else {
-          // Query for all posts - we'll sort by distance client-side
+          // Simple query to get all posted vostcards
           q1 = query(
             collection(db, 'vostcards'), 
-            where('state', '==', 'posted'),
-            limit(ITEMS_PER_PAGE)
+            where('state', '==', 'posted')
           );
         }
         const snapshot1 = await getDocs(q1);
@@ -401,8 +400,27 @@ const AllPostedVostcardsView: React.FC = () => {
           state: v.state,
           userID: v.userID,
           hasGeo: !!(v.latitude && v.longitude),
+          geo: v.geo,
+          latitude: v.latitude,
+          longitude: v.longitude,
           createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt
         })));
+
+        // Check for specific vostcard
+        const specificVostcard = postedVostcards.find(v => v.id === 'vostcard_1755525632456');
+        if (specificVostcard) {
+          console.log('✅ Found target vostcard:', {
+            id: specificVostcard.id,
+            title: specificVostcard.title,
+            state: specificVostcard.state,
+            hasGeo: !!(specificVostcard.latitude && specificVostcard.longitude),
+            geo: specificVostcard.geo,
+            latitude: specificVostcard.latitude,
+            longitude: specificVostcard.longitude
+          });
+        } else {
+          console.log('❌ Target vostcard not found in query results');
+        }
         
         // Combine and filter: Vōstcards only (exclude offers)
         const allContent = postedVostcards.filter(v => !v.isOffer);
@@ -490,14 +508,30 @@ const AllPostedVostcardsView: React.FC = () => {
         if (userLocation) {
           console.log('📍 Sorting vostcards by distance from:', userLocation);
           validVostcards.sort((a, b) => {
-            const distanceA = getDistanceForSorting(a);
-            const distanceB = getDistanceForSorting(b);
-            console.log(`📏 Distance comparison: ${a.title} (${distanceA.toFixed(2)}km) vs ${b.title} (${distanceB.toFixed(2)}km)`);
+            const latA = a.latitude || a.geo?.latitude;
+            const lngA = a.longitude || a.geo?.longitude;
+            const latB = b.latitude || b.geo?.latitude;
+            const lngB = b.longitude || b.geo?.longitude;
+
+            if (!latA || !lngA) return 1;  // Push items without location to end
+            if (!latB || !lngB) return -1;
+
+            const distanceA = calculateDistance(userLocation[0], userLocation[1], latA, lngA);
+            const distanceB = calculateDistance(userLocation[0], userLocation[1], latB, lngB);
+
+            console.log(`📏 Distance: ${a.title} (${distanceA.toFixed(2)}km) vs ${b.title} (${distanceB.toFixed(2)}km)`);
             return distanceA - distanceB;
           });
+
           console.log('📍 First 3 vostcards after sorting:', validVostcards.slice(0, 3).map(v => ({
+            id: v.id,
             title: v.title,
-            distance: getDistanceForSorting(v).toFixed(2) + 'km'
+            distance: calculateDistance(
+              userLocation[0], 
+              userLocation[1], 
+              v.latitude || v.geo?.latitude || 0, 
+              v.longitude || v.geo?.longitude || 0
+            ).toFixed(2) + 'km'
           })));
         } else {
           console.log('❌ No user location available for distance sorting');
