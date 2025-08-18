@@ -425,17 +425,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Post vostcard to Firebase
   const postVostcard = useCallback(async () => {
+    console.log('Starting postVostcard...');
     if (!currentVostcard) {
+      console.error('No vostcard to post');
       throw new Error('No vostcard to post');
     }
 
+    console.log('Current vostcard:', currentVostcard);
     const user = auth.currentUser;
     if (!user) {
+      console.error('User not authenticated');
       throw new Error('User not authenticated');
     }
     
     try {
-      // Upload media to Firebase Storage
+      console.log('Uploading media to Firebase Storage...');
       const photoURLs = await Promise.all(
             currentVostcard.photos.map(async (photo, idx) => {
           const photoRef = ref(storage, `users/${user.uid}/photos/${uuidv4()}`);

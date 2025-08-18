@@ -157,6 +157,7 @@ const VostcardStudioView: React.FC = () => {
     }
 
     try {
+      console.log('Creating vostcard for posting to map...');
       const vostcard: Vostcard = {
         id: currentVostcard?.id || crypto.randomUUID(),
         title,
@@ -167,7 +168,7 @@ const VostcardStudioView: React.FC = () => {
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
-        state: 'private',
+        state: 'posted',
         video: null,
         type: 'vostcard',
         hasVideo: false,
@@ -176,7 +177,9 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
+      console.log('Setting current vostcard:', vostcard);
       setCurrentVostcard(vostcard);
+      console.log('Posting vostcard...');
       await postVostcard();
       
       navigate('/home');
