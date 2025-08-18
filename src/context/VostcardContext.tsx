@@ -508,7 +508,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('Uploading media to Firebase Storage...');
       const photoURLs = await Promise.all(
             currentVostcard.photos.map(async (photo, idx) => {
-          const photoRef = ref(storage, `users/${user.uid}/photos/${uuidv4()}`);
+          const photoRef = ref(storage, `vostcards/${user.uid}/photos/${uuidv4()}`);
           await uploadBytes(photoRef, photo);
           return getDownloadURL(photoRef);
         })
@@ -516,7 +516,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       let videoURL = null;
       if (currentVostcard.video) {
-        const videoRef = ref(storage, `users/${user.uid}/videos/${uuidv4()}`);
+        const videoRef = ref(storage, `vostcards/${user.uid}/videos/${uuidv4()}`);
         await uploadBytes(videoRef, currentVostcard.video);
         videoURL = await getDownloadURL(videoRef);
       }
