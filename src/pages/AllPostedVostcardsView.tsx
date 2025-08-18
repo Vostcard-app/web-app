@@ -427,12 +427,20 @@ const AllPostedVostcardsView: React.FC = () => {
         
         console.log('📋 Loaded posted Vōstcards:', allContent.length);
         
-        // Debug: Check for specific vostcard
-        const specificVostcard = allContent.find(v => v.id === 'vostcard_1753956138356');
-        if (specificVostcard) {
-          console.log('🎯 Found specific vostcard vostcard_1753956138356:', specificVostcard);
+        // Debug: Check for specific vostcard in initial query
+        const targetVostcard = allContent.find(v => v.id === 'vostcard_1753956138356');
+        if (targetVostcard) {
+          console.log('🎯 Found target vostcard in initial query:', {
+            id: targetVostcard.id,
+            title: targetVostcard.title,
+            state: targetVostcard.state,
+            hasGeo: !!(targetVostcard.latitude && targetVostcard.longitude),
+            geo: targetVostcard.geo,
+            latitude: targetVostcard.latitude,
+            longitude: targetVostcard.longitude
+          });
         } else {
-          console.log('❌ Specific vostcard vostcard_1753956138356 not found in query results');
+          console.log('❌ Target vostcard not found in initial query');
           // Check if it was in the raw results before filtering
           const specificInRaw = postedVostcards.find(v => v.id === 'vostcard_1753956138356');
           if (specificInRaw) {
@@ -654,10 +662,18 @@ const AllPostedVostcardsView: React.FC = () => {
       
       console.log('📋 Loaded', newContent.length, 'more vostcards');
       
-      // Debug: Check for specific vostcard in load more
-      const specificVostcard = newContent.find(v => v.id === 'vostcard_1753956138356');
-      if (specificVostcard) {
-        console.log('🎯 Found specific vostcard vostcard_1753956138356 in load more:', specificVostcard);
+      // Debug: Check for target vostcard in load more
+      const targetInLoadMore = newContent.find(v => v.id === 'vostcard_1753956138356');
+      if (targetInLoadMore) {
+        console.log('🎯 Found target vostcard in load more:', {
+          id: targetInLoadMore.id,
+          title: targetInLoadMore.title,
+          state: targetInLoadMore.state,
+          hasGeo: !!(targetInLoadMore.latitude && targetInLoadMore.longitude),
+          geo: targetInLoadMore.geo,
+          latitude: targetInLoadMore.latitude,
+          longitude: targetInLoadMore.longitude
+        });
       }
       
       // Combine with existing vostcards and sort by distance
