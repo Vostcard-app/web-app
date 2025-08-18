@@ -2624,7 +2624,7 @@ const HomeView = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transform: isQuickcardPressed ? 'scale(0.95)' : 'scale(1)',
+            transform: isCreatePressed ? 'scale(0.95)' : 'scale(1)',
             textAlign: 'center',
             lineHeight: '1.2'
           }}
