@@ -60,7 +60,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
-      
+
       request.onupgradeneeded = (event) => {
         const db = request.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -96,7 +96,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
-
+      
       // If record exists, delete it first
       if (existingRecord) {
         await new Promise<void>((resolve, reject) => {
@@ -107,7 +107,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Add new record
-      await new Promise<void>((resolve, reject) => {
+          await new Promise<void>((resolve, reject) => {
         const request = store.add(currentVostcard);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
@@ -120,7 +120,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       console.log('✅ Vostcard saved successfully');
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Error saving vostcard:', error);
       throw error;
     }
@@ -136,11 +136,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!user) {
       throw new Error('User not authenticated');
     }
-
+    
     try {
       // Upload media to Firebase Storage
       const photoURLs = await Promise.all(
-        currentVostcard.photos.map(async (photo, idx) => {
+            currentVostcard.photos.map(async (photo, idx) => {
           const photoRef = ref(storage, `users/${user.uid}/photos/${uuidv4()}`);
           await uploadBytes(photoRef, photo);
           return getDownloadURL(photoRef);
@@ -206,7 +206,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       loadAllLocalVostcards();
       loadPostedVostcards();
       clearVostcard();
-
+      
     } catch (error) {
       console.error('Error posting vostcard:', error);
       throw error;
@@ -223,8 +223,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       // Delete from IndexedDB
       const localDB = await openUserDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
+        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
       await store.delete(vostcardId);
 
       // Delete from Firebase if posted
@@ -288,8 +288,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           isOffer: data.isOffer || false,
           offerDetails: data.offerDetails || null,
           geo: data.latitude && data.longitude ? { latitude: data.latitude, longitude: data.longitude } : null,
-          video: null,
-          photos: [],
+              video: null,
+              photos: [],
           _firebaseVideoURL: data.videoURL,
           _firebasePhotoURLs: data.photoURLs,
           _isMetadataOnly: true
@@ -358,7 +358,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSavedVostcards(prev =>
         prev.map(v => v.id === vostcardId ? updatedVostcard : v)
       );
-
+      
     } catch (error) {
       console.error('Error downloading vostcard content:', error);
       throw error;
@@ -384,9 +384,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const data = doc.data();
         return new Date(data.deletedAt) < thirtyDaysAgo;
       });
-      
-      for (const doc of toDelete) {
-        await deleteDoc(doc.ref);
+        
+        for (const doc of toDelete) {
+          await deleteDoc(doc.ref);
       }
     } catch (error) {
       console.error('Error cleaning up deletion markers:', error);
@@ -426,7 +426,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setSavedVostcards([]);
       setPostedVostcards([]);
       await loadAllLocalVostcards();
-
+      
     } catch (error) {
       console.error('Error in manual cleanup:', error);
       throw error;
@@ -443,18 +443,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const value = {
     savedVostcards,
     postedVostcards,
-    currentVostcard,
-    setCurrentVostcard,
-    clearVostcard,
+        currentVostcard,
+        setCurrentVostcard,
+        clearVostcard,
     saveLocalVostcard,
-    postVostcard,
-    deletePrivateVostcard,
+        postVostcard,
+        deletePrivateVostcard,
     loadAllLocalVostcards,
-    loadPostedVostcards,
-    syncVostcardMetadata,
-    downloadVostcardContent,
-    cleanupDeletionMarkers,
-    clearDeletionMarkers,
+        loadPostedVostcards,
+        syncVostcardMetadata,
+        downloadVostcardContent,
+        cleanupDeletionMarkers,
+        clearDeletionMarkers,
     manualCleanupFirebase
   };
 
