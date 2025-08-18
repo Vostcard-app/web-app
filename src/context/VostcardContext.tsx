@@ -79,7 +79,11 @@ interface VostcardContextProps {
 }
 
 // IndexedDB configuration
-const getDBName = (userId?: string) => `VostcardDB_${userId || 'anonymous'}`;
+const getDBName = (userId?: string) => {
+  // Get the current username from localStorage to ensure consistency
+  const username = localStorage.getItem('vostcard_username') || 'anonymous';
+  return `VostcardDB_${userId || 'anonymous'}_${username}`;
+};
 const DB_VERSION = 3;
 const STORE_NAME = 'privateVostcards';
 const METADATA_STORE_NAME = 'vostcardMetadata';
@@ -265,6 +269,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [scripts, setScripts] = useState<Script[]>([]);
   const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
   const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
+
+  // Update username in localStorage when it changes
+  useEffect(() => {
+    const username = getCorrectUsername(authContext);
+    localStorage.setItem('vostcard_username', username);
+  }, [authContext.username, authContext.user?.email, authContext.user?.displayName]);
 
   // Helper function to safely open IndexedDB with current user's ID
   const openUserDB = useCallback(async (attempt: number = 1): Promise<IDBDatabase> => {
