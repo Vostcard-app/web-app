@@ -67,15 +67,7 @@ interface VostcardContextProps {
   cleanupDeletionMarkers: () => void;
   clearDeletionMarkers: () => void;
   manualCleanupFirebase: () => Promise<void>;
-  // Quickcard-specific methods
-  quickcards: Vostcard[];
-  createQuickcard: (photo: Blob, geo: { latitude: number; longitude: number }) => void;
-  saveQuickcard: () => Promise<void>;
-  postQuickcard: (quickcardToPost?: Vostcard) => Promise<void>; // Add this line
-  // Migration: unify legacy quickcards and posted/private into unified private Vostcards
-  migrateToUnifiedVostcards: () => Promise<{ migrated: number; skipped: number; errors: number }>
-  // Cleanup: remove all remaining quickcards from Firebase
-  cleanupAllQuickcards: () => Promise<{ deleted: number; errors: number }>
+  // Removed quickcard-specific methods
 }
 
 // IndexedDB configuration
@@ -265,7 +257,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const authContext = useAuth();
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
-  const [quickcards, setQuickcards] = useState<Vostcard[]>([]);
+  // Removed quickcards state
   const [scripts, setScripts] = useState<Script[]>([]);
   const [likedVostcards, setLikedVostcards] = useState<Like[]>([]);
   const [postedVostcards, setPostedVostcards] = useState<any[]>([]);
@@ -932,14 +924,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // Keep all private vostcards
           if (v.visibility === 'private') return true;
           
-          // Keep posted quickcards for editing (they have visibility: 'public')
-          if (v.visibility === 'public' && v.isQuickcard) return true;
+          // Filter out all public vostcards
           
           // Filter out other public vostcards (they're managed separately)
           return false;
         });
         
-        console.log(`⚡ Filtered: ${filteredMetadata.length} kept (${filteredMetadata.filter(v => v.isQuickcard).length} quickcards), ${allFirebaseMetadata.length - filteredMetadata.length} excluded`);
+        console.log(`⚡ Filtered: ${filteredMetadata.length} private vostcards kept, ${allFirebaseMetadata.length - filteredMetadata.length} public vostcards excluded`);
         
         // Clean up any vostcards that exist in Firebase but are marked as deleted
         const firebaseVostcardsToDelete = allFirebaseMetadata.filter(v => deletedVostcards.includes(v.id));
@@ -2518,8 +2509,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             // Keep all private/draft vostcards
             if (v.state !== 'posted') return true;
             
-            // Keep posted quickcards for editing
-            if (v.state === 'posted' && v.isQuickcard) return true;
+            // Filter out all posted vostcards
             
             // Filter out posted regular vostcards (they're managed separately)
             return false;
@@ -2538,13 +2528,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             createdAt: v.createdAt
           })));
           
-          // 🔧 DEBUG: Count and log quickcards specifically
-          const quickcardsFound = filteredVostcards.filter(v => v.isQuickcard === true);
-          console.log('🎯 QUICKCARD DEBUG:', {
-            totalVostcards: filteredVostcards.length,
-            quickcardsFound: quickcardsFound.length,
-            quickcardTitles: quickcardsFound.map(q => q.title || 'Untitled')
-          });
+          // Log total vostcards found
+          console.log('📱 Total private vostcards:', filteredVostcards.length);
           
           filteredVostcards.forEach((vostcard, index) => {
             console.log(`📂 IndexedDB Vostcard ${index + 1}:`, {
