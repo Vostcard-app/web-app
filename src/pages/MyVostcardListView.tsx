@@ -16,7 +16,7 @@ import SharedOptionsModal from '../components/SharedOptionsModal';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, syncVostcardMetadata, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard } = useVostcard();
+  const { savedVostcards, setSavedVostcards, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard, syncVostcardMetadata } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
