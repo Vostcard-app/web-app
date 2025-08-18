@@ -72,16 +72,14 @@ export default function CreateVostcardStep2() {
       setRecordedBlob(null);
       setRecording(true);
       mr.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-      mr.onstop = async () => {
+      mr.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         setRecordedBlob(blob);
         stopAllTracks();
         setRecording(false);
         // Save video and return to step 2 to show preview
         setVideo(blob);
-        // Navigate to home and back to step 2 to ensure clean remount
-        navigate('/home');
-        setTimeout(() => navigate('/create/step2'), 0);
+        navigate('/create/step2');
       };
       mr.start();
       // 60s cap
