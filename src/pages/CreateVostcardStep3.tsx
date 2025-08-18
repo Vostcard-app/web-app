@@ -26,16 +26,14 @@ const CreateVostcardStep3: React.FC = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
 
-  
   const availableCategories = [...AVAILABLE_CATEGORIES]
   
   // Debug validation state
-  const isQuickcard = currentVostcard?.isQuickcard || false;
   const validationState = {
     hasTitle: title.trim() !== '',
     hasDescription: description.trim() !== '',
     hasCategories: (categories?.length || 0) > 0,
-    hasPhotos: isQuickcard ? (photos?.length || 0) >= 1 : (photos?.length || 0) >= 2,  // Quickcards need 1 photo, regular vostcards need 2
+    hasPhotos: (photos?.length || 0) >= 2,  // Vostcards need 2 photos
     hasVideo: !!currentVostcard?.video,
     hasGeo: !!currentVostcard?.geo
   };
@@ -50,8 +48,7 @@ const CreateVostcardStep3: React.FC = () => {
     photosCount: photos.length,
     photosValid: validationState.hasPhotos,
     video: !!currentVostcard?.video,
-    geo: !!currentVostcard?.geo,
-    isQuickcard: isQuickcard
+    geo: !!currentVostcard?.geo
   });
 
   // Check Firebase Auth
@@ -111,18 +108,6 @@ const CreateVostcardStep3: React.FC = () => {
       updateVostcard({ categories: [...categories, category] });
     }
   };
-
-  // Trip functionality
-  const loadUserTrips = async () => {
-    try {
-      const trips = await TripService.getUserTrips();
-      setUserTrips(trips);
-    } catch (error) {
-      console.error('Error loading itineraries:', error);
-    }
-  };
-
-
 
   const handleTitleChange = async (newTitle: string) => {
     // Update the vostcard title
@@ -210,11 +195,7 @@ const CreateVostcardStep3: React.FC = () => {
   if (!validationState.hasDescription) missingItems.push('Description');
   if (!validationState.hasCategories) missingItems.push('Categories');
   if (!validationState.hasPhotos) {
-    if (isQuickcard) {
-      missingItems.push('Photos (need at least 1)');
-    } else {
-      missingItems.push('Photos (need at least 2)');
-    }
+    missingItems.push('Photos (need at least 2)');
   }
 
   return (
@@ -330,8 +311,6 @@ const CreateVostcardStep3: React.FC = () => {
             </div>
           )}
         </div>
-
-
       </div>
 
       {/* 🔘 Fixed Bottom Buttons */}
@@ -417,8 +396,6 @@ const CreateVostcardStep3: React.FC = () => {
           </div>
         </div>
       )}
-
-
     </div>
   );
 };
