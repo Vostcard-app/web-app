@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe, FaImages, FaEdit } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { drivecardService } from '../services/drivecardService';
-import { QuickcardImporter as LegacyQuickcardImporter } from '../components/studio/LegacyQuickcardImporter';
+// Removed quickcard importer
 import { useVostcard } from '../context/VostcardContext';
 import { useVostcardEdit } from '../context/VostcardEditContext';
 import type { Drivecard, Vostcard } from '../types/VostcardTypes';
@@ -27,22 +27,13 @@ const VostcardStudioView: React.FC = () => {
   const editingDrivecardId = location.state?.editingDrivecard;
   
   // Switch to drivecard section if editing one
-  const [activeSection, setActiveSection] = useState<'quickcard' | 'drivecard'>(
-    editingDrivecardId && canAccessDrivecard ? 'drivecard' : 'quickcard'
+  const [activeSection, setActiveSection] = useState<'vostcard' | 'drivecard'>(
+    editingDrivecardId && canAccessDrivecard ? 'drivecard' : 'vostcard'
   );
 
-  // Quickcard import state
-  const [showQuickcardImporter, setShowQuickcardImporter] = useState(false);
-  const [showQuickcardCreator, setShowQuickcardCreator] = useState(false);
-  const [showQuickcardLoader, setShowQuickcardLoader] = useState(false);
+  // Post creation state
   const [loaderViewMode, setLoaderViewMode] = useState<'saved' | 'posted'>('saved');
-  
-  // Quickcard creation state - ENHANCED FOR MULTIPLE PHOTOS
-  const [quickcardTitle, setQuickcardTitle] = useState('');
-  const [quickcardDescription, setQuickcardDescription] = useState('');
-  const [quickcardPhotos, setQuickcardPhotos] = useState<(Blob | File)[]>([]); // Array of photos
-  const [quickcardPhotoPreviews, setQuickcardPhotoPreviews] = useState<string[]>([]); // Array of previews
-  const [quickcardLocation, setQuickcardLocation] = useState<{
+  const [postLocation, setPostLocation] = useState<{
     latitude: number;
     longitude: number;
     address?: string;
@@ -496,24 +487,11 @@ const VostcardStudioView: React.FC = () => {
     }
   }, [showQuickcardLoader, loadAllLocalVostcards]);
 
-  // Handle quickcard import
-  const handleQuickcardImport = (quickcard: Vostcard) => {
-    loadQuickcard(quickcard);
-    setShowQuickcardImporter(false);
-    // Navigate to the advanced editor to continue editing
-    navigate('/studio', { state: { editingQuickcard: quickcard.id, activeTab: 'quickcard' } });
-  };
-
-  const handleCancelImport = () => {
-    setShowQuickcardImporter(false);
-  };
-
-  // Load quickcard data from currentVostcard context or sessionStorage
-  const loadExistingQuickcardData = () => {
+  // Load existing post data from context or storage
+  const loadExistingPostData = () => {
     try {
       // Don't overwrite existing form data if user has already entered something
-      const hasExistingData = quickcardTitle.trim() || quickcardDescription.trim() || quickcardPhotos.length > 0;
-      if (hasExistingData) {
+      if (currentVostcard) {
         console.log('📱 Skipping data load - form already has content');
         return;
       }
