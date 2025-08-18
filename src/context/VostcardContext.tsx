@@ -410,7 +410,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }));
       
       // Filter for posted vostcards and sort by date
-      const postedVostcards = allVostcards
+      const sortedVostcards = allVostcards
         .filter(v => v.state === 'posted')
         .sort((a, b) => {
           const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
@@ -420,11 +420,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       console.log('📊 Found vostcards:', {
         total: allVostcards.length,
-        posted: postedVostcards.length,
-        nonPosted: allVostcards.length - postedVostcards.length
+        posted: sortedVostcards.length,
+        nonPosted: allVostcards.length - sortedVostcards.length
       });
       
-      console.log('📊 First 3 posted vostcards:', postedVostcards.slice(0, 3).map(v => ({
+      console.log('📊 First 3 posted vostcards:', sortedVostcards.slice(0, 3).map(v => ({
         id: v.id,
         title: v.title,
         createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt,
@@ -531,19 +531,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return true;
       });
 
-      // Split into posted and non-posted
-      const postedVostcards = validVostcards.filter(v => v.state === 'posted');
-      const personalVostcards = validVostcards.filter(v => v.state !== 'posted');
-
-      // Sort both by most recent
+      // Split into posted and non-posted, and sort both by most recent
       const sortByDate = (a: any, b: any) => {
         const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
         const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
         return dateB.getTime() - dateA.getTime();
       };
 
-      const sortedPosted = postedVostcards.sort(sortByDate);
-      const sortedPersonal = personalVostcards.sort(sortByDate);
+      const sortedPosted = validVostcards
+        .filter(v => v.state === 'posted')
+        .sort(sortByDate);
+      
+      const sortedPersonal = validVostcards
+        .filter(v => v.state !== 'posted')
+        .sort(sortByDate);
 
       console.log('✅ Successfully loaded vostcards:', {
         total: validVostcards.length,
