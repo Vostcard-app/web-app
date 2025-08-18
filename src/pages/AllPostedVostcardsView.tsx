@@ -276,14 +276,22 @@ const AllPostedVostcardsView: React.FC = () => {
 
   // Get distance in km for sorting (returns large number if no location data)
   const getDistanceForSorting = useCallback((vostcard: Vostcard): number => {
-    if (!userLocation) return 999999; // Put items without user location at end
+    if (!userLocation) {
+      console.log('⚠️ No user location for sorting:', vostcard.title);
+      return 999999; // Put items without user location at end
+    }
     
     const lat = vostcard.latitude || vostcard.geo?.latitude;
     const lng = vostcard.longitude || vostcard.geo?.longitude;
     
-    if (!lat || !lng) return 999999; // Put items without coordinates at end
+    if (!lat || !lng) {
+      console.log('⚠️ No coordinates for vostcard:', vostcard.title);
+      return 999999; // Put items without coordinates at end
+    }
     
-    return calculateDistance(userLocation[0], userLocation[1], lat, lng);
+    const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+    console.log('📏 Distance calculated for', vostcard.title + ':', distance.toFixed(2) + 'km');
+    return distance;
   }, [userLocation, calculateDistance]);
 
   
@@ -373,7 +381,7 @@ const AllPostedVostcardsView: React.FC = () => {
             limit(ITEMS_PER_PAGE)
           );
         } else {
-          // Normal query for all posts (no orderBy to avoid index requirement)
+          // Query for all posts - we'll sort by distance client-side
           q1 = query(
             collection(db, 'vostcards'), 
             where('state', '==', 'posted'),
@@ -385,6 +393,16 @@ const AllPostedVostcardsView: React.FC = () => {
           id: doc.id,
           ...doc.data()
         })) as Vostcard[];
+
+        // Debug: Log all vostcards from query
+        console.log('📋 Raw query results:', postedVostcards.map(v => ({
+          id: v.id,
+          title: v.title,
+          state: v.state,
+          userID: v.userID,
+          hasGeo: !!(v.latitude && v.longitude),
+          createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt
+        })));
         
         // Combine and filter: Vōstcards only (exclude offers)
         const allContent = postedVostcards.filter(v => !v.isOffer);
@@ -448,23 +466,62 @@ const AllPostedVostcardsView: React.FC = () => {
         }
         
         // Filter out any quickcard IDs that might be stale references AND invalid posts
-        const validVostcards = allContent.filter(v => 
-          v.id && 
-          !v.id.toLowerCase().includes('quickcard_') &&
-          v.title &&
-          v.userID &&
-          (v.latitude || v.longitude) // At least some location data
-        );
+        const validVostcards = allContent.filter(v => {
+          const isValid = v.id && 
+            !v.id.toLowerCase().includes('quickcard_') &&
+            v.title &&
+            v.userID &&
+            (v.latitude || v.longitude); // At least some location data
+
+          if (!isValid) {
+            console.log('⚠️ Invalid vostcard filtered out:', {
+              id: v.id,
+              title: v.title,
+              hasUserId: !!v.userID,
+              hasLocation: !!(v.latitude || v.longitude),
+              state: v.state
+            });
+          }
+          return isValid;
+        });
         console.log('🧹 Filtered out invalid posts:', allContent.length - validVostcards.length, 'removed');
+
+        // Sort by distance if we have user location
+        if (userLocation) {
+          console.log('📍 Sorting vostcards by distance from user location:', userLocation);
+          validVostcards.sort((a, b) => {
+            const distanceA = getDistanceForSorting(a);
+            const distanceB = getDistanceForSorting(b);
+            return distanceA - distanceB;
+          });
+          console.log('📍 First 3 vostcards after distance sorting:', validVostcards.slice(0, 3).map(v => ({
+            title: v.title,
+            distance: getDistanceForSorting(v).toFixed(2) + 'km'
+          })));
+        } else {
+          console.log('❌ No user location available for distance sorting');
+        }
         
         setVostcards(validVostcards);
         setLastUpdated(new Date());
         
         // Set pagination state
         if (snapshot1.docs.length > 0) {
-          setLastDoc(snapshot1.docs[snapshot1.docs.length - 1]);
+          const lastDocument = snapshot1.docs[snapshot1.docs.length - 1];
+          console.log('📄 Last document in batch:', {
+            id: lastDocument.id,
+            title: lastDocument.data().title,
+            createdAt: lastDocument.data().createdAt?.toDate?.()?.toISOString() || lastDocument.data().createdAt
+          });
+          setLastDoc(lastDocument);
         }
-        setHasMore(snapshot1.docs.length === ITEMS_PER_PAGE);
+        const hasMorePosts = snapshot1.docs.length === ITEMS_PER_PAGE;
+        console.log('📊 Pagination state:', {
+          batchSize: snapshot1.docs.length,
+          expectedBatchSize: ITEMS_PER_PAGE,
+          hasMore: hasMorePosts
+        });
+        setHasMore(hasMorePosts);
         
         // Load like and rating data for all content
         if (allContent.length > 0) {
@@ -500,7 +557,7 @@ const AllPostedVostcardsView: React.FC = () => {
           limit(ITEMS_PER_PAGE)
         );
       } else {
-        // Normal query for all posts (no orderBy to avoid index requirement)
+        // Query for next batch - we'll sort by distance client-side
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
@@ -524,6 +581,20 @@ const AllPostedVostcardsView: React.FC = () => {
         (v.latitude || v.longitude)
       );
       
+      // Sort new content by distance if we have user location
+      if (userLocation) {
+        console.log('📍 Sorting new vostcards by distance from user location:', userLocation);
+        newContent.sort((a, b) => {
+          const distanceA = getDistanceForSorting(a);
+          const distanceB = getDistanceForSorting(b);
+          return distanceA - distanceB;
+        });
+        console.log('📍 First 3 new vostcards after distance sorting:', newContent.slice(0, 3).map(v => ({
+          title: v.title,
+          distance: getDistanceForSorting(v).toFixed(2) + 'km'
+        })));
+      }
+      
       // Debug: Log Jay Bond posts in pagination
       const jayBondPosts = newVostcards.filter(v => v.username === 'Jay Bond' || v.userID === '9byLf32ls0gF2nzF17vnv9RhLiJ2');
       if (jayBondPosts.length > 0) {
@@ -538,8 +609,19 @@ const AllPostedVostcardsView: React.FC = () => {
         console.log('🎯 Found specific vostcard vostcard_1753956138356 in load more:', specificVostcard);
       }
       
-      // Append to existing vostcards
-      setVostcards(prev => [...prev, ...newContent]);
+      // Combine with existing vostcards and sort by distance
+      setVostcards(prev => {
+        const combined = [...prev, ...newContent];
+        if (userLocation) {
+          console.log('📍 Sorting combined vostcards by distance');
+          combined.sort((a, b) => {
+            const distanceA = getDistanceForSorting(a);
+            const distanceB = getDistanceForSorting(b);
+            return distanceA - distanceB;
+          });
+        }
+        return combined;
+      });
       
       // Update pagination state
       if (snapshot1.docs.length > 0) {
@@ -654,10 +736,31 @@ const AllPostedVostcardsView: React.FC = () => {
       const location = await LocationService.getCurrentLocation();
       
       const locationCoords: [number, number] = [location.latitude, location.longitude];
-      console.log('📍 User location acquired:', locationCoords, `(${location.source})`);
+      console.log('📍 User location acquired:', {
+        coords: locationCoords,
+        source: location.source,
+        accuracy: location.accuracy
+      });
       
       setUserLocation(locationCoords);
       setLocationError(null);
+      
+      // Re-sort vostcards when location updates
+      setVostcards(prev => {
+        if (prev.length === 0) return prev;
+        console.log('🔄 Re-sorting', prev.length, 'vostcards with new location');
+        const sorted = [...prev].sort((a, b) => {
+          const distanceA = calculateDistance(location.latitude, location.longitude, 
+            a.latitude || a.geo?.latitude || 0, 
+            a.longitude || a.geo?.longitude || 0);
+          const distanceB = calculateDistance(location.latitude, location.longitude, 
+            b.latitude || b.geo?.latitude || 0, 
+            b.longitude || b.geo?.longitude || 0);
+          return distanceA - distanceB;
+        });
+        console.log('✅ Vostcards re-sorted by new location');
+        return sorted;
+      });
       
     } catch (error) {
       console.error('❌ Location error:', error);
