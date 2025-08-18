@@ -521,26 +521,45 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.warn('⚠️ Found null vostcard entry');
           return false;
         }
-        if (!v.id || !v.userID || !v.geo) {
+        if (!v.id || !v.userID) {
           console.warn('⚠️ Invalid vostcard:', {
             id: v?.id,
-            hasUserID: !!v?.userID,
-            hasGeo: !!v?.geo
+            hasUserID: !!v?.userID
           });
           return false;
         }
         return true;
       });
-      console.log('✅ Successfully loaded', validVostcards.length, 'valid vostcards');
-      console.log('📊 Valid vostcards:', validVostcards.map(v => ({
+
+      // Split into posted and non-posted
+      const postedVostcards = validVostcards.filter(v => v.state === 'posted');
+      const personalVostcards = validVostcards.filter(v => v.state !== 'posted');
+
+      // Sort both by most recent
+      const sortByDate = (a: any, b: any) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+        const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      };
+
+      const sortedPosted = postedVostcards.sort(sortByDate);
+      const sortedPersonal = personalVostcards.sort(sortByDate);
+
+      console.log('✅ Successfully loaded vostcards:', {
+        total: validVostcards.length,
+        posted: sortedPosted.length,
+        personal: sortedPersonal.length
+      });
+      
+      console.log('📊 First 3 personal vostcards:', sortedPersonal.slice(0, 3).map(v => ({
         id: v.id,
         title: v.title,
-        userID: v.userID,
         state: v.state,
-        createdAt: v.createdAt
+        createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt
       })));
       
-      setPostedVostcards(validVostcards);
+      setPostedVostcards(sortedPosted);
+      setSavedVostcards(sortedPersonal);
     } catch (error) {
       console.error('❌ Error loading posted vostcards:', error);
       // Don't throw, just log the error and return empty array
