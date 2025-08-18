@@ -56,14 +56,7 @@ export default function CreateVostcardStep2() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: true
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: true });
       mediaStreamRef.current = stream;
       const chunks: BlobPart[] = [];
       const mr = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
@@ -462,7 +455,10 @@ export default function CreateVostcardStep2() {
             background: '#f8f9fa',
             border: '1px solid #e5e5e5',
             borderRadius: 10,
-            padding: 12
+            padding: 12,
+            height: 320,
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             {videoUrl ? (
               <video src={videoUrl} controls style={{ width: '100%', borderRadius: 8 }} />
@@ -471,7 +467,7 @@ export default function CreateVostcardStep2() {
                 autoPlay
                 muted
                 playsInline
-                style={{ width: '100%', borderRadius: 8 }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
                 ref={(el) => {
                   if (el && mediaStreamRef.current) {
                     // @ts-ignore - assign srcObject for live preview
@@ -480,7 +476,7 @@ export default function CreateVostcardStep2() {
                 }}
               />
             ) : (
-              <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No video recorded</div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No video recorded</div>
             )}
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               {!recording && (
