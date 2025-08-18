@@ -289,23 +289,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('🔄 Loading posted vostcards for user:', user.uid);
       
       // First try to get all posted vostcards
+      console.log('🔍 Building Firebase query for user:', user.uid);
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
         where('state', '==', 'posted'),
         orderBy('createdAt', 'desc')
       );
+      console.log('🔍 Query built:', q);
       
       const querySnapshot = await getDocs(q);
       console.log('📊 Found', querySnapshot.docs.length, 'posted vostcards in Firebase');
       
+      console.log('🔄 Processing vostcard documents...');
       const vostcards = await Promise.all(querySnapshot.docs.map(async doc => {
         try {
           const data = doc.data() as FirebaseVostcard;
           console.log('📄 Processing vostcard:', doc.id, {
             title: data.title,
             username: data.username,
-            createdAt: data.createdAt
+            userID: data.userID,
+            state: data.state,
+            createdAt: data.createdAt,
+            hasGeo: !!(data.latitude && data.longitude)
           });
           
           // Handle missing or invalid timestamps
@@ -380,8 +386,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }));
 
       // Filter out any null entries from errors
-      const validVostcards = vostcards.filter((v): v is NonNullable<typeof v> => v !== null);
+      const validVostcards = vostcards.filter((v): v is NonNullable<typeof v> => {
+        if (!v) {
+          console.warn('⚠️ Found null vostcard entry');
+          return false;
+        }
+        if (!v.id || !v.userID || !v.geo) {
+          console.warn('⚠️ Invalid vostcard:', {
+            id: v?.id,
+            hasUserID: !!v?.userID,
+            hasGeo: !!v?.geo
+          });
+          return false;
+        }
+        return true;
+      });
       console.log('✅ Successfully loaded', validVostcards.length, 'valid vostcards');
+      console.log('📊 Valid vostcards:', validVostcards.map(v => ({
+        id: v.id,
+        title: v.title,
+        userID: v.userID,
+        state: v.state,
+        createdAt: v.createdAt
+      })));
       
       setPostedVostcards(validVostcards);
     } catch (error) {
