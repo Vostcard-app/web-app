@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "npm run preview",
-    "clean": "rm -rf node_modules package-lock.json && npm install",
-    "type-check": "tsc --noEmit"
+    "clean": "rm -rf node_modules package-lock.json dist && npm install",
+    "type-check": "tsc --noEmit",
+    "postinstall": "npm run type-check"
   },
   "dependencies": {
-    "@react-google-maps/api": "^2.20.7",
+    "@react-google-maps/api": "2.20.7",
     "emailjs-com": "^3.2.0",
     "file-saver": "^2.0.5",
     "firebase": "^11.10.0",
@@ -20,7 +21,7 @@
     "gapi-script": "^1.2.0",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
-    "leaflet-routing-machine": "^3.2.12",
+    "leaflet-routing-machine": "3.2.12",
     "nodemailer": "^6.9.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
