@@ -3428,17 +3428,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         syncVostcardMetadata,
         downloadVostcardContent,
         getVostcardMetadata,
-        migrateToUnifiedVostcards,
         // Deletion marker management
         cleanupDeletionMarkers,
         clearDeletionMarkers,
         manualCleanupFirebase,
-        cleanupAllQuickcards,
-        // Quickcard-specific methods
-        quickcards,
-        createQuickcard,
-        saveQuickcard,
-        postQuickcard,
       }}
     >
       {children}
