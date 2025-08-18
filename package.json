@@ -16,7 +16,7 @@
     "@react-google-maps/api": "2.20.7",
     "emailjs-com": "^3.2.0",
     "file-saver": "^2.0.5",
-    "firebase": "^11.10.0",
+    "firebase": "11.10.0",
     "framer-motion": "^12.23.3",
     "gapi-script": "^1.2.0",
     "jszip": "^3.10.1",

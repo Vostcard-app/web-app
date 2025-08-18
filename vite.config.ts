@@ -50,7 +50,12 @@ export default defineConfig({
       'leaflet-routing-machine',
       'jszip',
       'file-saver',
-      'uuid'
+      'uuid',
+      'firebase',
+      'firebase/app',
+      'firebase/auth',
+      'firebase/firestore',
+      'firebase/storage'
     ]
   },
   resolve: {
