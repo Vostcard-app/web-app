@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { auth, db, storage } from '../firebase/firebaseConfig';
-import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, serverTimestamp, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from './AuthContext';
 import type { Vostcard, FirebaseVostcard } from '../types/VostcardTypes';
@@ -293,7 +293,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
-        where('state', '==', 'private'),
+        where('state', '==', 'posted'),
         orderBy('createdAt', 'desc')
       );
       console.log('🔍 Query built:', q);
