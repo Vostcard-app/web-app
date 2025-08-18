@@ -72,31 +72,33 @@ export default function VostcardCreateStep1Photos() {
       }
     };
 
-    initializeVostcard();
-    return;
-  }
+    const initVostcardAndPhotos = async () => {
+      await initializeVostcard();
 
-    // Prefer Files if present
-    if (currentVostcard?.photos && Array.isArray(currentVostcard.photos) && currentVostcard.photos.length > 0) {
-      const photos = currentVostcard.photos as (File | Blob | null)[];
-      const newPhotos: (File | null)[] = [null, null, null, null];
-      const newUrls: (string | null)[] = [null, null, null, null];
-      photos.slice(0, 4).forEach((photo, index) => {
-        if (photo instanceof File || photo instanceof Blob) {
-          try {
-            newPhotos[index] = photo as File;
-            newUrls[index] = URL.createObjectURL(photo);
-          } catch {}
-        }
-      });
-      setSelectedPhotos(newPhotos);
-      // Revoke previous blob: URLs only
-      setPhotoUrls(prev => {
-        prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
-        return newUrls;
-      });
-      return;
-    }
+      // Prefer Files if present
+      if (currentVostcard?.photos && Array.isArray(currentVostcard.photos) && currentVostcard.photos.length > 0) {
+        const photos = currentVostcard.photos as (File | Blob | null)[];
+        const newPhotos: (File | null)[] = [null, null, null, null];
+        const newUrls: (string | null)[] = [null, null, null, null];
+        photos.slice(0, 4).forEach((photo, index) => {
+          if (photo instanceof File || photo instanceof Blob) {
+            try {
+              newPhotos[index] = photo as File;
+              newUrls[index] = URL.createObjectURL(photo);
+            } catch {}
+          }
+        });
+        setSelectedPhotos(newPhotos);
+        // Revoke previous blob: URLs only
+        setPhotoUrls(prev => {
+          prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
+          return newUrls;
+        });
+      }
+    };
+
+    initVostcardAndPhotos();
+  }
 
     // Fallback: use remote photoURLs if available (edit from saved metadata)
     if (currentVostcard?.photoURLs && Array.isArray(currentVostcard.photoURLs) && currentVostcard.photoURLs.length > 0) {
