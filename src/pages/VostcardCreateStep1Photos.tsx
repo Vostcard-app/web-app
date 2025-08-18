@@ -144,24 +144,18 @@ export default function VostcardCreateStep1Photos() {
     
     setActiveThumbnail(index);
     
-    if (isMobile) {
-      // Mobile: Use native action sheet directly
-      if (fileInputRef.current) {
-        fileInputRef.current.setAttribute('data-index', index.toString());
-        fileInputRef.current.click();
-      }
-    } else {
-      // Desktop: Show custom modal with options
-      setPendingPhotoIndex(index);
-      setShowPhotoOptions(true);
-    }
+    // Both mobile and desktop: Show photo options modal
+    setPendingPhotoIndex(index);
+    setShowPhotoOptions(true);
   };
 
   // Desktop modal handlers
   const handleTakePhoto = () => {
     setShowPhotoOptions(false);
     if (pendingPhotoIndex !== null && fileInputRef.current) {
-      // For desktop "take photo", we'll open file input (user can use webcam apps)
+      // Set capture attribute for camera
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.setAttribute('capture', 'environment');
       fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
       fileInputRef.current.click();
     }
@@ -170,6 +164,9 @@ export default function VostcardCreateStep1Photos() {
   const handleUploadFile = () => {
     setShowPhotoOptions(false);
     if (pendingPhotoIndex !== null && fileInputRef.current) {
+      // Remove capture attribute for file upload
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.removeAttribute('capture');
       fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
       fileInputRef.current.click();
     }
@@ -178,6 +175,9 @@ export default function VostcardCreateStep1Photos() {
   const handleSelectFromLibrary = () => {
     setShowPhotoOptions(false);
     if (pendingPhotoIndex !== null && fileInputRef.current) {
+      // Remove capture attribute for library selection
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.removeAttribute('capture');
       fileInputRef.current.setAttribute('data-index', pendingPhotoIndex.toString());
       fileInputRef.current.click();
     }
