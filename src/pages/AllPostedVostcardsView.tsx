@@ -731,11 +731,19 @@ const AllPostedVostcardsView: React.FC = () => {
     
     // Sort by distance (closest first)
     if (userLocation) {
+      console.log('📍 Sorting', filtered.length, 'vostcards by distance from user location:', userLocation);
       filtered = filtered.sort((a, b) => {
         const distanceA = getDistanceForSorting(a);
         const distanceB = getDistanceForSorting(b);
+        console.log(`📏 Distance sorting: ${a.title} (${distanceA.toFixed(2)}km) vs ${b.title} (${distanceB.toFixed(2)}km)`);
         return distanceA - distanceB;
       });
+      console.log('📍 After sorting, first 3 vostcards:', filtered.slice(0, 3).map(v => ({
+        title: v.title,
+        distance: getDistanceForSorting(v).toFixed(2) + 'km'
+      })));
+    } else {
+      console.log('❌ No user location available for distance sorting');
     }
     
     // Apply location filtering when browse location is selected
