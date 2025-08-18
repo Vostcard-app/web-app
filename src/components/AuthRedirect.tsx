@@ -99,7 +99,10 @@ const AuthRedirect = () => {
       '/offer/',
       '/profile/',
       '/script-editor/',
-      '/flag/'
+      '/flag/',
+      '/my-posted-vostcards',
+      '/my-vostcards',
+      '/liked-vostcards'
     ].some(prefix => location.pathname.startsWith(prefix));
 
     // If not authenticated and trying to access protected route
