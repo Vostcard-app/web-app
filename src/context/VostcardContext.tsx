@@ -10,7 +10,7 @@ import type { Vostcard, FirebaseVostcard } from '../types/VostcardTypes';
 // Constants
 const STORE_NAME = 'vostcards';
 const METADATA_STORE_NAME = 'vostcard_metadata';
-const DB_VERSION = 2; // Increment this when schema changes
+const DB_VERSION = 3; // Increment this when schema changes - v3: after quickcard removal
 
 // Context interface
 interface VostcardContextType {
@@ -166,11 +166,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const saveLocalVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.error('No vostcard to save');
-        return;
-      }
+      return;
+    }
+
+    console.log('💾 Saving vostcard:', {
+      id: currentVostcard.id,
+      title: currentVostcard.title,
+      state: currentVostcard.state,
+      hasPhotos: currentVostcard.photos?.length > 0,
+      hasVideo: !!currentVostcard.video,
+      hasGeo: !!currentVostcard.geo
+    });
 
     try {
       const localDB = await openUserDB();
+      console.log('📂 Opened IndexedDB:', localDB.name, 'version:', localDB.version);
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
 
@@ -457,13 +467,24 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Save to Firebase
       const username = getCorrectUsername(authContext);
-      console.log('📍 Posting vostcard with geo:', {
-        latitude: currentVostcard.geo?.latitude,
-        longitude: currentVostcard.geo?.longitude
+      console.log('📍 Posting vostcard:', {
+        id: currentVostcard.id,
+        title: currentVostcard.title,
+        state: currentVostcard.state,
+        username: username,
+        userID: user.uid,
+        hasPhotos: currentVostcard.photos?.length > 0,
+        hasVideo: !!currentVostcard.video,
+        geo: currentVostcard.geo,
+        photoCount: currentVostcard.photos?.length
       });
       
       if (!currentVostcard.geo?.latitude || !currentVostcard.geo?.longitude) {
         throw new Error('Vostcard must have geo location to be posted');
+      }
+
+      if (currentVostcard.state !== 'posted') {
+        console.warn('⚠️ Vostcard state is not "posted":', currentVostcard.state);
       }
 
       const docData = {
