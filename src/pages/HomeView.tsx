@@ -25,7 +25,7 @@ import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import QuickcardPin from '../assets/quickcard_pin.png';
 import { AVAILABLE_CATEGORIES, AVAILABLE_TYPES } from '../types/VostcardTypes';
-import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+import { UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 // FIXED: Import pin images from assets folder for better Leaflet compatibility
 const vostcardIcon = new L.Icon({
@@ -1194,14 +1194,7 @@ const HomeView = () => {
   const handleCreateClick = (e: React.MouseEvent) => {
     e.preventDefault();
     clearVostcard();
-    // Open native camera immediately (required for iOS Safari user-gesture policy)
-    const cameraInput = document.getElementById('quickcard-native-camera') as HTMLInputElement | null;
-    if (cameraInput) {
-      cameraInput.click();
-    } else {
-      // Fallback: route to step1 if input not found
-      navigate(TEMP_UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
-    }
+    navigate(UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
   };
 
   const handleCreateQuickcard = (e: React.MouseEvent) => {
@@ -1303,16 +1296,51 @@ const HomeView = () => {
         timestamp: lastPost.createdAt?.toDate ? lastPost.createdAt.toDate().getTime() : new Date(lastPost.createdAt).getTime()
       });
       
-      // Do NOT convert URLs to blobs here to avoid iOS memory pressure. Editor will hydrate lazily.
+      // If this is a posted vostcard, we need to convert photoURLs back to Blob objects for editing
+      if (lastPost.photoURLs && lastPost.photoURLs.length > 0 && (!lastPost.photos || lastPost.photos.length === 0)) {
+        console.log('🔄 Converting posted vostcard photoURLs to Blobs for editing...');
+        try {
+          const fetchBlobWithRetry = async (url: string, retries = 3): Promise<Blob> => {
+            let lastError: any;
+            for (let attempt = 0; attempt < retries; attempt++) {
+              try {
+                const cacheBust = url.includes('?') ? `&cb=${Date.now()}` : `?cb=${Date.now()}`;
+                const response = await fetch(url + cacheBust, { cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.blob();
+              } catch (err) {
+                lastError = err;
+                await new Promise((r) => setTimeout(r, 200 + attempt * 200));
+              }
+            }
+            throw lastError;
+          };
+
+          const photoBlobs = await Promise.all(
+            lastPost.photoURLs.map(async (url: string) => fetchBlobWithRetry(url))
+          );
+          
+          lastPost.photos = photoBlobs;
+          console.log('✅ Converted', photoBlobs.length, 'photo URLs to Blobs');
+        } catch (error) {
+          console.error('❌ Failed to convert photo URLs to Blobs:', error);
+          // Continue anyway, user can add new photos
+        }
+      }
       
       // Use the same logic as handleEdit from MyVostcardListView
       setCurrentVostcard(lastPost);
       // Ensure context consumers see the update before navigation
       await new Promise((resolve) => setTimeout(resolve, 60));
       
-      // Open one-page editor for the last post (hydrates from id and uses URLs for thumbnails)
-      console.log('🔄 Opening last Vōstcard in edit view:', lastPost.id);
-      navigate(`/edit/${lastPost.id}`);
+      // Route to appropriate editing interface based on content type
+      if (lastPost.isQuickcard) {
+        console.log('🔄 Editing quickcard:', lastPost.id);
+        navigate('/quickcard-step2'); // Start with photo editing, then proceed to step 3
+      } else {
+        console.log('🔄 Editing regular vostcard:', lastPost.id);
+        navigate('/create-step2'); // Route to video/recording step
+      }
       
     } catch (error) {
       console.error('Error loading posts:', error);
@@ -1344,8 +1372,8 @@ const HomeView = () => {
         longitude: userLocation[1]
       });
       
-      // Navigate to unified 4-thumbnail step
-      navigate('/create/step1');
+      // Navigate to photo thumbnails step
+      navigate('/quickcard-step2');
     } else if (!userLocation) {
       alert('Location not available. Please enable location services.');
     }
