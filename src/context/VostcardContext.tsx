@@ -293,7 +293,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
-        where('state', '==', 'posted'),
         orderBy('createdAt', 'desc')
       );
       console.log('🔍 Query built:', q);
