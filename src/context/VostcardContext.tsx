@@ -58,45 +58,100 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const dbName = `VostcardDB_${user?.uid || 'anonymous'}_${username}`;
     
     return new Promise<IDBDatabase>((resolve, reject) => {
-      // Delete old database if it exists
-      const deleteRequest = indexedDB.deleteDatabase(dbName);
-      deleteRequest.onerror = () => {
-        console.warn('Error deleting old database:', deleteRequest.error);
+      // Try to open existing database first
+      const request = indexedDB.open(dbName, DB_VERSION);
+      
+      request.onerror = (event) => {
+        const error = request.error;
+        if (error?.name === 'VersionError') {
+          console.log('Version error, attempting to migrate data...');
+          // Get old version
+          const oldRequest = indexedDB.open(dbName);
+          oldRequest.onsuccess = () => {
+            const oldDb = oldRequest.result;
+            const oldVersion = oldDb.version;
+            oldDb.close();
+            
+            // Get data from old database
+            const getDataRequest = indexedDB.open(dbName, oldVersion);
+            getDataRequest.onsuccess = async () => {
+              const oldDb = getDataRequest.result;
+              const oldTx = oldDb.transaction([STORE_NAME], 'readonly');
+              const oldStore = oldTx.objectStore(STORE_NAME);
+              const oldData = await new Promise<any[]>((resolve, reject) => {
+                const request = oldStore.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+              });
+              oldDb.close();
+              
+              // Delete old database
+              const deleteRequest = indexedDB.deleteDatabase(dbName);
+              deleteRequest.onsuccess = () => {
+                // Create new database with current version
+                const newRequest = indexedDB.open(dbName, DB_VERSION);
+                newRequest.onupgradeneeded = (event) => {
+                  const db = newRequest.result;
+                  if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                  }
+                  if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
+                    db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
+                  }
+                  const store = newRequest.transaction?.objectStore(STORE_NAME);
+                  if (store && !store.indexNames.contains('userID')) {
+                    store.createIndex('userID', 'userID', { unique: false });
+                  }
+                };
+                newRequest.onsuccess = async () => {
+                  const newDb = newRequest.result;
+                  // Migrate data to new database
+                  const tx = newDb.transaction([STORE_NAME], 'readwrite');
+                  const store = tx.objectStore(STORE_NAME);
+                  for (const item of oldData) {
+                    await new Promise<void>((resolve, reject) => {
+                      const request = store.add(item);
+                      request.onsuccess = () => resolve();
+                      request.onerror = () => reject(request.error);
+                    });
+                  }
+                  resolve(newDb);
+                };
+                newRequest.onerror = () => reject(newRequest.error);
+              };
+              deleteRequest.onerror = () => reject(deleteRequest.error);
+            };
+            getDataRequest.onerror = () => reject(getDataRequest.error);
+          };
+          oldRequest.onerror = () => reject(oldRequest.error);
+        } else {
+          console.error('Error opening database:', error);
+          reject(error);
+        }
       };
-      deleteRequest.onsuccess = () => {
-        console.log('Successfully deleted old database');
-        
-        // Open new database with current version
-        const request = indexedDB.open(dbName, DB_VERSION);
-        
-        request.onerror = () => {
-          console.error('Error opening database:', request.error);
-          reject(request.error);
-        };
-        
-        request.onsuccess = () => {
-          console.log('Successfully opened database');
-          resolve(request.result);
-        };
+      
+      request.onsuccess = () => {
+        console.log('Successfully opened database');
+        resolve(request.result);
+      };
 
-        request.onupgradeneeded = (event) => {
-          console.log('Upgrading database to version:', DB_VERSION);
-          const db = request.result;
-          
-          // Create stores if they don't exist
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-          }
-          if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
-            db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
-          }
-          
-          // Add any new indexes or modify existing ones here
-          const store = request.transaction?.objectStore(STORE_NAME);
-          if (store && !store.indexNames.contains('userID')) {
-            store.createIndex('userID', 'userID', { unique: false });
-          }
-        };
+      request.onupgradeneeded = (event) => {
+        console.log('Upgrading database to version:', DB_VERSION);
+        const db = request.result;
+        
+        // Create stores if they don't exist
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
+          db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
+        }
+        
+        // Add any new indexes or modify existing ones here
+        const store = request.transaction?.objectStore(STORE_NAME);
+        if (store && !store.indexNames.contains('userID')) {
+          store.createIndex('userID', 'userID', { unique: false });
+        }
       };
     });
   }, [authContext]);
