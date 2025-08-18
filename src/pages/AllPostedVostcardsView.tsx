@@ -365,20 +365,18 @@ const AllPostedVostcardsView: React.FC = () => {
         // Query based on whether guide filter is active
         let q1;
         if (showGuidesOnly) {
-          // When guide filter is active, query directly for guide posts
+          // When guide filter is active, query directly for guide posts (no orderBy to avoid index requirement)
           q1 = query(
             collection(db, 'vostcards'), 
             where('state', '==', 'posted'),
             where('userRole', '==', 'guide'),
-            orderBy('createdAt', 'desc'),
             limit(ITEMS_PER_PAGE)
           );
         } else {
-          // Normal query for all posts
+          // Normal query for all posts (no orderBy to avoid index requirement)
           q1 = query(
             collection(db, 'vostcards'), 
             where('state', '==', 'posted'),
-            orderBy('createdAt', 'desc'),
             limit(ITEMS_PER_PAGE)
           );
         }
@@ -493,21 +491,19 @@ const AllPostedVostcardsView: React.FC = () => {
       // Query for next batch, starting after the last document
       let q1;
       if (showGuidesOnly) {
-        // When guide filter is active, query directly for guide posts
+        // When guide filter is active, query directly for guide posts (no orderBy to avoid index requirement)
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
           where('userRole', '==', 'guide'),
-          orderBy('createdAt', 'desc'),
           startAfter(lastDoc),
           limit(ITEMS_PER_PAGE)
         );
       } else {
-        // Normal query for all posts
+        // Normal query for all posts (no orderBy to avoid index requirement)
         q1 = query(
           collection(db, 'vostcards'), 
           where('state', '==', 'posted'),
-          orderBy('createdAt', 'desc'),
           startAfter(lastDoc),
           limit(ITEMS_PER_PAGE)
         );

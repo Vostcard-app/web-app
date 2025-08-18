@@ -290,11 +290,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // First try to get all posted vostcards
       console.log('🔍 Building Firebase query for user:', user.uid);
+      // Remove orderBy to avoid index requirement for now
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
-        where('state', '==', 'posted'),
-        orderBy('createdAt', 'desc')
+        where('state', '==', 'posted')
       );
       console.log('🔍 Query built:', q);
       
