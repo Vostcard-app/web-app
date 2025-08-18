@@ -70,7 +70,6 @@ const MyVostcardListView = () => {
           setLoading(true);
           setError(null);
           
-          // Avoid auto-redirect loops on iOS Safari; render lightweight CTA instead
           if (!user) {
             console.log('❌ No user authenticated');
             setError('Please log in to view your personal posts.');
@@ -78,14 +77,32 @@ const MyVostcardListView = () => {
             return;
           }
 
-          // ⚡ Lightweight metadata-only sync (no media) to avoid memory spikes on iOS
-          await syncVostcardMetadata();
+          // Simple direct query to Firebase
+          const q = query(
+            collection(db, 'vostcards'),
+            where('userID', '==', user.uid),
+            where('state', '!=', 'posted'),
+            orderBy('state'),
+            orderBy('createdAt', 'desc')
+          );
+
+          const querySnapshot = await getDocs(q);
+          const vostcards = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+
+          console.log('✅ Found vostcards:', {
+            total: vostcards.length,
+            ids: vostcards.map(v => v.id)
+          });
           
+          // Update context
+          setSavedVostcards(vostcards);
           console.log('✅ Personal Posts loaded successfully');
           
         } catch (error) {
           console.error('❌ Error loading personal posts:', error);
-          // ✅ NEW: Use utility for consistent error handling
           setError(createErrorMessage(error, 'Failed to load personal posts'));
         } finally {
           setLoading(false);
@@ -94,7 +111,7 @@ const MyVostcardListView = () => {
 
       loadData();
     }
-  }, [authLoading, user, syncVostcardMetadata, navigate]);
+  }, [authLoading, user, navigate]);
 
   // ✅ REMOVED: Replaced with imported utility functions
   // const getVostcardStatus = (vostcard: any) => { ... }
