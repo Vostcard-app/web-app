@@ -11,7 +11,7 @@ const PreferencesView: React.FC = () => {
 
   // Import category and type constants
   const AVAILABLE_CATEGORIES = ['Restaurants', 'Attractions', 'Entertainment', 'Shopping', 'Services', 'Outdoors', 'Nightlife', 'Hotels'];
-  const AVAILABLE_TYPES = ['Vostcard', 'Quickcard', 'Guide', 'Offer'];
+  const AVAILABLE_TYPES = ['Vostcard', 'Guide', 'Offer'];
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
