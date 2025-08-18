@@ -107,7 +107,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // Add new record
-          await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         const request = store.add(currentVostcard);
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
@@ -120,11 +120,70 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
 
       console.log('✅ Vostcard saved successfully');
-      } catch (error) {
+    } catch (error) {
       console.error('❌ Error saving vostcard:', error);
       throw error;
     }
   }, [currentVostcard, openUserDB]);
+
+  // Load all local vostcards
+  const loadAllLocalVostcards = useCallback(async () => {
+    try {
+      const localDB = await openUserDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      const vostcards = await new Promise<Vostcard[]>((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+
+      setSavedVostcards(vostcards);
+    } catch (error) {
+      console.error('Error loading local vostcards:', error);
+      throw error;
+    }
+  }, [openUserDB]);
+
+  // Load posted vostcards
+  const loadPostedVostcards = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const q = query(collection(db, 'vostcards'), where('userID', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      
+      const vostcards = querySnapshot.docs.map(doc => {
+        const data = doc.data() as FirebaseVostcard;
+        return {
+          id: doc.id,
+          title: data.title,
+          description: data.description,
+          categories: data.categories,
+          username: data.username,
+          userID: data.userID,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          state: 'posted' as const,
+          isOffer: data.isOffer || false,
+          offerDetails: data.offerDetails || null,
+          geo: data.latitude && data.longitude ? { latitude: data.latitude, longitude: data.longitude } : null,
+          video: null,
+          photos: [],
+          _firebaseVideoURL: data.videoURL,
+          _firebasePhotoURLs: data.photoURLs,
+          _isMetadataOnly: true
+        };
+      });
+
+      setPostedVostcards(vostcards);
+    } catch (error) {
+      console.error('Error loading posted vostcards:', error);
+      throw error;
+    }
+  }, []);
 
   // Post vostcard to Firebase
   const postVostcard = useCallback(async () => {
@@ -140,7 +199,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       // Upload media to Firebase Storage
       const photoURLs = await Promise.all(
-            currentVostcard.photos.map(async (photo, idx) => {
+        currentVostcard.photos.map(async (photo, idx) => {
           const photoRef = ref(storage, `users/${user.uid}/photos/${uuidv4()}`);
           await uploadBytes(photoRef, photo);
           return getDownloadURL(photoRef);
@@ -203,15 +262,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Refresh lists
       setLastSyncTimestamp(new Date());
-      loadAllLocalVostcards();
-      loadPostedVostcards();
+      await loadAllLocalVostcards();
+      await loadPostedVostcards();
       clearVostcard();
       
     } catch (error) {
       console.error('Error posting vostcard:', error);
       throw error;
     }
-  }, [currentVostcard, authContext, loadAllLocalVostcards, loadPostedVostcards, clearVostcard]);
+  }, [currentVostcard, authContext, openUserDB, loadAllLocalVostcards, loadPostedVostcards, clearVostcard]);
 
   // Delete private vostcard
   const deletePrivateVostcard = useCallback(async (vostcardId: string) => {
@@ -223,8 +282,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       // Delete from IndexedDB
       const localDB = await openUserDB();
-        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
+      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
       await store.delete(vostcardId);
 
       // Delete from Firebase if posted
@@ -243,65 +302,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       throw error;
     }
   }, [openUserDB]);
-
-  // Load all local vostcards
-  const loadAllLocalVostcards = useCallback(async () => {
-    try {
-      const localDB = await openUserDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      
-      const vostcards = await new Promise<Vostcard[]>((resolve, reject) => {
-        const request = store.getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-
-      setSavedVostcards(vostcards);
-    } catch (error) {
-      console.error('Error loading local vostcards:', error);
-      throw error;
-    }
-  }, [openUserDB]);
-
-  // Load posted vostcards
-  const loadPostedVostcards = useCallback(async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    try {
-      const q = query(collection(db, 'vostcards'), where('userID', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-      
-      const vostcards = querySnapshot.docs.map(doc => {
-        const data = doc.data() as FirebaseVostcard;
-        return {
-          id: doc.id,
-          title: data.title,
-          description: data.description,
-          categories: data.categories,
-          username: data.username,
-          userID: data.userID,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          state: 'posted' as const,
-          isOffer: data.isOffer || false,
-          offerDetails: data.offerDetails || null,
-          geo: data.latitude && data.longitude ? { latitude: data.latitude, longitude: data.longitude } : null,
-              video: null,
-              photos: [],
-          _firebaseVideoURL: data.videoURL,
-          _firebasePhotoURLs: data.photoURLs,
-          _isMetadataOnly: true
-        };
-      });
-
-      setPostedVostcards(vostcards);
-    } catch (error) {
-      console.error('Error loading posted vostcards:', error);
-      throw error;
-    }
-  }, []);
 
   // Sync vostcard metadata
   const syncVostcardMetadata = useCallback(async () => {
@@ -385,8 +385,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return new Date(data.deletedAt) < thirtyDaysAgo;
       });
         
-        for (const doc of toDelete) {
-          await deleteDoc(doc.ref);
+      for (const doc of toDelete) {
+        await deleteDoc(doc.ref);
       }
     } catch (error) {
       console.error('Error cleaning up deletion markers:', error);
@@ -443,18 +443,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const value = {
     savedVostcards,
     postedVostcards,
-        currentVostcard,
-        setCurrentVostcard,
-        clearVostcard,
+    currentVostcard,
+    setCurrentVostcard,
+    clearVostcard,
     saveLocalVostcard,
-        postVostcard,
-        deletePrivateVostcard,
+    postVostcard,
+    deletePrivateVostcard,
     loadAllLocalVostcards,
-        loadPostedVostcards,
-        syncVostcardMetadata,
-        downloadVostcardContent,
-        cleanupDeletionMarkers,
-        clearDeletionMarkers,
+    loadPostedVostcards,
+    syncVostcardMetadata,
+    downloadVostcardContent,
+    cleanupDeletionMarkers,
+    clearDeletionMarkers,
     manualCleanupFirebase
   };
 
