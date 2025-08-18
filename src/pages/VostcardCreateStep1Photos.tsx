@@ -48,9 +48,8 @@ export default function VostcardCreateStep1Photos() {
         photos: [],
         categories: [],
         geo: { latitude: 0, longitude: 0 }, // Default location, user can set later
-        type: 'vostcard',
-        hasVideo: false,
-        hasPhotos: false,
+        username: user?.displayName || user?.email || 'Anonymous',
+        userID: user?.uid || '',
         video: null,
         state: 'private',
         createdAt: new Date().toISOString(),
