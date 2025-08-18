@@ -48,6 +48,7 @@
           "fields": [
             { "fieldPath": "userID", "order": "ASCENDING" },
             { "fieldPath": "state", "order": "ASCENDING" },
+            { "fieldPath": "visibility", "order": "ASCENDING" },
             { "fieldPath": "createdAt", "order": "DESCENDING" }
           ]
         },
