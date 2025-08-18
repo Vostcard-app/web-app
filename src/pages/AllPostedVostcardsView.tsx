@@ -42,9 +42,11 @@ const AllPostedVostcardsView: React.FC = () => {
   const availableTypes = ['Vostcard', 'Guide'];
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [showGuidesOnly, setShowGuidesOnly] = useState(() => {
+    // Temporarily force to false to avoid index issues
+    return false;
     // Load persisted state from localStorage, default to true (Guides only enabled)
-    const saved = localStorage.getItem('homeView_showGuidesOnly');
-    return saved ? JSON.parse(saved) : true;
+    // const saved = localStorage.getItem('homeView_showGuidesOnly');
+    // return saved ? JSON.parse(saved) : true;
   });
   
   // Category filtering state (using central AVAILABLE_CATEGORIES)
