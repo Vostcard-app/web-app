@@ -16,7 +16,7 @@ import SharedOptionsModal from '../components/SharedOptionsModal';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, syncVostcardMetadata, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
+  const { savedVostcards, syncVostcardMetadata, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -480,10 +480,7 @@ Tap OK to continue.`;
 
             {/* Personal Posts List */}
             <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              {savedVostcards.length > 0 && [...savedVostcards]
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                .slice(0, 10) // render at most first 10 initially to avoid heavy layout on iOS
-                .map((vostcard, index) => {
+              {savedVostcards.length > 0 && savedVostcards.map((vostcard, index) => {
                   const missingItems = getVostcardStatus(vostcard);
                   const isDeleting = deletingIds.has(vostcard.id);
                   
