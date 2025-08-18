@@ -1165,8 +1165,8 @@ const HomeView = () => {
 
   const handleListViewClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('📋 Navigating to My Posted Vostcards View');
-    navigate('/my-posted-vostcards');
+    console.log('📋 Navigating to All Posted Vostcards View');
+    navigate('/all-posted-vostcards');
   };
 
   const handleOffersClick = (e: React.MouseEvent) => {
