@@ -317,7 +317,7 @@ const HomeView = () => {
   const [showComposeModal, setShowComposeModal] = useState(false);
   const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
-  const [isQuickcardPressed, setIsQuickcardPressed] = useState(false);
+  // Removed quickcard pressed state
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const [tourData, setTourData] = useState<{tour: any, tourPosts: any[]} | null>(null);
@@ -1342,8 +1342,7 @@ const HomeView = () => {
 
   const handleCreateTouchStart = () => setIsCreatePressed(true);
   const handleCreateTouchEnd = () => setIsCreatePressed(false);
-  const handleQuickcardTouchStart = () => setIsQuickcardPressed(true);
-  const handleQuickcardTouchEnd = () => setIsQuickcardPressed(false);
+  // Removed quickcard touch handlers
 
   // Removed handleNativeCameraPhoto function
 
@@ -2606,9 +2605,9 @@ const HomeView = () => {
       }}>
         {/* Create Vōstcard Button (single CTA) */}
         <button
-          onTouchStart={handleQuickcardTouchStart}
-          onTouchEnd={handleQuickcardTouchEnd}
-          onClick={handleCreateQuickcard}
+          onTouchStart={handleCreateTouchStart}
+          onTouchEnd={handleCreateTouchEnd}
+          onClick={handleCreateClick}
           style={{
             background: '#002B4D',
             color: 'white',
