@@ -48,22 +48,38 @@ const MyPostedVostcardsListView = () => {
           }
 
           // Load and sync posted vostcards with Firebase
+          console.log('🔄 Loading posted vostcards for user:', user.uid);
           await loadPostedVostcards();
           console.log('✅ Posted Vostcards loaded successfully');
 
           // Filter out local vostcards not present in Firebase
           const syncLocalWithFirebase = async () => {
-            const localVostcards = await loadLocalVostcards(); // implement this to get local Vostcards
-            for (const vostcard of localVostcards) {
-              const vostcardRef = doc(db, 'vostcards', vostcard.id);
-              const docSnap = await getDoc(vostcardRef);
-              if (!docSnap.exists()) {
-                console.log(`🗑️ Local vostcard ${vostcard.id} not found in Firebase, deleting from device`);
-                await deleteLocalVostcard(vostcard.id); // implement this to delete from local storage
+            try {
+              console.log('🔄 Syncing local vostcards with Firebase...');
+              const localVostcards = await loadLocalVostcards();
+              console.log('📂 Found', localVostcards.length, 'Vostcards in IndexedDB');
+
+              for (const vostcard of localVostcards) {
+                try {
+                  const vostcardRef = doc(db, 'vostcards', vostcard.id);
+                  const docSnap = await getDoc(vostcardRef);
+                  if (!docSnap.exists()) {
+                    console.log(`🗑️ Local vostcard ${vostcard.id} not found in Firebase, deleting from device`);
+                    await deleteLocalVostcard(vostcard.id);
+                  }
+                } catch (error) {
+                  console.error(`❌ Error checking vostcard ${vostcard.id} in Firebase:`, error);
+                }
               }
+              console.log('✅ Local vostcards synced with Firebase');
+            } catch (error) {
+              console.error('❌ Error syncing local vostcards:', error);
             }
           };
           await syncLocalWithFirebase();
+
+          // Reload posted vostcards one more time to ensure we have the latest data
+          await loadPostedVostcards();
 
         } catch (error) {
           console.error('❌ Error loading posted Vostcards:', error);
@@ -75,7 +91,7 @@ const MyPostedVostcardsListView = () => {
 
       loadData();
     }
-  }, [authLoading, user, loadPostedVostcards]);
+  }, [authLoading, user, loadPostedVostcards, navigate]);
 
   // Load posted vostcard from Firebase for editing
   const loadPostedVostcardForEdit = async (vostcardId: string) => {
