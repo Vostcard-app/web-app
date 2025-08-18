@@ -448,6 +448,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       // Save to Firebase
       const username = getCorrectUsername(authContext);
+      console.log('📍 Posting vostcard with geo:', {
+        latitude: currentVostcard.geo?.latitude,
+        longitude: currentVostcard.geo?.longitude
+      });
       await setDoc(doc(db, 'vostcards', currentVostcard.id), {
         id: currentVostcard.id,
         title: currentVostcard.title,

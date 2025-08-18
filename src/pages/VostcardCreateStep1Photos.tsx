@@ -8,6 +8,7 @@ import PhotoOptionsModal from '../components/PhotoOptionsModal';
 import { db } from '../firebase/firebaseConfig';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { LocationService } from '../services/locationService';
 
 export default function VostcardCreateStep1Photos() {
   const navigate = useNavigate();
@@ -39,25 +40,41 @@ export default function VostcardCreateStep1Photos() {
 
   // Initialize empty vostcard or load saved photos/URLs when component mounts
   useEffect(() => {
-    if (!currentVostcard) {
-      // Create empty vostcard when arriving at this step
-      console.log('📱 Initializing empty vostcard for photo selection');
-      setCurrentVostcard({
-        id: `vostcard_${Date.now()}`,
-        title: '',
-        description: '',
-        photos: [],
-        categories: [],
-        geo: { latitude: 0, longitude: 0 }, // Default location, user can set later
-        username: user?.displayName || user?.email || 'Anonymous',
-        userID: user?.uid || '',
-        video: null,
-        state: 'private',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-      return;
-    }
+    const initializeVostcard = async () => {
+      if (!currentVostcard) {
+        // Get user's location
+        console.log('📍 Getting user location for new vostcard');
+        let userLocation;
+        try {
+          userLocation = await LocationService.getCurrentLocation();
+          console.log('📍 Got user location:', userLocation);
+        } catch (error) {
+          console.error('❌ Error getting location:', error);
+          userLocation = { latitude: 0, longitude: 0 };
+        }
+
+        // Create empty vostcard when arriving at this step
+        console.log('📱 Initializing empty vostcard for photo selection');
+        setCurrentVostcard({
+          id: `vostcard_${Date.now()}`,
+          title: '',
+          description: '',
+          photos: [],
+          categories: [],
+          geo: userLocation,
+          username: user?.displayName || user?.email || 'Anonymous',
+          userID: user?.uid || '',
+          video: null,
+          state: 'private',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+    };
+
+    initializeVostcard();
+    return;
+  }
 
     // Prefer Files if present
     if (currentVostcard?.photos && Array.isArray(currentVostcard.photos) && currentVostcard.photos.length > 0) {
