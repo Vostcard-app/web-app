@@ -288,15 +288,16 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       console.log('🔄 Loading posted vostcards for user:', user.uid);
       
-      // First try to get all vostcards
+      // First try to get all posted vostcards
       const q = query(
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
+        where('state', '==', 'posted'),
         orderBy('createdAt', 'desc')
       );
       
       const querySnapshot = await getDocs(q);
-      console.log('📊 Found', querySnapshot.docs.length, 'posted vostcards');
+      console.log('📊 Found', querySnapshot.docs.length, 'posted vostcards in Firebase');
       
       const vostcards = await Promise.all(querySnapshot.docs.map(async doc => {
         try {
