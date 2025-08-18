@@ -37,7 +37,7 @@
           "queryScope": "COLLECTION",
           "fields": [
             { "fieldPath": "userID", "order": "ASCENDING" },
-            { "fieldPath": "visibility", "order": "ASCENDING" },
+            { "fieldPath": "state", "order": "ASCENDING" },
             { "fieldPath": "createdAt", "order": "DESCENDING" },
             { "fieldPath": "__name__", "order": "DESCENDING" }
           ]

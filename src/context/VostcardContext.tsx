@@ -92,12 +92,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 const newRequest = indexedDB.open(dbName, DB_VERSION);
                 newRequest.onupgradeneeded = (event) => {
                   const db = newRequest.result;
-                  if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                  }
-                  if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
-                    db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
-                  }
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
+          db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
+        }
                   const store = newRequest.transaction?.objectStore(STORE_NAME);
                   if (store && !store.indexNames.contains('userID')) {
                     store.createIndex('userID', 'userID', { unique: false });
@@ -165,8 +165,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const saveLocalVostcard = useCallback(async () => {
     if (!currentVostcard) {
       console.error('No vostcard to save');
-      return;
-    }
+        return;
+      }
 
     try {
       const localDB = await openUserDB();
@@ -262,10 +262,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
 
           return true;
-        } catch (error) {
+    } catch (error) {
           console.error('❌ Error validating vostcard:', vostcard.id, error);
-          return false;
-        }
+      return false;
+    }
       });
 
       console.log('✅ Loaded', validVostcards.length, 'valid local vostcards');
@@ -294,7 +294,6 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         collection(db, 'vostcards'),
         where('userID', '==', user.uid),
         where('state', '==', 'posted'),
-        where('visibility', '==', 'public'),
         orderBy('createdAt', 'desc')
       );
       console.log('🔍 Query built:', q);
@@ -359,9 +358,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               hasUserID: !!data.userID,
               hasGeo: !!geo
             });
-          }
+    }
 
-          return {
+    return {
             id: doc.id,
             title: data.title || 'Untitled',
             description: data.description || '',
@@ -433,7 +432,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       // Upload media to Firebase Storage
       const photoURLs = await Promise.all(
-        currentVostcard.photos.map(async (photo, idx) => {
+            currentVostcard.photos.map(async (photo, idx) => {
           const photoRef = ref(storage, `users/${user.uid}/photos/${uuidv4()}`);
           await uploadBytes(photoRef, photo);
           return getDownloadURL(photoRef);
@@ -498,8 +497,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLastSyncTimestamp(new Date());
       await loadAllLocalVostcards();
       await loadPostedVostcards();
-      clearVostcard();
-      
+        clearVostcard();
+
     } catch (error) {
       console.error('Error posting vostcard:', error);
       throw error;
@@ -530,7 +529,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Update state
       setSavedVostcards(prev => prev.filter(v => v.id !== vostcardId));
       setPostedVostcards(prev => prev.filter(v => v.id !== vostcardId));
-
+      
     } catch (error) {
       console.error('Error deleting vostcard:', error);
       throw error;
@@ -539,12 +538,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Sync vostcard metadata
   const syncVostcardMetadata = useCallback(async () => {
-    const user = auth.currentUser;
-    if (!user) {
+      const user = auth.currentUser;
+      if (!user) {
       console.log('No user authenticated, skipping metadata sync');
-      return;
-    }
-
+              return;
+            }
+            
     console.log('🔄 Starting metadata sync for user:', user.uid);
     let localSuccess = false;
     let postedSuccess = false;
@@ -554,7 +553,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await loadAllLocalVostcards();
       localSuccess = true;
       console.log('✅ Local vostcards synced');
-    } catch (error) {
+                      } catch (error) {
       console.error('❌ Failed to sync local vostcards:', error);
     }
 
@@ -563,7 +562,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await loadPostedVostcards();
       postedSuccess = true;
       console.log('✅ Posted vostcards synced');
-    } catch (error) {
+              } catch (error) {
       console.error('❌ Failed to sync posted vostcards:', error);
     }
 
@@ -586,8 +585,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // If we already have full content, return
     if (!vostcard._isMetadataOnly) {
-      return;
-    }
+          return;
+        }
 
     try {
       // Download media from Firebase Storage
@@ -647,8 +646,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return new Date(data.deletedAt) < thirtyDaysAgo;
       });
         
-      for (const doc of toDelete) {
-        await deleteDoc(doc.ref);
+        for (const doc of toDelete) {
+          await deleteDoc(doc.ref);
       }
     } catch (error) {
       console.error('Error cleaning up deletion markers:', error);
@@ -724,13 +723,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
       
       for (const docSnapshot of toDelete) {
-        await deleteDoc(docSnapshot.ref);
+          await deleteDoc(docSnapshot.ref);
       }
 
       // Clear local data
       const localDB = await openUserDB();
-      const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
+        const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
       await store.clear();
 
       setSavedVostcards([]);
@@ -788,19 +787,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const value = {
     savedVostcards,
     postedVostcards,
-    currentVostcard,
-    setCurrentVostcard,
-    clearVostcard,
+        currentVostcard,
+        setCurrentVostcard,
+        clearVostcard,
     saveLocalVostcard,
-    postVostcard,
-    deletePrivateVostcard,
+        postVostcard,
+        deletePrivateVostcard,
     loadAllLocalVostcards,
-    loadPostedVostcards,
-    syncVostcardMetadata,
-    downloadVostcardContent,
-    cleanupDeletionMarkers,
-    clearDeletionMarkers,
-    manualCleanupFirebase,
+        loadPostedVostcards,
+        syncVostcardMetadata,
+        downloadVostcardContent,
+        cleanupDeletionMarkers,
+        clearDeletionMarkers,
+        manualCleanupFirebase,
     loadLocalVostcard
   };
 
