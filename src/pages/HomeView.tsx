@@ -23,7 +23,7 @@ import { OnboardingService } from '../services/onboardingService';
 import InfoButton from '../assets/Info_button.png';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
-import QuickcardPin from '../assets/quickcard_pin.png';
+// Removed quickcard pin import
 import { AVAILABLE_CATEGORIES, AVAILABLE_TYPES } from '../types/VostcardTypes';
 import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
@@ -49,12 +49,7 @@ const guideIcon = new L.Icon({
   popupAnchor: [0, -75],
 });
 
-const quickcardIcon = new L.Icon({
-  iconUrl: QuickcardPin,
-  iconSize: [75, 75],
-  iconAnchor: [37.5, 75],
-  popupAnchor: [0, -75],
-});
+// Removed quickcard icon definition
 
 // Standard user location icon (like Apple/Google Maps)
 const userIcon = new L.Icon({
@@ -1160,15 +1155,8 @@ const HomeView = () => {
     }
   };
 
-  const getVostcardIcon = (isOffer: boolean, userRole?: string, isQuickcard?: boolean) => {
+  const getVostcardIcon = (isOffer: boolean, userRole?: string) => {
     if (isOffer) return offerIcon;
-    // For quickcards, check user role first to determine correct pin
-    if (isQuickcard) {
-      // If the quickcard is posted by a guide or admin, use Guide_pin
-      if (userRole === 'guide' || userRole === 'admin') return guideIcon;
-      // Otherwise, use regular Vostcard_pin for user quickcards
-      return vostcardIcon;
-    }
     if (userRole === 'guide') return guideIcon;
     return vostcardIcon;
   };
@@ -1197,11 +1185,7 @@ const HomeView = () => {
     navigate(TEMP_UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
   };
 
-  const handleCreateQuickcard = (e: React.MouseEvent) => {
-    e.preventDefault();
-    // Unified: route to create step1 and deprecate quickcard label
-    handleCreateClick(e);
-  };
+  // Removed handleCreateQuickcard function
 
   const handleLastPost = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -1220,14 +1204,23 @@ const HomeView = () => {
       toastEl.textContent = 'Loading your most recent post… this may take a moment';
       document.body.appendChild(toastEl);
 
-      // Load both personal and posted vostcards
-      console.log('📱 Loading personal vostcards...');
-      if (savedVostcards.length === 0) {
-        await loadAllLocalVostcardsImmediate();
-      }
-      
+            // Load posted vostcards first
       console.log('📱 Loading posted vostcards...');
       await loadPostedVostcards();
+
+      // Then load personal vostcards if needed
+      console.log('📱 Loading personal vostcards...');
+      if (savedVostcards.length === 0) {
+        try {
+          await loadAllLocalVostcardsImmediate();
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('Key already exists')) {
+            console.log('⚠️ Duplicate key in IndexedDB, continuing with existing data');
+          } else {
+            throw error;
+          }
+        }
+      }
       
       // Combine all posts (personal + posted) with a brief wait to allow async state to flush
       const waitForPosts = async (timeoutMs = 3000): Promise<any[]> => {
@@ -1352,30 +1345,7 @@ const HomeView = () => {
   const handleQuickcardTouchStart = () => setIsQuickcardPressed(true);
   const handleQuickcardTouchEnd = () => setIsQuickcardPressed(false);
 
-  const handleNativeCameraPhoto = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && userLocation) {
-      console.log('📸 Photo captured from native camera:', {
-        name: file.name,
-        size: file.size,
-        type: file.type
-      });
-      
-      // Create quickcard with the captured photo
-      createQuickcard(file, {
-        latitude: userLocation[0],
-        longitude: userLocation[1]
-      });
-      
-      // Navigate to photo thumbnails step
-      navigate('/quickcard-step2');
-    } else if (!userLocation) {
-      alert('Location not available. Please enable location services.');
-    }
-    
-    // Clear the input so same photo can be selected again
-    event.target.value = '';
-  };
+  // Removed handleNativeCameraPhoto function
 
   const handleRetryLoad = () => {
     setRetryCount(prev => prev + 1);
@@ -2692,15 +2662,7 @@ const HomeView = () => {
         </button>
       </div>
 
-      {/* Hidden camera input for quickcard creation */}
-      <input
-        id="quickcard-native-camera"
-        type="file"
-        accept="image/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={handleNativeCameraPhoto}
-      />
+      {/* Removed quickcard camera input */}
 
       {/* Filter Modal */}
       {showFilterModal && (
