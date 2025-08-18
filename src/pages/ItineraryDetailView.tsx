@@ -230,12 +230,8 @@ const ItineraryDetailView: React.FC = () => {
   };
 
   const handleItemClick = (item: ItineraryItem) => {
-    // Navigate to public view of the vostcard/quickcard
-    if (item.type === 'quickcard') {
-      navigate(`/share-quickcard/${item.vostcardID}`);
-    } else {
-      navigate(`/share/${item.vostcardID}`);
-    }
+    // All items are now vostcards
+    navigate(`/share/${item.vostcardID}`);
   };
 
   const handleShareItinerary = () => {
@@ -663,7 +659,7 @@ ${itinerary.description ? itinerary.description + '\n\n' : ''}${shareUrl}`;
                     />
                   ) : (
                     <div style={{ fontSize: '32px' }}>
-                      {item.type === 'quickcard' ? '📷' : '📱'}
+                      📱
                     </div>
                   )}
                 </div>
