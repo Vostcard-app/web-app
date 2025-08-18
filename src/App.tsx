@@ -107,11 +107,10 @@ function App() {
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />
                   <Route path="/share-vostcard/:id" element={<PublicVostcardView />} />
-                  <Route path="/share-quickcard/:id" element={<PublicLegacyQuickcardView />} />
                   <Route path="/share-trip/:id" element={<PublicTripView />} />
                   <Route path="/shared-trip/:tourId" element={<ShareableTripView />} />
                   <Route path="/share-itinerary/:shareableLink" element={<PublicItineraryView />} />
-            <Route path="/public-trip-map" element={<PublicTripMapView />} />
+                  <Route path="/public-trip-map" element={<PublicTripMapView />} />
                   <Route path="/email/:id" element={<EmailVostcardView />} />
                   <Route path="/public-map" element={<PublicHomeView />} />
 
@@ -129,10 +128,6 @@ function App() {
                   <Route path="/following" element={<FollowingView />} />
                   <Route path="/friends" element={<FriendListView />} />
                   <Route path="/vostbox" element={<VostboxView />} />
-
-                  {/* 📱 Quickcard Routes */}
-                  <Route path="/quickcards" element={<LegacyQuickcardsListView />} />
-                  <Route path="/quickcard/:id" element={<VostcardDetailView />} />
 
                   {/* 📋 Itinerary Routes */}
                   <Route path="/itineraries" element={<ItinerariesListView />} />
@@ -171,12 +166,7 @@ function App() {
                       <Route path="/create-step3" element={<CreateVostcardStep3 />} />
                     </>
                   )}
-                  {!TEMP_UNIFIED_VOSTCARD_FLOW && (
-                    <>
-                      <Route path="/quickcard-step2" element={<VostcardCreateStep1Photos />} />
-                      <Route path="/quickcard-step3" element={<QuickcardStep3 />} />
-                    </>
-                  )}
+                  {/* Removed legacy quickcard routes */}
                   <Route path="/quick-audio" element={<QuickAudio />} />
                   <Route path="/step2-camera" element={<Step2CameraView />} />
                   <Route path="/edit/:id" element={<EditVostcardView />} />
