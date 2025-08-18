@@ -81,16 +81,21 @@ const MyVostcardListView = () => {
           const q = query(
             collection(db, 'vostcards'),
             where('userID', '==', user.uid),
-            where('state', '!=', 'posted'),
-            orderBy('state'),
-            orderBy('createdAt', 'desc')
+            where('state', '==', 'private')  // Only get private vostcards
           );
 
+          // Get all vostcards and sort client-side
           const querySnapshot = await getDocs(q);
-          const vostcards = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
+          const vostcards = querySnapshot.docs
+            .map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }))
+            .sort((a, b) => {
+              const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+              const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+              return dateB.getTime() - dateA.getTime();
+            });
 
           console.log('✅ Found vostcards:', {
             total: vostcards.length,
