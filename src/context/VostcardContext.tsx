@@ -10,6 +10,7 @@ import type { Vostcard, FirebaseVostcard } from '../types/VostcardTypes';
 // Constants
 const STORE_NAME = 'vostcards';
 const METADATA_STORE_NAME = 'vostcard_metadata';
+const DB_VERSION = 2; // Increment this when schema changes
 
 // Context interface
 interface VostcardContextType {
@@ -56,19 +57,45 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const dbName = `VostcardDB_${user?.uid || 'anonymous'}_${username}`;
     
     return new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(dbName, 1);
-      
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
+      // Delete old database if it exists
+      const deleteRequest = indexedDB.deleteDatabase(dbName);
+      deleteRequest.onerror = () => {
+        console.warn('Error deleting old database:', deleteRequest.error);
+      };
+      deleteRequest.onsuccess = () => {
+        console.log('Successfully deleted old database');
+        
+        // Open new database with current version
+        const request = indexedDB.open(dbName, DB_VERSION);
+        
+        request.onerror = () => {
+          console.error('Error opening database:', request.error);
+          reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+          console.log('Successfully opened database');
+          resolve(request.result);
+        };
 
-      request.onupgradeneeded = (event) => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
-          db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
-        }
+        request.onupgradeneeded = (event) => {
+          console.log('Upgrading database to version:', DB_VERSION);
+          const db = request.result;
+          
+          // Create stores if they don't exist
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains(METADATA_STORE_NAME)) {
+            db.createObjectStore(METADATA_STORE_NAME, { keyPath: 'id' });
+          }
+          
+          // Add any new indexes or modify existing ones here
+          const store = request.transaction?.objectStore(STORE_NAME);
+          if (store && !store.indexNames.contains('userID')) {
+            store.createIndex('userID', 'userID', { unique: false });
+          }
+        };
       };
     });
   }, [authContext]);
