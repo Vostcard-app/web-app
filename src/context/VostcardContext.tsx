@@ -15,6 +15,7 @@ const DB_VERSION = 3; // Increment this when schema changes - v3: after quickcar
 // Context interface
 interface VostcardContextType {
   savedVostcards: Vostcard[];
+  setSavedVostcards: React.Dispatch<React.SetStateAction<Vostcard[]>>;
   postedVostcards: Vostcard[];
   currentVostcard: Vostcard | null;
   setCurrentVostcard: (vostcard: Vostcard | null) => void;
@@ -1014,6 +1015,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const value = {
     savedVostcards,
+    setSavedVostcards,
     postedVostcards,
     currentVostcard,
     setCurrentVostcard,
