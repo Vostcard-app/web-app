@@ -13,11 +13,11 @@ export default function CreateVostcardStep2() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Track selected photos
-  const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null]);
+  const [selectedPhotos, setSelectedPhotos] = useState<(File | null)[]>([null, null, null, null]);
   // Stable preview URLs to avoid repeated URL.createObjectURL churn that crashes iOS Safari
-  const [photoUrls, setPhotoUrls] = useState<(string | null)[]>([null, null]);
+  const [photoUrls, setPhotoUrls] = useState<(string | null)[]>([null, null, null, null]);
   const [activeThumbnail, setActiveThumbnail] = useState<number | null>(null);
-  const [loadedFlags, setLoadedFlags] = useState<boolean[]>([false, false]);
+  const [loadedFlags, setLoadedFlags] = useState<boolean[]>([false, false, false, false]);
   
   // Desktop photo options modal state
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
@@ -508,13 +508,15 @@ export default function CreateVostcardStep2() {
       }}>
         {/* Photo selection grid */}
         <div style={{
-          display: 'flex',
-          justifyContent: 'center',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '10px',
           marginBottom: 20,
-          width: '100%'
+          width: '100%',
+          maxWidth: 380,
+          margin: '0 auto'
         }}>
-          {[0].map(idx => (
+          {[0, 1, 2, 3].map(idx => (
             <button
               key={idx}
               style={optionStyle}
