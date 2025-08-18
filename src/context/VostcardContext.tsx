@@ -510,14 +510,42 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Sync vostcard metadata
   const syncVostcardMetadata = useCallback(async () => {
-    try {
-      await loadAllLocalVostcards();
-      await loadPostedVostcards();
-      setLastSyncTimestamp(new Date());
-    } catch (error) {
-      console.error('Error syncing vostcard metadata:', error);
-      throw error;
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('No user authenticated, skipping metadata sync');
+      return;
     }
+
+    console.log('🔄 Starting metadata sync for user:', user.uid);
+    let localSuccess = false;
+    let postedSuccess = false;
+
+    try {
+      // Try to load local data first
+      await loadAllLocalVostcards();
+      localSuccess = true;
+      console.log('✅ Local vostcards synced');
+    } catch (error) {
+      console.error('❌ Failed to sync local vostcards:', error);
+    }
+
+    try {
+      // Then try to load posted data
+      await loadPostedVostcards();
+      postedSuccess = true;
+      console.log('✅ Posted vostcards synced');
+    } catch (error) {
+      console.error('❌ Failed to sync posted vostcards:', error);
+    }
+
+    // If both operations failed, throw an error
+    if (!localSuccess && !postedSuccess) {
+      throw new Error('Failed to sync both local and posted vostcards');
+    }
+
+    // Update sync timestamp even if only one operation succeeded
+    setLastSyncTimestamp(new Date());
+    console.log('✅ Metadata sync completed at:', new Date().toISOString());
   }, [loadAllLocalVostcards, loadPostedVostcards]);
 
   // Download vostcard content
@@ -688,10 +716,45 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Initial load
   useEffect(() => {
-    if (!authContext.loading && authContext.user) {
-      syncVostcardMetadata();
-    }
-  }, [authContext.loading, authContext.user, syncVostcardMetadata]);
+    const loadInitialData = async () => {
+      if (!authContext.loading && authContext.user) {
+        console.log('🔄 Initial data load for user:', authContext.user.uid);
+        try {
+          // First try to load local data
+          await loadAllLocalVostcards();
+          console.log('✅ Local vostcards loaded');
+
+          // Then try to load posted data
+          await loadPostedVostcards();
+          console.log('✅ Posted vostcards loaded');
+
+          // Finally sync metadata
+          await syncVostcardMetadata();
+          console.log('✅ Metadata synced');
+        } catch (error) {
+          console.error('❌ Error during initial data load:', error);
+          // Try each operation individually to ensure at least some data loads
+          try {
+            await loadAllLocalVostcards();
+          } catch (e) {
+            console.error('❌ Failed to load local vostcards:', e);
+          }
+          try {
+            await loadPostedVostcards();
+          } catch (e) {
+            console.error('❌ Failed to load posted vostcards:', e);
+          }
+          try {
+            await syncVostcardMetadata();
+          } catch (e) {
+            console.error('❌ Failed to sync metadata:', e);
+          }
+        }
+      }
+    };
+
+    loadInitialData();
+  }, [authContext.loading, authContext.user, loadAllLocalVostcards, loadPostedVostcards, syncVostcardMetadata]);
 
   const value = {
     savedVostcards,
