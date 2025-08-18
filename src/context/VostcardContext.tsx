@@ -259,7 +259,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Load all local vostcards
   const loadAllLocalVostcards = useCallback(async () => {
     try {
-      console.log('🔄 Loading local vostcards...');
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('No user authenticated, skipping loadAllLocalVostcards');
+        setSavedVostcards([]);
+        return;
+      }
+
+      console.log('🔄 Loading local vostcards for user:', user.uid);
       const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readonly');
       const store = transaction.objectStore(STORE_NAME);
@@ -270,14 +277,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         request.onerror = () => reject(request.error);
       });
 
-      // Filter out any invalid vostcards
+      // Filter out any invalid vostcards and ensure they belong to current user
       const validVostcards = vostcards.filter(vostcard => {
         try {
-          // Check required fields
-          if (!vostcard.id || !vostcard.userID) {
-            console.warn('⚠️ Vostcard missing required fields:', {
+          // Check required fields and user ownership
+          if (!vostcard.id || !vostcard.userID || vostcard.userID !== user.uid) {
+            console.warn('⚠️ Vostcard invalid or wrong user:', {
               id: vostcard.id,
-              hasUserID: !!vostcard.userID
+              hasUserID: !!vostcard.userID,
+              isCurrentUser: vostcard.userID === user.uid
             });
             return false;
           }
@@ -315,8 +323,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
       });
 
-      console.log('✅ Loaded', validVostcards.length, 'valid local vostcards');
-      setSavedVostcards(validVostcards);
+      // Sort by most recent first
+      const sortedVostcards = validVostcards.sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      console.log('✅ Loaded', sortedVostcards.length, 'valid local vostcards');
+      console.log('📅 First 3 vostcards:', sortedVostcards.slice(0, 3).map(v => ({
+        id: v.id,
+        title: v.title,
+        createdAt: v.createdAt,
+        state: v.state
+      })));
+      setSavedVostcards(sortedVostcards);
     } catch (error) {
       console.error('❌ Error loading local vostcards:', error);
       // Don't throw, just log the error and return empty array
@@ -344,6 +365,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         orderBy('createdAt', 'desc')
       );
       console.log('🔍 Query built:', q);
+      
+      // Debug query
+      const debugQuery = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid)
+      );
+      const debugSnapshot = await getDocs(debugQuery);
+      console.log('🔍 All user vostcards:', debugSnapshot.docs.map(doc => ({
+        id: doc.id,
+        title: doc.data().title,
+        state: doc.data().state,
+        createdAt: doc.data().createdAt
+      })));
 
       // Search for the specific post in all states
       console.log('🔍 Searching for post titled "Gregs"...');
