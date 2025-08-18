@@ -14,8 +14,8 @@ export const getVostcardStatus = (vostcard: Partial<Vostcard>): string[] => {
   const photoCount = (vostcard.photos?.length || 0) + 
     ((vostcard as any).photoURLs?.length || 0) + 
     ((vostcard as any)._firebasePhotoURLs?.length || 0);
-  if (photoCount < 2) {
-    missing.push('Photos (need at least 2)');
+  if (photoCount < 1) {
+    missing.push('Photos (need at least 1)');
   }
   
   // Check for location in multiple formats (geo object, or separate lat/lng fields)
@@ -44,7 +44,7 @@ export const getValidationState = (vostcard: Partial<Vostcard>): ValidationState
     hasCategories: (vostcard.categories?.length || 0) > 0,
     hasPhotos: ((vostcard.photos?.length || 0) + 
       ((vostcard as any).photoURLs?.length || 0) + 
-      ((vostcard as any)._firebasePhotoURLs?.length || 0)) >= 2,
+      ((vostcard as any)._firebasePhotoURLs?.length || 0)) >= 1,
     hasVideo: true, // Video is always optional
     hasGeo: !!(vostcard.geo || 
       (vostcard.latitude && vostcard.longitude) ||
