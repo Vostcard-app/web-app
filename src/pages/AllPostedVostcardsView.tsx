@@ -369,7 +369,6 @@ const AllPostedVostcardsView: React.FC = () => {
           q1 = query(
             collection(db, 'vostcards'), 
             where('state', '==', 'posted'),
-            where('visibility', '==', 'public'),
             where('userRole', '==', 'guide'),
             limit(ITEMS_PER_PAGE)
           );
@@ -378,7 +377,6 @@ const AllPostedVostcardsView: React.FC = () => {
           q1 = query(
             collection(db, 'vostcards'), 
             where('state', '==', 'posted'),
-            where('visibility', '==', 'public'),
             limit(ITEMS_PER_PAGE)
           );
         }
