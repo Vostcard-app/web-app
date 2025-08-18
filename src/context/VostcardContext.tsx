@@ -1201,14 +1201,48 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const store = transaction.objectStore(STORE_NAME);
       
       await new Promise<void>((resolve, reject) => {
-        const request = store.put(serializableVostcard);
-        request.onerror = () => {
-          console.error('❌ Failed to save Vostcard to IndexedDB:', request.error);
-          reject(request.error);
+        // First try to get the existing record
+        const getRequest = store.get(serializableVostcard.id);
+        
+        getRequest.onsuccess = () => {
+          // If record exists, delete it first
+          if (getRequest.result) {
+            console.log('🔄 Replacing existing vostcard in IndexedDB:', serializableVostcard.id);
+            const deleteRequest = store.delete(serializableVostcard.id);
+            deleteRequest.onsuccess = () => {
+              // After deletion, add the new record
+              const addRequest = store.add(serializableVostcard);
+              addRequest.onerror = () => {
+                console.error('❌ Failed to save Vostcard to IndexedDB:', addRequest.error);
+                reject(addRequest.error);
+              };
+              addRequest.onsuccess = () => {
+                console.log('✅ Saved Vostcard to IndexedDB successfully');
+                resolve();
+              };
+            };
+            deleteRequest.onerror = () => {
+              console.error('❌ Failed to delete existing Vostcard:', deleteRequest.error);
+              reject(deleteRequest.error);
+            };
+          } else {
+            // If record doesn't exist, just add it
+            console.log('➕ Adding new vostcard to IndexedDB:', serializableVostcard.id);
+            const addRequest = store.add(serializableVostcard);
+            addRequest.onerror = () => {
+              console.error('❌ Failed to save Vostcard to IndexedDB:', addRequest.error);
+              reject(addRequest.error);
+            };
+            addRequest.onsuccess = () => {
+              console.log('✅ Saved Vostcard to IndexedDB successfully');
+              resolve();
+            };
+          }
         };
-        request.onsuccess = () => {
-          console.log('✅ Saved Vostcard to IndexedDB successfully');
-          resolve();
+        
+        getRequest.onerror = () => {
+          console.error('❌ Failed to check for existing Vostcard:', getRequest.error);
+          reject(getRequest.error);
         };
       });
 
