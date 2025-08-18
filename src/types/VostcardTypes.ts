@@ -129,6 +129,9 @@ export const AVAILABLE_CATEGORIES = [
   'Wish you were here',
   'Made for kids',
   'Mural',
+  'Plaque',
+  'Pub',
+  'Monument',
 ] as const;
 
 // Available types constant  

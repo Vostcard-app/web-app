@@ -13,7 +13,7 @@ const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
   const {
     currentVostcard,
-    updateVostcard,
+    setCurrentVostcard,
     saveLocalVostcard,
     loadLocalVostcard,
     clearLocalStorage,
@@ -102,16 +102,20 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handleCategoryToggle = (category: string) => {
+    if (!currentVostcard) return;
+    
     if (categories.includes(category)) {
-      updateVostcard({ categories: categories.filter((c) => c !== category) });
+      setCurrentVostcard({ ...currentVostcard, categories: categories.filter((c) => c !== category) });
     } else {
-      updateVostcard({ categories: [...categories, category] });
+      setCurrentVostcard({ ...currentVostcard, categories: [...categories, category] });
     }
   };
 
   const handleTitleChange = async (newTitle: string) => {
     // Update the vostcard title
-    updateVostcard({ title: newTitle });
+    if (currentVostcard) {
+      setCurrentVostcard({ ...currentVostcard, title: newTitle });
+    }
     
     // If there's an associated script, update its title too
     if (currentVostcard?.scriptId && newTitle.trim() !== '') {
@@ -266,7 +270,7 @@ const CreateVostcardStep3: React.FC = () => {
           </label>
           <textarea
             value={description}
-            onChange={(e) => updateVostcard({ description: e.target.value })}
+            onChange={(e) => currentVostcard && setCurrentVostcard({ ...currentVostcard, description: e.target.value })}
             placeholder="Enter Description"
             rows={4}
             style={{
