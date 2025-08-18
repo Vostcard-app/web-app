@@ -21,8 +21,7 @@ import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
 import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
 import EditVostcardView from "./pages/EditVostcardView";
 import VostcardCreateStep1Photos from "./pages/VostcardCreateStep1Photos";
-import QuickcardStep3 from "./pages/QuickcardStep3";
-import QuickAudio from "./pages/QuickAudio";
+// Removed quickcard imports
 import ListView from "./pages/ListView";
 import ScrollingCameraView from "./pages/ScrollingCameraView";
 import CameraView from "./pages/CameraView";
@@ -42,7 +41,7 @@ import LikedVostcardsView from "./pages/LikedVostcardsView";
 import FollowingView from "./pages/FollowingView";
 import FriendListView from "./pages/FriendListView";
 import VostboxView from "./pages/VostboxView";
-import LegacyQuickcardsListView from "./pages/LegacyQuickcardsListView";
+// Removed legacy quickcard import
 import ItinerariesListView from "./pages/ItinerariesListView";
 import ItineraryDetailView from "./pages/ItineraryDetailView";
 import MyTripsListView from "./pages/MyTripsListView";
@@ -67,7 +66,7 @@ import DriveModeSettingsView from "./pages/DriveModeSettingsView";
 import VostcardStudioView from "./pages/VostcardStudioView";
 import ExampleView from "./pages/ExampleView";
 import PublicVostcardView from "./pages/PublicVostcardView";
-import PublicLegacyQuickcardView from "./pages/PublicLegacyQuickcardView";
+// Removed public legacy quickcard import
 import PublicTripView from "./pages/PublicTripView";
 import PublicTripMapView from "./pages/PublicTripMapView";
 import ShareableTripView from "./pages/ShareableTripView";
@@ -167,7 +166,7 @@ function App() {
                     </>
                   )}
                   {/* Removed legacy quickcard routes */}
-                  <Route path="/quick-audio" element={<QuickAudio />} />
+                  {/* Removed quick audio route */}
                   <Route path="/step2-camera" element={<Step2CameraView />} />
                   <Route path="/edit/:id" element={<EditVostcardView />} />
 
