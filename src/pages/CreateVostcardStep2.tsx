@@ -514,7 +514,7 @@ export default function CreateVostcardStep2() {
           marginBottom: 20,
           width: '100%'
         }}>
-          {[0, 1].map(idx => (
+          {[0].map(idx => (
             <button
               key={idx}
               style={optionStyle}
@@ -564,7 +564,7 @@ export default function CreateVostcardStep2() {
           marginBottom: 20,
           paddingTop: '2px'
         }}>
-          {selectedPhotos.filter(photo => photo !== null).length} of 2 photos added
+          {selectedPhotos.filter(photo => photo !== null).length} of 1 photo required
         </div>
 
         {/* Add to Trip Section */}
