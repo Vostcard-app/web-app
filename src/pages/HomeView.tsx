@@ -2603,7 +2603,7 @@ const HomeView = () => {
         zIndex: 99999,
         display: 'flex',
         justifyContent: 'space-between',
-        gap: '2%',
+        gap: '4%', // Slightly more space between buttons
         padding: shouldUseContainer ? '0 15px' : '0',
         // Add safe area padding for mobile
         paddingBottom: shouldUseContainer ? 0 : 'env(safe-area-inset-bottom, 0px)',
@@ -2624,7 +2624,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: shouldUseContainer ? '80%' : '60%',
+            width: '48%', // Equal width for both buttons
             height: '60px',
             display: 'flex',
             alignItems: 'center',
@@ -2653,7 +2653,7 @@ const HomeView = () => {
             cursor: 'pointer',
             boxShadow: '0 4px 16px rgba(0,123,77,0.2)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-            width: '30%',
+            width: '48%', // Equal width for both buttons
             height: '60px',
             display: 'flex',
             alignItems: 'center',
