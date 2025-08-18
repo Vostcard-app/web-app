@@ -690,10 +690,7 @@ Tap OK to continue.`;
     
     try {
       // Generate public share URL
-      const isQuickcard = vostcard.isQuickcard === true;
-      const shareUrl = isQuickcard 
-        ? `${window.location.origin}/share-vostcard/${vostcard.id}`
-        : `${window.location.origin}/share/${vostcard.id}`;
+      const shareUrl = `${window.location.origin}/share/${vostcard.id}`;
       
       // Generate share text using utility
       const shareText = generateShareText(vostcard, shareUrl);
@@ -747,7 +744,7 @@ Tap OK to continue.`;
             username: vostcard.username,
             userRole: vostcard.userRole,
             isOffer: false,
-            isQuickcard: true,
+            type: 'vostcard',
             categories: vostcard.categories,
             createdAt: vostcard.createdAt,
             visibility: 'public',
@@ -2995,7 +2992,7 @@ Tap OK to continue.`;
           id: id || '',
           title: vostcard?.title,
           description: vostcard?.description,
-          isQuickcard: true
+          type: 'vostcard'
         }}
       />
 
