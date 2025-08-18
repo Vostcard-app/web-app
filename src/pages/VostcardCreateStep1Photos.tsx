@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages, FaTimes } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function VostcardCreateStep1Photos() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentVostcard, saveLocalVostcard, loadLocalVostcard, deletePrivateVostcard, setCurrentVostcard } = useVostcard();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +96,22 @@ export default function VostcardCreateStep1Photos() {
       return;
     }
   }, [currentVostcard, setCurrentVostcard]);
+
+  // Auto-open camera if coming from Create button
+  useEffect(() => {
+    const autoOpenCamera = location.state?.autoOpenCamera;
+    if (autoOpenCamera && fileInputRef.current) {
+      console.log('📷 Auto-opening camera from Create button');
+      // Set camera capture mode and open for first photo
+      fileInputRef.current.setAttribute('accept', 'image/*');
+      fileInputRef.current.setAttribute('capture', 'environment');
+      fileInputRef.current.setAttribute('data-index', '0');
+      fileInputRef.current.click();
+      
+      // Clear the state to prevent re-opening on re-renders
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   // Cleanup created object URLs on unmount
   useEffect(() => {

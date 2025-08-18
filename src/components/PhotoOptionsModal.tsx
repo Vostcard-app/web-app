@@ -48,11 +48,11 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '24px'
+          marginBottom: '20px'
         }}>
           <h3 style={{
             margin: 0,
-            fontSize: '20px',
+            fontSize: '18px',
             fontWeight: '600',
             color: '#333'
           }}>
@@ -70,182 +70,66 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
               alignItems: 'center',
               justifyContent: 'center'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f0f0f0';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
           >
             <FaTimes size={18} color="#666" />
           </button>
         </div>
 
-        {/* Options */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Options - Link Style */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {/* Take Photo */}
-          <button
+          <div
             onClick={onTakePhoto}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              padding: '16px',
-              backgroundColor: '#f8f9fa',
-              border: '2px solid transparent',
-              borderRadius: '12px',
+              gap: '12px',
+              padding: '16px 0',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              borderBottom: '1px solid #e0e0e0',
               fontSize: '16px',
-              fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#e9ecef';
-              e.currentTarget.style.borderColor = '#007aff';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f8f9fa';
-              e.currentTarget.style.borderColor = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0px)';
+              color: '#007aff'
             }}
           >
-            <div style={{
-              backgroundColor: '#007aff',
-              padding: '12px',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <FaCamera size={20} color="white" />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#333', fontWeight: '600' }}>Take Photo</div>
-              <div style={{ color: '#666', fontSize: '14px', marginTop: '2px' }}>
-                Use your camera to take a new photo
-              </div>
-            </div>
-          </button>
+            <FaCamera size={16} color="#007aff" />
+            <span>Take Photo</span>
+          </div>
 
           {/* Upload File */}
-          <button
+          <div
             onClick={onUploadFile}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              padding: '16px',
-              backgroundColor: '#f8f9fa',
-              border: '2px solid transparent',
-              borderRadius: '12px',
+              gap: '12px',
+              padding: '16px 0',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
+              borderBottom: '1px solid #e0e0e0',
               fontSize: '16px',
-              fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#e9ecef';
-              e.currentTarget.style.borderColor = '#28a745';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f8f9fa';
-              e.currentTarget.style.borderColor = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0px)';
+              color: '#007aff'
             }}
           >
-            <div style={{
-              backgroundColor: '#28a745',
-              padding: '12px',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <FaFolder size={20} color="white" />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#333', fontWeight: '600' }}>Upload File</div>
-              <div style={{ color: '#666', fontSize: '14px', marginTop: '2px' }}>
-                Choose a photo from your device
-              </div>
-            </div>
-          </button>
+            <FaFolder size={16} color="#007aff" />
+            <span>Upload File</span>
+          </div>
 
           {/* Select from Library */}
-          <button
+          <div
             onClick={onSelectFromLibrary}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              padding: '16px',
-              backgroundColor: '#f8f9fa',
-              border: '2px solid transparent',
-              borderRadius: '12px',
+              gap: '12px',
+              padding: '16px 0',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
               fontSize: '16px',
-              fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#e9ecef';
-              e.currentTarget.style.borderColor = '#fd7e14';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f8f9fa';
-              e.currentTarget.style.borderColor = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0px)';
+              color: '#007aff'
             }}
           >
-            <div style={{
-              backgroundColor: '#fd7e14',
-              padding: '12px',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <FaImages size={20} color="white" />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ color: '#333', fontWeight: '600' }}>Photo Library</div>
-              <div style={{ color: '#666', fontSize: '14px', marginTop: '2px' }}>
-                Select from your existing photos
-              </div>
-            </div>
-          </button>
+            <FaImages size={16} color="#007aff" />
+            <span>Select from Library</span>
+          </div>
         </div>
-
-        {/* Cancel Button */}
-        <button
-          onClick={onClose}
-          style={{
-            width: '100%',
-            padding: '12px',
-            marginTop: '20px',
-            backgroundColor: 'transparent',
-            border: '2px solid #ddd',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            fontWeight: '500',
-            color: '#666',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#999';
-            e.currentTarget.style.color = '#333';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#ddd';
-            e.currentTarget.style.color = '#666';
-          }}
-        >
-          Cancel
-        </button>
       </div>
     </div>
   );

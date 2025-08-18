@@ -1184,7 +1184,10 @@ const HomeView = () => {
   const handleCreateClick = (e: React.MouseEvent) => {
     e.preventDefault();
     clearVostcard();
-    navigate(TEMP_UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
+    // Navigate to step1 with camera auto-open flag
+    navigate(TEMP_UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1', {
+      state: { autoOpenCamera: true }
+    });
   };
 
   // Removed handleCreateQuickcard function
