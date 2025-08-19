@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaRegImages, FaTimes } from 'react-icons/fa';
+import { FaArrowLeft, FaRegImages, FaTimes, FaPencilAlt } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
+import EditTripNameModal from '../components/EditTripNameModal';
 import { db } from '../firebase/firebaseConfig';
 import { collection, query, where, orderBy, getDocs, limit, doc, setDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -34,6 +35,7 @@ export default function VostcardCreateStep1Photos() {
   const [newTripName, setNewTripName] = useState('');
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -702,6 +704,16 @@ export default function VostcardCreateStep1Photos() {
       />
 
       {/* Trip Modal */}
+      {editingTrip && (
+        <EditTripNameModal
+          trip={editingTrip}
+          onClose={() => setEditingTrip(null)}
+          onUpdate={(updatedTrip) => {
+            setUserTrips(prev => prev.map(t => t.id === updatedTrip.id ? updatedTrip : t));
+            setEditingTrip(null);
+          }}
+        />
+      )}
       {isTripModalOpen && (
         <div style={{
           position: 'fixed',
@@ -750,6 +762,32 @@ export default function VostcardCreateStep1Photos() {
                     </option>
                   ))}
                 </select>
+                {selectedTripId && (
+                  <button
+                    onClick={() => {
+                      const trip = userTrips.find(t => t.id === selectedTripId);
+                      if (trip) {
+                        setEditingTrip(trip);
+                      }
+                    }}
+                    style={{
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      backgroundColor: 'transparent',
+                      border: '1px solid #002B4D',
+                      borderRadius: '4px',
+                      color: '#002B4D',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <FaPencilAlt size={12} />
+                    Edit Trip Name
+                  </button>
+                )}
               </div>
             )}
 
