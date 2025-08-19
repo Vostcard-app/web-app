@@ -16,28 +16,31 @@ export const TourService = {
     try {
       const posts: TourPost[] = [];
       
-      // Query vostcards collection for all posts in the tour
-      const q = query(
-        collection(db, 'vostcards'),
-        where('id', 'in', tour.postIds)
+      // Get each vostcard by its document ID
+      const vostcardPromises = tour.postIds.map(id => 
+        getDoc(doc(db, 'vostcards', id))
       );
       
-      const snapshot = await getDocs(q);
+      const vostcardDocs = await Promise.all(vostcardPromises);
       
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        posts.push({
-          id: doc.id,
-          title: data.title || 'Untitled',
-          description: data.description,
-          photoURLs: data.photoURLs || [data.photoURL],
-          videoURL: data.videoURL,
-          latitude: data.latitude,
-          longitude: data.longitude,
-          createdAt: data.createdAt?.toDate(),
-          username: data.username,
-          state: data.state
-        });
+      vostcardDocs.forEach(doc => {
+        if (doc.exists()) {
+          const data = doc.data();
+          posts.push({
+            id: doc.id,
+            title: data.title || 'Untitled',
+            description: data.description,
+            photoURLs: data.photoURLs || [data.photoURL],
+            videoURL: data.videoURL,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            createdAt: data.createdAt?.toDate(),
+            username: data.username,
+            state: data.state
+          });
+        } else {
+          console.warn(`Vostcard ${doc.id} not found`);
+        }
       });
       
       // Sort by the order in postIds array
