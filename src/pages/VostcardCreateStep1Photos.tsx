@@ -6,7 +6,7 @@ import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
 import { db } from '../firebase/firebaseConfig';
-import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit, doc, setDoc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { LocationService } from '../services/locationService';
 
@@ -319,10 +319,22 @@ export default function VostcardCreateStep1Photos() {
       }
 
       if (tripId) {
-        // First save the vostcard to make sure it exists in the database
-        console.log('🔄 Saving vostcard before adding to trip...');
-        await saveLocalVostcard();
-        console.log('✅ Vostcard saved, now adding to trip...');
+        // First save the vostcard to Firebase to make sure it exists in the database
+        console.log('🔄 Saving vostcard to Firebase before adding to trip...');
+        const vostcard = await loadLocalVostcard(currentVostcard.id);
+        if (!vostcard) {
+          throw new Error('Could not load vostcard from local storage');
+        }
+        
+        // Save to Firebase
+        const vostcardRef = doc(db, 'vostcards', currentVostcard.id);
+        await setDoc(vostcardRef, {
+          ...vostcard,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now()
+        });
+        
+        console.log('✅ Vostcard saved to Firebase, now adding to trip...');
         
         await TripService.addItemToTrip(tripId, {
           vostcardID: currentVostcard.id,
