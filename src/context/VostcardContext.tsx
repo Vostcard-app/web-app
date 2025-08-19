@@ -85,8 +85,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               const oldData = await new Promise<any[]>((resolve, reject) => {
                 const request = oldStore.getAll();
                 request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-              });
+        request.onerror = () => reject(request.error);
+      });
               oldDb.close();
               
               // Delete old database
@@ -94,7 +94,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               deleteRequest.onsuccess = () => {
                 // Create new database with current version
                 const newRequest = indexedDB.open(dbName, DB_VERSION);
-                newRequest.onupgradeneeded = (event) => {
+                newRequest.onupgradeneeded = () => {
                   const db = newRequest.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           db.createObjectStore(STORE_NAME, { keyPath: 'id' });
@@ -175,10 +175,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const newVostcard: Vostcard = {
       id: crypto.randomUUID(),
-      title: '',
-      description: '',
-      photos: [],
-      categories: [],
+        title: '',
+        description: '',
+        photos: [],
+        categories: [],
       username: user.displayName || user.email?.split('@')[0] || 'Unknown',
       userID: user.uid,
       userRole: authContext.userRole || 'user',
@@ -187,8 +187,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       type: 'vostcard',
       hasVideo: false,
       hasPhotos: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       geo: null
     };
 
@@ -207,7 +207,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('No vostcard to save');
       return;
     }
-
+    
     console.log('💾 Saving vostcard:', {
       id: currentVostcard.id,
       title: currentVostcard.title,
@@ -222,7 +222,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('📂 Opened IndexedDB:', localDB.name, 'version:', localDB.version);
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
-
+      
       // Check if record exists
       const existingRecord = await new Promise<any>((resolve, reject) => {
         const request = store.get(currentVostcard.id);
@@ -272,8 +272,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('🔄 Loading local vostcards for user:', user.uid);
       const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      
+        const store = transaction.objectStore(STORE_NAME);
+        
       const vostcards = await new Promise<Vostcard[]>((resolve, reject) => {
         const request = store.getAll();
         request.onsuccess = () => resolve(request.result);
@@ -304,8 +304,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // Only include non-posted vostcards
           if (vostcard.state === 'posted') {
             console.log('📝 Skipping posted vostcard:', vostcard.id);
-            return false;
-          }
+      return false;
+    }
 
           // Ensure arrays are actually arrays
           if (vostcard.photos && !Array.isArray(vostcard.photos)) {
@@ -356,7 +356,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: v.state
       })));
       setSavedVostcards(sortedVostcards);
-    } catch (error) {
+      } catch (error) {
       console.error('❌ Error loading local vostcards:', error);
       // Don't throw, just log the error and return empty array
       setSavedVostcards([]);
@@ -389,7 +389,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       );
       const debugSnapshot = await getDocs(debugQuery);
       console.log('🔍 All user vostcards:', debugSnapshot.docs.map(doc => ({
-        id: doc.id,
+          id: doc.id,
         title: doc.data().title,
         state: doc.data().state,
         createdAt: doc.data().createdAt
@@ -404,14 +404,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const data = doc.data();
           return data.title && data.title.includes('Gregs');
         })
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data()
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
         }));
       
       if (gregsPost.length > 0) {
         console.log('✅ Found posts with "Gregs" in title:', gregsPost);
-      } else {
+          } else {
         console.log('❌ No posts found with "Gregs" in title');
       }
       
@@ -420,26 +420,26 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const data = doc.data();
         return {
           id: doc.id,
-          title: data.title || '',
-          description: data.description || '',
+            title: data.title || '',
+            description: data.description || '',
           categories: Array.isArray(data.categories) ? data.categories : [],
-          username: data.username || '',
-          userID: data.userID || '',
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            username: data.username || '',
+            userID: data.userID || '',
+            createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           state: data.state || 'private',
           type: 'vostcard' as const,
-          video: null,
-          photos: [],
+            video: null,
+            photos: [],
           geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
-          _firebaseVideoURL: data.videoURL || null,
+            _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
           _isMetadataOnly: true
-        };
-      });
-      
+          };
+        });
+        
       // Filter for posted vostcards and sort by date
       const sortedVostcards = allVostcards
         .filter(v => v.state === 'posted')
@@ -458,7 +458,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('📊 First 3 posted vostcards:', sortedVostcards.slice(0, 3).map(v => ({
         id: v.id,
         title: v.title,
-        createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt,
+        createdAt: v.createdAt,
         state: v.state
       })));
       
@@ -535,8 +535,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             isOffer: !!data.isOffer,
             offerDetails: data.offerDetails || undefined,
             geo,
-            video: null,
-            photos: [],
+              video: null,
+              photos: [],
             _firebaseVideoURL: data.videoURL || null,
             _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
             _isMetadataOnly: true
@@ -603,12 +603,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
       
       console.log('📊 First 3 personal vostcards:', sortedPersonal.slice(0, 3).map(v => ({
-        id: v.id,
-        title: v.title,
-        state: v.state,
-        createdAt: v.createdAt?.toDate?.()?.toISOString() || v.createdAt
-      })));
-      
+            id: v.id,
+            title: v.title,
+            state: v.state,
+            createdAt: v.createdAt
+          })));
+          
       setPostedVostcards(sortedPosted);
       setSavedVostcards(sortedPersonal);
     } catch (error) {
@@ -682,22 +682,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         userRole: authContext.userRole,
         photoURLs: photoURLs,
         videoURL: videoURL,
-        latitude: currentVostcard.geo.latitude,
-        longitude: currentVostcard.geo.longitude,
-        geo: {
-          latitude: currentVostcard.geo.latitude,
-          longitude: currentVostcard.geo.longitude
-        },
+        latitude: currentVostcard.geo?.latitude,
+        longitude: currentVostcard.geo?.longitude,
+        geo: currentVostcard.geo || null,
         avatarURL: user.photoURL || '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        state: 'posted',
+        state: currentVostcard.state || 'private',
+        type: 'vostcard' as const,
         hasVideo: !!currentVostcard.video,
         hasPhotos: currentVostcard.photos.length > 0,
         mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
         offerDetails: currentVostcard.offerDetails || null,
-        visibility: 'public'
+        visibility: currentVostcard.state === 'posted' ? 'public' : 'private'
       };
 
       console.log('📝 Saving vostcard to Firebase:', docData);
@@ -729,7 +727,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await loadAllLocalVostcards();
       await loadPostedVostcards();
         clearVostcard();
-
+      
     } catch (error) {
       console.error('Error posting vostcard:', error);
       throw error;
@@ -769,7 +767,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Sync vostcard metadata
   const syncVostcardMetadata = useCallback(async () => {
-      const user = auth.currentUser;
+    const user = auth.currentUser;
       if (!user) {
       console.log('No user authenticated, skipping metadata sync');
               return;
@@ -1032,7 +1030,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentVostcard({
       ...currentVostcard,
       ...updates,
-      updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString()
     });
   }, [currentVostcard]);
 
@@ -1040,20 +1038,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     savedVostcards,
     setSavedVostcards,
     postedVostcards,
-    currentVostcard,
-    setCurrentVostcard,
-    clearVostcard,
+        currentVostcard,
+        setCurrentVostcard,
+        clearVostcard,
     createNewVostcard,
     saveLocalVostcard,
-    postVostcard,
-    deletePrivateVostcard,
+        postVostcard,
+        deletePrivateVostcard,
     loadAllLocalVostcards,
-    loadPostedVostcards,
-    syncVostcardMetadata,
-    downloadVostcardContent,
-    cleanupDeletionMarkers,
-    clearDeletionMarkers,
-    manualCleanupFirebase,
+        loadPostedVostcards,
+        syncVostcardMetadata,
+        downloadVostcardContent,
+        cleanupDeletionMarkers,
+        clearDeletionMarkers,
+        manualCleanupFirebase,
     loadLocalVostcard,
     setVideo,
     updateVostcard
