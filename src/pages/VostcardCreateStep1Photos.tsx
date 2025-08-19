@@ -724,6 +724,7 @@ export default function VostcardCreateStep1Photos() {
               alert('Failed to delete trip. Please try again.');
             }
           }}
+        />
       )}
       {isTripModalOpen && (
         <div style={{
