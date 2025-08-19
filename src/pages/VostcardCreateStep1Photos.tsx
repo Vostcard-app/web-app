@@ -322,12 +322,22 @@ export default function VostcardCreateStep1Photos() {
         // First save the vostcard to Firebase to make sure it exists in the database
         console.log('🔄 Saving vostcard to Firebase before adding to trip...');
         
+        // Get the first photo URL from the selected photos
+        const firstPhotoFile = selectedPhotos.find(photo => photo !== null);
+        if (!firstPhotoFile) {
+          throw new Error('No photos selected');
+        }
+        
+        // Create a URL for the first photo
+        const photoURL = URL.createObjectURL(firstPhotoFile);
+        
         // Save to Firebase directly from currentVostcard
         const vostcardRef = doc(db, 'vostcards', currentVostcard.id);
         const now = Timestamp.now();
         await setDoc(vostcardRef, {
           ...currentVostcard,
           type: 'vostcard',
+          photoURL,
           createdAt: now,
           updatedAt: now
         });
@@ -339,6 +349,7 @@ export default function VostcardCreateStep1Photos() {
           type: 'vostcard',
           title: currentVostcard.title || `Vostcard ${new Date().toLocaleDateString()}`,
           description: currentVostcard.description,
+          photoURL,
           latitude: currentVostcard.geo?.latitude,
           longitude: currentVostcard.geo?.longitude
         });
