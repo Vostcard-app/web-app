@@ -712,7 +712,18 @@ export default function VostcardCreateStep1Photos() {
             setUserTrips(prev => prev.map(t => t.id === updatedTrip.id ? updatedTrip : t));
             setEditingTrip(null);
           }}
-        />
+          onDelete={async (tripId) => {
+            try {
+              await TripService.deleteTrip(tripId);
+              setUserTrips(prev => prev.filter(t => t.id !== tripId));
+              setEditingTrip(null);
+              setSelectedTripId('');
+              alert('Trip deleted successfully');
+            } catch (error) {
+              console.error('Error deleting trip:', error);
+              alert('Failed to delete trip. Please try again.');
+            }
+          }}
       )}
       {isTripModalOpen && (
         <div style={{

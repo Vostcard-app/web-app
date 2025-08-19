@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaPencilAlt } from 'react-icons/fa';
+import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 
@@ -7,9 +7,10 @@ interface EditTripNameModalProps {
   trip: Trip;
   onClose: () => void;
   onUpdate: (updatedTrip: Trip) => void;
+  onDelete: (tripId: string) => void;
 }
 
-export default function EditTripNameModal({ trip, onClose, onUpdate }: EditTripNameModalProps) {
+export default function EditTripNameModal({ trip, onClose, onUpdate, onDelete }: EditTripNameModalProps) {
   const [newName, setNewName] = useState(trip.name);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -77,37 +78,63 @@ export default function EditTripNameModal({ trip, onClose, onUpdate }: EditTripN
           autoFocus
         />
 
-        <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={onClose}
+              style={{
+                flex: 1,
+                padding: '12px',
+                backgroundColor: '#f8f9fa',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '16px',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+            
+            <button
+              onClick={handleSubmit}
+              disabled={!newName.trim() || isUpdating}
+              style={{
+                flex: 1,
+                padding: '12px',
+                backgroundColor: newName.trim() && !isUpdating ? '#002B4D' : '#cccccc',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '16px',
+                cursor: newName.trim() && !isUpdating ? 'pointer' : 'not-allowed',
+              }}
+            >
+              {isUpdating ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete this trip? This cannot be undone.')) {
+                onDelete(trip.id);
+              }
+            }}
             style={{
-              flex: 1,
               padding: '12px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #ddd',
+              backgroundColor: '#fff',
+              border: '1px solid #dc3545',
               borderRadius: '6px',
               fontSize: '16px',
+              color: '#dc3545',
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}
           >
-            Cancel
-          </button>
-          
-          <button
-            onClick={handleSubmit}
-            disabled={!newName.trim() || isUpdating}
-            style={{
-              flex: 1,
-              padding: '12px',
-              backgroundColor: newName.trim() && !isUpdating ? '#002B4D' : '#cccccc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '16px',
-              cursor: newName.trim() && !isUpdating ? 'pointer' : 'not-allowed',
-            }}
-          >
-            {isUpdating ? 'Saving...' : 'Save'}
+            <FaTrash size={14} />
+            Delete Trip
           </button>
         </div>
       </div>
