@@ -318,20 +318,18 @@ export default function VostcardCreateStep1Photos() {
         setLastUsedTrip(newTrip);
       }
 
-      if (tripId) {
+      if (tripId && currentVostcard) {
         // First save the vostcard to Firebase to make sure it exists in the database
         console.log('🔄 Saving vostcard to Firebase before adding to trip...');
-        const vostcard = await loadLocalVostcard(currentVostcard.id);
-        if (!vostcard) {
-          throw new Error('Could not load vostcard from local storage');
-        }
         
-        // Save to Firebase
+        // Save to Firebase directly from currentVostcard
         const vostcardRef = doc(db, 'vostcards', currentVostcard.id);
+        const now = Timestamp.now();
         await setDoc(vostcardRef, {
-          ...vostcard,
-          createdAt: Timestamp.now(),
-          updatedAt: Timestamp.now()
+          ...currentVostcard,
+          type: 'vostcard',
+          createdAt: now,
+          updatedAt: now
         });
         
         console.log('✅ Vostcard saved to Firebase, now adding to trip...');
