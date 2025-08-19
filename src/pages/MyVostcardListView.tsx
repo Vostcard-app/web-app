@@ -173,16 +173,31 @@ const MyVostcardListView = () => {
           hasPhotos: data.hasPhotos || false,
           _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
-          _isMetadataOnly: true
+          _isMetadataOnly: true,
+          // Add any missing fields from the original vostcard
+          ...Object.keys(vostcard).reduce((acc, key) => {
+            if (!(key in data)) {
+              acc[key] = vostcard[key];
+            }
+            return acc;
+          }, {})
         };
         setCurrentVostcard(updatedVostcard);
       } else {
         console.warn('⚠️ Could not find vostcard in Firebase, proceeding with current object');
-        setCurrentVostcard(vostcard);
+        setCurrentVostcard({
+          ...vostcard,
+          state: vostcard.state || 'private',
+          type: 'vostcard' as const
+        });
       }
     } catch (e) {
       console.warn('⚠️ Could not load from Firebase before edit, proceeding with current object');
-      setCurrentVostcard(vostcard);
+      setCurrentVostcard({
+        ...vostcard,
+        state: vostcard.state || 'private',
+        type: 'vostcard' as const
+      });
     }
     console.log('🔄 Editing in unified flow:', vostcard.id);
     navigate(`/edit/${vostcardId}`);
