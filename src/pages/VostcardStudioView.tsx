@@ -28,27 +28,27 @@ const VostcardStudioView: React.FC = () => {
   useEffect(() => {
     if (currentVostcard && title === '' && description === '') {
       console.log('📱 Loading vostcard data from context:', currentVostcard);
-      
-      // Populate fields from context
+        
+        // Populate fields from context
       setTitle(currentVostcard.title || '');
       setDescription(currentVostcard.description || '');
       setCategories(currentVostcard.categories || []);
-      
-      // Handle photos
-      if (currentVostcard.photos && currentVostcard.photos.length > 0) {
+        
+        // Handle photos
+        if (currentVostcard.photos && currentVostcard.photos.length > 0) {
         setPhotos(currentVostcard.photos);
-        // Create preview URLs for the photos
-        const previews = currentVostcard.photos.map((photo: any) => {
-          if (photo && (photo instanceof File || photo instanceof Blob)) {
-            return URL.createObjectURL(photo);
-          }
-          return '';
-        });
+          // Create preview URLs for the photos
+          const previews = currentVostcard.photos.map((photo: any) => {
+            if (photo && (photo instanceof File || photo instanceof Blob)) {
+              return URL.createObjectURL(photo);
+            }
+            return '';
+          });
         setPhotoPreviews(previews);
-      }
-      
-      // Handle location
-      if (currentVostcard.geo) {
+        }
+        
+        // Handle location
+        if (currentVostcard.geo) {
         setLocation(currentVostcard.geo);
       }
     }
@@ -98,12 +98,12 @@ const VostcardStudioView: React.FC = () => {
       alert('Please enter a title for your vostcard.');
       return;
     }
-    
+
     if (photos.length < 2) {
       alert('Please add at least 2 photos to your vostcard.');
       return;
     }
-    
+
     if (!location) {
       alert('Please select a location for your vostcard.');
       return;
@@ -145,12 +145,12 @@ const VostcardStudioView: React.FC = () => {
       alert('Please enter a title for your vostcard.');
       return;
     }
-    
-    if (photos.length < 2) {
-      alert('Please add at least 2 photos to your vostcard.');
+
+    if (photos.length < 1) {
+      alert('Please add at least 1 photo to your vostcard.');
       return;
     }
-    
+
     if (!location) {
       alert('Please select a location for your vostcard.');
       return;
@@ -211,113 +211,113 @@ const VostcardStudioView: React.FC = () => {
       <div style={{
         backgroundColor: '#07345c',
         padding: '20px',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
+            color: 'white', 
+              display: 'flex', 
+              alignItems: 'center', 
         justifyContent: 'space-between'
       }}>
         <h1 style={{ margin: 0, fontSize: '24px' }}>
           {currentVostcard ? 'Edit Vostcard' : 'Create Vostcard'}
         </h1>
-        <button
+          <button
           onClick={handleCancel}
-          style={{
+            style={{
             background: 'none',
-            border: 'none',
+              border: 'none',
             color: 'white',
-            cursor: 'pointer'
-          }}
-        >
+              cursor: 'pointer'
+            }}
+          >
           <FaTimes size={24} />
-        </button>
-      </div>
+          </button>
+        </div>
 
       {/* Content */}
       <div style={{ flex: 1, padding: '20px' }}>
         {/* Title */}
         <div style={{ marginBottom: '20px' }}>
-          <input
-            type="text"
+              <input
+                type="text"
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="Enter title"
-            style={{
-              width: '100%',
+                style={{
+                  width: '100%',
               padding: '12px',
-              fontSize: '16px',
+                  fontSize: '16px',
               border: '1px solid #ddd',
               borderRadius: '8px'
-            }}
-          />
-        </div>
+                }}
+              />
+            </div>
 
         {/* Description */}
         <div style={{ marginBottom: '20px' }}>
-          <textarea
+              <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder="Enter description"
-            style={{
-              width: '100%',
+                style={{
+                  width: '100%',
               padding: '12px',
               fontSize: '16px',
               border: '1px solid #ddd',
               borderRadius: '8px',
               minHeight: '100px',
               resize: 'vertical'
-            }}
-          />
-        </div>
+                }}
+              />
+            </div>
 
         {/* Photos */}
         <div style={{ marginBottom: '20px' }}>
           <h2 style={{ fontSize: '18px', marginBottom: '10px' }}>Photos</h2>
           <div style={{
-            display: 'grid',
+                    display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
             gap: '10px'
-          }}>
+                  }}>
             {photoPreviews.map((preview, index) => (
-              <div
-                key={index}
-                style={{
-                  position: 'relative',
-                  aspectRatio: '1',
-                  borderRadius: '8px',
+                    <div
+                      key={index}
+                      style={{
+                          position: 'relative',
+                          aspectRatio: '1',
+                          borderRadius: '8px',
                   overflow: 'hidden'
-                }}
-              >
-                <img
-                  src={preview}
-                  alt={`Photo ${index + 1}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
+                        }}
+                    >
+                      <img
+                        src={preview}
+                        alt={`Photo ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
                     objectFit: 'cover'
                   }}
                 />
-                <button
+                      <button
                   onClick={() => handleRemovePhoto(index)}
-                  style={{
-                    position: 'absolute',
+                        style={{
+                          position: 'absolute',
                     top: '5px',
                     right: '5px',
                     backgroundColor: 'rgba(0,0,0,0.5)',
-                    color: 'white',
-                    border: 'none',
+                          color: 'white',
+                          border: 'none',
                     borderRadius: '50%',
                     width: '24px',
                     height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                     cursor: 'pointer'
-                  }}
-                >
+                        }}
+                      >
                   <FaTrash size={12} />
-                </button>
-              </div>
-            ))}
+                      </button>
+                    </div>
+                  ))}
             {photos.length < 10 && (
               <button
                 onClick={() => handlePhotoSelect([/* photo blobs */])}
@@ -333,53 +333,53 @@ const VostcardStudioView: React.FC = () => {
                 }}
               >
                 <FaCamera size={24} color="#999" />
-              </button>
-            )}
-          </div>
-        </div>
+                </button>
+              )}
+            </div>
+            </div>
 
         {/* Categories */}
         <div style={{ marginBottom: '20px' }}>
           <h2 style={{ fontSize: '18px', marginBottom: '10px' }}>Categories</h2>
-          <div style={{
-            display: 'flex',
+            <div style={{
+                  display: 'flex',
             flexWrap: 'wrap',
             gap: '8px'
           }}>
             {AVAILABLE_CATEGORIES.map(category => (
-              <button
+                    <button
                 key={category}
                 onClick={() => setCategories(prev =>
                   prev.includes(category)
                     ? prev.filter(c => c !== category)
                     : [...prev, category]
                 )}
-                style={{
+                      style={{
                   padding: '8px 16px',
                   border: '1px solid #ddd',
                   borderRadius: '20px',
                   backgroundColor: categories.includes(category) ? '#07345c' : 'white',
                   color: categories.includes(category) ? 'white' : '#333',
                   cursor: 'pointer'
-                }}
-              >
-                {category}
+                      }}
+                    >
+                      {category}
               </button>
-            ))}
-          </div>
-        </div>
+                  ))}
+                </div>
+            </div>
 
         {/* Location */}
         <div style={{ marginBottom: '20px' }}>
           <h2 style={{ fontSize: '18px', marginBottom: '10px' }}>Location</h2>
-          <button
+              <button 
             onClick={handleLocationSelect}
-            style={{
-              width: '100%',
+                style={{
+                  width: '100%',
               padding: '12px',
-              border: '1px solid #ddd',
+            border: '1px solid #ddd',
               borderRadius: '8px',
-              backgroundColor: 'white',
+                  backgroundColor: 'white',
               cursor: 'pointer',
               textAlign: 'left'
             }}
@@ -387,48 +387,48 @@ const VostcardStudioView: React.FC = () => {
             {location
               ? `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`
               : 'Select location'}
-          </button>
-        </div>
+                </button>
+              </div>
 
         {/* Action Buttons */}
-        <div style={{
+                <div style={{
           display: 'flex',
           gap: '10px',
           marginTop: '20px'
         }}>
-          <button
+              <button
             onClick={handleSaveToPersonalPosts}
-            style={{
+                style={{
               flex: 1,
               padding: '12px',
-              border: 'none',
+                  border: 'none',
               borderRadius: '8px',
               backgroundColor: '#28a745',
-              color: 'white',
+                color: 'white',
               cursor: 'pointer'
             }}
           >
             Save to Personal Posts
-          </button>
-          <button
+            </button>
+              <button
             onClick={handlePostToMap}
-            style={{
+                style={{
               flex: 1,
               padding: '12px',
-              border: 'none',
-              borderRadius: '8px',
+                  border: 'none',
+                  borderRadius: '8px',
               backgroundColor: '#007bff',
               color: 'white',
               cursor: 'pointer'
             }}
           >
             Post to Map
-          </button>
-        </div>
-      </div>
+              </button>
+            </div>
+          </div>
 
-      {/* Photo Options Modal */}
-      <PhotoOptionsModal
+        {/* Photo Options Modal */}
+        <PhotoOptionsModal
         isOpen={false}
         onClose={() => {}}
         onTakePhoto={() => {}}
@@ -438,4 +438,4 @@ const VostcardStudioView: React.FC = () => {
   );
 };
 
-export default VostcardStudioView;
+export default VostcardStudioView; 
