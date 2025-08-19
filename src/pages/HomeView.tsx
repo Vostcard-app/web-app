@@ -1733,13 +1733,13 @@ const HomeView = () => {
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
-                    navigate('/my-trips');
+                    navigate(userRole === 'guide' ? `/user-profile/${userID}/tours` : '/my-trips');
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
                   onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   style={submenuItemStyle}
                 >
-                  Trips
+                  {userRole === 'guide' ? 'Tours' : 'Trips'}
                 </button>
               </>
             )}
