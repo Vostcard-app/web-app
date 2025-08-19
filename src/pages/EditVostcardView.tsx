@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash, FaUpload, FaSave } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
-import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, storage } from '../firebase/firebaseConfig';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 type Nullable<T> = T | null;
 
@@ -282,14 +284,35 @@ const EditVostcardView: React.FC = () => {
       // Save directly to Firebase
       const docRef = doc(db, 'vostcards', id!);
       const photosBlobs = photoFiles.filter(Boolean) as Blob[];
+      
+      // Upload photos to Firebase Storage
+      const photoURLs = await Promise.all(
+        photosBlobs.map(async (photo) => {
+          const photoRef = ref(storage, `vostcards/${currentVostcard!.userID}/photos/${uuidv4()}`);
+          await uploadBytes(photoRef, photo);
+          return getDownloadURL(photoRef);
+        })
+      );
+
+      // Upload video if present
+      let videoURL = null;
+      if (videoFile) {
+        const videoRef = ref(storage, `vostcards/${currentVostcard!.userID}/videos/${uuidv4()}`);
+        await uploadBytes(videoRef, videoFile);
+        videoURL = await getDownloadURL(videoRef);
+      }
+
       const updatedVostcard = {
         ...currentVostcard,
         title,
         description,
         categories,
-        photos: photosBlobs,
-        video: videoFile || null,
-        updatedAt: new Date().toISOString()
+        photoURLs,
+        videoURL,
+        hasPhotos: photosBlobs.length > 0,
+        hasVideo: !!videoFile,
+        updatedAt: serverTimestamp(),
+        state: currentVostcard?.state || 'private'
       };
       await setDoc(docRef, updatedVostcard);
       setCurrentVostcard(updatedVostcard);
