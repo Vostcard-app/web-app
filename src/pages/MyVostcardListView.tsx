@@ -149,16 +149,29 @@ const MyVostcardListView = () => {
       console.warn('⚠️ Non-fatal: could not fully hydrate content before edit:', e);
     }
 
-    // Load from local DB to ensure we have the fully restored object (like detail view)
+    // Load from Firebase to ensure we have the latest data
     try {
-      // On iOS, defer heavy Blob restoration if we're just showing thumbnails via URLs in the editor
-      await loadLocalVostcard(vostcardId, { restoreVideo: false, restorePhotos: false });
-      // After loadLocalVostcard, currentVostcard in context is replaced with restored media
-      // But to be safe, prefer the freshly loaded one for navigation state
-      const refreshed = savedVostcards.find((v: Vostcard) => v.id === vostcardId) || vostcard;
-      setCurrentVostcard(refreshed);
+      const docRef = doc(db, 'vostcards', vostcardId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const updatedVostcard = {
+          ...vostcard,
+          ...data,
+          id: vostcardId,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+          _firebasePhotoURLs: data.photoURLs || [],
+          _firebaseVideoURL: data.videoURL || null,
+          _isMetadataOnly: true
+        };
+        setCurrentVostcard(updatedVostcard);
+      } else {
+        console.warn('⚠️ Could not find vostcard in Firebase, proceeding with current object');
+        setCurrentVostcard(vostcard);
+      }
     } catch (e) {
-      console.warn('⚠️ Could not reload from local before edit, proceeding with current object');
+      console.warn('⚠️ Could not load from Firebase before edit, proceeding with current object');
       setCurrentVostcard(vostcard);
     }
     console.log('🔄 Editing in unified flow:', vostcard.id);
