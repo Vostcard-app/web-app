@@ -32,7 +32,6 @@ export default defineConfig({
       external: [
         'nodemailer', // Server-side only
         'gapi-script', // Server-side only
-        'emailjs-com', // Server-side only
         '@sapper/app' // Server-side only
       ],
       output: {
@@ -60,12 +59,12 @@ export default defineConfig({
       'firebase/app',
       'firebase/auth',
       'firebase/firestore',
-      'firebase/storage'
+      'firebase/storage',
+      'emailjs-com'
     ],
     exclude: [
       'nodemailer', // Server-side only
       'gapi-script', // Server-side only
-      'emailjs-com', // Server-side only
       '@sapper/app' // Server-side only
     ]
   },
