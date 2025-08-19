@@ -24,10 +24,15 @@ export const TourService = {
       );
       
       const snapshot = await getDocs(q);
-      const tours = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Tour));
+      const tours = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate()
+        } as Tour;
+      });
       
       console.log('✅ Loaded tours:', tours);
       return tours;
