@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { auth, db, storage } from '../firebase/firebaseConfig';
-import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, serverTimestamp, orderBy } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from './AuthContext';
 import type { Vostcard, FirebaseVostcard } from '../types/VostcardTypes';
@@ -33,6 +33,7 @@ interface VostcardContextType {
   manualCleanupFirebase: () => Promise<void>;
   loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
   setVideo: (video: Blob) => void;
+  updateVostcard: (updates: Partial<Vostcard>) => void;
 }
 
 // Create context
@@ -43,7 +44,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [savedVostcards, setSavedVostcards] = useState<Vostcard[]>([]);
   const [postedVostcards, setPostedVostcards] = useState<Vostcard[]>([]);
   const [currentVostcard, setCurrentVostcard] = useState<Vostcard | null>(null);
-  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<Date | null>(null);
+  const [, setLastSyncTimestamp] = useState<Date | null>(null);
   const authContext = useAuth();
 
   // Helper function to get correct username
@@ -64,7 +65,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Try to open existing database first
       const request = indexedDB.open(dbName, DB_VERSION);
       
-      request.onerror = (event) => {
+      request.onerror = () => {
         const error = request.error;
         if (error?.name === 'VersionError') {
           console.log('Version error, attempting to migrate data...');
@@ -138,7 +139,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         resolve(request.result);
       };
 
-      request.onupgradeneeded = (event) => {
+      request.onupgradeneeded = () => {
         console.log('Upgrading database to version:', DB_VERSION);
         const db = request.result;
         
@@ -166,11 +167,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Create new vostcard
   const createNewVostcard = useCallback(() => {
-    const user = auth.currentUser;
-    if (!user) {
+      const user = auth.currentUser;
+      if (!user) {
       console.error('No user authenticated');
-      return;
-    }
+        return;
+      }
 
     const newVostcard: Vostcard = {
       id: crypto.randomUUID(),
@@ -187,7 +188,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       hasVideo: false,
       hasPhotos: false,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      geo: null
     };
 
     console.log('🆕 Creating new vostcard:', {
@@ -292,8 +294,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
 
           // Handle legacy quickcards
-          const isLegacyQuickcard = vostcard.type === 'quickcard' || vostcard.id.includes('quickcard_');
-          if (isLegacyQuickcard) {
+          if (vostcard.id.includes('quickcard_')) {
             console.log('📦 Found legacy quickcard:', vostcard.id);
             // Treat all legacy quickcards as posted
             vostcard.state = 'posted';
@@ -326,17 +327,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             vostcard.updatedAt = new Date().toISOString();
           }
 
-          // Ensure state is valid
+          // Ensure state and type are valid
           if (!vostcard.state || !['private', 'posted'].includes(vostcard.state)) {
-            console.warn('⚠️ Vostcard has invalid state:', vostcard.id, vostcard.state);
+            console.warn('⚠️ Missing or invalid state, defaulting to private:', vostcard.id);
             vostcard.state = 'private';
           }
-
-          // Ensure type is set
-          if (!vostcard.type) {
-            console.warn('⚠️ Missing type, defaulting to vostcard:', vostcard.id);
-            vostcard.type = 'vostcard';
-          }
+          vostcard.type = 'vostcard';
 
           return true;
     } catch (error) {
@@ -420,17 +416,36 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       
       const querySnapshot = await getDocs(q);
-      const allVostcards = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const allVostcards = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title || '',
+          description: data.description || '',
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          username: data.username || '',
+          userID: data.userID || '',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          state: data.state || 'private',
+          type: 'vostcard' as const,
+          video: null,
+          photos: [],
+          geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
+          hasVideo: data.hasVideo || false,
+          hasPhotos: data.hasPhotos || false,
+          _firebaseVideoURL: data.videoURL || null,
+          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+          _isMetadataOnly: true
+        };
+      });
       
       // Filter for posted vostcards and sort by date
       const sortedVostcards = allVostcards
         .filter(v => v.state === 'posted')
         .sort((a, b) => {
-          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
-          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
           return dateB.getTime() - dateA.getTime();
         });
 
@@ -506,7 +521,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             });
     }
 
-    return {
+          return {
             id: doc.id,
             title: data.title || 'Untitled',
             description: data.description || '',
@@ -516,8 +531,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             createdAt,
             updatedAt,
             state: 'posted' as const,
+            type: 'vostcard' as const,
             isOffer: !!data.isOffer,
-            offerDetails: data.offerDetails || null,
+            offerDetails: data.offerDetails || undefined,
             geo,
             video: null,
             photos: [],
@@ -547,34 +563,28 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return false;
         }
 
-        // Handle migrated quickcards
-        const isLegacyQuickcard = v.type === 'quickcard' || v.id.includes('quickcard_');
-        if (isLegacyQuickcard) {
-          console.log('📦 Found legacy quickcard:', v.id);
-          // Treat all legacy quickcards as posted
-          v.state = 'posted';
-          v.type = 'vostcard';
-        }
+                  // Handle migrated quickcards
+          if (v.id.includes('quickcard_')) {
+            console.log('📦 Found legacy quickcard:', v.id);
+            // Treat all legacy quickcards as posted
+            v.state = 'posted';
+            v.type = 'vostcard';
+          }
 
-        // Ensure state is valid
-        if (!v.state) {
-          console.warn('⚠️ Missing state, defaulting to private:', v.id);
-          v.state = 'private';
-        }
-
-        // Ensure type is set
-        if (!v.type) {
-          console.warn('⚠️ Missing type, defaulting to vostcard:', v.id);
+                  // Ensure state and type are valid
+          if (!v.state || !['private', 'posted'].includes(v.state)) {
+            console.warn('⚠️ Missing or invalid state, defaulting to posted:', v.id);
+            v.state = 'posted';
+          }
           v.type = 'vostcard';
-        }
 
         return true;
       });
 
       // Split into posted and non-posted, and sort both by most recent
       const sortByDate = (a: any, b: any) => {
-        const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
-        const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+                  const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
         return dateB.getTime() - dateA.getTime();
       };
 
@@ -626,7 +636,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       console.log('Uploading media to Firebase Storage...');
       const photoURLs = await Promise.all(
-            currentVostcard.photos.map(async (photo, idx) => {
+            currentVostcard.photos.map(async (photo) => {
           const photoRef = ref(storage, `vostcards/${user.uid}/photos/${uuidv4()}`);
           await uploadBytes(photoRef, photo);
           return getDownloadURL(photoRef);
@@ -899,7 +909,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       // If we have URLs but no files, try to restore them
-      if (vostcard._firebasePhotoURLs?.length > 0 && (!vostcard.photos || vostcard.photos.length === 0)) {
+      if (vostcard._firebasePhotoURLs && vostcard._firebasePhotoURLs.length > 0 && (!vostcard.photos || vostcard.photos.length === 0)) {
         if (options?.restorePhotos !== false) {
           console.log('🔄 Restoring photos from URLs...');
           const photoBlobs = await Promise.all(
@@ -1013,6 +1023,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, [currentVostcard]);
 
+  const updateVostcard = useCallback((updates: Partial<Vostcard>) => {
+    if (!currentVostcard) {
+      console.error('No vostcard to update');
+      return;
+    }
+
+    setCurrentVostcard({
+      ...currentVostcard,
+      ...updates,
+      updatedAt: new Date().toISOString()
+    });
+  }, [currentVostcard]);
+
   const value = {
     savedVostcards,
     setSavedVostcards,
@@ -1032,7 +1055,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     clearDeletionMarkers,
     manualCleanupFirebase,
     loadLocalVostcard,
-    setVideo
+    setVideo,
+    updateVostcard
   };
 
   return (

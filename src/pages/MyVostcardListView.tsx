@@ -156,13 +156,23 @@ const MyVostcardListView = () => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const updatedVostcard = {
-          ...vostcard,
-          ...data,
           id: vostcardId,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-          _firebasePhotoURLs: data.photoURLs || [],
+          title: data.title || '',
+          description: data.description || '',
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          username: data.username || '',
+          userID: data.userID || '',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          state: data.state || 'private',
+          type: 'vostcard' as const,
+          video: null,
+          photos: [],
+          geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
+          hasVideo: data.hasVideo || false,
+          hasPhotos: data.hasPhotos || false,
           _firebaseVideoURL: data.videoURL || null,
+          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
           _isMetadataOnly: true
         };
         setCurrentVostcard(updatedVostcard);

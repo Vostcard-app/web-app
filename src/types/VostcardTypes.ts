@@ -6,6 +6,7 @@ import { Timestamp } from 'firebase/firestore';
 export interface Vostcard {
   id: string;
   state: 'private' | 'posted';
+  type: 'vostcard';
   video: Blob | null;
   title: string;
   description: string;
@@ -50,10 +51,12 @@ export interface FirebaseVostcard {
   photoURLs?: string[];
   latitude?: number;
   longitude?: number;
+  geo?: { latitude: number; longitude: number };
   categories: string[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
   state: 'private' | 'posted';
+  type: 'vostcard';
   visibility: 'private' | 'public';
   isOffer?: boolean;
   // Removed isQuickcard field

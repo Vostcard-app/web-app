@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash, FaUpload, FaSave } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 type Nullable<T> = T | null;
 
@@ -11,11 +11,9 @@ const EditVostcardView: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
-  const {
+      const {
     currentVostcard,
     setCurrentVostcard,
-    downloadVostcardContent,
-    loadLocalVostcard,
     updateVostcard,
     saveLocalVostcard,
     postVostcard,
@@ -70,41 +68,35 @@ const EditVostcardView: React.FC = () => {
       }
       try {
         setIsLoading(true);
-        // Always ensure hydrated like detail view, but never hang the UI
-        const task = (async () => {
-          await downloadVostcardContent(id);
-          await loadLocalVostcard(id);
-        })();
-        // Give up waiting after 2000ms and proceed with whatever is available
-        await Promise.race([
-          task,
-          new Promise<void>(resolve => setTimeout(() => resolve(), 2000))
-        ]);
-        // After async calls, try to initialize from context; otherwise direct fetch
-        const tryInit = async () => {
-          if (currentVostcard && currentVostcard.id === id) {
-            initializeFromVostcard(currentVostcard);
-            return true;
-          }
-          // Fallback: direct Firestore fetch (like detail view)
-          try {
-            const ref = doc(db, 'vostcards', id);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-              const data = snap.data();
-              initializeFromVostcard({ id: snap.id, ...data });
-              return true;
-            }
-          } catch (e) {
-            console.warn('⚠️ Direct fetch fallback failed:', e);
-          }
-          return false;
-        };
-        const ok = await tryInit();
-        if (!ok) {
-          // Give one more tick to allow context state propagation
-          await new Promise(r => setTimeout(r, 0));
-          await tryInit();
+        // Try to fetch directly from Firebase
+        const ref = doc(db, 'vostcards', id);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          const updatedVostcard = {
+            id: snap.id,
+            title: data.title || '',
+            description: data.description || '',
+            categories: Array.isArray(data.categories) ? data.categories : [],
+            username: data.username || '',
+            userID: data.userID || '',
+            createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+            state: data.state || 'private',
+            type: 'vostcard' as const,
+            video: null,
+            photos: [],
+            geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
+            hasVideo: data.hasVideo || false,
+            hasPhotos: data.hasPhotos || false,
+            _firebaseVideoURL: data.videoURL || null,
+            _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+            _isMetadataOnly: true
+          };
+          setCurrentVostcard(updatedVostcard);
+          initializeFromVostcard(updatedVostcard);
+        } else {
+          throw new Error('Vostcard not found');
         }
       } catch (e: any) {
         console.error('❌ Edit hydrate failed:', e);
@@ -296,9 +288,20 @@ const EditVostcardView: React.FC = () => {
         photos: photosBlobs,
         video: videoFile || null,
       });
-      await saveLocalVostcard();
-      // After save, ensure current is set for any further navigation
-      if (currentVostcard) setCurrentVostcard({ ...currentVostcard, title, description, categories });
+      // Save directly to Firebase
+      const docRef = doc(db, 'vostcards', id!);
+      const photosBlobs = photoFiles.filter(Boolean) as Blob[];
+      const updatedVostcard = {
+        ...currentVostcard,
+        title,
+        description,
+        categories,
+        photos: photosBlobs,
+        video: videoFile || null,
+        updatedAt: new Date().toISOString()
+      };
+      await setDoc(docRef, updatedVostcard);
+      setCurrentVostcard(updatedVostcard);
       alert('Saved!');
       navigate(-1);
     } catch (e) {
