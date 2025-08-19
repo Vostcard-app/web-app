@@ -7,11 +7,66 @@ import {
   where,
   getDocs,
   orderBy,
-  Timestamp
+  Timestamp,
+  addDoc
 } from 'firebase/firestore';
 import type { Tour, TourPost } from '../types/TourTypes';
 
 export const TourService = {
+  async getToursByCreator(creatorId: string): Promise<Tour[]> {
+    try {
+      console.log('🔍 Loading tours for creator:', creatorId);
+      const toursRef = collection(db, 'tours');
+      const q = query(
+        toursRef,
+        where('creatorId', '==', creatorId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const snapshot = await getDocs(q);
+      const tours = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Tour));
+      
+      console.log('✅ Loaded tours:', tours);
+      return tours;
+    } catch (error) {
+      console.error('❌ Error loading tours:', error);
+      throw error;
+    }
+  },
+
+  async createTour(data: {
+    name: string;
+    description?: string;
+    creatorId: string;
+    isPublic?: boolean;
+  }): Promise<Tour> {
+    try {
+      console.log('📝 Creating new tour:', data);
+      const toursRef = collection(db, 'tours');
+      const tourData = {
+        ...data,
+        postIds: [],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        isPublic: data.isPublic ?? false
+      };
+      
+      const docRef = await addDoc(toursRef, tourData);
+      console.log('✅ Tour created with ID:', docRef.id);
+      
+      return {
+        id: docRef.id,
+        ...tourData
+      } as Tour;
+    } catch (error) {
+      console.error('❌ Error creating tour:', error);
+      throw error;
+    }
+  },
+
   async getTourPosts(tour: Tour): Promise<TourPost[]> {
     try {
       const posts: TourPost[] = [];
