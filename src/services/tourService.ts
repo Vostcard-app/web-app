@@ -9,7 +9,8 @@ import {
   orderBy,
   Timestamp,
   addDoc,
-  deleteDoc
+  deleteDoc,
+  updateDoc
 } from 'firebase/firestore';
 import type { Tour, TourPost } from '../types/TourTypes';
 
@@ -69,6 +70,39 @@ export const TourService = {
       } as Tour;
     } catch (error) {
       console.error('❌ Error creating tour:', error);
+      throw error;
+    }
+  },
+
+  async updateTour(tourId: string, data: Partial<Tour>): Promise<Tour> {
+    try {
+      console.log('📝 Updating tour:', tourId, data);
+      const tourRef = doc(db, 'tours', tourId);
+      
+      const updateData = {
+        ...data,
+        updatedAt: Timestamp.now()
+      };
+      
+      await updateDoc(tourRef, updateData);
+      
+      // Get the updated tour
+      const updatedDoc = await getDoc(tourRef);
+      if (!updatedDoc.exists()) {
+        throw new Error('Tour not found after update');
+      }
+      
+      const tourData = updatedDoc.data();
+      console.log('✅ Tour updated successfully');
+      
+      return {
+        id: updatedDoc.id,
+        ...tourData,
+        createdAt: tourData.createdAt?.toDate(),
+        updatedAt: tourData.updatedAt?.toDate()
+      } as Tour;
+    } catch (error) {
+      console.error('❌ Error updating tour:', error);
       throw error;
     }
   },
