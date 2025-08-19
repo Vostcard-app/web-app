@@ -27,7 +27,7 @@ import ScrollingCameraView from "./pages/ScrollingCameraView";
 import CameraView from "./pages/CameraView";
 
 import Step2CameraView from "./pages/Step2CameraView";
-import SavedVostcardsListView from "./pages/SavedVostcardsListView.tsx";
+import SavedVostcardsListView from "./pages/SavedVostcardsListView";
 import SettingsView from "./pages/SettingsView";
 import AccountSettingsView from "./pages/AccountSettingsView";
 import UserSettingsView from "./pages/UserSettingsView";

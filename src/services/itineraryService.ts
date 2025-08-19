@@ -374,22 +374,23 @@ export const ItineraryService = {
       let longitude = data.longitude;
       let username = data.username;
 
-      if (!title || !photoURL) {
-        try {
-          const vostcardDoc = await getDoc(doc(db, 'vostcards', data.vostcardID));
-          if (vostcardDoc.exists()) {
-            const vostcardData = vostcardDoc.data();
-            title = title || vostcardData.title || 'Untitled';
-            description = description || vostcardData.description;
-            photoURL = photoURL || vostcardData.photoURL;
-            latitude = latitude || vostcardData.latitude;
-            longitude = longitude || vostcardData.longitude;
-            username = username || vostcardData.username;
-          }
-        } catch (fetchError) {
-          console.warn('⚠️ Could not fetch vostcard data for caching:', fetchError);
-          title = title || 'Untitled';
+      // Always fetch from vostcards collection to ensure we have latest data
+      try {
+        const vostcardDoc = await getDoc(doc(db, 'vostcards', data.vostcardID));
+        if (vostcardDoc.exists()) {
+          const vostcardData = vostcardDoc.data();
+          title = title || vostcardData.title || 'Untitled';
+          description = description || vostcardData.description;
+          photoURL = photoURL || vostcardData.photoURLs?.[0] || vostcardData.photoURL;
+          latitude = latitude || vostcardData.latitude || vostcardData.geo?.latitude;
+          longitude = longitude || vostcardData.longitude || vostcardData.geo?.longitude;
+          username = username || vostcardData.username;
+          // Always treat as vostcard type
+          data.type = 'vostcard';
         }
+      } catch (fetchError) {
+        console.warn('⚠️ Could not fetch vostcard data for caching:', fetchError);
+        title = title || 'Untitled';
       }
 
       const itemDoc: ItineraryItemFirebaseDoc = {
