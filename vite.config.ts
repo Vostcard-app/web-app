@@ -29,7 +29,12 @@ export default defineConfig({
       input: {
         main: '/index.html'
       },
-      external: ['nodemailer'], // Server-side only
+      external: [
+        'nodemailer', // Server-side only
+        'gapi-script', // Server-side only
+        'emailjs-com', // Server-side only
+        '@sapper/app' // Server-side only
+      ],
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
@@ -57,7 +62,12 @@ export default defineConfig({
       'firebase/firestore',
       'firebase/storage'
     ],
-    exclude: ['nodemailer'] // Server-side only
+    exclude: [
+      'nodemailer', // Server-side only
+      'gapi-script', // Server-side only
+      'emailjs-com', // Server-side only
+      '@sapper/app' // Server-side only
+    ]
   },
   resolve: {
     alias: {
