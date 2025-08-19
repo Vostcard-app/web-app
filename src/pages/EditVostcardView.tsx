@@ -319,7 +319,11 @@ const EditVostcardView: React.FC = () => {
         updatedAt: serverTimestamp(),
         state: currentVostcard?.state || 'private',
         userID: user.uid,
-        username: user.displayName || user.email?.split('@')[0] || 'Unknown'
+        username: user.displayName || user.email?.split('@')[0] || 'Unknown',
+        visibility: currentVostcard?.state === 'posted' ? 'public' : 'private',
+        type: 'vostcard' as const,
+        geo: currentVostcard?.geo || null,
+        mediaUploadStatus: 'complete'
       };
       await setDoc(docRef, updatedVostcard);
       setCurrentVostcard(updatedVostcard);
