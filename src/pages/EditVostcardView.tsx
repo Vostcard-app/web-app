@@ -126,8 +126,8 @@ const EditVostcardView: React.FC = () => {
             try { localUrls[idx] = URL.createObjectURL(p); } catch {}
           }
         });
-      } else if (Array.isArray(v.photoURLs) && v.photoURLs.length > 0) {
-        v.photoURLs.slice(0, 4).forEach((u: string, idx: number) => {
+      } else if (Array.isArray(v._firebasePhotoURLs) && v._firebasePhotoURLs.length > 0) {
+        v._firebasePhotoURLs.slice(0, 4).forEach((u: string, idx: number) => {
           localUrls[idx] = u;
         });
       }
@@ -181,8 +181,8 @@ const EditVostcardView: React.FC = () => {
           try { nextUrls[idx] = URL.createObjectURL(p); } catch {}
         }
       });
-    } else if (Array.isArray((currentVostcard as any).photoURLs) && (currentVostcard as any).photoURLs.length > 0) {
-      (currentVostcard as any).photoURLs.slice(0, 4).forEach((u: string, idx: number) => {
+    } else if (Array.isArray((currentVostcard as any)._firebasePhotoURLs) && (currentVostcard as any)._firebasePhotoURLs.length > 0) {
+      (currentVostcard as any)._firebasePhotoURLs.slice(0, 4).forEach((u: string, idx: number) => {
         nextUrls[idx] = u;
       });
     }
