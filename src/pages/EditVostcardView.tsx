@@ -279,15 +279,6 @@ const EditVostcardView: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      // Push edited fields into context, then save
-      const photosBlobs = photoFiles.filter(Boolean) as Blob[];
-      updateVostcard({
-        title,
-        description,
-        categories,
-        photos: photosBlobs,
-        video: videoFile || null,
-      });
       // Save directly to Firebase
       const docRef = doc(db, 'vostcards', id!);
       const photosBlobs = photoFiles.filter(Boolean) as Blob[];
