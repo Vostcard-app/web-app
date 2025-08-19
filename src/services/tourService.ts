@@ -8,7 +8,8 @@ import {
   getDocs,
   orderBy,
   Timestamp,
-  addDoc
+  addDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import type { Tour, TourPost } from '../types/TourTypes';
 
@@ -68,6 +69,18 @@ export const TourService = {
       } as Tour;
     } catch (error) {
       console.error('❌ Error creating tour:', error);
+      throw error;
+    }
+  },
+
+  async deleteTour(tourId: string): Promise<void> {
+    try {
+      console.log('🗑️ Deleting tour:', tourId);
+      const tourRef = doc(db, 'tours', tourId);
+      await deleteDoc(tourRef);
+      console.log('✅ Tour deleted successfully');
+    } catch (error) {
+      console.error('❌ Error deleting tour:', error);
       throw error;
     }
   },
