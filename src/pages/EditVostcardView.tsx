@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaArrowLeft, FaTrash, FaUpload, FaSave } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
-import { db, storage } from '../firebase/firebaseConfig';
+import { db, storage, auth } from '../firebase/firebaseConfig';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
@@ -302,6 +302,11 @@ const EditVostcardView: React.FC = () => {
         videoURL = await getDownloadURL(videoRef);
       }
 
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
       const updatedVostcard = {
         ...currentVostcard,
         title,
@@ -312,7 +317,9 @@ const EditVostcardView: React.FC = () => {
         hasPhotos: photosBlobs.length > 0,
         hasVideo: !!videoFile,
         updatedAt: serverTimestamp(),
-        state: currentVostcard?.state || 'private'
+        state: currentVostcard?.state || 'private',
+        userID: user.uid,
+        username: user.displayName || user.email?.split('@')[0] || 'Unknown'
       };
       await setDoc(docRef, updatedVostcard);
       setCurrentVostcard(updatedVostcard);
