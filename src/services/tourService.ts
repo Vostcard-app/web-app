@@ -44,21 +44,23 @@ export const TourService = {
     }
   },
 
-  async createTour(data: {
+  async createTour(creatorId: string, data: {
     name: string;
     description?: string;
-    creatorId: string;
+    postIds: string[];
     isPublic?: boolean;
+    isShareable?: boolean;
   }): Promise<Tour> {
     try {
-      console.log('📝 Creating new tour:', data);
+      console.log('📝 Creating new tour:', creatorId, data);
       const toursRef = collection(db, 'tours');
       const tourData = {
         ...data,
-        postIds: [],
+        creatorId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-        isPublic: data.isPublic ?? false
+        isPublic: data.isPublic ?? false,
+        isShareable: data.isShareable ?? false
       };
       
       const docRef = await addDoc(toursRef, tourData);
