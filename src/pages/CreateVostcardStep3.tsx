@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaPencilAlt } from 'react-icons/fa';
 import { db, auth, storage } from '../firebase/firebaseConfig';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, orderBy, getDocs, limit, doc, setDoc } from 'firebase/firestore';
 import { AVAILABLE_CATEGORIES } from '../types/VostcardTypes';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
+import EditTripNameModal from '../components/EditTripNameModal';
+import { useAuth } from '../context/AuthContext';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +27,17 @@ const CreateVostcardStep3: React.FC = () => {
 
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [authStatus, setAuthStatus] = useState<string>('Checking...');
+  
+  // Trip functionality states
+  const [isTripModalOpen, setIsTripModalOpen] = useState(false);
+  const [userTrips, setUserTrips] = useState<Trip[]>([]);
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const [newTripName, setNewTripName] = useState('');
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
+  const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
+  const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  
+  const { user } = useAuth();
 
   const availableCategories = [...AVAILABLE_CATEGORIES]
   
@@ -68,6 +81,95 @@ const CreateVostcardStep3: React.FC = () => {
     const unsubscribe = auth.onAuthStateChanged(checkAuth);
     return () => unsubscribe();
   }, []);
+
+  // Load user trips when component mounts
+  useEffect(() => {
+    const loadTrips = async () => {
+      if (!user) return;
+      
+      try {
+        const trips = await TripService.getUserTrips(user.uid);
+        setUserTrips(trips);
+        
+        // Set last used trip if available
+        if (trips.length > 0) {
+          const sortedTrips = trips.sort((a, b) => 
+            (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0)
+          );
+          setLastUsedTrip(sortedTrips[0]);
+        }
+      } catch (error) {
+        console.error('Error loading trips:', error);
+      }
+    };
+
+    loadTrips();
+  }, [user]);
+
+  // Trip handler functions
+  const handleAddToTrip = () => {
+    // Pre-select the last used trip if available
+    if (lastUsedTrip) {
+      setSelectedTripId(lastUsedTrip.id);
+    }
+    setIsTripModalOpen(true);
+  };
+
+  const handleTripSelection = async () => {
+    if (!selectedTripId && !newTripName.trim()) {
+      alert('Please select a trip or enter a new trip name');
+      return;
+    }
+
+    if (!currentVostcard) {
+      alert('No vostcard to add to trip');
+      return;
+    }
+
+    setIsCreatingTrip(true);
+
+    try {
+      let tripId = selectedTripId;
+
+      // Create new trip if needed
+      if (!tripId && newTripName.trim()) {
+        const newTrip = await TripService.createTrip({
+          name: newTripName.trim(),
+          description: '',
+          isPrivate: true
+        });
+        tripId = newTrip.id;
+        
+        // Add to trips list
+        setUserTrips(prev => [newTrip, ...prev]);
+        setLastUsedTrip(newTrip);
+      }
+
+      if (tripId && currentVostcard.geo) {
+        // Add vostcard to trip
+        await TripService.addItemToTrip(tripId, {
+          vostcardID: currentVostcard.id,
+          type: 'vostcard',
+          title: currentVostcard.title || `Vostcard ${new Date().toLocaleDateString()}`,
+          description: currentVostcard.description,
+          photoURL: currentVostcard.photos?.[0] ? URL.createObjectURL(currentVostcard.photos[0]) : undefined,
+          latitude: currentVostcard.geo?.latitude,
+          longitude: currentVostcard.geo?.longitude,
+          username: currentVostcard.username
+        });
+        
+        alert('Successfully added to trip!');
+        setIsTripModalOpen(false);
+        setSelectedTripId('');
+        setNewTripName('');
+      }
+    } catch (error) {
+      console.error('Error adding to trip:', error);
+      alert('Failed to add to trip. Please try again.');
+    } finally {
+      setIsCreatingTrip(false);
+    }
+  };
 
   // Test Firebase Storage upload
   const testStorageUpload = async () => {
@@ -335,7 +437,7 @@ const CreateVostcardStep3: React.FC = () => {
             Add to Trip (Optional)
           </label>
           <button
-            onClick={() => navigate('/my-trips')}
+            onClick={handleAddToTrip}
             style={{
               backgroundColor: '#28a745',
               color: 'white',
@@ -433,6 +535,159 @@ const CreateVostcardStep3: React.FC = () => {
                   <span style={{ fontSize: '16px', fontWeight: '500', textAlign: 'center' }}>{cat}</span>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trip Modal */}
+      {editingTrip && (
+        <EditTripNameModal
+          trip={editingTrip}
+          onClose={() => setEditingTrip(null)}
+          onUpdate={(updatedTrip) => {
+            setUserTrips(prev => prev.map(t => t.id === updatedTrip.id ? updatedTrip : t));
+            setEditingTrip(null);
+          }}
+          onDelete={async (tripId) => {
+            try {
+              await TripService.deleteTrip(tripId);
+              setUserTrips(prev => prev.filter(t => t.id !== tripId));
+              setEditingTrip(null);
+            } catch (error) {
+              console.error('Error deleting trip:', error);
+              alert('Failed to delete trip. Please try again.');
+            }
+          }}
+        />
+      )}
+      {isTripModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px',
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '100%',
+            maxWidth: '400px',
+            maxHeight: '70vh',
+            overflowY: 'auto',
+          }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '20px' }}>Add to Trip</h3>
+            
+            {userTrips.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                  Select Existing Trip:
+                </label>
+                <select
+                  value={selectedTripId}
+                  onChange={(e) => setSelectedTripId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '6px',
+                    border: '1px solid #ddd',
+                    fontSize: '16px'
+                  }}
+                >
+                  <option value="">Choose a trip...</option>
+                  {userTrips.map((trip) => (
+                    <option key={trip.id} value={trip.id}>
+                      {trip.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedTripId && (
+                  <button
+                    onClick={() => {
+                      const trip = userTrips.find(t => t.id === selectedTripId);
+                      if (trip) {
+                        setEditingTrip(trip);
+                      }
+                    }}
+                    style={{
+                      marginTop: '8px',
+                      padding: '6px 12px',
+                      backgroundColor: '#f8f9fa',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <FaPencilAlt size={12} />
+                    Edit Trip Name
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Or Create New Trip:
+              </label>
+              <input
+                type="text"
+                value={newTripName}
+                onChange={(e) => setNewTripName(e.target.value)}
+                placeholder="Enter trip name"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ddd',
+                  fontSize: '16px'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => setIsTripModalOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#f8f9fa',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              
+              <button
+                onClick={handleTripSelection}
+                disabled={!selectedTripId && !newTripName.trim() || isCreatingTrip}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: (selectedTripId || newTripName.trim()) && !isCreatingTrip ? '#002B4D' : '#cccccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '16px',
+                  cursor: (selectedTripId || newTripName.trim()) && !isCreatingTrip ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {isCreatingTrip ? 'Adding...' : 'Add to Trip'}
+              </button>
             </div>
           </div>
         </div>
