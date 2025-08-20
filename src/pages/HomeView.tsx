@@ -91,13 +91,12 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
   const map = useMap();
 
   useEffect(() => {
-    // ✅ ONLY allow INITIAL positioning (first load) - no subsequent auto-recentering
-    if (targetLocation && map && shouldUpdateMapView && !hasRecenteredOnce.current) {
+    // ✅ Allow INITIAL positioning AND browse location updates
+    if (targetLocation && map && shouldUpdateMapView) {
       const currentZoom = map.getZoom();
-      map.setView(targetLocation, currentZoom);
+      console.log('🗺️ MapUpdater: Centering map on target location:', targetLocation);
+      map.setView(targetLocation, Math.max(currentZoom, 13)); // Ensure minimum zoom level for browse areas
       hasRecenteredOnce.current = true;
-      stableShouldUpdateMapView(false);
-    } else if (shouldUpdateMapView && hasRecenteredOnce.current) {
       stableShouldUpdateMapView(false);
     }
   }, [targetLocation, map, shouldUpdateMapView]);
@@ -408,8 +407,8 @@ const HomeView = () => {
       setBrowseLocation(browseLocationState);
       browseLocationRef.current = browseLocationState;
       setMapTargetLocation(browseLocationState.coordinates);
-      // setShouldUpdateMapView(true); // DISABLED - no auto-recentering
-      console.log('🗺️ Navigation: Setting map target for browse area (intentional override)');
+      setShouldUpdateMapView(true); // ✅ ENABLED for browse areas - we want to center on the browsed location
+      console.log('🗺️ Navigation: Setting map target for browse area and enabling map update');
       // Remove the immediate state clearing - let it persist for this render cycle
     }
   }, [browseLocationState]);
@@ -420,8 +419,12 @@ const HomeView = () => {
       console.log('🗺️ Clearing navigation state after browse location set');
       // Clear the navigation state after the location has been set
       navigate(location.pathname, { replace: true, state: {} });
+      
+      // Force reload vostcards for the new browse location
+      console.log('🗺️ Reloading content for browse location:', browseLocation.name);
+      loadVostcards(true); // Force refresh to load content for browse area
     }
-  }, [browseLocation, browseLocationState, navigate, location.pathname]);
+  }, [browseLocation, browseLocationState, navigate, location.pathname, loadVostcards]);
 
   // Update ref when browse location changes
   useEffect(() => {
