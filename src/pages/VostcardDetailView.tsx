@@ -379,17 +379,22 @@ const VostcardDetailView: React.FC = () => {
 
   // ✅ Performance optimization - memoize photo URLs and audio detection
   const photoURLs = useMemo(() => {
-    const urls = vostcard?.photoURLs || [];
+    // Check both old (photoURLs) and new (_firebasePhotoURLs) formats
+    const oldFormat = vostcard?.photoURLs || [];
+    const newFormat = vostcard?._firebasePhotoURLs || [];
+    const urls = oldFormat.length > 0 ? oldFormat : newFormat;
+    
     console.log('🔍 VostcardDetailView Photo Debug:', {
       vostcardId: vostcard?.id,
       photoURLs: vostcard?.photoURLs,
-      photoURLsLength: urls.length,
-      hasPhotos: vostcard?.hasPhotos,
       _firebasePhotoURLs: vostcard?._firebasePhotoURLs,
+      finalUrls: urls,
+      finalUrlsLength: urls.length,
+      hasPhotos: vostcard?.hasPhotos,
       allVostcardKeys: vostcard ? Object.keys(vostcard) : []
     });
     return urls;
-  }, [vostcard?.photoURLs, vostcard?.id]);
+  }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
   const hasAudio = useMemo(() => {
     const audioExists = !!(
       vostcard?.audioURL || 
