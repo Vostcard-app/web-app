@@ -6,6 +6,7 @@ import { Timestamp } from 'firebase/firestore';
 export interface Vostcard {
   id: string;
   state: 'private' | 'posted';
+  visibility: 'private' | 'public';
   type: 'vostcard';
   video: Blob | null;
   title: string;
@@ -47,6 +48,8 @@ export interface FirebaseVostcard {
   description: string;
   username: string;
   userID: string;
+  state: 'private' | 'posted';
+  visibility: 'private' | 'public';
   videoURL?: string;
   photoURLs?: string[];
   latitude?: number;
