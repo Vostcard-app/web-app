@@ -1342,9 +1342,9 @@ const HomeView = () => {
       // Ensure context consumers see the update before navigation
       await new Promise((resolve) => setTimeout(resolve, 60));
       
-      // Always use the unified flow
-      console.log('🔄 Editing post:', lastPost.id);
-      navigate(`/vostcard/${lastPost.id}`);
+      // Navigate to edit view of the last post
+      console.log('🔄 Navigating to edit last post:', lastPost.id);
+      navigate(`/edit/${lastPost.id}`);
       
     } catch (error) {
       console.error('Error loading posts:', error);
