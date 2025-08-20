@@ -498,7 +498,7 @@ const EditVostcardView: React.FC = () => {
                     // Post to map using the context function
                     await postVostcard();
                     alert('Posted to the map!');
-                    navigate('/home');
+                    navigate('/home', { state: { justPosted: true } });
                   } catch (e) {
                     console.error('Post error:', e);
                     alert('Failed to post. Please try again.');
