@@ -446,8 +446,8 @@ export default function CreateVostcardStep2() {
         </div>
       )}
 
-      {/* Unified Step 2: Optional Video Recorder */}
-      {TEMP_UNIFIED_VOSTCARD_FLOW && (
+      {/* Step 2: Video Recording Interface */}
+      {true && (
         <div style={{ width: '100%', maxWidth: 420, marginTop: 100, padding: '0 16px' }}>
           <h2 style={{ margin: '0 0 8px 0', color: '#002B4D' }}>Optional Video (up to 60s)</h2>
           <p style={{ marginTop: 0, color: '#666' }}>You can skip this step if you don't want a video.</p>
@@ -478,7 +478,7 @@ export default function CreateVostcardStep2() {
             ) : (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No video recorded</div>
             )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
               {!recording && (
                 <button onClick={startRecording} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#007aff', color: 'white', fontWeight: 600 }}>Record</button>
               )}
@@ -486,138 +486,29 @@ export default function CreateVostcardStep2() {
                 <button onClick={stopRecording} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#dc3545', color: 'white', fontWeight: 600 }}>Stop ({elapsed}s)</button>
               )}
               <button onClick={() => { setRecordedBlob(null); stopAllTracks(); }} style={{ padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white', color: '#333' }}>Re-record</button>
-              <button onClick={saveVideoAndContinue} style={{ padding: '12px', borderRadius: 8, border: 'none', background: '#07345c', color: 'white', fontWeight: 600 }}>Continue</button>
-              <button onClick={() => navigate('/create/step3')} style={{ padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white' }}>Skip</button>
+              <button 
+                onClick={() => navigate('/script-tool')} 
+                style={{ 
+                  padding: '12px', 
+                  borderRadius: 8, 
+                  border: 'none', 
+                  background: '#6f42c1', 
+                  color: 'white', 
+                  fontWeight: 600
+                }}
+              >
+                Script Tool
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button onClick={saveVideoAndContinue} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#07345c', color: 'white', fontWeight: 600 }}>Save & Continue</button>
+              <button onClick={() => navigate('/create/step3')} style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white' }}>Skip</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Options - now scrollable (only show when unified flow is disabled) */}
-      {!TEMP_UNIFIED_VOSTCARD_FLOW && (
-        <div style={{
-          flex: 1,
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          padding: '45px 20px 0 20px',
-          boxSizing: 'border-box',
-          maxHeight: 'calc(100vh - 120px)',
-          overflowY: 'auto',
-          marginTop: currentVostcard?.title ? '20px' : '80px',
-        }}>
-        {/* Photo selection grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '10px',
-          marginBottom: 20,
-          width: '100%',
-          maxWidth: 380,
-          margin: '0 auto'
-        }}>
-          {[0, 1, 2, 3].map(idx => (
-            <button
-              key={idx}
-              style={optionStyle}
-              onClick={() => handleAddPhoto(idx)}
-              type="button"
-            >
-              {selectedPhotos[idx] ? (
-                <img
-                  src={photoUrls[idx] || ''}
-                  alt={idx === 0 ? "Take Photo" : "Photo Library"}
-                  onLoad={() => setLoadedFlags(prev => { const n=[...prev]; n[idx]=true; return n; })}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    borderRadius: 6,
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    opacity: loadedFlags[idx] ? 1 : 0,
-                    transition: 'opacity 220ms ease'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  color: '#002B4D',
-                  opacity: 0.7
-                }}>
-                  <FaRegImages size={20} style={{ marginBottom: 4 }} />
-                  <span style={{ fontSize: 10, fontWeight: 600, textAlign: 'center' }}>
-                    {idx === 0 ? "Take Photo" : "Photo Library"}
-                  </span>
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
 
-        {/* Photo count indicator */}
-        <div style={{
-          fontSize: 14,
-          color: '#666',
-          textAlign: 'center',
-          marginBottom: 20,
-          paddingTop: '2px'
-        }}>
-          {selectedPhotos.filter(photo => photo !== null).length} of 1 photo required
-        </div>
-
-        {/* Add to Trip Section */}
-        <div style={{ marginTop: 20, width: '100%', maxWidth: 380 }}>
-          <label style={{
-            fontSize: 16,
-            fontWeight: 'bold',
-            marginBottom: 8,
-            display: 'block',
-            color: '#333'
-          }}>
-            Add to Trip (Optional)
-          </label>
-          
-          <button
-            onClick={handleAddToTrip}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#f0f8ff',
-              border: '2px solid #07345c',
-              borderRadius: '8px',
-              fontSize: '16px',
-              color: '#07345c',
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
-          >
-            Add to Trip
-          </button>
-        </div>
-        <button
-          style={{ ...buttonStyle, marginTop: 15 }}
-          onClick={handleSaveAndContinue}
-        >
-          Save & Continue
-        </button>
-
-        {/* Camera mode indicator */}
-        <div style={{
-          marginTop: 10,
-          fontSize: 12,
-          color: '#666',
-          textAlign: 'center',
-          fontStyle: 'italic'
-        }}>
-          📱 Using enhanced camera with orientation correction
-        </div>
-      </div>
-      )}
 
       {/* File input - triggers iOS native action sheet on mobile, used by modal on desktop */}
       <input
