@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome } from 'react-icons/fa';
+import { FaHome, FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
@@ -189,22 +189,40 @@ const CreateVostcardStep2: React.FC = () => {
         <div style={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}>
           Vōstcard
         </div>
-        <button
-          onClick={() => navigate('/home')}
-          style={{
-            backgroundColor: 'rgba(0,0,0,0.10)',
-            border: 'none',
-            borderRadius: '50%',
-            width: 48,
-            height: 48,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer'
-          }}
-        >
-          <FaHome size={40} color="white" />
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button
+            onClick={() => navigate('/create-step1')}
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.10)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <FaArrowLeft size={20} color="white" />
+          </button>
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              backgroundColor: 'rgba(0,0,0,0.10)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <FaHome size={20} color="white" />
+          </button>
+        </div>
       </div>
 
       {/* 🎥 Thumbnail */}
