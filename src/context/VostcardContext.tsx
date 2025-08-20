@@ -487,254 +487,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // Load posted vostcards
-  const loadPostedVostcards = useCallback(async () => {
-    const user = auth.currentUser;
-    if (!user) {
-      console.log('No user authenticated, skipping loadPostedVostcards');
-      return;
-    }
 
-    try {
-      console.log('🔄 Loading posted vostcards for user:', user.uid);
-      
-      // Simple query for user's posted vostcards only, sorted by date
-      console.log('🔍 Loading posted vostcards for user:', user.uid);
-      const q = query(
-        collection(db, 'vostcards'),
-        where('userID', '==', user.uid),
-        where('state', '==', 'posted')
-      );
-      console.log('🔍 Query built:', q);
-      
-      // Debug query
-      const debugQuery = query(
-        collection(db, 'vostcards'),
-        where('userID', '==', user.uid)
-      );
-      const debugSnapshot = await getDocs(debugQuery);
-      console.log('🔍 All user vostcards:', debugSnapshot.docs.map(doc => ({
-          id: doc.id,
-        title: doc.data().title,
-        state: doc.data().state,
-        createdAt: doc.data().createdAt
-      })));
-
-      // Search for the specific post in all states
-      console.log('🔍 Searching for post titled "Gregs"...');
-      const gregsQuery = query(collection(db, 'vostcards'));
-      const gregsSnapshot = await getDocs(gregsQuery);
-      const gregsPost = gregsSnapshot.docs
-        .filter(doc => {
-          const data = doc.data();
-          return data.title && data.title.includes('Gregs');
-        })
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-      
-      if (gregsPost.length > 0) {
-        console.log('✅ Found posts with "Gregs" in title:', gregsPost);
-          } else {
-        console.log('❌ No posts found with "Gregs" in title');
-      }
-      
-      const querySnapshot = await getDocs(q);
-      const allVostcards = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-            title: data.title || '',
-            description: data.description || '',
-          categories: Array.isArray(data.categories) ? data.categories : [],
-            username: data.username || '',
-            userID: data.userID || '',
-            createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          state: data.state || 'private',
-          type: 'vostcard' as const,
-            video: null,
-            photos: [],
-          geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
-          hasVideo: data.hasVideo || false,
-          hasPhotos: data.hasPhotos || false,
-            _firebaseVideoURL: data.videoURL || null,
-          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
-          _isMetadataOnly: true
-          };
-        });
-        
-      // Filter for posted vostcards and sort by date
-      const sortedVostcards = allVostcards
-        .filter(v => v.state === 'posted')
-        .sort((a, b) => {
-          const dateA = new Date(a.createdAt);
-          const dateB = new Date(b.createdAt);
-          return dateB.getTime() - dateA.getTime();
-        });
-
-      console.log('📊 Found vostcards:', {
-        total: allVostcards.length,
-        posted: sortedVostcards.length,
-        nonPosted: allVostcards.length - sortedVostcards.length
-      });
-      
-      console.log('📊 First 3 posted vostcards:', sortedVostcards.slice(0, 3).map(v => ({
-        id: v.id,
-        title: v.title,
-        createdAt: v.createdAt,
-        state: v.state
-      })));
-      
-      console.log('🔄 Processing vostcard documents...');
-      const vostcards = await Promise.all(querySnapshot.docs.map(async doc => {
-        try {
-          const data = doc.data() as FirebaseVostcard;
-          console.log('📄 Processing vostcard:', doc.id, {
-            title: data.title,
-            username: data.username,
-            userID: data.userID,
-            state: data.state,
-            createdAt: data.createdAt,
-            hasGeo: !!(data.latitude && data.longitude)
-          });
-          
-          // Handle missing or invalid timestamps
-          let createdAt = new Date().toISOString();
-          let updatedAt = new Date().toISOString();
-          
-          try {
-            if (data.createdAt) {
-              if (typeof data.createdAt === 'string') {
-                createdAt = data.createdAt;
-              } else if (data.createdAt.toDate) {
-                createdAt = data.createdAt.toDate().toISOString();
-              }
-            }
-            if (data.updatedAt) {
-              if (typeof data.updatedAt === 'string') {
-                updatedAt = data.updatedAt;
-              } else if (data.updatedAt.toDate) {
-                updatedAt = data.updatedAt.toDate().toISOString();
-              }
-            }
-          } catch (timeError) {
-            console.warn('⚠️ Error parsing timestamps for vostcard:', doc.id, timeError);
-          }
-
-          // Handle missing or invalid geo data
-          let geo = null;
-          if (data.latitude !== undefined && data.longitude !== undefined) {
-            geo = {
-              latitude: Number(data.latitude),
-              longitude: Number(data.longitude)
-            };
-          } else if (data.geo) {
-            geo = {
-              latitude: Number(data.geo.latitude),
-              longitude: Number(data.geo.longitude)
-            };
-          }
-
-          // Validate required fields
-          if (!data.title || !data.userID || !geo) {
-            console.warn('⚠️ Vostcard missing required fields:', doc.id, {
-              hasTitle: !!data.title,
-              hasUserID: !!data.userID,
-              hasGeo: !!geo
-            });
-    }
-
-          return {
-            id: doc.id,
-            title: data.title || 'Untitled',
-            description: data.description || '',
-            categories: Array.isArray(data.categories) ? data.categories : [],
-            username: data.username || user.displayName || user.email?.split('@')[0] || 'Unknown',
-            userID: data.userID || user.uid,
-            createdAt,
-            updatedAt,
-            state: 'posted' as const,
-            type: 'vostcard' as const,
-            isOffer: !!data.isOffer,
-            offerDetails: data.offerDetails || undefined,
-            geo,
-              video: null,
-              photos: [],
-            _firebaseVideoURL: data.videoURL || null,
-            _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
-            _isMetadataOnly: true
-          };
-        } catch (docError) {
-          console.error('❌ Error processing vostcard:', doc.id, docError);
-          return null;
-        }
-      }));
-
-      // Filter out any null entries from errors
-      const validVostcards = vostcards.filter((v): v is NonNullable<typeof v> => {
-        if (!v) {
-          console.warn('⚠️ Found null vostcard entry');
-          return false;
-        }
-
-        // Basic validation
-        if (!v.id || !v.userID) {
-          console.warn('⚠️ Invalid vostcard:', {
-            id: v?.id,
-            hasUserID: !!v?.userID
-          });
-          return false;
-        }
-
-                  // Handle migrated quickcards
-          if (v.id.includes('quickcard_')) {
-            console.log('📦 Found legacy quickcard:', v.id);
-            // Treat all legacy quickcards as posted
-            v.state = 'posted';
-            v.type = 'vostcard';
-          }
-
-                  // Ensure state and type are valid
-          if (!v.state || !['private', 'posted'].includes(v.state)) {
-            console.warn('⚠️ Missing or invalid state, defaulting to posted:', v.id);
-            v.state = 'posted';
-          }
-          v.type = 'vostcard';
-
-        return true;
-      });
-
-      // Sort posted vostcards by most recent (we only get posted ones from Firestore now)
-      const sortByDate = (a: any, b: any) => {
-        const dateA = new Date(a.createdAt);
-        const dateB = new Date(b.createdAt);
-        return dateB.getTime() - dateA.getTime();
-      };
-
-      const sortedPosted = validVostcards.sort(sortByDate);
-
-      console.log('✅ Successfully loaded posted vostcards:', {
-        total: validVostcards.length,
-        posted: sortedPosted.length
-      });
-      
-      console.log('📊 First 3 posted vostcards:', sortedPosted.slice(0, 3).map(v => ({
-        id: v.id,
-        title: v.title,
-        state: v.state,
-        createdAt: v.createdAt
-      })));
-          
-      setPostedVostcards(sortedPosted);
-      // Don't modify savedVostcards here - that's handled by loadAllLocalVostcards
-    } catch (error) {
-      console.error('❌ Error loading posted vostcards:', error);
-      // Don't throw, just log the error and return empty array
-      setPostedVostcards([]);
-    }
-  }, []);
 
   // Post vostcard (change visibility to public and save)
   const postVostcard = useCallback(async () => {
@@ -786,15 +539,25 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard, saveVostcard]);
     
+    const uploadMedia = async () => {
+      try {
+        console.log('Uploading media to Firebase Storage...');
+        const photoURLs = await Promise.all(
+          currentVostcard.photos.map(async (photo) => {
+            const photoRef = ref(storage, `vostcards/${user.uid}/photos/${uuidv4()}`);
+            await uploadBytes(photoRef, photo);
+            return getDownloadURL(photoRef);
+          })
+        );
+        return photoURLs;
+      } catch (error) {
+        console.error('Error uploading media:', error);
+        throw error;
+      }
+    };
+
     try {
-      console.log('Uploading media to Firebase Storage...');
-      const photoURLs = await Promise.all(
-            currentVostcard.photos.map(async (photo) => {
-          const photoRef = ref(storage, `vostcards/${user.uid}/photos/${uuidv4()}`);
-          await uploadBytes(photoRef, photo);
-          return getDownloadURL(photoRef);
-        })
-      );
+      const photoURLs = await uploadMedia();
 
       let videoURL = null;
       if (currentVostcard.video) {
