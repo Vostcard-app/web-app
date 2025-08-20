@@ -534,20 +534,41 @@ ${shareUrl}`;
     try {
       if (showSlideshow && trip?.backgroundMusic?.url) {
         const volume = typeof trip.backgroundMusic.volume === 'number' ? Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        
+        // Load the audio source if not already loaded
+        if (!audioEl.src || audioEl.src !== trip.backgroundMusic.url) {
+          console.log('🎵 Loading audio source:', trip.backgroundMusic.url);
+          audioEl.src = trip.backgroundMusic.url;
+          audioEl.load(); // Force reload with new source
+        }
+        
         audioEl.volume = volume;
         audioEl.currentTime = 0;
         
-        console.log('🎵 Starting music playback:', { volume, url: trip.backgroundMusic.url });
+        console.log('🎵 Starting music playback:', { volume, url: trip.backgroundMusic.url, readyState: audioEl.readyState });
         
-        const playPromise = audioEl.play();
-        if (playPromise && typeof playPromise.then === 'function') {
-          playPromise
-            .then(() => {
-              console.log('✅ Music started successfully');
-            })
-            .catch((error) => {
-              console.log('❌ Music autoplay failed:', error);
-            });
+        // Wait for audio to be ready before playing
+        const tryPlay = () => {
+          const playPromise = audioEl.play();
+          if (playPromise && typeof playPromise.then === 'function') {
+            playPromise
+              .then(() => {
+                console.log('✅ Music started successfully');
+              })
+              .catch((error) => {
+                console.log('❌ Music autoplay failed:', error);
+                // Try to play after user interaction
+                if (error.name === 'NotAllowedError') {
+                  console.log('🎵 Autoplay blocked - music will start after user interaction');
+                }
+              });
+          }
+        };
+        
+        if (audioEl.readyState >= 2) { // HAVE_CURRENT_DATA
+          tryPlay();
+        } else {
+          audioEl.addEventListener('canplay', tryPlay, { once: true });
         }
       } else {
         console.log('🎵 Pausing music:', { showSlideshow, hasUrl: !!trip?.backgroundMusic?.url });
@@ -2042,9 +2063,16 @@ ${shareUrl}`;
       />
 
       {/* Hidden audio element to play background music during slideshow */}
-      {trip?.backgroundMusic?.url && (
-        <audio ref={backgroundAudioRef} src={trip.backgroundMusic.url} loop preload="auto" />
-      )}
+      <audio ref={backgroundAudioRef} loop preload="auto" style={{ display: 'none' }}>
+        {trip?.backgroundMusic?.url && (
+          <>
+            <source src={trip.backgroundMusic.url} type="audio/mpeg" />
+            <source src={trip.backgroundMusic.url} type="audio/mp4" />
+            <source src={trip.backgroundMusic.url} type="audio/wav" />
+            <source src={trip.backgroundMusic.url} type="audio/ogg" />
+          </>
+        )}
+      </audio>
 
       {/* Music Picker Modal */}
       {user && trip && user.uid === trip.userID && (
