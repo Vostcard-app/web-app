@@ -117,7 +117,7 @@ const EditVostcardView: React.FC = () => {
     const initializeFromVostcard = (v: any) => {
       setTitle(v.title || '');
       setDescription(v.description || '');
-      setCategories(Array.isArray(v.categories) ? v.categories : []);
+      setCategories(Array.isArray(v.categories) && v.categories.length > 0 ? v.categories : ['View']);
 
       // Photos: prefer Blob files; otherwise use URLs
       const localPhotos: Array<Nullable<Blob>> = [null, null, null, null];
@@ -433,8 +433,20 @@ const EditVostcardView: React.FC = () => {
 
         {/* Footer actions */}
         {(() => {
-          const photoCount = photoFiles.filter(Boolean).length || photoUrls.filter(Boolean).length;
-          const ready = photoCount > 0 && title.trim().length > 0 && description.trim().length > 0 && (categories[0] && categories[0] !== 'None');
+          const photoCount = photoFiles.filter(Boolean).length + photoUrls.filter(Boolean).length;
+          const ready = photoCount > 0 && title.trim().length > 0 && description.trim().length > 0 && categories.length > 0 && categories[0];
+          
+          // Debug logging
+          console.log('🔍 Edit Button State Debug:', {
+            photoCount,
+            photoFiles: photoFiles.filter(Boolean).length,
+            photoUrls: photoUrls.filter(Boolean).length,
+            titleLength: title.trim().length,
+            descriptionLength: description.trim().length,
+            category: categories[0],
+            ready
+          });
+          
           return (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <button 
