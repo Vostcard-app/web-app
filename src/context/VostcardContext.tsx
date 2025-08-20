@@ -25,6 +25,7 @@ interface VostcardContextType {
   postVostcard: () => Promise<void>;
   deletePrivateVostcard: (vostcardId: string) => Promise<void>;
   loadAllLocalVostcards: () => Promise<void>;
+  loadPrivateVostcards: () => Promise<void>;
   loadPostedVostcards: () => Promise<void>;
   syncVostcardMetadata: () => Promise<void>;
   downloadVostcardContent: (vostcardId: string) => Promise<void>;
@@ -1214,8 +1215,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.log('🔄 Initial data load for user:', authContext.user.uid);
         try {
           // First try to load local data
-          await loadAllLocalVostcards();
-          console.log('✅ Local vostcards loaded');
+          await loadPrivateVostcards();
+          console.log('✅ Private vostcards loaded');
 
           // Then try to load posted data
           await loadPostedVostcards();
@@ -1228,9 +1229,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.error('❌ Error during initial data load:', error);
           // Try each operation individually to ensure at least some data loads
           try {
-            await loadAllLocalVostcards();
+            await loadPrivateVostcards();
           } catch (e) {
-            console.error('❌ Failed to load local vostcards:', e);
+            console.error('❌ Failed to load private vostcards:', e);
           }
           try {
             await loadPostedVostcards();
@@ -1247,7 +1248,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     loadInitialData();
-  }, [authContext.loading, authContext.user, loadAllLocalVostcards, loadPostedVostcards, syncVostcardMetadata]);
+  }, [authContext.loading, authContext.user, loadPrivateVostcards, loadPostedVostcards, syncVostcardMetadata]);
 
   const setVideo = useCallback((video: Blob) => {
     if (!currentVostcard) return;
@@ -1329,6 +1330,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         postVostcard,
         deletePrivateVostcard,
     loadAllLocalVostcards,
+    loadPrivateVostcards,
         loadPostedVostcards,
         syncVostcardMetadata,
         downloadVostcardContent,

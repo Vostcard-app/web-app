@@ -13,10 +13,10 @@ import { useAuth } from '../context/AuthContext';
 
 const CreateVostcardStep3: React.FC = () => {
   const navigate = useNavigate();
-  const {
-    currentVostcard,
-    setCurrentVostcard,
-    saveLocalVostcard,
+    const { 
+    currentVostcard, 
+    setCurrentVostcard, 
+    saveVostcard,
     loadLocalVostcard,
     clearLocalStorage,
     postVostcard,
@@ -236,7 +236,7 @@ const CreateVostcardStep3: React.FC = () => {
       console.log('💾 Starting vostcard save process...');
       
       // This saves as private (updates the existing private Vostcard)
-      await saveLocalVostcard();
+      await saveVostcard();
       
       console.log('✅ Vostcard saved successfully');
 

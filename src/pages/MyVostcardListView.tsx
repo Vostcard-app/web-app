@@ -16,7 +16,7 @@ import SharedOptionsModal from '../components/SharedOptionsModal';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, setSavedVostcards, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard, syncVostcardMetadata, loadAllLocalVostcards, debugIndexedDB } = useVostcard();
+  const { savedVostcards, setSavedVostcards, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard, syncVostcardMetadata, loadPrivateVostcards, debugIndexedDB } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -79,7 +79,7 @@ const MyVostcardListView = () => {
 
           // Load personal vostcards from IndexedDB via VostcardContext
           console.log('🔄 Loading personal vostcards from IndexedDB...');
-          await loadAllLocalVostcards();
+          await loadPrivateVostcards();
           
           console.log('✅ Personal Posts loaded successfully');
           
@@ -93,7 +93,7 @@ const MyVostcardListView = () => {
 
       loadData();
     }
-  }, [authLoading, user, loadAllLocalVostcards]);
+  }, [authLoading, user, loadPrivateVostcards]);
 
   // Watch for changes in savedVostcards and update loading state
   useEffect(() => {
