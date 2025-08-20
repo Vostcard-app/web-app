@@ -10,6 +10,9 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'fireb
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
 import QuickcardPin from '../assets/quickcard_pin.png';
+import VostcardPin from '../assets/Vostcard_pin.png';
+import GuidePin from '../assets/Guide_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
 import { useAuth } from '../context/AuthContext';
 import { VostboxService } from '../services/vostboxService';
 import { LikeService } from '../services/likeService';
@@ -71,9 +74,19 @@ const VostcardDetailView: React.FC = () => {
 
   // Create custom icons
   const createIcons = () => {
-    // Vostcard location icon
+    // Determine the correct icon based on vostcard properties
+    let iconUrl = VostcardPin; // Default to vostcard pin
+    
+    if (vostcard?.username === 'Jay Bond') {
+      iconUrl = GuidePin; // Jay Bond gets guide pin
+    } else if (vostcard?.isOffer) {
+      iconUrl = OfferPin; // Offers get offer pin
+    } else if (vostcard?.userRole === 'guide') {
+      iconUrl = GuidePin; // Other guides get guide pin
+    }
+    
     const vostcardIcon = new L.Icon({
-      iconUrl: QuickcardPin,
+      iconUrl: iconUrl,
       iconSize: [75, 75],
       iconAnchor: [37.5, 75],
       popupAnchor: [0, -75],
@@ -2561,7 +2574,12 @@ Tap OK to continue.`;
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h3 style={{ margin: 0, fontSize: '18px' }}>{showDirections ? 'Directions to Location' : 'Quickcard Location'}</h3>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>
+                {showDirections ? 'Directions to Location' : 
+                  vostcard?.username === 'Jay Bond' ? 'Guide Location' : 
+                  vostcard?.isOffer ? 'Offer Location' : 
+                  'Vostcard Location'}
+              </h3>
               <button
                 onClick={() => {
                   setShowMapModal(false);
