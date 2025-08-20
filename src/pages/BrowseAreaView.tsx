@@ -133,6 +133,7 @@ const BrowseAreaView: React.FC = () => {
     if (selectedLocation) {
       console.log('📍 Coordinates being sent:', selectedLocation.coordinates);
       console.log('📍 Latitude:', selectedLocation.latitude, 'Longitude:', selectedLocation.longitude);
+      console.log('🗺️ Navigating to HomeView with browse location:', selectedLocation.name);
       
       navigate('/home', {
         state: {
