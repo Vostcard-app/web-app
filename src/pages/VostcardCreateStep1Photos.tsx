@@ -428,8 +428,8 @@ export default function VostcardCreateStep1Photos() {
       photoCount: validPhotos.length
     });
     
-    // Go to Step 2 (optional video)
-    navigate('/create/step2');
+    // Go to Step 3 (categories and trip)
+    navigate('/create/step3');
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
@@ -627,35 +627,26 @@ export default function VostcardCreateStep1Photos() {
           {photoCount} of 4 photos added
         </div>
 
-        {/* Add to Trip Section */}
-        <div style={{ marginTop: 2, width: '100%', maxWidth: 380 }}>
-          <label style={{
-            fontSize: 16,
-            fontWeight: 'bold',
-            marginBottom: 8,
-            display: 'block',
-            color: '#333'
-          }}>
-            Add to Trip (Optional)
-          </label>
-          
-          <button
-            onClick={handleAddToTrip}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#f0f8ff',
-              border: '2px solid #07345c',
-              borderRadius: '8px',
-              fontSize: '16px',
-              color: '#07345c',
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
-          >
-            Add to Trip
-          </button>
-        </div>
+        {/* Add Video Button */}
+        <button
+          onClick={() => navigate('/create-step2')}
+          style={{
+            width: '100%',
+            maxWidth: 380,
+            padding: '12px',
+            backgroundColor: '#007AFF',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            marginTop: 2,
+            marginBottom: '16px'
+          }}
+        >
+          Add Video
+        </button>
 
         {/* Continue button */}
         <button
