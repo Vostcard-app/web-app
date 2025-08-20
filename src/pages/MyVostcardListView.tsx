@@ -16,7 +16,7 @@ import SharedOptionsModal from '../components/SharedOptionsModal';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, setSavedVostcards, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard, syncVostcardMetadata, loadAllLocalVostcards } = useVostcard();
+  const { savedVostcards, setSavedVostcards, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard, syncVostcardMetadata, loadAllLocalVostcards, debugIndexedDB } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -517,9 +517,26 @@ Tap OK to continue.`;
               borderBottom: '1px solid #dee2e6',
               fontWeight: 'bold',
               fontSize: '14px',
-              color: '#495057'
+              color: '#495057',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}>
-              {savedVostcards.length} Personal Post{savedVostcards.length !== 1 ? 's' : ''}
+              <span>{savedVostcards.length} Personal Post{savedVostcards.length !== 1 ? 's' : ''}</span>
+              <button
+                onClick={debugIndexedDB}
+                style={{
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Debug DB
+              </button>
             </div>
 
             {/* Personal Posts List */}

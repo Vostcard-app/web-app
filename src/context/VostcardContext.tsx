@@ -34,6 +34,7 @@ interface VostcardContextType {
   loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
   setVideo: (video: Blob) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
+  debugIndexedDB: () => Promise<void>;
 }
 
 // Create context
@@ -1031,6 +1032,53 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, [currentVostcard]);
 
+  // Debug function to inspect IndexedDB contents
+  const debugIndexedDB = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('❌ No user authenticated for IndexedDB debug');
+      return;
+    }
+
+    try {
+      console.log('🔍 === IndexedDB Debug Report ===');
+      const localDB = await openUserDB();
+      console.log('📂 Database:', localDB.name, 'version:', localDB.version);
+      
+      const transaction = localDB.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      
+      // Get all records
+      const allRecords = await new Promise<any[]>((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      
+      console.log('📊 Total records in IndexedDB:', allRecords.length);
+      console.log('📋 All vostcard IDs:', allRecords.map(v => v.id));
+      console.log('📋 All vostcard titles:', allRecords.map(v => `${v.id}: "${v.title}"`));
+      console.log('📋 All vostcard states:', allRecords.map(v => `${v.id}: ${v.state}`));
+      
+      // Show first 3 records in detail
+      console.log('📄 First 3 records in detail:');
+      allRecords.slice(0, 3).forEach((record, index) => {
+        console.log(`📄 Record ${index + 1}:`, {
+          id: record.id,
+          title: record.title,
+          state: record.state,
+          createdAt: record.createdAt,
+          hasPhotos: record.photos?.length > 0,
+          hasVideo: !!record.video
+        });
+      });
+      
+      console.log('🔍 === End IndexedDB Debug Report ===');
+    } catch (error) {
+      console.error('❌ Error debugging IndexedDB:', error);
+    }
+  }, [openUserDB]);
+
   const value = {
     savedVostcards,
     setSavedVostcards,
@@ -1051,7 +1099,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         manualCleanupFirebase,
     loadLocalVostcard,
     setVideo,
-    updateVostcard
+    updateVostcard,
+    debugIndexedDB
   };
 
   return (
