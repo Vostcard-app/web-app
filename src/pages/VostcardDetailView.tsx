@@ -387,11 +387,17 @@ const VostcardDetailView: React.FC = () => {
     console.log('🔍 VostcardDetailView Photo Debug:', {
       vostcardId: vostcard?.id,
       photoURLs: vostcard?.photoURLs,
+      photoURLsType: Array.isArray(vostcard?.photoURLs) ? 'array' : typeof vostcard?.photoURLs,
       _firebasePhotoURLs: vostcard?._firebasePhotoURLs,
+      _firebasePhotoURLsType: Array.isArray(vostcard?._firebasePhotoURLs) ? 'array' : typeof vostcard?._firebasePhotoURLs,
       finalUrls: urls,
       finalUrlsLength: urls.length,
+      firstUrl: urls[0],
       hasPhotos: vostcard?.hasPhotos,
-      allVostcardKeys: vostcard ? Object.keys(vostcard) : []
+      createdAt: vostcard?.createdAt,
+      updatedAt: vostcard?.updatedAt,
+      state: vostcard?.state,
+      allVostcardKeys: vostcard ? Object.keys(vostcard).sort() : []
     });
     return urls;
   }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
@@ -432,7 +438,16 @@ const VostcardDetailView: React.FC = () => {
         // First try to find in savedVostcards (private vostcards from IndexedDB)
         const savedVostcard = savedVostcards.find(v => v.id === id);
         if (savedVostcard) {
-          console.log('📱 Found private vostcard in savedVostcards:', savedVostcard);
+          console.log('📱 Found private vostcard in savedVostcards:', {
+            id: savedVostcard.id,
+            title: savedVostcard.title,
+            hasPhotoURLs: !!savedVostcard.photoURLs,
+            photoURLsLength: savedVostcard.photoURLs?.length || 0,
+            has_firebasePhotoURLs: !!savedVostcard._firebasePhotoURLs,
+            _firebasePhotoURLsLength: savedVostcard._firebasePhotoURLs?.length || 0,
+            hasPhotos: savedVostcard.hasPhotos,
+            allKeys: Object.keys(savedVostcard).sort()
+          });
           setVostcard(savedVostcard);
           setLoading(false);
           return;
@@ -441,7 +456,16 @@ const VostcardDetailView: React.FC = () => {
         // Then try to find in postedVostcards (from Firestore)
         const postedVostcard = postedVostcards.find(v => v.id === id);
         if (postedVostcard) {
-          console.log('📱 Found posted vostcard in postedVostcards:', postedVostcard);
+          console.log('📱 Found posted vostcard in postedVostcards:', {
+            id: postedVostcard.id,
+            title: postedVostcard.title,
+            hasPhotoURLs: !!postedVostcard.photoURLs,
+            photoURLsLength: postedVostcard.photoURLs?.length || 0,
+            has_firebasePhotoURLs: !!postedVostcard._firebasePhotoURLs,
+            _firebasePhotoURLsLength: postedVostcard._firebasePhotoURLs?.length || 0,
+            hasPhotos: postedVostcard.hasPhotos,
+            allKeys: Object.keys(postedVostcard).sort()
+          });
           setVostcard(postedVostcard);
           setLoading(false);
           return;
@@ -469,7 +493,17 @@ const VostcardDetailView: React.FC = () => {
         
         if (docSnap.exists()) {
           const data = docSnap.data();
-          console.log('📱 Vostcard found in Firestore:', data);
+          console.log('📱 Vostcard found in Firestore:', {
+            id: data.id,
+            title: data.title,
+            hasPhotoURLs: !!data.photoURLs,
+            photoURLsLength: data.photoURLs?.length || 0,
+            has_firebasePhotoURLs: !!data._firebasePhotoURLs,
+            _firebasePhotoURLsLength: data._firebasePhotoURLs?.length || 0,
+            hasPhotos: data.hasPhotos,
+            photoURLsValue: data.photoURLs,
+            allKeys: Object.keys(data).sort()
+          });
           
           setVostcard(data);
           setLoading(false);
