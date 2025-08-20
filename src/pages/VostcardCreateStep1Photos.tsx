@@ -339,7 +339,7 @@ export default function VostcardCreateStep1Photos() {
         await setDoc(vostcardRef, {
           ...currentVostcard,
           type: 'vostcard',
-          photoURL,
+          photoURL: `vostcards/${currentVostcard.userID}/photos/${currentVostcard.id}_0`,
           createdAt: now,
           updatedAt: now
         });
