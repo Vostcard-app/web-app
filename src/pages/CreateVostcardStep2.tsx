@@ -72,7 +72,7 @@ export default function CreateVostcardStep2() {
         setRecording(false);
         // Save video and return to step 2 to show preview
         setVideo(blob);
-        navigate('/create/step2');
+        navigate('/create-step2');
       };
       mr.start();
       // 60s cap
@@ -109,7 +109,7 @@ export default function CreateVostcardStep2() {
       // @ts-ignore
       setVideo(recordedBlob);
     }
-    navigate('/create/step3');
+    navigate('/create-step3');
   };
 
   // Mobile detection
@@ -373,7 +373,7 @@ export default function CreateVostcardStep2() {
     // Filter out null photos but allow saving even with just one photo
     const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
     updateVostcard({ photos: validPhotos });
-    navigate('/create/step3');
+    navigate('/create-step3');
   };
 
   return (
@@ -502,7 +502,7 @@ export default function CreateVostcardStep2() {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
               <button onClick={saveVideoAndContinue} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#07345c', color: 'white', fontWeight: 600 }}>Save & Continue</button>
-              <button onClick={() => navigate('/create/step3')} style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white' }}>Skip</button>
+              <button onClick={() => navigate('/create-step3')} style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white' }}>Skip</button>
             </div>
           </div>
         </div>

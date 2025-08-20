@@ -151,20 +151,10 @@ function App() {
       
 
                   {/* 🛠️ Creation Flow */}
-                  {TEMP_UNIFIED_VOSTCARD_FLOW ? (
-                    <>
-                      <Route path="/create/step1" element={<VostcardCreateStep1Photos />} />
-                      {/* Step 2 should mirror original Vostcard Step 1 (video optional) */}
-                      <Route path="/create/step2" element={<CreateVostcardStep1 />} />
-                      <Route path="/create/step3" element={<CreateVostcardStep3 />} />
-                    </>
-                  ) : (
-                    <>
-                      <Route path="/create-step1" element={<CreateVostcardStep1 />} />
-                      <Route path="/create-step2" element={<CreateVostcardStep2 />} />
-                      <Route path="/create-step3" element={<CreateVostcardStep3 />} />
-                    </>
-                  )}
+                  {/* Standard 3-step vostcard creation flow */}
+                  <Route path="/create-step1" element={<VostcardCreateStep1Photos />} />
+                  <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+                  <Route path="/create-step3" element={<CreateVostcardStep3 />} />
                   {/* Removed legacy quickcard routes */}
                   {/* Removed quick audio route */}
                   <Route path="/step2-camera" element={<Step2CameraView />} />

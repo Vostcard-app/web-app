@@ -429,7 +429,7 @@ export default function VostcardCreateStep1Photos() {
     });
     
     // Go to Step 3 (categories and trip)
-    navigate('/create/step3');
+    navigate('/create-step3');
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
