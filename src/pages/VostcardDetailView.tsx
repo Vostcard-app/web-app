@@ -2031,7 +2031,7 @@ Tap OK to continue.`;
       }}>
         {/* Map View button */}
         {(() => {
-          const hasGeo = (vostcard?.latitude && vostcard?.longitude) || (vostcard?.geo?.latitude && vostcard?.geo?.longitude);
+          const hasGeo = !!(vostcard?.latitude && vostcard?.longitude) || !!(vostcard?.geo?.latitude && vostcard?.geo?.longitude);
           console.log('🔍 VostcardDetailView Geo Debug:', {
             vostcardId: vostcard?.id,
             latitude: vostcard?.latitude,
