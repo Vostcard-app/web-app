@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { auth, db, storage } from '../firebase/firebaseConfig';
-import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, deleteDoc, query, where, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from './AuthContext';
 import type { Vostcard, FirebaseVostcard } from '../types/VostcardTypes';
@@ -748,11 +748,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const store = transaction.objectStore(STORE_NAME);
       await store.delete(vostcardId);
 
-      // Delete from Firebase if posted
+      // Delete from Firebase
       const docRef = doc(db, 'vostcards', vostcardId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
+      try {
         await deleteDoc(docRef);
+        console.log('✅ Deleted from Firebase:', vostcardId);
+      } catch (e) {
+        console.warn('⚠️ Could not delete from Firebase:', e);
+        // Continue with local deletion even if Firebase fails
       }
 
       // Update state
