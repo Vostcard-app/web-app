@@ -335,7 +335,7 @@ const CreateVostcardStep3: React.FC = () => {
             Add to Trip (Optional)
           </label>
           <button
-            onClick={() => navigate('/my-trips-list')}
+            onClick={() => navigate('/my-trips')}
             style={{
               backgroundColor: '#28a745',
               color: 'white',
