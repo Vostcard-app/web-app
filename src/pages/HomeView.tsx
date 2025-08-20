@@ -1356,8 +1356,22 @@ const HomeView = () => {
     }
   };
 
-  const handleCreateTouchStart = () => setIsCreatePressed(true);
-  const handleCreateTouchEnd = () => setIsCreatePressed(false);
+  const handleCreateTouchStart = () => {
+    console.log('🎬 Create button touch start');
+    setIsCreatePressed(true);
+  };
+  
+  const handleCreateTouchEnd = (e: React.TouchEvent) => {
+    console.log('🎬 Create button touch end');
+    setIsCreatePressed(false);
+    // On mobile, sometimes onClick doesn't fire after touch events
+    // So we'll trigger the navigation on touch end as a fallback
+    if (e.type === 'touchend') {
+      console.log('🎬 Mobile touch detected - triggering navigation via touch end');
+      e.preventDefault();
+      handleCreateClick(e as any);
+    }
+  };
   // Removed quickcard touch handlers
 
   // Removed handleNativeCameraPhoto function
