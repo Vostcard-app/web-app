@@ -32,7 +32,7 @@ const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { fixBrokenSharedVostcard } = useVostcard();
+  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards } = useVostcard();
   const { user } = useAuth();
   
   // Navigation state from previous view
@@ -413,19 +413,52 @@ const VostcardDetailView: React.FC = () => {
       try {
         console.log('📱 Loading vostcard:', id);
         
-        // First try to load by Firebase document ID
+        // First try to find in savedVostcards (private vostcards from IndexedDB)
+        const savedVostcard = savedVostcards.find(v => v.id === id);
+        if (savedVostcard) {
+          console.log('📱 Found private vostcard in savedVostcards:', savedVostcard);
+          setVostcard(savedVostcard);
+          setLoading(false);
+          return;
+        }
+        
+        // Then try to find in postedVostcards (from Firestore)
+        const postedVostcard = postedVostcards.find(v => v.id === id);
+        if (postedVostcard) {
+          console.log('📱 Found posted vostcard in postedVostcards:', postedVostcard);
+          setVostcard(postedVostcard);
+          setLoading(false);
+          return;
+        }
+        
+        // If not found in context, try to load from IndexedDB directly
+        console.log('📱 Not found in context, trying IndexedDB...');
+        try {
+          await loadLocalVostcard(id);
+          // loadLocalVostcard should update the context, so check again
+          const updatedSavedVostcard = savedVostcards.find(v => v.id === id);
+          if (updatedSavedVostcard) {
+            console.log('📱 Found vostcard after loading from IndexedDB:', updatedSavedVostcard);
+            setVostcard(updatedSavedVostcard);
+            setLoading(false);
+            return;
+          }
+        } catch (indexedDBError) {
+          console.log('📱 Not found in IndexedDB, trying Firestore...');
+        }
+        
+        // Finally try to load from Firestore (for posted vostcards)
         const docRef = doc(db, 'vostcards', id);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
           const data = docSnap.data();
-          console.log('📱 Vostcard found:', data);
+          console.log('📱 Vostcard found in Firestore:', data);
           
-          // Accept both quickcards and regular vostcards
           setVostcard(data);
           setLoading(false);
         } else {
-          console.log('📱 Vostcard not found, trying to fix...');
+          console.log('📱 Vostcard not found anywhere, trying to fix...');
           
           try {
             const fixed = await fixBrokenSharedVostcard(id);
@@ -477,7 +510,7 @@ const VostcardDetailView: React.FC = () => {
     };
 
     fetchVostcard();
-  }, [id, fixBrokenSharedVostcard]);
+  }, [id, fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards]);
 
   // Live GPS tracking for navigation
   useEffect(() => {
