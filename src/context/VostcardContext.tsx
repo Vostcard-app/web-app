@@ -374,11 +374,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       console.log('🔄 Loading posted vostcards for user:', user.uid);
       
-      // Simple query for user's posted vostcards, sorted by date
-      console.log('🔍 Loading personal vostcards for user:', user.uid);
+      // Simple query for user's posted vostcards only, sorted by date
+      console.log('🔍 Loading posted vostcards for user:', user.uid);
       const q = query(
         collection(db, 'vostcards'),
-        where('userID', '==', user.uid)
+        where('userID', '==', user.uid),
+        where('state', '==', 'posted')
       );
       console.log('🔍 Query built:', q);
       
@@ -581,36 +582,29 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return true;
       });
 
-      // Split into posted and non-posted, and sort both by most recent
+      // Sort posted vostcards by most recent (we only get posted ones from Firestore now)
       const sortByDate = (a: any, b: any) => {
-                  const dateA = new Date(a.createdAt);
-          const dateB = new Date(b.createdAt);
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
         return dateB.getTime() - dateA.getTime();
       };
 
-      const sortedPosted = validVostcards
-        .filter(v => v.state === 'posted')
-        .sort(sortByDate);
-      
-      const sortedPersonal = validVostcards
-        .filter(v => v.state !== 'posted')
-        .sort(sortByDate);
+      const sortedPosted = validVostcards.sort(sortByDate);
 
-      console.log('✅ Successfully loaded vostcards:', {
+      console.log('✅ Successfully loaded posted vostcards:', {
         total: validVostcards.length,
-        posted: sortedPosted.length,
-        personal: sortedPersonal.length
+        posted: sortedPosted.length
       });
       
-      console.log('📊 First 3 personal vostcards:', sortedPersonal.slice(0, 3).map(v => ({
-            id: v.id,
-            title: v.title,
-            state: v.state,
-            createdAt: v.createdAt
-          })));
+      console.log('📊 First 3 posted vostcards:', sortedPosted.slice(0, 3).map(v => ({
+        id: v.id,
+        title: v.title,
+        state: v.state,
+        createdAt: v.createdAt
+      })));
           
       setPostedVostcards(sortedPosted);
-      setSavedVostcards(sortedPersonal);
+      // Don't modify savedVostcards here - that's handled by loadAllLocalVostcards
     } catch (error) {
       console.error('❌ Error loading posted vostcards:', error);
       // Don't throw, just log the error and return empty array
