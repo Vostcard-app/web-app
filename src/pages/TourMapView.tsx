@@ -469,22 +469,43 @@ const TourMapView: React.FC = () => {
           flexDirection: 'column'
         }}>
           {viewMode === 'map' ? (
-            /* Map View */
-            <MapContainer
-              center={[53.3498, -6.2603]} // Dublin fallback
-              zoom={13}
-              style={{
-                flex: 1,  // ✅ FIXED: Use flex instead of height 100%
-                width: '100%',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-                MozUserSelect: 'none',
-                msUserSelect: 'none',
-                WebkitTouchCallout: 'none',
-                WebkitTapHighlightColor: 'transparent'
-              }}
-              zoomControl={false}
-            >
+            tourPosts.length === 0 ? (
+              /* No Posts Message for Map View */
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '40px 20px',
+                color: '#666',
+                textAlign: 'center'
+              }}>
+                <h3 style={{ color: '#c62828', marginBottom: '16px' }}>No Stops to Display</h3>
+                <p style={{ marginBottom: '8px' }}>
+                  This tour was created with {tour?.postIds?.length || 0} stops, but the referenced content is no longer available.
+                </p>
+                <p style={{ fontSize: '12px', color: '#999' }}>
+                  The original posts may have been deleted or moved.
+                </p>
+              </div>
+            ) : (
+              /* Map View */
+              <MapContainer
+                center={[53.3498, -6.2603]} // Dublin fallback
+                zoom={13}
+                style={{
+                  flex: 1,  // ✅ FIXED: Use flex instead of height 100%
+                  width: '100%',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none',
+                  WebkitTouchCallout: 'none',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+                zoomControl={false}
+              >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -552,7 +573,8 @@ const TourMapView: React.FC = () => {
                     </Marker>
                   );
                 })}
-            </MapContainer>
+              </MapContainer>
+            )
           ) : (
             /* List View */
             <div style={{
@@ -573,7 +595,21 @@ const TourMapView: React.FC = () => {
                 📍 Tour stops in order
               </div>
 
-              {tourPosts
+              {tourPosts.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#666'
+                }}>
+                  <h3 style={{ color: '#c62828', marginBottom: '16px' }}>No Stops Available</h3>
+                  <p style={{ marginBottom: '8px' }}>
+                    This tour was created with {tour?.postIds?.length || 0} stops, but the referenced content is no longer available.
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#999' }}>
+                    The original posts may have been deleted or moved.
+                  </p>
+                </div>
+              ) : tourPosts
                 .filter(post => post.latitude && post.longitude)
                 .map((post, index) => (
                 <div

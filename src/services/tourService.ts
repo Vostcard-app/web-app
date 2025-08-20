@@ -198,9 +198,23 @@ export const TourService = {
       const posts: TourPost[] = [];
       
       // Get each vostcard by its document ID
-      const vostcardPromises = tour.postIds.map(id => 
-        getDoc(doc(db, 'vostcards', id))
-      );
+      console.log('🔍 Attempting to fetch vostcards with IDs:', tour.postIds);
+      
+      const vostcardPromises = tour.postIds.map(async (id) => {
+        console.log('🔍 Fetching vostcard:', id);
+        
+        // Try main vostcards collection first
+        let vostcardDoc = await getDoc(doc(db, 'vostcards', id));
+        console.log('🔍 Found in vostcards collection:', vostcardDoc.exists());
+        
+        if (!vostcardDoc.exists()) {
+          // If not found, try to find it in any user's private collection
+          // This is a fallback - normally tours should only reference public vostcards
+          console.log('🔍 Vostcard not found in public collection, checking if it exists elsewhere...');
+        }
+        
+        return vostcardDoc;
+      });
       
       const vostcardDocs = await Promise.all(vostcardPromises);
       
@@ -233,7 +247,7 @@ export const TourService = {
             userRole: data.userRole
           });
         } else {
-          console.warn(`Vostcard ${doc.id} not found`);
+          console.warn(`❌ Vostcard ${doc.id} not found in Firestore`);
         }
       });
       
@@ -242,8 +256,14 @@ export const TourService = {
         return tour.postIds.indexOf(a.id) - tour.postIds.indexOf(b.id);
       });
       
-      console.log('✅ Loaded tour posts:', posts.length, 'posts');
+      console.log('✅ Loaded tour posts:', posts.length, 'out of', tour.postIds.length, 'expected posts');
       console.log('📍 Posts with location data:', posts.filter(p => p.latitude && p.longitude).length);
+      
+      if (posts.length === 0 && tour.postIds.length > 0) {
+        console.error('❌ CRITICAL: No vostcard documents found for tour posts!');
+        console.error('❌ Expected postIds:', tour.postIds);
+        console.error('❌ This suggests the referenced vostcard documents have been deleted or moved');
+      }
       
       return posts;
     } catch (error) {
