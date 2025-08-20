@@ -432,6 +432,29 @@ export default function VostcardCreateStep1Photos() {
     navigate('/create-step3');
   };
 
+  // Add video handler - save photos first, then go to Step 2
+  const handleAddVideo = () => {
+    // Filter out null photos - need at least 1 photo
+    const validPhotos = selectedPhotos.filter((photo): photo is File => photo !== null);
+    
+    if (validPhotos.length < 1) {
+      alert('Please add at least one photo before adding video.');
+      return;
+    }
+    
+    // Save photos to context first
+    if (currentVostcard) {
+      setCurrentVostcard({ ...currentVostcard, photos: validPhotos });
+    }
+    
+    console.log('📱 Photos saved before adding video:', {
+      photoCount: validPhotos.length
+    });
+    
+    // Navigate to Step 2 (video recording)
+    navigate('/create-step2');
+  };
+
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
   const isFormComplete = photoCount >= 1;
   
@@ -629,7 +652,7 @@ export default function VostcardCreateStep1Photos() {
 
         {/* Add Video Button */}
         <button
-          onClick={() => navigate('/create-step2')}
+          onClick={handleAddVideo}
           style={{
             width: '100%',
             maxWidth: 380,

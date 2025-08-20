@@ -406,12 +406,9 @@ const ScrollingCameraView: React.FC = () => {
         const returnTo = params.get('returnTo');
         if (returnTo) {
           setTimeout(() => navigate(returnTo, { replace: true }), 250);
-        } else if (TEMP_UNIFIED_VOSTCARD_FLOW) {
-          setTimeout(() => navigate('/create/step2', { replace: true }), 250);
-        } else if (script && script.trim()) {
-          navigate(`/script-tool?script=${encodeURIComponent(script)}`);
         } else {
-          navigate('/create-step1');
+          // Always go to Step 2 after video recording (where video thumbnail should show)
+          setTimeout(() => navigate('/create-step2', { replace: true }), 250);
         }
       };
 
