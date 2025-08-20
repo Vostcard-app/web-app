@@ -153,16 +153,25 @@ export const TourService = {
 
   async getTour(tourId: string): Promise<Tour | null> {
     try {
-      console.log('🔍 Loading tour:', tourId);
+      console.log('🔍 Loading tour with ID:', tourId);
+      console.log('🔍 Tour ID length:', tourId.length);
+      console.log('🔍 Tour ID characters:', tourId.split('').map(c => c.charCodeAt(0)));
+      
       const tourRef = doc(db, 'tours', tourId);
+      console.log('🔍 Created tour reference for collection: tours, document:', tourId);
+      
       const tourDoc = await getDoc(tourRef);
+      console.log('🔍 Tour document exists:', tourDoc.exists());
       
       if (!tourDoc.exists()) {
-        console.warn('❌ Tour not found:', tourId);
+        console.warn('❌ Tour document not found in Firestore:', tourId);
+        console.warn('❌ This could mean the tour ID is incorrect or the document was deleted');
         return null;
       }
       
       const data = tourDoc.data();
+      console.log('🔍 Raw tour data from Firestore:', data);
+      
       const tour = {
         id: tourDoc.id,
         ...data,
@@ -170,10 +179,15 @@ export const TourService = {
         updatedAt: data.updatedAt?.toDate()
       } as Tour;
       
-      console.log('✅ Loaded tour:', tour);
+      console.log('✅ Processed tour object:', tour);
+      console.log('✅ Tour isPublic:', tour.isPublic);
+      console.log('✅ Tour isShareable:', tour.isShareable);
+      console.log('✅ Tour postIds:', tour.postIds);
+      
       return tour;
     } catch (error) {
       console.error('❌ Error loading tour:', error);
+      console.error('❌ Error details:', error);
       throw error;
     }
   },

@@ -108,18 +108,28 @@ const TourMapView: React.FC = () => {
           }
         } else if (tourId) {
           console.log('🎬 TourMapView: Fetching tour data for ID:', tourId);
+          console.log('🎬 TourMapView: Tour ID from URL params:', tourId);
+          
           // Fetch tour and posts from Firebase
           const fetchedTour = await TourService.getTour(tourId);
+          console.log('🎬 TourMapView: Fetched tour result:', fetchedTour);
+          
           if (fetchedTour) {
+            console.log('🎬 TourMapView: Tour found, checking accessibility...');
+            
             // Check if tour is publicly accessible
             if (!fetchedTour.isPublic && !fetchedTour.isShareable) {
               console.warn('❌ Tour is not public or shareable:', tourId);
+              console.warn('❌ Tour isPublic:', fetchedTour.isPublic);
+              console.warn('❌ Tour isShareable:', fetchedTour.isShareable);
               setError('This tour is not publicly accessible');
               return;
             }
             
+            console.log('🎬 TourMapView: Tour is accessible, loading posts...');
             setTour(fetchedTour);
             const fetchedPosts = await TourService.getTourPosts(fetchedTour);
+            console.log('🎬 TourMapView: Fetched posts:', fetchedPosts);
             setTourPosts(fetchedPosts);
             
             // Fetch rating stats for the tour
