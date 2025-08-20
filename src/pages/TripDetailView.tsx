@@ -480,15 +480,21 @@ ${shareUrl}`;
 
   // Handle slideshow mode
   const handleSlideshowMode = async () => {
+    console.log('🎬 handleSlideshowMode called:', { viewMode, slideshowImagesLength: slideshowImages.length });
+    
     if (viewMode !== 'slideshow') return;
     
     // Collect images if not already collected
     if (slideshowImages.length === 0) {
+      console.log('🖼️ Collecting trip images...');
       const images = await collectTripImages();
       setSlideshowImages(images);
       
+      console.log('🖼️ Images collected:', images.length);
+      
       // Start slideshow if images were found
       if (images.length > 0) {
+        console.log('🎬 Starting slideshow with images');
         setShowSlideshow(true);
       } else {
         // No images found, show message and switch back to list view
@@ -497,6 +503,7 @@ ${shareUrl}`;
       }
     } else {
       // Images already collected, start slideshow
+      console.log('🎬 Starting slideshow with existing images');
       setShowSlideshow(true);
     }
   };
@@ -511,20 +518,43 @@ ${shareUrl}`;
   // Play/pause background music when slideshow opens/closes
   useEffect(() => {
     const audioEl = backgroundAudioRef.current;
-    if (!audioEl) return;
+    console.log('🎵 Music playback effect triggered:', {
+      showSlideshow,
+      hasAudioEl: !!audioEl,
+      hasMusicUrl: !!trip?.backgroundMusic?.url,
+      musicUrl: trip?.backgroundMusic?.url,
+      volume: trip?.backgroundMusic?.volume
+    });
+    
+    if (!audioEl) {
+      console.log('❌ No audio element found');
+      return;
+    }
+    
     try {
       if (showSlideshow && trip?.backgroundMusic?.url) {
-        audioEl.volume = typeof trip.backgroundMusic.volume === 'number' ? Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        const volume = typeof trip.backgroundMusic.volume === 'number' ? Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        audioEl.volume = volume;
         audioEl.currentTime = 0;
+        
+        console.log('🎵 Starting music playback:', { volume, url: trip.backgroundMusic.url });
+        
         const playPromise = audioEl.play();
         if (playPromise && typeof playPromise.then === 'function') {
-          playPromise.catch(() => {/* ignore autoplay errors */});
+          playPromise
+            .then(() => {
+              console.log('✅ Music started successfully');
+            })
+            .catch((error) => {
+              console.log('❌ Music autoplay failed:', error);
+            });
         }
       } else {
+        console.log('🎵 Pausing music:', { showSlideshow, hasUrl: !!trip?.backgroundMusic?.url });
         audioEl.pause();
       }
     } catch (e) {
-      // ignore
+      console.error('❌ Music playback error:', e);
     }
   }, [showSlideshow, trip?.backgroundMusic?.url]);
 
