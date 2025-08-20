@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaLocationArrow, FaMap, FaList, FaStar, FaComment } from 'react-icons/fa';
+import { FaArrowLeft, FaLocationArrow, FaMap, FaList, FaStar, FaComment, FaEye } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -564,10 +564,35 @@ const TourMapView: React.FC = () => {
                           )}
                           <div style={{
                             fontSize: '12px',
-                            color: '#999'
+                            color: '#999',
+                            marginBottom: '8px'
                           }}>
                             by {post.username}
                           </div>
+                          
+                          <button
+                            onClick={() => {
+                              navigate(`/vostcard/${post.id}`);
+                            }}
+                            style={{
+                              backgroundColor: '#28a745',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '6px 10px',
+                              fontSize: '11px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              width: '100%',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <FaEye size={10} />
+                            View Details
+                          </button>
                         </div>
                       </Popup>
                     </Marker>
@@ -722,33 +747,64 @@ const TourMapView: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      // Switch to map view and center on this post
-                      setViewMode('map');
-                      if (mapRef && post.latitude && post.longitude) {
-                        setTimeout(() => {
-                          mapRef.setView([post.latitude!, post.longitude!], 17);
-                        }, 100);
-                      }
-                    }}
-                    style={{
-                      backgroundColor: '#002B4D',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '8px 12px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <FaLocationArrow size={10} />
-                    View on Map
-                  </button>
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    marginTop: '8px'
+                  }}>
+                    <button
+                      onClick={() => {
+                        // Switch to map view and center on this post
+                        setViewMode('map');
+                        if (mapRef && post.latitude && post.longitude) {
+                          setTimeout(() => {
+                            mapRef.setView([post.latitude!, post.longitude!], 17);
+                          }, 100);
+                        }
+                      }}
+                      style={{
+                        backgroundColor: '#002B4D',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        flex: 1
+                      }}
+                    >
+                      <FaLocationArrow size={10} />
+                      View on Map
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        // Navigate to vostcard detail view
+                        navigate(`/vostcard/${post.id}`);
+                      }}
+                      style={{
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 12px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        flex: 1
+                      }}
+                    >
+                      <FaEye size={10} />
+                      View
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
