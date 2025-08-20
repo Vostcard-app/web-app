@@ -284,7 +284,7 @@ const HomeView = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [singleVostcard, setSingleVostcard] = useState<any>(null);
   const [browseLocation, setBrowseLocation] = useState<any>(null);
-  const { preferences } = usePreferences();
+  const { preferences, updateFilterPreference } = usePreferences();
   
   // Initialize filter states from preferences or defaults
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
@@ -1461,7 +1461,11 @@ const HomeView = () => {
       total: vostcards.length,
       afterFilters: regularFiltered.length,
       visibleInBounds: boundsFiltered.length,
-      maxAllowed: MAX_POSTS
+      maxAllowed: MAX_POSTS,
+      showGuidesOnly,
+      guideUsers: vostcards.filter(v => v.userRole === 'guide').length,
+      regularUsers: vostcards.filter(v => v.userRole !== 'guide' && !v.isOffer).length,
+      offers: vostcards.filter(v => v.isOffer).length
     });
     
     return boundsFiltered;
@@ -2370,7 +2374,12 @@ const HomeView = () => {
         }}
       >
         <div
-          onClick={() => setShowGuidesOnly(!showGuidesOnly)}
+          onClick={() => {
+            const newValue = !showGuidesOnly;
+            setShowGuidesOnly(newValue);
+            updateFilterPreference('showGuidesOnly', newValue);
+            console.log('📚 Guide toggle clicked:', { from: showGuidesOnly, to: newValue });
+          }}
           style={{
             width: '36px',
             height: '20px',
@@ -2396,7 +2405,9 @@ const HomeView = () => {
             }}
           />
         </div>
-        <span style={{ fontSize: '10px', color: '#333', fontWeight: 500 }}>📚 See all</span>
+        <span style={{ fontSize: '10px', color: '#333', fontWeight: 500 }}>
+          {showGuidesOnly ? '📚 Guides only' : '📚 See all'}
+        </span>
       </div>
 
           {/* Help Menu Dropdown */}
