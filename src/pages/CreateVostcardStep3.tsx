@@ -130,12 +130,6 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handleSaveChanges = async () => {
-    // Show success message immediately
-    alert('Your Vōstcard has been saved and in a few minutes available in your Private Vōstcard list.');
-    
-    // Navigate to home view after user dismisses the message
-    navigate('/home');
-    
     try {
       console.log('💾 Starting vostcard save process...');
       
@@ -143,11 +137,14 @@ const CreateVostcardStep3: React.FC = () => {
       await saveLocalVostcard();
       
       console.log('✅ Vostcard saved successfully');
+
+      // Show success message and navigate only after successful save
+      alert('Your Vōstcard has been saved and will be available in your Private Vōstcard list.');
+      navigate('/home');
       
     } catch (error) {
       console.error('❌ Error saving vostcard:', error);
-      // Don't show error alert since user is already on home screen
-      // Could implement a more subtle error notification if needed
+      alert('Failed to save Vōstcard. Please try again.');
     }
   };
 
@@ -170,17 +167,6 @@ const CreateVostcardStep3: React.FC = () => {
       return;
     }
     
-    // Show success message immediately
-    alert('Your Vōstcard will appear on the map in a minute or two.');
-    
-    // Navigate to home without replacing history
-    navigate('/home', { 
-      state: { 
-        freshLoad: true,
-        timestamp: Date.now() 
-      }
-    });
-    
     try {
       console.log('📥 Starting vostcard post process...');
       
@@ -198,11 +184,19 @@ const CreateVostcardStep3: React.FC = () => {
       clearVostcard();
       
       console.log('✅ Vostcard posted successfully');
+
+      // Show success message and navigate only after successful post
+      alert('Your Vōstcard has been posted and will appear on the map in a minute or two.');
+      navigate('/home', { 
+        state: { 
+          freshLoad: true,
+          timestamp: Date.now() 
+        }
+      });
       
     } catch (error) {
       console.error('❌ Error posting vostcard:', error);
-      // Don't show error alert since user is already on home screen
-      // Instead, could implement a more subtle error notification if needed
+      alert('Failed to post Vōstcard. Please try again.');
     }
   };
 
