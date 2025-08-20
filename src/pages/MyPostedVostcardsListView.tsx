@@ -22,7 +22,11 @@ const MyPostedVostcardsListView = () => {
     user: !!user,
     loading,
     error,
-    postedVostcardsCount: postedVostcards.length
+    postedVostcardsCount: postedVostcards.length,
+    isDesktop,
+    isMobile: !isDesktop,
+    userAgent: navigator.userAgent,
+    connectionType: (navigator as any).connection?.effectiveType || 'unknown'
   });
 
   useEffect(() => {
@@ -52,23 +56,53 @@ const MyPostedVostcardsListView = () => {
           await loadPostedVostcards();
           console.log('✅ Posted Vostcards loaded successfully');
 
-          // Filter out local vostcards not present in Firebase
+          // Filter out local vostcards not present in Firebase (optimized for mobile)
           const syncLocalWithFirebase = async () => {
             try {
               console.log('🔄 Syncing local vostcards with Firebase...');
               const localVostcards = await loadLocalVostcards();
               console.log('📂 Found', localVostcards.length, 'Vostcards in IndexedDB');
 
-              for (const vostcard of localVostcards) {
-                try {
-                  const vostcardRef = doc(db, 'vostcards', vostcard.id);
-                  const docSnap = await getDoc(vostcardRef);
-                  if (!docSnap.exists()) {
-                    console.log(`🗑️ Local vostcard ${vostcard.id} not found in Firebase, deleting from device`);
-                    await deleteLocalVostcard(vostcard.id);
+              // Skip sync on mobile if there are too many vostcards to avoid performance issues
+              if (!isDesktop && localVostcards.length > 20) {
+                console.log('📱 Mobile: Skipping sync for large number of vostcards to improve performance');
+                return;
+              }
+
+              // Process in smaller batches for mobile
+              const batchSize = isDesktop ? 10 : 5;
+              for (let i = 0; i < localVostcards.length; i += batchSize) {
+                const batch = localVostcards.slice(i, i + batchSize);
+                
+                await Promise.all(batch.map(async (vostcard) => {
+                  try {
+                    // Add timeout for mobile
+                    const timeoutPromise = new Promise((_, reject) => 
+                      setTimeout(() => reject(new Error('Timeout')), isDesktop ? 10000 : 5000)
+                    );
+                    
+                    const checkPromise = (async () => {
+                      const vostcardRef = doc(db, 'vostcards', vostcard.id);
+                      const docSnap = await getDoc(vostcardRef);
+                      if (!docSnap.exists()) {
+                        console.log(`🗑️ Local vostcard ${vostcard.id} not found in Firebase, deleting from device`);
+                        await deleteLocalVostcard(vostcard.id);
+                      }
+                    })();
+                    
+                    await Promise.race([checkPromise, timeoutPromise]);
+                  } catch (error) {
+                    if (error instanceof Error && error.message === 'Timeout') {
+                      console.log(`⏱️ Timeout checking vostcard ${vostcard.id}, skipping`);
+                    } else {
+                      console.error(`❌ Error checking vostcard ${vostcard.id} in Firebase:`, error);
+                    }
                   }
-                } catch (error) {
-                  console.error(`❌ Error checking vostcard ${vostcard.id} in Firebase:`, error);
+                }));
+                
+                // Add delay between batches on mobile to prevent overwhelming the connection
+                if (!isDesktop && i + batchSize < localVostcards.length) {
+                  await new Promise(resolve => setTimeout(resolve, 500));
                 }
               }
               console.log('✅ Local vostcards synced with Firebase');
@@ -83,7 +117,24 @@ const MyPostedVostcardsListView = () => {
 
         } catch (error) {
           console.error('❌ Error loading posted Vostcards:', error);
-          setError(`Failed to load posted Vostcards: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          
+          // Provide more helpful error messages for mobile users
+          let errorMessage = 'Failed to load posted Vostcards';
+          if (error instanceof Error) {
+            if (error.message.includes('network') || error.message.includes('fetch')) {
+              errorMessage = isDesktop 
+                ? `Network error: ${error.message}` 
+                : 'Network connection issue. Please check your internet connection and try again.';
+            } else if (error.message.includes('timeout') || error.message === 'Timeout') {
+              errorMessage = isDesktop 
+                ? 'Request timed out' 
+                : 'Loading is taking longer than expected. Please try again.';
+            } else {
+              errorMessage = `${errorMessage}: ${error.message}`;
+            }
+          }
+          
+          setError(errorMessage);
         } finally {
           setLoading(false);
         }
@@ -92,11 +143,12 @@ const MyPostedVostcardsListView = () => {
       // Immediately load data when component mounts
       loadData();
 
-      // Set up an interval to refresh data every 30 seconds
+      // Set up an interval to refresh data (less frequent on mobile to save battery/data)
+      const refreshIntervalMs = isDesktop ? 30000 : 60000; // 30s desktop, 60s mobile
       const refreshInterval = setInterval(() => {
-        console.log('🔄 Refreshing posted vostcards...');
+        console.log('🔄 Refreshing posted vostcards...', { isDesktop, intervalMs: refreshIntervalMs });
         loadData();
-      }, 30000);
+      }, refreshIntervalMs);
 
       // Clean up interval on unmount
       return () => clearInterval(refreshInterval);
