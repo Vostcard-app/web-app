@@ -150,6 +150,7 @@ export const TourService = {
 
   async getTourPosts(tour: Tour): Promise<TourPost[]> {
     try {
+      console.log('🎬 Loading tour posts for tour:', tour.name, 'with postIds:', tour.postIds);
       const posts: TourPost[] = [];
       
       // Get each vostcard by its document ID
@@ -162,17 +163,30 @@ export const TourService = {
       vostcardDocs.forEach(doc => {
         if (doc.exists()) {
           const data = doc.data();
+          
+          // Handle location data - check both direct fields and geo object
+          let latitude = data.latitude;
+          let longitude = data.longitude;
+          
+          if (!latitude && !longitude && data.geo) {
+            latitude = data.geo.latitude;
+            longitude = data.geo.longitude;
+          }
+          
           posts.push({
             id: doc.id,
             title: data.title || 'Untitled',
             description: data.description,
-            photoURLs: data.photoURLs || [data.photoURL],
+            photoURLs: data.photoURLs || (data.photoURL ? [data.photoURL] : []),
             videoURL: data.videoURL,
-            latitude: data.latitude,
-            longitude: data.longitude,
+            latitude: latitude,
+            longitude: longitude,
             createdAt: data.createdAt?.toDate(),
             username: data.username,
-            state: data.state
+            state: data.state,
+            isOffer: data.isOffer || false,
+            isQuickcard: data.isQuickcard || false,
+            userRole: data.userRole
           });
         } else {
           console.warn(`Vostcard ${doc.id} not found`);
@@ -183,6 +197,9 @@ export const TourService = {
       posts.sort((a, b) => {
         return tour.postIds.indexOf(a.id) - tour.postIds.indexOf(b.id);
       });
+      
+      console.log('✅ Loaded tour posts:', posts.length, 'posts');
+      console.log('📍 Posts with location data:', posts.filter(p => p.latitude && p.longitude).length);
       
       return posts;
     } catch (error) {
