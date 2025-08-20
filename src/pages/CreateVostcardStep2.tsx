@@ -493,19 +493,20 @@ export default function CreateVostcardStep2() {
         </div>
       )}
 
-      {/* Options - now scrollable */}
-      <div style={{
-        flex: 1,
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '45px 20px 0 20px',
-        boxSizing: 'border-box',
-        maxHeight: 'calc(100vh - 120px)',
-        overflowY: 'auto',
-        marginTop: TEMP_UNIFIED_VOSTCARD_FLOW ? '20px' : (currentVostcard?.title ? '20px' : '80px'),
-      }}>
+      {/* Options - now scrollable (only show when unified flow is disabled) */}
+      {!TEMP_UNIFIED_VOSTCARD_FLOW && (
+        <div style={{
+          flex: 1,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: '45px 20px 0 20px',
+          boxSizing: 'border-box',
+          maxHeight: 'calc(100vh - 120px)',
+          overflowY: 'auto',
+          marginTop: currentVostcard?.title ? '20px' : '80px',
+        }}>
         {/* Photo selection grid */}
         <div style={{
           display: 'grid',
@@ -616,6 +617,7 @@ export default function CreateVostcardStep2() {
           📱 Using enhanced camera with orientation correction
         </div>
       </div>
+      )}
 
       {/* File input - triggers iOS native action sheet on mobile, used by modal on desktop */}
       <input
