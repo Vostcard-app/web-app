@@ -121,6 +121,33 @@ export const TourService = {
     }
   },
 
+  async getTour(tourId: string): Promise<Tour | null> {
+    try {
+      console.log('🔍 Loading tour:', tourId);
+      const tourRef = doc(db, 'tours', tourId);
+      const tourDoc = await getDoc(tourRef);
+      
+      if (!tourDoc.exists()) {
+        console.warn('❌ Tour not found:', tourId);
+        return null;
+      }
+      
+      const data = tourDoc.data();
+      const tour = {
+        id: tourDoc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate(),
+        updatedAt: data.updatedAt?.toDate()
+      } as Tour;
+      
+      console.log('✅ Loaded tour:', tour);
+      return tour;
+    } catch (error) {
+      console.error('❌ Error loading tour:', error);
+      throw error;
+    }
+  },
+
   async getTourPosts(tour: Tour): Promise<TourPost[]> {
     try {
       const posts: TourPost[] = [];
