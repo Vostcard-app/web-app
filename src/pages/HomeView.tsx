@@ -422,9 +422,10 @@ const HomeView = () => {
       
       // Force reload vostcards for the new browse location
       console.log('🗺️ Reloading content for browse location:', browseLocation.name);
-      loadVostcards(true); // Force refresh to load content for browse area
+      // We'll trigger the reload in a separate effect to avoid dependency issues
+      setHasInitialLoad(false); // Reset to trigger reload
     }
-  }, [browseLocation, browseLocationState, navigate, location.pathname, loadVostcards]);
+  }, [browseLocation, browseLocationState, navigate, location.pathname]);
 
   // Update ref when browse location changes
   useEffect(() => {
