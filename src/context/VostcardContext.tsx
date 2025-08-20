@@ -324,6 +324,94 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard, openUserDB]);
 
+  // Save a specific vostcard directly (used by postVostcard to avoid timing issues)
+  const saveVostcardDirect = useCallback(async (vostcardToSave: any) => {
+    if (!vostcardToSave) {
+      console.error('No vostcard to save');
+      return;
+    }
+    
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    console.log('💾 Saving vostcard directly to Firebase:', {
+      id: vostcardToSave.id,
+      title: vostcardToSave.title,
+      state: vostcardToSave.state,
+      visibility: vostcardToSave.visibility,
+      hasPhotos: vostcardToSave.photos?.length > 0,
+      hasVideo: !!vostcardToSave.video,
+      hasGeo: !!vostcardToSave.geo
+    });
+
+    try {
+      // Upload media files first if they exist
+      let photoURLs: string[] = [];
+      let videoURL: string | null = null;
+
+      // Upload photos
+      if (vostcardToSave.photos && vostcardToSave.photos.length > 0) {
+        console.log('📸 Uploading photos...');
+        photoURLs = await Promise.all(
+          vostcardToSave.photos.map(async (photo: Blob, index: number) => {
+            const photoRef = ref(storage, `vostcards/${user.uid}/photos/${vostcardToSave.id}_${index}`);
+            await uploadBytes(photoRef, photo);
+            return getDownloadURL(photoRef);
+          })
+        );
+      } else if (vostcardToSave._firebasePhotoURLs && vostcardToSave._firebasePhotoURLs.length > 0) {
+        // Preserve existing photo URLs if no new photos to upload
+        console.log('📸 Preserving existing photos...');
+        photoURLs = vostcardToSave._firebasePhotoURLs;
+      }
+
+      // Upload video
+      if (vostcardToSave.video) {
+        console.log('🎥 Uploading video...');
+        const videoRef = ref(storage, `vostcards/${user.uid}/videos/${vostcardToSave.id}`);
+        await uploadBytes(videoRef, vostcardToSave.video);
+        videoURL = await getDownloadURL(videoRef);
+      }
+
+      // Save to Firestore
+      const docData = {
+        id: vostcardToSave.id,
+        title: vostcardToSave.title,
+        description: vostcardToSave.description,
+        categories: vostcardToSave.categories,
+        username: vostcardToSave.username,
+        userID: user.uid,
+        userRole: vostcardToSave.userRole || authContext.userRole || 'user',
+        photoURLs: photoURLs,
+        videoURL: videoURL,
+        latitude: vostcardToSave.geo?.latitude,
+        longitude: vostcardToSave.geo?.longitude,
+        geo: vostcardToSave.geo || null,
+        avatarURL: user.photoURL || '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        state: vostcardToSave.state,
+        visibility: vostcardToSave.visibility || 'private',
+        type: 'vostcard' as const,
+        hasVideo: !!vostcardToSave.video,
+        hasPhotos: photoURLs.length > 0,
+        mediaUploadStatus: 'complete',
+        isOffer: vostcardToSave.isOffer || false,
+        offerDetails: vostcardToSave.offerDetails || null
+      };
+
+      console.log('📝 Saving vostcard directly to Firebase:', docData);
+      await setDoc(doc(db, 'vostcards', vostcardToSave.id), docData);
+
+      console.log('✅ Vostcard saved directly to Firebase successfully');
+    } catch (error) {
+      console.error('❌ Error saving vostcard directly:', error);
+      throw error;
+    }
+  }, [authContext.userRole]);
+
   // Load private vostcards from Firebase
   const loadPrivateVostcards = useCallback(async () => {
     try {
@@ -526,8 +614,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       setCurrentVostcard(updatedVostcard);
       
-      // Save to Firebase with new visibility
-      await saveVostcard();
+      // Save to Firebase with new visibility - pass the updated vostcard directly
+      await saveVostcardDirect(updatedVostcard);
       
       // Move from savedVostcards to postedVostcards
       console.log('🔄 Moving vostcard between lists:', {
