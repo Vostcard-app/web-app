@@ -236,7 +236,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         console.log('📸 Uploading photos...');
         photoURLs = await Promise.all(
           currentVostcard.photos.map(async (photo, index) => {
-            const photoRef = ref(storage, `vostcards/${currentVostcard.id}/photo_${index}`);
+            const photoRef = ref(storage, `vostcards/${user.uid}/photos/${currentVostcard.id}_${index}`);
             await uploadBytes(photoRef, photo);
             return getDownloadURL(photoRef);
           })
@@ -246,7 +246,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Upload video
       if (currentVostcard.video) {
         console.log('🎥 Uploading video...');
-        const videoRef = ref(storage, `vostcards/${currentVostcard.id}/video`);
+        const videoRef = ref(storage, `vostcards/${user.uid}/videos/${currentVostcard.id}`);
         await uploadBytes(videoRef, currentVostcard.video);
         videoURL = await getDownloadURL(videoRef);
       }
