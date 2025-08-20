@@ -654,17 +654,8 @@ export default function VostcardCreateStep1Photos() {
         <button
           onClick={handleAddVideo}
           style={{
-            width: '100%',
-            maxWidth: 380,
-            padding: '12px',
+            ...buttonStyle,
             backgroundColor: '#007AFF',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            marginTop: 2,
             marginBottom: '16px'
           }}
         >
