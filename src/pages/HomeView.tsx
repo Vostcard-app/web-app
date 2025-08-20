@@ -1161,7 +1161,10 @@ const HomeView = () => {
     }
   };
 
-  const getVostcardIcon = (isOffer: boolean, userRole?: string) => {
+  const getVostcardIcon = (isOffer: boolean, userRole?: string, username?: string) => {
+    // Show guide pin for all Jay Bond's vostcards
+    if (username === 'Jay Bond') return guideIcon;
+    
     if (isOffer) return offerIcon;
     if (userRole === 'guide') return guideIcon;
     return vostcardIcon;
@@ -2038,7 +2041,7 @@ const HomeView = () => {
 
 
                 const position: [number, number] = [vostcard.latitude, vostcard.longitude];
-                const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.isQuickcard);
+                const icon = getVostcardIcon(vostcard.isOffer, vostcard.userRole, vostcard.username);
                 const isVostcardPin = !vostcard.isOffer;
                 const isGuidePin = !vostcard.isOffer && vostcard.userRole === 'guide';
 

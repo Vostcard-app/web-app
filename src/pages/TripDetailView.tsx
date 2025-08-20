@@ -714,6 +714,9 @@ ${shareUrl}`;
 
   // Function to get the appropriate icon for a trip item
   const getIconForItem = (item: TripItem) => {
+    // Show guide pin for all Jay Bond's vostcards
+    if (item.username === 'Jay Bond') return guideIcon;
+    
     if (item.isOffer) return offerIcon;
     if (item.isQuickcard) {
       // Check user role for quickcards

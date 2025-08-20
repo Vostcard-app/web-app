@@ -250,6 +250,9 @@ const TourInProgressView: React.FC = () => {
   }, [mapRef, tourPosts, userLocation, viewMode]);
 
   const getPostIcon = (post: TourPost) => {
+    // Show guide pin for all Jay Bond's vostcards
+    if (post.username === 'Jay Bond') return guideIcon;
+    
     if (post.isOffer) return offerIcon;
     if (post.isQuickcard) {
       if (post.userRole === 'guide') return guideIcon;
