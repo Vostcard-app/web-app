@@ -288,7 +288,7 @@ const EditVostcardView: React.FC = () => {
       // Upload photos to Firebase Storage
       const photoURLs = await Promise.all(
         photosBlobs.map(async (photo) => {
-          const photoRef = ref(storage, `vostcards/${currentVostcard!.userID}/photos/${uuidv4()}`);
+          const photoRef = ref(storage, `vostcards/${currentVostcard!.userID}/photos/${currentVostcard!.id}_${index}`);
           await uploadBytes(photoRef, photo);
           return getDownloadURL(photoRef);
         })
@@ -297,7 +297,7 @@ const EditVostcardView: React.FC = () => {
       // Upload video if present
       let videoURL = null;
       if (videoFile) {
-        const videoRef = ref(storage, `vostcards/${currentVostcard!.userID}/videos/${uuidv4()}`);
+        const videoRef = ref(storage, `vostcards/${currentVostcard!.userID}/videos/${currentVostcard!.id}`);
         await uploadBytes(videoRef, videoFile);
         videoURL = await getDownloadURL(videoRef);
       }
