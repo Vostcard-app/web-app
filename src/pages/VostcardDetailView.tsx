@@ -378,7 +378,18 @@ const VostcardDetailView: React.FC = () => {
   const [isScrolling, setIsScrolling] = useState(false);
 
   // ✅ Performance optimization - memoize photo URLs and audio detection
-  const photoURLs = useMemo(() => vostcard?.photoURLs || [], [vostcard?.photoURLs]);
+  const photoURLs = useMemo(() => {
+    const urls = vostcard?.photoURLs || [];
+    console.log('🔍 VostcardDetailView Photo Debug:', {
+      vostcardId: vostcard?.id,
+      photoURLs: vostcard?.photoURLs,
+      photoURLsLength: urls.length,
+      hasPhotos: vostcard?.hasPhotos,
+      _firebasePhotoURLs: vostcard?._firebasePhotoURLs,
+      allVostcardKeys: vostcard ? Object.keys(vostcard) : []
+    });
+    return urls;
+  }, [vostcard?.photoURLs, vostcard?.id]);
   const hasAudio = useMemo(() => {
     const audioExists = !!(
       vostcard?.audioURL || 
@@ -1980,7 +1991,17 @@ Tap OK to continue.`;
         borderBottom: '1px solid #eee'
       }}>
         {/* Map View button */}
-        {vostcard?.latitude && vostcard?.longitude && (
+        {(() => {
+          const hasGeo = (vostcard?.latitude && vostcard?.longitude) || (vostcard?.geo?.latitude && vostcard?.geo?.longitude);
+          console.log('🔍 VostcardDetailView Geo Debug:', {
+            vostcardId: vostcard?.id,
+            latitude: vostcard?.latitude,
+            longitude: vostcard?.longitude,
+            geo: vostcard?.geo,
+            hasGeo
+          });
+          return hasGeo;
+        })() && (
           <button
             onClick={handleMapClick}
             style={{
