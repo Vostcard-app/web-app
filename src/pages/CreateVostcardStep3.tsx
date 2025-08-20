@@ -93,8 +93,11 @@ const CreateVostcardStep3: React.FC = () => {
         
         // Set last used trip if available
         if (trips.length > 0) {
-          const sortedTrips = trips.sort((a, b) => 
-            (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0)
+          const sortedTrips = trips.sort((a, b) => {
+            const aTime = a.updatedAt?.toDate?.()?.getTime() || 0;
+            const bTime = b.updatedAt?.toDate?.()?.getTime() || 0;
+            return bTime - aTime;
+          }
           );
           setLastUsedTrip(sortedTrips[0]);
         }
