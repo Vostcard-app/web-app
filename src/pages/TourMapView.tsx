@@ -111,6 +111,13 @@ const TourMapView: React.FC = () => {
           // Fetch tour and posts from Firebase
           const fetchedTour = await TourService.getTour(tourId);
           if (fetchedTour) {
+            // Check if tour is publicly accessible
+            if (!fetchedTour.isPublic && !fetchedTour.isShareable) {
+              console.warn('❌ Tour is not public or shareable:', tourId);
+              setError('This tour is not publicly accessible');
+              return;
+            }
+            
             setTour(fetchedTour);
             const fetchedPosts = await TourService.getTourPosts(fetchedTour);
             setTourPosts(fetchedPosts);

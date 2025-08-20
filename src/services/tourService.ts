@@ -121,6 +121,36 @@ export const TourService = {
     }
   },
 
+  async getPublicToursByCreator(creatorId: string): Promise<Tour[]> {
+    try {
+      console.log('🔍 Loading public tours for creator:', creatorId);
+      const toursRef = collection(db, 'tours');
+      const q = query(
+        toursRef,
+        where('creatorId', '==', creatorId),
+        where('isPublic', '==', true),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const snapshot = await getDocs(q);
+      const tours = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate(),
+          updatedAt: data.updatedAt?.toDate()
+        } as Tour;
+      });
+      
+      console.log('✅ Loaded public tours:', tours);
+      return tours;
+    } catch (error) {
+      console.error('❌ Error loading public tours:', error);
+      throw error;
+    }
+  },
+
   async getTour(tourId: string): Promise<Tour | null> {
     try {
       console.log('🔍 Loading tour:', tourId);
