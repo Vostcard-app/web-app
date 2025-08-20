@@ -259,7 +259,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         categories: currentVostcard.categories,
         username: currentVostcard.username,
         userID: user.uid,
-        userRole: currentVostcard.userRole,
+        userRole: currentVostcard.userRole || authContext.userRole || 'user',
         photoURLs: photoURLs,
         videoURL: videoURL,
         latitude: currentVostcard.geo?.latitude,
