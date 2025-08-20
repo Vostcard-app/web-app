@@ -317,7 +317,7 @@ const PublicHomeView: React.FC = () => {
             <Popup>
               <div style={{ textAlign: 'center', minWidth: '200px' }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
-                  {singleVostcard.title || (isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
+                  {singleVostcard.title || 'Untitled Vōstcard'}
                 </h3>
                 <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
                   {singleVostcard.description || 'No description'}

@@ -1114,7 +1114,7 @@ Tap OK to continue.`;
     navigate('/flag-form', {
       state: {
         vostcardId: vostcard?.id,
-        vostcardTitle: vostcard?.title || 'Untitled Quickcard',
+        vostcardTitle: vostcard?.title || 'Untitled Vōstcard',
         username: vostcard?.username || 'Anonymous'
       }
     });
@@ -1595,7 +1595,7 @@ Tap OK to continue.`;
           color: '#333',
           textAlign: 'center'
         }}>
-          {vostcard.title || 'Untitled Quickcard'}
+          {vostcard.title || 'Untitled Vōstcard'}
         </h1>
       </div>
 

@@ -469,7 +469,7 @@ const TourView: React.FC = () => {
                         <Popup>
                           <div style={{ textAlign: 'center', minWidth: '200px' }}>
                             <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>
-                              {post.title || (post.isQuickcard ? 'Untitled Quickcard' : 'Untitled Vostcard')}
+                              {post.title || 'Untitled Vōstcard'}
                             </h3>
                             <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#666' }}>
                               {post.description || 'No description'}

@@ -1263,7 +1263,7 @@ const HomeView = () => {
       console.log('🔍 All posts before sorting:');
       allPosts.forEach((post, index) => {
         const timestamp = post.createdAt?.toDate ? post.createdAt.toDate().getTime() : new Date(post.createdAt).getTime();
-        console.log(`  ${index + 1}. ${post.title || 'Untitled'} (${post.isQuickcard ? 'Quickcard' : 'Vostcard'}) - ${new Date(timestamp).toLocaleString()} - ${timestamp}`);
+        console.log(`  ${index + 1}. ${post.title || 'Untitled'} (Vōstcard) - ${new Date(timestamp).toLocaleString()} - ${timestamp}`);
       });
       
       // Sort ALL posts by creation date to find the absolute most recent
@@ -1277,7 +1277,7 @@ const HomeView = () => {
       console.log('🔍 Posts after sorting (most recent first):');
       sortedPosts.slice(0, 3).forEach((post, index) => {
         const timestamp = post.createdAt?.toDate ? post.createdAt.toDate().getTime() : new Date(post.createdAt).getTime();
-        console.log(`  ${index + 1}. ${post.title || 'Untitled'} (${post.isQuickcard ? 'Quickcard' : 'Vostcard'}) - ${new Date(timestamp).toLocaleString()} - ${timestamp}`);
+        console.log(`  ${index + 1}. ${post.title || 'Untitled'} (Vōstcard) - ${new Date(timestamp).toLocaleString()} - ${timestamp}`);
       });
       
       const lastPost = sortedPosts[0];
