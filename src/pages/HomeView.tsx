@@ -1755,17 +1755,45 @@ const HomeView = () => {
                   Liked Posts
                 </button>
                 
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate(userRole === 'guide' ? `/user-profile/${userID}/tours` : '/my-trips');
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  style={submenuItemStyle}
-                >
-                  {userRole === 'guide' ? 'Tours' : 'Trips'}
-                </button>
+                {userRole === 'guide' ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        navigate('/my-trips');
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      style={submenuItemStyle}
+                    >
+                      Personal Trips
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        navigate(`/user-profile/${userID}/tours`);
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      style={submenuItemStyle}
+                    >
+                      Public Tours
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      navigate('/my-trips');
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    style={submenuItemStyle}
+                  >
+                    Trips
+                  </button>
+                )}
               </>
             )}
             
