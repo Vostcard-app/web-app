@@ -50,24 +50,24 @@ export interface FirebaseVostcard {
   userID: string;
   state: 'private' | 'posted';
   visibility: 'private' | 'public';
-  videoURL?: string;
-  photoURLs?: string[];
+  type: 'vostcard';
+  categories: string[];
+  geo?: { latitude: number; longitude: number } | null;
   latitude?: number;
   longitude?: number;
-  geo?: { latitude: number; longitude: number };
-  categories: string[];
+  userRole?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
-  state: 'private' | 'posted';
-  type: 'vostcard';
-  visibility: 'private' | 'public';
-  isOffer?: boolean;
-  // Removed isQuickcard field
-  offerDetails?: OfferDetails;
-  userRole?: string;
-  avatarURL?: string;
   hasVideo?: boolean;
   hasPhotos?: boolean;
+  videoURL?: string;
+  photoURLs?: string[];
+  isOffer?: boolean;
+  offerDetails?: OfferDetails;
+  avatarURL?: string;
+  script?: string;
+  scriptId?: string;
+  _isMetadataOnly?: boolean;
 }
 
 // User profile interface
