@@ -45,13 +45,7 @@ const guideIcon = new L.Icon({
   popupAnchor: [0, -75],
 });
 
-// Standard user location icon
-const userIcon = new L.Icon({
-  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIGZpbGw9IiM0Mjg1RjQiIGZpbGwtb3BhY2l0eT0iMC4zIi8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjYiIGZpbGw9IiM0Mjg1RjQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjIuNSIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4=',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12],
-  popupAnchor: [0, -12],
-});
+
 
 // Map updater component
 const TourMapUpdater = ({ setMapRef }: { setMapRef: (map: L.Map) => void }) => {
@@ -77,7 +71,7 @@ const TourMapView: React.FC = () => {
   const [tourPosts, setTourPosts] = useState<TourPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+
   const [mapRef, setMapRef] = useState<L.Map | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [ratingStats, setRatingStats] = useState<RatingStats | null>(null);
@@ -156,34 +150,11 @@ const TourMapView: React.FC = () => {
     loadTour();
   }, [tourId, location.state]);
 
-  // Get user location
-  useEffect(() => {
-    const getUserLocation = () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            console.log('📍 TourMapView: User location updated:', { latitude, longitude });
-            setUserLocation([latitude, longitude]);
-          },
-          (error) => {
-            console.warn('📍 TourMapView: Location error:', error.message);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000
-          }
-        );
-      }
-    };
 
-    getUserLocation();
-  }, []);
 
   // Auto-fit map bounds when data is loaded
   useEffect(() => {
-    if (mapRef && tourPosts.length > 0 && userLocation) {
+    if (mapRef && tourPosts.length > 0) {
       console.log('🎬 TourMapView: Auto-fitting map bounds');
 
       // Get all valid tour post positions
@@ -192,11 +163,8 @@ const TourMapView: React.FC = () => {
         .map(post => [post.latitude!, post.longitude!] as [number, number]);
 
       if (tourPositions.length > 0) {
-        // Include user location in bounds calculation
-        const allPositions = [...tourPositions, userLocation];
-
         try {
-          const bounds = L.latLngBounds(allPositions);
+          const bounds = L.latLngBounds(tourPositions);
           console.log('🎬 TourMapView: Fitting map to bounds');
           mapRef.fitBounds(bounds, {
             padding: [50, 50],
@@ -207,7 +175,7 @@ const TourMapView: React.FC = () => {
         }
       }
     }
-  }, [mapRef, tourPosts, userLocation]);
+  }, [mapRef, tourPosts]);
 
   const getPostIcon = (post: TourPost) => {
     // Show guide pin for all Jay Bond's vostcards
@@ -516,20 +484,6 @@ const TourMapView: React.FC = () => {
               />
 
               <TourMapUpdater setMapRef={setMapRef} />
-
-              {/* User Location Marker */}
-              {userLocation && (
-                <Marker
-                  position={userLocation}
-                  icon={userIcon}
-                >
-                  <Popup>
-                    <div style={{ textAlign: 'center' }}>
-                      <strong>Your Location</strong>
-                    </div>
-                  </Popup>
-                </Marker>
-              )}
 
               {/* Tour Post Markers */}
               {tourPosts
