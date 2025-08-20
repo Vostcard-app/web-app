@@ -36,6 +36,8 @@ const CreateVostcardStep3: React.FC = () => {
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
   const [lastUsedTrip, setLastUsedTrip] = useState<Trip | null>(null);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
   
   const { user } = useAuth();
 
@@ -235,6 +237,14 @@ const CreateVostcardStep3: React.FC = () => {
   };
 
   const handleSaveChanges = async () => {
+    if (isSaving) return; // Prevent double-tap
+    
+    // Provide immediate haptic feedback on mobile
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    
+    setIsSaving(true);
     try {
       console.log('💾 Starting vostcard save process...');
       
@@ -250,10 +260,19 @@ const CreateVostcardStep3: React.FC = () => {
     } catch (error) {
       console.error('❌ Error saving vostcard:', error);
       alert('Failed to save Vōstcard. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handlePost = async () => {
+    if (isPosting) return; // Prevent double-tap
+    
+    // Provide immediate haptic feedback on mobile
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    
     const user = auth.currentUser;
     if (!user || !currentVostcard?.username) {
       alert("❌ Something went wrong. Please start again.");
@@ -272,6 +291,7 @@ const CreateVostcardStep3: React.FC = () => {
       return;
     }
     
+    setIsPosting(true);
     try {
       console.log('📥 Starting vostcard post process...');
       
@@ -302,6 +322,8 @@ const CreateVostcardStep3: React.FC = () => {
     } catch (error) {
       console.error('❌ Error posting vostcard:', error);
       alert('Failed to post Vōstcard. Please try again.');
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -474,9 +496,16 @@ const CreateVostcardStep3: React.FC = () => {
       }}>
         <button
           onClick={handleSaveChanges}
-          style={{...saveButtonStyle, touchAction: 'manipulation'}}
+          disabled={isSaving}
+          style={{
+            ...saveButtonStyle, 
+            touchAction: 'manipulation',
+            backgroundColor: isSaving ? '#6c757d' : '#002B4D',
+            cursor: isSaving ? 'not-allowed' : 'pointer',
+            opacity: isSaving ? 0.7 : 1
+          }}
         >
-          Save Changes
+          {isSaving ? '💾 Saving...' : 'Save Changes'}
         </button>
 
         {!isPostEnabled && (
@@ -487,14 +516,16 @@ const CreateVostcardStep3: React.FC = () => {
 
         <button
           onClick={handlePost}
-          disabled={!isPostEnabled}
+          disabled={!isPostEnabled || isPosting}
           style={{
             ...postButtonStyle,
-            backgroundColor: isPostEnabled ? '#002B4D' : '#aaa',
+            backgroundColor: isPosting ? '#6c757d' : (isPostEnabled ? '#002B4D' : '#aaa'),
+            cursor: (!isPostEnabled || isPosting) ? 'not-allowed' : 'pointer',
+            opacity: isPosting ? 0.7 : 1,
             touchAction: 'manipulation'
           }}
         >
-          Post to Map
+          {isPosting ? '🚀 Posting...' : 'Post to Map'}
         </button>
       </div>
 
