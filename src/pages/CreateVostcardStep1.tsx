@@ -412,6 +412,25 @@ const CreateVostcardStep1: React.FC = () => {
           Use Script Tool
         </button>
 
+        {/* 🎥 Add Video Button */}
+        <button
+          onClick={() => navigate('/create-step2')}
+          style={{
+            backgroundColor: '#007AFF',
+            color: 'white',
+            border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 8,
+            fontSize: 18,
+            cursor: 'pointer',
+            fontWeight: 600,
+            marginTop: '10px'
+          }}
+        >
+          Add Video
+        </button>
+
           {/* ✅ Save & Continue (video optional when unified flow is on) */}
         <button
           onClick={handleSaveAndContinue}

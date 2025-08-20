@@ -328,6 +328,30 @@ const CreateVostcardStep3: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* 🎒 Add to Trip Section */}
+        <div style={{ marginTop: '20px' }}>
+          <label style={labelStyle}>
+            Add to Trip (Optional)
+          </label>
+          <button
+            onClick={() => navigate('/my-trips-list')}
+            style={{
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              width: '100%',
+              padding: '14px',
+              borderRadius: 8,
+              fontSize: 18,
+              cursor: 'pointer',
+              fontWeight: 600,
+              touchAction: 'manipulation'
+            }}
+          >
+            Add to Trip
+          </button>
+        </div>
       </div>
 
       {/* 🔘 Fixed Bottom Buttons */}
