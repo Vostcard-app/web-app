@@ -926,12 +926,13 @@ ${shareUrl}`;
         width: isDesktop ? '390px' : '100%',
         maxWidth: '390px',
         height: isDesktop ? '844px' : '100vh',
+        maxHeight: isDesktop ? '844px' : '100vh',
         backgroundColor: '#fff',
         boxShadow: isDesktop ? '0 4px 20px rgba(0,0,0,0.1)' : 'none',
         borderRadius: isDesktop ? '16px' : '0',
         display: 'flex',
         flexDirection: 'column',
-        overflowY: 'auto'
+        overflow: 'hidden' // Prevent outer container from scrolling
       }}>
         
         {/* Header */}
@@ -1320,8 +1321,10 @@ ${shareUrl}`;
         {/* Content Area - List, Map, or Slideshow View */}
         <div style={{ 
           flex: 1,
+          minHeight: 0, // Important: allows flex child to shrink below content size
           padding: (viewMode === 'map' || viewMode === 'slideshow') ? '0' : '0 20px 20px 20px',
-          overflowY: (viewMode === 'map' || viewMode === 'slideshow') ? 'hidden' : 'auto'
+          overflowY: (viewMode === 'map' || viewMode === 'slideshow') ? 'hidden' : 'auto',
+          overflowX: 'hidden'
         }}>
           {viewMode === 'slideshow' ? (
             // Slideshow View
