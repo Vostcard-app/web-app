@@ -825,8 +825,12 @@ Tap OK to continue.`;
   }, [user, vostcard?.id]);
 
   const handleMapClick = useCallback(() => {
-    if (vostcard?.latitude && vostcard?.longitude) {
-      console.log('📍 Opening vostcard location on public map for single pin view');
+    // Check both old format (latitude/longitude) and new format (geo.latitude/geo.longitude)
+    const lat = vostcard?.latitude || vostcard?.geo?.latitude;
+    const lng = vostcard?.longitude || vostcard?.geo?.longitude;
+    
+    if (lat && lng) {
+      console.log('📍 Opening vostcard location on public map for single pin view', { lat, lng });
       navigate('/public-map', {
         replace: false, // Ensure we add to history so back button works
         state: {
@@ -834,8 +838,8 @@ Tap OK to continue.`;
             id: vostcard.id,
             title: vostcard.title,
             description: vostcard.description,
-            latitude: vostcard.latitude,
-            longitude: vostcard.longitude,
+            latitude: lat,
+            longitude: lng,
             photoURLs: vostcard.photoURLs,
             username: vostcard.username,
             userRole: vostcard.userRole,
@@ -849,6 +853,11 @@ Tap OK to continue.`;
         }
       });
     } else {
+      console.log('❌ No location data found:', {
+        oldFormat: { latitude: vostcard?.latitude, longitude: vostcard?.longitude },
+        newFormat: { geo: vostcard?.geo },
+        finalValues: { lat, lng }
+      });
       alert('No location data available for this vostcard');
     }
   }, [vostcard, navigate]);
