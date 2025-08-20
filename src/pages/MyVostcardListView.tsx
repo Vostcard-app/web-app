@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaHome, FaEdit, FaMapPin, FaTrash, FaEye, FaShare, FaTimes } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { useAuth } from '../context/AuthContext';
-import { collection, query, where, getDocs, doc, setDoc, deleteDoc, Timestamp, updateDoc, orderBy } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, Timestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 
 // ✅ NEW: Import our refactored utilities and types
@@ -16,7 +16,7 @@ import SharedOptionsModal from '../components/SharedOptionsModal';
 const MyVostcardListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { savedVostcards, setSavedVostcards, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard, syncVostcardMetadata } = useVostcard();
+  const { savedVostcards, setSavedVostcards, downloadVostcardContent, deletePrivateVostcard, setCurrentVostcard, loadLocalVostcard, syncVostcardMetadata, loadAllLocalVostcards } = useVostcard();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -77,33 +77,10 @@ const MyVostcardListView = () => {
             return;
           }
 
-          // Simple direct query to Firebase
-          const q = query(
-            collection(db, 'vostcards'),
-            where('userID', '==', user.uid),
-            where('state', '==', 'private')  // Only get private vostcards
-          );
-
-          // Get all vostcards and sort client-side
-          const querySnapshot = await getDocs(q);
-          const vostcards = querySnapshot.docs
-            .map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }))
-            .sort((a, b) => {
-              const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
-              const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
-              return dateB.getTime() - dateA.getTime();
-            });
-
-          console.log('✅ Found vostcards:', {
-            total: vostcards.length,
-            ids: vostcards.map(v => v.id)
-          });
+          // Load personal vostcards from IndexedDB via VostcardContext
+          console.log('🔄 Loading personal vostcards from IndexedDB...');
+          await loadAllLocalVostcards();
           
-          // Update context
-          setSavedVostcards(vostcards);
           console.log('✅ Personal Posts loaded successfully');
           
         } catch (error) {
@@ -116,7 +93,14 @@ const MyVostcardListView = () => {
 
       loadData();
     }
-  }, [authLoading, user, navigate]);
+  }, [authLoading, user, loadAllLocalVostcards]);
+
+  // Watch for changes in savedVostcards and update loading state
+  useEffect(() => {
+    if (!authLoading && user) {
+      setLoading(false);
+    }
+  }, [savedVostcards, authLoading, user]);
 
   // ✅ REMOVED: Replaced with imported utility functions
   // const getVostcardStatus = (vostcard: any) => { ... }
