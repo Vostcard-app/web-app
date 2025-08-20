@@ -530,10 +530,25 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await saveVostcard();
       
       // Move from savedVostcards to postedVostcards
-      setSavedVostcards(prev => prev.filter(v => v.id !== currentVostcard.id));
+      console.log('🔄 Moving vostcard between lists:', {
+        vostcardId: currentVostcard.id,
+        savedCount: savedVostcards.length,
+        postedCount: postedVostcards.length,
+        wasInSaved: savedVostcards.some(v => v.id === currentVostcard.id),
+        wasInPosted: postedVostcards.some(v => v.id === currentVostcard.id)
+      });
+      
+      setSavedVostcards(prev => {
+        const filtered = prev.filter(v => v.id !== currentVostcard.id);
+        console.log('📝 Removed from savedVostcards:', prev.length, '→', filtered.length);
+        return filtered;
+      });
+      
       setPostedVostcards(prev => {
         const filtered = prev.filter(v => v.id !== currentVostcard.id);
-        return [...filtered, updatedVostcard];
+        const updated = [...filtered, updatedVostcard];
+        console.log('📝 Added to postedVostcards:', prev.length, '→', updated.length);
+        return updated;
       });
 
       console.log('✅ Vostcard posted successfully');

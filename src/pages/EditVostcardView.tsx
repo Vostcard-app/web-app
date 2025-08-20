@@ -474,6 +474,15 @@ const EditVostcardView: React.FC = () => {
                   
                   setIsPosting(true);
                   try {
+                    // Debug logging
+                    console.log('🔍 EditVostcard Post Debug:', {
+                      currentVostcard: currentVostcard,
+                      hasGeo: !!currentVostcard?.geo,
+                      geo: currentVostcard?.geo,
+                      state: currentVostcard?.state,
+                      visibility: currentVostcard?.visibility
+                    });
+                    
                     // Update the vostcard context with the current data
                     const photosBlobs = photoFiles.filter(Boolean) as Blob[];
                     const existingPhotoUrls = photoUrls.filter(Boolean) as string[];
@@ -492,6 +501,16 @@ const EditVostcardView: React.FC = () => {
                       hasVideo: !!videoFile,
                       updatedAt: new Date().toISOString()
                     };
+                    
+                    console.log('🔍 Updated vostcard for posting:', {
+                      id: updatedVostcard.id,
+                      title: updatedVostcard.title,
+                      state: updatedVostcard.state,
+                      visibility: updatedVostcard.visibility,
+                      hasGeo: !!updatedVostcard.geo,
+                      geo: updatedVostcard.geo,
+                      hasPhotos: updatedVostcard.hasPhotos
+                    });
                     
                     setCurrentVostcard(updatedVostcard);
                     
