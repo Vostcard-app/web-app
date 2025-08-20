@@ -241,6 +241,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return getDownloadURL(photoRef);
           })
         );
+      } else if (currentVostcard._firebasePhotoURLs && currentVostcard._firebasePhotoURLs.length > 0) {
+        // Preserve existing photo URLs if no new photos to upload
+        console.log('📸 Preserving existing photos...');
+        photoURLs = currentVostcard._firebasePhotoURLs;
       }
 
       // Upload video
@@ -272,7 +276,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         visibility: currentVostcard.visibility || 'private',
         type: 'vostcard' as const,
         hasVideo: !!currentVostcard.video,
-        hasPhotos: currentVostcard.photos.length > 0,
+        hasPhotos: photoURLs.length > 0,
         mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
         offerDetails: currentVostcard.offerDetails || null

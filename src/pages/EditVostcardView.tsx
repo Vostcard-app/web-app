@@ -287,14 +287,17 @@ const EditVostcardView: React.FC = () => {
     try {
       // Update the current vostcard with the edited data
       const photosBlobs = photoFiles.filter(Boolean) as Blob[];
+      const existingPhotoUrls = photoUrls.filter(Boolean) as string[];
+      
       const updatedVostcard = {
         ...currentVostcard!,
         title,
         description,
         categories,
-        photos: photosBlobs,
+        photos: photosBlobs, // New photos as Blobs for upload
+        _firebasePhotoURLs: existingPhotoUrls, // Preserve existing photos
         video: videoFile || null,
-        hasPhotos: photosBlobs.length > 0,
+        hasPhotos: photosBlobs.length > 0 || existingPhotoUrls.length > 0,
         hasVideo: !!videoFile,
         updatedAt: new Date().toISOString()
       };
@@ -473,16 +476,19 @@ const EditVostcardView: React.FC = () => {
                   try {
                     // Update the vostcard context with the current data
                     const photosBlobs = photoFiles.filter(Boolean) as Blob[];
+                    const existingPhotoUrls = photoUrls.filter(Boolean) as string[];
+                    
                     const updatedVostcard = {
                       ...currentVostcard!,
                       title,
                       description,
                       categories,
-                      photos: photosBlobs,
+                      photos: photosBlobs, // New photos as Blobs for upload
+                      _firebasePhotoURLs: existingPhotoUrls, // Preserve existing photos
                       video: videoFile || null,
                       state: 'posted' as const,
                       visibility: 'public' as const,
-                      hasPhotos: photosBlobs.length > 0,
+                      hasPhotos: photosBlobs.length > 0 || existingPhotoUrls.length > 0,
                       hasVideo: !!videoFile,
                       updatedAt: new Date().toISOString()
                     };
