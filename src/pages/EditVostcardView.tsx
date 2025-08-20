@@ -16,13 +16,14 @@ const EditVostcardView: React.FC = () => {
       const {
     currentVostcard,
     setCurrentVostcard,
-    updateVostcard,
-    saveLocalVostcard,
+    saveVostcard,
     postVostcard,
   } = useVostcard();
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
 
   // Local edit state
   const [title, setTitle] = useState('');
@@ -280,58 +281,37 @@ const EditVostcardView: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (isSaving) return;
+    
+    setIsSaving(true);
     try {
-      // Save directly to Firebase
-      const docRef = doc(db, 'vostcards', id!);
+      // Update the current vostcard with the edited data
       const photosBlobs = photoFiles.filter(Boolean) as Blob[];
-      
-      // Upload photos to Firebase Storage
-      const photoURLs = await Promise.all(
-        photosBlobs.map(async (photo) => {
-          const photoRef = ref(storage, `vostcards/${currentVostcard!.userID}/photos/${currentVostcard!.id}_${index}`);
-          await uploadBytes(photoRef, photo);
-          return getDownloadURL(photoRef);
-        })
-      );
-
-      // Upload video if present
-      let videoURL = null;
-      if (videoFile) {
-        const videoRef = ref(storage, `vostcards/${currentVostcard!.userID}/videos/${currentVostcard!.id}`);
-        await uploadBytes(videoRef, videoFile);
-        videoURL = await getDownloadURL(videoRef);
-      }
-
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
       const updatedVostcard = {
-        ...currentVostcard,
+        ...currentVostcard!,
         title,
         description,
         categories,
-        photoURLs,
-        videoURL,
+        photos: photosBlobs,
+        video: videoFile || null,
         hasPhotos: photosBlobs.length > 0,
         hasVideo: !!videoFile,
-        updatedAt: serverTimestamp(),
-        state: currentVostcard?.state || 'private',
-        userID: user.uid,
-        username: user.displayName || user.email?.split('@')[0] || 'Unknown',
-        visibility: currentVostcard?.state === 'posted' ? 'public' : 'private',
-        type: 'vostcard' as const,
-        geo: currentVostcard?.geo || null,
-        mediaUploadStatus: 'complete'
+        updatedAt: new Date().toISOString()
       };
-      await setDoc(docRef, updatedVostcard);
+      
+      // Update the context
       setCurrentVostcard(updatedVostcard);
+      
+      // Use the context's save function
+      await saveVostcard();
+      
       alert('Saved!');
       navigate(-1);
     } catch (e) {
       console.error('❌ Save failed:', e);
       alert('Failed to save changes.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -453,29 +433,74 @@ const EditVostcardView: React.FC = () => {
 
         {/* Footer actions */}
         {(() => {
-          const photoCount = photoUrls.filter(Boolean).length + photoFiles.filter(Boolean).length;
+          const photoCount = photoFiles.filter(Boolean).length || photoUrls.filter(Boolean).length;
           const ready = photoCount > 0 && title.trim().length > 0 && description.trim().length > 0 && (categories[0] && categories[0] !== 'None');
           return (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <button onClick={handleSave} style={{ background: '#002B4D', color: 'white', border: 'none', borderRadius: 8, padding: '12px 16px', fontWeight: 700 }}>
-                <FaSave /> Save Changes
+              <button 
+                onClick={handleSave} 
+                disabled={isSaving}
+                style={{ 
+                  background: isSaving ? '#6c757d' : '#002B4D', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: 8, 
+                  padding: '12px 16px', 
+                  fontWeight: 700,
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.7 : 1
+                }}
+              >
+                <FaSave /> {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 onClick={async () => {
+                  if (isPosting || !ready) return;
+                  
+                  setIsPosting(true);
                   try {
+                    // Update the vostcard context with the current data
                     const photosBlobs = photoFiles.filter(Boolean) as Blob[];
-                    updateVostcard({ title, description, categories, photos: photosBlobs, video: videoFile || currentVostcard?.video || null });
-                    await saveLocalVostcard();
+                    const updatedVostcard = {
+                      ...currentVostcard!,
+                      title,
+                      description,
+                      categories,
+                      photos: photosBlobs,
+                      video: videoFile || null,
+                      state: 'posted' as const,
+                      visibility: 'public' as const,
+                      hasPhotos: photosBlobs.length > 0,
+                      hasVideo: !!videoFile,
+                      updatedAt: new Date().toISOString()
+                    };
+                    
+                    setCurrentVostcard(updatedVostcard);
+                    
+                    // Post to map using the context function
                     await postVostcard();
                     alert('Posted to the map!');
+                    navigate('/home');
                   } catch (e) {
+                    console.error('Post error:', e);
                     alert('Failed to post. Please try again.');
+                  } finally {
+                    setIsPosting(false);
                   }
                 }}
-                disabled={!ready}
-                style={{ background: ready ? '#0a8f54' : '#9bb7a9', color: 'white', border: 'none', borderRadius: 8, padding: '12px 16px', fontWeight: 700, cursor: ready ? 'pointer' : 'not-allowed' }}
+                disabled={!ready || isPosting}
+                style={{ 
+                  background: isPosting ? '#6c757d' : (ready ? '#0a8f54' : '#9bb7a9'), 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: 8, 
+                  padding: '12px 16px', 
+                  fontWeight: 700, 
+                  cursor: (!ready || isPosting) ? 'not-allowed' : 'pointer',
+                  opacity: isPosting ? 0.7 : 1
+                }}
               >
-                Post to Map
+                {isPosting ? '🚀 Posting...' : 'Post to Map'}
               </button>
             </div>
           );
