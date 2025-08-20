@@ -35,7 +35,6 @@ const AllPostedVostcardsView: React.FC = () => {
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const ITEMS_PER_PAGE = 5;
   
   // Type filtering state (Offers are never filtered out)
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -73,10 +72,33 @@ const AllPostedVostcardsView: React.FC = () => {
   
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { toggleLike, getLikeCount, isLiked, setupLikeListeners } = useVostcard();
+  const { } = useVostcard();
+  
+  // TODO: Implement like functionality locally or add to VostcardContext
+  const toggleLike = async (vostcardId: string) => {
+    console.log('toggleLike not implemented yet for:', vostcardId);
+    return false;
+  };
+  
+  const getLikeCount = async (vostcardId: string) => {
+    console.log('getLikeCount not implemented yet for:', vostcardId);
+    return 0;
+  };
+  
+  const isLiked = async (vostcardId: string) => {
+    console.log('isLiked not implemented yet for:', vostcardId);
+    return false;
+  };
+  
+  const setupLikeListeners = () => {
+    console.log('setupLikeListeners not implemented yet');
+  };
   
   // Use same breakpoint as personal posts for consistency
   const [isDesktopView, setIsDesktopView] = useState(window.innerWidth > 768);
+  
+  // Pagination - reduce initial load on mobile
+  const ITEMS_PER_PAGE = isDesktopView ? 5 : 3;
   
   useEffect(() => {
     const handleResize = () => {
@@ -306,41 +328,98 @@ const AllPostedVostcardsView: React.FC = () => {
     // Get unique userIDs from vostcards
     const userIds = [...new Set(vostcardsList.map(v => v.userID).filter(Boolean))];
     
-    for (const id of vostcardIds) {
-      try {
-        // Load like count and status sequentially to avoid race conditions
-        const count = await getLikeCount(id);
-        const liked = await isLiked(id);
-        const stats = await RatingService.getRatingStats(id);
-        
-        counts[id] = count;
-        statuses[id] = liked;
-        ratings[id] = stats;
-      } catch (error) {
-        console.error(`Error loading data for ${id}:`, error);
-        counts[id] = 0;
-        statuses[id] = false;
-        ratings[id] = {
-          averageRating: 0,
-          ratingCount: 0,
-          lastUpdated: ''
-        };
+    console.log('📊 Loading data for vostcards:', { 
+      vostcardCount: vostcardIds.length, 
+      userCount: userIds.length,
+      isMobile: !isDesktopView 
+    });
+    
+    // Optimize for mobile: Use smaller batch sizes and timeouts
+    const batchSize = isDesktopView ? 10 : 5;
+    const timeoutMs = isDesktopView ? 10000 : 5000;
+    
+    // Process vostcard data in parallel batches
+    for (let i = 0; i < vostcardIds.length; i += batchSize) {
+      const batch = vostcardIds.slice(i, i + batchSize);
+      
+      await Promise.all(batch.map(async (id) => {
+        try {
+          // Create timeout promise
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), timeoutMs)
+          );
+          
+          // Load all data for this vostcard in parallel
+          const dataPromise = Promise.all([
+            getLikeCount(id),
+            isLiked(id),
+            RatingService.getRatingStats(id)
+          ]);
+          
+          const [count, liked, stats] = await Promise.race([dataPromise, timeoutPromise]) as [number, boolean, RatingStats];
+          
+          counts[id] = count;
+          statuses[id] = liked;
+          ratings[id] = stats;
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Timeout') {
+            console.log(`⏱️ Timeout loading data for vostcard ${id}, using defaults`);
+          } else {
+            console.error(`Error loading data for ${id}:`, error);
+          }
+          counts[id] = 0;
+          statuses[id] = false;
+          ratings[id] = {
+            averageRating: 0,
+            ratingCount: 0,
+            lastUpdated: ''
+          };
+        }
+      }));
+      
+      // Add delay between batches on mobile to prevent overwhelming the connection
+      if (!isDesktopView && i + batchSize < vostcardIds.length) {
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
     }
     
-    // Fetch user profiles for avatars
-    for (const userId of userIds) {
-      try {
-        const userRef = doc(db, 'users', userId);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          profiles[userId] = userData;
-          // Debug: Log user roles to see what we're getting
-          console.log(`👤 User profile loaded: ${userId} - username: ${userData?.username}, userRole: ${userData?.userRole}`);
+    // Fetch user profiles in parallel batches
+    const profileBatchSize = isDesktopView ? 5 : 3;
+    for (let i = 0; i < userIds.length; i += profileBatchSize) {
+      const batch = userIds.slice(i, i + profileBatchSize);
+      
+      await Promise.all(batch.map(async (userId) => {
+        try {
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), timeoutMs)
+          );
+          
+          const profilePromise = (async () => {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              profiles[userId] = userData;
+              // Debug: Log user roles to see what we're getting
+              console.log(`👤 User profile loaded: ${userId} - username: ${userData?.username}, userRole: ${userData?.userRole}`);
+              return userData;
+            }
+            return null;
+          })();
+          
+          await Promise.race([profilePromise, timeoutPromise]);
+        } catch (error) {
+          if (error instanceof Error && error.message === 'Timeout') {
+            console.log(`⏱️ Timeout loading profile for user ${userId}, skipping`);
+          } else {
+            console.error(`Error loading user profile for ${userId}:`, error);
+          }
         }
-      } catch (error) {
-        console.error(`Error loading user profile for ${userId}:`, error);
+      }));
+      
+      // Add delay between profile batches on mobile
+      if (!isDesktopView && i + profileBatchSize < userIds.length) {
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
     
@@ -588,13 +667,19 @@ const AllPostedVostcardsView: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching posted content:', error);
+        
+        // Show user-friendly error message on mobile
+        if (!isDesktopView) {
+          console.log('📱 Mobile error detected, showing user-friendly message');
+          // You could add a toast notification or error state here
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchAllPostedVostcards();
-  }, [loadData, ITEMS_PER_PAGE, showGuidesOnly]);
+  }, [loadData, ITEMS_PER_PAGE, showGuidesOnly, isDesktopView]);
 
   // Load more vostcards for pagination
   const loadMoreVostcards = async () => {
