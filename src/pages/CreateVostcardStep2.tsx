@@ -1,10 +1,11 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaRegImages } from 'react-icons/fa';
+import { FaArrowLeft, FaRegImages, FaMagic } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
+import AIScriptTool from '../components/AIScriptTool';
 import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 
 export default function CreateVostcardStep2() {
@@ -39,6 +40,10 @@ export default function CreateVostcardStep2() {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<number | null>(null);
   const videoUrl = useMemo(() => (recordedBlob ? URL.createObjectURL(recordedBlob) : ''), [recordedBlob]);
+
+  // Script tool state
+  const [showScriptTool, setShowScriptTool] = useState(false);
+  const [savedScript, setSavedScript] = useState<string>('');
 
   const stopAllTracks = () => {
     mediaStreamRef.current?.getTracks().forEach(t => t.stop());
@@ -110,6 +115,15 @@ export default function CreateVostcardStep2() {
       setVideo(recordedBlob);
     }
     navigate('/create/step3');
+  };
+
+  const handleScriptSave = (script: string) => {
+    setSavedScript(script);
+    setShowScriptTool(false);
+    // Optionally save script to vostcard context
+    if (currentVostcard) {
+      updateVostcard({ ...currentVostcard, script: script });
+    }
   };
 
   // Mobile detection
@@ -478,7 +492,7 @@ export default function CreateVostcardStep2() {
             ) : (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999' }}>No video recorded</div>
             )}
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
               {!recording && (
                 <button onClick={startRecording} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#007aff', color: 'white', fontWeight: 600 }}>Record</button>
               )}
@@ -486,8 +500,27 @@ export default function CreateVostcardStep2() {
                 <button onClick={stopRecording} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#dc3545', color: 'white', fontWeight: 600 }}>Stop ({elapsed}s)</button>
               )}
               <button onClick={() => { setRecordedBlob(null); stopAllTracks(); }} style={{ padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white', color: '#333' }}>Re-record</button>
-              <button onClick={saveVideoAndContinue} style={{ padding: '12px', borderRadius: 8, border: 'none', background: '#07345c', color: 'white', fontWeight: 600 }}>Continue</button>
-              <button onClick={() => navigate('/create/step3')} style={{ padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white' }}>Skip</button>
+              <button 
+                onClick={() => setShowScriptTool(true)} 
+                style={{ 
+                  padding: '12px', 
+                  borderRadius: 8, 
+                  border: 'none', 
+                  background: '#6f42c1', 
+                  color: 'white', 
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaMagic size={14} />
+                Script Tool
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button onClick={saveVideoAndContinue} style={{ flex: 1, padding: '12px', borderRadius: 8, border: 'none', background: '#07345c', color: 'white', fontWeight: 600 }}>Save & Continue</button>
+              <button onClick={() => navigate('/create/step3')} style={{ flex: 1, padding: '12px', borderRadius: 8, border: '1px solid #ccc', background: 'white' }}>Skip</button>
             </div>
           </div>
         </div>
@@ -744,6 +777,15 @@ export default function CreateVostcardStep2() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI Script Tool Modal */}
+      {showScriptTool && (
+        <AIScriptTool
+          onSave={handleScriptSave}
+          onClose={() => setShowScriptTool(false)}
+          initialPrompt={currentVostcard?.title || ''}
+        />
       )}
     </div>
   );
