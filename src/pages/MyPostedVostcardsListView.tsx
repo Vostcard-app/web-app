@@ -55,18 +55,6 @@ const MyPostedVostcardsListView = () => {
           console.log('🔄 Loading posted vostcards for user:', user.uid);
           await loadPostedVostcards();
           console.log('✅ Posted Vostcards loaded successfully');
-        
-        // Debug: Log vostcard ownership info
-        console.log('🔍 Vostcard ownership debug:', {
-          currentUserId: user.uid,
-          totalVostcards: postedVostcards.length,
-          vostcardOwnership: postedVostcards.slice(0, 3).map(v => ({
-            id: v.id,
-            title: v.title,
-            userID: v.userID,
-            isOwner: v.userID === user.uid
-          }))
-        });
 
           // Filter out local vostcards not present in Firebase (optimized for mobile)
           const syncLocalWithFirebase = async () => {
@@ -165,7 +153,23 @@ const MyPostedVostcardsListView = () => {
       // Clean up interval on unmount
       return () => clearInterval(refreshInterval);
     }
-  }, [authLoading, user, loadPostedVostcards, navigate]);
+  }, [authLoading, user, navigate, isDesktop]);
+
+  // Debug: Log vostcard ownership info when postedVostcards changes
+  useEffect(() => {
+    if (postedVostcards.length > 0 && user) {
+      console.log('🔍 Vostcard ownership debug:', {
+        currentUserId: user.uid,
+        totalVostcards: postedVostcards.length,
+        vostcardOwnership: postedVostcards.slice(0, 3).map(v => ({
+          id: v.id,
+          title: v.title,
+          userID: v.userID,
+          isOwner: v.userID === user.uid
+        }))
+      });
+    }
+  }, [postedVostcards, user]);
 
   // Load posted vostcard from Firebase for editing
   const loadPostedVostcardForEdit = async (vostcardId: string) => {
@@ -641,7 +645,7 @@ ${getUserFirstName()}`);
               Retry
             </button>
           </div>
-        ) : postedVostcards.length === 0 ? (
+        ) : (postedVostcards || []).length === 0 ? (
           <div style={{
             padding: '40px',
             textAlign: 'center',
@@ -675,16 +679,38 @@ ${getUserFirstName()}`);
               fontSize: '14px',
               color: '#495057'
             }}>
-              {postedVostcards.length} Posted Vōstcard{postedVostcards.length !== 1 ? 's' : ''} on the Map
+              {(postedVostcards || []).length} Posted Vōstcard{(postedVostcards || []).length !== 1 ? 's' : ''} on the Map
             </div>
 
             {/* Vostcard List */}
             <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              {[...postedVostcards]
+              {(postedVostcards || [])
                 .sort((a, b) => {
-                  const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-                  const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-                  return dateB.getTime() - dateA.getTime();
+                  try {
+                    // Safe date parsing with fallbacks
+                    let dateA, dateB;
+                    
+                    if (a.createdAt?.toDate) {
+                      dateA = a.createdAt.toDate();
+                    } else if (a.createdAt) {
+                      dateA = new Date(a.createdAt);
+                    } else {
+                      dateA = new Date(0); // Fallback to epoch
+                    }
+                    
+                    if (b.createdAt?.toDate) {
+                      dateB = b.createdAt.toDate();
+                    } else if (b.createdAt) {
+                      dateB = new Date(b.createdAt);
+                    } else {
+                      dateB = new Date(0); // Fallback to epoch
+                    }
+                    
+                    return dateB.getTime() - dateA.getTime();
+                  } catch (error) {
+                    console.error('Error sorting vostcards by date:', error);
+                    return 0; // Keep original order if sorting fails
+                  }
                 })
                 .map((vostcard, index) => (
                 <div
