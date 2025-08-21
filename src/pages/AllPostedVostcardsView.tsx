@@ -90,8 +90,10 @@ const AllPostedVostcardsView: React.FC = () => {
     return false;
   };
   
-  const setupLikeListeners = () => {
-    console.log('setupLikeListeners not implemented yet');
+  const setupLikeListeners = (vostcardId: string, onLikeCountUpdate: (count: number) => void, onLikeStatusUpdate: (liked: boolean) => void) => {
+    console.log('setupLikeListeners not implemented yet for:', vostcardId);
+    // Return a no-op function to prevent "Invalid unsubscribe function" warnings
+    return () => {};
   };
   
   // Use same breakpoint as personal posts for consistency
