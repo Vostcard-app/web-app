@@ -11,8 +11,23 @@ import { loadLocalVostcards, deleteLocalVostcard } from '../utils/localVostcardS
 const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
-  const { postedVostcards, loadPostedVostcards, setCurrentVostcard } = useVostcard();
+  const vostcardContext = useVostcard();
+  
+  // Debug: Check if context is available
+  if (!vostcardContext) {
+    console.error('❌ VostcardContext is not available! Check if component is wrapped in VostcardProvider');
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+        <h2>Context Error</h2>
+        <p>VostcardContext is not available. Please refresh the page.</p>
+        <button onClick={() => window.location.reload()}>Refresh Page</button>
+      </div>
+    );
+  }
+  
+  const { postedVostcards, loadPostedVostcards, setCurrentVostcard } = vostcardContext;
   const [loading, setLoading] = useState(true);
+  const [loadingStep, setLoadingStep] = useState('Initializing...');
   const [error, setError] = useState<string | null>(null);
   const [unpostingIds, setUnpostingIds] = useState<Set<string>>(new Set());
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
@@ -20,13 +35,17 @@ const MyPostedVostcardsListView = () => {
   console.log('🔄 MyPostedVostcardsListView rendered', {
     authLoading,
     user: !!user,
+    userId: user?.uid,
     loading,
     error,
-    postedVostcardsCount: postedVostcards.length,
+    postedVostcardsCount: postedVostcards?.length || 0,
     isDesktop,
     isMobile: !isDesktop,
     userAgent: navigator.userAgent,
-    connectionType: (navigator as any).connection?.effectiveType || 'unknown'
+    connectionType: (navigator as any).connection?.effectiveType || 'unknown',
+    timestamp: new Date().toISOString(),
+    location: window.location.href,
+    referrer: document.referrer
   });
 
   useEffect(() => {
@@ -36,13 +55,21 @@ const MyPostedVostcardsListView = () => {
   }, []);
 
   useEffect(() => {
-    console.log('🔄 Auth state changed:', { authLoading, user: !!user });
+    console.log('🔄 Auth state changed:', { 
+      authLoading, 
+      user: !!user, 
+      userId: user?.uid,
+      timestamp: new Date().toISOString(),
+      location: window.location.href
+    });
     // Wait for auth to finish loading before attempting to load Vostcards
     if (!authLoading) {
+      console.log('✅ Auth loading complete, proceeding with data load...');
       const loadData = async () => {
         try {
           setLoading(true);
           setError(null);
+          setLoadingStep('Checking authentication...');
 
           if (!user) {
             console.log('❌ No user authenticated');
@@ -53,10 +80,26 @@ const MyPostedVostcardsListView = () => {
 
           // Load and sync posted vostcards with Firebase
           console.log('🔄 Loading posted vostcards for user:', user.uid);
-          await loadPostedVostcards();
-          console.log('✅ Posted Vostcards loaded successfully');
+          setLoadingStep('Loading your posted vostcards...');
+          
+          // Add timeout to prevent hanging
+          const loadTimeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Load timeout')), 30000)
+          );
+          
+          try {
+            await Promise.race([loadPostedVostcards(), loadTimeout]);
+            console.log('✅ Posted Vostcards loaded successfully');
+          } catch (timeoutError) {
+            if (timeoutError instanceof Error && timeoutError.message === 'Load timeout') {
+              console.error('⏰ Posted vostcards loading timed out after 30 seconds');
+              throw new Error('Loading is taking too long. Please check your connection and try again.');
+            }
+            throw timeoutError;
+          }
 
           // Filter out local vostcards not present in Firebase (optimized for mobile)
+          setLoadingStep('Syncing with local storage...');
           const syncLocalWithFirebase = async () => {
             try {
               console.log('🔄 Syncing local vostcards with Firebase...');
@@ -620,6 +663,9 @@ ${getUserFirstName()}`);
             }} />
             <p>Loading your posted Vostcards...</p>
             <p style={{ fontSize: '14px', color: '#888' }}>
+              {loadingStep}
+            </p>
+            <p style={{ fontSize: '12px', color: '#aaa', marginTop: '10px' }}>
               This may take a moment while we sync with Firebase
             </p>
           </div>
