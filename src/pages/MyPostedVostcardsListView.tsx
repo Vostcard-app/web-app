@@ -55,6 +55,18 @@ const MyPostedVostcardsListView = () => {
           console.log('🔄 Loading posted vostcards for user:', user.uid);
           await loadPostedVostcards();
           console.log('✅ Posted Vostcards loaded successfully');
+        
+        // Debug: Log vostcard ownership info
+        console.log('🔍 Vostcard ownership debug:', {
+          currentUserId: user.uid,
+          totalVostcards: postedVostcards.length,
+          vostcardOwnership: postedVostcards.slice(0, 3).map(v => ({
+            id: v.id,
+            title: v.title,
+            userID: v.userID,
+            isOwner: v.userID === user.uid
+          }))
+        });
 
           // Filter out local vostcards not present in Firebase (optimized for mobile)
           const syncLocalWithFirebase = async () => {
@@ -326,32 +338,66 @@ ${getUserFirstName()}`);
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('📤 Unpost button clicked for Vōstcard:', {
+      vostcardId,
+      userId: user?.uid,
+      isAuthenticated: !!user,
+      timestamp: new Date().toISOString()
+    });
+    
     if (!window.confirm('Are you sure you want to unpost this Vōstcard? It will be removed from the map.')) {
+      console.log('🚫 Unpost cancelled by user');
       return;
     }
 
+    console.log('✅ Unpost confirmed by user, proceeding...');
+
     try {
-      console.log('🗑️ Unposting vostcard:', vostcardId);
+      console.log('🗑️ Starting unpost process for vostcard:', vostcardId);
       
       // Add to unposting state
       setUnpostingIds(prev => new Set([...prev, vostcardId]));
+      console.log('⏳ Added to unposting state, showing loading...');
       
       // Update the vostcard state to private in Firebase
       const vostcardRef = doc(db, 'vostcards', vostcardId);
+      console.log('🔥 Attempting to update vostcard in Firebase...', { vostcardRef: vostcardRef.path });
+      
       await updateDoc(vostcardRef, {
         state: 'private',
         visibility: 'private',
         unpostedAt: new Date()
       });
       
-      console.log('✅ Vostcard unposted successfully');
+      console.log('✅ Vostcard unposted successfully - updated to private');
       
       // Refresh the posted vostcards list
+      console.log('🔄 Refreshing posted vostcards list...');
       await loadPostedVostcards();
+      console.log('✅ Posted vostcards list refreshed');
       
     } catch (error) {
-      console.error('❌ Error unposting vostcard:', error);
-      alert('Failed to unpost Vōstcard. Please try again.');
+      console.error('❌ Error unposting vostcard:', {
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorCode: (error as any)?.code,
+        vostcardId,
+        userId: user?.uid
+      });
+      
+      // Show more specific error messages
+      let errorMessage = 'Failed to unpost Vōstcard. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('permission-denied')) {
+          errorMessage = 'Permission denied. You can only unpost your own Vōstcards.';
+        } else if (error.message.includes('not-found')) {
+          errorMessage = 'Vōstcard not found. It may have already been deleted.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        }
+      }
+      
+      alert(errorMessage);
     } finally {
       // Remove from unposting state
       setUnpostingIds(prev => {
@@ -359,6 +405,7 @@ ${getUserFirstName()}`);
         newSet.delete(vostcardId);
         return newSet;
       });
+      console.log('🏁 Cleared loading state for vostcard:', vostcardId);
     }
   };
 
@@ -366,31 +413,64 @@ ${getUserFirstName()}`);
     e.preventDefault();
     e.stopPropagation();
     
+    console.log('🗑️ Delete button clicked for Vōstcard:', {
+      vostcardId,
+      userId: user?.uid,
+      isAuthenticated: !!user,
+      timestamp: new Date().toISOString()
+    });
+    
     if (!window.confirm('Are you sure you want to delete this Vōstcard permanently? This action cannot be undone.')) {
+      console.log('🚫 Delete cancelled by user');
       return;
     }
 
-    console.log('🗑️ Delete clicked for posted Vōstcard:', vostcardId);
+    console.log('✅ Delete confirmed by user, proceeding...');
 
     try {
       // Show loading state
       setUnpostingIds(prev => new Set([...prev, vostcardId]));
+      console.log('⏳ Added to unposting state, showing loading...');
 
       // Delete from Firebase
       const vostcardRef = doc(db, 'vostcards', vostcardId);
+      console.log('🔥 Attempting to delete from Firebase...', { vostcardRef: vostcardRef.path });
+      
       await deleteDoc(vostcardRef);
-      console.log('✅ Deleted Vōstcard from Firebase:', vostcardId);
+      console.log('✅ Successfully deleted Vōstcard from Firebase:', vostcardId);
 
       // Delete from local storage
+      console.log('💾 Attempting to delete from local storage...');
       await deleteLocalVostcard(vostcardId);
-      console.log('✅ Deleted Vōstcard from local storage:', vostcardId);
+      console.log('✅ Successfully deleted Vōstcard from local storage:', vostcardId);
 
       // Refresh the posted Vōstcards list
+      console.log('🔄 Refreshing posted vostcards list...');
       await loadPostedVostcards();
+      console.log('✅ Posted vostcards list refreshed');
 
     } catch (error) {
-      console.error('❌ Failed to delete Vōstcard:', error);
-      alert('Failed to delete Vōstcard. Please try again.');
+      console.error('❌ Failed to delete Vōstcard:', {
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorCode: (error as any)?.code,
+        vostcardId,
+        userId: user?.uid
+      });
+      
+      // Show more specific error messages
+      let errorMessage = 'Failed to delete Vōstcard. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('permission-denied')) {
+          errorMessage = 'Permission denied. You can only delete your own Vōstcards.';
+        } else if (error.message.includes('not-found')) {
+          errorMessage = 'Vōstcard not found. It may have already been deleted.';
+        } else if (error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        }
+      }
+      
+      alert(errorMessage);
     } finally {
       // Clear loading state
       setUnpostingIds(prev => {
@@ -398,6 +478,7 @@ ${getUserFirstName()}`);
         newSet.delete(vostcardId);
         return newSet;
       });
+      console.log('🏁 Cleared loading state for vostcard:', vostcardId);
     }
   };
 
