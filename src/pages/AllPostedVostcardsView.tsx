@@ -74,27 +74,27 @@ const AllPostedVostcardsView: React.FC = () => {
   const { user } = useAuth();
   const { } = useVostcard();
   
-  // TODO: Implement like functionality locally or add to VostcardContext
-  const toggleLike = async (vostcardId: string) => {
+  // Stable placeholder functions to prevent infinite re-renders
+  const toggleLike = useCallback(async (vostcardId: string) => {
     console.log('toggleLike not implemented yet for:', vostcardId);
     return false;
-  };
+  }, []);
   
-  const getLikeCount = async (vostcardId: string) => {
+  const getLikeCount = useCallback(async (vostcardId: string) => {
     console.log('getLikeCount not implemented yet for:', vostcardId);
     return 0;
-  };
+  }, []);
   
-  const isLiked = async (vostcardId: string) => {
+  const isLiked = useCallback(async (vostcardId: string) => {
     console.log('isLiked not implemented yet for:', vostcardId);
     return false;
-  };
+  }, []);
   
-  const setupLikeListeners = (vostcardId: string, onLikeCountUpdate: (count: number) => void, onLikeStatusUpdate: (liked: boolean) => void) => {
+  const setupLikeListeners = useCallback((vostcardId: string, onLikeCountUpdate: (count: number) => void, onLikeStatusUpdate: (liked: boolean) => void) => {
     console.log('setupLikeListeners not implemented yet for:', vostcardId);
     // Return a no-op function to prevent "Invalid unsubscribe function" warnings
     return () => {};
-  };
+  }, []);
   
   // Use same breakpoint as personal posts for consistency
   const [isDesktopView, setIsDesktopView] = useState(window.innerWidth > 768);
@@ -440,16 +440,15 @@ const AllPostedVostcardsView: React.FC = () => {
     setLikedStatus(statuses);
     setRatingStats(ratings);
     setUserProfiles(profiles);
-  }, [getLikeCount, isLiked]);
+  }, [getLikeCount, isLiked, isDesktopView]);
 
-  useEffect(() => {
-    const fetchAllPostedVostcards = async () => {
-      setLoading(true);
-      // Reset pagination state when filter changes
-      setLastDoc(null);
-      setHasMore(true);
-      try {
-        console.log('🔄 Fetching first', ITEMS_PER_PAGE, 'posted vostcards...', showGuidesOnly ? '(guide filter active)' : '');
+  const fetchAllPostedVostcards = useCallback(async () => {
+    setLoading(true);
+    // Reset pagination state when filter changes
+    setLastDoc(null);
+    setHasMore(true);
+    try {
+      console.log('🔄 Fetching first', ITEMS_PER_PAGE, 'posted vostcards...', showGuidesOnly ? '(guide filter active)' : '');
         
         // Query based on whether guide filter is active
         let q1;
@@ -678,10 +677,11 @@ const AllPostedVostcardsView: React.FC = () => {
       } finally {
         setLoading(false);
       }
-    };
+  }, [loadData, ITEMS_PER_PAGE, showGuidesOnly, isDesktopView, userLocation, calculateDistance, getDistanceForSorting]);
 
+  useEffect(() => {
     fetchAllPostedVostcards();
-  }, [loadData, ITEMS_PER_PAGE, showGuidesOnly, isDesktopView]);
+  }, [fetchAllPostedVostcards]);
 
   // Load more vostcards for pagination
   const loadMoreVostcards = async () => {
