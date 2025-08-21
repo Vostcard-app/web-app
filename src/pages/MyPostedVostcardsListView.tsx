@@ -8,6 +8,13 @@ import { useVostcard } from '../context/VostcardContext';
 // Import local storage utilities for Vostcards
 import { loadLocalVostcards, deleteLocalVostcard } from '../utils/localVostcardStorage';
 
+// TypeScript declaration for mobile garbage collection
+declare global {
+  interface Window {
+    gc?: () => void;
+  }
+}
+
 const MyPostedVostcardsListView = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, username } = useAuth();
@@ -82,9 +89,10 @@ const MyPostedVostcardsListView = () => {
           console.log('🔄 Loading posted vostcards for user:', user.uid);
           setLoadingStep('Loading your posted vostcards...');
           
-          // Add timeout to prevent hanging
+          // Add timeout to prevent hanging (shorter for mobile)
+          const timeoutMs = isDesktop ? 30000 : 15000; // 15s for mobile, 30s for desktop
           const loadTimeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Load timeout')), 30000)
+            setTimeout(() => reject(new Error('Load timeout')), timeoutMs)
           );
           
           try {
@@ -99,8 +107,20 @@ const MyPostedVostcardsListView = () => {
           }
 
           // Filter out local vostcards not present in Firebase (optimized for mobile)
-          setLoadingStep('Syncing with local storage...');
+          // Skip sync entirely on mobile to prevent memory/performance issues
+          if (!isDesktop) {
+            console.log('📱 Mobile: Skipping local sync to improve performance and prevent crashes');
+            setLoadingStep('Finalizing...');
+          } else {
+            setLoadingStep('Syncing with local storage...');
+          }
+          
           const syncLocalWithFirebase = async () => {
+            // Skip sync on mobile entirely
+            if (!isDesktop) {
+              console.log('📱 Mobile: Sync skipped for performance');
+              return;
+            }
             try {
               console.log('🔄 Syncing local vostcards with Firebase...');
               const localVostcards = await loadLocalVostcards();
@@ -168,18 +188,34 @@ const MyPostedVostcardsListView = () => {
               errorMessage = isDesktop 
                 ? `Network error: ${error.message}` 
                 : 'Network connection issue. Please check your internet connection and try again.';
-            } else if (error.message.includes('timeout') || error.message === 'Timeout') {
+            } else if (error.message.includes('timeout') || error.message === 'Load timeout') {
               errorMessage = isDesktop 
                 ? 'Request timed out' 
-                : 'Loading is taking longer than expected. Please try again.';
+                : 'Loading is taking longer than expected on mobile. Please try again.';
+            } else if (error.message.includes('memory') || error.message.includes('quota')) {
+              errorMessage = 'Mobile device is low on memory. Please close other apps and try again.';
+            } else if (error.message.includes('IndexedDB') || error.message.includes('storage')) {
+              errorMessage = 'Storage issue on mobile. Please clear browser cache and try again.';
             } else {
-              errorMessage = `${errorMessage}: ${error.message}`;
+              errorMessage = isDesktop 
+                ? `${errorMessage}: ${error.message}`
+                : 'Loading failed on mobile. Please refresh the page and try again.';
             }
           }
           
           setError(errorMessage);
         } finally {
           setLoading(false);
+          setLoadingStep('Complete');
+          
+          // Mobile memory cleanup
+          if (!isDesktop) {
+            console.log('📱 Mobile: Performing memory cleanup...');
+            // Force garbage collection on mobile if available
+            if (window.gc) {
+              window.gc();
+            }
+          }
         }
       };
 
@@ -529,9 +565,29 @@ ${getUserFirstName()}`);
     }
   };
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     console.log('🔄 Retrying to load posted Vostcards...');
-    loadPostedVostcards();
+    
+    // Mobile-specific retry with delay
+    if (!isDesktop) {
+      console.log('📱 Mobile: Adding delay before retry...');
+      setLoadingStep('Preparing to retry...');
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay for mobile
+    }
+    
+    setError(null);
+    setLoading(true);
+    setLoadingStep('Retrying...');
+    
+    try {
+      await loadPostedVostcards();
+      setLoading(false);
+      setLoadingStep('Complete');
+    } catch (error) {
+      console.error('❌ Retry failed:', error);
+      setError('Retry failed. Please check your connection and try again.');
+      setLoading(false);
+    }
   };
   if (authLoading) {
     return (
