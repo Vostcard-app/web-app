@@ -786,45 +786,93 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [openUserDB]);
 
-  // Sync vostcard metadata
+  // Intelligent sync: prioritize IndexedDB URLs if they're fresher than Firebase
   const syncVostcardMetadata = useCallback(async () => {
     const user = auth.currentUser;
-      if (!user) {
+    if (!user) {
       console.log('No user authenticated, skipping metadata sync');
-              return;
-            }
-            
-    console.log('🔄 Starting metadata sync for user:', user.uid);
-    let localSuccess = false;
-    let postedSuccess = false;
-
-    try {
-      // Try to load local data first
-      await loadAllLocalVostcards();
-      localSuccess = true;
-      console.log('✅ Local vostcards synced');
-                      } catch (error) {
-      console.error('❌ Failed to sync local vostcards:', error);
+      return;
     }
-
+    
+    console.log('🔄 Starting intelligent IndexedDB-Firebase sync for user:', user.uid);
+    
     try {
-      // Then try to load posted data
+      // Step 1: Load from IndexedDB first
+      const localDB = await openUserDB();
+      const transaction = localDB.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const localVostcards = await new Promise<any[]>((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+      
+      console.log('📱 Loaded', localVostcards.length, 'vostcards from IndexedDB');
+      
+      // Step 2: Load from Firebase
+      await loadPrivateVostcards();
       await loadPostedVostcards();
-      postedSuccess = true;
-      console.log('✅ Posted vostcards synced');
-              } catch (error) {
-      console.error('❌ Failed to sync posted vostcards:', error);
-    }
+      
+      // Step 3: Intelligent merge - prioritize IndexedDB URLs if they exist
+      const currentSaved = savedVostcards;
+      const mergedVostcards = currentSaved.map(firebaseVostcard => {
+        const localVostcard = localVostcards.find(local => local.id === firebaseVostcard.id);
+        
+        if (localVostcard && (localVostcard._firebasePhotoURLs || localVostcard.photos)) {
+          console.log('🔄 Merging IndexedDB data for', firebaseVostcard.id);
+          
+          return {
+            ...firebaseVostcard,
+            _firebasePhotoURLs: localVostcard._firebasePhotoURLs || firebaseVostcard._firebasePhotoURLs,
+            _firebaseVideoURL: localVostcard._firebaseVideoURL || firebaseVostcard._firebaseVideoURL,
+            _firebaseAudioURL: localVostcard._firebaseAudioURL || firebaseVostcard._firebaseAudioURL,
+            photos: localVostcard.photos || firebaseVostcard.photos,
+            video: localVostcard.video || firebaseVostcard.video,
+            audio: localVostcard.audio || firebaseVostcard.audio
+          };
+        }
+        
+        return firebaseVostcard;
+      });
+      
+      // Update the state with merged data
+      setSavedVostcards(mergedVostcards);
+      
+      console.log('✅ Intelligent sync completed - merged IndexedDB and Firebase data');
+      setLastSyncTimestamp(new Date());
+      console.log('✅ Metadata sync completed at:', new Date().toISOString());
+      
+    } catch (error) {
+      console.error('❌ Error during intelligent sync, falling back to Firebase-only:', error);
+      
+      // Fallback to original sync
+      let localSuccess = false;
+      let postedSuccess = false;
 
-    // If both operations failed, throw an error
-    if (!localSuccess && !postedSuccess) {
-      throw new Error('Failed to sync both local and posted vostcards');
-    }
+      try {
+        await loadAllLocalVostcards();
+        localSuccess = true;
+        console.log('✅ Local vostcards synced');
+      } catch (error) {
+        console.error('❌ Failed to sync local vostcards:', error);
+      }
 
-    // Update sync timestamp even if only one operation succeeded
-    setLastSyncTimestamp(new Date());
-    console.log('✅ Metadata sync completed at:', new Date().toISOString());
-  }, [loadAllLocalVostcards, loadPostedVostcards]);
+      try {
+        await loadPostedVostcards();
+        postedSuccess = true;
+        console.log('✅ Posted vostcards synced');
+      } catch (error) {
+        console.error('❌ Failed to sync posted vostcards:', error);
+      }
+
+      if (!localSuccess && !postedSuccess) {
+        throw new Error('Failed to sync both local and posted vostcards');
+      }
+
+      setLastSyncTimestamp(new Date());
+      console.log('✅ Fallback sync completed at:', new Date().toISOString());
+    }
+  }, [loadAllLocalVostcards, loadPostedVostcards, savedVostcards, openUserDB]);
 
   // Download vostcard content
   const downloadVostcardContent = useCallback(async (vostcardId: string) => {
