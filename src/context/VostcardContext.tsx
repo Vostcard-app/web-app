@@ -430,16 +430,50 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       let freshVideoURL: string | null = null;
       let freshAudioURL: string | null = null;
 
-      // Try to get fresh photo URLs (assuming standard naming pattern)
+      // Try to get fresh photo URLs (check multiple naming patterns)
       for (let i = 0; i < 10; i++) { // Try up to 10 photos
+        let foundPhoto = false;
+        
+        // Pattern 1: vostcardId_index (new format)
         try {
           const photoRef = ref(storage, `vostcards/${user.uid}/photos/${vostcardId}_${i}`);
           const url = await getDownloadURL(photoRef);
           freshPhotoURLs.push(url);
-          console.log(`✅ Refreshed photo ${i} URL:`, url);
+          console.log(`✅ Refreshed photo ${i} URL (new format):`, url);
+          foundPhoto = true;
         } catch (error) {
-          // Photo doesn't exist, stop trying
-          break;
+          // Try next pattern
+        }
+        
+        // Pattern 2: photo{i+1}.jpg (old format)
+        if (!foundPhoto) {
+          try {
+            const photoRef = ref(storage, `vostcards/${user.uid}/photos/photo${i + 1}.jpg`);
+            const url = await getDownloadURL(photoRef);
+            freshPhotoURLs.push(url);
+            console.log(`✅ Refreshed photo ${i} URL (old format):`, url);
+            foundPhoto = true;
+          } catch (error) {
+            // Try next pattern
+          }
+        }
+        
+        // Pattern 3: Just the index number
+        if (!foundPhoto) {
+          try {
+            const photoRef = ref(storage, `vostcards/${user.uid}/photos/${i}.jpg`);
+            const url = await getDownloadURL(photoRef);
+            freshPhotoURLs.push(url);
+            console.log(`✅ Refreshed photo ${i} URL (index format):`, url);
+            foundPhoto = true;
+          } catch (error) {
+            // Photo doesn't exist in any format, stop trying
+            break;
+          }
+        }
+        
+        if (!foundPhoto) {
+          break; // No more photos found
         }
       }
 
@@ -507,19 +541,47 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('🔍 Checking Firebase Storage for vostcard:', vostcardId);
       console.log('🔍 User ID:', user.uid);
       
-      // Check for photos
+      // Check for photos (multiple naming patterns)
       for (let i = 0; i < 5; i++) {
+        let foundPhoto = false;
+        
+        // Pattern 1: vostcardId_index
         try {
           const photoRef = ref(storage, `vostcards/${user.uid}/photos/${vostcardId}_${i}`);
           const url = await getDownloadURL(photoRef);
-          console.log(`✅ Photo ${i} exists:`, url);
+          console.log(`✅ Photo ${i} exists (new format):`, url);
+          foundPhoto = true;
         } catch (error: any) {
-          if (error.code === 'storage/object-not-found') {
-            console.log(`❌ Photo ${i} not found in storage`);
-          } else {
-            console.log(`❌ Photo ${i} error:`, error.code, error.message);
+          // Try next pattern
+        }
+        
+        // Pattern 2: photo{i+1}.jpg
+        if (!foundPhoto) {
+          try {
+            const photoRef = ref(storage, `vostcards/${user.uid}/photos/photo${i + 1}.jpg`);
+            const url = await getDownloadURL(photoRef);
+            console.log(`✅ Photo ${i} exists (old format):`, url);
+            foundPhoto = true;
+          } catch (error: any) {
+            // Try next pattern
           }
-          break; // Stop checking after first missing photo
+        }
+        
+        // Pattern 3: {i}.jpg
+        if (!foundPhoto) {
+          try {
+            const photoRef = ref(storage, `vostcards/${user.uid}/photos/${i}.jpg`);
+            const url = await getDownloadURL(photoRef);
+            console.log(`✅ Photo ${i} exists (index format):`, url);
+            foundPhoto = true;
+          } catch (error: any) {
+            // Photo doesn't exist
+          }
+        }
+        
+        if (!foundPhoto) {
+          console.log(`❌ Photo ${i} not found in any format`);
+          break;
         }
       }
 
