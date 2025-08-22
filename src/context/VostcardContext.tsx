@@ -927,72 +927,73 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await loadPrivateVostcards();
       await loadPostedVostcards();
       
-      // Step 2.5: If IndexedDB is empty, populate it with Firebase data (initial sync)
-      if (localVostcards.length === 0 && savedVostcards.length > 0) {
-        console.log('🔄 IndexedDB is empty, performing initial population from Firebase...');
-        try {
-          const localDB = await openUserDB();
-          const transaction = localDB.transaction([STORE_NAME], 'readwrite');
-          const store = transaction.objectStore(STORE_NAME);
+      // Step 2.5 & 3: Get current saved vostcards and perform intelligent merge
+      setSavedVostcards(currentSaved => {
+        // Step 2.5: If IndexedDB is empty, populate it with Firebase data (initial sync)
+        if (localVostcards.length === 0 && currentSaved.length > 0) {
+          console.log('🔄 IndexedDB is empty, performing initial population from Firebase...');
+          (async () => {
+            try {
+              const localDB = await openUserDB();
+              const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+              const store = transaction.objectStore(STORE_NAME);
+              
+              for (const vostcard of currentSaved) {
+                await store.put(vostcard);
+              }
+              
+              console.log('✅ Initial IndexedDB population completed with', currentSaved.length, 'vostcards');
+            } catch (error) {
+              console.error('❌ Failed to populate IndexedDB:', error);
+            }
+          })();
+        }
+        
+        // Step 3: Intelligent merge - prioritize IndexedDB URLs if they exist
+        let indexedDBUsedCount = 0;
+        let firebaseUsedCount = 0;
+        
+        const mergedVostcards = currentSaved.map(firebaseVostcard => {
+          const localVostcard = localVostcards.find(local => local.id === firebaseVostcard.id);
           
-          for (const vostcard of savedVostcards) {
-            await store.put(vostcard);
+          if (localVostcard && (localVostcard._firebasePhotoURLs || localVostcard.photos)) {
+            console.log('🔄 Using IndexedDB URLs for', firebaseVostcard.id, {
+              hasIndexedDBPhotos: !!localVostcard._firebasePhotoURLs,
+              indexedDBPhotoCount: localVostcard._firebasePhotoURLs?.length || 0,
+              hasFirebasePhotos: !!firebaseVostcard._firebasePhotoURLs,
+              firebasePhotoCount: firebaseVostcard._firebasePhotoURLs?.length || 0
+            });
+            indexedDBUsedCount++;
+            
+            return {
+              ...firebaseVostcard,
+              _firebasePhotoURLs: localVostcard._firebasePhotoURLs || firebaseVostcard._firebasePhotoURLs,
+              _firebaseVideoURL: localVostcard._firebaseVideoURL || firebaseVostcard._firebaseVideoURL,
+              photos: localVostcard.photos || firebaseVostcard.photos,
+              video: localVostcard.video || firebaseVostcard.video
+            };
+          } else {
+            console.log('🔥 Using Firebase URLs for', firebaseVostcard.id, {
+              reason: !localVostcard ? 'not in IndexedDB' : 'no IndexedDB URLs',
+              hasFirebasePhotos: !!firebaseVostcard._firebasePhotoURLs,
+              firebasePhotoCount: firebaseVostcard._firebasePhotoURLs?.length || 0
+            });
+            firebaseUsedCount++;
           }
           
-          console.log('✅ Initial IndexedDB population completed with', savedVostcards.length, 'vostcards');
-        } catch (error) {
-          console.error('❌ Failed to populate IndexedDB:', error);
-        }
-      }
-      
-      // Step 3: Intelligent merge - prioritize IndexedDB URLs if they exist
-      const currentSaved = savedVostcards;
-      let indexedDBUsedCount = 0;
-      let firebaseUsedCount = 0;
-      
-      const mergedVostcards = currentSaved.map(firebaseVostcard => {
-        const localVostcard = localVostcards.find(local => local.id === firebaseVostcard.id);
+          return firebaseVostcard;
+        });
         
-        if (localVostcard && (localVostcard._firebasePhotoURLs || localVostcard.photos)) {
-          console.log('🔄 Using IndexedDB URLs for', firebaseVostcard.id, {
-            hasIndexedDBPhotos: !!localVostcard._firebasePhotoURLs,
-            indexedDBPhotoCount: localVostcard._firebasePhotoURLs?.length || 0,
-            hasFirebasePhotos: !!firebaseVostcard._firebasePhotoURLs,
-            firebasePhotoCount: firebaseVostcard._firebasePhotoURLs?.length || 0
-          });
-          indexedDBUsedCount++;
-          
-          return {
-            ...firebaseVostcard,
-            _firebasePhotoURLs: localVostcard._firebasePhotoURLs || firebaseVostcard._firebasePhotoURLs,
-            _firebaseVideoURL: localVostcard._firebaseVideoURL || firebaseVostcard._firebaseVideoURL,
-            _firebaseAudioURL: localVostcard._firebaseAudioURL || firebaseVostcard._firebaseAudioURL,
-            photos: localVostcard.photos || firebaseVostcard.photos,
-            video: localVostcard.video || firebaseVostcard.video,
-            audio: localVostcard.audio || firebaseVostcard.audio
-          };
-        } else {
-          console.log('🔥 Using Firebase URLs for', firebaseVostcard.id, {
-            reason: !localVostcard ? 'not in IndexedDB' : 'no IndexedDB URLs',
-            hasFirebasePhotos: !!firebaseVostcard._firebasePhotoURLs,
-            firebasePhotoCount: firebaseVostcard._firebasePhotoURLs?.length || 0
-          });
-          firebaseUsedCount++;
-        }
+        console.log('📊 Sync summary:', {
+          totalVostcards: mergedVostcards.length,
+          usedIndexedDB: indexedDBUsedCount,
+          usedFirebase: firebaseUsedCount
+        });
         
-        return firebaseVostcard;
+        console.log('✅ Intelligent sync completed - merged IndexedDB and Firebase data');
+        
+        return mergedVostcards;
       });
-      
-      console.log('📊 Sync summary:', {
-        totalVostcards: mergedVostcards.length,
-        usedIndexedDB: indexedDBUsedCount,
-        usedFirebase: firebaseUsedCount
-      });
-      
-      // Update the state with merged data
-      setSavedVostcards(mergedVostcards);
-      
-      console.log('✅ Intelligent sync completed - merged IndexedDB and Firebase data');
       setLastSyncTimestamp(new Date());
       console.log('✅ Metadata sync completed at:', new Date().toISOString());
       
@@ -1026,7 +1027,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLastSyncTimestamp(new Date());
       console.log('✅ Fallback sync completed at:', new Date().toISOString());
     }
-  }, [loadAllLocalVostcards, loadPostedVostcards, savedVostcards, openUserDB]);
+  }, [loadAllLocalVostcards, loadPostedVostcards, openUserDB]);
 
   // Download vostcard content
   const downloadVostcardContent = useCallback(async (vostcardId: string) => {
