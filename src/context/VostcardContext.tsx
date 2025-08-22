@@ -813,13 +813,40 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await loadPrivateVostcards();
       await loadPostedVostcards();
       
+      // Step 2.5: If IndexedDB is empty, populate it with Firebase data (initial sync)
+      if (localVostcards.length === 0 && savedVostcards.length > 0) {
+        console.log('🔄 IndexedDB is empty, performing initial population from Firebase...');
+        try {
+          const localDB = await openUserDB();
+          const transaction = localDB.transaction([STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(STORE_NAME);
+          
+          for (const vostcard of savedVostcards) {
+            await store.put(vostcard);
+          }
+          
+          console.log('✅ Initial IndexedDB population completed with', savedVostcards.length, 'vostcards');
+        } catch (error) {
+          console.error('❌ Failed to populate IndexedDB:', error);
+        }
+      }
+      
       // Step 3: Intelligent merge - prioritize IndexedDB URLs if they exist
       const currentSaved = savedVostcards;
+      let indexedDBUsedCount = 0;
+      let firebaseUsedCount = 0;
+      
       const mergedVostcards = currentSaved.map(firebaseVostcard => {
         const localVostcard = localVostcards.find(local => local.id === firebaseVostcard.id);
         
         if (localVostcard && (localVostcard._firebasePhotoURLs || localVostcard.photos)) {
-          console.log('🔄 Merging IndexedDB data for', firebaseVostcard.id);
+          console.log('🔄 Using IndexedDB URLs for', firebaseVostcard.id, {
+            hasIndexedDBPhotos: !!localVostcard._firebasePhotoURLs,
+            indexedDBPhotoCount: localVostcard._firebasePhotoURLs?.length || 0,
+            hasFirebasePhotos: !!firebaseVostcard._firebasePhotoURLs,
+            firebasePhotoCount: firebaseVostcard._firebasePhotoURLs?.length || 0
+          });
+          indexedDBUsedCount++;
           
           return {
             ...firebaseVostcard,
@@ -830,9 +857,22 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             video: localVostcard.video || firebaseVostcard.video,
             audio: localVostcard.audio || firebaseVostcard.audio
           };
+        } else {
+          console.log('🔥 Using Firebase URLs for', firebaseVostcard.id, {
+            reason: !localVostcard ? 'not in IndexedDB' : 'no IndexedDB URLs',
+            hasFirebasePhotos: !!firebaseVostcard._firebasePhotoURLs,
+            firebasePhotoCount: firebaseVostcard._firebasePhotoURLs?.length || 0
+          });
+          firebaseUsedCount++;
         }
         
         return firebaseVostcard;
+      });
+      
+      console.log('📊 Sync summary:', {
+        totalVostcards: mergedVostcards.length,
+        usedIndexedDB: indexedDBUsedCount,
+        usedFirebase: firebaseUsedCount
       });
       
       // Update the state with merged data
