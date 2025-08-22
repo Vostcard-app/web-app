@@ -683,13 +683,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log(`🧹 Cleanup completed! Cleaned ${cleanedCount} vostcards`);
       
       // Reload data to reflect changes
-      await loadPrivateVostcards();
-      await loadPostedVostcards();
+      // Note: Reload will be handled by the parent component
       
     } catch (error) {
       console.error('❌ Error during cleanup:', error);
     }
-  }, [savedVostcards, postedVostcards, loadPrivateVostcards, loadPostedVostcards]);
+  }, [savedVostcards, postedVostcards]);
 
   // Debug function to check if files actually exist in Firebase Storage
   const debugFirebaseStorage = useCallback(async (vostcardId: string) => {
@@ -1057,7 +1056,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error posting vostcard:', error);
       throw error;
     }
-  }, [currentVostcard, saveVostcard]);
+  }, [currentVostcard, saveVostcardDirect, savedVostcards, postedVostcards]);
 
   // Delete private vostcard
   const deletePrivateVostcard = useCallback(async (vostcardId: string) => {
@@ -1220,7 +1219,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setLastSyncTimestamp(new Date());
       console.log('✅ Fallback sync completed at:', new Date().toISOString());
     }
-  }, [loadAllLocalVostcards, loadPostedVostcards, openUserDB]);
+  }, [openUserDB]);
 
   // Download vostcard content
   const downloadVostcardContent = useCallback(async (vostcardId: string) => {
@@ -1380,13 +1379,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       setSavedVostcards([]);
       setPostedVostcards([]);
-      await loadAllLocalVostcards();
+      // Note: Data reload will be handled by parent component
       
     } catch (error) {
       console.error('Error in manual cleanup:', error);
       throw error;
     }
-  }, [openUserDB, loadAllLocalVostcards]);
+  }, [openUserDB]);
 
   // Initial load
   useEffect(() => {
@@ -1428,7 +1427,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     loadInitialData();
-  }, [authContext.loading, authContext.user, loadPrivateVostcards, loadPostedVostcards, syncVostcardMetadata]);
+  }, [authContext.loading, authContext.user]);
 
   const setVideo = useCallback((video: Blob) => {
     if (!currentVostcard) return;
