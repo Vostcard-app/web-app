@@ -437,6 +437,12 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Remove token and alt parameters to make it a public URL
       urlObj.searchParams.delete('token');
       urlObj.searchParams.set('alt', 'media');
+      
+      // Fix quickcard references in the path
+      let pathname = urlObj.pathname;
+      pathname = pathname.replace(/quickcard_(\d+)/g, 'vostcard_$1');
+      urlObj.pathname = pathname;
+      
       return urlObj.toString();
     } catch (error) {
       console.error('Error converting to public URL:', error);
