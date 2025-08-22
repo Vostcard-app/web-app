@@ -34,6 +34,7 @@ interface VostcardContextType {
   manualCleanupFirebase: () => Promise<void>;
   loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
   refreshFirebaseStorageURLs: (vostcardId: string) => Promise<{ photoURLs: string[]; videoURL: string | null; audioURL: string | null } | null>;
+  debugFirebaseStorage: (vostcardId: string) => Promise<void>;
   setVideo: (video: Blob) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
   debugIndexedDB: () => Promise<void>;
@@ -491,6 +492,57 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     } catch (error) {
       console.error('❌ Error refreshing Firebase Storage URLs:', error);
       return null;
+    }
+  }, []);
+
+  // Debug function to check if files actually exist in Firebase Storage
+  const debugFirebaseStorage = useCallback(async (vostcardId: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('No user authenticated');
+        return;
+      }
+
+      console.log('🔍 Checking Firebase Storage for vostcard:', vostcardId);
+      console.log('🔍 User ID:', user.uid);
+      
+      // Check for photos
+      for (let i = 0; i < 5; i++) {
+        try {
+          const photoRef = ref(storage, `vostcards/${user.uid}/photos/${vostcardId}_${i}`);
+          const url = await getDownloadURL(photoRef);
+          console.log(`✅ Photo ${i} exists:`, url);
+        } catch (error: any) {
+          if (error.code === 'storage/object-not-found') {
+            console.log(`❌ Photo ${i} not found in storage`);
+          } else {
+            console.log(`❌ Photo ${i} error:`, error.code, error.message);
+          }
+          break; // Stop checking after first missing photo
+        }
+      }
+
+      // Check for video
+      try {
+        const videoRef = ref(storage, `vostcards/${user.uid}/videos/${vostcardId}`);
+        const url = await getDownloadURL(videoRef);
+        console.log('✅ Video exists:', url);
+      } catch (error: any) {
+        console.log('❌ Video not found:', error.code);
+      }
+
+      // Check for audio
+      try {
+        const audioRef = ref(storage, `vostcards/${user.uid}/audio/${vostcardId}`);
+        const url = await getDownloadURL(audioRef);
+        console.log('✅ Audio exists:', url);
+      } catch (error: any) {
+        console.log('❌ Audio not found:', error.code);
+      }
+
+    } catch (error) {
+      console.error('❌ Error checking Firebase Storage:', error);
     }
   }, []);
 
@@ -1211,6 +1263,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         manualCleanupFirebase,
     loadLocalVostcard,
     refreshFirebaseStorageURLs,
+    debugFirebaseStorage,
     setVideo,
     updateVostcard,
     debugIndexedDB
