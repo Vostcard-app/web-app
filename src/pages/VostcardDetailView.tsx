@@ -32,7 +32,7 @@ const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards, refreshFirebaseStorageURLs } = useVostcard();
+  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards, refreshFirebaseStorageURLs, debugFirebaseStorage } = useVostcard();
   const { user } = useAuth();
   
   // Navigation state from previous view
@@ -2049,6 +2049,61 @@ Tap OK to continue.`;
           }}
         >
           <FaShare size={22} />
+        </button>
+
+        {/* Debug buttons - always show for now */}
+        <button
+          onClick={async () => {
+            if (vostcard?.id) {
+              console.log('🔍 Manual debug trigger for:', vostcard.id);
+              await debugFirebaseStorage(vostcard.id);
+            }
+          }}
+          style={{
+            background: 'rgba(255,0,0,0.7)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            borderRadius: '4px',
+            padding: '8px',
+            margin: '0 4px'
+          }}
+          title="Debug Firebase Storage"
+        >
+          🔍
+        </button>
+
+        <button
+          onClick={async () => {
+            if (vostcard?.id) {
+              console.log('🔄 Manual refresh trigger for:', vostcard.id);
+              const refreshedURLs = await refreshFirebaseStorageURLs(vostcard.id);
+              if (refreshedURLs) {
+                console.log('✅ URLs refreshed, reloading page...');
+                window.location.reload();
+              } else {
+                console.log('❌ No URLs were refreshed');
+              }
+            }
+          }}
+          style={{
+            background: 'rgba(0,255,0,0.7)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            borderRadius: '4px',
+            padding: '8px',
+            margin: '0 4px'
+          }}
+          title="Refresh Firebase Storage URLs"
+        >
+          🔄
         </button>
 
         <button
