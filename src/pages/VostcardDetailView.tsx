@@ -1741,6 +1741,16 @@ Tap OK to continue.`;
                     style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
                     loading="eager"
                     fetchPriority="high"
+                    onError={(e) => {
+                      console.error('❌ Image failed to load:', {
+                        src: photoURLs[0],
+                        vostcardId: vostcard?.id,
+                        error: e
+                      });
+                    }}
+                    onLoad={() => {
+                      console.log('✅ Image loaded successfully:', photoURLs[0]);
+                    }}
                   />
                   {/* Centered play overlay to signal tap-to-view */}
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1825,6 +1835,16 @@ Tap OK to continue.`;
                     style={{ width: '200px', height: '200px', objectFit: 'cover', display: 'block' }}
                     loading="eager"
                     fetchPriority="high"
+                    onError={(e) => {
+                      console.error('❌ Large image failed to load:', {
+                        src: photoURLs[0],
+                        vostcardId: vostcard?.id,
+                        error: e
+                      });
+                    }}
+                    onLoad={() => {
+                      console.log('✅ Large image loaded successfully:', photoURLs[0]);
+                    }}
                   />
                   {/* Centered play overlay to signal tap-to-view */}
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
