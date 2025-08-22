@@ -442,7 +442,16 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.log(`✅ Refreshed photo ${i} URL (new format):`, url);
           foundPhoto = true;
         } catch (error) {
-          // Try next pattern
+          // Try quickcard path
+          try {
+            const photoRef = ref(storage, `quickcards/${user.uid}/photos/${vostcardId}_${i}`);
+            const url = await getDownloadURL(photoRef);
+            freshPhotoURLs.push(url);
+            console.log(`✅ Refreshed photo ${i} URL (quickcard format):`, url);
+            foundPhoto = true;
+          } catch (error) {
+            // Try next pattern
+          }
         }
         
         // Pattern 2: photo{i+1}.jpg (old format)
@@ -483,7 +492,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         freshVideoURL = await getDownloadURL(videoRef);
         console.log('✅ Refreshed video URL:', freshVideoURL);
       } catch (error) {
-        console.log('No video found for vostcard:', vostcardId);
+        // Try quickcard path
+        try {
+          const videoRef = ref(storage, `quickcards/${user.uid}/videos/${vostcardId}`);
+          freshVideoURL = await getDownloadURL(videoRef);
+          console.log('✅ Refreshed video URL (quickcard format):', freshVideoURL);
+        } catch (error) {
+          console.log('No video found for vostcard:', vostcardId);
+        }
       }
 
       // Try to get fresh audio URL
@@ -492,7 +508,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         freshAudioURL = await getDownloadURL(audioRef);
         console.log('✅ Refreshed audio URL:', freshAudioURL);
       } catch (error) {
-        console.log('No audio found for vostcard:', vostcardId);
+        // Try quickcard path
+        try {
+          const audioRef = ref(storage, `quickcards/${user.uid}/audio/${vostcardId}`);
+          freshAudioURL = await getDownloadURL(audioRef);
+          console.log('✅ Refreshed audio URL (quickcard format):', freshAudioURL);
+        } catch (error) {
+          console.log('No audio found for vostcard:', vostcardId);
+        }
       }
 
       // Update the vostcard in Firebase with fresh URLs
@@ -552,7 +575,15 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.log(`✅ Photo ${i} exists (new format):`, url);
           foundPhoto = true;
         } catch (error: any) {
-          // Try next pattern
+          // Try quickcard path
+          try {
+            const photoRef = ref(storage, `quickcards/${user.uid}/photos/${vostcardId}_${i}`);
+            const url = await getDownloadURL(photoRef);
+            console.log(`✅ Photo ${i} exists (quickcard format):`, url);
+            foundPhoto = true;
+          } catch (error: any) {
+            // Try next pattern
+          }
         }
         
         // Pattern 2: photo{i+1}.jpg
@@ -591,7 +622,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const url = await getDownloadURL(videoRef);
         console.log('✅ Video exists:', url);
       } catch (error: any) {
-        console.log('❌ Video not found:', error.code);
+        // Try quickcard path
+        try {
+          const videoRef = ref(storage, `quickcards/${user.uid}/videos/${vostcardId}`);
+          const url = await getDownloadURL(videoRef);
+          console.log('✅ Video exists (quickcard format):', url);
+        } catch (error: any) {
+          console.log('❌ Video not found in either location:', error.code);
+        }
       }
 
       // Check for audio
@@ -600,7 +638,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const url = await getDownloadURL(audioRef);
         console.log('✅ Audio exists:', url);
       } catch (error: any) {
-        console.log('❌ Audio not found:', error.code);
+        // Try quickcard path
+        try {
+          const audioRef = ref(storage, `quickcards/${user.uid}/audio/${vostcardId}`);
+          const url = await getDownloadURL(audioRef);
+          console.log('✅ Audio exists (quickcard format):', url);
+        } catch (error: any) {
+          console.log('❌ Audio not found in either location:', error.code);
+        }
       }
 
     } catch (error) {
