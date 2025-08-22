@@ -434,6 +434,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const querySnapshot = await getDocs(q);
       const vostcards = querySnapshot.docs.map(doc => {
         const data = doc.data();
+        
+        // Debug logging for image/audio data
+        console.log('🔍 Private vostcard Firebase data for', doc.id, ':', {
+          photoURLs: data.photoURLs,
+          photoURLsType: typeof data.photoURLs,
+          photoURLsLength: Array.isArray(data.photoURLs) ? data.photoURLs.length : 'not array',
+          videoURL: data.videoURL,
+          audioURL: data.audioURL,
+          hasPhotos: data.hasPhotos,
+          hasVideo: data.hasVideo,
+          allFields: Object.keys(data)
+        });
         return {
           id: doc.id,
           title: data.title || '',
@@ -525,6 +537,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const querySnapshot = await getDocs(q);
       const vostcards = querySnapshot.docs.map(doc => {
         const data = doc.data();
+        
+        // Debug logging for image/audio data
+        console.log('🔍 Posted vostcard Firebase data for', doc.id, ':', {
+          photoURLs: data.photoURLs,
+          photoURLsType: typeof data.photoURLs,
+          photoURLsLength: Array.isArray(data.photoURLs) ? data.photoURLs.length : 'not array',
+          videoURL: data.videoURL,
+          audioURL: data.audioURL,
+          hasPhotos: data.hasPhotos,
+          hasVideo: data.hasVideo,
+          allFields: Object.keys(data)
+        });
         return {
           id: doc.id,
           title: data.title || '',
