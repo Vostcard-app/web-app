@@ -414,6 +414,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [authContext.userRole]);
 
+  // Helper function to extract file path from Firebase Storage URL
+  const extractFilePathFromURL = (url: string): string | null => {
+    try {
+      const urlObj = new URL(url);
+      const pathMatch = urlObj.pathname.match(/\/o\/(.+?)\?/);
+      if (pathMatch) {
+        return decodeURIComponent(pathMatch[1]);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error extracting file path from URL:', error);
+      return null;
+    }
+  };
+
   // Refresh expired Firebase Storage URLs
   const refreshFirebaseStorageURLs = useCallback(async (vostcardId: string) => {
     try {
@@ -425,96 +440,85 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       console.log('🔄 Refreshing Firebase Storage URLs for vostcard:', vostcardId);
       
+      // First, try to get the existing vostcard data to extract current file paths
+      const vostcard = savedVostcards.find(v => v.id === vostcardId);
+      if (!vostcard) {
+        console.log('❌ Vostcard not found in context, cannot refresh URLs');
+        return null;
+      }
+
+      console.log('🔍 Found vostcard data:', {
+        hasFirebasePhotoURLs: !!vostcard._firebasePhotoURLs,
+        hasFirebaseVideoURL: !!vostcard._firebaseVideoURL,
+        photoCount: vostcard._firebasePhotoURLs?.length || 0,
+        // Check if vostcard has additional properties from Firestore
+        hasPhotoURLs: !!(vostcard as any).photoURLs,
+        hasVideoURL: !!(vostcard as any).videoURL,
+        hasAudioURL: !!(vostcard as any).audioURL
+      });
+
       // Get fresh download URLs from Firebase Storage
       const freshPhotoURLs: string[] = [];
       let freshVideoURL: string | null = null;
       let freshAudioURL: string | null = null;
 
-      // Try to get fresh photo URLs (check multiple naming patterns)
-      for (let i = 0; i < 10; i++) { // Try up to 10 photos
-        let foundPhoto = false;
-        
-        // Pattern 1: vostcardId_index (new format)
-        try {
-          const photoRef = ref(storage, `vostcards/${user.uid}/photos/${vostcardId}_${i}`);
-          const url = await getDownloadURL(photoRef);
-          freshPhotoURLs.push(url);
-          console.log(`✅ Refreshed photo ${i} URL (new format):`, url);
-          foundPhoto = true;
-        } catch (error) {
-          // Try quickcard path
-          try {
-            const photoRef = ref(storage, `quickcards/${user.uid}/photos/${vostcardId}_${i}`);
-            const url = await getDownloadURL(photoRef);
-            freshPhotoURLs.push(url);
-            console.log(`✅ Refreshed photo ${i} URL (quickcard format):`, url);
-            foundPhoto = true;
-          } catch (error) {
-            // Try next pattern
+      // Refresh photo URLs using existing file paths
+      const photoURLs = vostcard._firebasePhotoURLs || (vostcard as any).photoURLs;
+      if (photoURLs && Array.isArray(photoURLs)) {
+        console.log('🔄 Refreshing photo URLs from existing paths...');
+        for (let i = 0; i < photoURLs.length; i++) {
+          const existingURL = photoURLs[i];
+          if (typeof existingURL === 'string') {
+            const filePath = extractFilePathFromURL(existingURL);
+            if (filePath) {
+              try {
+                const photoRef = ref(storage, filePath);
+                const freshURL = await getDownloadURL(photoRef);
+                freshPhotoURLs.push(freshURL);
+                console.log(`✅ Refreshed photo ${i} URL:`, freshURL);
+              } catch (error: any) {
+                console.log(`❌ Failed to refresh photo ${i}:`, error.code);
+              }
+            } else {
+              console.log(`❌ Could not extract file path from photo ${i} URL:`, existingURL);
+            }
           }
-        }
-        
-        // Pattern 2: photo{i+1}.jpg (old format)
-        if (!foundPhoto) {
-          try {
-            const photoRef = ref(storage, `vostcards/${user.uid}/photos/photo${i + 1}.jpg`);
-            const url = await getDownloadURL(photoRef);
-            freshPhotoURLs.push(url);
-            console.log(`✅ Refreshed photo ${i} URL (old format):`, url);
-            foundPhoto = true;
-          } catch (error) {
-            // Try next pattern
-          }
-        }
-        
-        // Pattern 3: Just the index number
-        if (!foundPhoto) {
-          try {
-            const photoRef = ref(storage, `vostcards/${user.uid}/photos/${i}.jpg`);
-            const url = await getDownloadURL(photoRef);
-            freshPhotoURLs.push(url);
-            console.log(`✅ Refreshed photo ${i} URL (index format):`, url);
-            foundPhoto = true;
-          } catch (error) {
-            // Photo doesn't exist in any format, stop trying
-            break;
-          }
-        }
-        
-        if (!foundPhoto) {
-          break; // No more photos found
         }
       }
 
-      // Try to get fresh video URL
-      try {
-        const videoRef = ref(storage, `vostcards/${user.uid}/videos/${vostcardId}`);
-        freshVideoURL = await getDownloadURL(videoRef);
-        console.log('✅ Refreshed video URL:', freshVideoURL);
-      } catch (error) {
-        // Try quickcard path
-        try {
-          const videoRef = ref(storage, `quickcards/${user.uid}/videos/${vostcardId}`);
-          freshVideoURL = await getDownloadURL(videoRef);
-          console.log('✅ Refreshed video URL (quickcard format):', freshVideoURL);
-        } catch (error) {
-          console.log('No video found for vostcard:', vostcardId);
+      // Refresh video URL using existing file path
+      const videoURL = vostcard._firebaseVideoURL || (vostcard as any).videoURL;
+      if (videoURL && typeof videoURL === 'string') {
+        console.log('🔄 Refreshing video URL from existing path...');
+        const filePath = extractFilePathFromURL(videoURL);
+        if (filePath) {
+          try {
+            const videoRef = ref(storage, filePath);
+            freshVideoURL = await getDownloadURL(videoRef);
+            console.log('✅ Refreshed video URL:', freshVideoURL);
+          } catch (error: any) {
+            console.log('❌ Failed to refresh video URL:', error.code);
+          }
+        } else {
+          console.log('❌ Could not extract file path from video URL:', videoURL);
         }
       }
 
-      // Try to get fresh audio URL
-      try {
-        const audioRef = ref(storage, `vostcards/${user.uid}/audio/${vostcardId}`);
-        freshAudioURL = await getDownloadURL(audioRef);
-        console.log('✅ Refreshed audio URL:', freshAudioURL);
-      } catch (error) {
-        // Try quickcard path
-        try {
-          const audioRef = ref(storage, `quickcards/${user.uid}/audio/${vostcardId}`);
-          freshAudioURL = await getDownloadURL(audioRef);
-          console.log('✅ Refreshed audio URL (quickcard format):', freshAudioURL);
-        } catch (error) {
-          console.log('No audio found for vostcard:', vostcardId);
+      // Refresh audio URL using existing file path
+      const audioURL = (vostcard as any).audioURL;
+      if (audioURL && typeof audioURL === 'string') {
+        console.log('🔄 Refreshing audio URL from existing path...');
+        const filePath = extractFilePathFromURL(audioURL);
+        if (filePath) {
+          try {
+            const audioRef = ref(storage, filePath);
+            freshAudioURL = await getDownloadURL(audioRef);
+            console.log('✅ Refreshed audio URL:', freshAudioURL);
+          } catch (error: any) {
+            console.log('❌ Failed to refresh audio URL:', error.code);
+          }
+        } else {
+          console.log('❌ Could not extract file path from audio URL:', audioURL);
         }
       }
 
@@ -550,7 +554,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.error('❌ Error refreshing Firebase Storage URLs:', error);
       return null;
     }
-  }, []);
+  }, [savedVostcards]);
 
   // Debug function to check if files actually exist in Firebase Storage
   const debugFirebaseStorage = useCallback(async (vostcardId: string) => {
@@ -575,14 +579,23 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.log(`✅ Photo ${i} exists (new format):`, url);
           foundPhoto = true;
         } catch (error: any) {
-          // Try quickcard path
+          // Try quickcard path with vostcard ID
           try {
             const photoRef = ref(storage, `quickcards/${user.uid}/photos/${vostcardId}_${i}`);
             const url = await getDownloadURL(photoRef);
             console.log(`✅ Photo ${i} exists (quickcard format):`, url);
             foundPhoto = true;
           } catch (error: any) {
-            // Try next pattern
+            // Try original quickcard ID format (quickcard_timestamp)
+            const originalQuickcardId = vostcardId.replace('vostcard_', 'quickcard_');
+            try {
+              const photoRef = ref(storage, `quickcards/${user.uid}/photos/${originalQuickcardId}_${i}`);
+              const url = await getDownloadURL(photoRef);
+              console.log(`✅ Photo ${i} exists (original quickcard format):`, url);
+              foundPhoto = true;
+            } catch (error: any) {
+              // Try next pattern
+            }
           }
         }
         
