@@ -33,7 +33,8 @@ interface VostcardContextType {
   clearDeletionMarkers: () => void;
   manualCleanupFirebase: () => Promise<void>;
   loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
-  refreshFirebaseStorageURLs: (vostcardId: string) => Promise<{ photoURLs: string[]; videoURL: string | null; audioURL: string | null } | null>;
+  refreshFirebaseStorageURLs: (vostcardId: string, vostcardData?: any) => Promise<{ photoURLs: string[]; videoURL: string | null; audioURL: string | null } | null>;
+  fixExpiredURLs: (vostcardData: any) => { photoURLs: string[]; videoURL: string | null; audioURL: string | null };
   debugFirebaseStorage: (vostcardId: string) => Promise<void>;
   setVideo: (video: Blob) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
@@ -429,6 +430,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // Helper function to convert Firebase Storage URL to public URL (no token needed)
+  const convertToPublicURL = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      // Remove token and alt parameters to make it a public URL
+      urlObj.searchParams.delete('token');
+      urlObj.searchParams.set('alt', 'media');
+      return urlObj.toString();
+    } catch (error) {
+      console.error('Error converting to public URL:', error);
+      return url; // Return original URL if conversion fails
+    }
+  };
+
   // Refresh expired Firebase Storage URLs
   const refreshFirebaseStorageURLs = useCallback(async (vostcardId: string) => {
     try {
@@ -555,6 +570,45 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return null;
     }
   }, [savedVostcards]);
+
+  // Simple function to fix expired URLs by converting them to public URLs
+  const fixExpiredURLs = useCallback((vostcardData: any) => {
+    const fixedPhotoURLs: string[] = [];
+    let fixedVideoURL: string | null = null;
+    let fixedAudioURL: string | null = null;
+
+    // Fix photo URLs
+    const photoURLs = vostcardData._firebasePhotoURLs || vostcardData.photoURLs;
+    if (photoURLs && Array.isArray(photoURLs)) {
+      for (const url of photoURLs) {
+        if (typeof url === 'string') {
+          const publicURL = convertToPublicURL(url);
+          fixedPhotoURLs.push(publicURL);
+          console.log('🔧 Fixed photo URL:', publicURL);
+        }
+      }
+    }
+
+    // Fix video URL
+    const videoURL = vostcardData._firebaseVideoURL || vostcardData.videoURL;
+    if (videoURL && typeof videoURL === 'string') {
+      fixedVideoURL = convertToPublicURL(videoURL);
+      console.log('🔧 Fixed video URL:', fixedVideoURL);
+    }
+
+    // Fix audio URL
+    const audioURL = vostcardData.audioURL;
+    if (audioURL && typeof audioURL === 'string') {
+      fixedAudioURL = convertToPublicURL(audioURL);
+      console.log('🔧 Fixed audio URL:', fixedAudioURL);
+    }
+
+    return {
+      photoURLs: fixedPhotoURLs,
+      videoURL: fixedVideoURL,
+      audioURL: fixedAudioURL
+    };
+  }, []);
 
   // Debug function to check if files actually exist in Firebase Storage
   const debugFirebaseStorage = useCallback(async (vostcardId: string) => {
@@ -1384,6 +1438,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         manualCleanupFirebase,
     loadLocalVostcard,
     refreshFirebaseStorageURLs,
+    fixExpiredURLs,
     debugFirebaseStorage,
     setVideo,
     updateVostcard,
