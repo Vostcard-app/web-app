@@ -32,7 +32,7 @@ const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards } = useVostcard();
+  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards, refreshFirebaseStorageURLs } = useVostcard();
   const { user } = useAuth();
   
   // Navigation state from previous view
@@ -1741,12 +1741,21 @@ Tap OK to continue.`;
                     style={{ width: '125px', height: '125px', objectFit: 'cover', display: 'block' }}
                     loading="eager"
                     fetchPriority="high"
-                    onError={(e) => {
+                    onError={async (e) => {
                       console.error('❌ Image failed to load:', {
                         src: photoURLs[0],
                         vostcardId: vostcard?.id,
                         error: e
                       });
+                      // Try to refresh Firebase Storage URLs
+                      if (vostcard?.id) {
+                        console.log('🔄 Attempting to refresh Firebase Storage URLs...');
+                        const refreshedURLs = await refreshFirebaseStorageURLs(vostcard.id);
+                        if (refreshedURLs) {
+                          console.log('✅ URLs refreshed, reloading page...');
+                          window.location.reload();
+                        }
+                      }
                     }}
                     onLoad={() => {
                       console.log('✅ Image loaded successfully:', photoURLs[0]);
@@ -1835,12 +1844,21 @@ Tap OK to continue.`;
                     style={{ width: '200px', height: '200px', objectFit: 'cover', display: 'block' }}
                     loading="eager"
                     fetchPriority="high"
-                    onError={(e) => {
+                    onError={async (e) => {
                       console.error('❌ Large image failed to load:', {
                         src: photoURLs[0],
                         vostcardId: vostcard?.id,
                         error: e
                       });
+                      // Try to refresh Firebase Storage URLs
+                      if (vostcard?.id) {
+                        console.log('🔄 Attempting to refresh Firebase Storage URLs...');
+                        const refreshedURLs = await refreshFirebaseStorageURLs(vostcard.id);
+                        if (refreshedURLs) {
+                          console.log('✅ URLs refreshed, reloading page...');
+                          window.location.reload();
+                        }
+                      }
                     }}
                     onLoad={() => {
                       console.log('✅ Large image loaded successfully:', photoURLs[0]);

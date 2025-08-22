@@ -33,6 +33,7 @@ interface VostcardContextType {
   clearDeletionMarkers: () => void;
   manualCleanupFirebase: () => Promise<void>;
   loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
+  refreshFirebaseStorageURLs: (vostcardId: string) => Promise<{ photoURLs: string[]; videoURL: string | null; audioURL: string | null } | null>;
   setVideo: (video: Blob) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
   debugIndexedDB: () => Promise<void>;
@@ -411,6 +412,87 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       throw error;
     }
   }, [authContext.userRole]);
+
+  // Refresh expired Firebase Storage URLs
+  const refreshFirebaseStorageURLs = useCallback(async (vostcardId: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('No user authenticated, cannot refresh URLs');
+        return null;
+      }
+
+      console.log('🔄 Refreshing Firebase Storage URLs for vostcard:', vostcardId);
+      
+      // Get fresh download URLs from Firebase Storage
+      const freshPhotoURLs: string[] = [];
+      let freshVideoURL: string | null = null;
+      let freshAudioURL: string | null = null;
+
+      // Try to get fresh photo URLs (assuming standard naming pattern)
+      for (let i = 0; i < 10; i++) { // Try up to 10 photos
+        try {
+          const photoRef = ref(storage, `vostcards/${user.uid}/photos/${vostcardId}_${i}`);
+          const url = await getDownloadURL(photoRef);
+          freshPhotoURLs.push(url);
+          console.log(`✅ Refreshed photo ${i} URL:`, url);
+        } catch (error) {
+          // Photo doesn't exist, stop trying
+          break;
+        }
+      }
+
+      // Try to get fresh video URL
+      try {
+        const videoRef = ref(storage, `vostcards/${user.uid}/videos/${vostcardId}`);
+        freshVideoURL = await getDownloadURL(videoRef);
+        console.log('✅ Refreshed video URL:', freshVideoURL);
+      } catch (error) {
+        console.log('No video found for vostcard:', vostcardId);
+      }
+
+      // Try to get fresh audio URL
+      try {
+        const audioRef = ref(storage, `vostcards/${user.uid}/audio/${vostcardId}`);
+        freshAudioURL = await getDownloadURL(audioRef);
+        console.log('✅ Refreshed audio URL:', freshAudioURL);
+      } catch (error) {
+        console.log('No audio found for vostcard:', vostcardId);
+      }
+
+      // Update the vostcard in Firebase with fresh URLs
+      if (freshPhotoURLs.length > 0 || freshVideoURL || freshAudioURL) {
+        const vostcardRef = doc(db, 'vostcards', vostcardId);
+        const updateData: any = {
+          updatedAt: serverTimestamp()
+        };
+        
+        if (freshPhotoURLs.length > 0) {
+          updateData.photoURLs = freshPhotoURLs;
+        }
+        if (freshVideoURL) {
+          updateData.videoURL = freshVideoURL;
+        }
+        if (freshAudioURL) {
+          updateData.audioURL = freshAudioURL;
+        }
+
+        await setDoc(vostcardRef, updateData, { merge: true });
+        console.log('✅ Updated vostcard with fresh URLs:', updateData);
+
+        return {
+          photoURLs: freshPhotoURLs,
+          videoURL: freshVideoURL,
+          audioURL: freshAudioURL
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error('❌ Error refreshing Firebase Storage URLs:', error);
+      return null;
+    }
+  }, []);
 
   // Load private vostcards from Firebase
   const loadPrivateVostcards = useCallback(async () => {
@@ -1040,6 +1122,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearDeletionMarkers,
         manualCleanupFirebase,
     loadLocalVostcard,
+    refreshFirebaseStorageURLs,
     setVideo,
     updateVostcard,
     debugIndexedDB
