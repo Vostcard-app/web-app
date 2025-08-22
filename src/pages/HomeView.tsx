@@ -936,7 +936,7 @@ const HomeView = () => {
         loadUserAvatar();
       }, 1000); // Load avatar 1s after auth completes
     }
-  }, [user?.uid, userAvatar]);
+  }, [user?.uid]);
 
   // Initial load - Skip if tour data is active, load immediately for faster experience
   useEffect(() => {
