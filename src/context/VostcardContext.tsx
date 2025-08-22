@@ -35,6 +35,7 @@ interface VostcardContextType {
   loadLocalVostcard: (vostcardId: string, options?: { restoreVideo?: boolean; restorePhotos?: boolean }) => Promise<void>;
   refreshFirebaseStorageURLs: (vostcardId: string, vostcardData?: any) => Promise<{ photoURLs: string[]; videoURL: string | null; audioURL: string | null } | null>;
   fixExpiredURLs: (vostcardData: any) => { photoURLs: string[]; videoURL: string | null; audioURL: string | null };
+  cleanupBrokenFileReferences: () => Promise<void>;
   debugFirebaseStorage: (vostcardId: string) => Promise<void>;
   setVideo: (video: Blob) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
@@ -615,6 +616,80 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       audioURL: fixedAudioURL
     };
   }, []);
+
+  // Function to clean up broken file references from the database
+  const cleanupBrokenFileReferences = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('❌ No authenticated user for cleanup');
+      return;
+    }
+
+    console.log('🧹 Starting cleanup of broken file references...');
+    let cleanedCount = 0;
+
+    try {
+      // Get all vostcards for the current user
+      const vostcardsToClean = [...savedVostcards, ...postedVostcards];
+      
+      for (const vostcard of vostcardsToClean) {
+        let needsUpdate = false;
+        const updateData: any = {};
+
+        // Check and clean photo URLs
+        const photoURLs = (vostcard as any).photoURLs || vostcard._firebasePhotoURLs;
+        if (photoURLs && Array.isArray(photoURLs) && photoURLs.length > 0) {
+          console.log(`🔍 Cleaning photo URLs for vostcard: ${vostcard.id}`);
+          updateData.photoURLs = [];
+          updateData._firebasePhotoURLs = [];
+          needsUpdate = true;
+        }
+
+        // Check and clean video URL
+        const videoURL = (vostcard as any).videoURL || vostcard._firebaseVideoURL;
+        if (videoURL) {
+          console.log(`🔍 Cleaning video URL for vostcard: ${vostcard.id}`);
+          updateData.videoURL = null;
+          updateData._firebaseVideoURL = null;
+          updateData.hasVideo = false;
+          needsUpdate = true;
+        }
+
+        // Check and clean audio URL
+        const audioURL = (vostcard as any).audioURL;
+        if (audioURL) {
+          console.log(`🔍 Cleaning audio URL for vostcard: ${vostcard.id}`);
+          updateData.audioURL = null;
+          needsUpdate = true;
+        }
+
+        // Update the document if needed
+        if (needsUpdate) {
+          try {
+            const vostcardRef = doc(db, 'vostcards', vostcard.id);
+            await setDoc(vostcardRef, {
+              ...updateData,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+            
+            console.log(`✅ Cleaned up vostcard: ${vostcard.id}`);
+            cleanedCount++;
+          } catch (error) {
+            console.error(`❌ Failed to clean up vostcard ${vostcard.id}:`, error);
+          }
+        }
+      }
+
+      console.log(`🧹 Cleanup completed! Cleaned ${cleanedCount} vostcards`);
+      
+      // Reload data to reflect changes
+      await loadPrivateVostcards();
+      await loadPostedVostcards();
+      
+    } catch (error) {
+      console.error('❌ Error during cleanup:', error);
+    }
+  }, [savedVostcards, postedVostcards, loadPrivateVostcards, loadPostedVostcards]);
 
   // Debug function to check if files actually exist in Firebase Storage
   const debugFirebaseStorage = useCallback(async (vostcardId: string) => {
@@ -1445,6 +1520,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadLocalVostcard,
     refreshFirebaseStorageURLs,
     fixExpiredURLs,
+    cleanupBrokenFileReferences,
     debugFirebaseStorage,
     setVideo,
     updateVostcard,
