@@ -836,11 +836,23 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           allFields: Object.keys(data)
         });
         
-        // Test if first photo URL is accessible
+        // Test if first photo URL is accessible and try public URL conversion
         if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
           const testUrl = data.photoURLs[0];
           console.log('🧪 Testing photo URL accessibility:', testUrl);
+          
+          // Try original URL first
           fetch(testUrl, { method: 'HEAD' })
+            .then(response => {
+              if (response.status === 412) {
+                console.warn('⚠️ HTTP 412: Trying public URL conversion...');
+                // Try converting to public URL (remove token, keep alt=media)
+                const publicUrl = testUrl.split('?')[0] + '?alt=media';
+                console.log('🔄 Testing public URL:', publicUrl);
+                return fetch(publicUrl, { method: 'HEAD' });
+              }
+              return response;
+            })
             .then(response => {
               console.log('✅ Photo URL accessible:', response.status, response.statusText);
             })
@@ -866,8 +878,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
           _firebaseVideoURL: data.videoURL || null,
-          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
-          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // For compatibility with VostcardDetailView
+          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [],
+          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [], // Convert to public URLs for compatibility
           _isMetadataOnly: true
         };
       });
@@ -954,11 +966,23 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           allFields: Object.keys(data)
         });
         
-        // Test if first photo URL is accessible
+        // Test if first photo URL is accessible and try public URL conversion
         if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
           const testUrl = data.photoURLs[0];
           console.log('🧪 Testing posted photo URL accessibility:', testUrl);
+          
+          // Try original URL first
           fetch(testUrl, { method: 'HEAD' })
+            .then(response => {
+              if (response.status === 412) {
+                console.warn('⚠️ Posted HTTP 412: Trying public URL conversion...');
+                // Try converting to public URL (remove token, keep alt=media)
+                const publicUrl = testUrl.split('?')[0] + '?alt=media';
+                console.log('🔄 Testing posted public URL:', publicUrl);
+                return fetch(publicUrl, { method: 'HEAD' });
+              }
+              return response;
+            })
             .then(response => {
               console.log('✅ Posted photo URL accessible:', response.status, response.statusText);
             })
@@ -987,7 +1011,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           offerDetails: data.offerDetails || undefined,
           userRole: data.userRole,
           _firebaseVideoURL: data.videoURL || null,
-          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [],
+          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [], // Convert to public URLs for compatibility
           _isMetadataOnly: true
         };
       });
