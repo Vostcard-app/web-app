@@ -399,6 +399,21 @@ const VostcardDetailView: React.FC = () => {
       state: vostcard?.state,
       allVostcardKeys: vostcard ? Object.keys(vostcard).sort() : []
     });
+    
+    // Test URL accessibility in VostcardDetailView
+    if (urls.length > 0) {
+      console.log('🧪 VostcardDetailView testing first photo URL:', urls[0]);
+      fetch(urls[0], { method: 'HEAD' })
+        .then(response => {
+          console.log('✅ VostcardDetailView photo URL accessible:', response.status, response.statusText);
+        })
+        .catch(error => {
+          console.error('❌ VostcardDetailView photo URL failed:', error.message);
+        });
+    } else {
+      console.warn('⚠️ VostcardDetailView: No photo URLs found for vostcard:', vostcard?.id);
+    }
+    
     return urls;
   }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
   const hasAudio = useMemo(() => {
@@ -2104,6 +2119,28 @@ Tap OK to continue.`;
           title="Refresh Firebase Storage URLs"
         >
           🔄
+        </button>
+
+        <button
+          onClick={async () => {
+            console.log('🧹 Manual cleanup trigger');
+            await cleanupBrokenFileReferences();
+          }}
+          style={{
+            background: 'rgba(255,165,0,0.7)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            borderRadius: '4px',
+            padding: '8px',
+            margin: '0 4px'
+          }}
+          title="Clean up broken file references"
+        >
+          🧹
         </button>
 
         <button
