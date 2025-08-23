@@ -15,7 +15,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { loadQuickcard } = useVostcardEdit();
-  const { saveLocalVostcard, setCurrentVostcard, postQuickcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcardsImmediate, loadAllLocalVostcards } = useVostcard();
+  const { saveVostcard, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -955,7 +955,7 @@ const VostcardStudioView: React.FC = () => {
       };
 
       setCurrentVostcard(quickcard);
-      await saveLocalVostcard();
+      await saveVostcard();
       
       alert(`✅ Vostcard saved to Personal Posts with ${quickcardPhotos.length} photo(s)!`);
       resetQuickcardForm();
@@ -1032,7 +1032,8 @@ const VostcardStudioView: React.FC = () => {
 
       setCurrentVostcard(quickcard);
       await new Promise(resolve => setTimeout(resolve, 100));
-      await postQuickcard(quickcard);
+      setCurrentVostcard(quickcard);
+      await postVostcard();
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
       sessionStorage.removeItem('quickcardCreatorState');
@@ -1119,7 +1120,8 @@ const VostcardStudioView: React.FC = () => {
 
       setCurrentVostcard(updatedQuickcard);
       await new Promise(resolve => setTimeout(resolve, 100));
-      await postQuickcard(updatedQuickcard);
+      setCurrentVostcard(updatedQuickcard);
+      await postVostcard();
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
       sessionStorage.removeItem('quickcardCreatorState');
