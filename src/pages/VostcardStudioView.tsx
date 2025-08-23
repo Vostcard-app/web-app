@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe, FaImages, FaEdit } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { drivecardService } from '../services/drivecardService';
-import { QuickcardImporter as LegacyQuickcardImporter } from '../components/studio/LegacyQuickcardImporter';
+import { VostcardImporter as LegacyVostcardImporter } from '../components/studio/LegacyVostcardImporter';
 import { useVostcard } from '../context/VostcardContext';
 import { useVostcardEdit } from '../context/VostcardEditContext';
 import type { Drivecard, Vostcard } from '../types/VostcardTypes';
@@ -14,7 +14,7 @@ const VostcardStudioView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
-  const { loadQuickcard } = useVostcardEdit();
+  const { loadVostcard } = useVostcardEdit();
   const { saveVostcard, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards } = useVostcard();
   
   // Categories from step 3
@@ -42,34 +42,34 @@ const VostcardStudioView: React.FC = () => {
   const editingDrivecardId = location.state?.editingDrivecard;
   
   // Switch to drivecard section if editing one
-  const [activeSection, setActiveSection] = useState<'quickcard' | 'drivecard'>(
-    editingDrivecardId && canAccessDrivecard ? 'drivecard' : 'quickcard'
+  const [activeSection, setActiveSection] = useState<'vostcard' | 'drivecard'>(
+    editingDrivecardId && canAccessDrivecard ? 'drivecard' : 'vostcard'
   );
 
-  // Quickcard import state
-  const [showQuickcardImporter, setShowQuickcardImporter] = useState(false);
+  // Vostcard import state
+  const [showVostcardImporter, setShowVostcardImporter] = useState(false);
   const [showVostcardCreator, setShowVostcardCreator] = useState(false);
-  const [showQuickcardLoader, setShowQuickcardLoader] = useState(false);
+  const [showVostcardLoader, setShowVostcardLoader] = useState(false);
   
-  // Quickcard creation state - ENHANCED FOR MULTIPLE PHOTOS
-  const [quickcardTitle, setQuickcardTitle] = useState('');
-  const [quickcardDescription, setQuickcardDescription] = useState('');
-  const [quickcardPhotos, setQuickcardPhotos] = useState<(Blob | File)[]>([]); // Array of photos
-  const [quickcardPhotoPreviews, setQuickcardPhotoPreviews] = useState<string[]>([]); // Array of previews
-  const [quickcardLocation, setQuickcardLocation] = useState<{
+  // Vostcard creation state - ENHANCED FOR MULTIPLE PHOTOS
+  const [vostcardTitle, setVostcardTitle] = useState('');
+  const [vostcardDescription, setVostcardDescription] = useState('');
+  const [vostcardPhotos, setVostcardPhotos] = useState<(Blob | File)[]>([]); // Array of photos
+  const [vostcardPhotoPreviews, setVostcardPhotoPreviews] = useState<string[]>([]); // Array of previews
+  const [vostcardLocation, setVostcardLocation] = useState<{
     latitude: number;
     longitude: number;
     address?: string;
   } | null>(null);
   // Separate audio states for Intro and Detail
-  const [quickcardIntroAudio, setQuickcardIntroAudio] = useState<Blob | null>(null);
-  const [quickcardIntroAudioSource, setQuickcardIntroAudioSource] = useState<'recording' | 'file' | null>(null);
-  const [quickcardIntroAudioFileName, setQuickcardIntroAudioFileName] = useState<string | null>(null);
-  const [quickcardDetailAudio, setQuickcardDetailAudio] = useState<Blob | null>(null);
-  const [quickcardDetailAudioSource, setQuickcardDetailAudioSource] = useState<'recording' | 'file' | null>(null);
-  const [quickcardDetailAudioFileName, setQuickcardDetailAudioFileName] = useState<string | null>(null);
-  const [quickcardCategories, setQuickcardCategories] = useState<string[]>([]);
-  const [showQuickcardCategoryModal, setShowQuickcardCategoryModal] = useState(false);
+  const [vostcardIntroAudio, setVostcardIntroAudio] = useState<Blob | null>(null);
+  const [vostcardIntroAudioSource, setVostcardIntroAudioSource] = useState<'recording' | 'file' | null>(null);
+  const [vostcardIntroAudioFileName, setVostcardIntroAudioFileName] = useState<string | null>(null);
+  const [vostcardDetailAudio, setVostcardDetailAudio] = useState<Blob | null>(null);
+  const [vostcardDetailAudioSource, setVostcardDetailAudioSource] = useState<'recording' | 'file' | null>(null);
+  const [vostcardDetailAudioFileName, setVostcardDetailAudioFileName] = useState<string | null>(null);
+  const [vostcardCategories, setVostcardCategories] = useState<string[]>([]);
+  const [showVostcardCategoryModal, setShowVostcardCategoryModal] = useState(false);
 
   // Drag and drop state for photo reordering
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
@@ -82,13 +82,13 @@ const VostcardStudioView: React.FC = () => {
   // Ref for managing touch event listeners
   const photoGridRef = useRef<HTMLDivElement | null>(null);
   
-  // Editing state for quickcards
-  const [editingQuickcardId, setEditingQuickcardId] = useState<string | null>(null);
+  // Editing state for vostcards
+  const [editingVostcardId, setEditingVostcardId] = useState<string | null>(null);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingQuickcards, setIsLoadingQuickcards] = useState(false);
+  const [isLoadingVostcards, setIsLoadingVostcards] = useState(false);
 
   // Drivecard creation state
   const [title, setTitle] = useState('');
@@ -373,7 +373,7 @@ const VostcardStudioView: React.FC = () => {
   useEffect(() => {
     const restoreState = async () => {
       const drivecardLocation = sessionStorage.getItem('drivecardLocation');
-      const quickcardLocation = sessionStorage.getItem('quickcardLocation');
+      const vostcardLocation = sessionStorage.getItem('vostcardLocation');
       
       if (drivecardLocation) {
         try {
@@ -394,24 +394,24 @@ const VostcardStudioView: React.FC = () => {
         }
       }
 
-      if (quickcardLocation) {
+      if (vostcardLocation) {
         try {
-          const location = JSON.parse(quickcardLocation);
-          setQuickcardLocation(location);
-          sessionStorage.removeItem('quickcardLocation');
+          const location = JSON.parse(vostcardLocation);
+          setVostcardLocation(location);
+          sessionStorage.removeItem('vostcardLocation');
           
-          // ONLY restore quickcard creator state when coming back from pin placer
+          // ONLY restore vostcard creator state when coming back from pin placer
           // This ensures clean initialization when first opening studio
-          const creatorState = sessionStorage.getItem('quickcardCreatorState');
+          const creatorState = sessionStorage.getItem('vostcardCreatorState');
           if (creatorState) {
             const state = JSON.parse(creatorState);
             
             // Only restore fields that have actual values
-            if (state.title) setQuickcardTitle(state.title);
-            if (state.description) setQuickcardDescription(state.description);
-            if (state.categories && state.categories.length > 0) setQuickcardCategories(state.categories);
-            if (state.audioSource) setQuickcardIntroAudioSource(state.audioSource);
-            if (state.audioFileName) setQuickcardIntroAudioFileName(state.audioFileName);
+            if (state.title) setVostcardTitle(state.title);
+            if (state.description) setVostcardDescription(state.description);
+            if (state.categories && state.categories.length > 0) setVostcardCategories(state.categories);
+            if (state.audioSource) setVostcardIntroAudioSource(state.audioSource);
+            if (state.audioFileName) setVostcardIntroAudioFileName(state.audioFileName);
             
             // ✅ NEW: Restore photo from base64 (only if exists)
             if (state.photoBase64) {
@@ -419,10 +419,10 @@ const VostcardStudioView: React.FC = () => {
                 // Convert base64 back to File object
                 const response = await fetch(state.photoBase64);
                 const blob = await response.blob();
-                const photoFile = new File([blob], 'quickcard-photo.jpg', { type: state.photoType || 'image/jpeg' });
+                const photoFile = new File([blob], 'vostcard-photo.jpg', { type: state.photoType || 'image/jpeg' });
                 
-                setQuickcardPhotos([photoFile]);
-                setQuickcardPhotoPreviews([state.photoBase64]); // Use base64 as preview
+                setVostcardPhotos([photoFile]);
+                setVostcardPhotoPreviews([state.photoBase64]); // Use base64 as preview
                 console.log('📸 Photo restored from storage');
               } catch (error) {
                 console.error('❌ Failed to restore photo from base64:', error);
@@ -435,9 +435,9 @@ const VostcardStudioView: React.FC = () => {
                 // Convert base64 back to File object
                 const response = await fetch(state.audioBase64);
                 const blob = await response.blob();
-                const audioFile = new File([blob], state.audioFileName || 'quickcard-audio.mp3', { type: state.audioType || 'audio/mpeg' });
+                const audioFile = new File([blob], state.audioFileName || 'vostcard-audio.mp3', { type: state.audioType || 'audio/mpeg' });
                 
-                setQuickcardIntroAudio(audioFile);
+                setVostcardIntroAudio(audioFile);
                 console.log('🎵 Audio restored from storage');
               } catch (error) {
                 console.error('❌ Failed to restore audio from base64:', error);
@@ -445,15 +445,15 @@ const VostcardStudioView: React.FC = () => {
             }
             
             // Clear the creator state after restoration
-            sessionStorage.removeItem('quickcardCreatorState');
-            console.log('✅ Quickcard location set and state restored');
+            sessionStorage.removeItem('vostcardCreatorState');
+            console.log('✅ Vostcard location set and state restored');
           } else {
-            console.log('✅ Quickcard location set (no stored state to restore)');
+            console.log('✅ Vostcard location set (no stored state to restore)');
           }
           
           setShowVostcardCreator(true);
         } catch (error) {
-          console.error('Error parsing quickcard location:', error);
+          console.error('Error parsing vostcard location:', error);
         }
       }
     };
@@ -464,21 +464,21 @@ const VostcardStudioView: React.FC = () => {
   // Ensure clean initialization when first opening studio (clear stale data)
   useEffect(() => {
     // Only clear if we're not restoring from pin placer or transfer
-    const hasLocationToRestore = sessionStorage.getItem('quickcardLocation') || 
+    const hasLocationToRestore = sessionStorage.getItem('vostcardLocation') || 
                                   sessionStorage.getItem('drivecardLocation');
-    const hasTransferData = sessionStorage.getItem('quickcardTransferData');
+    const hasTransferData = sessionStorage.getItem('vostcardTransferData');
     
     if (!hasLocationToRestore && !hasTransferData) {
       // Clear any stale creator state to ensure clean start
-      sessionStorage.removeItem('quickcardCreatorState');
-      console.log('🧹 Cleared stale quickcard creator state for clean initialization');
+      sessionStorage.removeItem('vostcardCreatorState');
+      console.log('🧹 Cleared stale vostcard creator state for clean initialization');
     }
   }, []);
 
-  // Separate useEffect for loading existing quickcard data - only runs once
+  // Separate useEffect for loading existing vostcard data - only runs once
   useEffect(() => {
-    // Check for existing quickcard data from context or transfer (only on initial load)
-    loadExistingQuickcardData();
+    // Check for existing vostcard data from context or transfer (only on initial load)
+    loadExistingVostcardData();
   }, []); // Only run once on mount
 
   // Cleanup on unmount
@@ -490,10 +490,10 @@ const VostcardStudioView: React.FC = () => {
     };
   }, []);
 
-  // Auto-refresh quickcards when loader modal opens
+  // Auto-refresh vostcards when loader modal opens
   useEffect(() => {
-    if (showQuickcardLoader) {
-      const refreshQuickcards = async () => {
+    if (showVostcardLoader) {
+      const refreshVostcards = async () => {
         console.log('📂 Quickcard loader opened - refreshing saved vostcards with full sync...');
         setIsLoadingQuickcards(true);
         try {
@@ -512,7 +512,7 @@ const VostcardStudioView: React.FC = () => {
 
   // Handle quickcard import
   const handleQuickcardImport = (quickcard: Vostcard) => {
-    loadQuickcard(quickcard);
+    loadVostcard(quickcard);
     setShowQuickcardImporter(false);
     // Navigate to the advanced editor to continue editing
     navigate('/studio', { state: { editingQuickcard: quickcard.id, activeTab: 'quickcard' } });
@@ -533,7 +533,7 @@ const VostcardStudioView: React.FC = () => {
       }
       
       // First try sessionStorage (from transfer button)
-      const transferData = sessionStorage.getItem('quickcardTransferData');
+      const transferData = sessionStorage.getItem('vostcardTransferData');
       if (transferData) {
         const data = JSON.parse(transferData);
         console.log('📱 Loading transferred quickcard data:', data);
@@ -569,7 +569,7 @@ const VostcardStudioView: React.FC = () => {
         setShowVostcardCreator(true);
         
         // Clear the transfer data
-        sessionStorage.removeItem('quickcardTransferData');
+        sessionStorage.removeItem('vostcardTransferData');
         
         console.log('✅ Quickcard data transferred successfully');
         return;
@@ -880,7 +880,7 @@ const VostcardStudioView: React.FC = () => {
     }
 
     // Store the state
-    sessionStorage.setItem('quickcardCreatorState', JSON.stringify(stateToSave));
+    sessionStorage.setItem('vostcardCreatorState', JSON.stringify(stateToSave));
     
     // Navigate to pin placer with required pinData
     navigate('/pin-placer', {
@@ -1036,8 +1036,8 @@ const VostcardStudioView: React.FC = () => {
       await postVostcard();
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
-      sessionStorage.removeItem('quickcardCreatorState');
-      sessionStorage.removeItem('quickcardTransferData');
+      sessionStorage.removeItem('vostcardCreatorState');
+      sessionStorage.removeItem('vostcardTransferData');
       
       resetQuickcardForm();
       alert(`🎉 Vostcard posted to map with ${quickcardPhotos.length} photo(s)! Form cleared for your next vostcard.`);
@@ -1124,8 +1124,8 @@ const VostcardStudioView: React.FC = () => {
       await postVostcard();
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
-      sessionStorage.removeItem('quickcardCreatorState');
-      sessionStorage.removeItem('quickcardTransferData');
+      sessionStorage.removeItem('vostcardCreatorState');
+      sessionStorage.removeItem('vostcardTransferData');
       
       resetQuickcardForm();
       alert(`🎉 Vostcard updated and reposted to map with ${quickcardPhotos.length} photo(s)! No duplicates created.`);
@@ -1170,7 +1170,7 @@ const VostcardStudioView: React.FC = () => {
   };
 
   // Function to load a quickcard for editing
-  const loadQuickcardForEditing = async (quickcard: Vostcard) => {
+  const loadVostcardForEditing = async (quickcard: Vostcard) => {
     console.log('🔄 Loading quickcard for editing:', quickcard);
     
     try {
@@ -2663,7 +2663,7 @@ const VostcardStudioView: React.FC = () => {
                    savedVostcards.map((quickcard) => (
                      <div
                        key={quickcard.id}
-                       onClick={() => !isLoadingQuickcards && loadQuickcardForEditing(quickcard)}
+                       onClick={() => !isLoadingQuickcards && loadVostcardForEditing(quickcard)}
                        style={{
                          display: 'flex',
                          alignItems: 'center',
