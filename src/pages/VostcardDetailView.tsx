@@ -384,36 +384,6 @@ const VostcardDetailView: React.FC = () => {
     const newFormat = vostcard?._firebasePhotoURLs || [];
     const urls = oldFormat.length > 0 ? oldFormat : newFormat;
     
-    console.log('🔍 VostcardDetailView Photo Debug:', {
-      vostcardId: vostcard?.id,
-      photoURLs: vostcard?.photoURLs,
-      photoURLsType: Array.isArray(vostcard?.photoURLs) ? 'array' : typeof vostcard?.photoURLs,
-      _firebasePhotoURLs: vostcard?._firebasePhotoURLs,
-      _firebasePhotoURLsType: Array.isArray(vostcard?._firebasePhotoURLs) ? 'array' : typeof vostcard?._firebasePhotoURLs,
-      finalUrls: urls,
-      finalUrlsLength: urls.length,
-      firstUrl: urls[0],
-      hasPhotos: vostcard?.hasPhotos,
-      createdAt: vostcard?.createdAt,
-      updatedAt: vostcard?.updatedAt,
-      state: vostcard?.state,
-      allVostcardKeys: vostcard ? Object.keys(vostcard).sort() : []
-    });
-    
-    // Test URL accessibility in VostcardDetailView
-    if (urls.length > 0) {
-      console.log('🧪 VostcardDetailView testing first photo URL:', urls[0]);
-      fetch(urls[0], { method: 'HEAD' })
-        .then(response => {
-          console.log('✅ VostcardDetailView photo URL accessible:', response.status, response.statusText);
-        })
-        .catch(error => {
-          console.error('❌ VostcardDetailView photo URL failed:', error.message);
-        });
-    } else {
-      console.warn('⚠️ VostcardDetailView: No photo URLs found for vostcard:', vostcard?.id);
-    }
-    
     return urls;
   }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
   const hasAudio = useMemo(() => {
@@ -1773,7 +1743,7 @@ Tap OK to continue.`;
                       }
                     }}
                     onLoad={() => {
-                      console.log('✅ Image loaded successfully:', photoURLs[0]);
+                      // Image loaded successfully
                     }}
                   />
                   {/* Centered play overlay to signal tap-to-view */}
@@ -1876,7 +1846,7 @@ Tap OK to continue.`;
                       }
                     }}
                     onLoad={() => {
-                      console.log('✅ Large image loaded successfully:', photoURLs[0]);
+                      // Large image loaded successfully
                     }}
                   />
                   {/* Centered play overlay to signal tap-to-view */}
