@@ -836,28 +836,22 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           allFields: Object.keys(data)
         });
         
-        // Test if first photo URL is accessible and try public URL conversion
+        // Test if first photo URL is accessible and try to refresh if needed
         if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
           const testUrl = data.photoURLs[0];
           console.log('🧪 Testing photo URL accessibility:', testUrl);
           
-          // Try original URL first
           fetch(testUrl, { method: 'HEAD' })
             .then(response => {
-              if (response.status === 412) {
-                console.warn('⚠️ HTTP 412: Trying public URL conversion...');
-                // Try converting to public URL (remove token, keep alt=media)
-                const publicUrl = testUrl.split('?')[0] + '?alt=media';
-                console.log('🔄 Testing public URL:', publicUrl);
-                return fetch(publicUrl, { method: 'HEAD' });
-              }
-              return response;
-            })
-            .then(response => {
               console.log('✅ Photo URL accessible:', response.status, response.statusText);
+              if (response.status === 412 || response.status === 403) {
+                console.warn('⚠️ HTTP', response.status, ': URL may be expired or have permission issues');
+                // TODO: Implement URL refresh logic here if needed
+              }
             })
             .catch(error => {
               console.error('❌ Photo URL failed:', error.message);
+              // TODO: Implement fallback logic here if needed
             });
         }
         return {
@@ -878,8 +872,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
           _firebaseVideoURL: data.videoURL || null,
-          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [],
-          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [], // Convert to public URLs for compatibility
+          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
           _isMetadataOnly: true
         };
       });
@@ -966,28 +960,22 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           allFields: Object.keys(data)
         });
         
-        // Test if first photo URL is accessible and try public URL conversion
+        // Test if first photo URL is accessible and try to refresh if needed
         if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
           const testUrl = data.photoURLs[0];
           console.log('🧪 Testing posted photo URL accessibility:', testUrl);
           
-          // Try original URL first
           fetch(testUrl, { method: 'HEAD' })
             .then(response => {
-              if (response.status === 412) {
-                console.warn('⚠️ Posted HTTP 412: Trying public URL conversion...');
-                // Try converting to public URL (remove token, keep alt=media)
-                const publicUrl = testUrl.split('?')[0] + '?alt=media';
-                console.log('🔄 Testing posted public URL:', publicUrl);
-                return fetch(publicUrl, { method: 'HEAD' });
-              }
-              return response;
-            })
-            .then(response => {
               console.log('✅ Posted photo URL accessible:', response.status, response.statusText);
+              if (response.status === 412 || response.status === 403) {
+                console.warn('⚠️ Posted HTTP', response.status, ': URL may be expired or have permission issues');
+                // TODO: Implement URL refresh logic here if needed
+              }
             })
             .catch(error => {
               console.error('❌ Posted photo URL failed:', error.message);
+              // TODO: Implement fallback logic here if needed
             });
         }
         return {
@@ -1011,8 +999,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           offerDetails: data.offerDetails || undefined,
           userRole: data.userRole,
           _firebaseVideoURL: data.videoURL || null,
-          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [],
-          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs.map(url => url.split('?')[0] + '?alt=media') : [], // Convert to public URLs for compatibility
+          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
           _isMetadataOnly: true
         };
       });
