@@ -48,7 +48,7 @@ const VostcardStudioView: React.FC = () => {
 
   // Quickcard import state
   const [showQuickcardImporter, setShowQuickcardImporter] = useState(false);
-  const [showQuickcardCreator, setShowQuickcardCreator] = useState(false);
+  const [showVostcardCreator, setShowVostcardCreator] = useState(false);
   const [showQuickcardLoader, setShowQuickcardLoader] = useState(false);
   
   // Quickcard creation state - ENHANCED FOR MULTIPLE PHOTOS
@@ -451,7 +451,7 @@ const VostcardStudioView: React.FC = () => {
             console.log('✅ Quickcard location set (no stored state to restore)');
           }
           
-          setShowQuickcardCreator(true);
+          setShowVostcardCreator(true);
         } catch (error) {
           console.error('Error parsing quickcard location:', error);
         }
@@ -566,7 +566,7 @@ const VostcardStudioView: React.FC = () => {
         }
         
         // Show the quickcard creator
-        setShowQuickcardCreator(true);
+        setShowVostcardCreator(true);
         
         // Clear the transfer data
         sessionStorage.removeItem('quickcardTransferData');
@@ -606,7 +606,7 @@ const VostcardStudioView: React.FC = () => {
         }
         
         // Show the quickcard creator
-        setShowQuickcardCreator(true);
+        setShowVostcardCreator(true);
         
         console.log('✅ Quickcard data loaded from context');
       }
@@ -616,7 +616,7 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handleCancelCreator = () => {
-    setShowQuickcardCreator(false);
+    setShowVostcardCreator(false);
     // Clear creation state and clean up blob URLs
     setQuickcardTitle('');
     quickcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
@@ -1475,7 +1475,7 @@ const VostcardStudioView: React.FC = () => {
           }}>
             <div style={{ marginBottom: '15px' }}>
               <h3 style={{ marginTop: 0, marginBottom: '8px' }}>
-                📷 Quickcard Creator
+                📷 Vostcard Creator
               </h3>
               {editingQuickcardId && (
                 <div style={{ 
