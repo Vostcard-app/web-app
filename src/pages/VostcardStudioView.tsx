@@ -1052,7 +1052,7 @@ const VostcardStudioView: React.FC = () => {
 
   // Update and repost existing quickcard
   const handleUpdateAndRepostQuickcard = async () => {
-    if (!editingQuickcardId) {
+    if (!editingVostcardId) {
       alert('No vostcard is being edited.');
       return;
     }
@@ -1096,7 +1096,7 @@ const VostcardStudioView: React.FC = () => {
       
       // Update the existing quickcard with same ID
       const updatedQuickcard: Vostcard = {
-        id: editingQuickcardId, // Keep the same ID
+        id: editingVostcardId, // Keep the same ID
         title: vostcardTitle.trim(),
         description: vostcardDescription.trim() || 'Quickcard',
         photos: vostcardPhotos,
@@ -1166,7 +1166,7 @@ const VostcardStudioView: React.FC = () => {
     setVostcardCategories([]);
     
     // Clear editing state
-    setEditingQuickcardId(null);
+    setEditingVostcardId(null);
   };
 
   // Function to load a quickcard for editing
@@ -1256,7 +1256,7 @@ const VostcardStudioView: React.FC = () => {
       }
 
       // Set editing state
-      setEditingQuickcardId(quickcard.id);
+      setEditingVostcardId(quickcard.id);
       
       setShowQuickcardLoader(false);
       alert(`✅ Vostcard "${quickcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
@@ -1513,7 +1513,7 @@ const VostcardStudioView: React.FC = () => {
               <h3 style={{ marginTop: 0, marginBottom: '8px' }}>
                 📷 Vostcard Creator
               </h3>
-              {editingQuickcardId && (
+              {editingVostcardId && (
                 <div style={{ 
                   backgroundColor: '#fff3cd', 
                   border: '1px solid #ffeaa7', 
@@ -1743,7 +1743,7 @@ const VostcardStudioView: React.FC = () => {
             {/* Enhanced Button Grid - Load Card, Load Photos, and New Card */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: editingQuickcardId ? '1fr 1fr 1fr' : '1fr 1fr',
+              gridTemplateColumns: editingVostcardId ? '1fr 1fr 1fr' : '1fr 1fr',
               gap: '10px',
               marginBottom: '15px'
             }}>
@@ -1802,7 +1802,7 @@ const VostcardStudioView: React.FC = () => {
               </button>
               
               {/* New Quickcard Button (only when editing) */}
-              {editingQuickcardId && (
+              {editingVostcardId && (
                 <button
                   onClick={() => {
                     if (window.confirm('Are you sure you want to start a new quickcard? Current changes will be lost.')) {
@@ -2108,7 +2108,7 @@ const VostcardStudioView: React.FC = () => {
               </button>
 
               {/* Update Button - Only visible when editing */}
-              {editingQuickcardId && (
+              {editingVostcardId && (
                 <button 
                   onClick={handleUpdateAndRepostQuickcard}
                   disabled={!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
