@@ -14,8 +14,8 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
   const [loading, setLoading] = useState(true);
   const [selectedQuickcard, setSelectedQuickcard] = useState<Vostcard | null>(null);
 
-  // Filter quickcards from saved vostcards
-  const quickcards = savedVostcards.filter(vostcard => vostcard.isQuickcard === true);
+  // Show all saved vostcards (no longer filtering for quickcards only)
+  const quickcards = savedVostcards;
 
   useEffect(() => {
     const loadQuickcards = async () => {
@@ -67,9 +67,9 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
         textAlign: 'center'
       }}>
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>📱</div>
-        <h3 style={{ color: '#333', marginBottom: '12px' }}>No Quickcards Found</h3>
+        <h3 style={{ color: '#333', marginBottom: '12px' }}>No Vostcards Found</h3>
         <p style={{ color: '#666', marginBottom: '20px' }}>
-          Create some quickcards first to import them into Studio.
+          Create some vostcards first to import them into Studio.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
           <button
@@ -99,10 +99,10 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
       width: '100%'
     }}>
       <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>
-        📱 Import Quickcard
+        📱 Import Vostcard
       </h3>
       <p style={{ color: '#666', marginBottom: '20px', fontSize: '14px' }}>
-        Select a quickcard to enhance in Studio. You can add audio, edit content, and create a full vostcard.
+        Select a vostcard to enhance in Studio. You can add audio, edit content, and create a full vostcard.
       </p>
 
       {/* Quickcard List */}
@@ -148,7 +148,7 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
                 {photoUrl ? (
                   <img
                     src={photoUrl}
-                    alt="Quickcard"
+                    alt="Vostcard"
                     style={{
                       width: '100%',
                       height: '100%',
@@ -170,7 +170,7 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
                 }}>
-                  {quickcard.title || 'Untitled Quickcard'}
+                  {quickcard.title || 'Untitled Vostcard'}
                 </h4>
                 
                 {quickcard.description && (
