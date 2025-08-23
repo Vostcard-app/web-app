@@ -1275,6 +1275,29 @@ const VostcardStudioView: React.FC = () => {
     document.getElementById('quickcard-gallery-input')?.click();
   };
 
+  // Handle different photo input methods
+  const handleTakePhotoOption = () => {
+    setShowPhotoOptionsModal(false);
+    // On mobile, use camera input. On desktop, fallback to file input
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      document.getElementById('quickcard-camera-input')?.click();
+    } else {
+      // On desktop, camera access can be problematic, so use file input instead
+      document.getElementById('quickcard-file-input')?.click();
+    }
+  };
+
+  const handleUploadFileOption = () => {
+    setShowPhotoOptionsModal(false);
+    document.getElementById('quickcard-file-input')?.click();
+  };
+
+  const handleSelectFromLibraryOption = () => {
+    setShowPhotoOptionsModal(false);
+    document.getElementById('quickcard-gallery-input')?.click();
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -1359,7 +1382,7 @@ const VostcardStudioView: React.FC = () => {
       {/* Content - Adjusted for fixed header */}
       <div style={{ 
         flex: 1,
-        padding: '20px 20px 0 20px', // Remove bottom padding to eliminate white space
+        padding: '20px',
         paddingTop: '100px', // Account for fixed header height + spacing
         display: 'flex',
         flexDirection: 'column',
@@ -1744,17 +1767,17 @@ const VostcardStudioView: React.FC = () => {
               </button>
 
               <button 
-                onClick={() => document.getElementById('quickcard-gallery-input')?.click()}
-                disabled={isLoading}
+                onClick={() => setShowPhotoOptionsModal(true)}
+                disabled={isLoading || quickcardPhotos.length >= 4}
                 style={{
-                  backgroundColor: isLoading ? '#ccc' : '#007aff',
+                  backgroundColor: (isLoading || quickcardPhotos.length >= 4) ? '#ccc' : '#007aff',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  cursor: (isLoading || quickcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1762,7 +1785,7 @@ const VostcardStudioView: React.FC = () => {
                 }}
               >
                 <FaImages size={14} />
-                🖼️ Load Photos
+                📷 Add Photo
               </button>
               
               {/* New Quickcard Button (only when editing) */}
@@ -1824,27 +1847,7 @@ const VostcardStudioView: React.FC = () => {
                 📍 Set Location
               </button>
               
-              <button 
-                onClick={() => document.getElementById('quickcard-camera-input')?.click()}
-                disabled={isLoading || quickcardPhotos.length >= 4}
-                style={{
-                  backgroundColor: (isLoading || quickcardPhotos.length >= 4) ? '#ccc' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: (isLoading || quickcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaCamera size={14} />
-                📸 Take Photo
-              </button>
+
             </div>
 
             {/* Intro and Detail Audio Buttons */}
@@ -2533,9 +2536,10 @@ const VostcardStudioView: React.FC = () => {
         <PhotoOptionsModal
           isOpen={showPhotoOptionsModal}
           onClose={() => setShowPhotoOptionsModal(false)}
-          onTakePhoto={handleTakePhoto}
-          onSelectFromGallery={handleSelectFromGallery}
-          currentPhotoCount={quickcardPhotos.length}
+          onTakePhoto={handleTakePhotoOption}
+          onUploadFile={handleUploadFileOption}
+          onSelectFromLibrary={handleSelectFromLibraryOption}
+          title="Add Photos to Vostcard"
         />
 
         {/* Hidden Inputs - NATIVE APP ACCESS */}
@@ -2553,6 +2557,15 @@ const VostcardStudioView: React.FC = () => {
           type="file"
           accept="image/*"
           multiple // 🖼️ Opens NATIVE PHOTO LIBRARY with multi-select
+          onChange={handlePhotoUpload}
+          style={{ display: 'none' }}
+        />
+        
+        <input
+          id="quickcard-file-input"
+          type="file"
+          accept="image/*"
+          multiple // 📁 Opens FILE SYSTEM dialog with multi-select
           onChange={handlePhotoUpload}
           style={{ display: 'none' }}
         />
