@@ -526,7 +526,7 @@ const VostcardStudioView: React.FC = () => {
   const loadExistingQuickcardData = () => {
     try {
       // Don't overwrite existing form data if user has already entered something
-      const hasExistingData = quickcardTitle.trim() || quickcardDescription.trim() || quickcardPhotos.length > 0;
+      const hasExistingData = quickcardTitle.trim() || quickcardDescription.trim() || vostcardPhotos.length > 0;
       if (hasExistingData) {
         console.log('📱 Skipping data load - form already has content');
         return;
@@ -619,7 +619,7 @@ const VostcardStudioView: React.FC = () => {
     setShowVostcardCreator(false);
     // Clear creation state and clean up blob URLs
     setQuickcardTitle('');
-    quickcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
+    vostcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
     setQuickcardLocation(null);
@@ -645,8 +645,8 @@ const VostcardStudioView: React.FC = () => {
     }
 
     // Add new photos and previews
-    const newPhotos = [...quickcardPhotos, ...imageFiles];
-    const newPreviews = [...quickcardPhotoPreviews];
+    const newPhotos = [...vostcardPhotos, ...imageFiles];
+    const newPreviews = [...vostcardPhotoPreviews];
     
     imageFiles.forEach(file => {
       const previewUrl = URL.createObjectURL(file);
@@ -661,12 +661,12 @@ const VostcardStudioView: React.FC = () => {
 
   // Remove a specific photo
   const removePhoto = (index: number) => {
-    const newPhotos = quickcardPhotos.filter((_, i) => i !== index);
-    const newPreviews = quickcardPhotoPreviews.filter((_, i) => i !== index);
+    const newPhotos = vostcardPhotos.filter((_, i) => i !== index);
+    const newPreviews = vostcardPhotoPreviews.filter((_, i) => i !== index);
     
     // Clean up blob URL
-    if (quickcardPhotoPreviews[index]) {
-      URL.revokeObjectURL(quickcardPhotoPreviews[index]);
+    if (vostcardPhotoPreviews[index]) {
+      URL.revokeObjectURL(vostcardPhotoPreviews[index]);
     }
     
     setQuickcardPhotos(newPhotos);
@@ -699,8 +699,8 @@ const VostcardStudioView: React.FC = () => {
     }
 
     // Reorder photos and previews
-    const newPhotos = [...quickcardPhotos];
-    const newPreviews = [...quickcardPhotoPreviews];
+    const newPhotos = [...vostcardPhotos];
+    const newPreviews = [...vostcardPhotoPreviews];
     
     const draggedPhoto = newPhotos[draggedIndex];
     const draggedPreview = newPreviews[draggedIndex];
@@ -774,8 +774,8 @@ const VostcardStudioView: React.FC = () => {
     
     if (isDragging && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
       // Perform the reorder
-      const newPhotos = [...quickcardPhotos];
-      const newPreviews = [...quickcardPhotoPreviews];
+      const newPhotos = [...vostcardPhotos];
+      const newPreviews = [...vostcardPhotoPreviews];
       
       const draggedPhoto = newPhotos[draggedIndex];
       const draggedPreview = newPreviews[draggedIndex];
@@ -812,7 +812,7 @@ const VostcardStudioView: React.FC = () => {
       photoGrid.removeEventListener('touchmove', handleTouchMove);
       photoGrid.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [draggedIndex, touchStartPos, isDragging, dragOverIndex, quickcardPhotos, quickcardPhotoPreviews]);
+  }, [draggedIndex, touchStartPos, isDragging, dragOverIndex, vostcardPhotos, vostcardPhotoPreviews]);
 
   const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
     const file = e.target.files?.[0];
@@ -850,15 +850,15 @@ const VostcardStudioView: React.FC = () => {
     };
 
     // Convert photos to base64 for storage
-    if (quickcardPhotos.length > 0) {
+    if (vostcardPhotos.length > 0) {
       try {
         const photoBase64 = await new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(quickcardPhotos[0]);
+          reader.readAsDataURL(vostcardPhotos[0]);
         });
         stateToSave.photoBase64 = photoBase64;
-        stateToSave.photoType = quickcardPhotos[0].type;
+        stateToSave.photoType = vostcardPhotos[0].type;
       } catch (error) {
         console.error('❌ Failed to convert photo to base64:', error);
       }
@@ -908,7 +908,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (quickcardPhotos.length === 0) {
+    if (vostcardPhotos.length === 0) {
       alert('Please add at least one photo for your vostcard.');
       return;
     }
@@ -935,7 +935,7 @@ const VostcardStudioView: React.FC = () => {
         id: `quickcard_${Date.now()}`,
         title: quickcardTitle.trim(),
         description: quickcardDescription.trim() || '', 
-        photos: quickcardPhotos, // Multiple photos
+        photos: vostcardPhotos, // Multiple photos
         audio: quickcardIntroAudio, // LEGACY: Keep for backward compatibility
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
@@ -948,7 +948,7 @@ const VostcardStudioView: React.FC = () => {
         video: null,
         isQuickcard: true,
         hasVideo: false,
-        hasPhotos: quickcardPhotos.length > 0,
+        hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -957,7 +957,7 @@ const VostcardStudioView: React.FC = () => {
       setCurrentVostcard(quickcard);
       await saveVostcard();
       
-      alert(`✅ Vostcard saved to Personal Posts with ${quickcardPhotos.length} photo(s)!`);
+      alert(`✅ Vostcard saved to Personal Posts with ${vostcardPhotos.length} photo(s)!`);
       resetQuickcardForm();
       
     } catch (error) {
@@ -974,7 +974,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (quickcardPhotos.length === 0) {
+    if (vostcardPhotos.length === 0) {
       alert('Please add at least one photo for your vostcard.');
       return;
     }
@@ -1011,7 +1011,7 @@ const VostcardStudioView: React.FC = () => {
         id: `quickcard_${Date.now()}`,
         title: quickcardTitle.trim(),
         description: quickcardDescription.trim() || 'Quickcard',
-        photos: quickcardPhotos, // Multiple photos
+        photos: vostcardPhotos, // Multiple photos
         audio: quickcardIntroAudio, // Use intro audio as primary
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
@@ -1024,7 +1024,7 @@ const VostcardStudioView: React.FC = () => {
         video: null,
         isQuickcard: true,
         hasVideo: false,
-        hasPhotos: quickcardPhotos.length > 0,
+        hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -1040,7 +1040,7 @@ const VostcardStudioView: React.FC = () => {
       sessionStorage.removeItem('vostcardTransferData');
       
       resetQuickcardForm();
-      alert(`🎉 Vostcard posted to map with ${quickcardPhotos.length} photo(s)! Form cleared for your next vostcard.`);
+      alert(`🎉 Vostcard posted to map with ${vostcardPhotos.length} photo(s)! Form cleared for your next vostcard.`);
       
     } catch (error) {
       console.error('❌ Error posting quickcard:', error);
@@ -1062,7 +1062,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (quickcardPhotos.length === 0) {
+    if (vostcardPhotos.length === 0) {
       alert('Please add at least one photo for your vostcard.');
       return;
     }
@@ -1099,7 +1099,7 @@ const VostcardStudioView: React.FC = () => {
         id: editingQuickcardId, // Keep the same ID
         title: quickcardTitle.trim(),
         description: quickcardDescription.trim() || 'Quickcard',
-        photos: quickcardPhotos,
+        photos: vostcardPhotos,
         audio: quickcardIntroAudio,
         audioFiles: audioFiles,
         audioLabels: audioLabels,
@@ -1112,7 +1112,7 @@ const VostcardStudioView: React.FC = () => {
         video: null,
         isQuickcard: true,
         hasVideo: false,
-        hasPhotos: quickcardPhotos.length > 0,
+        hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(), // This will be preserved from original
         updatedAt: new Date().toISOString()
@@ -1128,7 +1128,7 @@ const VostcardStudioView: React.FC = () => {
       sessionStorage.removeItem('vostcardTransferData');
       
       resetQuickcardForm();
-      alert(`🎉 Vostcard updated and reposted to map with ${quickcardPhotos.length} photo(s)! No duplicates created.`);
+      alert(`🎉 Vostcard updated and reposted to map with ${vostcardPhotos.length} photo(s)! No duplicates created.`);
       
       navigate('/home', { 
         state: { 
@@ -1152,7 +1152,7 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardDescription('');
     
     // Clean up photo blob URLs
-    quickcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
+    vostcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
     
@@ -1593,7 +1593,7 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Photo Gallery Preview */}
-            {quickcardPhotoPreviews.length > 0 && (
+            {vostcardPhotoPreviews.length > 0 && (
               <div style={{ marginBottom: '15px' }}>
                 <label style={{
                   display: 'block',
@@ -1602,7 +1602,7 @@ const VostcardStudioView: React.FC = () => {
                   color: '#333',
                   marginBottom: '8px'
                 }}>
-                  Photos ({quickcardPhotoPreviews.length}/4)
+                  Photos ({vostcardPhotoPreviews.length}/4)
                 </label>
                 <div 
                   ref={photoGridRef}
@@ -1612,7 +1612,7 @@ const VostcardStudioView: React.FC = () => {
                     gap: '8px',
                     marginBottom: '8px'
                   }}>
-                  {quickcardPhotoPreviews.map((preview, index) => (
+                  {vostcardPhotoPreviews.map((preview, index) => (
                     <div
                       key={index}
                       data-photo-index={index}
@@ -1640,8 +1640,8 @@ const VostcardStudioView: React.FC = () => {
                         // Handle drop for mouse
                         if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
                           // Reorder photos
-                          const newPhotos = [...quickcardPhotos];
-                          const newPreviews = [...quickcardPhotoPreviews];
+                          const newPhotos = [...vostcardPhotos];
+                          const newPreviews = [...vostcardPhotoPreviews];
                           
                           const draggedPhoto = newPhotos[draggedIndex];
                           const draggedPreview = newPreviews[draggedIndex];
@@ -1726,7 +1726,7 @@ const VostcardStudioView: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                {quickcardPhotoPreviews.length > 1 && (
+                {vostcardPhotoPreviews.length > 1 && (
                   <div style={{
                     fontSize: '12px',
                     color: '#666',
@@ -1781,16 +1781,16 @@ const VostcardStudioView: React.FC = () => {
 
               <button 
                 onClick={() => setShowPhotoOptionsModal(true)}
-                disabled={isLoading || quickcardPhotos.length >= 4}
+                disabled={isLoading || vostcardPhotos.length >= 4}
                 style={{
-                  backgroundColor: (isLoading || quickcardPhotos.length >= 4) ? '#ccc' : '#007aff',
+                  backgroundColor: (isLoading || vostcardPhotos.length >= 4) ? '#ccc' : '#007aff',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (isLoading || quickcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
+                  cursor: (isLoading || vostcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -2062,16 +2062,16 @@ const VostcardStudioView: React.FC = () => {
               {/* Save to Personal Posts Button */}
               <button 
                 onClick={handleSaveQuickcardToPersonalPosts}
-                disabled={!quickcardTitle.trim() || isLoading || quickcardPhotos.length === 0}
+                disabled={!quickcardTitle.trim() || isLoading || vostcardPhotos.length === 0}
                 style={{
-                  backgroundColor: (!quickcardTitle.trim() || isLoading || quickcardPhotos.length === 0) ? '#ccc' : '#28a745',
+                  backgroundColor: (!quickcardTitle.trim() || isLoading || vostcardPhotos.length === 0) ? '#ccc' : '#28a745',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || isLoading || quickcardPhotos.length === 0) ? 'not-allowed' : 'pointer',
+                  cursor: (!quickcardTitle.trim() || isLoading || vostcardPhotos.length === 0) ? 'not-allowed' : 'pointer',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -2086,16 +2086,16 @@ const VostcardStudioView: React.FC = () => {
               {/* Post to Map Button - Always visible */}
               <button 
                 onClick={handlePostQuickcardToMap}
-                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
+                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0}
                 style={{
-                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
+                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -2111,16 +2111,16 @@ const VostcardStudioView: React.FC = () => {
               {editingQuickcardId && (
                 <button 
                   onClick={handleUpdateAndRepostQuickcard}
-                  disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0}
+                  disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0}
                   style={{
-                    backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#ff9800',
+                    backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#ff9800',
                     color: 'white',
                     border: 'none',
                     padding: '12px 8px',
                     borderRadius: '4px',
                     fontSize: '13px',
                     fontWeight: 'bold',
-                    cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || quickcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                    cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
                     flex: 1,
                     display: 'flex',
                     alignItems: 'center',
@@ -2135,10 +2135,10 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Clear Photo Button */}
-            {quickcardPhotos.length > 0 && (
+            {vostcardPhotos.length > 0 && (
               <button
                 onClick={() => {
-                  quickcardPhotos.forEach(photo => URL.revokeObjectURL(URL.createObjectURL(photo)));
+                  vostcardPhotos.forEach(photo => URL.revokeObjectURL(URL.createObjectURL(photo)));
                   setQuickcardPhotos([]);
                   setQuickcardPhotoPreviews([]);
                 }}
