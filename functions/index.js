@@ -85,15 +85,29 @@ exports.generateScript = functions.https.onRequest((req, res) => {
 
 // Server-side avatar URL regeneration function
 exports.regenerateAvatarUrls = functions.https.onCall(async (data, context) => {
+  // Set CORS headers for callable functions
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+
   // Verify admin authentication
-  if (!context.auth || !context.auth.token.admin) {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated to regenerate avatar URLs');
+  }
+
+  // Check if user is admin by checking their user document
+  const db = admin.firestore();
+  const userDoc = await db.collection('users').doc(context.auth.uid).get();
+  const userData = userDoc.data();
+  
+  if (!userData || userData.userRole !== 'admin') {
     throw new functions.https.HttpsError('permission-denied', 'Only admins can regenerate avatar URLs');
   }
 
   try {
     console.log('🔧 Starting server-side avatar URL regeneration...');
-    
-    const db = admin.firestore();
     const storage = admin.storage();
     const bucket = storage.bucket();
     
