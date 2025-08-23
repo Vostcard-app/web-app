@@ -1295,7 +1295,18 @@ const VostcardStudioView: React.FC = () => {
 
   const handleSelectFromLibraryOption = () => {
     setShowPhotoOptionsModal(false);
-    document.getElementById('quickcard-gallery-input')?.click();
+    
+    // On desktop (Mac/Windows), there's no real distinction between file system and photo library
+    // Both open the same file picker dialog, so we'll use the file input for consistency
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile, try to access native photo library
+      document.getElementById('quickcard-gallery-input')?.click();
+    } else {
+      // On desktop (Mac/Windows), use the regular file input since there's no photo library distinction
+      document.getElementById('quickcard-file-input')?.click();
+    }
   };
 
   return (
@@ -2540,6 +2551,7 @@ const VostcardStudioView: React.FC = () => {
           onUploadFile={handleUploadFileOption}
           onSelectFromLibrary={handleSelectFromLibraryOption}
           title="Add Photos to Vostcard"
+          isMobile={/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)}
         />
 
         {/* Hidden Inputs - NATIVE APP ACCESS */}

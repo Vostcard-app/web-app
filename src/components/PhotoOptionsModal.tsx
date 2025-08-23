@@ -8,6 +8,7 @@ interface PhotoOptionsModalProps {
   onUploadFile: () => void;
   onSelectFromLibrary: () => void;
   title?: string;
+  isMobile?: boolean;
 }
 
 const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
@@ -16,7 +17,8 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
   onTakePhoto,
   onUploadFile,
   onSelectFromLibrary,
-  title = "Add Photo"
+  title = "Add Photo",
+  isMobile = false
 }) => {
   if (!isOpen) return null;
 
@@ -110,7 +112,7 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
             }}
           >
             <FaFolder size={16} color="#007aff" />
-            <span>Upload File</span>
+            <span>{isMobile ? 'Upload File' : 'Browse Files'}</span>
           </div>
 
           {/* Select from Library */}
@@ -127,7 +129,7 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
             }}
           >
             <FaImages size={16} color="#007aff" />
-            <span>Select from Library</span>
+            <span>{isMobile ? 'Photo Library' : 'Select Multiple'}</span>
           </div>
         </div>
       </div>
