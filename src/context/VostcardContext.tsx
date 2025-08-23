@@ -853,6 +853,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hasPhotos: data.hasPhotos || false,
           _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // For compatibility with VostcardDetailView
           _isMetadataOnly: true
         };
       });
