@@ -6,7 +6,7 @@ import { FaArrowLeft, FaKey, FaUser, FaSearch, FaHome } from 'react-icons/fa';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { storage } from '../firebase/firebaseConfig';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, uploadBytes, getDownloadURL, listAll } from 'firebase/storage';
 
 const AdminPanel: React.FC = () => {
   const { user, userRole, isAdmin, convertUserToGuide, convertUserToAdmin } = useAuth();
@@ -44,6 +44,8 @@ const AdminPanel: React.FC = () => {
   const [quickcardMigrationLoading, setQuickcardMigrationLoading] = useState(false);
   // Jay Bond userRole fix state
   const [jayBondRoleFixLoading, setJayBondRoleFixLoading] = useState(false);
+  // Photo URL regeneration state
+  const [photoUrlFixLoading, setPhotoUrlFixLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -678,6 +680,117 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Regenerate photo URLs with correct paths
+  const handleRegeneratePhotoUrls = async () => {
+    if (!window.confirm('🔧 This will regenerate photo URLs for ALL vostcards by scanning Firebase Storage and updating the database with correct URLs. This should fix the HTTP 412 errors. Continue?')) {
+      return;
+    }
+
+    setPhotoUrlFixLoading(true);
+    let fixed = 0;
+    let errors = 0;
+
+    try {
+      console.log('🔧 Starting photo URL regeneration...');
+      
+      // Query for all vostcards
+      const q = query(collection(db, 'vostcards'));
+      const snapshot = await getDocs(q);
+      console.log(`📋 Found ${snapshot.docs.length} vostcards to check`);
+      
+      // Process each vostcard
+      for (const docSnapshot of snapshot.docs) {
+        try {
+          const data = docSnapshot.data();
+          
+          // Skip if no userID
+          if (!data.userID) {
+            console.log(`⏭️ Skipping vostcard ${docSnapshot.id} - no userID`);
+            continue;
+          }
+          
+          console.log(`🔍 Checking vostcard: "${data.title || 'NO_TITLE'}" (${docSnapshot.id})`);
+          
+          // Try to find photos in storage for this vostcard
+          const userStorageRef = storageRef(storage, `vostcards/${data.userID}/${docSnapshot.id}`);
+          
+          try {
+            const storageList = await listAll(userStorageRef);
+            
+            if (storageList.items.length > 0) {
+              console.log(`📸 Found ${storageList.items.length} files in storage for ${docSnapshot.id}`);
+              
+              // Generate new download URLs
+              const newPhotoURLs: string[] = [];
+              const newFirebasePhotoURLs: string[] = [];
+              
+              // Sort files by name to maintain consistent order
+              const sortedItems = storageList.items.sort((a, b) => a.name.localeCompare(b.name));
+              
+              for (const item of sortedItems) {
+                // Only process image files
+                if (item.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                  try {
+                    const downloadURL = await getDownloadURL(item);
+                    newPhotoURLs.push(downloadURL);
+                    newFirebasePhotoURLs.push(downloadURL);
+                    console.log(`  ✅ Generated URL for ${item.name}`);
+                  } catch (urlError) {
+                    console.log(`  ❌ Failed to get URL for ${item.name}:`, urlError);
+                  }
+                }
+              }
+              
+              // Update the vostcard with new URLs if we found any
+              if (newPhotoURLs.length > 0) {
+                const updateData: any = {
+                  photoURLs: newPhotoURLs,
+                  _firebasePhotoURLs: newFirebasePhotoURLs,
+                  updatedAt: new Date().toISOString(),
+                  photoUrlsRegeneratedAt: new Date().toISOString()
+                };
+                
+                await updateDoc(docSnapshot.ref, updateData);
+                
+                fixed++;
+                console.log(`  ✅ Updated ${docSnapshot.id} with ${newPhotoURLs.length} photo URLs`);
+              } else {
+                console.log(`  ⚠️ No image files found for ${docSnapshot.id}`);
+              }
+            } else {
+              console.log(`  ℹ️ No files found in storage for ${docSnapshot.id}`);
+            }
+          } catch (storageError: any) {
+            if (storageError.code === 'storage/object-not-found') {
+              console.log(`  ℹ️ No storage folder found for ${docSnapshot.id}`);
+            } else {
+              console.log(`  ❌ Storage error for ${docSnapshot.id}:`, storageError.message);
+            }
+          }
+        } catch (error) {
+          console.error(`❌ Failed to process vostcard ${docSnapshot.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`✅ Photo URL regeneration completed! Fixed: ${fixed}, Errors: ${errors}`);
+      
+      if (fixed > 0) {
+        alert(`✅ Successfully regenerated photo URLs for ${fixed} vostcards! Images should now load properly.`);
+      } else if (errors > 0) {
+        alert(`⚠️ Regeneration completed with ${errors} errors. Check console for details.`);
+      } else {
+        alert('ℹ️ No vostcards needed photo URL regeneration.');
+      }
+      
+    } catch (error) {
+      console.error('❌ Photo URL regeneration failed:', error);
+      alert('❌ Photo URL regeneration failed. Check console for details.');
+    } finally {
+      setPhotoUrlFixLoading(false);
+    }
+  };
+
   const searchForDocument = async (docId: string) => {
     try {
       console.log(`🔍 Searching for document: ${docId}`);
@@ -1200,6 +1313,52 @@ const AdminPanel: React.FC = () => {
           }}
         >
           {jayBondRoleFixLoading ? '🔄 Fixing...' : '🎯 Fix Jay Bond UserRole'}
+        </button>
+      </div>
+
+      {/* 4.8. Regenerate Photo URLs */}
+      <div style={{ backgroundColor: '#fff3e0', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #ff9800' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#e65100' }}>
+          📸 Regenerate Photo URLs
+        </h2>
+        <p style={{ marginBottom: '15px', color: '#555' }}>
+          <strong>🔧 Fix HTTP 412 Errors:</strong> This will scan Firebase Storage and regenerate fresh download URLs for ALL vostcard photos.
+        </p>
+        <ul style={{ marginBottom: '15px', color: '#555', paddingLeft: '20px' }}>
+          <li>Scan each vostcard's storage folder: <code>vostcards/&#123;userID&#125;/&#123;vostcardID&#125;/</code></li>
+          <li>Generate fresh download URLs with current authentication tokens</li>
+          <li>Update database with new <code>photoURLs</code> and <code>_firebasePhotoURLs</code></li>
+          <li>This should fix HTTP 412 (Precondition Failed) errors</li>
+        </ul>
+        <div style={{ backgroundColor: '#ffecb3', padding: '10px', borderRadius: '4px', marginBottom: '15px', border: '1px solid #ffc107' }}>
+          <strong>⚠️ Note:</strong> This process may take several minutes for large numbers of vostcards.
+        </div>
+        <button
+          onClick={handleRegeneratePhotoUrls}
+          disabled={photoUrlFixLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: photoUrlFixLoading ? '#6c757d' : '#ff9800',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: photoUrlFixLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!photoUrlFixLoading) {
+              e.currentTarget.style.backgroundColor = '#f57c00';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!photoUrlFixLoading) {
+              e.currentTarget.style.backgroundColor = '#ff9800';
+            }
+          }}
+        >
+          {photoUrlFixLoading ? '🔄 Regenerating URLs...' : '📸 Regenerate All Photo URLs'}
         </button>
       </div>
 
