@@ -1359,7 +1359,7 @@ const VostcardStudioView: React.FC = () => {
       {/* Content - Adjusted for fixed header */}
       <div style={{ 
         flex: 1,
-        padding: '20px',
+        padding: '20px 20px 0 20px', // Remove bottom padding to eliminate white space
         paddingTop: '100px', // Account for fixed header height + spacing
         display: 'flex',
         flexDirection: 'column',

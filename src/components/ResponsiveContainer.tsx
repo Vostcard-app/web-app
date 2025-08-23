@@ -29,7 +29,8 @@ const ResponsiveContainer: React.FC<ResponsiveContainerProps> = ({
     '/camera',         // Camera view
     '/scrolling-camera', // Camera view
     '/create-step1',   // Camera creation
-    '/pin-placer'      // Map tools
+    '/pin-placer',     // Map tools
+    '/studio'          // Vostcard Studio
   ];
 
   // Check if current route should be fullscreen
