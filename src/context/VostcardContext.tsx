@@ -828,12 +828,26 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           photoURLs: data.photoURLs,
           photoURLsType: typeof data.photoURLs,
           photoURLsLength: Array.isArray(data.photoURLs) ? data.photoURLs.length : 'not array',
+          firstPhotoURL: Array.isArray(data.photoURLs) && data.photoURLs.length > 0 ? data.photoURLs[0] : 'none',
           videoURL: data.videoURL,
           audioURL: data.audioURL,
           hasPhotos: data.hasPhotos,
           hasVideo: data.hasVideo,
           allFields: Object.keys(data)
         });
+        
+        // Test if first photo URL is accessible
+        if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
+          const testUrl = data.photoURLs[0];
+          console.log('🧪 Testing photo URL accessibility:', testUrl);
+          fetch(testUrl, { method: 'HEAD' })
+            .then(response => {
+              console.log('✅ Photo URL accessible:', response.status, response.statusText);
+            })
+            .catch(error => {
+              console.error('❌ Photo URL failed:', error.message);
+            });
+        }
         return {
           id: doc.id,
           title: data.title || '',
@@ -932,12 +946,26 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           photoURLs: data.photoURLs,
           photoURLsType: typeof data.photoURLs,
           photoURLsLength: Array.isArray(data.photoURLs) ? data.photoURLs.length : 'not array',
+          firstPhotoURL: Array.isArray(data.photoURLs) && data.photoURLs.length > 0 ? data.photoURLs[0] : 'none',
           videoURL: data.videoURL,
           audioURL: data.audioURL,
           hasPhotos: data.hasPhotos,
           hasVideo: data.hasVideo,
           allFields: Object.keys(data)
         });
+        
+        // Test if first photo URL is accessible
+        if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
+          const testUrl = data.photoURLs[0];
+          console.log('🧪 Testing posted photo URL accessibility:', testUrl);
+          fetch(testUrl, { method: 'HEAD' })
+            .then(response => {
+              console.log('✅ Posted photo URL accessible:', response.status, response.statusText);
+            })
+            .catch(error => {
+              console.error('❌ Posted photo URL failed:', error.message);
+            });
+        }
         return {
           id: doc.id,
           title: data.title || '',
