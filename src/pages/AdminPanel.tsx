@@ -46,6 +46,8 @@ const AdminPanel: React.FC = () => {
   const [jayBondRoleFixLoading, setJayBondRoleFixLoading] = useState(false);
   // Photo URL regeneration state
   const [photoUrlFixLoading, setPhotoUrlFixLoading] = useState(false);
+  // Avatar URL regeneration state
+  const [avatarUrlFixLoading, setAvatarUrlFixLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -809,6 +811,126 @@ const AdminPanel: React.FC = () => {
       alert('❌ Photo URL regeneration failed. Check console for details.');
     } finally {
       setPhotoUrlFixLoading(false);
+    }
+  };
+
+  // Regenerate avatar URLs for users
+  const handleRegenerateAvatarUrls = async () => {
+    if (!window.confirm('🔧 This will scan avatar storage and regenerate avatar URLs for all users. Continue?')) {
+      return;
+    }
+
+    setAvatarUrlFixLoading(true);
+    let fixed = 0;
+    let errors = 0;
+
+    try {
+      console.log('🔧 Starting avatar URL regeneration...');
+      
+      // Step 1: Scan avatar storage
+      console.log('📁 Step 1: Scanning avatar storage...');
+      const avatarsStorageRef = storageRef(storage, 'avatars');
+      const avatarFiles = await listAll(avatarsStorageRef);
+      
+      const avatarMap = new Map<string, string>(); // userId -> avatarURL
+      
+      // Process direct avatar files (e.g., userId.jpg)
+      for (const file of avatarFiles.items) {
+        if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+          const userId = file.name.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '');
+          try {
+            const downloadURL = await getDownloadURL(file);
+            avatarMap.set(userId, downloadURL);
+            console.log(`📸 Found avatar for user: ${userId}`);
+          } catch (e) {
+            console.log(`❌ Failed to get URL for ${file.name}`);
+          }
+        }
+      }
+      
+      // Process avatar folders (e.g., userId/avatar.jpg)
+      for (const folder of avatarFiles.prefixes) {
+        const userId = folder.name.split('/').pop();
+        if (!userId) continue;
+        
+        try {
+          const userAvatarFiles = await listAll(folder);
+          if (userAvatarFiles.items.length > 0) {
+            // Get the most recent avatar file
+            const sortedFiles = userAvatarFiles.items.sort((a, b) => b.name.localeCompare(a.name));
+            const latestAvatar = sortedFiles[0];
+            
+            if (latestAvatar.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+              try {
+                const downloadURL = await getDownloadURL(latestAvatar);
+                avatarMap.set(userId, downloadURL);
+                console.log(`📸 Found avatar for user: ${userId} (from folder)`);
+              } catch (e) {
+                console.log(`❌ Failed to get URL for ${latestAvatar.fullPath}`);
+              }
+            }
+          }
+        } catch (e) {
+          console.log(`❌ Error scanning avatar folder for ${userId}`);
+        }
+      }
+      
+      console.log(`📊 Avatar scan complete: Found avatars for ${avatarMap.size} users`);
+      
+      // Step 2: Update user profiles with avatar URLs
+      console.log('💾 Step 2: Updating user profiles...');
+      
+      const usersQuery = query(collection(db, 'users'));
+      const usersSnapshot = await getDocs(usersQuery);
+      console.log(`👥 Found ${usersSnapshot.docs.length} users in database`);
+      
+      for (const userDoc of usersSnapshot.docs) {
+        try {
+          const userData = userDoc.data();
+          const userId = userDoc.id;
+          const currentAvatarURL = userData.avatarURL;
+          const foundAvatarURL = avatarMap.get(userId);
+          
+          console.log(`👤 Checking user: ${userData.username || userData.email || userId}`);
+          
+          if (foundAvatarURL) {
+            if (!currentAvatarURL || currentAvatarURL !== foundAvatarURL) {
+              await updateDoc(userDoc.ref, {
+                avatarURL: foundAvatarURL,
+                avatarUpdatedAt: new Date().toISOString()
+              });
+              
+              fixed++;
+              console.log(`  ✅ Updated avatar URL`);
+            } else {
+              console.log(`  ℹ️ Avatar URL already correct`);
+            }
+          } else {
+            console.log(`  ⚠️ No avatar found in storage`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to process user ${userDoc.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`✅ Avatar URL regeneration completed!`);
+      console.log(`   Fixed: ${fixed} users`);
+      console.log(`   Errors: ${errors}`);
+      
+      if (fixed > 0) {
+        alert(`✅ Successfully updated avatar URLs for ${fixed} users!`);
+      } else if (errors > 0) {
+        alert(`⚠️ Avatar regeneration completed with ${errors} errors. Check console for details.`);
+      } else {
+        alert('ℹ️ All users already have correct avatar URLs.');
+      }
+      
+    } catch (error) {
+      console.error('❌ Avatar URL regeneration failed:', error);
+      alert('❌ Avatar URL regeneration failed. Check console for details.');
+    } finally {
+      setAvatarUrlFixLoading(false);
     }
   };
 
