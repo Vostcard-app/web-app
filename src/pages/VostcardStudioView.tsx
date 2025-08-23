@@ -2628,72 +2628,7 @@ const VostcardStudioView: React.FC = () => {
                 </button>
               </div>
 
-                             {/* Debug Button */}
-               <div style={{ marginBottom: '16px', textAlign: 'center' }}>
-                 <button
-                   onClick={() => {
-                     console.log('🔧 DEBUG: Checking savedVostcards');
-                     console.log('🔧 Total savedVostcards:', savedVostcards.length);
-                     console.log('🔧 All savedVostcards:', savedVostcards.map(v => ({
-                       id: v.id,
-                       title: v.title || 'Untitled',
-                       isQuickcard: v.isQuickcard,
-                       state: v.state,
-                       visibility: (v as any).visibility
-                     })));
-                     console.log('🔧 Vostcard details:', savedVostcards.map(q => ({
-                       id: q.id,
-                       title: q.title || 'Untitled',
-                       isQuickcard: q.isQuickcard,
-                       state: q.state,
-                       visibility: (q as any).visibility
-                     })));
-                     
 
-                   }}
-                   disabled={isLoadingQuickcards}
-                   style={{
-                     backgroundColor: isLoadingQuickcards ? '#ccc' : '#17a2b8',
-                     color: 'white',
-                     border: 'none',
-                     borderRadius: '4px',
-                     padding: '8px 16px',
-                     fontSize: '12px',
-                     cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer',
-                     marginRight: '8px'
-                   }}
-                 >
-                   🔧 Debug Vostcards
-                 </button>
-                 
-                 <button
-                   onClick={async () => {
-                     console.log('🔄 Manually reloading vostcards with full sync...');
-                     setIsLoadingQuickcards(true);
-                     try {
-                       // Use full sync to get both IndexedDB and Firebase data
-                       await loadAllLocalVostcards();
-                       console.log('✅ Vostcards reloaded successfully with full sync');
-                     } catch (error) {
-                       console.error('❌ Failed to reload vostcards:', error);
-                     } finally {
-                       setIsLoadingQuickcards(false);
-                     }
-                   }}
-                   disabled={isLoadingQuickcards}
-                   style={{
-                     backgroundColor: isLoadingQuickcards ? '#ccc' : '#28a745',
-                     color: 'white',
-                     border: 'none',
-                     borderRadius: '4px',
-                     padding: '8px 16px',
-                     fontSize: '12px',
-                     cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer'
-                   }}
-                 >
-                   {isLoadingQuickcards ? '🔄 Loading...' : '🔄 Reload Vostcards'}
-                 </button>
-               </div>
 
                              {/* Quickcard List */}
                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
