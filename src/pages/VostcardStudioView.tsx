@@ -36,7 +36,7 @@ const VostcardStudioView: React.FC = () => {
     'Made for kids',
   ];
   
-  const canAccessDrivecard = userRole === 'guide' || userRole === 'admin';
+  const canAccessDrivecard = true; // All authenticated users can access drivecard functionality
   
   // Check if we're editing a drivecard from the library
   const editingDrivecardId = location.state?.editingDrivecard;

@@ -1859,18 +1859,16 @@ const HomeView = () => {
               👤 Following
             </button>
 
-            {/* 6. Vostcard Studio */}
-            {userRole === 'guide' && (
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  navigate('/studio');
-                }}
-                style={menuItemStyle}
-              >
-                🎬 Vostcard Studio
-              </button>
-            )}
+            {/* 6. Vostcard Studio - Available to all authenticated users */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                navigate('/studio');
+              }}
+              style={menuItemStyle}
+            >
+              🎬 Vostcard Studio
+            </button>
 
             {/* 7. Admin Panel */}
             {userRole === 'admin' && (
