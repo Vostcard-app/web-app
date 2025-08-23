@@ -4,37 +4,37 @@ import { useVostcard } from '../../context/VostcardContext';
 import { useVostcardEdit } from '../../context/VostcardEditContext';
 import type { Vostcard } from '../../types/VostcardTypes';
 
-interface QuickcardImporterProps {
-  onImport: (quickcard: Vostcard) => void;
+interface VostcardImporterProps {
+  onImport: (vostcard: Vostcard) => void;
   onCancel: () => void;
 }
 
-export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, onCancel }) => {
+export const VostcardImporter: React.FC<VostcardImporterProps> = ({ onImport, onCancel }) => {
   const { savedVostcards, loadAllLocalVostcardsImmediate } = useVostcard();
   const [loading, setLoading] = useState(true);
-  const [selectedQuickcard, setSelectedQuickcard] = useState<Vostcard | null>(null);
+  const [selectedVostcard, setSelectedVostcard] = useState<Vostcard | null>(null);
 
-  // Show all saved vostcards (no longer filtering for quickcards only)
-  const quickcards = savedVostcards;
+  // Show all saved vostcards (no longer filtering for vostcards only)
+  const vostcards = savedVostcards;
 
   useEffect(() => {
-    const loadQuickcards = async () => {
+    const loadVostcards = async () => {
       try {
         setLoading(true);
         await loadAllLocalVostcardsImmediate();
       } catch (error) {
-        console.error('Failed to load quickcards:', error);
+        console.error('Failed to load vostcards:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadQuickcards();
+    loadVostcards();
   }, [loadAllLocalVostcardsImmediate]);
 
   const handleImport = () => {
-    if (selectedQuickcard) {
-      onImport(selectedQuickcard);
+    if (selectedVostcard) {
+      onImport(selectedVostcard);
     }
   };
 
@@ -51,13 +51,13 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
       }}>
         <div style={{ textAlign: 'center', color: '#666' }}>
           <div style={{ fontSize: '24px', marginBottom: '8px' }}>📱</div>
-          <div>Loading your quickcards...</div>
+          <div>Loading your vostcards...</div>
         </div>
       </div>
     );
   }
 
-  if (quickcards.length === 0) {
+  if (vostcards.length === 0) {
     return (
       <div style={{
         backgroundColor: '#f9f9f9',
@@ -111,15 +111,15 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
         overflowY: 'auto',
         marginBottom: '20px'
       }}>
-        {quickcards.map(quickcard => {
-          const isSelected = selectedQuickcard?.id === quickcard.id;
+        {vostcards.map(quickcard => {
+          const isSelected = selectedVostcard?.id === quickcard.id;
           const hasPhoto = quickcard.photos && quickcard.photos.length > 0;
           const photoUrl = hasPhoto ? URL.createObjectURL(quickcard.photos[0]) : null;
           
           return (
             <div
               key={quickcard.id}
-              onClick={() => setSelectedQuickcard(quickcard)}
+              onClick={() => setSelectedVostcard(quickcard)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -246,14 +246,14 @@ export const QuickcardImporter: React.FC<QuickcardImporterProps> = ({ onImport, 
         </button>
         <button
           onClick={handleImport}
-          disabled={!selectedQuickcard}
+          disabled={!selectedVostcard}
           style={{
-            backgroundColor: selectedQuickcard ? '#007aff' : '#ccc',
+            backgroundColor: selectedVostcard ? '#007aff' : '#ccc',
             color: 'white',
             border: 'none',
             padding: '10px 20px',
             borderRadius: '6px',
-            cursor: selectedQuickcard ? 'pointer' : 'not-allowed',
+            cursor: selectedVostcard ? 'pointer' : 'not-allowed',
             fontSize: '14px',
             display: 'flex',
             alignItems: 'center',
