@@ -523,20 +523,6 @@ Tap OK to continue.`;
               alignItems: 'center'
             }}>
               <span>{savedVostcards.length} Personal Post{savedVostcards.length !== 1 ? 's' : ''}</span>
-              <button
-                onClick={debugIndexedDB}
-                style={{
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  cursor: 'pointer'
-                }}
-              >
-                Debug DB
-              </button>
             </div>
 
             {/* Personal Posts List */}
