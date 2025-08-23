@@ -2599,7 +2599,7 @@ const VostcardStudioView: React.FC = () => {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
-                  📂 Load Quickcard for Editing
+                  📂 Load Vostcard for Editing
                 </h3>
                 <button
                   onClick={() => setShowQuickcardLoader(false)}
@@ -2619,7 +2619,7 @@ const VostcardStudioView: React.FC = () => {
                <div style={{ marginBottom: '16px', textAlign: 'center' }}>
                  <button
                    onClick={() => {
-                     console.log('🔧 DEBUG: Checking savedVostcards for quickcards');
+                     console.log('🔧 DEBUG: Checking savedVostcards');
                      console.log('🔧 Total savedVostcards:', savedVostcards.length);
                      console.log('🔧 All savedVostcards:', savedVostcards.map(v => ({
                        id: v.id,
@@ -2628,9 +2628,7 @@ const VostcardStudioView: React.FC = () => {
                        state: v.state,
                        visibility: (v as any).visibility
                      })));
-                     const quickcards = savedVostcards.filter(card => card.isQuickcard);
-                     console.log('🔧 Filtered quickcards:', quickcards.length);
-                     console.log('🔧 Quickcard details:', quickcards.map(q => ({
+                     console.log('🔧 Vostcard details:', savedVostcards.map(q => ({
                        id: q.id,
                        title: q.title || 'Untitled',
                        isQuickcard: q.isQuickcard,
@@ -2652,19 +2650,19 @@ const VostcardStudioView: React.FC = () => {
                      marginRight: '8px'
                    }}
                  >
-                   🔧 Debug Quickcards
+                   🔧 Debug Vostcards
                  </button>
                  
                  <button
                    onClick={async () => {
-                     console.log('🔄 Manually reloading quickcards with full sync...');
+                     console.log('🔄 Manually reloading vostcards with full sync...');
                      setIsLoadingQuickcards(true);
                      try {
                        // Use full sync to get both IndexedDB and Firebase data
                        await loadAllLocalVostcards();
-                       console.log('✅ Quickcards reloaded successfully with full sync');
+                       console.log('✅ Vostcards reloaded successfully with full sync');
                      } catch (error) {
-                       console.error('❌ Failed to reload quickcards:', error);
+                       console.error('❌ Failed to reload vostcards:', error);
                      } finally {
                        setIsLoadingQuickcards(false);
                      }
@@ -2680,7 +2678,7 @@ const VostcardStudioView: React.FC = () => {
                      cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer'
                    }}
                  >
-                   {isLoadingQuickcards ? '🔄 Loading...' : '🔄 Reload Quickcards'}
+                   {isLoadingQuickcards ? '🔄 Loading...' : '🔄 Reload Vostcards'}
                  </button>
                </div>
 
@@ -2688,20 +2686,19 @@ const VostcardStudioView: React.FC = () => {
                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                  {isLoadingQuickcards ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                     <div style={{ fontSize: '16px', marginBottom: '8px' }}>🔄 Loading quickcards...</div>
+                     <div style={{ fontSize: '16px', marginBottom: '8px' }}>🔄 Loading vostcards...</div>
                      <div style={{ fontSize: '12px', color: '#999' }}>Refreshing saved vostcards from storage</div>
                    </div>
-                 ) : savedVostcards.filter(card => card.isQuickcard).length === 0 ? (
+                 ) : savedVostcards.length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                     <p>No quickcards found.</p>
-                     <p style={{ fontSize: '14px' }}>Create a quickcard first, then you can load it for editing.</p>
+                                         <p>No vostcards found.</p>
+                    <p style={{ fontSize: '14px' }}>Create a vostcard first, then you can load it for editing.</p>
                      <p style={{ fontSize: '12px', color: '#999', marginTop: '16px' }}>
-                       Total saved cards: {savedVostcards.length}<br/>
-                       Cards with isQuickcard=true: {savedVostcards.filter(card => card.isQuickcard === true).length}
+                       Total saved cards: {savedVostcards.length}
                      </p>
                    </div>
                  ) : (
-                   savedVostcards.filter(card => card.isQuickcard).map((quickcard) => (
+                   savedVostcards.map((quickcard) => (
                      <div
                        key={quickcard.id}
                        onClick={() => !isLoadingQuickcards && loadQuickcardForEditing(quickcard)}
@@ -2722,7 +2719,7 @@ const VostcardStudioView: React.FC = () => {
                      >
                        <div style={{ flex: 1 }}>
                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                           {quickcard.title || 'Untitled Quickcard'}
+                           {quickcard.title || 'Untitled Vostcard'}
                          </div>
                          <div style={{ fontSize: '12px', color: '#666' }}>
                            {quickcard.description && quickcard.description.length > 50 
