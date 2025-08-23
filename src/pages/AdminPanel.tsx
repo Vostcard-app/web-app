@@ -1506,6 +1506,50 @@ const AdminPanel: React.FC = () => {
         </button>
       </div>
 
+      {/* 4.9. Regenerate Avatar URLs */}
+      <div style={{ backgroundColor: '#f0f8ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid '#4169e1' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#1e3a8a' }}>
+          🖼️ Regenerate Avatar URLs
+        </h2>
+        <p style={{ marginBottom: '15px', color: '#555' }}>
+          <strong>🔧 Avatar Recovery:</strong> This will scan avatar storage and regenerate avatar URLs for all users. Fixes missing or broken avatar images.
+        </p>
+        <ul style={{ marginBottom: '15px', color: '#555', paddingLeft: '20px' }}>
+          <li><strong>Step 1:</strong> Scan <code>avatars/</code> storage for user avatar files</li>
+          <li><strong>Step 2:</strong> Support both <code>userId.jpg</code> and <code>userId/avatar.jpg</code> formats</li>
+          <li><strong>Step 3:</strong> Generate fresh download URLs with current tokens</li>
+          <li><strong>Step 4:</strong> Update user profiles with correct <code>avatarURL</code></li>
+          <li>This fixes missing avatars like Jay Bond's profile picture</li>
+        </ul>
+        <button
+          onClick={handleRegenerateAvatarUrls}
+          disabled={avatarUrlFixLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: avatarUrlFixLoading ? '#6c757d' : '#4169e1',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: avatarUrlFixLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!avatarUrlFixLoading) {
+              e.currentTarget.style.backgroundColor = '#1e40af';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!avatarUrlFixLoading) {
+              e.currentTarget.style.backgroundColor = '#4169e1';
+            }
+          }}
+        >
+          {avatarUrlFixLoading ? '🔄 Regenerating Avatars...' : '🖼️ Regenerate All Avatar URLs'}
+        </button>
+      </div>
+
       {/* 5. Music Library (Admin) */}
       <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
