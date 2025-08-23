@@ -1,4 +1,10 @@
 const functions = require('firebase-functions');
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 // OpenAI API key from Firebase environment
 const OPENAI_API_KEY = functions.config().openai?.api_key;
@@ -75,4 +81,112 @@ exports.generateScript = functions.https.onRequest((req, res) => {
       details: error.message 
     });
   }
-}); 
+});
+
+// Server-side avatar URL regeneration function
+exports.regenerateAvatarUrls = functions.https.onCall(async (data, context) => {
+  // Verify admin authentication
+  if (!context.auth || !context.auth.token.admin) {
+    throw new functions.https.HttpsError('permission-denied', 'Only admins can regenerate avatar URLs');
+  }
+
+  try {
+    console.log('🔧 Starting server-side avatar URL regeneration...');
+    
+    const db = admin.firestore();
+    const storage = admin.storage();
+    const bucket = storage.bucket();
+    
+    let fixed = 0;
+    let errors = 0;
+    
+    // Step 1: Scan avatar storage
+    console.log('📁 Step 1: Scanning avatar storage...');
+    const [files] = await bucket.getFiles({ prefix: 'avatars/' });
+    
+    const avatarMap = new Map(); // userId -> avatarURL
+    
+    // Process avatar files
+    for (const file of files) {
+      const fileName = file.name.split('/').pop();
+      if (fileName && fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        // Handle both userId.jpg and userId/avatar.jpg formats
+        let userId;
+        if (file.name.includes('/')) {
+          const parts = file.name.split('/');
+          if (parts.length === 2) {
+            userId = parts[1].replace(/\.(jpg|jpeg|png|gif|webp)$/i, '');
+          } else if (parts.length === 3) {
+            userId = parts[1];
+          }
+        }
+        
+        if (userId) {
+          try {
+            const [url] = await file.getSignedUrl({
+              action: 'read',
+              expires: '03-09-2491' // Far future date
+            });
+            avatarMap.set(userId, url);
+            console.log(`📸 Found avatar for user: ${userId}`);
+          } catch (e) {
+            console.log(`❌ Failed to get URL for ${file.name}: ${e.message}`);
+          }
+        }
+      }
+    }
+    
+    console.log(`📊 Avatar scan complete: Found avatars for ${avatarMap.size} users`);
+    
+    // Step 2: Update user profiles with avatar URLs
+    console.log('💾 Step 2: Updating user profiles...');
+    
+    const usersSnapshot = await db.collection('users').get();
+    console.log(`👥 Found ${usersSnapshot.docs.length} users in database`);
+    
+    for (const userDoc of usersSnapshot.docs) {
+      try {
+        const userData = userDoc.data();
+        const userId = userDoc.id;
+        const currentAvatarURL = userData.avatarURL;
+        const foundAvatarURL = avatarMap.get(userId);
+        
+        console.log(`👤 Checking user: ${userData.username || userData.email || userId}`);
+        
+        if (foundAvatarURL) {
+          if (!currentAvatarURL || currentAvatarURL !== foundAvatarURL) {
+            await userDoc.ref.update({
+              avatarURL: foundAvatarURL,
+              avatarUpdatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            
+            fixed++;
+            console.log(`  ✅ Updated avatar URL`);
+          } else {
+            console.log(`  ℹ️ Avatar URL already correct`);
+          }
+        } else {
+          console.log(`  ⚠️ No avatar found in storage`);
+        }
+      } catch (error) {
+        console.error(`❌ Failed to process user ${userDoc.id}:`, error);
+        errors++;
+      }
+    }
+
+    console.log(`✅ Avatar URL regeneration completed!`);
+    console.log(`   Fixed: ${fixed} users`);
+    console.log(`   Errors: ${errors}`);
+    
+    return {
+      success: true,
+      fixed,
+      errors,
+      message: `Successfully updated avatar URLs for ${fixed} users${errors > 0 ? ` (${errors} errors)` : ''}`
+    };
+    
+  } catch (error) {
+    console.error('❌ Avatar URL regeneration failed:', error);
+    throw new functions.https.HttpsError('internal', 'Avatar URL regeneration failed', error.message);
+  }
+});

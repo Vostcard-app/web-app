@@ -4,6 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
@@ -27,6 +28,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app);
 // Temporarily disable analytics to test
 // export const analytics = getAnalytics(app);
 
@@ -34,6 +36,7 @@ console.log('✅ Firebase services initialized:', {
   auth: !!auth,
   db: !!db,
   storage: !!storage,
+  functions: !!functions,
   // analytics: !!analytics
 });
 
