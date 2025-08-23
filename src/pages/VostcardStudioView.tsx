@@ -499,7 +499,7 @@ const VostcardStudioView: React.FC = () => {
         try {
           // Use full sync instead of immediate load to get Firebase data too
           await loadAllLocalVostcards();
-          console.log('✅ Saved vostcards refreshed for quickcard loader (full sync)');
+          console.log('✅ Saved vostcards refreshed for vostcard loader (full sync)');
         } catch (error) {
           console.error('❌ Failed to refresh saved vostcards:', error);
         } finally {
@@ -510,23 +510,23 @@ const VostcardStudioView: React.FC = () => {
     }
   }, [showVostcardLoader, loadAllLocalVostcards]);
 
-  // Handle quickcard import
+  // Handle vostcard import
   const handleVostcardImport = (quickcard: Vostcard) => {
     loadVostcard(quickcard);
     setShowVostcardImporter(false);
     // Navigate to the advanced editor to continue editing
-    navigate('/studio', { state: { editingQuickcard: quickcard.id, activeTab: 'quickcard' } });
+    navigate('/studio', { state: { editingVostcard: quickcard.id, activeTab: 'vostcard' } });
   };
 
   const handleCancelImport = () => {
     setShowVostcardImporter(false);
   };
 
-  // Load quickcard data from currentVostcard context or sessionStorage
-  const loadExistingQuickcardData = () => {
+  // Load vostcard data from currentVostcard context or sessionStorage
+  const loadExistingVostcardData = () => {
     try {
       // Don't overwrite existing form data if user has already entered something
-      const hasExistingData = quickcardTitle.trim() || quickcardDescription.trim() || vostcardPhotos.length > 0;
+      const hasExistingData = vostcardTitle.trim() || vostcardDescription.trim() || vostcardPhotos.length > 0;
       if (hasExistingData) {
         console.log('📱 Skipping data load - form already has content');
         return;
@@ -536,12 +536,12 @@ const VostcardStudioView: React.FC = () => {
       const transferData = sessionStorage.getItem('vostcardTransferData');
       if (transferData) {
         const data = JSON.parse(transferData);
-        console.log('📱 Loading transferred quickcard data:', data);
+        console.log('📱 Loading transferred vostcard data:', data);
         
         // Populate VostcardStudio fields with transferred data
-        setQuickcardTitle(data.title || '');
-        setQuickcardDescription(data.description || '');
-        setQuickcardCategories(data.categories || []);
+        setVostcardTitle(data.title || '');
+        setVostcardDescription(data.description || '');
+        setVostcardCategories(data.categories || []);
         
         // Handle photos
         if (data.photos && data.photos.length > 0) {
@@ -576,13 +576,13 @@ const VostcardStudioView: React.FC = () => {
       }
       
       // If no sessionStorage data, check currentVostcard context
-      if (currentVostcard?.isQuickcard && quickcardTitle === '' && quickcardDescription === '') {
+      if (currentVostcard?.isQuickcard && vostcardTitle === '' && vostcardDescription === '') {
         console.log('📱 Loading quickcard data from context:', currentVostcard);
         
         // Populate fields from context
-        setQuickcardTitle(currentVostcard.title || '');
-        setQuickcardDescription(currentVostcard.description || '');
-        setQuickcardCategories(currentVostcard.categories || []);
+        setVostcardTitle(currentVostcard.title || '');
+        setVostcardDescription(currentVostcard.description || '');
+        setVostcardCategories(currentVostcard.categories || []);
         
         // Handle photos
         if (currentVostcard.photos && currentVostcard.photos.length > 0) {
@@ -618,7 +618,7 @@ const VostcardStudioView: React.FC = () => {
   const handleCancelCreator = () => {
     setShowVostcardCreator(false);
     // Clear creation state and clean up blob URLs
-    setQuickcardTitle('');
+    setVostcardTitle('');
     vostcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
@@ -629,7 +629,7 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardDetailAudio(null);
     setQuickcardDetailAudioSource(null);
     setQuickcardDetailAudioFileName(null);
-    setQuickcardCategories([]);
+    setVostcardCategories([]);
   };
 
   // Enhanced photo upload handler for multiple photos (unlimited)
@@ -830,10 +830,10 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handleQuickcardCategoryToggle = (category: string) => {
-    if (quickcardCategories.includes(category)) {
-      setQuickcardCategories(prev => prev.filter(c => c !== category));
+    if (vostcardCategories.includes(category)) {
+      setVostcardCategories(prev => prev.filter(c => c !== category));
     } else {
-      setQuickcardCategories(prev => [...prev, category]);
+      setVostcardCategories(prev => [...prev, category]);
     }
   };
 
@@ -842,11 +842,11 @@ const VostcardStudioView: React.FC = () => {
     
     // ✅ SAVE CURRENT QUICKCARD STATE BEFORE NAVIGATING
     const stateToSave: any = {
-      title: quickcardTitle,
-      description: quickcardDescription,
-      categories: quickcardCategories,
-      audioSource: quickcardIntroAudioSource,
-      audioFileName: quickcardIntroAudioFileName,
+      title: vostcardTitle,
+      description: vostcardDescription,
+      categories: vostcardCategories,
+      audioSource: vostcardIntroAudioSource,
+      audioFileName: vostcardIntroAudioFileName,
     };
 
     // Convert photos to base64 for storage
@@ -865,15 +865,15 @@ const VostcardStudioView: React.FC = () => {
     }
 
     // Convert audio to base64 for storage
-    if (quickcardIntroAudio) {
+    if (vostcardIntroAudio) {
       try {
         const audioBase64 = await new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(quickcardIntroAudio);
+          reader.readAsDataURL(vostcardIntroAudio);
         });
         stateToSave.audioBase64 = audioBase64;
-        stateToSave.audioType = quickcardIntroAudio.type;
+        stateToSave.audioType = vostcardIntroAudio.type;
       } catch (error) {
         console.error('❌ Failed to convert audio to base64:', error);
       }
@@ -887,10 +887,10 @@ const VostcardStudioView: React.FC = () => {
       state: {
         returnTo: '/studio',
         quickcardCreation: true,
-        title: quickcardTitle || 'New Quickcard',
+        title: vostcardTitle || 'New Quickcard',
         pinData: {
           id: 'temp_quickcard',
-          title: quickcardTitle || 'New Quickcard',
+          title: vostcardTitle || 'New Quickcard',
           description: 'Quickcard location',
           latitude: quickcardLocation?.latitude || 40.7128,
           longitude: quickcardLocation?.longitude || -74.0060,
@@ -903,7 +903,7 @@ const VostcardStudioView: React.FC = () => {
 
   // Update creation functions to use multiple photos
   const handleSaveQuickcardToPersonalPosts = async () => {
-    if (!quickcardTitle.trim()) {
+    if (!vostcardTitle.trim()) {
       alert('Please enter a title for your vostcard.');
       return;
     }
@@ -920,8 +920,8 @@ const VostcardStudioView: React.FC = () => {
       const audioFiles: Blob[] = [];
       const audioLabels: string[] = [];
       
-      if (quickcardIntroAudio) {
-        audioFiles.push(quickcardIntroAudio);
+      if (vostcardIntroAudio) {
+        audioFiles.push(vostcardIntroAudio);
         audioLabels.push('intro');
       }
       
@@ -933,13 +933,13 @@ const VostcardStudioView: React.FC = () => {
       // Create quickcard as private draft with multiple photos and audio files
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
-        title: quickcardTitle.trim(),
-        description: quickcardDescription.trim() || '', 
+        title: vostcardTitle.trim(),
+        description: vostcardDescription.trim() || '', 
         photos: vostcardPhotos, // Multiple photos
-        audio: quickcardIntroAudio, // LEGACY: Keep for backward compatibility
+        audio: vostcardIntroAudio, // LEGACY: Keep for backward compatibility
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
-        categories: quickcardCategories,
+        categories: vostcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
@@ -949,7 +949,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
+        hasAudio: !!(vostcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -969,7 +969,7 @@ const VostcardStudioView: React.FC = () => {
   };
 
   const handlePostQuickcardToMap = async () => {
-    if (!quickcardTitle.trim()) {
+    if (!vostcardTitle.trim()) {
       alert('Please enter a title for your vostcard.');
       return;
     }
@@ -984,7 +984,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (quickcardCategories.length === 0) {
+    if (vostcardCategories.length === 0) {
       alert('Please select at least one category for your vostcard.');
       return;
     }
@@ -996,8 +996,8 @@ const VostcardStudioView: React.FC = () => {
       const audioFiles: Blob[] = [];
       const audioLabels: string[] = [];
       
-      if (quickcardIntroAudio) {
-        audioFiles.push(quickcardIntroAudio);
+      if (vostcardIntroAudio) {
+        audioFiles.push(vostcardIntroAudio);
         audioLabels.push('intro');
       }
       
@@ -1009,13 +1009,13 @@ const VostcardStudioView: React.FC = () => {
       // Create quickcard ready for posting with multiple photos
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
-        title: quickcardTitle.trim(),
-        description: quickcardDescription.trim() || 'Quickcard',
+        title: vostcardTitle.trim(),
+        description: vostcardDescription.trim() || 'Quickcard',
         photos: vostcardPhotos, // Multiple photos
-        audio: quickcardIntroAudio, // Use intro audio as primary
+        audio: vostcardIntroAudio, // Use intro audio as primary
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
-        categories: quickcardCategories,
+        categories: vostcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
@@ -1025,7 +1025,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
+        hasAudio: !!(vostcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1057,7 +1057,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (!quickcardTitle.trim()) {
+    if (!vostcardTitle.trim()) {
       alert('Please enter a title for your vostcard.');
       return;
     }
@@ -1072,7 +1072,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (quickcardCategories.length === 0) {
+    if (vostcardCategories.length === 0) {
       alert('Please select at least one category for your vostcard.');
       return;
     }
@@ -1084,8 +1084,8 @@ const VostcardStudioView: React.FC = () => {
       const audioFiles: Blob[] = [];
       const audioLabels: string[] = [];
       
-      if (quickcardIntroAudio) {
-        audioFiles.push(quickcardIntroAudio);
+      if (vostcardIntroAudio) {
+        audioFiles.push(vostcardIntroAudio);
         audioLabels.push('intro');
       }
       
@@ -1097,13 +1097,13 @@ const VostcardStudioView: React.FC = () => {
       // Update the existing quickcard with same ID
       const updatedQuickcard: Vostcard = {
         id: editingQuickcardId, // Keep the same ID
-        title: quickcardTitle.trim(),
-        description: quickcardDescription.trim() || 'Quickcard',
+        title: vostcardTitle.trim(),
+        description: vostcardDescription.trim() || 'Quickcard',
         photos: vostcardPhotos,
-        audio: quickcardIntroAudio,
+        audio: vostcardIntroAudio,
         audioFiles: audioFiles,
         audioLabels: audioLabels,
-        categories: quickcardCategories,
+        categories: vostcardCategories,
         geo: quickcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
@@ -1113,7 +1113,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(quickcardIntroAudio || quickcardDetailAudio),
+        hasAudio: !!(vostcardIntroAudio || quickcardDetailAudio),
         createdAt: new Date().toISOString(), // This will be preserved from original
         updatedAt: new Date().toISOString()
       };
@@ -1148,8 +1148,8 @@ const VostcardStudioView: React.FC = () => {
 
   // Helper function to reset form - UPDATED for multiple photos
   const resetQuickcardForm = () => {
-    setQuickcardTitle('');
-    setQuickcardDescription('');
+    setVostcardTitle('');
+    setVostcardDescription('');
     
     // Clean up photo blob URLs
     vostcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
@@ -1163,7 +1163,7 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardDetailAudioSource(null);
     setQuickcardDetailAudioFileName(null);
     setQuickcardLocation(null);
-    setQuickcardCategories([]);
+    setVostcardCategories([]);
     
     // Clear editing state
     setEditingQuickcardId(null);
@@ -1177,9 +1177,9 @@ const VostcardStudioView: React.FC = () => {
       setIsLoading(true);
       
       // Load basic information
-      setQuickcardTitle(quickcard.title || '');
-      setQuickcardDescription(quickcard.description || '');
-      setQuickcardCategories(quickcard.categories || []);
+      setVostcardTitle(quickcard.title || '');
+      setVostcardDescription(quickcard.description || '');
+      setVostcardCategories(quickcard.categories || []);
       
       // Load location
       if (quickcard.geo) {
@@ -1544,8 +1544,8 @@ const VostcardStudioView: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={quickcardTitle}
-                onChange={(e) => setQuickcardTitle(e.target.value)}
+                value={vostcardTitle}
+                onChange={(e) => setVostcardTitle(e.target.value)}
                 disabled={isLoading}
                 style={{
                   width: '100%',
@@ -1572,8 +1572,8 @@ const VostcardStudioView: React.FC = () => {
                 Description
               </label>
               <textarea
-                value={quickcardDescription}
-                onChange={(e) => setQuickcardDescription(e.target.value)}
+                value={vostcardDescription}
+                onChange={(e) => setVostcardDescription(e.target.value)}
                 disabled={isLoading}
                 placeholder="Add a description for your quickcard..."
                 rows={3}
@@ -1916,9 +1916,9 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Audio Status Display */}
-            {(quickcardIntroAudio || quickcardDetailAudio) && (
+            {(vostcardIntroAudio || quickcardDetailAudio) && (
               <div style={{ marginBottom: '15px' }}>
-                {quickcardIntroAudio && (
+                {vostcardIntroAudio && (
                   <div style={{
                     backgroundColor: '#f3e5f5',
                     padding: '8px 12px',
@@ -1928,7 +1928,7 @@ const VostcardStudioView: React.FC = () => {
                     color: '#6a1b9a',
                     marginBottom: '8px'
                   }}>
-                    🎵 Intro: {quickcardIntroAudioFileName || 'Audio file ready'}
+                    🎵 Intro: {vostcardIntroAudioFileName || 'Audio file ready'}
                     <button
                       onClick={() => {
                         setQuickcardIntroAudio(null);
@@ -1993,7 +1993,7 @@ const VostcardStudioView: React.FC = () => {
                 marginBottom: '6px',
                 color: '#333'
               }}>
-                Categories {quickcardCategories.length > 0 && <span style={{color: 'green'}}>✅</span>}
+                Categories {vostcardCategories.length > 0 && <span style={{color: 'green'}}>✅</span>}
               </label>
               
               <div
@@ -2005,20 +2005,20 @@ const VostcardStudioView: React.FC = () => {
                   border: '1px solid #ddd',
                   cursor: isLoading ? 'not-allowed' : 'pointer',
                   fontSize: '14px',
-                  color: quickcardCategories.length > 0 ? '#333' : '#999',
+                  color: vostcardCategories.length > 0 ? '#333' : '#999',
                   opacity: isLoading ? 0.6 : 1
                 }}
               >
-                {quickcardCategories.length > 0 ? 
-                  `${quickcardCategories.length} categor${quickcardCategories.length === 1 ? 'y' : 'ies'} selected` : 
+                {vostcardCategories.length > 0 ? 
+                  `${vostcardCategories.length} categor${vostcardCategories.length === 1 ? 'y' : 'ies'} selected` : 
                   'Select Categories (Required)'
                 }
               </div>
 
               {/* Display Selected Categories */}
-              {quickcardCategories.length > 0 && (
+              {vostcardCategories.length > 0 && (
                 <div style={{ marginTop: '8px' }}>
-                  {quickcardCategories.map((category, index) => (
+                  {vostcardCategories.map((category, index) => (
                     <span
                       key={category}
                       style={{
@@ -2040,7 +2040,7 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Audio Status Indicator */}
-            {(quickcardIntroAudio || quickcardDetailAudio) && (
+            {(vostcardIntroAudio || quickcardDetailAudio) && (
               <div style={{
                 backgroundColor: '#e3f2fd',
                 border: '1px solid #2196f3',
@@ -2062,16 +2062,16 @@ const VostcardStudioView: React.FC = () => {
               {/* Save to Personal Posts Button */}
               <button 
                 onClick={handleSaveQuickcardToPersonalPosts}
-                disabled={!quickcardTitle.trim() || isLoading || vostcardPhotos.length === 0}
+                disabled={!vostcardTitle.trim() || isLoading || vostcardPhotos.length === 0}
                 style={{
-                  backgroundColor: (!quickcardTitle.trim() || isLoading || vostcardPhotos.length === 0) ? '#ccc' : '#28a745',
+                  backgroundColor: (!vostcardTitle.trim() || isLoading || vostcardPhotos.length === 0) ? '#ccc' : '#28a745',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || isLoading || vostcardPhotos.length === 0) ? 'not-allowed' : 'pointer',
+                  cursor: (!vostcardTitle.trim() || isLoading || vostcardPhotos.length === 0) ? 'not-allowed' : 'pointer',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -2086,16 +2086,16 @@ const VostcardStudioView: React.FC = () => {
               {/* Post to Map Button - Always visible */}
               <button 
                 onClick={handlePostQuickcardToMap}
-                disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0}
+                disabled={!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
                 style={{
-                  backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#007aff',
+                  backgroundColor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#007aff',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                  cursor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? 'not-allowed' : 'pointer',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -2111,16 +2111,16 @@ const VostcardStudioView: React.FC = () => {
               {editingQuickcardId && (
                 <button 
                   onClick={handleUpdateAndRepostQuickcard}
-                  disabled={!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0}
+                  disabled={!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
                   style={{
-                    backgroundColor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? '#ccc' : '#ff9800',
+                    backgroundColor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#ff9800',
                     color: 'white',
                     border: 'none',
                     padding: '12px 8px',
                     borderRadius: '4px',
                     fontSize: '13px',
                     fontWeight: 'bold',
-                    cursor: (!quickcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || quickcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                    cursor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? 'not-allowed' : 'pointer',
                     flex: 1,
                     display: 'flex',
                     alignItems: 'center',
@@ -2161,9 +2161,9 @@ const VostcardStudioView: React.FC = () => {
             )}
 
             {/* Clear Audio Buttons */}
-            {(quickcardIntroAudio || quickcardDetailAudio) && (
+            {(vostcardIntroAudio || quickcardDetailAudio) && (
               <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                {quickcardIntroAudio && (
+                {vostcardIntroAudio && (
                   <button
                     onClick={() => {
                       setQuickcardIntroAudio(null);
@@ -2516,7 +2516,7 @@ const VostcardStudioView: React.FC = () => {
                 >
                   <input
                     type="checkbox"
-                    checked={quickcardCategories.includes(category)}
+                    checked={vostcardCategories.includes(category)}
                     readOnly
                     style={{ marginRight: '8px' }}
                   />
