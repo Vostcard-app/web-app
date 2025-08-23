@@ -1507,7 +1507,7 @@ const AdminPanel: React.FC = () => {
       </div>
 
       {/* 4.9. Regenerate Avatar URLs */}
-      <div style={{ backgroundColor: '#f0f8ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid '#4169e1' }}>
+      <div style={{ backgroundColor: '#f0f8ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #4169e1' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#1e3a8a' }}>
           🖼️ Regenerate Avatar URLs
         </h2>
