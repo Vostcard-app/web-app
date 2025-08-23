@@ -1100,6 +1100,64 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [currentVostcard, saveVostcardDirect, savedVostcards, postedVostcards]);
 
+  // Unpost vostcard (change back to private and move to saved)
+  const unpostVostcard = useCallback(async () => {
+    console.log('📤 Starting unpostVostcard...');
+    if (!currentVostcard) {
+      console.error('No vostcard to unpost');
+      throw new Error('No vostcard to unpost');
+    }
+
+    console.log('📍 Unposting vostcard:', {
+      id: currentVostcard.id,
+      title: currentVostcard.title,
+      state: currentVostcard.state,
+      visibility: currentVostcard.visibility
+    });
+
+    try {
+      // Update vostcard to private
+      const updatedVostcard = {
+        ...currentVostcard,
+        state: 'private' as const,
+        visibility: 'private' as const,
+        updatedAt: new Date().toISOString()
+      };
+      
+      setCurrentVostcard(updatedVostcard);
+      
+      // Save to Firebase with new visibility
+      await saveVostcardDirect(updatedVostcard);
+      
+      // Move from postedVostcards to savedVostcards
+      console.log('🔄 Moving vostcard from posted to saved:', {
+        vostcardId: currentVostcard.id,
+        savedCount: savedVostcards.length,
+        postedCount: postedVostcards.length,
+        wasInSaved: savedVostcards.some(v => v.id === currentVostcard.id),
+        wasInPosted: postedVostcards.some(v => v.id === currentVostcard.id)
+      });
+      
+      setPostedVostcards(prev => {
+        const filtered = prev.filter(v => v.id !== currentVostcard.id);
+        console.log('📝 Removed from postedVostcards:', prev.length, '→', filtered.length);
+        return filtered;
+      });
+      
+      setSavedVostcards(prev => {
+        const filtered = prev.filter(v => v.id !== currentVostcard.id);
+        const updated = [...filtered, updatedVostcard];
+        console.log('📝 Added to savedVostcards:', prev.length, '→', updated.length);
+        return updated;
+      });
+
+      console.log('✅ Vostcard unposted successfully');
+    } catch (error) {
+      console.error('❌ Error unposting vostcard:', error);
+      throw error;
+    }
+  }, [currentVostcard, saveVostcardDirect, savedVostcards, postedVostcards]);
+
   // Delete private vostcard
   const deletePrivateVostcard = useCallback(async (vostcardId: string) => {
     const user = auth.currentUser;
@@ -1549,6 +1607,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     createNewVostcard,
     saveVostcard,
         postVostcard,
+        unpostVostcard,
         deletePrivateVostcard,
     loadAllLocalVostcards,
     loadPrivateVostcards,

@@ -18,12 +18,20 @@ const EditVostcardView: React.FC = () => {
     setCurrentVostcard,
     saveVostcard,
     postVostcard,
+    unpostVostcard,
+    postedVostcards,
   } = useVostcard();
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isPosting, setIsPosting] = useState(false);
+
+  // Check if current vostcard is posted
+  const isCurrentVostcardPosted = useMemo(() => {
+    if (!currentVostcard?.id) return false;
+    return postedVostcards.some(v => v.id === currentVostcard.id) || currentVostcard.state === 'posted';
+  }, [currentVostcard, postedVostcards]);
 
   // Local edit state
   const [title, setTitle] = useState('');
@@ -470,74 +478,91 @@ const EditVostcardView: React.FC = () => {
               </button>
               <button
                 onClick={async () => {
-                  if (isPosting || !ready) return;
+                  if (isPosting) return;
                   
                   setIsPosting(true);
                   try {
-                    // Debug logging
-                    console.log('🔍 EditVostcard Post Debug:', {
-                      currentVostcard: currentVostcard,
-                      hasGeo: !!currentVostcard?.geo,
-                      geo: currentVostcard?.geo,
-                      state: currentVostcard?.state,
-                      visibility: currentVostcard?.visibility
-                    });
-                    
-                    // Update the vostcard context with the current data
-                    const photosBlobs = photoFiles.filter(Boolean) as Blob[];
-                    const existingPhotoUrls = photoUrls.filter(Boolean) as string[];
-                    
-                    const updatedVostcard = {
-                      ...currentVostcard!,
-                      title,
-                      description,
-                      categories,
-                      photos: photosBlobs, // New photos as Blobs for upload
-                      _firebasePhotoURLs: existingPhotoUrls, // Preserve existing photos
-                      video: videoFile || null,
-                      state: 'posted' as const,
-                      visibility: 'public' as const,
-                      hasPhotos: photosBlobs.length > 0 || existingPhotoUrls.length > 0,
-                      hasVideo: !!videoFile,
-                      updatedAt: new Date().toISOString()
-                    };
-                    
-                    console.log('🔍 Updated vostcard for posting:', {
-                      id: updatedVostcard.id,
-                      title: updatedVostcard.title,
-                      state: updatedVostcard.state,
-                      visibility: updatedVostcard.visibility,
-                      hasGeo: !!updatedVostcard.geo,
-                      geo: updatedVostcard.geo,
-                      hasPhotos: updatedVostcard.hasPhotos
-                    });
-                    
-                    setCurrentVostcard(updatedVostcard);
-                    
-                    // Post to map using the context function
-                    await postVostcard();
-                    alert('Posted to the map!');
-                    navigate('/home', { state: { justPosted: true } });
+                    if (isCurrentVostcardPosted) {
+                      // Unpost the vostcard
+                      console.log('📤 Unposting vostcard from edit view');
+                      
+                      // Update the current vostcard with any edits first
+                      const photosBlobs = photoFiles.filter(Boolean) as Blob[];
+                      const existingPhotoUrls = photoUrls.filter(Boolean) as string[];
+                      
+                      const updatedVostcard = {
+                        ...currentVostcard!,
+                        title,
+                        description,
+                        categories,
+                        photos: photosBlobs,
+                        _firebasePhotoURLs: existingPhotoUrls,
+                        video: videoFile || null,
+                        hasPhotos: photosBlobs.length > 0 || existingPhotoUrls.length > 0,
+                        hasVideo: !!videoFile,
+                        updatedAt: new Date().toISOString()
+                      };
+                      
+                      setCurrentVostcard(updatedVostcard);
+                      await unpostVostcard();
+                      alert('Unposted from the map!');
+                      navigate('/my-vostcards');
+                    } else {
+                      // Post the vostcard
+                      if (!ready) return;
+                      
+                      console.log('🚀 Posting vostcard from edit view');
+                      
+                      // Update the vostcard context with the current data
+                      const photosBlobs = photoFiles.filter(Boolean) as Blob[];
+                      const existingPhotoUrls = photoUrls.filter(Boolean) as string[];
+                      
+                      const updatedVostcard = {
+                        ...currentVostcard!,
+                        title,
+                        description,
+                        categories,
+                        photos: photosBlobs, // New photos as Blobs for upload
+                        _firebasePhotoURLs: existingPhotoUrls, // Preserve existing photos
+                        video: videoFile || null,
+                        state: 'posted' as const,
+                        visibility: 'public' as const,
+                        hasPhotos: photosBlobs.length > 0 || existingPhotoUrls.length > 0,
+                        hasVideo: !!videoFile,
+                        updatedAt: new Date().toISOString()
+                      };
+                      
+                      setCurrentVostcard(updatedVostcard);
+                      await postVostcard();
+                      alert('Posted to the map!');
+                      navigate('/home', { state: { justPosted: true } });
+                    }
                   } catch (e) {
-                    console.error('Post error:', e);
-                    alert('Failed to post. Please try again.');
+                    console.error('Post/Unpost error:', e);
+                    const action = isCurrentVostcardPosted ? 'unpost' : 'post';
+                    alert(`Failed to ${action}. Please try again.`);
                   } finally {
                     setIsPosting(false);
                   }
                 }}
-                disabled={!ready || isPosting}
+                disabled={(!ready && !isCurrentVostcardPosted) || isPosting}
                 style={{ 
-                  background: isPosting ? '#6c757d' : (ready ? '#0a8f54' : '#9bb7a9'), 
+                  background: isPosting ? '#6c757d' : 
+                           isCurrentVostcardPosted ? '#ff6b35' : // Orange for unpost
+                           (ready ? '#0a8f54' : '#9bb7a9'), // Green for post
                   color: 'white', 
                   border: 'none', 
                   borderRadius: 8, 
                   padding: '12px 16px', 
                   fontWeight: 700, 
-                  cursor: (!ready || isPosting) ? 'not-allowed' : 'pointer',
+                  cursor: ((!ready && !isCurrentVostcardPosted) || isPosting) ? 'not-allowed' : 'pointer',
                   opacity: isPosting ? 0.7 : 1
                 }}
               >
-                {isPosting ? '🚀 Posting...' : 'Post to Map'}
+                {isPosting ? 
+                  (isCurrentVostcardPosted ? '📤 Unposting...' : '🚀 Posting...') : 
+                  (isCurrentVostcardPosted ? '📤 Unpost from Map' : '🚀 Post to Map')
+                }
               </button>
             </div>
           );
