@@ -565,7 +565,7 @@ const VostcardStudioView: React.FC = () => {
           });
         }
         
-        // Show the quickcard creator
+        // Show the vostcard creator
         setShowVostcardCreator(true);
         
         // Clear the transfer data
@@ -577,7 +577,7 @@ const VostcardStudioView: React.FC = () => {
       
       // If no sessionStorage data, check currentVostcard context
       if (currentVostcard?.isQuickcard && vostcardTitle === '' && vostcardDescription === '') {
-        console.log('📱 Loading quickcard data from context:', currentVostcard);
+        console.log('📱 Loading vostcard data from context:', currentVostcard);
         
         // Populate fields from context
         setVostcardTitle(currentVostcard.title || '');
@@ -605,13 +605,13 @@ const VostcardStudioView: React.FC = () => {
           });
         }
         
-        // Show the quickcard creator
+        // Show the vostcard creator
         setShowVostcardCreator(true);
         
         console.log('✅ Quickcard data loaded from context');
       }
     } catch (error) {
-      console.error('❌ Error loading quickcard data:', error);
+      console.error('❌ Error loading vostcard data:', error);
     }
   };
 
@@ -623,12 +623,12 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
     setQuickcardLocation(null);
-    setQuickcardIntroAudio(null);
-    setQuickcardIntroAudioSource(null);
-    setQuickcardIntroAudioFileName(null);
-    setQuickcardDetailAudio(null);
-    setQuickcardDetailAudioSource(null);
-    setQuickcardDetailAudioFileName(null);
+    setVostcardIntroAudio(null);
+    setVostcardIntroAudioSource(null);
+    setVostcardIntroAudioFileName(null);
+    setVostcardDetailAudio(null);
+    setVostcardDetailAudioSource(null);
+    setVostcardDetailAudioFileName(null);
     setVostcardCategories([]);
   };
 
@@ -818,13 +818,13 @@ const VostcardStudioView: React.FC = () => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('audio/')) {
       if (audioType === 'intro') {
-        setQuickcardIntroAudio(file);
-        setQuickcardIntroAudioSource('file');
-        setQuickcardIntroAudioFileName(file.name);
+        setVostcardIntroAudio(file);
+        setVostcardIntroAudioSource('file');
+        setVostcardIntroAudioFileName(file.name);
       } else if (audioType === 'detail') {
-        setQuickcardDetailAudio(file);
-        setQuickcardDetailAudioSource('file');
-        setQuickcardDetailAudioFileName(file.name);
+        setVostcardDetailAudio(file);
+        setVostcardDetailAudioSource('file');
+        setVostcardDetailAudioFileName(file.name);
       }
     }
   };
@@ -886,10 +886,10 @@ const VostcardStudioView: React.FC = () => {
     navigate('/pin-placer', {
       state: {
         returnTo: '/studio',
-        quickcardCreation: true,
+        vostcardCreation: true,
         title: vostcardTitle || 'New Quickcard',
         pinData: {
-          id: 'temp_quickcard',
+          id: 'temp_vostcard',
           title: vostcardTitle || 'New Quickcard',
           description: 'Quickcard location',
           latitude: quickcardLocation?.latitude || 40.7128,
@@ -925,8 +925,8 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('intro');
       }
       
-      if (quickcardDetailAudio) {
-        audioFiles.push(quickcardDetailAudio);
+      if (vostcardDetailAudio) {
+        audioFiles.push(vostcardDetailAudio);
         audioLabels.push('detail');
       }
       
@@ -949,7 +949,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(vostcardIntroAudio || quickcardDetailAudio),
+        hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1001,8 +1001,8 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('intro');
       }
       
-      if (quickcardDetailAudio) {
-        audioFiles.push(quickcardDetailAudio);
+      if (vostcardDetailAudio) {
+        audioFiles.push(vostcardDetailAudio);
         audioLabels.push('detail');
       }
       
@@ -1025,7 +1025,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(vostcardIntroAudio || quickcardDetailAudio),
+        hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1089,8 +1089,8 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('intro');
       }
       
-      if (quickcardDetailAudio) {
-        audioFiles.push(quickcardDetailAudio);
+      if (vostcardDetailAudio) {
+        audioFiles.push(vostcardDetailAudio);
         audioLabels.push('detail');
       }
       
@@ -1113,7 +1113,7 @@ const VostcardStudioView: React.FC = () => {
         isQuickcard: true,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(vostcardIntroAudio || quickcardDetailAudio),
+        hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
         createdAt: new Date().toISOString(), // This will be preserved from original
         updatedAt: new Date().toISOString()
       };
@@ -1156,12 +1156,12 @@ const VostcardStudioView: React.FC = () => {
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
     
-    setQuickcardIntroAudio(null);
-    setQuickcardIntroAudioSource(null);
-    setQuickcardIntroAudioFileName(null);
-    setQuickcardDetailAudio(null);
-    setQuickcardDetailAudioSource(null);
-    setQuickcardDetailAudioFileName(null);
+    setVostcardIntroAudio(null);
+    setVostcardIntroAudioSource(null);
+    setVostcardIntroAudioFileName(null);
+    setVostcardDetailAudio(null);
+    setVostcardDetailAudioSource(null);
+    setVostcardDetailAudioFileName(null);
     setQuickcardLocation(null);
     setVostcardCategories([]);
     
@@ -1214,18 +1214,18 @@ const VostcardStudioView: React.FC = () => {
         
         // Load intro audio (first file)
         if (quickcard.audioFiles[0]) {
-          setQuickcardIntroAudio(quickcard.audioFiles[0]);
-          setQuickcardIntroAudioSource('file');
+          setVostcardIntroAudio(quickcard.audioFiles[0]);
+          setVostcardIntroAudioSource('file');
           const introLabel = quickcard.audioLabels && quickcard.audioLabels[0] ? quickcard.audioLabels[0] : 'Intro Audio';
-          setQuickcardIntroAudioFileName(introLabel);
+          setVostcardIntroAudioFileName(introLabel);
         }
         
         // Load detail audio (second file)
         if (quickcard.audioFiles[1]) {
-          setQuickcardDetailAudio(quickcard.audioFiles[1]);
-          setQuickcardDetailAudioSource('file');
+          setVostcardDetailAudio(quickcard.audioFiles[1]);
+          setVostcardDetailAudioSource('file');
           const detailLabel = quickcard.audioLabels && quickcard.audioLabels[1] ? quickcard.audioLabels[1] : 'Detail Audio';
-          setQuickcardDetailAudioFileName(detailLabel);
+          setVostcardDetailAudioFileName(detailLabel);
         }
       }
       // Fallback to legacy audio system
@@ -1233,9 +1233,9 @@ const VostcardStudioView: React.FC = () => {
         try {
           const response = await fetch(quickcard._firebaseAudioURL);
           const blob = await response.blob();
-          setQuickcardIntroAudio(blob);
-          setQuickcardIntroAudioSource('file');
-          setQuickcardIntroAudioFileName('loaded_audio.mp3');
+          setVostcardIntroAudio(blob);
+          setVostcardIntroAudioSource('file');
+          setVostcardIntroAudioFileName('loaded_audio.mp3');
         } catch (error) {
           console.error('Failed to load intro audio:', error);
         }
@@ -1247,9 +1247,9 @@ const VostcardStudioView: React.FC = () => {
         try {
           const response = await fetch(anyQuickcard.audioURLs[1]);
           const blob = await response.blob();
-          setQuickcardDetailAudio(blob);
-          setQuickcardDetailAudioSource('file');
-          setQuickcardDetailAudioFileName('loaded_detail_audio.mp3');
+          setVostcardDetailAudio(blob);
+          setVostcardDetailAudioSource('file');
+          setVostcardDetailAudioFileName('loaded_detail_audio.mp3');
         } catch (error) {
           console.error('Failed to load detail audio:', error);
         }
@@ -1916,7 +1916,7 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Audio Status Display */}
-            {(vostcardIntroAudio || quickcardDetailAudio) && (
+            {(vostcardIntroAudio || vostcardDetailAudio) && (
               <div style={{ marginBottom: '15px' }}>
                 {vostcardIntroAudio && (
                   <div style={{
@@ -1931,9 +1931,9 @@ const VostcardStudioView: React.FC = () => {
                     🎵 Intro: {vostcardIntroAudioFileName || 'Audio file ready'}
                     <button
                       onClick={() => {
-                        setQuickcardIntroAudio(null);
-                        setQuickcardIntroAudioSource(null);
-                        setQuickcardIntroAudioFileName(null);
+                        setVostcardIntroAudio(null);
+                        setVostcardIntroAudioSource(null);
+                        setVostcardIntroAudioFileName(null);
                       }}
                       disabled={isLoading}
                       style={{
@@ -1950,7 +1950,7 @@ const VostcardStudioView: React.FC = () => {
                     </button>
                   </div>
                 )}
-                {quickcardDetailAudio && (
+                {vostcardDetailAudio && (
                   <div style={{
                     backgroundColor: '#fce4ec',
                     padding: '8px 12px',
@@ -1959,12 +1959,12 @@ const VostcardStudioView: React.FC = () => {
                     fontSize: '14px',
                     color: '#ad1457'
                   }}>
-                    🎵 Detail: {quickcardDetailAudioFileName || 'Audio file ready'}
+                    🎵 Detail: {vostcardDetailAudioFileName || 'Audio file ready'}
                     <button
                       onClick={() => {
-                        setQuickcardDetailAudio(null);
-                        setQuickcardDetailAudioSource(null);
-                        setQuickcardDetailAudioFileName(null);
+                        setVostcardDetailAudio(null);
+                        setVostcardDetailAudioSource(null);
+                        setVostcardDetailAudioFileName(null);
                       }}
                       disabled={isLoading}
                       style={{
@@ -2040,7 +2040,7 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Audio Status Indicator */}
-            {(vostcardIntroAudio || quickcardDetailAudio) && (
+            {(vostcardIntroAudio || vostcardDetailAudio) && (
               <div style={{
                 backgroundColor: '#e3f2fd',
                 border: '1px solid #2196f3',
@@ -2161,14 +2161,14 @@ const VostcardStudioView: React.FC = () => {
             )}
 
             {/* Clear Audio Buttons */}
-            {(vostcardIntroAudio || quickcardDetailAudio) && (
+            {(vostcardIntroAudio || vostcardDetailAudio) && (
               <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
                 {vostcardIntroAudio && (
                   <button
                     onClick={() => {
-                      setQuickcardIntroAudio(null);
-                      setQuickcardIntroAudioSource(null);
-                      setQuickcardIntroAudioFileName(null);
+                      setVostcardIntroAudio(null);
+                      setVostcardIntroAudioSource(null);
+                      setVostcardIntroAudioFileName(null);
                     }}
                     disabled={isLoading}
                     style={{
@@ -2186,12 +2186,12 @@ const VostcardStudioView: React.FC = () => {
                     Clear Intro
                   </button>
                 )}
-                {quickcardDetailAudio && (
+                {vostcardDetailAudio && (
                   <button
                     onClick={() => {
-                      setQuickcardDetailAudio(null);
-                      setQuickcardDetailAudioSource(null);
-                      setQuickcardDetailAudioFileName(null);
+                      setVostcardDetailAudio(null);
+                      setVostcardDetailAudioSource(null);
+                      setVostcardDetailAudioFileName(null);
                     }}
                     disabled={isLoading}
                     style={{
