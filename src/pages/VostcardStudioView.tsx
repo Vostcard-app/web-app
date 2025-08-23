@@ -495,7 +495,7 @@ const VostcardStudioView: React.FC = () => {
     if (showVostcardLoader) {
       const refreshVostcards = async () => {
         console.log('📂 Quickcard loader opened - refreshing saved vostcards with full sync...');
-        setIsLoadingQuickcards(true);
+        setIsLoadingVostcards(true);
         try {
           // Use full sync instead of immediate load to get Firebase data too
           await loadAllLocalVostcards();
@@ -503,23 +503,23 @@ const VostcardStudioView: React.FC = () => {
         } catch (error) {
           console.error('❌ Failed to refresh saved vostcards:', error);
         } finally {
-          setIsLoadingQuickcards(false);
+          setIsLoadingVostcards(false);
         }
       };
-      refreshQuickcards();
+      refreshVostcards();
     }
-  }, [showQuickcardLoader, loadAllLocalVostcards]);
+  }, [showVostcardLoader, loadAllLocalVostcards]);
 
   // Handle quickcard import
-  const handleQuickcardImport = (quickcard: Vostcard) => {
+  const handleVostcardImport = (quickcard: Vostcard) => {
     loadVostcard(quickcard);
-    setShowQuickcardImporter(false);
+    setShowVostcardImporter(false);
     // Navigate to the advanced editor to continue editing
     navigate('/studio', { state: { editingQuickcard: quickcard.id, activeTab: 'quickcard' } });
   };
 
   const handleCancelImport = () => {
-    setShowQuickcardImporter(false);
+    setShowVostcardImporter(false);
   };
 
   // Load quickcard data from currentVostcard context or sessionStorage
@@ -1997,7 +1997,7 @@ const VostcardStudioView: React.FC = () => {
               </label>
               
               <div
-                onClick={isLoading ? undefined : () => setShowQuickcardCategoryModal(true)}
+                onClick={isLoading ? undefined : () => setShowVostcardCategoryModal(true)}
                 style={{
                   backgroundColor: '#f5f5f5',
                   padding: '10px 12px',
@@ -2474,7 +2474,7 @@ const VostcardStudioView: React.FC = () => {
         )}
 
         {/* Category Selection Modal */}
-        {showQuickcardCategoryModal && (
+        {showVostcardCategoryModal && (
           <div style={{
             position: 'fixed',
             top: 0,
@@ -2525,7 +2525,7 @@ const VostcardStudioView: React.FC = () => {
               ))}
               
               <button
-                onClick={() => setShowQuickcardCategoryModal(false)}
+                onClick={() => setShowVostcardCategoryModal(false)}
                 style={{
                   marginTop: '15px',
                   backgroundColor: '#007aff',
@@ -2601,7 +2601,7 @@ const VostcardStudioView: React.FC = () => {
         />
 
         {/* Quickcard Loader Modal */}
-        {showQuickcardLoader && (
+        {showVostcardLoader && (
           <div style={{
             position: 'fixed',
             top: 0,
@@ -2646,7 +2646,7 @@ const VostcardStudioView: React.FC = () => {
 
                              {/* Quickcard List */}
                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                 {isLoadingQuickcards ? (
+                 {isLoadingVostcards ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
                      <div style={{ fontSize: '16px', marginBottom: '8px' }}>🔄 Loading vostcards...</div>
                      <div style={{ fontSize: '12px', color: '#999' }}>Refreshing saved vostcards from storage</div>
@@ -2663,7 +2663,7 @@ const VostcardStudioView: React.FC = () => {
                    savedVostcards.map((quickcard) => (
                      <div
                        key={quickcard.id}
-                       onClick={() => !isLoadingQuickcards && loadVostcardForEditing(quickcard)}
+                       onClick={() => !isLoadingVostcards && loadVostcardForEditing(quickcard)}
                        style={{
                          display: 'flex',
                          alignItems: 'center',
@@ -2671,13 +2671,13 @@ const VostcardStudioView: React.FC = () => {
                          border: '1px solid #ddd',
                          borderRadius: '8px',
                          marginBottom: '8px',
-                         cursor: isLoadingQuickcards ? 'not-allowed' : 'pointer',
-                         backgroundColor: isLoadingQuickcards ? '#f5f5f5' : '#f9f9f9',
+                         cursor: isLoadingVostcards ? 'not-allowed' : 'pointer',
+                         backgroundColor: isLoadingVostcards ? '#f5f5f5' : '#f9f9f9',
                          transition: 'background-color 0.2s',
-                         opacity: isLoadingQuickcards ? 0.6 : 1
+                         opacity: isLoadingVostcards ? 0.6 : 1
                        }}
-                       onMouseEnter={(e) => !isLoadingQuickcards && (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-                       onMouseLeave={(e) => !isLoadingQuickcards && (e.currentTarget.style.backgroundColor = '#f9f9f9')}
+                       onMouseEnter={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = '#f0f0f0')}
+                       onMouseLeave={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = '#f9f9f9')}
                      >
                        <div style={{ flex: 1 }}>
                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
