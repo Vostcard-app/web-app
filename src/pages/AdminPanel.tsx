@@ -42,6 +42,8 @@ const AdminPanel: React.FC = () => {
   const [orphanedPostsFixLoading, setOrphanedPostsFixLoading] = useState(false);
   // Quickcard to vostcard migration state
   const [quickcardMigrationLoading, setQuickcardMigrationLoading] = useState(false);
+  // Jay Bond userRole fix state
+  const [jayBondRoleFixLoading, setJayBondRoleFixLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -605,6 +607,77 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Fix Jay Bond userRole to guide
+  const handleFixJayBondUserRole = async () => {
+    if (!window.confirm('🔧 This will update ALL vostcards created by Jay Bond to have userRole: "guide". Continue?')) {
+      return;
+    }
+
+    setJayBondRoleFixLoading(true);
+    let fixed = 0;
+    let errors = 0;
+    const JAY_BOND_USER_ID = '9byLf32ls0gF2nzF17vnv9RhLiJ2';
+
+    try {
+      console.log('🔧 Starting Jay Bond userRole fix...');
+      
+      // Query for all vostcards created by Jay Bond
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', JAY_BOND_USER_ID)
+      );
+      
+      const snapshot = await getDocs(q);
+      console.log(`📋 Found ${snapshot.docs.length} vostcards created by Jay Bond to check`);
+      
+      // Check each vostcard for incorrect userRole
+      for (const docSnapshot of snapshot.docs) {
+        try {
+          const data = docSnapshot.data();
+          
+          // Check if userRole needs to be fixed
+          const needsRoleFix = data.userRole !== 'guide';
+          
+          if (needsRoleFix) {
+            console.log(`🔧 Fixing userRole for vostcard: "${data.title || 'NO_TITLE'}" (${docSnapshot.id})`);
+            console.log(`  Current userRole: ${data.userRole} → guide`);
+            
+            // Update the vostcard with correct userRole
+            const updateData: any = {
+              userRole: 'guide',
+              username: 'Jay Bond', // Ensure username is also correct
+              updatedAt: new Date().toISOString()
+            };
+            
+            await updateDoc(docSnapshot.ref, updateData);
+            
+            fixed++;
+            console.log(`  ✅ Fixed userRole for ${docSnapshot.id}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to process vostcard ${docSnapshot.id}:`, error);
+          errors++;
+        }
+      }
+
+      console.log(`✅ Jay Bond userRole fix completed! Fixed: ${fixed}, Errors: ${errors}`);
+      
+      if (fixed > 0) {
+        alert(`✅ Successfully fixed userRole for ${fixed} Jay Bond vostcards! They should now show as guide content.`);
+      } else if (errors > 0) {
+        alert(`⚠️ Fix completed with ${errors} errors. Check console for details.`);
+      } else {
+        alert('ℹ️ All Jay Bond vostcards already have correct userRole: guide.');
+      }
+      
+    } catch (error) {
+      console.error('❌ Jay Bond userRole fix failed:', error);
+      alert('❌ Jay Bond userRole fix failed. Check console for details.');
+    } finally {
+      setJayBondRoleFixLoading(false);
+    }
+  };
+
   const searchForDocument = async (docId: string) => {
     try {
       console.log(`🔍 Searching for document: ${docId}`);
@@ -1084,6 +1157,49 @@ const AdminPanel: React.FC = () => {
           }}
         >
           {quickcardMigrationLoading ? '🔄 Migrating...' : '🔄 Migrate All Quickcards'}
+        </button>
+      </div>
+
+      {/* 4.7. Fix Jay Bond UserRole */}
+      <div style={{ backgroundColor: '#e8f5e8', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #28a745' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#155724' }}>
+          🎯 Fix Jay Bond UserRole
+        </h2>
+        <p style={{ marginBottom: '15px', color: '#555' }}>
+          <strong>Data Cleanup:</strong> This will update ALL vostcards created by Jay Bond to have the correct <code>userRole: "guide"</code> instead of <code>userRole: "user"</code>.
+        </p>
+        <ul style={{ marginBottom: '15px', color: '#555', paddingLeft: '20px' }}>
+          <li>Find all vostcards with <code>userID: "9byLf32ls0gF2nzF17vnv9RhLiJ2"</code> (Jay Bond)</li>
+          <li>Update <code>userRole</code> from <code>"user"</code> to <code>"guide"</code></li>
+          <li>Ensure <code>username: "Jay Bond"</code> is correct</li>
+          <li>This will make Jay Bond's content show with guide pins and styling</li>
+        </ul>
+        <button
+          onClick={handleFixJayBondUserRole}
+          disabled={jayBondRoleFixLoading}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: jayBondRoleFixLoading ? '#6c757d' : '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: jayBondRoleFixLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!jayBondRoleFixLoading) {
+              e.currentTarget.style.backgroundColor = '#1e7e34';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!jayBondRoleFixLoading) {
+              e.currentTarget.style.backgroundColor = '#28a745';
+            }
+          }}
+        >
+          {jayBondRoleFixLoading ? '🔄 Fixing...' : '🎯 Fix Jay Bond UserRole'}
         </button>
       </div>
 
