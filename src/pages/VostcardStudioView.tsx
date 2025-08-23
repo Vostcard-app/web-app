@@ -904,12 +904,12 @@ const VostcardStudioView: React.FC = () => {
   // Update creation functions to use multiple photos
   const handleSaveQuickcardToPersonalPosts = async () => {
     if (!quickcardTitle.trim()) {
-      alert('Please enter a title for your quickcard.');
+      alert('Please enter a title for your vostcard.');
       return;
     }
 
     if (quickcardPhotos.length === 0) {
-      alert('Please add at least one photo for your quickcard.');
+      alert('Please add at least one photo for your vostcard.');
       return;
     }
 
@@ -957,12 +957,12 @@ const VostcardStudioView: React.FC = () => {
       setCurrentVostcard(quickcard);
       await saveLocalVostcard();
       
-      alert(`✅ Quickcard saved to Personal Posts with ${quickcardPhotos.length} photo(s)!`);
+      alert(`✅ Vostcard saved to Personal Posts with ${quickcardPhotos.length} photo(s)!`);
       resetQuickcardForm();
       
     } catch (error) {
       console.error('❌ Error saving quickcard draft:', error);
-      alert('Failed to save quickcard to Personal Posts. Please try again.');
+      alert('Failed to save vostcard to Personal Posts. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -970,22 +970,22 @@ const VostcardStudioView: React.FC = () => {
 
   const handlePostQuickcardToMap = async () => {
     if (!quickcardTitle.trim()) {
-      alert('Please enter a title for your quickcard.');
+      alert('Please enter a title for your vostcard.');
       return;
     }
 
     if (quickcardPhotos.length === 0) {
-      alert('Please add at least one photo for your quickcard.');
+      alert('Please add at least one photo for your vostcard.');
       return;
     }
 
     if (!quickcardLocation) {
-      alert('Please set a location for your quickcard.');
+      alert('Please set a location for your vostcard.');
       return;
     }
 
     if (quickcardCategories.length === 0) {
-      alert('Please select at least one category for your quickcard.');
+      alert('Please select at least one category for your vostcard.');
       return;
     }
 
@@ -1039,11 +1039,11 @@ const VostcardStudioView: React.FC = () => {
       sessionStorage.removeItem('quickcardTransferData');
       
       resetQuickcardForm();
-      alert(`🎉 Quickcard posted to map with ${quickcardPhotos.length} photo(s)! Form cleared for your next quickcard.`);
+      alert(`🎉 Vostcard posted to map with ${quickcardPhotos.length} photo(s)! Form cleared for your next vostcard.`);
       
     } catch (error) {
       console.error('❌ Error posting quickcard:', error);
-      alert('Failed to post quickcard. Please try again.');
+      alert('Failed to post vostcard. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -1052,27 +1052,27 @@ const VostcardStudioView: React.FC = () => {
   // Update and repost existing quickcard
   const handleUpdateAndRepostQuickcard = async () => {
     if (!editingQuickcardId) {
-      alert('No quickcard is being edited.');
+      alert('No vostcard is being edited.');
       return;
     }
 
     if (!quickcardTitle.trim()) {
-      alert('Please enter a title for your quickcard.');
+      alert('Please enter a title for your vostcard.');
       return;
     }
 
     if (quickcardPhotos.length === 0) {
-      alert('Please add at least one photo for your quickcard.');
+      alert('Please add at least one photo for your vostcard.');
       return;
     }
 
     if (!quickcardLocation) {
-      alert('Please set a location for your quickcard.');
+      alert('Please set a location for your vostcard.');
       return;
     }
 
     if (quickcardCategories.length === 0) {
-      alert('Please select at least one category for your quickcard.');
+      alert('Please select at least one category for your vostcard.');
       return;
     }
 
@@ -1126,7 +1126,7 @@ const VostcardStudioView: React.FC = () => {
       sessionStorage.removeItem('quickcardTransferData');
       
       resetQuickcardForm();
-      alert(`🎉 Quickcard updated and reposted to map with ${quickcardPhotos.length} photo(s)! No duplicates created.`);
+      alert(`🎉 Vostcard updated and reposted to map with ${quickcardPhotos.length} photo(s)! No duplicates created.`);
       
       navigate('/home', { 
         state: { 
@@ -1138,7 +1138,7 @@ const VostcardStudioView: React.FC = () => {
       
     } catch (error) {
       console.error('❌ Error updating quickcard:', error);
-      alert('Failed to update quickcard. Please try again.');
+      alert('Failed to update vostcard. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -1257,11 +1257,11 @@ const VostcardStudioView: React.FC = () => {
       setEditingQuickcardId(quickcard.id);
       
       setShowQuickcardLoader(false);
-      alert(`✅ Quickcard "${quickcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
+      alert(`✅ Vostcard "${quickcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
       
     } catch (error) {
       console.error('Error loading quickcard:', error);
-      alert('❌ Failed to load quickcard. Please try again.');
+      alert('❌ Failed to load vostcard. Please try again.');
     } finally {
       setIsLoading(false);
     }
