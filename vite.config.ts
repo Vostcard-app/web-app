@@ -32,7 +32,8 @@ export default defineConfig({
       external: [
         'nodemailer', // Server-side only
         'gapi-script', // Server-side only
-        '@sapper/app' // Server-side only
+        '@sapper/app', // Server-side only
+        'swiper/react' // Fix Netlify build error
       ],
       output: {
         manualChunks: {
@@ -65,7 +66,8 @@ export default defineConfig({
     exclude: [
       'nodemailer', // Server-side only
       'gapi-script', // Server-side only
-      '@sapper/app' // Server-side only
+      '@sapper/app', // Server-side only
+      'swiper/react' // Fix Netlify build error
     ]
   },
   resolve: {
