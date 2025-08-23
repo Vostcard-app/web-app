@@ -680,92 +680,110 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  // Regenerate photo URLs with correct paths
+  // Regenerate photo URLs with smart path discovery
   const handleRegeneratePhotoUrls = async () => {
-    if (!window.confirm('🔧 This will regenerate photo URLs for ALL vostcards by scanning Firebase Storage and updating the database with correct URLs. This should fix the HTTP 412 errors. Continue?')) {
+    if (!window.confirm('🔧 This will scan ALL storage folders to find orphaned photos and reconnect them to vostcards. This fixes database/storage mismatches. Continue?')) {
       return;
     }
 
     setPhotoUrlFixLoading(true);
     let fixed = 0;
     let errors = 0;
+    let scanned = 0;
 
     try {
-      console.log('🔧 Starting photo URL regeneration...');
+      console.log('🔧 Starting smart photo URL regeneration...');
       
-      // Query for all vostcards
-      const q = query(collection(db, 'vostcards'));
-      const snapshot = await getDocs(q);
-      console.log(`📋 Found ${snapshot.docs.length} vostcards to check`);
+      // Step 1: Build a map of all storage files
+      console.log('📁 Step 1: Scanning all storage folders...');
+      const vostcardsStorageRef = storageRef(storage, 'vostcards');
+      const userFolders = await listAll(vostcardsStorageRef);
       
-      // Process each vostcard
-      for (const docSnapshot of snapshot.docs) {
+      const storageFileMap = new Map<string, string[]>(); // vostcardId -> [photoURLs]
+      
+      for (const userFolder of userFolders.prefixes) {
         try {
-          const data = docSnapshot.data();
+          const vostcardFolders = await listAll(userFolder);
           
-          // Skip if no userID
-          if (!data.userID) {
-            console.log(`⏭️ Skipping vostcard ${docSnapshot.id} - no userID`);
-            continue;
-          }
-          
-          console.log(`🔍 Checking vostcard: "${data.title || 'NO_TITLE'}" (${docSnapshot.id})`);
-          
-          // Try to find photos in storage for this vostcard
-          const userStorageRef = storageRef(storage, `vostcards/${data.userID}/${docSnapshot.id}`);
-          
-          try {
-            const storageList = await listAll(userStorageRef);
+          for (const vostcardFolder of vostcardFolders.prefixes) {
+            const vostcardId = vostcardFolder.name.split('/').pop();
+            if (!vostcardId) continue;
             
-            if (storageList.items.length > 0) {
-              console.log(`📸 Found ${storageList.items.length} files in storage for ${docSnapshot.id}`);
+            try {
+              const files = await listAll(vostcardFolder);
+              const photoURLs: string[] = [];
               
-              // Generate new download URLs
-              const newPhotoURLs: string[] = [];
-              const newFirebasePhotoURLs: string[] = [];
+              // Sort files by name for consistent order
+              const sortedFiles = files.items.sort((a, b) => a.name.localeCompare(b.name));
               
-              // Sort files by name to maintain consistent order
-              const sortedItems = storageList.items.sort((a, b) => a.name.localeCompare(b.name));
-              
-              for (const item of sortedItems) {
-                // Only process image files
-                if (item.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+              for (const file of sortedFiles) {
+                if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
                   try {
-                    const downloadURL = await getDownloadURL(item);
-                    newPhotoURLs.push(downloadURL);
-                    newFirebasePhotoURLs.push(downloadURL);
-                    console.log(`  ✅ Generated URL for ${item.name}`);
+                    const downloadURL = await getDownloadURL(file);
+                    photoURLs.push(downloadURL);
                   } catch (urlError) {
-                    console.log(`  ❌ Failed to get URL for ${item.name}:`, urlError);
+                    console.log(`  ❌ Failed to get URL for ${file.fullPath}`);
                   }
                 }
               }
               
-              // Update the vostcard with new URLs if we found any
-              if (newPhotoURLs.length > 0) {
-                const updateData: any = {
-                  photoURLs: newPhotoURLs,
-                  _firebasePhotoURLs: newFirebasePhotoURLs,
-                  updatedAt: new Date().toISOString(),
-                  photoUrlsRegeneratedAt: new Date().toISOString()
-                };
-                
-                await updateDoc(docSnapshot.ref, updateData);
-                
-                fixed++;
-                console.log(`  ✅ Updated ${docSnapshot.id} with ${newPhotoURLs.length} photo URLs`);
-              } else {
-                console.log(`  ⚠️ No image files found for ${docSnapshot.id}`);
+              if (photoURLs.length > 0) {
+                storageFileMap.set(vostcardId, photoURLs);
+                console.log(`📸 Found ${photoURLs.length} photos for ${vostcardId}`);
               }
-            } else {
-              console.log(`  ℹ️ No files found in storage for ${docSnapshot.id}`);
+            } catch (e) {
+              console.log(`  ❌ Error scanning ${vostcardFolder.fullPath}`);
             }
-          } catch (storageError: any) {
-            if (storageError.code === 'storage/object-not-found') {
-              console.log(`  ℹ️ No storage folder found for ${docSnapshot.id}`);
+          }
+        } catch (e) {
+          console.log(`  ❌ Error scanning user folder ${userFolder.fullPath}`);
+        }
+      }
+      
+      console.log(`📊 Storage scan complete: Found photos for ${storageFileMap.size} vostcards`);
+      
+      // Step 2: Update database with found photos
+      console.log('💾 Step 2: Updating database with found photos...');
+      
+      const q = query(collection(db, 'vostcards'));
+      const snapshot = await getDocs(q);
+      console.log(`📋 Found ${snapshot.docs.length} vostcards in database`);
+      
+      for (const docSnapshot of snapshot.docs) {
+        try {
+          scanned++;
+          const data = docSnapshot.data();
+          const vostcardId = docSnapshot.id;
+          
+          console.log(`🔍 ${scanned}/${snapshot.docs.length}: Checking "${data.title || 'NO_TITLE'}" (${vostcardId})`);
+          
+          // Check if we have photos for this vostcard in storage
+          const foundPhotos = storageFileMap.get(vostcardId);
+          
+          if (foundPhotos && foundPhotos.length > 0) {
+            // Check if database needs updating
+            const currentPhotos = data.photoURLs || [];
+            const needsUpdate = currentPhotos.length === 0 || 
+                               currentPhotos.length !== foundPhotos.length ||
+                               !currentPhotos.every((url: string) => foundPhotos.includes(url));
+            
+            if (needsUpdate) {
+              const updateData: any = {
+                photoURLs: foundPhotos,
+                _firebasePhotoURLs: foundPhotos,
+                updatedAt: new Date().toISOString(),
+                photoUrlsRegeneratedAt: new Date().toISOString()
+              };
+              
+              await updateDoc(docSnapshot.ref, updateData);
+              
+              fixed++;
+              console.log(`  ✅ Updated with ${foundPhotos.length} photo URLs`);
             } else {
-              console.log(`  ❌ Storage error for ${docSnapshot.id}:`, storageError.message);
+              console.log(`  ℹ️ Already has correct photo URLs`);
             }
+          } else {
+            console.log(`  ⚠️ No photos found in storage`);
           }
         } catch (error) {
           console.error(`❌ Failed to process vostcard ${docSnapshot.id}:`, error);
@@ -773,18 +791,21 @@ const AdminPanel: React.FC = () => {
         }
       }
 
-      console.log(`✅ Photo URL regeneration completed! Fixed: ${fixed}, Errors: ${errors}`);
+      console.log(`✅ Smart photo URL regeneration completed!`);
+      console.log(`   Scanned: ${scanned} vostcards`);
+      console.log(`   Fixed: ${fixed} vostcards`);
+      console.log(`   Errors: ${errors}`);
       
       if (fixed > 0) {
-        alert(`✅ Successfully regenerated photo URLs for ${fixed} vostcards! Images should now load properly.`);
+        alert(`✅ Successfully reconnected photos for ${fixed} vostcards! Images should now load properly.`);
       } else if (errors > 0) {
         alert(`⚠️ Regeneration completed with ${errors} errors. Check console for details.`);
       } else {
-        alert('ℹ️ No vostcards needed photo URL regeneration.');
+        alert('ℹ️ All vostcards already have correct photo URLs.');
       }
       
     } catch (error) {
-      console.error('❌ Photo URL regeneration failed:', error);
+      console.error('❌ Smart photo URL regeneration failed:', error);
       alert('❌ Photo URL regeneration failed. Check console for details.');
     } finally {
       setPhotoUrlFixLoading(false);
@@ -1322,13 +1343,14 @@ const AdminPanel: React.FC = () => {
           📸 Regenerate Photo URLs
         </h2>
         <p style={{ marginBottom: '15px', color: '#555' }}>
-          <strong>🔧 Fix HTTP 412 Errors:</strong> This will scan Firebase Storage and regenerate fresh download URLs for ALL vostcard photos.
+          <strong>🔧 Smart Photo Recovery:</strong> This will scan ALL storage folders to find orphaned photos and reconnect them to vostcards. Fixes database/storage mismatches.
         </p>
         <ul style={{ marginBottom: '15px', color: '#555', paddingLeft: '20px' }}>
-          <li>Scan each vostcard's storage folder: <code>vostcards/&#123;userID&#125;/&#123;vostcardID&#125;/</code></li>
-          <li>Generate fresh download URLs with current authentication tokens</li>
-          <li>Update database with new <code>photoURLs</code> and <code>_firebasePhotoURLs</code></li>
-          <li>This should fix HTTP 412 (Precondition Failed) errors</li>
+          <li><strong>Step 1:</strong> Scan all storage folders to build a map of existing photos</li>
+          <li><strong>Step 2:</strong> Match photos to vostcards by ID (ignores userID mismatches)</li>
+          <li><strong>Step 3:</strong> Generate fresh download URLs with current tokens</li>
+          <li><strong>Step 4:</strong> Update database with correct <code>photoURLs</code></li>
+          <li>This fixes HTTP 412 errors AND database/storage mismatches</li>
         </ul>
         <div style={{ backgroundColor: '#ffecb3', padding: '10px', borderRadius: '4px', marginBottom: '15px', border: '1px solid #ffc107' }}>
           <strong>⚠️ Note:</strong> This process may take several minutes for large numbers of vostcards.
