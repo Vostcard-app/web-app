@@ -49,6 +49,8 @@ const AdminPanel: React.FC = () => {
   const [photoUrlFixLoading, setPhotoUrlFixLoading] = useState(false);
   // Avatar URL regeneration state
   const [avatarUrlFixLoading, setAvatarUrlFixLoading] = useState(false);
+  // Username display fix state
+  const [usernameFixLoading, setUsernameFixLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -851,6 +853,85 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Fix username display issues (missing displayName fields)
+  const handleFixUsernameDisplay = async () => {
+    if (!window.confirm('🔧 This will scan all user profiles and fix missing displayName fields that cause email addresses to show instead of usernames. Continue?')) {
+      return;
+    }
+
+    setUsernameFixLoading(true);
+
+    try {
+      console.log('🔧 Starting username display fix...');
+      
+      // Get all users from Firestore
+      const usersRef = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersRef);
+      
+      let fixedCount = 0;
+      let totalUsers = usersSnapshot.docs.length;
+      
+      console.log(`👥 Found ${totalUsers} user profiles to check`);
+      
+      for (const userDoc of usersSnapshot.docs) {
+        const userData = userDoc.data();
+        const userId = userDoc.id;
+        
+        console.log(`👤 Checking user: ${userId}`, {
+          username: userData.username,
+          displayName: userData.displayName,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          email: userData.email
+        });
+        
+        // Check if displayName is missing or empty
+        if (!userData.displayName || userData.displayName.trim() === '') {
+          let newDisplayName = '';
+          
+          // Try to build displayName from firstName + lastName
+          if (userData.firstName && userData.lastName) {
+            newDisplayName = `${userData.firstName.trim()} ${userData.lastName.trim()}`;
+          } 
+          // Fall back to username if available
+          else if (userData.username && userData.username.trim() !== '') {
+            newDisplayName = userData.username.trim();
+          }
+          // Last resort: use email prefix (before @)
+          else if (userData.email) {
+            newDisplayName = userData.email.split('@')[0];
+          }
+          
+          if (newDisplayName) {
+            console.log(`🔧 Fixing user ${userId}: setting displayName to "${newDisplayName}"`);
+            
+            // Update the user document
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+              displayName: newDisplayName,
+              updatedAt: new Date().toISOString()
+            });
+            
+            fixedCount++;
+          } else {
+            console.log(`⚠️ Could not generate displayName for user ${userId}`);
+          }
+        } else {
+          console.log(`✅ User ${userId} already has displayName: "${userData.displayName}"`);
+        }
+      }
+      
+      console.log(`✅ Username display fix completed: ${fixedCount}/${totalUsers} users fixed`);
+      alert(`✅ Username Display Fix Complete!\n\nFixed: ${fixedCount} users\nTotal checked: ${totalUsers} users\n\nVostcards should now show proper usernames instead of email addresses.`);
+      
+    } catch (error) {
+      console.error('❌ Username display fix failed:', error);
+      alert(`❌ Username display fix failed: ${error.message}`);
+    } finally {
+      setUsernameFixLoading(false);
+    }
+  };
+
   const searchForDocument = async (docId: string) => {
     try {
       console.log(`🔍 Searching for document: ${docId}`);
@@ -1464,6 +1545,49 @@ const AdminPanel: React.FC = () => {
           }}
         >
           {avatarUrlFixLoading ? '🔄 Regenerating Avatars...' : '🖼️ Regenerate All Avatar URLs'}
+        </button>
+      </div>
+
+      {/* 4.10. Fix Username Display Issues */}
+      <div style={{ backgroundColor: '#f0fff0', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #28a745' }}>
+        <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#155724' }}>
+          👤 Fix Username Display Issues
+        </h2>
+        <p style={{ marginBottom: '15px', color: '#555' }}>
+          <strong>🔧 Username Fix:</strong> This will scan all user profiles and fix missing displayName fields that cause email addresses to show instead of proper usernames.
+        </p>
+        <ul style={{ marginBottom: '15px', color: '#555', paddingLeft: '20px' }}>
+          <li>Scans all user profiles in Firestore</li>
+          <li>Sets displayName = firstName + lastName (if missing)</li>
+          <li>Falls back to username if no firstName/lastName</li>
+          <li>Fixes vostcards showing email instead of username</li>
+        </ul>
+        <button
+          onClick={handleFixUsernameDisplay}
+          disabled={usernameFixLoading}
+          style={{
+            backgroundColor: usernameFixLoading ? '#6c757d' : '#28a745',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: usernameFixLoading ? 'not-allowed' : 'pointer',
+            fontWeight: 600,
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            if (!usernameFixLoading) {
+              e.currentTarget.style.backgroundColor = '#1e7e34';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!usernameFixLoading) {
+              e.currentTarget.style.backgroundColor = '#28a745';
+            }
+          }}
+        >
+          {usernameFixLoading ? '🔄 Fixing Usernames...' : '👤 Fix All Username Display Issues'}
         </button>
       </div>
 
