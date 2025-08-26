@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaKey, FaUser, FaSearch, FaHome, FaUsers, FaEye, FaRefresh } from 'react-icons/fa';
+import { FaKey, FaUser, FaSearch, FaHome, FaUsers, FaEye, FaSync } from 'react-icons/fa';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { storage } from '../firebase/firebaseConfig';
@@ -492,7 +492,7 @@ const AdminPanel: React.FC = () => {
               gap: '5px'
             }}
           >
-            <FaRefresh />
+            <FaSync />
             {statsLoading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
