@@ -39,7 +39,10 @@ const AdminPanel: React.FC = () => {
     usersTotal: 0,
     vostcardsViewedToday: 0,
     vostcardsViewedLastWeek: 0,
-    vostcardsViewedTotal: 0
+    vostcardsViewedTotal: 0,
+    advertisersToday: 0,
+    advertisersLastWeek: 0,
+    advertisersTotal: 0
   });
   const [statsLoading, setStatsLoading] = useState(false);
 
@@ -138,13 +141,31 @@ const AdminPanel: React.FC = () => {
         }
       });
       
+      // Load advertiser statistics
+      const advertisersRef = collection(db, 'advertisers');
+      const allAdvertisersSnap = await getDocs(advertisersRef);
+      const advertisersTotal = allAdvertisersSnap.docs.length;
+      
+      // Count advertisers signed up today
+      const advertisersTodayQuery = query(advertisersRef, where('createdAt', '>=', todayStart));
+      const advertisersTodaySnap = await getDocs(advertisersTodayQuery);
+      const advertisersToday = advertisersTodaySnap.docs.length;
+      
+      // Count advertisers signed up in the last week
+      const advertisersLastWeekQuery = query(advertisersRef, where('createdAt', '>=', weekAgoStart));
+      const advertisersLastWeekSnap = await getDocs(advertisersLastWeekQuery);
+      const advertisersLastWeek = advertisersLastWeekSnap.docs.length;
+      
       setStats({
         usersToday,
         usersLastWeek,
         usersTotal,
         vostcardsViewedToday,
         vostcardsViewedLastWeek,
-        vostcardsViewedTotal
+        vostcardsViewedTotal,
+        advertisersToday,
+        advertisersLastWeek,
+        advertisersTotal
       });
       
       console.log('✅ Statistics loaded successfully');
@@ -543,6 +564,27 @@ const AdminPanel: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#666' }}>Total:</span>
                   <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#6f42c1' }}>{stats.vostcardsViewedTotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Advertiser Statistics */}
+            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+              <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', color: '#dc3545' }}>
+                🏪 Advertiser Signups
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Today:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#28a745' }}>{stats.advertisersToday.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Last 7 days:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#17a2b8' }}>{stats.advertisersLastWeek.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Total:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#6f42c1' }}>{stats.advertisersTotal.toLocaleString()}</span>
                 </div>
               </div>
             </div>
