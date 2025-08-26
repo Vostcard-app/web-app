@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaKey, FaUser, FaSearch, FaHome } from 'react-icons/fa';
-import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, addDoc } from 'firebase/firestore';
+import { FaKey, FaUser, FaSearch, FaHome, FaUsers, FaEye, FaRefresh } from 'react-icons/fa';
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { storage } from '../firebase/firebaseConfig';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -31,6 +31,17 @@ const AdminPanel: React.FC = () => {
   const [tracks, setTracks] = useState<any[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
   const [tracksError, setTracksError] = useState<string | null>(null);
+  
+  // Statistics state
+  const [stats, setStats] = useState({
+    usersToday: 0,
+    usersLastWeek: 0,
+    usersTotal: 0,
+    vostcardsViewedToday: 0,
+    vostcardsViewedLastWeek: 0,
+    vostcardsViewedTotal: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(false);
 
 
   // Redirect if not admin
@@ -45,6 +56,7 @@ const AdminPanel: React.FC = () => {
     if (isAdmin) {
       loadPendingAdvertisers();
       reloadTracks();
+      loadStatistics();
     }
   }, [isAdmin]);
 
@@ -61,6 +73,86 @@ const AdminPanel: React.FC = () => {
       setTracksError(e?.message || 'Failed to load music library');
     } finally {
       setTracksLoading(false);
+    }
+  };
+
+  const loadStatistics = async () => {
+    setStatsLoading(true);
+    try {
+      console.log('📊 Loading admin statistics...');
+      
+      // Calculate date ranges
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekAgoStart = new Date(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate());
+      
+      // Load user statistics
+      const usersRef = collection(db, 'users');
+      const allUsersSnap = await getDocs(usersRef);
+      const usersTotal = allUsersSnap.docs.length;
+      
+      // Count users signed up today
+      const usersTodayQuery = query(usersRef, where('createdAt', '>=', todayStart));
+      const usersTodaySnap = await getDocs(usersTodayQuery);
+      const usersToday = usersTodaySnap.docs.length;
+      
+      // Count users signed up in the last week
+      const usersLastWeekQuery = query(usersRef, where('createdAt', '>=', weekAgoStart));
+      const usersLastWeekSnap = await getDocs(usersLastWeekQuery);
+      const usersLastWeek = usersLastWeekSnap.docs.length;
+      
+      // Load vostcard view statistics
+      const vostcardsRef = collection(db, 'vostcards');
+      const allVostcardsSnap = await getDocs(vostcardsRef);
+      
+      // Calculate total views from all vostcards
+      let vostcardsViewedTotal = 0;
+      let vostcardsViewedToday = 0;
+      let vostcardsViewedLastWeek = 0;
+      
+      allVostcardsSnap.docs.forEach(doc => {
+        const data = doc.data();
+        const views = data.views || 0;
+        vostcardsViewedTotal += views;
+        
+        // For today and last week views, we'd need view timestamps
+        // Since we don't have view tracking by date, we'll use creation dates as approximation
+        const createdAt = data.createdAt;
+        if (createdAt) {
+          let createdDate;
+          if (createdAt instanceof Timestamp) {
+            createdDate = createdAt.toDate();
+          } else if (typeof createdAt === 'string') {
+            createdDate = new Date(createdAt);
+          } else {
+            createdDate = new Date(createdAt);
+          }
+          
+          if (createdDate >= todayStart) {
+            vostcardsViewedToday += views;
+          }
+          if (createdDate >= weekAgoStart) {
+            vostcardsViewedLastWeek += views;
+          }
+        }
+      });
+      
+      setStats({
+        usersToday,
+        usersLastWeek,
+        usersTotal,
+        vostcardsViewedToday,
+        vostcardsViewedLastWeek,
+        vostcardsViewedTotal
+      });
+      
+      console.log('✅ Statistics loaded successfully');
+      
+    } catch (error) {
+      console.error('❌ Error loading statistics:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -378,7 +470,85 @@ const AdminPanel: React.FC = () => {
         <div style={{ width: 36 }} />
       </div>
 
+      {/* Statistics Dashboard */}
+      <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #dee2e6' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', color: '#495057' }}>
+            📊 Platform Statistics
+          </h2>
+          <button
+            onClick={loadStatistics}
+            disabled={statsLoading}
+            style={{
+              padding: '8px 16px',
+              backgroundColor: '#6c757d',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: statsLoading ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+          >
+            <FaRefresh />
+            {statsLoading ? 'Loading...' : 'Refresh'}
+          </button>
+        </div>
 
+        {statsLoading ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+            Loading statistics...
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            {/* User Statistics */}
+            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+              <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', color: '#28a745' }}>
+                <FaUsers style={{ marginRight: '10px' }} />
+                User Signups
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Today:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#28a745' }}>{stats.usersToday.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Last 7 days:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#17a2b8' }}>{stats.usersLastWeek.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Total:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#6f42c1' }}>{stats.usersTotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Vostcard View Statistics */}
+            <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+              <h3 style={{ margin: '0 0 15px 0', display: 'flex', alignItems: 'center', color: '#fd7e14' }}>
+                <FaEye style={{ marginRight: '10px' }} />
+                Vostcard Views
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Today:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#28a745' }}>{stats.vostcardsViewedToday.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Last 7 days:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#17a2b8' }}>{stats.vostcardsViewedLastWeek.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#666' }}>Total:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#6f42c1' }}>{stats.vostcardsViewedTotal.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* 1. Pending Advertiser Applications Section */}
       <div style={{ backgroundColor: '#e8f5e8', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #c3e6c3' }}>
