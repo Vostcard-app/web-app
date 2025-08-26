@@ -139,6 +139,7 @@ export const AVAILABLE_CATEGORIES = [
   'Plaque',
   'Pub',
   'Monument',
+  'Boondocking',
 ] as const;
 
 // Available types constant  
