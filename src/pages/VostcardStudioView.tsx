@@ -558,7 +558,7 @@ const VostcardStudioView: React.FC = () => {
         
         // Handle location
         if (data.location) {
-          setQuickcardLocation({
+          setVostcardLocation({
             latitude: data.location.latitude,
             longitude: data.location.longitude,
             address: data.location.address
@@ -599,7 +599,7 @@ const VostcardStudioView: React.FC = () => {
         
         // Handle location
         if (currentVostcard.geo) {
-          setQuickcardLocation({
+          setVostcardLocation({
             latitude: currentVostcard.geo.latitude,
             longitude: currentVostcard.geo.longitude
           });
@@ -622,7 +622,7 @@ const VostcardStudioView: React.FC = () => {
     vostcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
     setQuickcardPhotos([]);
     setQuickcardPhotoPreviews([]);
-    setQuickcardLocation(null);
+    setVostcardLocation(null);
     setVostcardIntroAudio(null);
     setVostcardIntroAudioSource(null);
     setVostcardIntroAudioFileName(null);
@@ -892,8 +892,8 @@ const VostcardStudioView: React.FC = () => {
           id: 'temp_vostcard',
           title: vostcardTitle || 'New Quickcard',
           description: 'Quickcard location',
-          latitude: quickcardLocation?.latitude || 40.7128,
-          longitude: quickcardLocation?.longitude || -74.0060,
+          latitude: vostcardLocation?.latitude || 40.7128,
+          longitude: vostcardLocation?.longitude || -74.0060,
           isOffer: false,
           isQuickcard: true
         }
@@ -940,7 +940,7 @@ const VostcardStudioView: React.FC = () => {
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
-        geo: quickcardLocation,
+        geo: vostcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -979,7 +979,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (!quickcardLocation) {
+    if (!vostcardLocation) {
       alert('Please set a location for your vostcard.');
       return;
     }
@@ -1016,7 +1016,7 @@ const VostcardStudioView: React.FC = () => {
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
-        geo: quickcardLocation,
+        geo: vostcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1067,7 +1067,7 @@ const VostcardStudioView: React.FC = () => {
       return;
     }
 
-    if (!quickcardLocation) {
+    if (!vostcardLocation) {
       alert('Please set a location for your vostcard.');
       return;
     }
@@ -1104,7 +1104,7 @@ const VostcardStudioView: React.FC = () => {
         audioFiles: audioFiles,
         audioLabels: audioLabels,
         categories: vostcardCategories,
-        geo: quickcardLocation,
+        geo: vostcardLocation,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1162,7 +1162,7 @@ const VostcardStudioView: React.FC = () => {
     setVostcardDetailAudio(null);
     setVostcardDetailAudioSource(null);
     setVostcardDetailAudioFileName(null);
-    setQuickcardLocation(null);
+    setVostcardLocation(null);
     setVostcardCategories([]);
     
     // Clear editing state
@@ -2009,16 +2009,16 @@ const VostcardStudioView: React.FC = () => {
               {/* Post to Map Button - Always visible */}
               <button 
                 onClick={handlePostQuickcardToMap}
-                disabled={!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
+                disabled={!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
                 style={{
-                  backgroundColor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#007aff',
+                  backgroundColor: (!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#007aff',
                   color: 'white',
                   border: 'none',
                   padding: '12px 8px',
                   borderRadius: '4px',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                  cursor: (!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? 'not-allowed' : 'pointer',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
@@ -2034,16 +2034,16 @@ const VostcardStudioView: React.FC = () => {
               {editingVostcardId && (
                 <button 
                   onClick={handleUpdateAndRepostQuickcard}
-                  disabled={!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
+                  disabled={!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
                   style={{
-                    backgroundColor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#ff9800',
+                    backgroundColor: (!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#ff9800',
                     color: 'white',
                     border: 'none',
                     padding: '12px 8px',
                     borderRadius: '4px',
                     fontSize: '13px',
                     fontWeight: 'bold',
-                    cursor: (!vostcardTitle.trim() || !quickcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? 'not-allowed' : 'pointer',
+                    cursor: (!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? 'not-allowed' : 'pointer',
                     flex: 1,
                     display: 'flex',
                     alignItems: 'center',
