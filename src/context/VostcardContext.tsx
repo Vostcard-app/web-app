@@ -22,6 +22,7 @@ interface VostcardContextType {
   clearVostcard: () => void;
   createNewVostcard: () => void;
   saveVostcard: () => Promise<void>;
+  saveVostcardDirect: (vostcard: any) => Promise<void>;
   postVostcard: () => Promise<void>;
   deletePrivateVostcard: (vostcardId: string) => Promise<void>;
   loadAllLocalVostcards: () => Promise<void>;
@@ -1636,6 +1637,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearVostcard,
     createNewVostcard,
     saveVostcard,
+    saveVostcardDirect,
         postVostcard,
         unpostVostcard,
         deletePrivateVostcard,
