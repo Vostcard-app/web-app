@@ -274,7 +274,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         longitude: currentVostcard.geo?.longitude,
         geo: currentVostcard.geo || null,
         avatarURL: user.photoURL || '',
-        createdAt: serverTimestamp(),
+        createdAt: currentVostcard.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp(),
         state: currentVostcard.state,
         visibility: currentVostcard.visibility || 'private',
@@ -287,7 +287,14 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
 
       console.log('📝 Saving vostcard to Firebase:', docData);
-      await setDoc(doc(db, 'vostcards', currentVostcard.id), docData);
+      
+      try {
+        await setDoc(doc(db, 'vostcards', currentVostcard.id), docData);
+        console.log('✅ Successfully saved vostcard to Firebase:', currentVostcard.id);
+      } catch (firebaseError) {
+        console.error('❌ Firebase save failed:', firebaseError);
+        throw new Error(`Firebase save failed: ${firebaseError}`);
+      }
 
       // Cache locally for performance
       try {

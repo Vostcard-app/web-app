@@ -327,12 +327,33 @@ const EditVostcardView: React.FC = () => {
       setCurrentVostcard(updatedVostcard);
       
       // Use the context's save function
+      console.log('🚀 Starting save process...');
       await saveVostcard();
+      console.log('✅ Save process completed');
       
       // Add a small delay to ensure Firebase consistency
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      alert('Saved successfully! Your changes have been updated.');
+      // Verify the save by reloading the data
+      console.log('🔄 Reloading vostcard to verify save...');
+      const ref = doc(db, 'vostcards', currentVostcard!.id);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const savedData = snap.data();
+        console.log('📊 Verified saved data:', { 
+          id: savedData.id, 
+          title: savedData.title,
+          updatedAt: savedData.updatedAt 
+        });
+        
+        if (savedData.title === title) {
+          alert('✅ Saved successfully! Your changes have been updated and verified.');
+        } else {
+          alert('⚠️ Save completed but verification failed. Please refresh the page.');
+        }
+      } else {
+        alert('⚠️ Save completed but could not verify. Please refresh the page.');
+      }
       // Don't navigate away immediately - let user see the changes
     } catch (e) {
       console.error('❌ Save failed:', e);
