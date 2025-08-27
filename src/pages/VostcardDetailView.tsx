@@ -378,17 +378,21 @@ const VostcardDetailView: React.FC = () => {
   );
   
   // Debug video detection
-  console.log('🎥 Video detection for vostcard:', vostcard.id, {
-    hasVideoMedia,
-    videoURL: (vostcard as any)?.videoURL,
-    hasVideoURL: !!(vostcard as any)?.videoURL,
-    video: (vostcard as any)?.video,
-    hasVideoBlob: !!(vostcard as any)?.video,
-    hasVideo: (vostcard as any)?.hasVideo,
-    _firebaseVideoURL: (vostcard as any)?._firebaseVideoURL,
-    vostcardKeys: Object.keys(vostcard),
-    has_firebaseVideoURL: !!(vostcard as any)?._firebaseVideoURL
-  });
+  if (vostcard) {
+    console.log('🎥 Video detection for vostcard:', vostcard.id, {
+      hasVideoMedia,
+      videoURL: (vostcard as any)?.videoURL,
+      hasVideoURL: !!(vostcard as any)?.videoURL,
+      video: (vostcard as any)?.video,
+      hasVideoBlob: !!(vostcard as any)?.video,
+      hasVideo: (vostcard as any)?.hasVideo,
+      _firebaseVideoURL: (vostcard as any)?._firebaseVideoURL,
+      vostcardKeys: Object.keys(vostcard),
+      has_firebaseVideoURL: !!(vostcard as any)?._firebaseVideoURL
+    });
+  } else {
+    console.log('❌ Vostcard is null - cannot detect video');
+  }
 
   // Swipe gesture state for navigation
   const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
