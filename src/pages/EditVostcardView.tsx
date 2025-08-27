@@ -30,8 +30,9 @@ const EditVostcardView: React.FC = () => {
   // Check if current vostcard is posted
   const isCurrentVostcardPosted = useMemo(() => {
     if (!currentVostcard?.id) return false;
-    return postedVostcards.some(v => v.id === currentVostcard.id) || currentVostcard.state === 'posted';
-  }, [currentVostcard, postedVostcards]);
+    // Only consider it posted if the state is actually 'posted'
+    return currentVostcard.state === 'posted';
+  }, [currentVostcard]);
 
   // Local edit state
   const [title, setTitle] = useState('');

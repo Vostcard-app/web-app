@@ -71,6 +71,10 @@ const VostcardStudioView: React.FC = () => {
   const [vostcardCategories, setVostcardCategories] = useState<string[]>([]);
   const [showVostcardCategoryModal, setShowVostcardCategoryModal] = useState(false);
 
+  // Video state
+  const [vostcardVideo, setVostcardVideo] = useState<Blob | File | null>(null);
+  const [vostcardVideoPreview, setVostcardVideoPreview] = useState<string | null>(null);
+
   // Drag and drop state for photo reordering
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -945,9 +949,9 @@ const VostcardStudioView: React.FC = () => {
         userID: user?.uid || '',
         userRole: userRole || 'user',
         state: 'private',
-        video: null,
+        video: currentVostcard?.video || null,
         isQuickcard: true,
-        hasVideo: false,
+        hasVideo: !!(currentVostcard?.video || currentVostcard?.hasVideo),
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
         createdAt: new Date().toISOString(),
@@ -1021,9 +1025,9 @@ const VostcardStudioView: React.FC = () => {
         userID: user?.uid || '',
         userRole: userRole || 'user',
         state: 'private',
-        video: null,
+        video: currentVostcard?.video || null,
         isQuickcard: true,
-        hasVideo: false,
+        hasVideo: !!(currentVostcard?.video || currentVostcard?.hasVideo),
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
         createdAt: new Date().toISOString(),
@@ -1109,9 +1113,9 @@ const VostcardStudioView: React.FC = () => {
         userID: user?.uid || '',
         userRole: userRole || 'user',
         state: 'private',
-        video: null,
+        video: currentVostcard?.video || null,
         isQuickcard: true,
-        hasVideo: false,
+        hasVideo: !!(currentVostcard?.video || currentVostcard?.hasVideo),
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
         createdAt: new Date().toISOString(), // This will be preserved from original
