@@ -1638,7 +1638,7 @@ Tap OK to continue.`;
               }
             }}
           >
-            {vostcard.username || 'Anonymous'}
+            {userProfile?.username || vostcard.username || 'Anonymous'}
         </div>
       </div>
 
@@ -1785,8 +1785,24 @@ Tap OK to continue.`;
                 }
               }}
             >
-              <div style={{ width: '100%', height: '100%' }}>
-                {/* Static black preview with play overlay */}
+              <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+                {/* Video thumbnail */}
+                {(vostcard as any)?.videoURL && (
+                  <video
+                    style={{ 
+                      width: '100%', 
+                      height: '100%', 
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                    preload="metadata"
+                    muted
+                    playsInline
+                  >
+                    <source src={`${(vostcard as any).videoURL}#t=0.5`} type="video/mp4" />
+                  </video>
+                )}
+                {/* Play overlay */}
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ width: 0, height: 0, borderLeft: '14px solid white', borderTop: '9px solid transparent', borderBottom: '9px solid transparent', marginLeft: 4 }} />
                 </div>
