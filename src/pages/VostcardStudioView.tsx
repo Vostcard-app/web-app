@@ -1899,7 +1899,7 @@ const VostcardStudioView: React.FC = () => {
               )}
             </div>
 
-            {/* Location and Take Photo Buttons */}
+            {/* Set Location and Audio Buttons */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -1927,17 +1927,7 @@ const VostcardStudioView: React.FC = () => {
                 <FaMapMarkerAlt size={14} />
                 📍 Set Location
               </button>
-              
 
-            </div>
-
-            {/* Intro Audio Button, YouTube URL Input, and Instagram URL Input */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr',
-              gap: '10px',
-              marginBottom: '15px'
-            }}>
               <button 
                 onClick={() => document.getElementById('quickcard-intro-audio-input')?.click()}
                 disabled={isLoading}
@@ -1957,9 +1947,17 @@ const VostcardStudioView: React.FC = () => {
                 }}
               >
                 <FaUpload size={14} />
-                🎵 Intro
+                🎵 Audio
               </button>
-              
+            </div>
+
+            {/* YouTube URL Input and Instagram URL Input */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '10px',
+              marginBottom: '15px'
+            }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#333' }}>
                   📺 Add YouTube
