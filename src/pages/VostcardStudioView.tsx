@@ -1460,14 +1460,14 @@ const VostcardStudioView: React.FC = () => {
           maxWidth: '350px'
         }}>
           <button
-            onClick={() => setActiveSection('quickcard')}
+            onClick={() => setActiveSection('vostcard')}
             style={{
               flex: 1,
               padding: '12px 16px',
               border: 'none',
               borderRadius: '6px',
-              backgroundColor: activeSection === 'quickcard' ? '#007aff' : 'transparent',
-              color: activeSection === 'quickcard' ? 'white' : '#666',
+              backgroundColor: activeSection === 'vostcard' ? '#007aff' : 'transparent',
+              color: activeSection === 'vostcard' ? 'white' : '#666',
               fontSize: '14px',
               fontWeight: 'bold',
               cursor: 'pointer'
@@ -1496,8 +1496,8 @@ const VostcardStudioView: React.FC = () => {
           )}
         </div>
 
-        {/* Quickcard Section */}
-        {activeSection === 'quickcard' && (
+        {/* Vostcard Section */}
+        {activeSection === 'vostcard' && (
           <div style={{
             borderRadius: '8px',
             padding: '15px',
