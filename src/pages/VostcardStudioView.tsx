@@ -547,7 +547,7 @@ const VostcardStudioView: React.FC = () => {
         
         // Handle photos
         if (data.photos && data.photos.length > 0) {
-          setQuickcardPhotos(data.photos);
+          setVostcardPhotos(data.photos);
           // Create preview URLs for the photos
           const previews = data.photos.map((photo: any) => {
             if (photo && (photo instanceof File || photo instanceof Blob)) {
@@ -555,7 +555,7 @@ const VostcardStudioView: React.FC = () => {
             }
             return '';
           });
-          setQuickcardPhotoPreviews(previews);
+          setVostcardPhotoPreviews(previews);
         }
         
         // Handle location
@@ -588,7 +588,7 @@ const VostcardStudioView: React.FC = () => {
         
         // Handle photos
         if (currentVostcard.photos && currentVostcard.photos.length > 0) {
-          setQuickcardPhotos(currentVostcard.photos);
+          setVostcardPhotos(currentVostcard.photos);
           // Create preview URLs for the photos
           const previews = currentVostcard.photos.map((photo: any) => {
             if (photo && (photo instanceof File || photo instanceof Blob)) {
@@ -596,7 +596,7 @@ const VostcardStudioView: React.FC = () => {
             }
             return '';
           });
-          setQuickcardPhotoPreviews(previews);
+          setVostcardPhotoPreviews(previews);
         }
         
         // Handle location
@@ -622,8 +622,8 @@ const VostcardStudioView: React.FC = () => {
     // Clear creation state and clean up blob URLs
     setVostcardTitle('');
     vostcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
-    setQuickcardPhotos([]);
-    setQuickcardPhotoPreviews([]);
+    setVostcardPhotos([]);
+    setVostcardPhotoPreviews([]);
     setVostcardLocation(null);
     setVostcardIntroAudio(null);
     setVostcardIntroAudioSource(null);
@@ -657,8 +657,8 @@ const VostcardStudioView: React.FC = () => {
       newPreviews.push(previewUrl);
     });
 
-    setQuickcardPhotos(newPhotos);
-    setQuickcardPhotoPreviews(newPreviews);
+    setVostcardPhotos(newPhotos);
+    setVostcardPhotoPreviews(newPreviews);
     
     console.log(`📸 Added ${imageFiles.length} photos. Total: ${newPhotos.length}`);
   };
@@ -673,8 +673,8 @@ const VostcardStudioView: React.FC = () => {
       URL.revokeObjectURL(vostcardPhotoPreviews[index]);
     }
     
-    setQuickcardPhotos(newPhotos);
-    setQuickcardPhotoPreviews(newPreviews);
+    setVostcardPhotos(newPhotos);
+    setVostcardPhotoPreviews(newPreviews);
   };
 
   // Drag and drop handlers for photo reordering
@@ -717,8 +717,8 @@ const VostcardStudioView: React.FC = () => {
     newPhotos.splice(dropIndex, 0, draggedPhoto);
     newPreviews.splice(dropIndex, 0, draggedPreview);
     
-    setQuickcardPhotos(newPhotos);
-    setQuickcardPhotoPreviews(newPreviews);
+    setVostcardPhotos(newPhotos);
+    setVostcardPhotoPreviews(newPreviews);
     
     setDraggedIndex(null);
     setDragOverIndex(null);
@@ -790,8 +790,8 @@ const VostcardStudioView: React.FC = () => {
       newPhotos.splice(dragOverIndex, 0, draggedPhoto);
       newPreviews.splice(dragOverIndex, 0, draggedPreview);
       
-      setQuickcardPhotos(newPhotos);
-      setQuickcardPhotoPreviews(newPreviews);
+      setVostcardPhotos(newPhotos);
+      setVostcardPhotoPreviews(newPreviews);
     }
     
     // Reset all drag state
@@ -1226,8 +1226,8 @@ const VostcardStudioView: React.FC = () => {
     
     // Clean up photo blob URLs
     vostcardPhotoPreviews.forEach(url => URL.revokeObjectURL(url));
-    setQuickcardPhotos([]);
-    setQuickcardPhotoPreviews([]);
+    setVostcardPhotos([]);
+    setVostcardPhotoPreviews([]);
     
     setVostcardIntroAudio(null);
     setVostcardIntroAudioSource(null);
@@ -1724,8 +1724,8 @@ const VostcardStudioView: React.FC = () => {
                           newPhotos.splice(dragOverIndex, 0, draggedPhoto);
                           newPreviews.splice(dragOverIndex, 0, draggedPreview);
                           
-                          setQuickcardPhotos(newPhotos);
-                          setQuickcardPhotoPreviews(newPreviews);
+                          setVostcardPhotos(newPhotos);
+                          setVostcardPhotoPreviews(newPreviews);
                         }
                         setDraggedIndex(null);
                         setDragOverIndex(null);
@@ -2265,8 +2265,8 @@ const VostcardStudioView: React.FC = () => {
               <button
                 onClick={() => {
                   vostcardPhotos.forEach(photo => URL.revokeObjectURL(URL.createObjectURL(photo)));
-                  setQuickcardPhotos([]);
-                  setQuickcardPhotoPreviews([]);
+                  setVostcardPhotos([]);
+                  setVostcardPhotoPreviews([]);
                 }}
                 disabled={isLoading}
                 style={{
