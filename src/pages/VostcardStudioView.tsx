@@ -68,6 +68,7 @@ const VostcardStudioView: React.FC = () => {
   const [vostcardDetailAudio, setVostcardDetailAudio] = useState<Blob | null>(null);
   const [vostcardDetailAudioSource, setVostcardDetailAudioSource] = useState<'recording' | 'file' | null>(null);
   const [vostcardDetailAudioFileName, setVostcardDetailAudioFileName] = useState<string | null>(null);
+  const [youtubeURL, setYoutubeURL] = useState<string>('');
   const [vostcardCategories, setVostcardCategories] = useState<string[]>([]);
   const [showVostcardCategoryModal, setShowVostcardCategoryModal] = useState(false);
 
@@ -629,6 +630,7 @@ const VostcardStudioView: React.FC = () => {
     setVostcardDetailAudio(null);
     setVostcardDetailAudioSource(null);
     setVostcardDetailAudioFileName(null);
+    setYoutubeURL('');
     setVostcardCategories([]);
   };
 
@@ -837,6 +839,31 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
+  // YouTube URL validation and processing
+  const validateAndProcessYouTubeURL = (url: string): string | null => {
+    if (!url.trim()) return null;
+    
+    // YouTube URL patterns
+    const patterns = [
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
+      /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]+)/,
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return match[1]; // Return the video ID
+      }
+    }
+    
+    return null;
+  };
+
+  const handleYouTubeURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setYoutubeURL(e.target.value);
+  };
+
   const handleQuickcardPinPlacer = async () => {
     console.log('🗺️ Pin placer button clicked!'); // Debug log
     
@@ -930,6 +957,9 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('detail');
       }
       
+      // Process YouTube URL
+      const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      
       // Create quickcard as private draft with multiple photos and audio files
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
@@ -941,6 +971,7 @@ const VostcardStudioView: React.FC = () => {
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
         geo: vostcardLocation,
+        youtubeURL: processedYouTubeID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1006,6 +1037,9 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('detail');
       }
       
+      // Process YouTube URL
+      const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      
       // Create quickcard ready for posting with multiple photos
       const quickcard: Vostcard = {
         id: `quickcard_${Date.now()}`,
@@ -1017,6 +1051,7 @@ const VostcardStudioView: React.FC = () => {
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
         geo: vostcardLocation,
+        youtubeURL: processedYouTubeID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1094,6 +1129,9 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('detail');
       }
       
+      // Process YouTube URL
+      const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      
       // Update the existing quickcard with same ID
       const updatedQuickcard: Vostcard = {
         id: editingVostcardId, // Keep the same ID
@@ -1105,6 +1143,7 @@ const VostcardStudioView: React.FC = () => {
         audioLabels: audioLabels,
         categories: vostcardCategories,
         geo: vostcardLocation,
+        youtubeURL: processedYouTubeID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1162,6 +1201,7 @@ const VostcardStudioView: React.FC = () => {
     setVostcardDetailAudio(null);
     setVostcardDetailAudioSource(null);
     setVostcardDetailAudioFileName(null);
+    setYoutubeURL('');
     setVostcardLocation(null);
     setVostcardCategories([]);
     
@@ -1786,7 +1826,7 @@ const VostcardStudioView: React.FC = () => {
 
             </div>
 
-            {/* Intro and Detail Audio Buttons */}
+            {/* Intro Audio Button and YouTube URL Input */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -1815,27 +1855,44 @@ const VostcardStudioView: React.FC = () => {
                 🎵 Intro
               </button>
               
-              <button 
-                onClick={() => document.getElementById('quickcard-detail-audio-input')?.click()}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: isLoading ? '#ccc' : '#e91e63',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaUpload size={14} />
-                🎵 Detail
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#333' }}>
+                  📺 Add YouTube
+                </label>
+                <input
+                  type="text"
+                  value={youtubeURL}
+                  onChange={handleYouTubeURLChange}
+                  placeholder="Paste YouTube URL here..."
+                  disabled={isLoading}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    backgroundColor: isLoading ? '#f5f5f5' : 'white',
+                    color: isLoading ? '#999' : '#333'
+                  }}
+                />
+                {youtubeURL && validateAndProcessYouTubeURL(youtubeURL) && (
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#4CAF50',
+                    fontWeight: 'bold'
+                  }}>
+                    ✅ Valid YouTube URL
+                  </div>
+                )}
+                {youtubeURL && !validateAndProcessYouTubeURL(youtubeURL) && (
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#f44336',
+                    fontWeight: 'bold'
+                  }}>
+                    ❌ Invalid YouTube URL
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Audio Status Display */}
@@ -2515,13 +2572,7 @@ const VostcardStudioView: React.FC = () => {
           style={{ display: 'none' }}
         />
         
-        <input
-          id="quickcard-detail-audio-input"
-          type="file"
-          accept="audio/*"
-          onChange={(e) => handleQuickcardAudioUpload(e, 'detail')}
-          style={{ display: 'none' }}
-        />
+
 
         {/* Quickcard Loader Modal */}
         {showVostcardLoader && (

@@ -64,6 +64,7 @@ const VostcardDetailView: React.FC = () => {
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showYouTubeModal, setShowYouTubeModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
   const [directions, setDirections] = useState<NavigationStep[]>([]);
   const [showDirectionsOverlay, setShowDirectionsOverlay] = useState(false);
@@ -1973,7 +1974,7 @@ Tap OK to continue.`;
           gap: '5px',
           flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
         }}>
-          {/* Detail Button - Show ONLY if there's a second recording */}
+          {/* Detail Button - Show if there's a second recording OR YouTube URL */}
           {(() => {
             const hasDetailAudio = (
               // Multiple audio files exist
@@ -1987,17 +1988,27 @@ Tap OK to continue.`;
               (vostcard?.introAudioURL && vostcard?.detailAudioURL)
             );
             
-            return hasDetailAudio;
+            const hasYouTubeURL = vostcard?.youtubeURL;
+            
+            return hasDetailAudio || hasYouTubeURL;
           })() && (
             <button
               onClick={() => {
-                console.log('🎵 Detail button clicked - playing detail audio and showing slideshow');
-                // Play detail audio
-                handleDetailAudioPlayback();
-                // Show photo slideshow starting with first photo WITH AUTO-PLAY
-                if (photoURLs && photoURLs.length > 0) {
-                  setSelectedPhotoIndex(0);
-                  setShowMultiPhotoModal(true);
+                console.log('🎵 Detail button clicked');
+                
+                // Check if there's a YouTube URL
+                if (vostcard?.youtubeURL) {
+                  console.log('📺 Opening YouTube video:', vostcard.youtubeURL);
+                  setShowYouTubeModal(true);
+                } else {
+                  console.log('🎵 Playing detail audio and showing slideshow');
+                  // Play detail audio
+                  handleDetailAudioPlayback();
+                  // Show photo slideshow starting with first photo WITH AUTO-PLAY
+                  if (photoURLs && photoURLs.length > 0) {
+                    setSelectedPhotoIndex(0);
+                    setShowMultiPhotoModal(true);
+                  }
                 }
               }}
               style={{
@@ -2016,8 +2027,17 @@ Tap OK to continue.`;
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              <FaPlay size={14} style={{ marginRight: '8px' }} />
-              More
+              {vostcard?.youtubeURL ? (
+                <>
+                  <FaPlay size={14} style={{ marginRight: '8px' }} />
+                  Detail
+                </>
+              ) : (
+                <>
+                  <FaPlay size={14} style={{ marginRight: '8px' }} />
+                  More
+                </>
+              )}
             </button>
           )}
 
@@ -3231,6 +3251,76 @@ Tap OK to continue.`;
         onClose={() => setShowTipDropdown(false)}
         position={tipDropdownPosition}
       />
+
+      {/* YouTube Modal */}
+      {showYouTubeModal && vostcard?.youtubeURL && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.9)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowYouTubeModal(false)}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: '90%',
+              maxWidth: '800px',
+              aspectRatio: '16/9',
+              backgroundColor: '#000',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowYouTubeModal(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'rgba(0,0,0,0.7)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                zIndex: 10001,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            {/* YouTube Embed */}
+            <iframe
+              width="100%"
+              height="100%"
+              src={`https://www.youtube.com/embed/${vostcard.youtubeURL}?autoplay=1`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none'
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

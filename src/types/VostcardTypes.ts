@@ -27,6 +27,7 @@ export interface Vostcard {
   scriptId?: string;
   hasVideo?: boolean;
   hasPhotos?: boolean;
+  youtubeURL?: string | null;
   _videoBase64?: string | null;
   _photosBase64?: string[];
   _firebaseVideoURL?: string | null;
@@ -60,6 +61,7 @@ export interface FirebaseVostcard {
   updatedAt: Timestamp;
   hasVideo?: boolean;
   hasPhotos?: boolean;
+  youtubeURL?: string | null;
   videoURL?: string;
   photoURLs?: string[];
   isOffer?: boolean;
