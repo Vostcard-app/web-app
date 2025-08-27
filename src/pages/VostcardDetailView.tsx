@@ -371,6 +371,18 @@ const VostcardDetailView: React.FC = () => {
 
   // Determine if this vostcard has a video attached
   const hasVideoMedia = Boolean((vostcard as any)?.videoURL || (vostcard as any)?.video);
+  
+  // Debug video detection
+  console.log('🎥 Video detection:', {
+    hasVideoMedia,
+    videoURL: (vostcard as any)?.videoURL,
+    hasVideoURL: !!(vostcard as any)?.videoURL,
+    video: (vostcard as any)?.video,
+    hasVideoBlob: !!(vostcard as any)?.video,
+    hasVideo: (vostcard as any)?.hasVideo,
+    _firebaseVideoURL: (vostcard as any)?._firebaseVideoURL,
+    has_firebaseVideoURL: !!(vostcard as any)?._firebaseVideoURL
+  });
 
   // Swipe gesture state for navigation
   const [touchStart, setTouchStart] = useState<{ y: number; x: number; time: number } | null>(null);
@@ -487,6 +499,14 @@ const VostcardDetailView: React.FC = () => {
             _firebasePhotoURLsLength: data._firebasePhotoURLs?.length || 0,
             hasPhotos: data.hasPhotos,
             photoURLsValue: data.photoURLs,
+            // Video-related fields
+            hasVideo: data.hasVideo,
+            videoURL: data.videoURL,
+            hasVideoURL: !!data.videoURL,
+            video: data.video,
+            hasVideoBlob: !!data.video,
+            _firebaseVideoURL: data._firebaseVideoURL,
+            has_firebaseVideoURL: !!data._firebaseVideoURL,
             allKeys: Object.keys(data).sort()
           });
           
@@ -1779,29 +1799,66 @@ Tap OK to continue.`;
                 cursor: 'pointer'
               }}
               onClick={() => {
-                const videoUrl = (vostcard as any)?.videoURL || ((vostcard as any)?.video instanceof Blob ? URL.createObjectURL((vostcard as any).video) : null);
+                const videoUrl = (vostcard as any)?.videoURL || (vostcard as any)?._firebaseVideoURL || ((vostcard as any)?.video instanceof Blob ? URL.createObjectURL((vostcard as any).video) : null);
+                console.log('🎥 Opening video:', videoUrl);
                 if (videoUrl) {
                   window.open(videoUrl, '_blank');
+                } else {
+                  console.log('❌ No video URL available to open');
+                  alert('Video not available');
                 }
               }}
             >
               <div style={{ width: '100%', height: '100%', position: 'relative' }}>
                 {/* Video thumbnail */}
-                {(vostcard as any)?.videoURL && (
-                  <video
-                    style={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      objectFit: 'cover',
-                      display: 'block'
-                    }}
-                    preload="metadata"
-                    muted
-                    playsInline
-                  >
-                    <source src={`${(vostcard as any).videoURL}#t=0.5`} type="video/mp4" />
-                  </video>
-                )}
+                {(() => {
+                  const videoUrl = (vostcard as any)?.videoURL || (vostcard as any)?._firebaseVideoURL;
+                  console.log('🎥 Video thumbnail URL:', videoUrl);
+                  
+                  if (videoUrl) {
+                    return (
+                      <video
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover',
+                          display: 'block'
+                        }}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        onError={(e) => {
+                          console.error('❌ Video thumbnail failed to load:', {
+                            videoUrl,
+                            error: e,
+                            vostcardId: (vostcard as any)?.id
+                          });
+                        }}
+                        onLoadedMetadata={() => {
+                          console.log('✅ Video thumbnail loaded successfully');
+                        }}
+                      >
+                        <source src={`${videoUrl}#t=0.5`} type="video/mp4" />
+                      </video>
+                    );
+                  } else {
+                    console.log('❌ No video URL found for thumbnail');
+                    return (
+                      <div style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        backgroundColor: '#333',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#666',
+                        fontSize: '12px'
+                      }}>
+                        No Video
+                      </div>
+                    );
+                  }
+                })()}
                 {/* Play overlay */}
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ width: 0, height: 0, borderLeft: '14px solid white', borderTop: '9px solid transparent', borderBottom: '9px solid transparent', marginLeft: 4 }} />
