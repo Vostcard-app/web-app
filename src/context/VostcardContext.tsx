@@ -393,6 +393,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoURL = await getDownloadURL(videoRef);
       }
 
+      // Clean geo object to remove undefined values
+      let cleanGeo: any = null;
+      if (vostcardToSave.geo) {
+        cleanGeo = {
+          latitude: vostcardToSave.geo.latitude,
+          longitude: vostcardToSave.geo.longitude
+        };
+        // Only add address if it's defined and not null
+        if (vostcardToSave.geo.address !== undefined && vostcardToSave.geo.address !== null) {
+          cleanGeo.address = vostcardToSave.geo.address;
+        }
+      }
+
       // Save to Firestore
       const docData = {
         id: vostcardToSave.id,
@@ -406,7 +419,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoURL: videoURL,
         latitude: vostcardToSave.geo?.latitude,
         longitude: vostcardToSave.geo?.longitude,
-        geo: vostcardToSave.geo || null,
+        geo: cleanGeo,
         avatarURL: user.photoURL || '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -417,7 +430,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: photoURLs.length > 0,
         mediaUploadStatus: 'complete',
         isOffer: vostcardToSave.isOffer || false,
-        offerDetails: vostcardToSave.offerDetails || null
+        offerDetails: vostcardToSave.offerDetails || null,
+        youtubeURL: vostcardToSave.youtubeURL || null,
+        instagramURL: vostcardToSave.instagramURL || null
       };
 
       console.log('📝 Saving vostcard directly to Firebase:', docData);
