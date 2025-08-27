@@ -180,6 +180,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
+    // Preserve existing video data if currentVostcard exists
+    const existingVideo = currentVostcard?.video || null;
+    const existingHasVideo = currentVostcard?.hasVideo || false;
+
     const newVostcard: Vostcard = {
       id: crypto.randomUUID(),
         title: '',
@@ -191,9 +195,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       userRole: authContext.userRole || 'user',
       state: 'private',
       visibility: 'private',
-      video: null,
+      video: existingVideo,
       type: 'vostcard',
-      hasVideo: false,
+      hasVideo: existingHasVideo,
       hasPhotos: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -203,11 +207,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     console.log('🆕 Creating new vostcard:', {
       id: newVostcard.id,
       username: newVostcard.username,
+      preservedVideo: !!existingVideo,
+      preservedHasVideo: existingHasVideo,
       userID: newVostcard.userID
     });
 
     setCurrentVostcard(newVostcard);
-  }, [authContext.userRole]);
+  }, [authContext.userRole, currentVostcard]);
 
   // Save vostcard to Firebase (primary) and cache locally
   const saveVostcard = useCallback(async () => {
