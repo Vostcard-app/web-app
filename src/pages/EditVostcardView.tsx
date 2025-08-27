@@ -324,6 +324,15 @@ const EditVostcardView: React.FC = () => {
         categories: updatedVostcard.categories
       });
       
+      console.log('🔍 Title state debugging:', {
+        titleStateVariable: title,
+        titleLength: title.length,
+        currentVostcardTitle: currentVostcard?.title,
+        currentVostcardTitleLength: currentVostcard?.title?.length,
+        updatedVostcardTitle: updatedVostcard.title,
+        updatedVostcardTitleLength: updatedVostcard.title.length
+      });
+      
       // Update the context
       setCurrentVostcard(updatedVostcard);
       
@@ -465,7 +474,20 @@ const EditVostcardView: React.FC = () => {
         {/* Text fields */}
         <div style={{ marginBottom: 12 }}>
           <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Title</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a title" style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6, boxSizing: 'border-box' }} />
+          <input 
+            value={title} 
+            onChange={(e) => {
+              console.log('🔤 Title input changed:', {
+                oldValue: title,
+                newValue: e.target.value,
+                oldLength: title.length,
+                newLength: e.target.value.length
+              });
+              setTitle(e.target.value);
+            }} 
+            placeholder="Add a title" 
+            style={{ width: '100%', padding: 10, border: '1px solid #ccc', borderRadius: 6, boxSizing: 'border-box' }} 
+          />
         </div>
         <div style={{ marginBottom: 12 }}>
           <label style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>Description</label>
