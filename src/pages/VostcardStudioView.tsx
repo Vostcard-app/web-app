@@ -1327,6 +1327,9 @@ const VostcardStudioView: React.FC = () => {
       // Set editing state
       setEditingVostcardId(quickcard.id);
       
+      // Close the Load Vostcard modal
+      setShowVostcardLoader(false);
+      
       alert(`✅ Vostcard "${quickcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
       
     } catch (error) {
