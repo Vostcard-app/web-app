@@ -124,6 +124,11 @@ const EditVostcardView: React.FC = () => {
     };
 
     const initializeFromVostcard = (v: any) => {
+      console.log('🔄 Initializing edit form with vostcard data:', { 
+        id: v.id, 
+        title: v.title, 
+        description: v.description?.substring(0, 50) + '...' 
+      });
       setTitle(v.title || '');
       setDescription(v.description || '');
       setCategories(Array.isArray(v.categories) && v.categories.length > 0 ? v.categories : ['View']);
@@ -311,14 +316,24 @@ const EditVostcardView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
       
+      console.log('💾 Saving vostcard with updated data:', {
+        id: updatedVostcard.id,
+        title: updatedVostcard.title,
+        description: updatedVostcard.description?.substring(0, 50) + '...',
+        categories: updatedVostcard.categories
+      });
+      
       // Update the context
       setCurrentVostcard(updatedVostcard);
       
       // Use the context's save function
       await saveVostcard();
       
-      alert('Saved!');
-      navigate(-1);
+      // Add a small delay to ensure Firebase consistency
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      alert('Saved successfully! Your changes have been updated.');
+      // Don't navigate away immediately - let user see the changes
     } catch (e) {
       console.error('❌ Save failed:', e);
       alert('Failed to save changes.');
