@@ -14,7 +14,7 @@ const VostcardStudioView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userRole } = useAuth();
-  const { loadVostcard } = useVostcardEdit();
+  const { startEditing } = useVostcardEdit();
   const { saveVostcard, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards } = useVostcard();
   
   // Categories from step 3
@@ -512,7 +512,7 @@ const VostcardStudioView: React.FC = () => {
 
   // Handle vostcard import
   const handleVostcardImport = (quickcard: Vostcard) => {
-    loadVostcard(quickcard);
+    startEditing(quickcard);
     setShowVostcardImporter(false);
     // Navigate to the advanced editor to continue editing
     navigate('/studio', { state: { editingVostcard: quickcard.id, activeTab: 'vostcard' } });
@@ -1176,89 +1176,12 @@ const VostcardStudioView: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Load basic information
-      setVostcardTitle(quickcard.title || '');
-      setVostcardDescription(quickcard.description || '');
-      setVostcardCategories(quickcard.categories || []);
+      // Use the VostcardEdit context to start editing
+      startEditing(quickcard);
       
-      // Load location
-      if (quickcard.geo) {
-        setQuickcardLocation({
-          latitude: quickcard.geo.latitude,
-          longitude: quickcard.geo.longitude,
-          address: (quickcard.geo as any).address // Address might be in geo object
-        });
-      }
-
-      // Load photos (convert URLs to Blobs)
-      if (quickcard._firebasePhotoURLs && quickcard._firebasePhotoURLs.length > 0) {
-        const photoBlobs: Blob[] = [];
-        const photoPreviews: string[] = [];
-        for (const photoUrl of quickcard._firebasePhotoURLs) {
-          try {
-            const response = await fetch(photoUrl);
-            const blob = await response.blob();
-            photoBlobs.push(blob);
-            photoPreviews.push(URL.createObjectURL(blob));
-          } catch (error) {
-            console.error('Failed to load photo:', photoUrl, error);
-          }
-        }
-        setQuickcardPhotos(photoBlobs);
-        setQuickcardPhotoPreviews(photoPreviews);
-      }
-
-      // Load audio from new audioFiles system (preferred)
-      if (quickcard.audioFiles && quickcard.audioFiles.length > 0) {
-        console.log('🎵 Loading audio from audioFiles:', quickcard.audioFiles.length, 'files');
-        
-        // Load intro audio (first file)
-        if (quickcard.audioFiles[0]) {
-          setVostcardIntroAudio(quickcard.audioFiles[0]);
-          setVostcardIntroAudioSource('file');
-          const introLabel = quickcard.audioLabels && quickcard.audioLabels[0] ? quickcard.audioLabels[0] : 'Intro Audio';
-          setVostcardIntroAudioFileName(introLabel);
-        }
-        
-        // Load detail audio (second file)
-        if (quickcard.audioFiles[1]) {
-          setVostcardDetailAudio(quickcard.audioFiles[1]);
-          setVostcardDetailAudioSource('file');
-          const detailLabel = quickcard.audioLabels && quickcard.audioLabels[1] ? quickcard.audioLabels[1] : 'Detail Audio';
-          setVostcardDetailAudioFileName(detailLabel);
-        }
-      }
-      // Fallback to legacy audio system
-      else if (quickcard._firebaseAudioURL) {
-        try {
-          const response = await fetch(quickcard._firebaseAudioURL);
-          const blob = await response.blob();
-          setVostcardIntroAudio(blob);
-          setVostcardIntroAudioSource('file');
-          setVostcardIntroAudioFileName('loaded_audio.mp3');
-        } catch (error) {
-          console.error('Failed to load intro audio:', error);
-        }
-      }
-
-      // Fallback to audioURLs system
-      const anyQuickcard = quickcard as any;
-      if (!quickcard.audioFiles && anyQuickcard.audioURLs && anyQuickcard.audioURLs.length > 1) {
-        try {
-          const response = await fetch(anyQuickcard.audioURLs[1]);
-          const blob = await response.blob();
-          setVostcardDetailAudio(blob);
-          setVostcardDetailAudioSource('file');
-          setVostcardDetailAudioFileName('loaded_detail_audio.mp3');
-        } catch (error) {
-          console.error('Failed to load detail audio:', error);
-        }
-      }
-
       // Set editing state
       setEditingVostcardId(quickcard.id);
       
-      setShowQuickcardLoader(false);
       alert(`✅ Vostcard "${quickcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
       
     } catch (error) {
@@ -1757,7 +1680,7 @@ const VostcardStudioView: React.FC = () => {
                   } catch (error) {
                     console.error('❌ Failed to refresh vostcards:', error);
                   }
-                  setShowQuickcardLoader(true);
+                  setShowVostcardLoader(true);
                 }}
                 disabled={isLoading}
                 style={{
@@ -2629,7 +2552,7 @@ const VostcardStudioView: React.FC = () => {
                   📂 Load Vostcard for Editing
                 </h3>
                 <button
-                  onClick={() => setShowQuickcardLoader(false)}
+                  onClick={() => setShowVostcardLoader(false)}
                   style={{
                     background: 'none',
                     border: 'none',
