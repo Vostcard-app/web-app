@@ -37,21 +37,74 @@ const Step2CameraView: React.FC = () => {
       return;
     }
 
-    // Check if it's a video file
+    // Handle video files
     if (file.type.startsWith('video/')) {
-      setFileTypeWarningMessage('📸 Vostcards need photos, not videos!\n\nPlease take a photo instead.');
-      setShowFileTypeWarning(true);
+      console.log('🎥 Video captured for vostcard:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        photoType,
+        photoIndex
+      });
+      
+      // Update vostcard with the video
+      updateVostcard({ 
+        video: file,
+        hasVideo: true
+      });
+      
+      // Navigate back to Step 2
+      navigate('/create-step2', { 
+        state: { 
+          videoTaken: true,
+          photoType,
+          photoIndex
+        }
+      });
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
-    // Check if it's an image file
-    if (!file.type.startsWith('image/')) {
-      setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo file.');
-      setShowFileTypeWarning(true);
+    // Handle image files
+    if (file.type.startsWith('image/')) {
+      console.log('📸 Native camera photo captured for vostcard:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        photoType,
+        photoIndex
+      });
+      
+      // Update vostcard with the new photo
+      const currentPhotos = currentVostcard?.photos || [];
+      const newPhotos = [...currentPhotos];
+      newPhotos[photoIndex] = file;
+      
+      updateVostcard({ photos: newPhotos });
+      
+      // Navigate back to Step 2
+      navigate('/create-step2', { 
+        state: { 
+          photoTaken: true,
+          photoType,
+          photoIndex
+        }
+      });
+      
+      // Clear the file input for next use
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
-    // Process valid image file
+    // Invalid file type
+    setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo or video file.');
+    setShowFileTypeWarning(true);
     console.log('📸 Native camera photo captured for vostcard:', {
       name: file.name,
       type: file.type,
@@ -112,7 +165,7 @@ const Step2CameraView: React.FC = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         capture="environment"
         style={{ display: 'none' }}
         onChange={handleNativeCapture}
@@ -128,18 +181,18 @@ const Step2CameraView: React.FC = () => {
           fontSize: '48px',
           marginBottom: '20px'
         }}>
-          📸
+          📸🎥
         </div>
         <h2 style={{ 
           margin: '0 0 10px 0',
           color: photoType === 'distant' ? '#00aaff' : '#ff6600'
         }}>
-          {photoType === 'distant' ? 'Distant Photo' : 'Near Photo'}
+          {photoType === 'distant' ? 'Distant Media' : 'Near Media'}
         </h2>
         <p style={{ margin: '0 0 20px 0', color: '#ccc' }}>
           {photoType === 'distant' 
-            ? 'Take a photo from far away to show the full scene'
-            : 'Take a close-up photo to show details'
+            ? 'Take a photo or video from far away to show the full scene'
+            : 'Take a close-up photo or video to show details'
           }
         </p>
         <p style={{ fontSize: '14px', color: '#999', marginBottom: '20px' }}>
