@@ -845,11 +845,12 @@ const VostcardStudioView: React.FC = () => {
   const validateAndProcessYouTubeURL = (url: string): string | null => {
     if (!url.trim()) return null;
     
-    // YouTube URL patterns
+    // YouTube URL patterns (including Shorts)
     const patterns = [
       /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
       /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]+)/,
-      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/
     ];
     
     for (const pattern of patterns) {
