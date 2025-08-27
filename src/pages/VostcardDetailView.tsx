@@ -65,6 +65,7 @@ const VostcardDetailView: React.FC = () => {
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showYouTubeModal, setShowYouTubeModal] = useState(false);
+  const [showInstagramModal, setShowInstagramModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
   const [directions, setDirections] = useState<NavigationStep[]>([]);
   const [showDirectionsOverlay, setShowDirectionsOverlay] = useState(false);
@@ -1974,7 +1975,7 @@ Tap OK to continue.`;
           gap: '5px',
           flexWrap: 'wrap' // Allow wrapping if needed on smaller screens
         }}>
-          {/* Detail Button - Show if there's a second recording OR YouTube URL */}
+          {/* More Button - Show ONLY if there's a second recording (not YouTube/Instagram) */}
           {(() => {
             const hasDetailAudio = (
               // Multiple audio files exist
@@ -1988,27 +1989,17 @@ Tap OK to continue.`;
               (vostcard?.introAudioURL && vostcard?.detailAudioURL)
             );
             
-            const hasYouTubeURL = vostcard?.youtubeURL;
-            
-            return hasDetailAudio || hasYouTubeURL;
+            return hasDetailAudio;
           })() && (
             <button
               onClick={() => {
-                console.log('🎵 Detail button clicked');
-                
-                // Check if there's a YouTube URL
-                if (vostcard?.youtubeURL) {
-                  console.log('📺 Opening YouTube video:', vostcard.youtubeURL);
-                  setShowYouTubeModal(true);
-                } else {
-                  console.log('🎵 Playing detail audio and showing slideshow');
-                  // Play detail audio
-                  handleDetailAudioPlayback();
-                  // Show photo slideshow starting with first photo WITH AUTO-PLAY
-                  if (photoURLs && photoURLs.length > 0) {
-                    setSelectedPhotoIndex(0);
-                    setShowMultiPhotoModal(true);
-                  }
+                console.log('🎵 More button clicked - playing detail audio and showing slideshow');
+                // Play detail audio
+                handleDetailAudioPlayback();
+                // Show photo slideshow starting with first photo WITH AUTO-PLAY
+                if (photoURLs && photoURLs.length > 0) {
+                  setSelectedPhotoIndex(0);
+                  setShowMultiPhotoModal(true);
                 }
               }}
               style={{
@@ -2027,17 +2018,8 @@ Tap OK to continue.`;
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#001f35'}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#002B4D'}
             >
-              {vostcard?.youtubeURL ? (
-                <>
-                  <FaPlay size={14} style={{ marginRight: '8px' }} />
-                  Detail
-                </>
-              ) : (
-                <>
-                  <FaPlay size={14} style={{ marginRight: '8px' }} />
-                  More
-                </>
-              )}
+              <FaPlay size={14} style={{ marginRight: '8px' }} />
+              More
             </button>
           )}
 
@@ -2156,6 +2138,98 @@ Tap OK to continue.`;
           <FaFlag size={22} />
         </button>
       </div>
+
+      {/* YouTube and Instagram Buttons - Above Map View */}
+      {(vostcard?.youtubeURL || vostcard?.instagramURL) && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '10px',
+          gap: '12px',
+          borderBottom: '1px solid #eee'
+        }}>
+          {/* YouTube Button */}
+          {vostcard?.youtubeURL && (
+            <button
+              onClick={() => {
+                console.log('📺 YouTube button clicked:', vostcard.youtubeURL);
+                setShowYouTubeModal(true);
+              }}
+              style={{
+                backgroundColor: '#FF0000',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(255,0,0,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#CC0000'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#FF0000'}
+            >
+              <div style={{
+                width: '16px',
+                height: '16px',
+                backgroundColor: 'white',
+                borderRadius: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <FaPlay size={8} style={{ color: '#FF0000', marginLeft: '1px' }} />
+              </div>
+              YouTube
+            </button>
+          )}
+
+          {/* Instagram Button */}
+          {vostcard?.instagramURL && (
+            <button
+              onClick={() => {
+                console.log('📷 Instagram button clicked:', vostcard.instagramURL);
+                setShowInstagramModal(true);
+              }}
+              style={{
+                background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 2px 8px rgba(188,24,136,0.2)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            >
+              <div style={{
+                width: '16px',
+                height: '16px',
+                backgroundColor: 'white',
+                borderRadius: '3px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                📷
+              </div>
+              Instagram
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Map View and Add to Itinerary Buttons - Under action icons */}
       <div style={{
@@ -3315,6 +3389,76 @@ Tap OK to continue.`;
               style={{
                 width: '100%',
                 height: '100%',
+                border: 'none'
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Instagram Modal */}
+      {showInstagramModal && vostcard?.instagramURL && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.9)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setShowInstagramModal(false)}
+        >
+          <div
+            style={{
+              position: 'relative',
+              width: '90%',
+              maxWidth: '500px',
+              maxHeight: '80vh',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowInstagramModal(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'rgba(0,0,0,0.7)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                zIndex: 10001,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            {/* Instagram Embed */}
+            <iframe
+              width="100%"
+              height="600"
+              src={`https://www.instagram.com/p/${vostcard.instagramURL}/embed`}
+              title="Instagram post"
+              frameBorder="0"
+              scrolling="no"
+              allowTransparency={true}
+              style={{
+                width: '100%',
+                minHeight: '600px',
                 border: 'none'
               }}
             />

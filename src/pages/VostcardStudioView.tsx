@@ -69,6 +69,7 @@ const VostcardStudioView: React.FC = () => {
   const [vostcardDetailAudioSource, setVostcardDetailAudioSource] = useState<'recording' | 'file' | null>(null);
   const [vostcardDetailAudioFileName, setVostcardDetailAudioFileName] = useState<string | null>(null);
   const [youtubeURL, setYoutubeURL] = useState<string>('');
+  const [instagramURL, setInstagramURL] = useState<string>('');
   const [vostcardCategories, setVostcardCategories] = useState<string[]>([]);
   const [showVostcardCategoryModal, setShowVostcardCategoryModal] = useState(false);
 
@@ -631,6 +632,7 @@ const VostcardStudioView: React.FC = () => {
     setVostcardDetailAudioSource(null);
     setVostcardDetailAudioFileName(null);
     setYoutubeURL('');
+    setInstagramURL('');
     setVostcardCategories([]);
   };
 
@@ -864,6 +866,31 @@ const VostcardStudioView: React.FC = () => {
     setYoutubeURL(e.target.value);
   };
 
+  // Instagram URL validation and processing
+  const validateAndProcessInstagramURL = (url: string): string | null => {
+    if (!url.trim()) return null;
+    
+    // Instagram URL patterns
+    const patterns = [
+      /(?:https?:\/\/)?(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)/,
+      /(?:https?:\/\/)?(?:www\.)?instagram\.com\/reel\/([a-zA-Z0-9_-]+)/,
+      /(?:https?:\/\/)?(?:www\.)?instagram\.com\/tv\/([a-zA-Z0-9_-]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return match[1]; // Return the post ID
+      }
+    }
+    
+    return null;
+  };
+
+  const handleInstagramURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInstagramURL(e.target.value);
+  };
+
   const handleQuickcardPinPlacer = async () => {
     console.log('🗺️ Pin placer button clicked!'); // Debug log
     
@@ -957,8 +984,9 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('detail');
       }
       
-      // Process YouTube URL
+      // Process YouTube and Instagram URLs
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       // Create quickcard as private draft with multiple photos and audio files
       const quickcard: Vostcard = {
@@ -972,6 +1000,7 @@ const VostcardStudioView: React.FC = () => {
         categories: vostcardCategories,
         geo: vostcardLocation,
         youtubeURL: processedYouTubeID,
+        instagramURL: processedInstagramID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1037,8 +1066,9 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('detail');
       }
       
-      // Process YouTube URL
+      // Process YouTube and Instagram URLs
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       // Create quickcard ready for posting with multiple photos
       const quickcard: Vostcard = {
@@ -1052,6 +1082,7 @@ const VostcardStudioView: React.FC = () => {
         categories: vostcardCategories,
         geo: vostcardLocation,
         youtubeURL: processedYouTubeID,
+        instagramURL: processedInstagramID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1129,8 +1160,9 @@ const VostcardStudioView: React.FC = () => {
         audioLabels.push('detail');
       }
       
-      // Process YouTube URL
+      // Process YouTube and Instagram URLs
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       // Update the existing quickcard with same ID
       const updatedQuickcard: Vostcard = {
@@ -1144,6 +1176,7 @@ const VostcardStudioView: React.FC = () => {
         categories: vostcardCategories,
         geo: vostcardLocation,
         youtubeURL: processedYouTubeID,
+        instagramURL: processedInstagramID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
@@ -1826,10 +1859,10 @@ const VostcardStudioView: React.FC = () => {
 
             </div>
 
-            {/* Intro Audio Button and YouTube URL Input */}
+            {/* Intro Audio Button, YouTube URL Input, and Instagram URL Input */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              gridTemplateColumns: '1fr 1fr 1fr',
               gap: '10px',
               marginBottom: '15px'
             }}>
@@ -1890,6 +1923,45 @@ const VostcardStudioView: React.FC = () => {
                     fontWeight: 'bold'
                   }}>
                     ❌ Invalid YouTube URL
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#333' }}>
+                  📷 Add Instagram
+                </label>
+                <input
+                  type="text"
+                  value={instagramURL}
+                  onChange={handleInstagramURLChange}
+                  placeholder="Paste Instagram URL here..."
+                  disabled={isLoading}
+                  style={{
+                    padding: '8px 12px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    backgroundColor: isLoading ? '#f5f5f5' : 'white',
+                    color: isLoading ? '#999' : '#333'
+                  }}
+                />
+                {instagramURL && validateAndProcessInstagramURL(instagramURL) && (
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#4CAF50',
+                    fontWeight: 'bold'
+                  }}>
+                    ✅ Valid Instagram URL
+                  </div>
+                )}
+                {instagramURL && !validateAndProcessInstagramURL(instagramURL) && (
+                  <div style={{
+                    fontSize: '11px',
+                    color: '#f44336',
+                    fontWeight: 'bold'
+                  }}>
+                    ❌ Invalid Instagram URL
                   </div>
                 )}
               </div>
