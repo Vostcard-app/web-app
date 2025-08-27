@@ -370,10 +370,15 @@ const VostcardDetailView: React.FC = () => {
   const [creatingItinerary, setCreatingItinerary] = useState(false);
 
   // Determine if this vostcard has a video attached
-  const hasVideoMedia = Boolean((vostcard as any)?.videoURL || (vostcard as any)?.video);
+  const hasVideoMedia = Boolean(
+    (vostcard as any)?.videoURL || 
+    (vostcard as any)?._firebaseVideoURL || 
+    (vostcard as any)?.video ||
+    (vostcard as any)?.hasVideo
+  );
   
   // Debug video detection
-  console.log('🎥 Video detection:', {
+  console.log('🎥 Video detection for vostcard:', vostcard.id, {
     hasVideoMedia,
     videoURL: (vostcard as any)?.videoURL,
     hasVideoURL: !!(vostcard as any)?.videoURL,
@@ -381,6 +386,7 @@ const VostcardDetailView: React.FC = () => {
     hasVideoBlob: !!(vostcard as any)?.video,
     hasVideo: (vostcard as any)?.hasVideo,
     _firebaseVideoURL: (vostcard as any)?._firebaseVideoURL,
+    vostcardKeys: Object.keys(vostcard),
     has_firebaseVideoURL: !!(vostcard as any)?._firebaseVideoURL
   });
 
