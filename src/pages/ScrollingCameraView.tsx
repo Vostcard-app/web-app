@@ -366,11 +366,20 @@ const ScrollingCameraView: React.FC = () => {
       });
 
       // Save the portrait video (context)
+      console.log('💾 Saving video to context:', {
+        blobSize: blob.size,
+        blobType: blob.type,
+        hasLocation: !!userLocation,
+        location: userLocation
+      });
+      
       if (userLocation) {
         setVideo(blob, userLocation);
       } else {
         setVideo(blob);
       }
+      
+      console.log('✅ Video saved to context successfully');
       // Emit a custom event so listeners (e.g., edit view) can refresh their local preview immediately
       try {
         window.dispatchEvent(new CustomEvent('vostcard:video-updated', { detail: { size: blob.size, type: blob.type } }));

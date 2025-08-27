@@ -37,7 +37,7 @@ interface VostcardContextType {
   fixExpiredURLs: (vostcardData: any) => { photoURLs: string[]; videoURL: string | null; audioURL: string | null };
   cleanupBrokenFileReferences: () => Promise<void>;
   debugFirebaseStorage: (vostcardId: string) => Promise<void>;
-  setVideo: (video: Blob) => void;
+  setVideo: (video: Blob, location?: { latitude: number; longitude: number }) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
   debugIndexedDB: () => Promise<void>;
 }
@@ -1529,12 +1529,35 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loadInitialData();
   }, [authContext.loading, authContext.user]);
 
-  const setVideo = useCallback((video: Blob) => {
-    if (!currentVostcard) return;
+  const setVideo = useCallback((video: Blob, location?: { latitude: number; longitude: number }) => {
+    if (!currentVostcard) {
+      console.error('❌ No current vostcard to set video on');
+      return;
+    }
+    
+    console.log('📹 Setting video on vostcard:', {
+      vostcardId: currentVostcard.id,
+      videoSize: video.size,
+      videoType: video.type,
+      hasLocation: !!location,
+      location: location
+    });
+    
+    const updates: any = { video };
+    
+    // Update location if provided and not already set
+    if (location && (!currentVostcard.geo || !currentVostcard.geo.latitude)) {
+      updates.geo = location;
+      console.log('📍 Updated vostcard location from video recording');
+    }
+    
     setCurrentVostcard({
       ...currentVostcard,
-      video
+      ...updates,
+      updatedAt: new Date().toISOString()
     });
+    
+    console.log('✅ Video set on vostcard successfully');
   }, [currentVostcard]);
 
   const updateVostcard = useCallback((updates: Partial<Vostcard>) => {

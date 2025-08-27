@@ -60,15 +60,19 @@ const CreateVostcardStep2: React.FC = () => {
     console.log('🎥 Video object at save:', video);
 
     if (!TEMP_UNIFIED_VOSTCARD_FLOW) {
-      // Legacy requires video
-      if (!video) {
-        alert('❌ No video found. Please record a video first.');
-        return;
-      }
+      // Legacy flow: video is optional now (changed from required)
       if (videoError) {
-        alert('❌ Video has errors. Please record a new video.');
+        alert('❌ Video has errors. Please record a new video or continue without video.');
         return;
       }
+      
+      // Log video status for debugging
+      if (video) {
+        console.log('✅ Video found, proceeding with video');
+      } else {
+        console.log('ℹ️ No video found, proceeding without video (optional)');
+      }
+      
       navigate('/create-step3');
       return;
     }

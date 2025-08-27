@@ -219,8 +219,15 @@ const CameraView: React.FC = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        
+        console.log('📹 Recording completed:', {
+          blobSize: blob.size,
+          blobType: blob.type,
+          chunks: chunksRef.current.length
+        });
+        
         setVideo(blob);
-        console.log('📹 Recording saved:', blob);
+        console.log('✅ Video saved to context successfully');
         // Stop camera tracks to avoid black preview overlays
         // Comprehensive camera cleanup before navigation
         const cleanupAndNavigate = () => {
