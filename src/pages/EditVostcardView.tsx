@@ -17,6 +17,7 @@ const EditVostcardView: React.FC = () => {
     currentVostcard,
     setCurrentVostcard,
     saveVostcard,
+    saveVostcardDirect,
     postVostcard,
     unpostVostcard,
     postedVostcards,
@@ -326,9 +327,9 @@ const EditVostcardView: React.FC = () => {
       // Update the context
       setCurrentVostcard(updatedVostcard);
       
-      // Use the context's save function
-      console.log('🚀 Starting save process...');
-      await saveVostcard();
+      // Use the direct save function with the updated data to avoid timing issues
+      console.log('🚀 Starting save process with direct data...');
+      await saveVostcardDirect(updatedVostcard);
       console.log('✅ Save process completed');
       
       // Add a small delay to ensure Firebase consistency
