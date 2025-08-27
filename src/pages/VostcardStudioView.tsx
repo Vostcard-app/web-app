@@ -1252,6 +1252,78 @@ const VostcardStudioView: React.FC = () => {
       // Use the VostcardEdit context to start editing
       startEditing(quickcard);
       
+      // Populate VostcardStudio form fields
+      setVostcardTitle(quickcard.title || '');
+      setVostcardDescription(quickcard.description || '');
+      setVostcardCategories(quickcard.categories || []);
+      
+      // Load location
+      if (quickcard.geo) {
+        setVostcardLocation({
+          latitude: quickcard.geo.latitude,
+          longitude: quickcard.geo.longitude,
+          address: (quickcard.geo as any).address
+        });
+      }
+      
+      // Load YouTube and Instagram URLs
+      setYoutubeURL(quickcard.youtubeURL || '');
+      setInstagramURL(quickcard.instagramURL || '');
+      
+      // Load photos if available
+      if (quickcard.photos && quickcard.photos.length > 0) {
+        setVostcardPhotos(quickcard.photos);
+        // Create preview URLs for photos
+        const previews = quickcard.photos.map(photo => URL.createObjectURL(photo));
+        setVostcardPhotoPreviews(previews);
+      } else if (quickcard._firebasePhotoURLs && quickcard._firebasePhotoURLs.length > 0) {
+        // Load photos from Firebase URLs
+        const photoBlobs: Blob[] = [];
+        const photoPreviews: string[] = [];
+        for (const photoUrl of quickcard._firebasePhotoURLs) {
+          try {
+            const response = await fetch(photoUrl);
+            const blob = await response.blob();
+            photoBlobs.push(blob);
+            photoPreviews.push(URL.createObjectURL(blob));
+          } catch (error) {
+            console.error('Failed to load photo:', photoUrl, error);
+          }
+        }
+        setVostcardPhotos(photoBlobs);
+        setVostcardPhotoPreviews(photoPreviews);
+      }
+      
+      // Load audio files if available
+      if (quickcard.audioFiles && quickcard.audioFiles.length > 0) {
+        // Load intro audio (first file)
+        if (quickcard.audioFiles[0]) {
+          setVostcardIntroAudio(quickcard.audioFiles[0]);
+          setVostcardIntroAudioSource('file');
+          const introLabel = quickcard.audioLabels && quickcard.audioLabels[0] ? quickcard.audioLabels[0] : 'Intro Audio';
+          setVostcardIntroAudioFileName(introLabel);
+        }
+        
+        // Load detail audio (second file) 
+        if (quickcard.audioFiles[1]) {
+          setVostcardDetailAudio(quickcard.audioFiles[1]);
+          setVostcardDetailAudioSource('file');
+          const detailLabel = quickcard.audioLabels && quickcard.audioLabels[1] ? quickcard.audioLabels[1] : 'Detail Audio';
+          setVostcardDetailAudioFileName(detailLabel);
+        }
+      } else if (quickcard._firebaseAudioURL) {
+        // Load audio from Firebase URL
+        try {
+          const response = await fetch(quickcard._firebaseAudioURL);
+          const blob = await response.blob();
+          setVostcardIntroAudio(blob);
+          setVostcardIntroAudioSource('file');
+          setVostcardIntroAudioFileName('loaded_audio.mp3');
+        } catch (error) {
+          console.error('Failed to load intro audio:', error);
+        }
+      }
+      
       // Set editing state
       setEditingVostcardId(quickcard.id);
       
