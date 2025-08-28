@@ -92,13 +92,17 @@ const PublicTripView: React.FC = () => {
           });
           
           // Check if trip is shared or public
-          // Allow access if: explicitly shared, public visibility, or not private (legacy)
-          const canAccess = data.isShared || data.visibility === 'public' || data.isPrivate === false;
+          // Allow access if: explicitly shared, public visibility, not private (legacy), or isPrivate is undefined (default allow)
+          const canAccess = data.isShared || 
+                           data.visibility === 'public' || 
+                           data.isPrivate === false || 
+                           data.isPrivate === undefined;
           console.log('🔐 PublicTripView: Access check:', {
             isShared: data.isShared,
             visibility: data.visibility,
             isPrivate: data.isPrivate,
-            canAccess: canAccess
+            canAccess: canAccess,
+            shareUrl: `${window.location.origin}/share-trip/${data.id}`
           });
           
           if (canAccess) {
@@ -144,8 +148,15 @@ const PublicTripView: React.FC = () => {
             }
           } else {
             console.log('❌ PublicTripView: Trip access denied - not shared/public');
+            console.log('🔍 PublicTripView: Trip sharing debug:', {
+              tripId: data.id,
+              isShared: data.isShared,
+              visibility: data.visibility,
+              isPrivate: data.isPrivate,
+              suggestion: 'Trip owner needs to click Share button to make this trip public'
+            });
             clearTimeout(timeoutId);
-            setError('This trip is not available for public viewing.');
+            setError('This trip has not been shared publicly yet. The trip owner needs to share it first.');
             setLoading(false);
           }
         } else {
