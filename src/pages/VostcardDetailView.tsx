@@ -465,6 +465,10 @@ const VostcardDetailView: React.FC = () => {
             has_firebasePhotoURLs: !!savedVostcard._firebasePhotoURLs,
             _firebasePhotoURLsLength: savedVostcard._firebasePhotoURLs?.length || 0,
             hasPhotos: savedVostcard.hasPhotos,
+            youtubeURL: savedVostcard.youtubeURL,
+            instagramURL: savedVostcard.instagramURL,
+            hasYouTube: !!savedVostcard.youtubeURL,
+            hasInstagram: !!savedVostcard.instagramURL,
             allKeys: Object.keys(savedVostcard).sort()
           });
           setVostcard(savedVostcard);
@@ -483,6 +487,10 @@ const VostcardDetailView: React.FC = () => {
             has_firebasePhotoURLs: !!postedVostcard._firebasePhotoURLs,
             _firebasePhotoURLsLength: postedVostcard._firebasePhotoURLs?.length || 0,
             hasPhotos: postedVostcard.hasPhotos,
+            youtubeURL: postedVostcard.youtubeURL,
+            instagramURL: postedVostcard.instagramURL,
+            hasYouTube: !!postedVostcard.youtubeURL,
+            hasInstagram: !!postedVostcard.instagramURL,
             allKeys: Object.keys(postedVostcard).sort()
           });
           setVostcard(postedVostcard);
