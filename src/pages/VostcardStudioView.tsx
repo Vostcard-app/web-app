@@ -86,6 +86,7 @@ const VostcardStudioView: React.FC = () => {
   
   // Editing state for vostcards
   const [editingVostcardId, setEditingVostcardId] = useState<string | null>(null);
+  const [originalVostcardState, setOriginalVostcardState] = useState<'private' | 'posted' | null>(null);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -1165,7 +1166,7 @@ const VostcardStudioView: React.FC = () => {
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
-      // Update the existing quickcard with same ID
+      // Update the existing quickcard with same ID and preserve original state
       const updatedQuickcard: Vostcard = {
         id: editingVostcardId, // Keep the same ID
         title: vostcardTitle.trim(),
@@ -1181,7 +1182,7 @@ const VostcardStudioView: React.FC = () => {
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
         userRole: userRole || 'user',
-        state: 'private',
+        state: originalVostcardState || 'private', // Preserve original state
         video: null,
         isQuickcard: true,
         hasVideo: false,
@@ -1194,14 +1195,28 @@ const VostcardStudioView: React.FC = () => {
       setCurrentVostcard(updatedQuickcard);
       await new Promise(resolve => setTimeout(resolve, 100));
       setCurrentVostcard(updatedQuickcard);
-      await postVostcard();
+      
+      // Only post to public if the original was already posted, otherwise just save
+      if (originalVostcardState === 'posted') {
+        console.log('🔄 Updating already posted vostcard - keeping it public');
+        await postVostcard();
+      } else {
+        console.log('🔄 Updating private vostcard - keeping it private');
+        await saveVostcard();
+      }
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
       sessionStorage.removeItem('vostcardCreatorState');
       sessionStorage.removeItem('vostcardTransferData');
       
       resetQuickcardForm();
-      alert(`🎉 Vostcard updated and reposted to map with ${vostcardPhotos.length} photo(s)! No duplicates created.`);
+      
+      // Show appropriate success message based on what happened
+      if (originalVostcardState === 'posted') {
+        alert(`🎉 Public vostcard updated with ${vostcardPhotos.length} photo(s)! Changes are live on the map.`);
+      } else {
+        alert(`🎉 Personal vostcard updated with ${vostcardPhotos.length} photo(s)! Kept private as requested.`);
+      }
       
       navigate('/home', { 
         state: { 
@@ -1241,6 +1256,7 @@ const VostcardStudioView: React.FC = () => {
     
     // Clear editing state
     setEditingVostcardId(null);
+    setOriginalVostcardState(null);
   };
 
   // Function to load a quickcard for editing
@@ -1252,6 +1268,10 @@ const VostcardStudioView: React.FC = () => {
       
       // Use the VostcardEdit context to start editing
       startEditing(quickcard);
+      
+      // Store the original state to preserve it during updates
+      setOriginalVostcardState(quickcard.state || 'private');
+      console.log('📝 Original vostcard state:', quickcard.state || 'private');
       
       // Populate VostcardStudio form fields
       setVostcardTitle(quickcard.title || '');
