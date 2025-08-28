@@ -304,26 +304,18 @@ const PublicTripView: React.FC = () => {
     }
   };
 
-  // Handle slideshow button click
+  // Handle slideshow button click - just collect images, don't auto-open
   const handleSlideshowClick = async () => {
-
-    
     if (slideshowImages.length === 0) {
-
       const images = await collectTripImages();
       setSlideshowImages(images);
       
-      if (images.length > 0) {
-
-        setShowSlideshow(true);
-      } else {
-
+      if (images.length === 0) {
         alert('No images found in this trip to display in slideshow.');
       }
-    } else {
-
-      setShowSlideshow(true);
+      // Don't auto-open slideshow - let user tap thumbnail
     }
+    // Don't auto-open slideshow - let user tap thumbnail
   };
 
 
@@ -741,11 +733,11 @@ const PublicTripView: React.FC = () => {
           </button>
           
           <button
-            onClick={handleSlideshowClick}
+            onClick={slideshowImages.length > 0 ? () => setShowSlideshow(true) : handleSlideshowClick}
             disabled={loadingSlideshowImages}
             style={{
-              backgroundColor: loadingSlideshowImages ? '#ccc' : '#f0f0f0',
-              color: loadingSlideshowImages ? '#666' : '#333',
+              backgroundColor: loadingSlideshowImages ? '#ccc' : (slideshowImages.length > 0 ? '#007aff' : '#f0f0f0'),
+              color: loadingSlideshowImages ? '#666' : (slideshowImages.length > 0 ? 'white' : '#333'),
               border: 'none',
               borderRadius: '8px',
               padding: '8px 16px',
@@ -769,6 +761,11 @@ const PublicTripView: React.FC = () => {
                   animation: 'spin 1s linear infinite'
                 }} />
                 Loading...
+              </>
+            ) : slideshowImages.length > 0 ? (
+              <>
+                <FaPlay size={12} />
+                Start Slideshow ({slideshowImages.length})
               </>
             ) : (
               <>
