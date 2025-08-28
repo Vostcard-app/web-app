@@ -99,6 +99,9 @@ const TripDetailView: React.FC = () => {
   type ViewMode = 'list' | 'map' | 'slideshow';
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   
+  // Check if current user is viewing a shared trip (not the owner)
+  const isViewingSharedTrip = trip && user && user.uid !== trip.userID;
+  
   // Slideshow states
   const [showSlideshow, setShowSlideshow] = useState(false);
   const [slideshowImages, setSlideshowImages] = useState<Array<{url: string, postTitle: string}>>([]);
@@ -146,6 +149,12 @@ const TripDetailView: React.FC = () => {
       });
       
       console.log(`✅ Loaded trip: ${tripData.name} with ${tripData.items.length} items`);
+
+      // For shared trips (not owned by current user), default to slideshow view
+      if (user.uid !== tripData.userID) {
+        console.log('🔄 Shared trip detected, defaulting to slideshow view');
+        setViewMode('slideshow');
+      }
 
       // ✅ Automatically cleanup trip if there are issues (duplicates or deleted items)
       if (tripData) {
@@ -497,9 +506,9 @@ ${shareUrl}`;
         console.log('🎬 Starting slideshow with images');
         setShowSlideshow(true);
       } else {
-        // No images found, show message and switch back to list view
+        // No images found, show message and switch back to appropriate view
         alert('No images found in this trip to display in slideshow.');
-        setViewMode('list');
+        setViewMode(isViewingSharedTrip ? 'map' : 'list');
       }
     } else {
       // Images already collected, start slideshow
@@ -1092,26 +1101,29 @@ ${shareUrl}`;
             gap: '8px',
             marginBottom: '16px'
           }}>
-            <button
-              onClick={() => setViewMode('list')}
-              style={{
-                backgroundColor: viewMode === 'list' ? '#007aff' : '#f0f0f0',
-                color: viewMode === 'list' ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <FaList size={12} />
-              List View
-            </button>
+            {/* Hide List View for shared trips */}
+            {!isViewingSharedTrip && (
+              <button
+                onClick={() => setViewMode('list')}
+                style={{
+                  backgroundColor: viewMode === 'list' ? '#007aff' : '#f0f0f0',
+                  color: viewMode === 'list' ? 'white' : '#333',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <FaList size={12} />
+                List View
+              </button>
+            )}
             
             <button
               onClick={() => setViewMode('map')}
@@ -1311,7 +1323,7 @@ ${shareUrl}`;
                     This trip doesn't contain any images to display in slideshow.
                   </p>
                   <button
-                    onClick={() => setViewMode('list')}
+                    onClick={() => setViewMode(isViewingSharedTrip ? 'map' : 'list')}
                     style={{
                       background: '#007aff',
                       color: 'white',
@@ -1322,7 +1334,7 @@ ${shareUrl}`;
                       cursor: 'pointer'
                     }}
                   >
-                    Back to List View
+{isViewingSharedTrip ? 'Back to Map View' : 'Back to List View'}
                   </button>
                 </div>
               ) : (
@@ -2010,8 +2022,8 @@ ${shareUrl}`;
         isOpen={showSlideshow}
         onClose={() => {
           setShowSlideshow(false);
-          // Switch back to list view after slideshow
-          setViewMode('list');
+          // Switch back to appropriate view after slideshow
+          setViewMode(isViewingSharedTrip ? 'map' : 'list');
         }}
         title={`${trip?.name} - Slideshow`}
         autoPlay={true}
