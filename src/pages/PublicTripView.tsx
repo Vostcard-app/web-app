@@ -315,7 +315,7 @@ const PublicTripView: React.FC = () => {
     }
   };
 
-  // Handle slideshow button click - just collect images, don't auto-open
+  // Handle slideshow button click - collect images and auto-start slideshow
   const handleSlideshowClick = async () => {
     if (slideshowImages.length === 0) {
       const images = await collectTripImages();
@@ -323,10 +323,11 @@ const PublicTripView: React.FC = () => {
       
       if (images.length === 0) {
         alert('No images found in this trip to display in slideshow.');
+        return;
       }
-      // Don't auto-open slideshow - let user tap thumbnail
     }
-    // Don't auto-open slideshow - let user tap thumbnail
+    // Auto-start slideshow for shared trips
+    setShowSlideshow(true);
   };
 
 

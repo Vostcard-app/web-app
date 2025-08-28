@@ -501,19 +501,19 @@ ${shareUrl}`;
       
       console.log('🖼️ Images collected:', images.length);
       
-      // Start slideshow if images were found
+      // Don't auto-start slideshow - let user manually trigger it
       if (images.length > 0) {
-        console.log('🎬 Starting slideshow with images');
-        setShowSlideshow(true);
+        console.log('🎬 Images ready for slideshow (manual start required)');
+        // setShowSlideshow(true); // Commented out - no auto-start
       } else {
         // No images found, show message and switch back to appropriate view
         alert('No images found in this trip to display in slideshow.');
         setViewMode(isViewingSharedTrip ? 'map' : 'list');
       }
     } else {
-      // Images already collected, start slideshow
-      console.log('🎬 Starting slideshow with existing images');
-      setShowSlideshow(true);
+      // Images already collected, ready for manual slideshow start
+      console.log('🎬 Images already ready for slideshow (manual start required)');
+      // setShowSlideshow(true); // Commented out - no auto-start
     }
   };
 
@@ -2180,7 +2180,7 @@ ${shareUrl}`;
           setViewMode(isViewingSharedTrip ? 'map' : 'list');
         }}
         title={`${trip?.name} - Slideshow`}
-        autoPlay={isViewingSharedTrip} // Enable auto-play for shared trips
+        autoPlay={false}
         autoPlayInterval={5000}
       />
 
