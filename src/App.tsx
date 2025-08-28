@@ -1,266 +1,223 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { AiOutlineClose } from 'react-icons/ai';
-import { useVostcard } from '../context/VostcardContext';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { VostcardProvider } from "./context/VostcardContext";
+import { VostcardStorageProvider, VostcardEditProvider } from "./context";
+import { ScriptProvider } from "./context/ScriptContext";
+import { FollowingProvider } from "./context/FollowingContext";
+import { DriveModeProvider } from "./context/DriveModeContext";
+import ResponsiveContainer from "./components/ResponsiveContainer";
 
-interface LocationState {
-  photoType: 'distant' | 'near';
-  photoIndex: number;
+import RootView from "./pages/RootView";
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import RegistrationPage from "./pages/RegistrationPage";
+import UserGuideView from "./pages/UserGuideView";
+import HomeView from "./pages/HomeView";
+import PublicHomeView from "./pages/PublicHomeView";
+import BrowseAreaView from "./pages/BrowseAreaView";
+import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
+import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
+import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
+import EditVostcardView from "./pages/EditVostcardView";
+import VostcardCreateStep1Photos from "./pages/VostcardCreateStep1Photos";
+// Removed quickcard imports
+import ListView from "./pages/ListView";
+import ScrollingCameraView from "./pages/ScrollingCameraView";
+import CameraView from "./pages/CameraView";
+
+import Step2CameraView from "./pages/Step2CameraView";
+import SavedVostcardsListView from "./pages/SavedVostcardsListView";
+import SettingsView from "./pages/SettingsView";
+import AccountSettingsView from "./pages/AccountSettingsView";
+import UserSettingsView from "./pages/UserSettingsView";
+import VostcardDetailView from "./pages/VostcardDetailView";
+import PinPlacerTool from "./pages/PinPlacerTool";
+import DrivecardPinPlacer from "./pages/DrivecardPinPlacer";
+import MyVostcardListView from "./pages/MyVostcardListView";
+import MyPostedVostcardsListView from "./pages/MyPostedVostcardsListView";
+import AllPostedVostcardsView from "./pages/AllPostedVostcardsView";
+import LikedVostcardsView from "./pages/LikedVostcardsView";
+import FollowingView from "./pages/FollowingView";
+import FriendListView from "./pages/FriendListView";
+import VostboxView from "./pages/VostboxView";
+// Removed legacy quickcard import
+import ItinerariesListView from "./pages/ItinerariesListView";
+import ItineraryDetailView from "./pages/ItineraryDetailView";
+import MyTripsListView from "./pages/MyTripsListView";
+import TripDetailView from "./pages/TripDetailView";
+import ScriptLibraryView from "./pages/ScriptLibraryView";
+import ScriptEditorView from "./pages/ScriptEditorView";
+import ScriptToolView from "./pages/ScriptToolView";
+import MusicLibraryView from "./pages/MusicLibraryView";
+import UserProfileView from "./pages/UserProfileView";
+import BusinessProfileView from "./pages/BusinessProfileView";
+import AdvertiserPortal from "./pages/AdvertiserPortal";
+import CreateOfferView from "./pages/CreateOfferView";
+import EditStoreProfileView from "./pages/EditStoreProfileView";
+import OfferView from "./pages/OfferView";
+import OffersListView from "./pages/OffersListView";
+import AdminPanel from "./pages/AdminPanel";
+import ReportBugView from "./pages/ReportBugView";
+import FlagFormView from "./pages/FlagFormView";
+import SuggestionBoxView from "./pages/SuggestionBoxView";
+import DrivecardsListView from "./pages/DrivecardsListView";
+import DriveModeSettingsView from "./pages/DriveModeSettingsView";
+import VostcardStudioView from "./pages/VostcardStudioView";
+import ExampleView from "./pages/ExampleView";
+import PublicVostcardView from "./pages/PublicVostcardView";
+// Removed public legacy quickcard import
+import PublicTripView from "./pages/PublicTripView";
+import PublicTripMapView from "./pages/PublicTripMapView";
+import ShareableTripView from "./pages/ShareableTripView";
+import PublicItineraryView from "./pages/PublicItineraryView";
+import PreferencesView from "./pages/PreferencesView";
+import EmailVostcardView from "./pages/EmailVostcardView";
+import TourView from "./pages/TourView";
+import ToursView from "./pages/ToursView";
+import ToursNearMeView from "./pages/ToursNearMeView";
+import TourMapView from "./pages/TourMapView";
+import TourInProgressView from "./pages/TourInProgressView";
+import AuthRedirect from "./components/AuthRedirect";
+import FiltersHelpView from "./pages/FiltersHelpView";
+import CreateCardsHelpView from "./pages/CreateCardsHelpView";
+import { TEMP_UNIFIED_VOSTCARD_FLOW } from './utils/flags';
+
+function App() {
+  return (
+    <AuthProvider>
+      <VostcardProvider>
+        <VostcardStorageProvider>
+          <VostcardEditProvider>
+            <ScriptProvider>
+              <FollowingProvider>
+                <DriveModeProvider>
+                  <Router>
+              <AuthRedirect />
+              <ResponsiveContainer>
+                <Routes>
+                  {/* 🔑 Authentication */}
+                  <Route path="/" element={<RootView />} />
+                  <Route path="/landing" element={<LandingPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegistrationPage />} />
+                  <Route path="/user-guide" element={<UserGuideView />} />
+
+                  {/*  Public Access */}
+                  <Route path="/share/:id" element={<PublicVostcardView />} />
+                  <Route path="/share-vostcard/:id" element={<PublicVostcardView />} />
+                  <Route path="/share-trip/:id" element={<PublicTripView />} />
+                  <Route path="/shared-trip/:tourId" element={<ShareableTripView />} />
+                  <Route path="/share-itinerary/:shareableLink" element={<PublicItineraryView />} />
+                  <Route path="/public-trip-map" element={<PublicTripMapView />} />
+                  <Route path="/email/:id" element={<EmailVostcardView />} />
+                  <Route path="/public-map" element={<PublicHomeView />} />
+
+                  {/* 🏠 Main */}
+                  <Route path="/home" element={<HomeView />} />
+                  <Route path="/browse-area" element={<BrowseAreaView />} />
+                  <Route path="/list" element={<ListView />} />
+                  <Route path="/all-posted-vostcards" element={<AllPostedVostcardsView />} />
+                  <Route path="/offers-list" element={<OffersListView />} />
+    
+                  <Route path="/my-posted-vostcards" element={<MyPostedVostcardsListView />} />
+                  <Route path="/my-vostcards" element={<MyVostcardListView />} />
+                  <Route path="/edit-my-vostcards" element={<MyVostcardListView />} />
+                  <Route path="/liked-vostcards" element={<LikedVostcardsView />} />
+                  <Route path="/following" element={<FollowingView />} />
+                  <Route path="/friends" element={<FriendListView />} />
+                  <Route path="/vostbox" element={<VostboxView />} />
+
+                  {/* 📋 Itinerary Routes */}
+                  <Route path="/itineraries" element={<ItinerariesListView />} />
+                  <Route path="/itinerary/:id" element={<ItineraryDetailView />} />
+                  
+                  {/* 🧳 Trip Routes */}
+                  <Route path="/my-trips" element={<MyTripsListView />} />
+                  <Route path="/trip/:id" element={<TripDetailView />} />
+
+                  {/* 📜 Script Management */}
+                  <Route path="/script-library" element={<ScriptLibraryView />} />
+                  <Route path="/scripts" element={<ScriptLibraryView />} />
+                  <Route path="/script-editor" element={<ScriptEditorView />} />
+                  <Route path="/script-tool" element={<ScriptToolView />} />
+                  
+                  {/* 🎵 Music Library */}
+                  <Route path="/music-library" element={<MusicLibraryView />} />
+
+                  {/* 📹 Recording */}
+                  <Route path="/camera" element={<CameraView />} />
+                  <Route path="/scrolling-camera" element={<ScrollingCameraView />} />
+      
+
+                  {/* 🛠️ Creation Flow */}
+                  {/* Standard 3-step vostcard creation flow */}
+                  <Route path="/create-step1" element={<VostcardCreateStep1Photos />} />
+                  <Route path="/create-step2" element={<CreateVostcardStep2 />} />
+                  <Route path="/create-step3" element={<CreateVostcardStep3 />} />
+                  {/* Removed legacy quickcard routes */}
+                  {/* Removed quick audio route */}
+                  <Route path="/step2-camera" element={<Step2CameraView />} />
+                  <Route path="/edit/:id" element={<EditVostcardView />} />
+
+                  {/* 📍 Location */}
+                  <Route path="/pin-placer" element={<PinPlacerTool />} />
+                  <Route path="/drivecard-pin-placer" element={<DrivecardPinPlacer />} />
+
+                  {/* 🎯 Details */}
+                  <Route path="/vostcard/:id" element={<VostcardDetailView />} />
+                  <Route path="/offer/:id" element={<OfferView />} />
+                  <Route path="/tour/:tourId" element={<TourView />} />
+                  <Route path="/tours-near-me" element={<ToursNearMeView />} />
+                  <Route path="/tour-map/:tourId" element={<TourMapView />} />
+                  <Route path="/tour-in-progress/:tourId" element={<TourInProgressView />} />
+
+                  {/* 👤 Profile */}
+                  <Route path="/user-settings" element={<UserSettingsView />} />
+                  <Route path="/preferences" element={<PreferencesView />} />
+                  <Route path="/settings" element={<SettingsView />} />
+                  <Route path="/account-settings" element={<AccountSettingsView />} />
+                  <Route path="/user-profile/:userId" element={<UserProfileView />} />
+                  <Route path="/user-profile/:userId/tours" element={<ToursView />} />
+                  <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />
+
+                  {/* 🏢 Business */}
+                  <Route path="/advertiser-portal" element={<AdvertiserPortal />} />
+                  <Route path="/create-offer" element={<CreateOfferView />} />
+                  <Route path="/edit-store-profile" element={<EditStoreProfileView />} />
+
+                  {/* 🛡️ Admin */}
+                  <Route path="/admin" element={<AdminPanel />} />
+
+                  {/* 🐛 Support */}
+                  <Route path="/report-bug" element={<ReportBugView />} />
+                  <Route path="/flag-form" element={<FlagFormView />} />
+                  <Route path="/suggestion-box" element={<SuggestionBoxView />} />
+                  
+                  {/* 🆘 Help */}
+                  <Route path="/help/filters" element={<FiltersHelpView />} />
+                  <Route path="/help/create-cards" element={<CreateCardsHelpView />} />
+
+                  {/* 🏎️ Drive Mode */}
+                  <Route path="/drivecards" element={<DrivecardsListView />} />
+                  <Route path="/drive-mode-settings" element={<DriveModeSettingsView />} />
+
+                  {/* 🎬 Studio */}
+                  <Route path="/studio" element={<VostcardStudioView />} />
+
+                  {/* 🔍 Examples */}
+                  <Route path="/example" element={<ExampleView />} />
+                </Routes>
+              </ResponsiveContainer>
+            </Router>
+                </DriveModeProvider>
+              </FollowingProvider>
+            </ScriptProvider>
+          </VostcardEditProvider>
+        </VostcardStorageProvider>
+      </VostcardProvider>
+    </AuthProvider>
+  );
 }
 
-const Step2CameraView: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { updateVostcard, currentVostcard } = useVostcard();
-  
-  // Get photo type from location state
-  const state = location.state as LocationState;
-  const photoType = state?.photoType || 'distant';
-  const photoIndex = state?.photoIndex || 0;
-  
-  const [showFileTypeWarning, setShowFileTypeWarning] = useState(false);
-  const [fileTypeWarningMessage, setFileTypeWarningMessage] = useState('');
-
-  // Auto-trigger native camera when component mounts
-  useEffect(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  // Handle native camera capture
-  const handleNativeCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    
-    if (!file) {
-      // User cancelled - go back to Step 2
-      navigate('/create-step2');
-      return;
-    }
-
-    // Handle video files
-    if (file.type.startsWith('video/')) {
-      console.log('🎥 Video captured for vostcard:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        photoType,
-        photoIndex
-      });
-      
-      // Update vostcard with the video
-      updateVostcard({ 
-        video: file,
-        hasVideo: true
-      });
-      
-      // Navigate back to Step 2
-      navigate('/create-step2', { 
-        state: { 
-          videoTaken: true,
-          photoType,
-          photoIndex
-        }
-      });
-      
-      // Clear the file input for next use
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    // Handle image files
-    if (file.type.startsWith('image/')) {
-      console.log('📸 Native camera photo captured for vostcard:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        photoType,
-        photoIndex
-      });
-      
-      // Update vostcard with the new photo
-      const currentPhotos = currentVostcard?.photos || [];
-      const newPhotos = [...currentPhotos];
-      newPhotos[photoIndex] = file;
-      
-      updateVostcard({ photos: newPhotos });
-      
-      // Navigate back to Step 2
-      navigate('/create-step2', { 
-        state: { 
-          photoTaken: true,
-          photoType,
-          photoIndex
-        }
-      });
-      
-      // Clear the file input for next use
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    // Invalid file type
-    setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo or video file.');
-    setShowFileTypeWarning(true);
-  };
-
-  // Handle warning dismissal
-  const handleWarningOk = () => {
-    setShowFileTypeWarning(false);
-    // Go back to Step 2
-    navigate('/create-step2');
-  };
-
-  // Try native camera again
-  const retryNativeCamera = () => {
-    fileInputRef.current?.click();
-  };
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: '#000',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999
-    }}>
-      {/* Native camera file input - Updated to accept both images and videos */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        capture="environment"
-        style={{ display: 'none' }}
-        onChange={handleNativeCapture}
-      />
-
-      {/* Loading/instruction screen */}
-      <div style={{
-        textAlign: 'center',
-        color: 'white',
-        padding: '20px'
-      }}>
-        <div style={{
-          fontSize: '48px',
-          marginBottom: '20px'
-        }}>
-          📸🎥
-        </div>
-        <h2 style={{ 
-          margin: '0 0 10px 0',
-          color: photoType === 'distant' ? '#00aaff' : '#ff6600'
-        }}>
-          {photoType === 'distant' ? 'Distant Media' : 'Near Media'}
-        </h2>
-        <p style={{ margin: '0 0 20px 0', color: '#ccc' }}>
-          {photoType === 'distant' 
-            ? 'Take a photo or video from far away to show the full scene'
-            : 'Take a close-up photo or video to show details'
-          }
-        </p>
-        <p style={{ fontSize: '14px', color: '#999', marginBottom: '20px' }}>
-          Your camera app should open automatically
-        </p>
-        
-        {/* Manual camera trigger button */}
-        <button
-          onClick={retryNativeCamera}
-          style={{
-            background: '#007aff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '12px 24px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            marginBottom: '10px'
-          }}
-        >
-          📱 Open Camera
-        </button>
-        
-        <div style={{ fontSize: '12px', color: '#666' }}>
-          If camera doesn't open, tap the button above
-        </div>
-      </div>
-
-      {/* Close button */}
-      <button
-        onClick={() => navigate('/create-step2')}
-        style={{
-          position: 'absolute',
-          top: '20px',
-          right: '20px',
-          background: 'rgba(255,255,255,0.2)',
-          border: 'none',
-          borderRadius: '50%',
-          width: '48px',
-          height: '48px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer'
-        }}
-      >
-        <AiOutlineClose size={24} color="white" />
-      </button>
-
-      {/* File Type Warning Modal */}
-      {showFileTypeWarning && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            padding: '24px',
-            margin: '20px',
-            maxWidth: '320px',
-            textAlign: 'center'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>
-              ⚠️ File Type Warning
-            </h3>
-            <p style={{ margin: '0 0 20px 0', color: '#666', whiteSpace: 'pre-line' }}>
-              {fileTypeWarningMessage}
-            </p>
-            <button 
-              onClick={handleWarningOk}
-              style={{
-                background: '#007aff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                cursor: 'pointer',
-                fontSize: '16px'
-              }}
-            >
-              OK, Got It
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Step2CameraView;
+export default App;
