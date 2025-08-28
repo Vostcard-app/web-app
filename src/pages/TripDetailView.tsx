@@ -1519,7 +1519,7 @@ ${shareUrl}`;
                   </div>
                 )}
               </div>
-            ))
+            )
           ) : viewMode === 'map' ? (
             // Map View
             (() => {
