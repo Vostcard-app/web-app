@@ -9,7 +9,7 @@ import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
-import QuickcardPin from '../assets/quickcard_pin.png';
+// Legacy pin import removed - using VostcardPin for all vostcards
 import VostcardPin from '../assets/Vostcard_pin.png';
 import GuidePin from '../assets/Guide_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
@@ -42,7 +42,7 @@ const VostcardDetailView: React.FC = () => {
   
   // Debug navigation state on load and scroll to top
   useEffect(() => {
-    console.log('🔍 QuickcardDetailView loaded:', {
+    console.log('🔍 VostcardDetailView loaded:', {
       vostcardList: vostcardList.length,
       currentIndex,
       id,
@@ -711,8 +711,8 @@ const VostcardDetailView: React.FC = () => {
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
           const userData = userSnap.data();
-          console.log('🔍 QuickcardDetailView Debug - Creator userRole:', userData.userRole);
-          console.log('🔍 QuickcardDetailView Debug - Creator buyMeACoffeeURL:', userData.buyMeACoffeeURL);
+          console.log('🔍 VostcardDetailView Debug - Creator userRole:', userData.userRole);
+          console.log('🔍 VostcardDetailView Debug - Creator buyMeACoffeeURL:', userData.buyMeACoffeeURL);
           setUserProfile(userData);
         }
       } catch (err) {
@@ -1275,11 +1275,11 @@ Tap OK to continue.`;
   const canGoToPrevious = vostcardList.length > 0 && currentIndex > 0;
   const canGoToNext = vostcardList.length > 0 && currentIndex < vostcardList.length - 1;
 
-  const handlePreviousQuickcard = () => {
+  const handlePreviousVostcard = () => {
     // Scroll to top before navigation to show avatar under banner
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    console.log('🔄 handlePreviousQuickcard called:', { canGoToPrevious, currentIndex, vostcardList: vostcardList.length });
+    console.log('🔄 handlePreviousVostcard called:', { canGoToPrevious, currentIndex, vostcardList: vostcardList.length });
     if (canGoToPrevious) {
       const previousId = vostcardList[currentIndex - 1];
       console.log('📱 Navigating to previous:', previousId, 'index:', currentIndex - 1);
@@ -1299,11 +1299,11 @@ Tap OK to continue.`;
     }
   };
 
-  const handleNextQuickcard = () => {
+  const handleNextVostcard = () => {
     // Scroll to top before navigation to show avatar under banner
     window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    console.log('🔄 handleNextQuickcard called:', { canGoToNext, currentIndex, vostcardList: vostcardList.length });
+    console.log('🔄 handleNextVostcard called:', { canGoToNext, currentIndex, vostcardList: vostcardList.length });
     if (canGoToNext) {
       const nextId = vostcardList[currentIndex + 1];
       console.log('📱 Navigating to next:', nextId, 'index:', currentIndex + 1);
@@ -1399,7 +1399,7 @@ Tap OK to continue.`;
                         timeDiff < timeThreshold && 
                         !isScrolling;
     
-    console.log('🔍 QuickcardDetailView Swipe Debug:', {
+    console.log('🔍 VostcardDetailView Swipe Debug:', {
       distance,
       horizontalDistance,
       timeDiff,
@@ -1418,7 +1418,7 @@ Tap OK to continue.`;
         // Swipe up - go to next vostcard
         console.log('📱 Swiping up to next item...', { distance, canGoToNext, currentIndex, listLength: vostcardList.length });
         if (canGoToNext) {
-          handleNextQuickcard();
+          handleNextVostcard();
         } else {
           console.log('❌ Cannot go to next - at end of list');
         }
@@ -1426,7 +1426,7 @@ Tap OK to continue.`;
         // Swipe down - go to previous vostcard
         console.log('📱 Swiping down to previous item...', { distance, canGoToPrevious, currentIndex, listLength: vostcardList.length });
         if (canGoToPrevious) {
-          handlePreviousQuickcard();
+          handlePreviousVostcard();
         } else {
           console.log('❌ Cannot go to previous - at start of list', { currentIndex, canGoToPrevious });
         }
@@ -1452,7 +1452,7 @@ Tap OK to continue.`;
   // Debug logging for audio detection
   useEffect(() => {
     if (vostcard) {
-      console.log('🎵 AUDIO DEBUG - Quickcard data:', {
+      console.log('🎵 AUDIO DEBUG - Vostcard data:', {
         id: vostcard.id,
         title: vostcard.title,
         hasAudioURL: !!vostcard.audioURL,

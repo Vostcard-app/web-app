@@ -1250,6 +1250,7 @@ const VostcardStudioView: React.FC = () => {
     setVostcardDetailAudioSource(null);
     setVostcardDetailAudioFileName(null);
     setYoutubeURL('');
+    setInstagramURL('');
     setVostcardLocation(null);
     setVostcardCategories([]);
     
