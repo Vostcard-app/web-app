@@ -497,7 +497,7 @@ const VostcardStudioView: React.FC = () => {
   useEffect(() => {
     if (showVostcardLoader) {
       const refreshVostcards = async () => {
-        console.log('📂 Quickcard loader opened - refreshing saved vostcards with full sync...');
+        console.log('📂 Vostcard loader opened - refreshing saved vostcards with full sync...');
         setIsLoadingVostcards(true);
         try {
           // Use full sync instead of immediate load to get Firebase data too
@@ -514,11 +514,11 @@ const VostcardStudioView: React.FC = () => {
   }, [showVostcardLoader, loadAllLocalVostcards]);
 
   // Handle vostcard import
-  const handleVostcardImport = (quickcard: Vostcard) => {
-    startEditing(quickcard);
+  const handleVostcardImport = (vostcard: Vostcard) => {
+    startEditing(vostcard);
     setShowVostcardImporter(false);
     // Navigate to the advanced editor to continue editing
-    navigate('/studio', { state: { editingVostcard: quickcard.id, activeTab: 'vostcard' } });
+    navigate('/studio', { state: { editingVostcard: vostcard.id, activeTab: 'vostcard' } });
   };
 
   const handleCancelImport = () => {
@@ -574,12 +574,12 @@ const VostcardStudioView: React.FC = () => {
         // Clear the transfer data
         sessionStorage.removeItem('vostcardTransferData');
         
-        console.log('✅ Quickcard data transferred successfully');
+        console.log('✅ Vostcard data transferred successfully');
         return;
       }
       
       // If no sessionStorage data, check currentVostcard context
-      if (currentVostcard?.isQuickcard && vostcardTitle === '' && vostcardDescription === '') {
+      if (currentVostcard && vostcardTitle === '' && vostcardDescription === '') {
         console.log('📱 Loading vostcard data from context:', currentVostcard);
         
         // Populate fields from context
@@ -611,7 +611,7 @@ const VostcardStudioView: React.FC = () => {
         // Show the vostcard creator
         setShowVostcardCreator(true);
         
-        console.log('✅ Quickcard data loaded from context');
+        console.log('✅ Vostcard data loaded from context');
       }
     } catch (error) {
       console.error('❌ Error loading vostcard data:', error);
@@ -819,7 +819,7 @@ const VostcardStudioView: React.FC = () => {
     };
   }, [draggedIndex, touchStartPos, isDragging, dragOverIndex, vostcardPhotos, vostcardPhotoPreviews]);
 
-  const handleQuickcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
+  const handleVostcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('audio/')) {
       if (audioType === 'intro') {
@@ -834,7 +834,7 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
-  const handleQuickcardCategoryToggle = (category: string) => {
+  const handleVostcardCategoryToggle = (category: string) => {
     if (vostcardCategories.includes(category)) {
       setVostcardCategories(prev => prev.filter(c => c !== category));
     } else {
@@ -893,7 +893,7 @@ const VostcardStudioView: React.FC = () => {
     setInstagramURL(e.target.value);
   };
 
-  const handleQuickcardPinPlacer = async () => {
+  const handleVostcardPinPlacer = async () => {
     console.log('🗺️ Pin placer button clicked!'); // Debug log
     
     // ✅ SAVE CURRENT QUICKCARD STATE BEFORE NAVIGATING
@@ -943,22 +943,21 @@ const VostcardStudioView: React.FC = () => {
       state: {
         returnTo: '/studio',
         vostcardCreation: true,
-        title: vostcardTitle || 'New Quickcard',
+        title: vostcardTitle || 'New Vostcard',
         pinData: {
           id: 'temp_vostcard',
-          title: vostcardTitle || 'New Quickcard',
-          description: 'Quickcard location',
+          title: vostcardTitle || 'New Vostcard',
+          description: 'Vostcard location',
           latitude: vostcardLocation?.latitude || 40.7128,
           longitude: vostcardLocation?.longitude || -74.0060,
-          isOffer: false,
-          isQuickcard: true
+          isOffer: false
         }
       }
     });
   };
 
   // Update creation functions to use multiple photos
-  const handleSaveQuickcardToPersonalPosts = async () => {
+  const handleSaveVostcardToPersonalPosts = async () => {
     if (!vostcardTitle.trim()) {
       alert('Please enter a title for your vostcard.');
       return;
@@ -991,8 +990,8 @@ const VostcardStudioView: React.FC = () => {
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       // Create quickcard as private draft with multiple photos and audio files
-      const quickcard: Vostcard = {
-        id: `quickcard_${Date.now()}`,
+      const vostcard: Vostcard = {
+        id: `vostcard_${Date.now()}`,
         title: vostcardTitle.trim(),
         description: vostcardDescription.trim() || '', 
         photos: vostcardPhotos, // Multiple photos
@@ -1008,7 +1007,7 @@ const VostcardStudioView: React.FC = () => {
         userRole: userRole || 'user',
         state: 'private',
         video: null,
-        isQuickcard: true,
+
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
@@ -1016,21 +1015,21 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
-      setCurrentVostcard(quickcard);
+      setCurrentVostcard(vostcard);
       await saveVostcard();
       
       alert(`✅ Vostcard saved to Personal Posts with ${vostcardPhotos.length} photo(s)!`);
-      resetQuickcardForm();
+      resetVostcardForm();
       
     } catch (error) {
-      console.error('❌ Error saving quickcard draft:', error);
+      console.error('❌ Error saving vostcard draft:', error);
       alert('Failed to save vostcard to Personal Posts. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handlePostQuickcardToMap = async () => {
+  const handlePostVostcardToMap = async () => {
     if (!vostcardTitle.trim()) {
       alert('Please enter a title for your vostcard.');
       return;
@@ -1073,10 +1072,10 @@ const VostcardStudioView: React.FC = () => {
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       // Create quickcard ready for posting with multiple photos
-      const quickcard: Vostcard = {
-        id: `quickcard_${Date.now()}`,
+      const vostcard: Vostcard = {
+        id: `vostcard_${Date.now()}`,
         title: vostcardTitle.trim(),
-        description: vostcardDescription.trim() || 'Quickcard',
+        description: vostcardDescription.trim() || 'Vostcard',
         photos: vostcardPhotos, // Multiple photos
         audio: vostcardIntroAudio, // Use intro audio as primary
         audioFiles: audioFiles, // NEW: Multiple audio files
@@ -1090,7 +1089,7 @@ const VostcardStudioView: React.FC = () => {
         userRole: userRole || 'user',
         state: 'private',
         video: null,
-        isQuickcard: true,
+
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
@@ -1098,20 +1097,20 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
-      setCurrentVostcard(quickcard);
+      setCurrentVostcard(vostcard);
       await new Promise(resolve => setTimeout(resolve, 100));
-      setCurrentVostcard(quickcard);
+      setCurrentVostcard(vostcard);
       await postVostcard();
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
       sessionStorage.removeItem('vostcardCreatorState');
       sessionStorage.removeItem('vostcardTransferData');
       
-      resetQuickcardForm();
+      resetVostcardForm();
       alert(`🎉 Vostcard posted to map with ${vostcardPhotos.length} photo(s)! Form cleared for your next vostcard.`);
       
     } catch (error) {
-      console.error('❌ Error posting quickcard:', error);
+      console.error('❌ Error posting vostcard:', error);
       alert('Failed to post vostcard. Please try again.');
     } finally {
       setIsLoading(false);
@@ -1119,7 +1118,7 @@ const VostcardStudioView: React.FC = () => {
   };
 
   // Update and repost existing quickcard
-  const handleUpdateAndRepostQuickcard = async () => {
+  const handleUpdateAndRepostVostcard = async () => {
     if (!editingVostcardId) {
       alert('No vostcard is being edited.');
       return;
@@ -1167,10 +1166,10 @@ const VostcardStudioView: React.FC = () => {
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       // Update the existing quickcard with same ID and preserve original state
-      const updatedQuickcard: Vostcard = {
+      const updatedVostcard: Vostcard = {
         id: editingVostcardId, // Keep the same ID
         title: vostcardTitle.trim(),
-        description: vostcardDescription.trim() || 'Quickcard',
+        description: vostcardDescription.trim() || 'Vostcard',
         photos: vostcardPhotos,
         audio: vostcardIntroAudio,
         audioFiles: audioFiles,
@@ -1184,7 +1183,7 @@ const VostcardStudioView: React.FC = () => {
         userRole: userRole || 'user',
         state: originalVostcardState || 'private', // Preserve original state
         video: null,
-        isQuickcard: true,
+
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
@@ -1192,9 +1191,9 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
-      setCurrentVostcard(updatedQuickcard);
+      setCurrentVostcard(updatedVostcard);
       await new Promise(resolve => setTimeout(resolve, 100));
-      setCurrentVostcard(updatedQuickcard);
+      setCurrentVostcard(updatedVostcard);
       
       // Only post to public if the original was already posted, otherwise just save
       if (originalVostcardState === 'posted') {
@@ -1209,7 +1208,7 @@ const VostcardStudioView: React.FC = () => {
       sessionStorage.removeItem('vostcardCreatorState');
       sessionStorage.removeItem('vostcardTransferData');
       
-      resetQuickcardForm();
+      resetVostcardForm();
       
       // Show appropriate success message based on what happened
       if (originalVostcardState === 'posted') {
@@ -1222,12 +1221,12 @@ const VostcardStudioView: React.FC = () => {
         state: { 
           freshLoad: true,
           timestamp: Date.now(),
-          justPosted: 'quickcard'
+          justPosted: 'vostcard'
         }
       });
       
     } catch (error) {
-      console.error('❌ Error updating quickcard:', error);
+      console.error('❌ Error updating vostcard:', error);
       alert('Failed to update vostcard. Please try again.');
     } finally {
       setIsLoading(false);
@@ -1235,7 +1234,7 @@ const VostcardStudioView: React.FC = () => {
   };
 
   // Helper function to reset form - UPDATED for multiple photos
-  const resetQuickcardForm = () => {
+  const resetVostcardForm = () => {
     setVostcardTitle('');
     setVostcardDescription('');
     
@@ -1260,48 +1259,48 @@ const VostcardStudioView: React.FC = () => {
   };
 
   // Function to load a quickcard for editing
-  const loadVostcardForEditing = async (quickcard: Vostcard) => {
-    console.log('🔄 Loading quickcard for editing:', quickcard);
+  const loadVostcardForEditing = async (vostcard: Vostcard) => {
+    console.log('🔄 Loading vostcard for editing:', vostcard);
     
     try {
       setIsLoading(true);
       
       // Use the VostcardEdit context to start editing
-      startEditing(quickcard);
+      startEditing(vostcard);
       
       // Store the original state to preserve it during updates
-      setOriginalVostcardState(quickcard.state || 'private');
-      console.log('📝 Original vostcard state:', quickcard.state || 'private');
+      setOriginalVostcardState(vostcard.state || 'private');
+      console.log('📝 Original vostcard state:', vostcard.state || 'private');
       
       // Populate VostcardStudio form fields
-      setVostcardTitle(quickcard.title || '');
-      setVostcardDescription(quickcard.description || '');
-      setVostcardCategories(quickcard.categories || []);
+      setVostcardTitle(vostcard.title || '');
+      setVostcardDescription(vostcard.description || '');
+      setVostcardCategories(vostcard.categories || []);
       
       // Load location
-      if (quickcard.geo) {
+      if (vostcard.geo) {
         setVostcardLocation({
-          latitude: quickcard.geo.latitude,
-          longitude: quickcard.geo.longitude,
-          address: (quickcard.geo as any).address
+          latitude: vostcard.geo.latitude,
+          longitude: vostcard.geo.longitude,
+          address: (vostcard.geo as any).address
         });
       }
       
       // Load YouTube and Instagram URLs
-      setYoutubeURL(quickcard.youtubeURL || '');
-      setInstagramURL(quickcard.instagramURL || '');
+      setYoutubeURL(vostcard.youtubeURL || '');
+      setInstagramURL(vostcard.instagramURL || '');
       
       // Load photos if available
-      if (quickcard.photos && quickcard.photos.length > 0) {
-        setVostcardPhotos(quickcard.photos);
+      if (vostcard.photos && vostcard.photos.length > 0) {
+        setVostcardPhotos(vostcard.photos);
         // Create preview URLs for photos
-        const previews = quickcard.photos.map(photo => URL.createObjectURL(photo));
+        const previews = vostcard.photos.map(photo => URL.createObjectURL(photo));
         setVostcardPhotoPreviews(previews);
-      } else if (quickcard._firebasePhotoURLs && quickcard._firebasePhotoURLs.length > 0) {
+      } else if (vostcard._firebasePhotoURLs && vostcard._firebasePhotoURLs.length > 0) {
         // Load photos from Firebase URLs
         const photoBlobs: Blob[] = [];
         const photoPreviews: string[] = [];
-        for (const photoUrl of quickcard._firebasePhotoURLs) {
+        for (const photoUrl of vostcard._firebasePhotoURLs) {
           try {
             const response = await fetch(photoUrl);
             const blob = await response.blob();
@@ -1316,26 +1315,26 @@ const VostcardStudioView: React.FC = () => {
       }
       
       // Load audio files if available
-      if (quickcard.audioFiles && quickcard.audioFiles.length > 0) {
+      if (vostcard.audioFiles && vostcard.audioFiles.length > 0) {
         // Load intro audio (first file)
-        if (quickcard.audioFiles[0]) {
-          setVostcardIntroAudio(quickcard.audioFiles[0]);
+        if (vostcard.audioFiles[0]) {
+          setVostcardIntroAudio(vostcard.audioFiles[0]);
           setVostcardIntroAudioSource('file');
-          const introLabel = quickcard.audioLabels && quickcard.audioLabels[0] ? quickcard.audioLabels[0] : 'Intro Audio';
+          const introLabel = vostcard.audioLabels && vostcard.audioLabels[0] ? vostcard.audioLabels[0] : 'Intro Audio';
           setVostcardIntroAudioFileName(introLabel);
         }
         
         // Load detail audio (second file) 
-        if (quickcard.audioFiles[1]) {
-          setVostcardDetailAudio(quickcard.audioFiles[1]);
+        if (vostcard.audioFiles[1]) {
+          setVostcardDetailAudio(vostcard.audioFiles[1]);
           setVostcardDetailAudioSource('file');
-          const detailLabel = quickcard.audioLabels && quickcard.audioLabels[1] ? quickcard.audioLabels[1] : 'Detail Audio';
+          const detailLabel = vostcard.audioLabels && vostcard.audioLabels[1] ? vostcard.audioLabels[1] : 'Detail Audio';
           setVostcardDetailAudioFileName(detailLabel);
         }
-      } else if (quickcard._firebaseAudioURL) {
+      } else if (vostcard._firebaseAudioURL) {
         // Load audio from Firebase URL
         try {
-          const response = await fetch(quickcard._firebaseAudioURL);
+          const response = await fetch(vostcard._firebaseAudioURL);
           const blob = await response.blob();
           setVostcardIntroAudio(blob);
           setVostcardIntroAudioSource('file');
@@ -1346,12 +1345,12 @@ const VostcardStudioView: React.FC = () => {
       }
       
       // Set editing state
-      setEditingVostcardId(quickcard.id);
+      setEditingVostcardId(vostcard.id);
       
       // Close the Load Vostcard modal
       setShowVostcardLoader(false);
       
-      alert(`✅ Vostcard "${quickcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
+      alert(`✅ Vostcard "${vostcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
       
     } catch (error) {
       console.error('Error loading quickcard:', error);
@@ -1667,7 +1666,7 @@ const VostcardStudioView: React.FC = () => {
                 value={vostcardDescription}
                 onChange={(e) => setVostcardDescription(e.target.value)}
                 disabled={isLoading}
-                placeholder="Add a description for your quickcard..."
+                placeholder="Add a description for your vostcard..."
                 rows={3}
                 style={{
                   width: '100%',
@@ -1893,12 +1892,12 @@ const VostcardStudioView: React.FC = () => {
                 📷 Add Photo
               </button>
               
-              {/* New Quickcard Button (only when editing) */}
+              {/* New Vostcard Button (only when editing) */}
               {editingVostcardId && (
                 <button
                   onClick={() => {
-                    if (window.confirm('Are you sure you want to start a new quickcard? Current changes will be lost.')) {
-                      resetQuickcardForm();
+                    if (window.confirm('Are you sure you want to start a new vostcard? Current changes will be lost.')) {
+                      resetVostcardForm();
                     }
                   }}
                   disabled={isLoading}
@@ -1931,7 +1930,7 @@ const VostcardStudioView: React.FC = () => {
               marginBottom: '15px'
             }}>
               <button 
-                onClick={handleQuickcardPinPlacer}
+                onClick={handleVostcardPinPlacer}
                 disabled={isLoading}
                 style={{
                   backgroundColor: isLoading ? '#ccc' : '#ff9800',
@@ -2207,7 +2206,7 @@ const VostcardStudioView: React.FC = () => {
             <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
               {/* Save to Personal Posts Button */}
               <button 
-                onClick={handleSaveQuickcardToPersonalPosts}
+                onClick={handleSaveVostcardToPersonalPosts}
                 disabled={!vostcardTitle.trim() || isLoading || vostcardPhotos.length === 0}
                 style={{
                   backgroundColor: (!vostcardTitle.trim() || isLoading || vostcardPhotos.length === 0) ? '#ccc' : '#28a745',
@@ -2231,7 +2230,7 @@ const VostcardStudioView: React.FC = () => {
 
               {/* Post to Map Button - Always visible */}
               <button 
-                onClick={handlePostQuickcardToMap}
+                onClick={handlePostVostcardToMap}
                 disabled={!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
                 style={{
                   backgroundColor: (!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#007aff',
@@ -2256,7 +2255,7 @@ const VostcardStudioView: React.FC = () => {
               {/* Update Button - Only visible when editing */}
               {editingVostcardId && (
                 <button 
-                  onClick={handleUpdateAndRepostQuickcard}
+                  onClick={handleUpdateAndRepostVostcard}
                   disabled={!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
                   style={{
                     backgroundColor: (!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#ff9800',
@@ -2651,7 +2650,7 @@ const VostcardStudioView: React.FC = () => {
               {availableCategories.filter(cat => cat !== 'None').map((category) => (
                 <div
                   key={category}
-                  onClick={() => handleQuickcardCategoryToggle(category)}
+                  onClick={() => handleVostcardCategoryToggle(category)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -2734,7 +2733,7 @@ const VostcardStudioView: React.FC = () => {
           id="quickcard-intro-audio-input"
           type="file"
           accept="audio/*"
-          onChange={(e) => handleQuickcardAudioUpload(e, 'intro')}
+          onChange={(e) => handleVostcardAudioUpload(e, 'intro')}
           style={{ display: 'none' }}
         />
         
@@ -2800,10 +2799,10 @@ const VostcardStudioView: React.FC = () => {
                      </p>
                    </div>
                  ) : (
-                   savedVostcards.map((quickcard) => (
+                   savedVostcards.map((vostcard) => (
                      <div
-                       key={quickcard.id}
-                       onClick={() => !isLoadingVostcards && loadVostcardForEditing(quickcard)}
+                       key={vostcard.id}
+                       onClick={() => !isLoadingVostcards && loadVostcardForEditing(vostcard)}
                        style={{
                          display: 'flex',
                          alignItems: 'center',
@@ -2821,16 +2820,16 @@ const VostcardStudioView: React.FC = () => {
                      >
                        <div style={{ flex: 1 }}>
                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                           {quickcard.title || 'Untitled Vostcard'}
+                           {vostcard.title || 'Untitled Vostcard'}
                          </div>
                          <div style={{ fontSize: '12px', color: '#666' }}>
-                           {quickcard.description && quickcard.description.length > 50 
-                             ? quickcard.description.substring(0, 50) + '...'
-                             : quickcard.description || 'No description'
+                           {vostcard.description && vostcard.description.length > 50 
+                            ? vostcard.description.substring(0, 50) + '...'
+                            : vostcard.description || 'No description'
                            }
                          </div>
                          <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-                           Created: {new Date(quickcard.createdAt).toLocaleDateString()}
+                           Created: {new Date(vostcard.createdAt).toLocaleDateString()}
                          </div>
                        </div>
                        <div style={{ marginLeft: '12px', color: '#28a745' }}>

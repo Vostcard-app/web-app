@@ -10,7 +10,7 @@ import type { Vostcard, FirebaseVostcard } from '../types/VostcardTypes';
 // Constants
 const STORE_NAME = 'vostcards';
 const METADATA_STORE_NAME = 'vostcard_metadata';
-const DB_VERSION = 3; // Increment this when schema changes - v3: after quickcard removal
+const DB_VERSION = 3; // Increment this when schema changes - v3: after legacy reference removal
 
 // Context interface
 interface VostcardContextType {
@@ -468,7 +468,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       urlObj.searchParams.delete('token');
       urlObj.searchParams.set('alt', 'media');
       
-      // Fix quickcard references in the path
+      // Fix legacy references in the path
       let pathname = urlObj.pathname;
       pathname = pathname.replace(/quickcard_(\d+)/g, 'vostcard_$1');
       urlObj.pathname = pathname;
@@ -742,19 +742,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.log(`✅ Photo ${i} exists (new format):`, url);
           foundPhoto = true;
         } catch (error: any) {
-          // Try quickcard path with vostcard ID
+          // Try legacy path with vostcard ID
           try {
             const photoRef = ref(storage, `quickcards/${user.uid}/photos/${vostcardId}_${i}`);
             const url = await getDownloadURL(photoRef);
-            console.log(`✅ Photo ${i} exists (quickcard format):`, url);
+            console.log(`✅ Photo ${i} exists (legacy format):`, url);
             foundPhoto = true;
           } catch (error: any) {
-            // Try original quickcard ID format (quickcard_timestamp)
-            const originalQuickcardId = vostcardId.replace('vostcard_', 'quickcard_');
+            // Try original legacy ID format (quickcard_timestamp)
+            const originalLegacyId = vostcardId.replace('vostcard_', 'quickcard_');
             try {
-              const photoRef = ref(storage, `quickcards/${user.uid}/photos/${originalQuickcardId}_${i}`);
+              const photoRef = ref(storage, `quickcards/${user.uid}/photos/${originalLegacyId}_${i}`);
               const url = await getDownloadURL(photoRef);
-              console.log(`✅ Photo ${i} exists (original quickcard format):`, url);
+              console.log(`✅ Photo ${i} exists (original legacy format):`, url);
               foundPhoto = true;
             } catch (error: any) {
               // Try next pattern
@@ -798,11 +798,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const url = await getDownloadURL(videoRef);
         console.log('✅ Video exists:', url);
       } catch (error: any) {
-        // Try quickcard path
+        // Try legacy path
         try {
           const videoRef = ref(storage, `quickcards/${user.uid}/videos/${vostcardId}`);
           const url = await getDownloadURL(videoRef);
-          console.log('✅ Video exists (quickcard format):', url);
+          console.log('✅ Video exists (legacy format):', url);
         } catch (error: any) {
           console.log('❌ Video not found in either location:', error.code);
         }
@@ -814,11 +814,11 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const url = await getDownloadURL(audioRef);
         console.log('✅ Audio exists:', url);
       } catch (error: any) {
-        // Try quickcard path
+        // Try legacy path
         try {
           const audioRef = ref(storage, `quickcards/${user.uid}/audio/${vostcardId}`);
           const url = await getDownloadURL(audioRef);
-          console.log('✅ Audio exists (quickcard format):', url);
+          console.log('✅ Audio exists (legacy format):', url);
         } catch (error: any) {
           console.log('❌ Audio not found in either location:', error.code);
         }
