@@ -1104,11 +1104,48 @@ const PublicTripView: React.FC = () => {
             marginBottom: '8px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
+            justifyContent: 'space-between',
             gap: '8px'
           }}>
-            <FaCalendar size={14} />
-            Posted: {formatDate(trip.createdAt)}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <FaCalendar size={14} />
+              Posted: {formatDate(trip.createdAt)}
+            </div>
+            
+            {/* Join Button - Right Justified */}
+            <button
+              type="button"
+              style={{
+                cursor: 'pointer',
+                transition: 'transform 0.1s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#007bff',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                border: 'none',
+                whiteSpace: 'nowrap'
+              }}
+              onClick={() => {
+                // Redirect to login with returnTo parameter pointing to private version
+                const privateUrl = `/trip/${id}`;
+                navigate(`/login?returnTo=${encodeURIComponent(privateUrl)}`);
+              }}
+              onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
+              onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              Join (It's Free)
+            </button>
           </div>
           
           <div style={{
