@@ -204,9 +204,9 @@ export const TripService = {
 
       const tripData = tripDoc.data() as TripFirebaseDoc;
       
-      // Verify user owns this trip
-      if (tripData.userID !== user.uid) {
-        throw new Error('Access denied: Trip does not belong to current user');
+      // Verify user owns this trip OR trip is public/shared
+      if (tripData.userID !== user.uid && tripData.isPrivate !== false) {
+        throw new Error('Access denied: Trip does not belong to current user and is not shared');
       }
 
       const items = await TripService.getTripItems(tripId);
