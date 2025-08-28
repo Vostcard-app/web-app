@@ -315,7 +315,7 @@ const PublicTripView: React.FC = () => {
     }
   };
 
-  // Handle slideshow button click - collect images and auto-start slideshow
+  // Handle slideshow button click - just collect images, don't auto-open
   const handleSlideshowClick = async () => {
     if (slideshowImages.length === 0) {
       const images = await collectTripImages();
@@ -323,11 +323,44 @@ const PublicTripView: React.FC = () => {
       
       if (images.length === 0) {
         alert('No images found in this trip to display in slideshow.');
-        return;
+      }
+      // Don't auto-open slideshow - let user tap thumbnail
+    }
+    // Don't auto-open slideshow - let user tap thumbnail
+  };
+
+  // Start slideshow with music (called from user interaction)
+  const startSlideshowWithMusic = async () => {
+    console.log('🎬 Starting public slideshow with music from user interaction');
+    
+    // Start slideshow
+    setShowSlideshow(true);
+    
+    // Immediately try to start music with user interaction context
+    const audioEl = bgAudioRef.current;
+    if (audioEl && trip?.backgroundMusic?.url) {
+      try {
+        const volume = typeof trip.backgroundMusic.volume === 'number' ? 
+          Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        
+        audioEl.volume = volume;
+        audioEl.currentTime = 0;
+        
+        console.log('🎵 Starting public music with user interaction context');
+        const playPromise = audioEl.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise
+            .then(() => {
+              console.log('✅ Public music started successfully with user interaction');
+            })
+            .catch((error) => {
+              console.log('❌ Public music failed to start even with user interaction:', error);
+            });
+        }
+      } catch (e) {
+        console.error('❌ Public music start error:', e);
       }
     }
-    // Auto-start slideshow for shared trips
-    setShowSlideshow(true);
   };
 
 
@@ -745,7 +778,7 @@ const PublicTripView: React.FC = () => {
           </button>
           
           <button
-            onClick={slideshowImages.length > 0 ? () => setShowSlideshow(true) : handleSlideshowClick}
+            onClick={slideshowImages.length > 0 ? startSlideshowWithMusic : handleSlideshowClick}
             disabled={loadingSlideshowImages}
             style={{
               backgroundColor: loadingSlideshowImages ? '#ccc' : (slideshowImages.length > 0 ? '#007aff' : '#f0f0f0'),

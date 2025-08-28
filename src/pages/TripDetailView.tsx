@@ -517,6 +517,47 @@ ${shareUrl}`;
     }
   };
 
+  // Start slideshow with music (called from user interaction)
+  const startSlideshowWithMusic = async () => {
+    console.log('🎬 Starting slideshow with music from user interaction');
+    
+    // Start slideshow
+    setShowSlideshow(true);
+    
+    // Immediately try to start music with user interaction context
+    const audioEl = backgroundAudioRef.current;
+    if (audioEl && trip?.backgroundMusic?.url) {
+      try {
+        const volume = typeof trip.backgroundMusic.volume === 'number' ? 
+          Math.min(Math.max(trip.backgroundMusic.volume, 0), 1) : 0.5;
+        
+        // Load the audio source if not already loaded
+        if (!audioEl.src || audioEl.src !== trip.backgroundMusic.url) {
+          console.log('🎵 Loading audio source for user interaction:', trip.backgroundMusic.url);
+          audioEl.src = trip.backgroundMusic.url;
+          audioEl.load();
+        }
+        
+        audioEl.volume = volume;
+        audioEl.currentTime = 0;
+        
+        console.log('🎵 Starting music with user interaction context');
+        const playPromise = audioEl.play();
+        if (playPromise && typeof playPromise.then === 'function') {
+          playPromise
+            .then(() => {
+              console.log('✅ Music started successfully with user interaction');
+            })
+            .catch((error) => {
+              console.log('❌ Music failed to start even with user interaction:', error);
+            });
+        }
+      } catch (e) {
+        console.error('❌ Music start error:', e);
+      }
+    }
+  };
+
   // Effect to handle slideshow mode changes
   useEffect(() => {
     if (viewMode === 'slideshow') {
@@ -1498,7 +1539,7 @@ ${shareUrl}`;
                       {slideshowImages.length} images ready to display
                     </p>
                     <button
-                      onClick={() => setShowSlideshow(true)}
+                      onClick={startSlideshowWithMusic}
                       style={{
                         background: '#007aff',
                         color: 'white',
