@@ -2180,7 +2180,7 @@ ${shareUrl}`;
           setViewMode(isViewingSharedTrip ? 'map' : 'list');
         }}
         title={`${trip?.name} - Slideshow`}
-        autoPlay={true}
+        autoPlay={false}
         autoPlayInterval={5000}
       />
 
