@@ -1151,7 +1151,7 @@ const PublicTripView: React.FC = () => {
           isOpen={showSlideshow}
           onClose={() => setShowSlideshow(false)}
           title={`${trip?.name} - Slideshow`}
-          autoPlay={true}
+          autoPlay={false}
           autoPlayInterval={5000}
         />
       )}
