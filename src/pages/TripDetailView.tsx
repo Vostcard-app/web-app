@@ -638,59 +638,12 @@ ${shareUrl}`;
         }
       }
       
-      // Get user's quickcards (handle permissions carefully)
-      let quickcards: any[] = [];
-      try {
-        // Try with indexed query first
-        const quickcardsQuery = query(
-          collection(db, 'quickcards'),
-          where('userID', '==', user?.uid),
-          orderBy('createdAt', 'desc')
-        );
-        
-        const quickcardsSnapshot = await getDocs(quickcardsQuery);
-        quickcards = quickcardsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          type: 'quickcard'
-        }));
-        
-        console.log('🔍 Debug: Found quickcards with index:', quickcards.length, quickcards);
-      } catch (quickcardError) {
-        console.log('🔍 Debug: Quickcards index query failed, trying without orderBy:', quickcardError);
-        
-        // Fallback: query without orderBy if index isn't ready
-        try {
-          const fallbackQuickcardsQuery = query(
-            collection(db, 'quickcards'),
-            where('userID', '==', user?.uid)
-          );
-          
-          const fallbackQuickcardsSnapshot = await getDocs(fallbackQuickcardsQuery);
-          quickcards = fallbackQuickcardsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            type: 'quickcard'
-          }));
-          
-          // Sort manually
-          quickcards.sort((a, b) => {
-            const aTime = a.createdAt?.toMillis?.() || a.createdAt || 0;
-            const bTime = b.createdAt?.toMillis?.() || b.createdAt || 0;
-            return bTime - aTime;
-          });
-          
-          console.log('🔍 Debug: Found quickcards with fallback:', quickcards.length, quickcards);
-        } catch (fallbackQuickcardError) {
-          console.log('🔍 Debug: Both quickcard queries failed, continuing without them:', fallbackQuickcardError);
-          quickcards = [];
-        }
-      }
+      // No need to query quickcards - they have been eliminated
       
       console.log('🔍 Debug: Current trip items:', currentItemIds);
       
-      // Combine and filter out posts already in trip
-      const allPosts = [...userVostcards, ...quickcards].filter(post => 
+      // Filter out posts already in trip (only vostcards now)
+      const allPosts = userVostcards.filter(post => 
         !currentItemIds.includes(post.id)
       );
       

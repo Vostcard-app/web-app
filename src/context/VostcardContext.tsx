@@ -37,7 +37,7 @@ interface VostcardContextType {
   refreshFirebaseStorageURLs: (vostcardId: string, vostcardData?: any) => Promise<{ photoURLs: string[]; videoURL: string | null; audioURL: string | null } | null>;
   fixExpiredURLs: (vostcardData: any) => { photoURLs: string[]; videoURL: string | null; audioURL: string | null };
   cleanupBrokenFileReferences: () => Promise<void>;
-  debugFirebaseStorage: (vostcardId: string) => Promise<void>;
+
   setVideo: (video: Blob, location?: { latitude: number; longitude: number }) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
   debugIndexedDB: () => Promise<void>;
@@ -719,115 +719,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [savedVostcards, postedVostcards]);
 
-  // Debug function to check if files actually exist in Firebase Storage
-  const debugFirebaseStorage = useCallback(async (vostcardId: string) => {
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        console.log('No user authenticated');
-        return;
-      }
 
-      console.log('🔍 Checking Firebase Storage for vostcard:', vostcardId);
-      console.log('🔍 User ID:', user.uid);
-      
-      // Check for photos (multiple naming patterns)
-      for (let i = 0; i < 5; i++) {
-        let foundPhoto = false;
-        
-        // Pattern 1: vostcardId_index
-        try {
-          const photoRef = ref(storage, `vostcards/${user.uid}/photos/${vostcardId}_${i}`);
-          const url = await getDownloadURL(photoRef);
-          console.log(`✅ Photo ${i} exists (new format):`, url);
-          foundPhoto = true;
-        } catch (error: any) {
-          // Try legacy path with vostcard ID
-          try {
-            const photoRef = ref(storage, `quickcards/${user.uid}/photos/${vostcardId}_${i}`);
-            const url = await getDownloadURL(photoRef);
-            console.log(`✅ Photo ${i} exists (legacy format):`, url);
-            foundPhoto = true;
-          } catch (error: any) {
-            // Try original legacy ID format (quickcard_timestamp)
-            const originalLegacyId = vostcardId.replace('vostcard_', 'quickcard_');
-            try {
-              const photoRef = ref(storage, `quickcards/${user.uid}/photos/${originalLegacyId}_${i}`);
-              const url = await getDownloadURL(photoRef);
-              console.log(`✅ Photo ${i} exists (original legacy format):`, url);
-              foundPhoto = true;
-            } catch (error: any) {
-              // Try next pattern
-            }
-          }
-        }
-        
-        // Pattern 2: photo{i+1}.jpg
-        if (!foundPhoto) {
-          try {
-            const photoRef = ref(storage, `vostcards/${user.uid}/photos/photo${i + 1}.jpg`);
-            const url = await getDownloadURL(photoRef);
-            console.log(`✅ Photo ${i} exists (old format):`, url);
-            foundPhoto = true;
-          } catch (error: any) {
-            // Try next pattern
-          }
-        }
-        
-        // Pattern 3: {i}.jpg
-        if (!foundPhoto) {
-          try {
-            const photoRef = ref(storage, `vostcards/${user.uid}/photos/${i}.jpg`);
-            const url = await getDownloadURL(photoRef);
-            console.log(`✅ Photo ${i} exists (index format):`, url);
-            foundPhoto = true;
-          } catch (error: any) {
-            // Photo doesn't exist
-          }
-        }
-        
-        if (!foundPhoto) {
-          console.log(`❌ Photo ${i} not found in any format`);
-          break;
-        }
-      }
-
-      // Check for video
-      try {
-        const videoRef = ref(storage, `vostcards/${user.uid}/videos/${vostcardId}`);
-        const url = await getDownloadURL(videoRef);
-        console.log('✅ Video exists:', url);
-      } catch (error: any) {
-        // Try legacy path
-        try {
-          const videoRef = ref(storage, `quickcards/${user.uid}/videos/${vostcardId}`);
-          const url = await getDownloadURL(videoRef);
-          console.log('✅ Video exists (legacy format):', url);
-        } catch (error: any) {
-          console.log('❌ Video not found in either location:', error.code);
-        }
-      }
-
-      // Check for audio
-      try {
-        const audioRef = ref(storage, `vostcards/${user.uid}/audio/${vostcardId}`);
-        const url = await getDownloadURL(audioRef);
-        console.log('✅ Audio exists:', url);
-      } catch (error: any) {
-        // Try legacy path
-        try {
-          const audioRef = ref(storage, `quickcards/${user.uid}/audio/${vostcardId}`);
-          const url = await getDownloadURL(audioRef);
-          console.log('✅ Audio exists (legacy format):', url);
-        } catch (error: any) {
-          console.log('❌ Audio not found in either location:', error.code);
-        }
-      }
-
-    } catch (error) {
-      console.error('❌ Error checking Firebase Storage:', error);
-    }
-  }, []);
 
   // Load private vostcards from Firebase
   const loadPrivateVostcards = useCallback(async () => {
@@ -1674,7 +1566,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     refreshFirebaseStorageURLs,
     fixExpiredURLs,
     cleanupBrokenFileReferences,
-    debugFirebaseStorage,
+
     setVideo,
     updateVostcard,
     debugIndexedDB

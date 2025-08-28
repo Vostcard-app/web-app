@@ -32,7 +32,7 @@ const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards, refreshFirebaseStorageURLs, debugFirebaseStorage } = useVostcard();
+  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards, refreshFirebaseStorageURLs } = useVostcard();
   const { user } = useAuth();
   
   // Navigation state from previous view

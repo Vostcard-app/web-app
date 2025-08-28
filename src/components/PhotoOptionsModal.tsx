@@ -77,6 +77,21 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
           </button>
         </div>
 
+        {/* Mac Desktop Tip */}
+        {!isMobile && (
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '16px',
+            fontSize: '14px',
+            color: '#666',
+            textAlign: 'center'
+          }}>
+            💡 Tip: You can also drag photos directly from Finder into the studio
+          </div>
+        )}
+
         {/* Options - Link Style */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {/* Take Photo */}
@@ -129,7 +144,7 @@ const PhotoOptionsModal: React.FC<PhotoOptionsModalProps> = ({
             }}
           >
             <FaImages size={16} color="#007aff" />
-            <span>{isMobile ? 'Photo Library' : 'Select Multiple'}</span>
+            <span>{isMobile ? 'Photo Library' : 'Browse Photos'}</span>
           </div>
         </div>
       </div>
