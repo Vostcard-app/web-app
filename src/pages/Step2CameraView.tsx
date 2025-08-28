@@ -31,7 +31,17 @@ const Step2CameraView: React.FC = () => {
   const handleNativeCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     
+    console.log('📱 File selected from camera:', {
+      hasFile: !!file,
+      fileName: file?.name,
+      fileType: file?.type,
+      fileSize: file?.size,
+      photoType,
+      photoIndex
+    });
+    
     if (!file) {
+      console.log('❌ No file selected - user cancelled');
       // User cancelled - go back to Step 2
       navigate('/create-step2');
       return;
@@ -103,9 +113,7 @@ const Step2CameraView: React.FC = () => {
     }
 
     // Invalid file type
-    setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo or video file.');
-    setShowFileTypeWarning(true);
-    console.log('📸 Native camera photo captured for vostcard:', {
+    console.log('❌ Invalid file type captured:', {
       name: file.name,
       type: file.type,
       size: file.size,
@@ -113,21 +121,8 @@ const Step2CameraView: React.FC = () => {
       photoIndex
     });
     
-    // Update vostcard with the new photo
-    const currentPhotos = currentVostcard?.photos || [];
-    const newPhotos = [...currentPhotos];
-    newPhotos[photoIndex] = file;
-    
-    updateVostcard({ photos: newPhotos });
-    
-    // Navigate back to Step 2
-    navigate('/create-step2', { 
-      state: { 
-        photoTaken: true,
-        photoType,
-        photoIndex
-      }
-    });
+    setFileTypeWarningMessage('📸 Invalid file type!\n\nPlease select a photo or video file.');
+    setShowFileTypeWarning(true);
     
     // Clear the file input for next use
     if (fileInputRef.current) {
@@ -169,6 +164,7 @@ const Step2CameraView: React.FC = () => {
         capture="environment"
         style={{ display: 'none' }}
         onChange={handleNativeCapture}
+        multiple={false}
       />
 
       {/* Loading/instruction screen */}
