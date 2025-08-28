@@ -150,10 +150,10 @@ const TripDetailView: React.FC = () => {
       
       console.log(`✅ Loaded trip: ${tripData.name} with ${tripData.items.length} items`);
 
-      // For shared trips (not owned by current user), default to slideshow view
+      // For shared trips (not owned by current user), default to thumbnail view
       if (user.uid !== tripData.userID) {
-        console.log('🔄 Shared trip detected, defaulting to slideshow view');
-        setViewMode('slideshow');
+        console.log('🔄 Shared trip detected, defaulting to thumbnail view');
+        setViewMode('slideshow'); // We'll show thumbnail instead of full slideshow initially
       }
 
       // ✅ Automatically cleanup trip if there are issues (duplicates or deleted items)
@@ -1097,14 +1097,66 @@ ${shareUrl}`;
             </div>
           )}
 
-          {/* View Mode Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '8px',
-            marginBottom: '16px'
-          }}>
-            {/* Hide List View for shared trips */}
-            {!isViewingSharedTrip && (
+          {/* View Mode Controls */}
+          {isViewingSharedTrip ? (
+            /* Shared Trip: Simple header with date and toggle button */
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px',
+              padding: '12px 0'
+            }}>
+              {/* Create Date */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#666',
+                fontSize: '14px'
+              }}>
+                <FaCalendar size={12} />
+                {trip?.createdAt ? new Date(trip.createdAt).toLocaleDateString() : 'Unknown date'}
+              </div>
+              
+              {/* Toggle Button */}
+              <button
+                onClick={() => setViewMode(viewMode === 'map' ? 'slideshow' : 'map')}
+                style={{
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {viewMode === 'map' ? (
+                  <>
+                    <FaPhotoVideo size={12} />
+                    Slideshow
+                  </>
+                ) : (
+                  <>
+                    <FaMap size={12} />
+                    Map View
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            /* Trip Owner: Full view mode buttons */
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              marginBottom: '16px'
+            }}>
               <button
                 onClick={() => setViewMode('list')}
                 style={{
@@ -1125,50 +1177,50 @@ ${shareUrl}`;
                 <FaList size={12} />
                 List View
               </button>
-            )}
-            
-            <button
-              onClick={() => setViewMode('map')}
-              style={{
-                backgroundColor: viewMode === 'map' ? '#007aff' : '#f0f0f0',
-                color: viewMode === 'map' ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <FaMap size={12} />
-              Map View
-            </button>
-            
-            <button
-              onClick={() => setViewMode('slideshow')}
-              style={{
-                backgroundColor: viewMode === 'slideshow' ? '#007aff' : '#f0f0f0',
-                color: viewMode === 'slideshow' ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <FaPhotoVideo size={12} />
-              Slideshow
-            </button>
-          </div>
+              
+              <button
+                onClick={() => setViewMode('map')}
+                style={{
+                  backgroundColor: viewMode === 'map' ? '#007aff' : '#f0f0f0',
+                  color: viewMode === 'map' ? 'white' : '#333',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <FaMap size={12} />
+                Map View
+              </button>
+              
+              <button
+                onClick={() => setViewMode('slideshow')}
+                style={{
+                  backgroundColor: viewMode === 'slideshow' ? '#007aff' : '#f0f0f0',
+                  color: viewMode === 'slideshow' ? 'white' : '#333',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <FaPhotoVideo size={12} />
+                Slideshow
+              </button>
+            </div>
+          )}
           
           {trip.isPublic && (
             <div style={{
@@ -1294,80 +1346,180 @@ ${shareUrl}`;
           overflowX: 'hidden'
         }}>
           {viewMode === 'slideshow' ? (
-            // Slideshow View
-            <div style={{
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              padding: '40px 20px',
-              color: '#666'
-            }}>
-              {loadingSlideshowImages ? (
-                <div>
+            isViewingSharedTrip ? (
+              // Shared Trip: Show thumbnail of first image
+              <div style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '20px',
+                color: '#666'
+              }}>
+                {loadingSlideshowImages ? (
+                  <div>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      border: '4px solid #f3f3f3',
+                      borderTop: '4px solid #007aff',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      margin: '0 auto 16px'
+                    }} />
+                    <p style={{ fontSize: '16px', color: '#333' }}>Loading images...</p>
+                  </div>
+                ) : slideshowImages.length === 0 ? (
+                  <div>
+                    <FaPhotoVideo size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+                    <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Images Found</h3>
+                    <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
+                      This trip doesn't contain any images to display.
+                    </p>
+                  </div>
+                ) : (
+                  // Show large thumbnail of first image
                   <div style={{
-                    width: '40px',
-                    height: '40px',
-                    border: '4px solid #f3f3f3',
-                    borderTop: '4px solid #007aff',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    margin: '0 auto 16px'
-                  }} />
-                  <p style={{ fontSize: '16px', color: '#333' }}>Loading slideshow images...</p>
-                </div>
-              ) : slideshowImages.length === 0 ? (
-                <div>
-                  <FaPhotoVideo size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
-                  <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Images Found</h3>
-                  <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
-                    This trip doesn't contain any images to display in slideshow.
-                  </p>
-                  <button
-                    onClick={() => setViewMode(isViewingSharedTrip ? 'map' : 'list')}
-                    style={{
-                      background: '#007aff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '12px 24px',
-                      fontSize: '14px',
-                      cursor: 'pointer'
-                    }}
-                  >
-{isViewingSharedTrip ? 'Back to Map View' : 'Back to List View'}
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <FaPhotoVideo size={48} style={{ color: '#007aff', marginBottom: '16px' }} />
-                  <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>Slideshow Ready</h3>
-                  <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
-                    {slideshowImages.length} images ready to display
-                  </p>
-                  <button
-                    onClick={() => setShowSlideshow(true)}
-                    style={{
-                      background: '#007aff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '12px 24px',
-                      fontSize: '16px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      margin: '0 auto'
-                    }}
-                  >
-                    <FaPlay />
-                    Start Slideshow
-                  </button>
-                </div>
-              )}
-            </div>
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
+                    <div
+                      onClick={() => setShowSlideshow(true)}
+                      style={{
+                        position: 'relative',
+                        cursor: 'pointer',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                        transition: 'transform 0.2s ease',
+                        maxWidth: '90%',
+                        maxHeight: '70vh'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
+                      <img
+                        src={slideshowImages[0].url}
+                        alt={slideshowImages[0].postTitle}
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          display: 'block',
+                          maxHeight: '70vh',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      {/* Play overlay */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        background: 'rgba(0,0,0,0.7)',
+                        borderRadius: '50%',
+                        width: '80px',
+                        height: '80px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '24px'
+                      }}>
+                        <FaPlay />
+                      </div>
+                    </div>
+                    <p style={{ 
+                      fontSize: '14px', 
+                      color: '#666',
+                      margin: '0',
+                      textAlign: 'center'
+                    }}>
+                      Tap to start slideshow ({slideshowImages.length} images)
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Trip Owner: Original slideshow interface
+              <div style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: '#666'
+              }}>
+                {loadingSlideshowImages ? (
+                  <div>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      border: '4px solid #f3f3f3',
+                      borderTop: '4px solid #007aff',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      margin: '0 auto 16px'
+                    }} />
+                    <p style={{ fontSize: '16px', color: '#333' }}>Loading slideshow images...</p>
+                  </div>
+                ) : slideshowImages.length === 0 ? (
+                  <div>
+                    <FaPhotoVideo size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
+                    <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Images Found</h3>
+                    <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
+                      This trip doesn't contain any images to display in slideshow.
+                    </p>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      style={{
+                        background: '#007aff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '12px 24px',
+                        fontSize: '14px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Back to List View
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <FaPhotoVideo size={48} style={{ color: '#007aff', marginBottom: '16px' }} />
+                    <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>Slideshow Ready</h3>
+                    <p style={{ margin: '0 0 16px 0', fontSize: '14px' }}>
+                      {slideshowImages.length} images ready to display
+                    </p>
+                    <button
+                      onClick={() => setShowSlideshow(true)}
+                      style={{
+                        background: '#007aff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '12px 24px',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        margin: '0 auto'
+                      }}
+                    >
+                      <FaPlay />
+                      Start Slideshow
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
           ) : viewMode === 'map' ? (
             // Map View
             (() => {
