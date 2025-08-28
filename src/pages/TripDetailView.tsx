@@ -1015,26 +1015,28 @@ ${shareUrl}`;
             
 
             
-            {/* Share Trip Button */}
-            <button
-              style={{
-                background: 'rgba(255,255,255,0.15)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600',
-              }}
-              onClick={handleShareTrip}
-              title="Share Trip"
-            >
-              Share
-            </button>
+            {/* Share Trip Button - Only show for trip owners */}
+            {!isViewingSharedTrip && (
+              <button
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                }}
+                onClick={handleShareTrip}
+                title="Share Trip"
+              >
+                Share
+              </button>
+            )}
             
             <button
               onClick={() => navigate('/home')}
