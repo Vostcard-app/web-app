@@ -392,6 +392,16 @@ const VostcardDetailView: React.FC = () => {
       vostcardKeys: Object.keys(vostcard),
       has_firebaseVideoURL: !!(vostcard as any)?._firebaseVideoURL
     });
+    
+    // Debug YouTube and Instagram URLs
+    console.log('📺📷 Social URLs for vostcard:', vostcard.id, {
+      youtubeURL: vostcard.youtubeURL,
+      instagramURL: vostcard.instagramURL,
+      hasYouTube: !!vostcard.youtubeURL,
+      hasInstagram: !!vostcard.instagramURL,
+      shouldShowSocialButtons: !!(vostcard.youtubeURL || vostcard.instagramURL),
+      allVostcardProperties: Object.keys(vostcard)
+    });
   } else {
     console.log('❌ Vostcard is null - cannot detect video');
   }
