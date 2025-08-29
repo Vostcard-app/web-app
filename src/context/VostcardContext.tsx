@@ -1236,28 +1236,47 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     try {
+      console.log(`🗑️ Starting deletion process for vostcard: ${vostcardId}`);
+
       // Delete from IndexedDB
       const localDB = await openUserDB();
       const transaction = localDB.transaction([STORE_NAME], 'readwrite');
       const store = transaction.objectStore(STORE_NAME);
       await store.delete(vostcardId);
+      console.log('✅ Deleted from IndexedDB');
 
-      // Delete from Firebase
-      const docRef = doc(db, 'vostcards', vostcardId);
-      try {
-        await deleteDoc(docRef);
-        console.log('✅ Deleted from Firebase:', vostcardId);
-      } catch (e) {
-        console.warn('⚠️ Could not delete from Firebase:', e);
-        // Continue with local deletion even if Firebase fails
+      // Delete from Firebase (try both collections)
+      const deletePromises = [
+        deleteDoc(doc(db, 'vostcards', vostcardId)),
+        deleteDoc(doc(db, 'privateVostcards', user.uid, 'vostcards', vostcardId))
+      ];
+      
+      const results = await Promise.allSettled(deletePromises);
+      results.forEach((result, index) => {
+        const collection = index === 0 ? 'vostcards' : 'privateVostcards';
+        if (result.status === 'fulfilled') {
+          console.log(`✅ Deleted from Firebase ${collection}`);
+        } else {
+          console.log(`⚠️ Could not delete from Firebase ${collection}:`, result.reason);
+        }
+      });
+
+      // Add to deleted list in localStorage for sync
+      const deletedVostcards = JSON.parse(localStorage.getItem('deleted_vostcards') || '[]');
+      if (!deletedVostcards.includes(vostcardId)) {
+        deletedVostcards.push(vostcardId);
+        localStorage.setItem('deleted_vostcards', JSON.stringify(deletedVostcards));
+        console.log('✅ Added to deleted list in localStorage');
       }
 
       // Update state
       setSavedVostcards(prev => prev.filter(v => v.id !== vostcardId));
       setPostedVostcards(prev => prev.filter(v => v.id !== vostcardId));
       
+      console.log('✅ Vostcard deletion completed successfully');
+      
     } catch (error) {
-      console.error('Error deleting vostcard:', error);
+      console.error('❌ Error deleting vostcard:', error);
       throw error;
     }
   }, [openUserDB]);
