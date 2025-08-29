@@ -58,6 +58,7 @@ const PublicTripView: React.FC = () => {
   
   // Slideshow states
   const [showSlideshow, setShowSlideshow] = useState(false);
+  const [slideshowAutoPlay, setSlideshowAutoPlay] = useState(false);
   const [viewMode, setViewMode] = useState<'thumbnail' | 'map'>('thumbnail');
   const bgAudioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
@@ -357,7 +358,8 @@ const PublicTripView: React.FC = () => {
   const startSlideshowWithMusic = async () => {
     console.log('🎬 Starting public slideshow with music from user interaction');
     
-    // Start slideshow
+    // Enable auto-play and start slideshow
+    setSlideshowAutoPlay(true);
     setShowSlideshow(true);
     
     // Immediately try to start music with user interaction context
@@ -1198,9 +1200,12 @@ const PublicTripView: React.FC = () => {
           photos={slideshowImages}
           initialIndex={0}
           isOpen={showSlideshow}
-          onClose={() => setShowSlideshow(false)}
+          onClose={() => {
+            setShowSlideshow(false);
+            setSlideshowAutoPlay(false); // Reset auto-play when closed
+          }}
           title={`${trip?.name} - Slideshow`}
-          autoPlay={false}
+          autoPlay={slideshowAutoPlay}
           autoPlayInterval={5000}
         />
       )}
