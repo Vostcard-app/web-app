@@ -604,11 +604,31 @@ const VostcardDetailView: React.FC = () => {
             instagramURL: postedVostcard.instagramURL,
             hasYouTube: !!postedVostcard.youtubeURL,
             hasInstagram: !!postedVostcard.instagramURL,
+            // ✅ Audio debugging
+            hasAudioURLs: !!postedVostcard.audioURLs,
+            audioURLsLength: postedVostcard.audioURLs?.length || 0,
+            hasAudioFiles: !!postedVostcard.audioFiles,
+            audioFilesLength: postedVostcard.audioFiles?.length || 0,
+            hasAudioFlag: postedVostcard.hasAudio,
+            audioURL: postedVostcard.audioURL,
             allKeys: Object.keys(postedVostcard).sort()
           });
-          setVostcard(postedVostcard);
-          setLoading(false);
-          return;
+          
+          // ✅ Check if audio data is missing and force refresh from Firebase
+          const hasAnyAudio = postedVostcard.hasAudio || 
+                             !!(postedVostcard.audioURLs?.length > 0) ||
+                             !!(postedVostcard.audioFiles?.length > 0) ||
+                             !!postedVostcard.audioURL ||
+                             !!postedVostcard.audio;
+          
+          if (!hasAnyAudio) {
+            console.log('🔄 Audio data missing in cached postedVostcard, forcing refresh from Firebase...');
+            // Don't return here - fall through to Firebase fetch
+          } else {
+            setVostcard(postedVostcard);
+            setLoading(false);
+            return;
+          }
         }
         
         // If not found in context, try to load from IndexedDB directly
@@ -647,6 +667,18 @@ const VostcardDetailView: React.FC = () => {
             hasVideo: data.hasVideo,
             videoURL: data.videoURL,
             hasVideoURL: !!data.videoURL,
+            // ✅ Audio-related fields (UNIFIED FORMAT)
+            hasAudio: data.hasAudio,
+            audioURLs: data.audioURLs,
+            audioURLsLength: data.audioURLs?.length || 0,
+            audioFiles: data.audioFiles,
+            audioFilesLength: data.audioFiles?.length || 0,
+            audioLabels: data.audioLabels,
+            // Legacy audio fields
+            audioURL: data.audioURL,
+            audio: data.audio,
+            _firebaseAudioURL: data._firebaseAudioURL,
+            _firebaseAudioURLs: data._firebaseAudioURLs,
             video: data.video,
             hasVideoBlob: !!data.video,
             _firebaseVideoURL: data._firebaseVideoURL,
