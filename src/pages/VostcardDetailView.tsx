@@ -537,6 +537,16 @@ const VostcardDetailView: React.FC = () => {
             hasVideoBlob: !!data.video,
             _firebaseVideoURL: data._firebaseVideoURL,
             has_firebaseVideoURL: !!data._firebaseVideoURL,
+            // Audio-related fields
+            hasAudio: data.hasAudio,
+            audioURL: data.audioURL,
+            audioURLs: data.audioURLs,
+            audioURLsLength: data.audioURLs?.length || 0,
+            _firebaseAudioURL: data._firebaseAudioURL,
+            _firebaseAudioURLs: data._firebaseAudioURLs,
+            audio: data.audio,
+            audioFiles: data.audioFiles,
+            audioLabels: data.audioLabels,
             allKeys: Object.keys(data).sort()
           });
           

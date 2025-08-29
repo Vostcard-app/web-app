@@ -1158,22 +1158,43 @@ const VostcardStudioView: React.FC = () => {
         audioFiles.push(vostcardIntroAudio);
         audioLabels.push('intro');
       } else if (originalVostcardData?.audioFiles?.[0]) {
-        // Preserve original intro audio
+        // Preserve original intro audio from audioFiles
         audioFiles.push(originalVostcardData.audioFiles[0]);
         audioLabels.push(originalVostcardData.audioLabels?.[0] || 'intro');
       } else if (originalVostcardData?.audio) {
         // Preserve legacy audio format
         audioFiles.push(originalVostcardData.audio);
         audioLabels.push('intro');
+      } else if (originalVostcardData?.audioURL || originalVostcardData?.audioURLs?.[0] || originalVostcardData?._firebaseAudioURL) {
+        // Preserve audio from Firebase URLs by fetching and converting to blob
+        const audioURL = originalVostcardData.audioURL || originalVostcardData.audioURLs?.[0] || originalVostcardData._firebaseAudioURL;
+        try {
+          const response = await fetch(audioURL);
+          const blob = await response.blob();
+          audioFiles.push(blob);
+          audioLabels.push('intro');
+        } catch (error) {
+          console.error('Failed to preserve intro audio from URL:', error);
+        }
       }
       
       if (vostcardDetailAudio) {
         audioFiles.push(vostcardDetailAudio);
         audioLabels.push('detail');
       } else if (originalVostcardData?.audioFiles?.[1]) {
-        // Preserve original detail audio
+        // Preserve original detail audio from audioFiles
         audioFiles.push(originalVostcardData.audioFiles[1]);
         audioLabels.push(originalVostcardData.audioLabels?.[1] || 'detail');
+      } else if (originalVostcardData?.audioURLs?.[1]) {
+        // Preserve detail audio from Firebase URLs by fetching and converting to blob
+        try {
+          const response = await fetch(originalVostcardData.audioURLs[1]);
+          const blob = await response.blob();
+          audioFiles.push(blob);
+          audioLabels.push('detail');
+        } catch (error) {
+          console.error('Failed to preserve detail audio from URL:', error);
+        }
       }
       
       // Process YouTube and Instagram URLs
@@ -1349,16 +1370,33 @@ const VostcardStudioView: React.FC = () => {
           const detailLabel = vostcard.audioLabels && vostcard.audioLabels[1] ? vostcard.audioLabels[1] : 'Detail Audio';
           setVostcardDetailAudioFileName(detailLabel);
         }
-      } else if (vostcard._firebaseAudioURL) {
-        // Load audio from Firebase URL
-        try {
-          const response = await fetch(vostcard._firebaseAudioURL);
-          const blob = await response.blob();
-          setVostcardIntroAudio(blob);
-          setVostcardIntroAudioSource('file');
-          setVostcardIntroAudioFileName('loaded_audio.mp3');
-        } catch (error) {
-          console.error('Failed to load intro audio:', error);
+      } else {
+        // Load audio from Firebase URLs - check all possible audio fields
+        const audioURL = vostcard.audioURL || vostcard.audioURLs?.[0] || vostcard._firebaseAudioURL;
+        const detailAudioURL = vostcard.audioURLs?.[1];
+        
+        if (audioURL) {
+          try {
+            const response = await fetch(audioURL);
+            const blob = await response.blob();
+            setVostcardIntroAudio(blob);
+            setVostcardIntroAudioSource('file');
+            setVostcardIntroAudioFileName('loaded_audio.mp3');
+          } catch (error) {
+            console.error('Failed to load intro audio:', error);
+          }
+        }
+        
+        if (detailAudioURL) {
+          try {
+            const response = await fetch(detailAudioURL);
+            const blob = await response.blob();
+            setVostcardDetailAudio(blob);
+            setVostcardDetailAudioSource('file');
+            setVostcardDetailAudioFileName('loaded_detail_audio.mp3');
+          } catch (error) {
+            console.error('Failed to load detail audio:', error);
+          }
         }
       }
       
