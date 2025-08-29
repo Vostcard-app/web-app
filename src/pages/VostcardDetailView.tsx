@@ -976,34 +976,35 @@ Tap OK to continue.`;
     }
   }, [photoURLs]);
 
-  // ✅ NEW: Thumbnail click handler - launches audio and shows clicked photo
+  // ✅ NEW: Thumbnail click handler - launches audio and shows slideshow
   const handleThumbnailClick = useCallback((photoUrl: string) => {
-    console.log('🖼️ Thumbnail clicked - launching audio and showing clicked photo:', photoUrl);
+    console.log('🖼️ Thumbnail clicked - launching audio and showing slideshow:', photoUrl);
     
     // Start audio if available
     if (hasAudio) {
       handlePlayPause();
     }
     
-    // Show the specific photo that was clicked
-    setSelectedPhoto(photoUrl);
-  }, [hasAudio, handlePlayPause]);
+    // Find the index of the clicked photo and start slideshow from there
+    const photoIndex = photoURLs.indexOf(photoUrl);
+    setSelectedPhotoIndex(photoIndex >= 0 ? photoIndex : 0);
+    setShowMultiPhotoModal(true);
+  }, [hasAudio, handlePlayPause, photoURLs]);
 
-  // ✅ Main photo click handler - triggers audio and shows main photo (same as thumbnails)
+  // ✅ Main photo click handler - triggers audio and shows slideshow
   const handleMainPhotoClick = useCallback(() => {
     console.log('🚨 CLICK DETECTED ON MAIN PHOTO! 🚨');
-    console.log('🖼️ Main photo clicked - launching audio and showing main photo');
+    console.log('🖼️ Main photo clicked - launching audio and showing slideshow');
     
     // Start audio if available
     if (hasAudio) {
       handlePlayPause();
     }
     
-    // Show main photo in full screen (same behavior as thumbnails)
-    if (photoURLs[0]) {
-      setSelectedPhoto(photoURLs[0]);
-    }
-  }, [hasAudio, photoURLs, handlePlayPause]);
+    // Start slideshow from the first photo
+    setSelectedPhotoIndex(0);
+    setShowMultiPhotoModal(true);
+  }, [hasAudio, handlePlayPause]);
 
   // ✅ NEW: Enhanced audio playback functions for Intro and Detail
   const handleIntroAudioPlayback = useCallback(async () => {
