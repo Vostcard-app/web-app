@@ -416,7 +416,23 @@ const VostcardDetailView: React.FC = () => {
     // Check both old (photoURLs) and new (_firebasePhotoURLs) formats
     const oldFormat = vostcard?.photoURLs || [];
     const newFormat = vostcard?._firebasePhotoURLs || [];
-    const urls = oldFormat.length > 0 ? oldFormat : newFormat;
+    
+    // Use oldFormat if it has valid URLs, otherwise use newFormat
+    // Filter out any empty/invalid URLs
+    const validOldFormat = oldFormat.filter(url => url && url.trim() !== '');
+    const validNewFormat = newFormat.filter(url => url && url.trim() !== '');
+    
+    const urls = validOldFormat.length > 0 ? validOldFormat : validNewFormat;
+    
+    console.log('🖼️ Photo URLs resolved:', {
+      vostcardId: vostcard?.id,
+      oldFormatLength: oldFormat.length,
+      newFormatLength: newFormat.length,
+      validOldFormatLength: validOldFormat.length,
+      validNewFormatLength: validNewFormat.length,
+      finalUrlsLength: urls.length,
+      finalUrls: urls.slice(0, 2) // Log first 2 URLs for debugging
+    });
     
     return urls;
   }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
