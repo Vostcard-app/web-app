@@ -2764,10 +2764,15 @@ const VostcardStudioView: React.FC = () => {
               overflow: 'auto',
               position: 'relative'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
-                  📂 Load Vostcard for Editing
-                </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
+                    📂 Load Vostcard for Editing
+                  </h3>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    🔒 Private cards • 🌐 Public cards • Total: {savedVostcards.length}
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowVostcardLoader(false)}
                   style={{
@@ -2793,51 +2798,89 @@ const VostcardStudioView: React.FC = () => {
                    </div>
                  ) : savedVostcards.length === 0 ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-                                         <p>No vostcards found.</p>
-                    <p style={{ fontSize: '14px' }}>Create a vostcard first, then you can load it for editing.</p>
-                     <p style={{ fontSize: '12px', color: '#999', marginTop: '16px' }}>
-                       Total saved cards: {savedVostcards.length}
-                     </p>
+                     <div style={{ fontSize: '48px', marginBottom: '16px' }}>📂</div>
+                     <p style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '8px' }}>No vostcards found</p>
+                     <p style={{ fontSize: '14px', marginBottom: '16px' }}>Create a vostcard first, then you can load it for editing.</p>
+                     <div style={{ fontSize: '12px', color: '#999', backgroundColor: '#f8f9fa', padding: '12px', borderRadius: '8px' }}>
+                       <div>This loads both:</div>
+                       <div>🔒 <strong>Private cards</strong> - Your drafts and unpublished cards</div>
+                       <div>🌐 <strong>Public cards</strong> - Your published cards that you can re-edit</div>
+                     </div>
                    </div>
                  ) : (
-                   savedVostcards.map((vostcard) => (
-                     <div
-                       key={vostcard.id}
-                       onClick={() => !isLoadingVostcards && loadVostcardForEditing(vostcard)}
-                       style={{
-                         display: 'flex',
-                         alignItems: 'center',
-                         padding: '12px',
-                         border: '1px solid #ddd',
-                         borderRadius: '8px',
-                         marginBottom: '8px',
-                         cursor: isLoadingVostcards ? 'not-allowed' : 'pointer',
-                         backgroundColor: isLoadingVostcards ? '#f5f5f5' : '#f9f9f9',
-                         transition: 'background-color 0.2s',
-                         opacity: isLoadingVostcards ? 0.6 : 1
-                       }}
-                       onMouseEnter={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = '#f0f0f0')}
-                       onMouseLeave={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = '#f9f9f9')}
-                     >
-                       <div style={{ flex: 1 }}>
-                         <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                           {vostcard.title || 'Untitled Vostcard'}
+                   savedVostcards.map((vostcard) => {
+                     const isPublic = vostcard.visibility === 'public';
+                     const isPosted = vostcard.state === 'posted';
+                     
+                     return (
+                       <div
+                         key={vostcard.id}
+                         onClick={() => !isLoadingVostcards && loadVostcardForEditing(vostcard)}
+                         style={{
+                           display: 'flex',
+                           alignItems: 'center',
+                           padding: '12px',
+                           border: isPublic ? '2px solid #007aff' : '1px solid #ddd',
+                           borderRadius: '8px',
+                           marginBottom: '8px',
+                           cursor: isLoadingVostcards ? 'not-allowed' : 'pointer',
+                           backgroundColor: isLoadingVostcards ? '#f5f5f5' : (isPublic ? '#f0f8ff' : '#f9f9f9'),
+                           transition: 'background-color 0.2s',
+                           opacity: isLoadingVostcards ? 0.6 : 1,
+                           position: 'relative'
+                         }}
+                         onMouseEnter={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = isPublic ? '#e6f3ff' : '#f0f0f0')}
+                         onMouseLeave={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = isPublic ? '#f0f8ff' : '#f9f9f9')}
+                       >
+                         {/* Visibility Badge */}
+                         <div style={{
+                           position: 'absolute',
+                           top: '8px',
+                           right: '8px',
+                           backgroundColor: isPublic ? '#007aff' : '#6c757d',
+                           color: 'white',
+                           fontSize: '10px',
+                           fontWeight: 'bold',
+                           padding: '2px 6px',
+                           borderRadius: '12px',
+                           textTransform: 'uppercase'
+                         }}>
+                           {isPublic ? (isPosted ? '🌐 Public' : '🔓 Public') : '🔒 Private'}
                          </div>
-                         <div style={{ fontSize: '12px', color: '#666' }}>
-                           {vostcard.description && vostcard.description.length > 50 
-                            ? vostcard.description.substring(0, 50) + '...'
-                            : vostcard.description || 'No description'
-                           }
+                         
+                         <div style={{ flex: 1, paddingRight: '60px' }}>
+                           <div style={{ 
+                             fontWeight: 'bold', 
+                             marginBottom: '4px',
+                             color: isPublic ? '#007aff' : '#333'
+                           }}>
+                             {vostcard.title || 'Untitled Vostcard'}
+                           </div>
+                           <div style={{ fontSize: '12px', color: '#666' }}>
+                             {vostcard.description && vostcard.description.length > 50 
+                              ? vostcard.description.substring(0, 50) + '...'
+                              : vostcard.description || 'No description'
+                             }
+                           </div>
+                           <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                             Created: {new Date(vostcard.createdAt).toLocaleDateString()}
+                             {isPublic && (
+                               <span style={{ 
+                                 marginLeft: '8px', 
+                                 color: isPosted ? '#28a745' : '#ffc107',
+                                 fontWeight: 'bold'
+                               }}>
+                                 • {isPosted ? 'Published' : 'Ready to Publish'}
+                               </span>
+                             )}
+                           </div>
                          </div>
-                         <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-                           Created: {new Date(vostcard.createdAt).toLocaleDateString()}
+                         <div style={{ marginLeft: '12px', color: isPublic ? '#007aff' : '#28a745' }}>
+                           <FaEdit size={16} />
                          </div>
                        </div>
-                       <div style={{ marginLeft: '12px', color: '#28a745' }}>
-                         <FaEdit size={16} />
-                       </div>
-                     </div>
-                   ))
+                     );
+                   })
                  )}
                </div>
             </div>

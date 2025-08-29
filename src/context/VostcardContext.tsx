@@ -840,10 +840,130 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [openUserDB]);
 
-  // Legacy function for compatibility - now redirects to loadPrivateVostcards
+  // Enhanced function to load both private and public vostcards for Studio
   const loadAllLocalVostcards = useCallback(async () => {
-    return loadPrivateVostcards();
-  }, [loadPrivateVostcards]);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        console.log('No user authenticated, skipping loadAllLocalVostcards');
+        setSavedVostcards([]);
+        return;
+      }
+
+      console.log('🔄 Loading ALL vostcards (private + public) from Firebase for user:', user.uid);
+      
+      // Query Firebase for ALL user's vostcards (both private and public)
+      const q = query(
+        collection(db, 'vostcards'),
+        where('userID', '==', user.uid)
+        // Removed visibility filter to get both private and public
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const vostcards = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        // Debug logging for image/audio data
+        console.log('🔍 All vostcard Firebase data for', doc.id, ':', {
+          photoURLs: data.photoURLs,
+          photoURLsType: typeof data.photoURLs,
+          photoURLsLength: Array.isArray(data.photoURLs) ? data.photoURLs.length : 'not array',
+          firstPhotoURL: Array.isArray(data.photoURLs) && data.photoURLs.length > 0 ? data.photoURLs[0] : 'none',
+          videoURL: data.videoURL,
+          audioURL: data.audioURL,
+          hasPhotos: data.hasPhotos,
+          hasVideo: data.hasVideo,
+          visibility: data.visibility,
+          state: data.state,
+          allFields: Object.keys(data)
+        });
+        
+        // Test if first photo URL is accessible and try to refresh if needed
+        if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
+          const testUrl = data.photoURLs[0];
+          console.log('🧪 Testing photo URL accessibility:', testUrl);
+          
+          fetch(testUrl, { method: 'HEAD' })
+            .then(response => {
+              console.log('✅ Photo URL accessible:', response.status, response.statusText);
+              if (response.status === 412 || response.status === 403) {
+                console.warn('⚠️ HTTP', response.status, ': URL may be expired or have permission issues');
+                // TODO: Implement URL refresh logic here if needed
+              }
+            })
+            .catch(error => {
+              console.error('❌ Photo URL failed:', error.message);
+
+              // TODO: Implement fallback logic here if needed
+            });
+        }
+        return {
+          id: doc.id,
+          title: data.title || '',
+          description: data.description || '',
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          username: data.username || '',
+          userID: data.userID || '',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          state: data.state || 'private',
+          visibility: data.visibility || 'private',
+          type: 'vostcard' as const,
+          video: null,
+          photos: [],
+          geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
+          hasVideo: data.hasVideo || false,
+          hasPhotos: data.hasPhotos || false,
+          _firebaseVideoURL: data.videoURL || null,
+          _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
+          photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
+          _isMetadataOnly: true
+        };
+      });
+
+      // Sort by creation date (newest first)
+      const sortedVostcards = vostcards.sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      console.log('✅ Loaded', sortedVostcards.length, 'vostcards (private + public) from Firebase');
+      console.log('📊 Breakdown:', {
+        private: sortedVostcards.filter(v => v.visibility === 'private').length,
+        public: sortedVostcards.filter(v => v.visibility === 'public').length,
+        total: sortedVostcards.length
+      });
+      console.log('📅 First 3 vostcards:', sortedVostcards.slice(0, 3).map(v => ({
+        id: v.id,
+        title: v.title,
+        createdAt: v.createdAt,
+        state: v.state,
+        visibility: v.visibility
+      })));
+      
+      setSavedVostcards(sortedVostcards);
+      
+      // Cache locally for performance
+      try {
+        const db = await openUserDB();
+        const transaction = db.transaction([METADATA_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(METADATA_STORE_NAME);
+        
+        for (const vostcard of sortedVostcards) {
+          await store.put(vostcard);
+        }
+        
+        console.log('✅ Cached', sortedVostcards.length, 'vostcard metadata locally');
+      } catch (cacheError) {
+        console.warn('⚠️ Failed to cache vostcard metadata locally:', cacheError);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error loading all vostcards:', error);
+      setSavedVostcards([]);
+    }
+  }, [openUserDB]);
 
   // Load posted vostcards from Firebase  
   const loadPostedVostcards = useCallback(async () => {
