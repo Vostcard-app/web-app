@@ -1280,45 +1280,7 @@ ${shareUrl}`;
             })()}
             
 
-            
-            {/* Share Trip Button - Only show for trip owners */}
-            {!isViewingSharedTrip && (
-              <button
-                style={{
-                  background: preparingShare ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: preparingShare ? 'not-allowed' : 'pointer',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  gap: '6px'
-                }}
-                onClick={handleShareTrip}
-                disabled={preparingShare}
-                title="Share Trip"
-              >
-                {preparingShare ? (
-                  <>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      borderTop: '2px solid white',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
-                    Preparing...
-                  </>
-                ) : (
-                  'Share'
-                )}
-              </button>
-            )}
+
             
             <button
               onClick={() => navigate('/home')}
@@ -1343,16 +1305,77 @@ ${shareUrl}`;
         {/* Trip Info */}
         <div style={{ padding: '20px 20px 16px 20px' }}>
           
-          <div style={{ 
+                    <div style={{
             display: 'flex', 
             alignItems: 'center', 
-            gap: '4px',
+            justifyContent: 'space-between',
             fontSize: '12px',
             color: '#888',
             marginBottom: '16px'
           }}>
-            <FaCalendar />
-            Created {formatDate(trip.createdAt)}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <FaCalendar />
+              Created {formatDate(trip.createdAt)}
+            </div>
+            
+            {/* Small Share Button - Only show for trip owners */}
+            {!isViewingSharedTrip && (
+              <button
+                style={{
+                  background: preparingShare ? '#f0f0f0' : '#e9ecef',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: preparingShare ? 'not-allowed' : 'pointer',
+                  color: '#666',
+                  fontSize: '10px',
+                  fontWeight: '500',
+                  gap: '4px',
+                  transition: 'all 0.2s'
+                }}
+                onClick={handleShareTrip}
+                disabled={preparingShare}
+                title="Share Trip"
+                onMouseEnter={(e) => {
+                  if (!preparingShare) {
+                    e.currentTarget.style.backgroundColor = '#d4edda';
+                    e.currentTarget.style.borderColor = '#c3e6cb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!preparingShare) {
+                    e.currentTarget.style.backgroundColor = '#e9ecef';
+                    e.currentTarget.style.borderColor = '#ddd';
+                  }
+                }}
+              >
+                {preparingShare ? (
+                  <>
+                    <div style={{
+                      width: '8px',
+                      height: '8px',
+                      border: '1px solid #999',
+                      borderTop: '1px solid #333',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Preparing...
+                  </>
+                ) : (
+                  <>
+                    <FaShare size={8} />
+                    Share
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Trip Description */}
