@@ -437,22 +437,26 @@ const VostcardDetailView: React.FC = () => {
     return urls;
   }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
   const hasAudio = useMemo(() => {
+    // ✅ FIXED: Prioritize Firebase URLs over Blob objects for studio-edited vostcards
     const audioExists = !!(
-      vostcard?.audioURL || 
-      vostcard?.audioURLs?.length > 0 || 
-      vostcard?.audio || 
-      vostcard?._firebaseAudioURL ||
-      vostcard?._firebaseAudioURLs?.length > 0 ||
-      vostcard?.audioFiles?.length > 0
+      vostcard?.audioURLs?.length > 0 ||           // Studio-edited: Firebase URLs from uploaded audioFiles
+      vostcard?._firebaseAudioURLs?.length > 0 ||  // Alternative Firebase URL field
+      vostcard?.audioURL ||                        // Legacy single URL
+      vostcard?._firebaseAudioURL ||               // Legacy Firebase URL
+      vostcard?.audio ||                           // Legacy Blob
+      vostcard?.audioFiles?.length > 0             // Blob fallback (should be uploaded to Firebase)
     );
-    console.log('🔍 Audio detection:', {
+    console.log('🔍 VostcardDetailView Audio detection:', {
       audioExists,
-      audioURL: vostcard?.audioURL,
       audioURLs: vostcard?.audioURLs,
-      audio: vostcard?.audio,
-      _firebaseAudioURL: vostcard?._firebaseAudioURL,
+      audioURLsLength: vostcard?.audioURLs?.length || 0,
       _firebaseAudioURLs: vostcard?._firebaseAudioURLs,
-      audioFiles: vostcard?.audioFiles
+      _firebaseAudioURLsLength: vostcard?._firebaseAudioURLs?.length || 0,
+      audioURL: vostcard?.audioURL,
+      _firebaseAudioURL: vostcard?._firebaseAudioURL,
+      audio: !!vostcard?.audio,
+      audioFiles: vostcard?.audioFiles,
+      audioFilesLength: vostcard?.audioFiles?.length || 0
     });
     return audioExists;
   }, [vostcard?.audioURL, vostcard?.audioURLs, vostcard?.audio, vostcard?._firebaseAudioURL, vostcard?._firebaseAudioURLs, vostcard?.audioFiles]);
@@ -951,10 +955,12 @@ Tap OK to continue.`;
       (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
 
       // Get audio source - check multiple possible fields
-      const audioSource = vostcard?.audioURL || 
-                         vostcard?.audioURLs?.[0] || 
-                         vostcard?.audio || 
-                         vostcard?._firebaseAudioURL;
+      // ✅ FIXED: Prioritize Firebase URLs over Blob objects for studio-edited vostcards
+      const audioSource = vostcard?.audioURLs?.[0] ||           // Studio-edited: Firebase URLs from uploaded audioFiles
+                         vostcard?._firebaseAudioURLs?.[0] ||   // Alternative Firebase URL field
+                         vostcard?.audioURL ||                  // Legacy single URL
+                         vostcard?._firebaseAudioURL ||         // Legacy Firebase URL
+                         vostcard?.audio;                       // Legacy Blob (last resort)
 
       if (!audioSource) {
         console.error('No audio source available');
@@ -1064,11 +1070,13 @@ Tap OK to continue.`;
       (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
 
       // Get intro audio source - prioritize intro-specific fields
-      const introAudioSource = vostcard?.introAudioURL || 
-                              vostcard?.audioURL || 
-                              vostcard?.audioURLs?.[0] || 
-                              vostcard?.audio || 
-                              vostcard?._firebaseAudioURL;
+      // ✅ FIXED: Prioritize Firebase URLs over Blob objects for studio-edited vostcards
+      const introAudioSource = vostcard?.introAudioURL ||       // Specific intro URL
+                              vostcard?.audioURLs?.[0] ||       // Studio-edited: First audio from uploaded audioFiles
+                              vostcard?._firebaseAudioURLs?.[0] || // Alternative Firebase URL field
+                              vostcard?.audioURL ||             // Legacy single URL
+                              vostcard?._firebaseAudioURL ||    // Legacy Firebase URL
+                              vostcard?.audio;                  // Legacy Blob (last resort)
 
       if (!introAudioSource) {
         console.error('No intro audio source available');
@@ -1135,15 +1143,17 @@ Tap OK to continue.`;
         (vostcard?.audioLabels && vostcard.audioFiles && 
          vostcard.audioLabels.includes('detail')) ? 
          vostcard.audioFiles[vostcard.audioLabels.indexOf('detail')] :
-        // Check for second audio in arrays
-        vostcard?.audioURLs?.[1] || 
-        vostcard?._firebaseAudioURLs?.[1] || 
-        vostcard?.audioFiles?.[1] ||
-        // Fallback to first audio
-        vostcard?.audioURL ||
-        vostcard?.audioURLs?.[0] ||
-        vostcard?.audio ||
-        vostcard?._firebaseAudioURL;
+        // ✅ FIXED: Prioritize Firebase URLs over Blob objects for studio-edited vostcards
+        // Check for second audio in arrays (detail audio)
+        vostcard?.audioURLs?.[1] ||                   // Studio-edited: Second audio from uploaded audioFiles
+        vostcard?._firebaseAudioURLs?.[1] ||          // Alternative Firebase URL field
+        vostcard?.audioFiles?.[1] ||                  // Blob fallback for second audio
+        // Fallback to first audio if no detail audio
+        vostcard?.audioURLs?.[0] ||                   // Studio-edited: First audio from uploaded audioFiles
+        vostcard?._firebaseAudioURLs?.[0] ||          // Alternative Firebase URL field
+        vostcard?.audioURL ||                         // Legacy single URL
+        vostcard?._firebaseAudioURL ||                // Legacy Firebase URL
+        vostcard?.audio;                              // Legacy Blob (last resort)
 
       if (!detailAudioSource) {
         console.error('No detail audio source available');
