@@ -398,6 +398,7 @@ const VostcardDetailView: React.FC = () => {
     // Add additional audio properties for better compatibility
     audio.preload = 'auto';
     audio.crossOrigin = 'anonymous';
+    audio.loop = false; // ✅ Ensure audio doesn't loop/repeat
     
     // Track this instance
     allAudioInstances.current.add(audio);
@@ -405,7 +406,14 @@ const VostcardDetailView: React.FC = () => {
     
     // Enhanced event listeners for debugging
     const cleanup = () => {
-      console.log('🎵 Audio cleanup triggered');
+      console.log('🎵 Audio cleanup triggered - audio ended or errored');
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = ''; // Clear source to prevent any restart
+      } catch (e) {
+        console.log('🎵 Audio cleanup error (non-critical):', e);
+      }
       allAudioInstances.current.delete(audio);
       if (audioRef.current === audio) {
         audioRef.current = null;
@@ -915,48 +923,7 @@ const VostcardDetailView: React.FC = () => {
     loadUserRating();
   }, [user, vostcard?.id]);
 
-  // ✅ Enhanced audio player effects
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleLoadedMetadata = () => {
-      setAudioDuration(audio.duration);
-    };
-
-    const handlePlay = () => {
-      setIsPlaying(true);
-    };
-
-    const handlePause = () => {
-      setIsPlaying(false);
-    };
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-      audioRef.current = null;
-    };
-
-    const handleError = () => {
-      console.error('Audio failed to load');
-      setIsPlaying(false);
-      audioRef.current = null;
-    };
-
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('error', handleError);
-
-    return () => {
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('error', handleError);
-    };
-  }, [vostcard?.audioURL, vostcard?.audioURLs]);
+  // ✅ Audio event listeners are now handled by createAudioInstance() - no conflicting useEffect needed
 
   const handleShareClick = async () => {
     if (!vostcard) return;
