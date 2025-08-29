@@ -395,12 +395,17 @@ const VostcardDetailView: React.FC = () => {
     const audio = new Audio();
     audio.src = src;
     
+    // Add additional audio properties for better compatibility
+    audio.preload = 'auto';
+    audio.crossOrigin = 'anonymous';
+    
     // Track this instance
     allAudioInstances.current.add(audio);
     audioRef.current = audio;
     
-    // Auto-cleanup when audio ends or errors
+    // Enhanced event listeners for debugging
     const cleanup = () => {
+      console.log('🎵 Audio cleanup triggered');
       allAudioInstances.current.delete(audio);
       if (audioRef.current === audio) {
         audioRef.current = null;
@@ -408,10 +413,35 @@ const VostcardDetailView: React.FC = () => {
       }
     };
     
+    const onLoadStart = () => console.log('🎵 Audio loading started');
+    const onCanPlay = () => console.log('🎵 Audio can start playing');
+    const onLoadedData = () => console.log('🎵 Audio data loaded');
+    const onError = (e: any) => {
+      console.error('🚨 Audio element error:', {
+        error: e,
+        audioError: audio.error,
+        networkState: audio.networkState,
+        readyState: audio.readyState,
+        src: audio.src
+      });
+      cleanup();
+    };
+    
     audio.addEventListener('ended', cleanup);
-    audio.addEventListener('error', cleanup);
+    audio.addEventListener('error', onError);
+    audio.addEventListener('loadstart', onLoadStart);
+    audio.addEventListener('canplay', onCanPlay);
+    audio.addEventListener('loadeddata', onLoadedData);
     
     console.log('🎵 Created new audio instance, total instances:', allAudioInstances.current.size);
+    console.log('🎵 Audio element properties:', {
+      src: audio.src,
+      preload: audio.preload,
+      crossOrigin: audio.crossOrigin,
+      readyState: audio.readyState,
+      networkState: audio.networkState
+    });
+    
     return audio;
   }, [stopAllAudio]);
   
@@ -1026,13 +1056,36 @@ Tap OK to continue.`;
       console.log('🎵 Audio source set:', audioSrc);
 
       // Play audio
+      console.log('🎵 Attempting to play audio...');
       await audio.play();
       setIsPlaying(true);
+      console.log('🎵 Audio started playing successfully');
       
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error('🚨 Error playing audio:', {
+        error: error,
+        errorMessage: error.message,
+        errorName: error.name,
+        audioSrc: audioSrc,
+        audioReadyState: audio.readyState,
+        audioNetworkState: audio.networkState,
+        audioError: audio.error
+      });
       stopAllAudio();
-      alert('Failed to play audio. Please try again.');
+      
+      // More user-friendly error message based on error type
+      let errorMsg = 'Failed to play audio. ';
+      if (error.name === 'NotAllowedError') {
+        errorMsg += 'Please tap to enable audio playback.';
+      } else if (error.name === 'NotSupportedError') {
+        errorMsg += 'Audio format not supported by your browser.';
+      } else if (error.name === 'AbortError') {
+        errorMsg += 'Audio loading was interrupted.';
+      } else {
+        errorMsg += 'Please try again.';
+      }
+      
+      alert(errorMsg);
     }
   }, [hasAudio, isPlaying, vostcard]);
 
