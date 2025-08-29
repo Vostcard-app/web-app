@@ -1,12 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaHeart, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay, FaPhotoVideo } from 'react-icons/fa';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import type { Trip, TripItem } from '../types/TripTypes';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import RoundInfoButton from '../assets/RoundInfo_Button.png';
+
+// Import pin assets
+import VostcardPin from '../assets/Vostcard_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
+import QuickcardPin from '../assets/quickcard_pin.png';
+
+// Custom icons for the map
+const vostcardIcon = new L.Icon({
+  iconUrl: VostcardPin,
+  iconSize: [60, 60],
+  iconAnchor: [30, 60],
+  popupAnchor: [0, -60],
+});
+
+const quickcardIcon = new L.Icon({
+  iconUrl: QuickcardPin,
+  iconSize: [60, 60],
+  iconAnchor: [30, 60],
+  popupAnchor: [0, -60],
+});
 
 interface VostcardData {
   id: string;
@@ -35,6 +58,7 @@ const PublicTripView: React.FC = () => {
   
   // Slideshow states
   const [showSlideshow, setShowSlideshow] = useState(false);
+  const [viewMode, setViewMode] = useState<'thumbnail' | 'map'>('thumbnail');
   const bgAudioRef = useRef<HTMLAudioElement | null>(null);
   useEffect(() => {
     const audio = bgAudioRef.current;
@@ -676,14 +700,31 @@ const PublicTripView: React.FC = () => {
           </div>
         )}
 
-        {/* View Mode Buttons */}
+        {/* View Mode Toggle Button */}
         <div style={{
           display: 'flex',
-          gap: '8px',
-          marginBottom: '16px',
-          justifyContent: 'center'
+          justifyContent: 'flex-end',
+          marginBottom: '16px'
         }}>
           <button
+            onClick={() => {
+              if (viewMode === 'thumbnail') {
+                // Switch to map view
+                if (trip && tripPosts.length > 0) {
+                  const postsWithLocation = tripPosts.filter(post => post.latitude && post.longitude);
+                  if (postsWithLocation.length > 0) {
+                    setViewMode('map');
+                  } else {
+                    alert('No posts in this trip have location data for the map view.');
+                  }
+                } else {
+                  alert('No posts available for map view.');
+                }
+              } else {
+                // Switch back to thumbnail view
+                setViewMode('thumbnail');
+              }
+            }}
             style={{
               backgroundColor: '#007aff',
               color: 'white',
@@ -699,118 +740,10 @@ const PublicTripView: React.FC = () => {
               transition: 'all 0.2s ease'
             }}
           >
-            <FaEye size={12} />
-            List View
-          </button>
-          
-      {/* Music label intentionally omitted on shared list view */}
-
-          <button
-            onClick={() => {
-
-              
-              if (trip && tripPosts.length > 0) {
-                // Filter posts that have location data
-                const postsWithLocation = tripPosts.filter(post => {
-
-                  return post.latitude && post.longitude;
-                });
-                
-
-                
-                if (postsWithLocation.length > 0) {
-
-                  navigate('/public-trip-map', {
-                    replace: false,
-                    state: {
-                      trip: {
-                        id: trip.id,
-                        name: trip.name,
-                        description: trip.description,
-                        username: userProfile?.username || 'Anonymous'
-                      },
-                      tripPosts: postsWithLocation.map(post => ({
-                        id: post.id,
-                        title: post.title,
-                        description: post.description,
-                        latitude: post.latitude,
-                        longitude: post.longitude,
-                        photoURLs: post.photoURLs,
-                        videoURL: post.videoURL,
-                        username: post.username,
-                        userRole: post.userRole,
-                        isOffer: post.isOffer || false,
-                        isQuickcard: post.isQuickcard || false,
-                        offerDetails: post.offerDetails,
-                        categories: post.categories,
-                        createdAt: post.createdAt,
-                        type: post.type,
-                        order: post.order
-                      }))
-                    }
-                  });
-                } else {
-
-                  alert('No posts in this trip have location data for the map view.');
-                }
-              } else {
-
-                alert('No posts available for map view.');
-              }
-            }}
-            style={{
-              backgroundColor: '#f0f0f0',
-              color: '#333',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <FaMap size={12} />
-            Map View
-          </button>
-          
-          <button
-            onClick={slideshowImages.length > 0 ? startSlideshowWithMusic : handleSlideshowClick}
-            disabled={loadingSlideshowImages}
-            style={{
-              backgroundColor: loadingSlideshowImages ? '#ccc' : (slideshowImages.length > 0 ? '#007aff' : '#f0f0f0'),
-              color: loadingSlideshowImages ? '#666' : (slideshowImages.length > 0 ? 'white' : '#333'),
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 16px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: loadingSlideshowImages ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {loadingSlideshowImages ? (
+            {viewMode === 'thumbnail' ? (
               <>
-                <div style={{
-                  width: '12px',
-                  height: '12px',
-                  border: '2px solid #999',
-                  borderTop: '2px solid transparent',
-                  borderRadius: '50%',
-                  animation: 'spin 1s linear infinite'
-                }} />
-                Loading...
-              </>
-            ) : slideshowImages.length > 0 ? (
-              <>
-                <FaPlay size={12} />
-                Start Slideshow ({slideshowImages.length})
+                <FaMap size={12} />
+                Map View
               </>
             ) : (
               <>
@@ -821,201 +754,238 @@ const PublicTripView: React.FC = () => {
           </button>
         </div>
 
-        {/* Debug Info - Remove after testing */}
-        <div style={{
-          background: '#f0f0f0',
-          padding: '8px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          marginBottom: '16px',
-          color: '#666'
-        }}>
-          Debug: Trip has {trip?.items?.length || 0} items, loaded {tripPosts.length} posts
-        </div>
-
-        {/* List View of Posts */}
-        {tripPosts.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {tripPosts.map((post, index) => (
+        {/* Conditional View: Thumbnail or Map */}
+        {viewMode === 'thumbnail' ? (
+          /* Thumbnail View */
+          tripPosts.length > 0 ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
+              {/* Large Thumbnail - Tappable to start slideshow */}
               <div
-                key={post.id}
-                onClick={() => handlePostClick(post.id, post.isQuickcard)}
+                onClick={async () => {
+                  if (slideshowImages.length === 0) {
+                    const images = await collectTripImages();
+                    setSlideshowImages(images);
+                  }
+                  if (slideshowImages.length > 0 || tripPosts.some(p => p.photoURLs?.length > 0)) {
+                    startSlideshowWithMusic();
+                  } else {
+                    alert('No images found in this trip to display in slideshow.');
+                  }
+                }}
                 style={{
-                  background: 'white',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '12px',
-                  padding: '12px',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                  cursor: 'pointer'
+                  width: '300px',
+                  height: '300px',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  backgroundColor: '#f0f0f0',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f8f9fa';
-                  e.currentTarget.style.borderColor = '#007aff';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.borderColor = '#e0e0e0';
-                  e.currentTarget.style.transform = 'translateY(0px)';
-                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
                 }}
               >
-                {/* Post Header */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '8px'
-                }}>
+                {tripPosts[0]?.photoURLs?.[0] ? (
+                  <img
+                    src={tripPosts[0].photoURLs[0]}
+                    alt={trip.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
                   <div style={{
+                    width: '100%',
+                    height: '100%',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    justifyContent: 'center',
+                    color: '#999',
+                    fontSize: '48px'
                   }}>
-                    <span style={{
-                      fontSize: '16px',
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      {index + 1}. {post.title || 'Untitled'}
-                    </span>
-                    
-                    <span style={{
-                      fontSize: '12px',
-                      padding: '2px 6px',
-                      backgroundColor: post.isQuickcard ? '#e3f2fd' : '#f3e5f5',
-                      borderRadius: '8px',
-                      color: post.isQuickcard ? '#1976d2' : '#7b1fa2'
-                    }}>
-                      {post.isQuickcard ? '📸 Quickcard' : '📹 Vostcard'}
-                    </span>
+                    🧳
                   </div>
-                </div>
-
-                {/* Post Content */}
+                )}
+                
+                {/* Play overlay */}
                 <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '60px',
+                  height: '60px',
                   display: 'flex',
-                  gap: '12px'
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '24px'
                 }}>
-                  {/* Thumbnail */}
-                  <div style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    backgroundColor: '#f0f0f0',
-                    flexShrink: 0,
-                    position: 'relative'
-                  }}>
-                    {post.photoURLs && post.photoURLs.length > 0 ? (
-                      <img
-                        src={post.photoURLs[0]}
-                        alt={post.title}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#999',
-                        fontSize: '24px'
-                      }}>
-                        {post.isQuickcard ? '📷' : '📱'}
-                      </div>
-                    )}
-                    
-                    {/* Video indicator */}
-                    {post.videoURL && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '4px',
-                        right: '4px',
-                        background: 'rgba(0, 0, 0, 0.7)',
-                        color: 'white',
-                        borderRadius: '50%',
-                        width: '20px',
-                        height: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px'
-                      }}>
-                        <FaPlay />
-                      </div>
-                    )}
-
-                    {/* Multiple photos indicator */}
-                    {post.photoURLs && post.photoURLs.length > 1 && (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '4px',
-                        right: '4px',
-                        background: 'rgba(0, 0, 0, 0.7)',
-                        color: 'white',
-                        borderRadius: '4px',
-                        padding: '2px 4px',
-                        fontSize: '10px',
-                        fontWeight: '600'
-                      }}>
-                        +{post.photoURLs.length - 1}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Post Details */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {post.description && (
-                      <p style={{
-                        margin: '0 0 8px 0',
-                        fontSize: '14px',
-                        color: '#555',
-                        lineHeight: '1.4',
-                        overflow: 'hidden',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical'
-                      }}>
-                        {post.description}
-                      </p>
-                    )}
-                    
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#888',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}>
-                      <span>{formatDate(post.createdAt)}</span>
-                      <span>•</span>
-                      <span>Tap to view details</span>
-                    </div>
-                  </div>
+                  <FaPlay />
+                </div>
+                
+                {/* Photo count indicator */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '12px',
+                  right: '12px',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '4px 8px',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}>
+                  {tripPosts.reduce((total, post) => total + (post.photoURLs?.length || 0), 0)} photos
                 </div>
               </div>
-            ))}
-          </div>
+              
+              {/* Trip info below thumbnail */}
+              <div style={{
+                textAlign: 'center',
+                maxWidth: '300px'
+              }}>
+                <h3 style={{
+                  margin: '0 0 8px 0',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: '#333'
+                }}>
+                  Tap to start slideshow
+                </h3>
+                <p style={{
+                  margin: '0',
+                  fontSize: '14px',
+                  color: '#666',
+                  lineHeight: '1.4'
+                }}>
+                  {tripPosts.length} stop{tripPosts.length !== 1 ? 's' : ''} • {tripPosts.reduce((total, post) => total + (post.photoURLs?.length || 0), 0)} photos
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: '#666'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧳</div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Posts Yet</h3>
+              <p style={{ margin: '0', fontSize: '14px' }}>
+                This trip doesn't contain any posts yet.
+              </p>
+            </div>
+          )
         ) : (
-          <div style={{
-            textAlign: 'center',
-            padding: '40px 20px',
-            color: '#666'
-          }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧳</div>
-            <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Posts Yet</h3>
-            <p style={{ margin: '0', fontSize: '14px' }}>
-              This trip doesn't contain any posts yet.
-            </p>
-          </div>
+          /* Map View */
+          tripPosts.filter(post => post.latitude && post.longitude).length > 0 ? (
+            <div style={{
+              height: '400px',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: '1px solid #e0e0e0'
+            }}>
+              <MapContainer
+                center={[
+                  tripPosts.find(p => p.latitude && p.longitude)?.latitude || 0,
+                  tripPosts.find(p => p.latitude && p.longitude)?.longitude || 0
+                ]}
+                zoom={13}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {tripPosts
+                  .filter(post => post.latitude && post.longitude)
+                  .map((post, index) => (
+                    <Marker
+                      key={post.id}
+                      position={[post.latitude!, post.longitude!]}
+                      icon={post.isQuickcard ? quickcardIcon : vostcardIcon}
+                    >
+                      <Popup>
+                        <div style={{ minWidth: '200px' }}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                            {index + 1}. {post.title || 'Untitled'}
+                          </h4>
+                          {post.photoURLs?.[0] && (
+                            <img
+                              src={post.photoURLs[0]}
+                              alt={post.title}
+                              style={{
+                                width: '100%',
+                                height: '120px',
+                                objectFit: 'cover',
+                                borderRadius: '4px',
+                                marginBottom: '8px'
+                              }}
+                            />
+                          )}
+                          {post.description && (
+                            <p style={{
+                              margin: '0 0 8px 0',
+                              fontSize: '12px',
+                              color: '#666',
+                              lineHeight: '1.3'
+                            }}>
+                              {post.description.length > 100 
+                                ? post.description.substring(0, 100) + '...'
+                                : post.description
+                              }
+                            </p>
+                          )}
+                          <button
+                            onClick={() => handlePostClick(post.id, post.isQuickcard)}
+                            style={{
+                              background: '#007aff',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              padding: '4px 8px',
+                              fontSize: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            View Details
+                          </button>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))
+                }
+              </MapContainer>
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: '#666'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🗺️</div>
+              <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No Map Data</h3>
+              <p style={{ margin: '0', fontSize: '14px' }}>
+                No posts in this trip have location data for the map view.
+              </p>
+            </div>
+          )
         )}
 
         {/* Icons and Map View Button */}
