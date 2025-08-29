@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaRegImages, FaTimes, FaPencilAlt } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid';
 import { useVostcard } from '../context/VostcardContext';
 import { TripService } from '../services/tripService';
 import type { Trip } from '../types/TripTypes';
@@ -58,7 +59,7 @@ export default function VostcardCreateStep1Photos() {
         // Create empty vostcard when arriving at this step
         console.log('📱 Initializing empty vostcard for photo selection');
         setCurrentVostcard({
-          id: `vostcard_${Date.now()}`,
+          id: uuidv4(), // Use Firebase-compatible UUID instead of timestamp
           title: '',
           description: '',
           photos: [],

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe, FaImages, FaEdit } from 'react-icons/fa';
+import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../context/AuthContext';
 import { drivecardService } from '../services/drivecardService';
 import { VostcardImporter as LegacyVostcardImporter } from '../components/studio/LegacyVostcardImporter';
@@ -993,7 +994,7 @@ const VostcardStudioView: React.FC = () => {
       
       // Create vostcard as private draft with multiple photos and audio files
       const vostcard: Vostcard = {
-        id: `vostcard_${Date.now()}`,
+        id: uuidv4(), // Use Firebase-compatible UUID instead of timestamp
         title: vostcardTitle.trim(),
         description: vostcardDescription.trim() || '', 
         photos: vostcardPhotos, // Multiple photos
@@ -1076,7 +1077,7 @@ const VostcardStudioView: React.FC = () => {
       
       // Create vostcard ready for posting with multiple photos
       const vostcard: Vostcard = {
-        id: `vostcard_${Date.now()}`,
+        id: uuidv4(), // Use Firebase-compatible UUID instead of timestamp
         title: vostcardTitle.trim(),
         description: vostcardDescription.trim() || 'Vostcard',
         photos: vostcardPhotos, // Multiple photos
