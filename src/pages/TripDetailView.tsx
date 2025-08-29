@@ -113,6 +113,11 @@ const TripDetailView: React.FC = () => {
   const [editedDescription, setEditedDescription] = useState('');
   const [savingDescription, setSavingDescription] = useState(false);
 
+  // Title editing states
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [savingTitle, setSavingTitle] = useState(false);
+
   console.log('🔄 TripDetailView rendered', {
     id,
     user: !!user,
@@ -551,6 +556,37 @@ ${shareUrl}`;
       alert('Failed to update description. Please try again.');
     } finally {
       setSavingDescription(false);
+    }
+  };
+
+  // Title editing functions
+  const startEditingTitle = () => {
+    setEditedTitle(trip?.name || '');
+    setIsEditingTitle(true);
+  };
+
+  const cancelEditingTitle = () => {
+    setIsEditingTitle(false);
+    setEditedTitle('');
+  };
+
+  const saveTitle = async () => {
+    if (!trip || !user || user.uid !== trip.userID) return;
+    
+    setSavingTitle(true);
+    try {
+      await TripService.updateTrip(trip.id, { name: editedTitle });
+      
+      // Update local trip state
+      setTrip(prev => prev ? { ...prev, name: editedTitle } : null);
+      
+      setIsEditingTitle(false);
+      console.log('✅ Trip title updated successfully');
+    } catch (error) {
+      console.error('❌ Error updating trip title:', error);
+      alert('Failed to update title. Please try again.');
+    } finally {
+      setSavingTitle(false);
     }
   };
 
@@ -1011,26 +1047,138 @@ ${shareUrl}`;
               <FaArrowLeft />
             </button>
             <div style={{ flex: 1 }}>
-              <h1 style={{
-                color: 'white',
-                fontWeight: 700,
-                fontSize: '18px',
-                margin: 0,
-                lineHeight: '1.2'
-              }}>{trip.name}</h1>
-              <p style={{ 
-                color: 'rgba(255,255,255,0.8)', 
-                fontSize: '12px', 
-                margin: '4px 0 0 0' 
-              }}>
-                {(() => {
-                  const visibleCount = trip.items.filter((item) => {
-                    const status = itemsStatus.get(item.vostcardID);
-                    return !status || status.loading || status.exists;
-                  }).length;
-                  return `${visibleCount} ${visibleCount === 1 ? 'item' : 'items'}`;
-                })()}
-              </p>
+              {!isViewingSharedTrip && isEditingTitle ? (
+                /* Editing Mode - Only for trip owners */
+                <div>
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    placeholder="Enter trip title..."
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      borderRadius: '6px',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      color: 'white',
+                      fontFamily: 'inherit',
+                      lineHeight: '1.2',
+                      outline: 'none',
+                      marginBottom: '8px'
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        saveTitle();
+                      } else if (e.key === 'Escape') {
+                        cancelEditingTitle();
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    alignItems: 'center'
+                  }}>
+                    <button
+                      onClick={cancelEditingTitle}
+                      disabled={savingTitle}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        borderRadius: '4px',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'white',
+                        cursor: savingTitle ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveTitle}
+                      disabled={savingTitle}
+                      style={{
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                        border: 'none',
+                        borderRadius: '4px',
+                        backgroundColor: savingTitle ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.9)',
+                        color: savingTitle ? 'rgba(255,255,255,0.7)' : '#07345c',
+                        cursor: savingTitle ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 600
+                      }}
+                    >
+                      {savingTitle ? (
+                        <>
+                          <div style={{
+                            width: '10px',
+                            height: '10px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTop: '2px solid rgba(255,255,255,0.7)',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }} />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FaSave size={8} />
+                          Save
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Display Mode */
+                <div>
+                  <h1 
+                    onClick={!isViewingSharedTrip ? startEditingTitle : undefined}
+                    style={{
+                      color: 'white',
+                      fontWeight: 700,
+                      fontSize: '18px',
+                      margin: 0,
+                      lineHeight: '1.2',
+                      cursor: !isViewingSharedTrip ? 'pointer' : 'default',
+                      position: 'relative',
+                      display: 'inline-block'
+                    }}
+                  >
+                    {trip.name || (!isViewingSharedTrip ? 'Click to add title...' : 'Untitled Trip')}
+                    {!isViewingSharedTrip && (
+                      <FaEdit 
+                        size={10} 
+                        style={{ 
+                          marginLeft: '8px', 
+                          opacity: 0.7,
+                          verticalAlign: 'middle'
+                        }} 
+                      />
+                    )}
+                  </h1>
+                  <p style={{ 
+                    color: 'rgba(255,255,255,0.8)', 
+                    fontSize: '12px', 
+                    margin: '4px 0 0 0' 
+                  }}>
+                    {(() => {
+                      const visibleCount = trip.items.filter((item) => {
+                        const status = itemsStatus.get(item.vostcardID);
+                        return !status || status.loading || status.exists;
+                      }).length;
+                      return `${visibleCount} ${visibleCount === 1 ? 'item' : 'items'}`;
+                    })()}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           
