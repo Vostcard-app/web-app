@@ -256,13 +256,8 @@ const PublicTripView: React.FC = () => {
       try {
         const postsData: VostcardData[] = [];
         
-        // Sort items chronologically by when they were added to the trip
-        const sortedItems = [...trip.items].sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime());
-
-
-        // Fetch full vostcard data for each item
-        for (const item of sortedItems) {
-
+        // Fetch full vostcard data for each item first
+        for (const item of trip.items) {
           try {
             const vostcardRef = doc(db, 'vostcards', item.vostcardID);
             const vostcardSnap = await getDoc(vostcardRef);
@@ -291,6 +286,12 @@ const PublicTripView: React.FC = () => {
           }
         }
 
+        // Sort by vostcard creation date (chronological order)
+        postsData.sort((a, b) => {
+          const aTime = a.createdAt?.toMillis?.() || new Date(a.createdAt || 0).getTime();
+          const bTime = b.createdAt?.toMillis?.() || new Date(b.createdAt || 0).getTime();
+          return aTime - bTime;
+        });
 
         setTripPosts(postsData);
       } catch (error) {

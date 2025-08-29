@@ -107,6 +107,7 @@ const TripDetailView: React.FC = () => {
   const [slideshowImages, setSlideshowImages] = useState<Array<{url: string, postTitle: string}>>([]);
   const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
   const [slideshowAutoPlay, setSlideshowAutoPlay] = useState(false);
+  const [sortedTripItems, setSortedTripItems] = useState<any[]>([]);
 
   // Description editing states
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -498,20 +499,53 @@ ${shareUrl}`;
         return !status || status.loading || status.exists;
       });
 
-      // Sort chronologically by when items were added to the trip
-      const sortedItems = validItems.sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime());
-
-      // Fetch full vostcard data for each item to get all photoURLs with titles
-      for (const item of sortedItems) {
+      // Load vostcard data first to get creation dates for proper sorting
+      const itemsWithCreationDates = [];
+      for (const item of validItems) {
         try {
           const vostcardDoc = await getDoc(doc(db, 'vostcards', item.vostcardID));
           if (vostcardDoc.exists()) {
             const vostcardData = vostcardDoc.data();
+            itemsWithCreationDates.push({
+              ...item,
+              vostcardCreatedAt: vostcardData.createdAt,
+              vostcardData
+            });
+          } else {
+            // If vostcard doesn't exist, still include item but with fallback date
+            itemsWithCreationDates.push({
+              ...item,
+              vostcardCreatedAt: item.addedAt,
+              vostcardData: null
+            });
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch creation date for item ${item.vostcardID}:`, error);
+          // Fallback to addedAt if we can't get creation date
+          itemsWithCreationDates.push({
+            ...item,
+            vostcardCreatedAt: item.addedAt,
+            vostcardData: null
+          });
+        }
+      }
+
+      // Sort by vostcard creation date (chronological order)
+      const sortedItems = itemsWithCreationDates.sort((a, b) => {
+        const aTime = a.vostcardCreatedAt?.toMillis?.() || new Date(a.vostcardCreatedAt || 0).getTime();
+        const bTime = b.vostcardCreatedAt?.toMillis?.() || new Date(b.vostcardCreatedAt || 0).getTime();
+        return aTime - bTime;
+      });
+
+      // Process images from the sorted items (using already loaded vostcard data)
+      for (const item of sortedItems) {
+        try {
+          if (item.vostcardData) {
             // Get photoURLs array, excluding videos
-            if (vostcardData.photoURLs && Array.isArray(vostcardData.photoURLs)) {
-              const postTitle = vostcardData.title || 'Untitled Post';
+            if (item.vostcardData.photoURLs && Array.isArray(item.vostcardData.photoURLs)) {
+              const postTitle = item.vostcardData.title || 'Untitled Post';
               // Add each photo with the post title
-              vostcardData.photoURLs.forEach((photoUrl: string) => {
+              item.vostcardData.photoURLs.forEach((photoUrl: string) => {
                 allImages.push({
                   url: photoUrl,
                   postTitle: postTitle
@@ -520,7 +554,7 @@ ${shareUrl}`;
             }
           }
         } catch (error) {
-          console.warn(`Failed to fetch images for item ${item.vostcardID}:`, error);
+          console.warn(`Failed to process images for item ${item.vostcardID}:`, error);
         }
       }
 
@@ -902,6 +936,61 @@ ${shareUrl}`;
     if (trip && trip.items.length > 0) {
       checkAllItemsExistence();
     }
+  }, [trip]);
+
+  // Load and sort trip items by vostcard creation date
+  useEffect(() => {
+    const loadSortedTripItems = async () => {
+      if (!trip?.items || trip.items.length === 0) {
+        setSortedTripItems([]);
+        return;
+      }
+
+      try {
+        const itemsWithCreationDates = [];
+        
+        for (const item of trip.items) {
+          try {
+            const vostcardDoc = await getDoc(doc(db, 'vostcards', item.vostcardID));
+            if (vostcardDoc.exists()) {
+              const vostcardData = vostcardDoc.data();
+              itemsWithCreationDates.push({
+                ...item,
+                vostcardCreatedAt: vostcardData.createdAt
+              });
+            } else {
+              // If vostcard doesn't exist, use addedAt as fallback
+              itemsWithCreationDates.push({
+                ...item,
+                vostcardCreatedAt: item.addedAt
+              });
+            }
+          } catch (error) {
+            console.warn(`Failed to fetch creation date for item ${item.vostcardID}:`, error);
+            // Fallback to addedAt if we can't get creation date
+            itemsWithCreationDates.push({
+              ...item,
+              vostcardCreatedAt: item.addedAt
+            });
+          }
+        }
+
+        // Sort by vostcard creation date (chronological order)
+        const sorted = itemsWithCreationDates.sort((a, b) => {
+          const aTime = a.vostcardCreatedAt?.toMillis?.() || new Date(a.vostcardCreatedAt || 0).getTime();
+          const bTime = b.vostcardCreatedAt?.toMillis?.() || new Date(b.vostcardCreatedAt || 0).getTime();
+          return aTime - bTime;
+        });
+
+        setSortedTripItems(sorted);
+      } catch (error) {
+        console.error('Error loading sorted trip items:', error);
+        // Fallback to original items if sorting fails
+        setSortedTripItems(trip.items || []);
+      }
+    };
+
+    loadSortedTripItems();
   }, [trip]);
 
   if (loading) {
@@ -2043,7 +2132,12 @@ ${shareUrl}`;
                     {itemsWithLocation.length > 1 && (
                       <Polyline
                         positions={itemsWithLocation
-                          .sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime())
+                          .filter(item => sortedTripItems.some(sortedItem => sortedItem.id === item.id))
+                          .sort((a, b) => {
+                            const aIndex = sortedTripItems.findIndex(sortedItem => sortedItem.id === a.id);
+                            const bIndex = sortedTripItems.findIndex(sortedItem => sortedItem.id === b.id);
+                            return aIndex - bIndex;
+                          })
                           .map(item => [parseFloat(item.latitude!), parseFloat(item.longitude!)])
                         }
                         pathOptions={{
@@ -2154,8 +2248,7 @@ ${shareUrl}`;
             return null; // This will fall through to the items list
           })() || (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {trip.items
-                .sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime()) // Sort chronologically
+              {(sortedTripItems.length > 0 ? sortedTripItems : trip.items)
                 .filter((item) => {
                   // ✅ Filter out deleted items automatically
                   const status = itemsStatus.get(item.vostcardID);
