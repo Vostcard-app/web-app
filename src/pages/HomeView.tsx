@@ -91,12 +91,17 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
   const map = useMap();
 
   useEffect(() => {
-    // ✅ Allow INITIAL positioning AND browse location updates
-    if (targetLocation && map && shouldUpdateMapView) {
+    // 🚫 AUTOMATIC recentering disabled - ONLY allow MANUAL recentering
+    // Check if this is a manual recenter request (hasRecenteredOnce.current === false indicates manual)
+    if (targetLocation && map && shouldUpdateMapView && hasRecenteredOnce.current === false) {
       const currentZoom = map.getZoom();
-      console.log('🗺️ MapUpdater: Centering map on target location:', targetLocation);
-      map.setView(targetLocation, Math.max(currentZoom, 13)); // Ensure minimum zoom level for browse areas
+      console.log('🎯 MapUpdater: Manual recenter requested to:', targetLocation);
+      map.setView(targetLocation, Math.max(currentZoom, 13));
       hasRecenteredOnce.current = true;
+      stableShouldUpdateMapView(false);
+    } else if (shouldUpdateMapView) {
+      // Automatic recentering blocked
+      console.log('🚫 MapUpdater: Automatic recentering blocked by user preference');
       stableShouldUpdateMapView(false);
     }
   }, [targetLocation, map, shouldUpdateMapView]);
