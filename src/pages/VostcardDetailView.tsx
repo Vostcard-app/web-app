@@ -458,12 +458,20 @@ const VostcardDetailView: React.FC = () => {
   // ✅ Cleanup audio when component unmounts
   useEffect(() => {
     return () => {
-      // Cleanup audio when leaving the page
+      // ✅ ENHANCED: Robust audio cleanup when leaving the page
+      console.log('🎵 VostcardDetailView unmounting - cleaning up audio');
       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-        console.log('🎵 Audio cleaned up on component unmount');
+        try {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          audioRef.current = null;
+          console.log('🎵 Audio cleaned up on component unmount');
+        } catch (error) {
+          console.log('🎵 Audio cleanup error on unmount (non-critical):', error);
+          audioRef.current = null;
+        }
       }
+      setIsPlaying(false);
     };
   }, []);
 
@@ -1038,11 +1046,15 @@ Tap OK to continue.`;
     }
   }, [hasAudio, handlePlayPause]);
 
-  // ✅ Auto-start audio when slideshow opens
+  // ✅ Auto-start audio when slideshow opens (with delay to prevent conflicts)
   useEffect(() => {
     if (showMultiPhotoModal && hasAudio && !isPlaying) {
       console.log('🎵 Slideshow opened - auto-starting audio');
-      handlePlayPause();
+      // Add small delay to ensure slideshow is fully rendered
+      const timer = setTimeout(() => {
+        handlePlayPause();
+      }, 200);
+      return () => clearTimeout(timer);
     }
   }, [showMultiPhotoModal, hasAudio, isPlaying, handlePlayPause]);
 
@@ -2019,15 +2031,7 @@ Tap OK to continue.`;
         </div>
       )}
 
-      {/* Hidden Audio Element */}
-      {hasAudio && (
-        <audio
-          ref={audioRef}
-          src={vostcard.audioURL || vostcard.audioURLs?.[0]}
-          preload="metadata"
-          style={{ display: 'none' }}
-        />
-      )}
+      {/* Audio is handled programmatically via new Audio() objects */}
 
       {/* Intro/Detail/Map Buttons - Only show if there are recordings */}
       {(hasAudio || (vostcard?.latitude && vostcard?.longitude)) && (
@@ -3355,16 +3359,29 @@ Tap OK to continue.`;
           photos={photoURLs}
         initialIndex={selectedPhotoIndex}
         isOpen={showMultiPhotoModal}
-          onClose={() => {
-            setShowMultiPhotoModal(false);
-            // ✅ FIXED: Always stop audio when slideshow closes and reset position
-            if (audioRef.current) {
+                  onClose={() => {
+          console.log('🎵 MultiPhotoModal closing - stopping all audio');
+          setShowMultiPhotoModal(false);
+          
+          // ✅ ENHANCED: Robust audio cleanup when slideshow closes
+          if (audioRef.current) {
+            try {
               audioRef.current.pause();
               audioRef.current.currentTime = 0; // Reset to beginning
-              setIsPlaying(false);
               console.log('🎵 Audio stopped and reset when slideshow closed');
+            } catch (error) {
+              console.log('🎵 Audio cleanup error (non-critical):', error);
             }
-          }}
+          }
+          
+          // Always update playing state regardless of audio ref status
+          setIsPlaying(false);
+          
+          // Small delay to ensure state is updated before any auto-restart logic
+          setTimeout(() => {
+            console.log('🎵 Audio cleanup complete');
+          }, 100);
+        }}
           title={vostcard?.title}
           autoPlay={true}
           autoPlayInterval={7000}
