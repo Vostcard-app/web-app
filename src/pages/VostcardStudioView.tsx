@@ -1201,6 +1201,16 @@ const VostcardStudioView: React.FC = () => {
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
+      // Debug audio data before creating updated vostcard
+      console.log('🎵 Audio data before creating updatedVostcard:', {
+        audioFilesLength: audioFiles.length,
+        audioLabelsLength: audioLabels.length,
+        hasIntroAudio: !!vostcardIntroAudio,
+        hasDetailAudio: !!vostcardDetailAudio,
+        audioFiles: audioFiles.map((file, i) => ({ index: i, size: file.size, type: file.type })),
+        audioLabels: audioLabels
+      });
+
       // Update the existing quickcard with same ID and preserve original state
       const updatedVostcard: Vostcard = {
         id: editingVostcardId, // Keep the same ID
@@ -1226,6 +1236,12 @@ const VostcardStudioView: React.FC = () => {
         createdAt: new Date().toISOString(), // This will be preserved from original
         updatedAt: new Date().toISOString()
       };
+
+      console.log('🎵 Created updatedVostcard with audio:', {
+        hasAudio: updatedVostcard.hasAudio,
+        audioFilesLength: updatedVostcard.audioFiles?.length || 0,
+        hasLegacyAudio: !!updatedVostcard.audio
+      });
 
       // Set the current vostcard for context consistency
       setCurrentVostcard(updatedVostcard);
