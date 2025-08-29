@@ -1121,6 +1121,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       visibility: vostcard.visibility,
       hasPhotos: vostcard.photos?.length > 0,
       hasVideo: !!vostcard.video,
+      hasAudio: vostcard.audioFiles?.length > 0,
+      audioFilesCount: vostcard.audioFiles?.length || 0,
+      hasLegacyAudio: !!vostcard.audio,
       geo: vostcard.geo
     });
 
