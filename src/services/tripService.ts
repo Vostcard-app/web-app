@@ -41,7 +41,7 @@ const convertFirebaseToTrip = (doc: TripFirebaseDoc, items: TripItem[]): Trip =>
     description: doc.description,
     userID: doc.userID,
     username: doc.username,
-    items: items.sort((a, b) => a.order - b.order), // Sort by order
+    items: items.sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime()), // Sort chronologically by addedAt
     isPrivate: doc.isPrivate,
     shareableLink: doc.shareableLink,
     createdAt: doc.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),

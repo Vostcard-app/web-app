@@ -256,8 +256,8 @@ const PublicTripView: React.FC = () => {
       try {
         const postsData: VostcardData[] = [];
         
-        // Sort items by order to maintain trip sequence
-        const sortedItems = [...trip.items].sort((a, b) => a.order - b.order);
+        // Sort items chronologically by when they were added to the trip
+        const sortedItems = [...trip.items].sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime());
 
 
         // Fetch full vostcard data for each item

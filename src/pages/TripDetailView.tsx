@@ -498,8 +498,8 @@ ${shareUrl}`;
         return !status || status.loading || status.exists;
       });
 
-      // Sort by order to maintain trip sequence
-      const sortedItems = validItems.sort((a, b) => a.order - b.order);
+      // Sort chronologically by when items were added to the trip
+      const sortedItems = validItems.sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime());
 
       // Fetch full vostcard data for each item to get all photoURLs with titles
       for (const item of sortedItems) {
@@ -2043,7 +2043,7 @@ ${shareUrl}`;
                     {itemsWithLocation.length > 1 && (
                       <Polyline
                         positions={itemsWithLocation
-                          .sort((a, b) => a.order - b.order)
+                          .sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime())
                           .map(item => [parseFloat(item.latitude!), parseFloat(item.longitude!)])
                         }
                         pathOptions={{
@@ -2155,7 +2155,7 @@ ${shareUrl}`;
           })() || (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {trip.items
-                .sort((a, b) => a.order - b.order) // Sort by order
+                .sort((a, b) => new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime()) // Sort chronologically
                 .filter((item) => {
                   // ✅ Filter out deleted items automatically
                   const status = itemsStatus.get(item.vostcardID);
