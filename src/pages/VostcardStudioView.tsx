@@ -2348,7 +2348,7 @@ const VostcardStudioView: React.FC = () => {
                       opacity: isLoading ? 0.6 : 1
                     }}
                   >
-                    Clear Intro
+                    ✕ Remove Intro Audio
                   </button>
                 )}
                 {vostcardDetailAudio && (
@@ -2371,7 +2371,7 @@ const VostcardStudioView: React.FC = () => {
                       opacity: isLoading ? 0.6 : 1
                     }}
                   >
-                    Clear Detail
+                    ✕ Remove Detail Audio
                   </button>
                 )}
               </div>
