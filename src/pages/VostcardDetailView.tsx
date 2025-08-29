@@ -355,11 +355,65 @@ const VostcardDetailView: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const allAudioInstances = useRef<Set<HTMLAudioElement>>(new Set());
 
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
   const tipButtonRef = useRef<HTMLButtonElement>(null);
+
+  // ✅ Audio management helper functions
+  const stopAllAudio = useCallback(() => {
+    console.log('🎵 Stopping all audio instances:', allAudioInstances.current.size);
+    
+    // Stop and cleanup all tracked audio instances
+    allAudioInstances.current.forEach(audio => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = ''; // Clear source to free memory
+      } catch (error) {
+        console.log('🎵 Error stopping audio instance:', error);
+      }
+    });
+    
+    // Clear the set
+    allAudioInstances.current.clear();
+    
+    // Clear current ref
+    audioRef.current = null;
+    setIsPlaying(false);
+    
+    console.log('🎵 All audio stopped and cleaned up');
+  }, []);
+
+  const createAudioInstance = useCallback((src: string): HTMLAudioElement => {
+    // Stop any existing audio first
+    stopAllAudio();
+    
+    // Create new audio instance
+    const audio = new Audio();
+    audio.src = src;
+    
+    // Track this instance
+    allAudioInstances.current.add(audio);
+    audioRef.current = audio;
+    
+    // Auto-cleanup when audio ends or errors
+    const cleanup = () => {
+      allAudioInstances.current.delete(audio);
+      if (audioRef.current === audio) {
+        audioRef.current = null;
+        setIsPlaying(false);
+      }
+    };
+    
+    audio.addEventListener('ended', cleanup);
+    audio.addEventListener('error', cleanup);
+    
+    console.log('🎵 Created new audio instance, total instances:', allAudioInstances.current.size);
+    return audio;
+  }, [stopAllAudio]);
   
   // Itinerary modal state
   const [showItineraryModal, setShowItineraryModal] = useState(false);
@@ -459,22 +513,11 @@ const VostcardDetailView: React.FC = () => {
   // ✅ Cleanup audio when component unmounts
   useEffect(() => {
     return () => {
-      // ✅ ENHANCED: Robust audio cleanup when leaving the page
-      console.log('🎵 VostcardDetailView unmounting - cleaning up audio');
-      if (audioRef.current) {
-        try {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-          audioRef.current = null;
-          console.log('🎵 Audio cleaned up on component unmount');
-        } catch (error) {
-          console.log('🎵 Audio cleanup error on unmount (non-critical):', error);
-          audioRef.current = null;
-        }
-      }
-      setIsPlaying(false);
+      // ✅ ENHANCED: Comprehensive audio cleanup when leaving the page
+      console.log('🎵 VostcardDetailView unmounting - cleaning up ALL audio');
+      stopAllAudio();
     };
-  }, []);
+  }, [stopAllAudio]);
 
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -953,19 +996,10 @@ Tap OK to continue.`;
     }
 
     try {
-      // Stop any existing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
       if (isPlaying) {
-        setIsPlaying(false);
+        stopAllAudio();
         return;
       }
-
-      // Create new audio element
-      const audio = new Audio();
-      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
 
       // ✅ UNIFIED AUDIO FORMAT - Simple source resolution
       const audioSource = vostcard?.audioURLs?.[0] ||          // UNIFIED: Primary audio URL
@@ -977,25 +1011,27 @@ Tap OK to continue.`;
         return;
       }
 
-      // Set audio source
+      // Create and track new audio instance
+      let audioSrc: string;
       if (audioSource instanceof Blob) {
-        audio.src = URL.createObjectURL(audioSource);
+        audioSrc = URL.createObjectURL(audioSource);
       } else if (typeof audioSource === 'string') {
-        audio.src = audioSource;
+        audioSrc = audioSource;
       } else {
         console.error('Invalid audio source type:', typeof audioSource);
         return;
       }
 
+      const audio = createAudioInstance(audioSrc);
+      console.log('🎵 Audio source set:', audioSrc);
+
       // Play audio
       await audio.play();
+      setIsPlaying(true);
       
     } catch (error) {
       console.error('Error playing audio:', error);
-      setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current = null;
-      }
+      stopAllAudio();
       alert('Failed to play audio. Please try again.');
     }
   }, [hasAudio, isPlaying, vostcard]);
@@ -1063,145 +1099,9 @@ Tap OK to continue.`;
     }
   }, [showMultiPhotoModal, hasAudio, isPlaying, modalClosing, handlePlayPause]);
 
-  // ✅ NEW: Enhanced audio playback functions for Intro and Detail
-  const handleIntroAudioPlayback = useCallback(async () => {
-    console.log('🎵 Playing intro audio');
-    
-    if (!hasAudio) {
-      console.log('❌ No audio detected');
-      return;
-    }
+  // ✅ Unified audio format - using single handlePlayPause function for all audio
 
-    try {
-      // Stop any existing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
 
-      if (isPlaying) {
-        setIsPlaying(false);
-        return;
-      }
-
-      // Create new audio element
-      const audio = new Audio();
-      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
-
-      // ✅ UNIFIED AUDIO FORMAT - Intro audio source resolution
-      const introAudioSource = vostcard?.introAudioURL ||      // Specific intro URL (if exists)
-                              vostcard?.audioURLs?.[0] ||       // UNIFIED: First audio URL (intro)
-                              vostcard?.audioURL ||             // Legacy: Single audio URL (migration support)
-                              vostcard?._firebaseAudioURL;      // Legacy: Firebase audio URL (migration support)
-
-      if (!introAudioSource) {
-        console.error('No intro audio source available');
-        return;
-      }
-
-      // Set audio source
-      if (introAudioSource instanceof Blob) {
-        audio.src = URL.createObjectURL(introAudioSource);
-      } else if (typeof introAudioSource === 'string') {
-        audio.src = introAudioSource;
-      } else {
-        console.error('Invalid audio source type:', typeof introAudioSource);
-        return;
-      }
-
-      // Audio event listeners
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false);
-        console.log('🎵 Intro audio playback ended');
-      });
-
-      audio.addEventListener('error', (e) => {
-        console.error('🎵 Intro audio playback error:', e);
-        setIsPlaying(false);
-      });
-
-      // Play audio
-      await audio.play();
-      setIsPlaying(true);
-      
-    } catch (error) {
-      console.error('Error playing intro audio:', error);
-      setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current = null;
-      }
-    }
-  }, [hasAudio, isPlaying, vostcard]);
-
-  const handleDetailAudioPlayback = useCallback(async () => {
-    console.log('🎵 Playing detail audio');
-    
-    try {
-      // Stop any existing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      if (isPlaying) {
-        setIsPlaying(false);
-        return;
-      }
-
-      // Create new audio element
-      const audio = new Audio();
-      (audioRef as React.MutableRefObject<HTMLAudioElement | null>).current = audio;
-
-      // Get detail audio source
-      const detailAudioSource = 
-        // Check for explicit detail audio
-        vostcard?.detailAudioURL ||
-        // Check for labeled audio
-        (vostcard?.audioLabels && vostcard.audioFiles && 
-         vostcard.audioLabels.includes('detail')) ? 
-         vostcard.audioFiles[vostcard.audioLabels.indexOf('detail')] :
-        // ✅ UNIFIED AUDIO FORMAT - Detail audio source resolution
-        vostcard?.audioURLs?.[1] ||                   // UNIFIED: Second audio URL (detail)
-        vostcard?.audioURLs?.[0] ||                   // UNIFIED: Fallback to first audio URL
-        vostcard?.audioURL ||                         // Legacy: Single audio URL (migration support)
-        vostcard?._firebaseAudioURL;                  // Legacy: Firebase audio URL (migration support)
-
-      if (!detailAudioSource) {
-        console.error('No detail audio source available');
-        return;
-      }
-
-      // Set audio source
-      if (detailAudioSource instanceof Blob) {
-        audio.src = URL.createObjectURL(detailAudioSource);
-      } else if (typeof detailAudioSource === 'string') {
-        audio.src = detailAudioSource;
-      } else {
-        console.error('Invalid audio source type:', typeof detailAudioSource);
-        return;
-      }
-
-      // Audio event listeners
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false);
-        console.log('🎵 Detail audio playback ended');
-      });
-
-      audio.addEventListener('error', (e) => {
-        console.error('🎵 Detail audio playback error:', e);
-        setIsPlaying(false);
-      });
-
-      // Play audio
-      await audio.play();
-      setIsPlaying(true);
-      
-    } catch (error) {
-      console.error('Error playing detail audio:', error);
-      setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current = null;
-      }
-    }
-  }, [isPlaying, vostcard]);
 
   // Load user's existing itineraries
   const loadUserItineraries = async () => {
@@ -1824,7 +1724,7 @@ Tap OK to continue.`;
               position: 'relative'
             }}
             onClick={() => {
-              if (hasAudio) handleIntroAudioPlayback();
+              if (hasAudio) handlePlayPause();
               if (photoURLs && photoURLs.length > 0) {
                 setSelectedPhotoIndex(0);
                 setShowMultiPhotoModal(true);
@@ -1980,7 +1880,7 @@ Tap OK to continue.`;
               position: 'relative'
             }}
             onClick={() => {
-              if (hasAudio) handleIntroAudioPlayback();
+              if (hasAudio) handlePlayPause();
               if (photoURLs && photoURLs.length > 0) {
                 setSelectedPhotoIndex(0);
                 setShowMultiPhotoModal(true);
@@ -2066,9 +1966,9 @@ Tap OK to continue.`;
           })() && (
             <button
               onClick={() => {
-                console.log('🎵 More button clicked - playing detail audio and showing slideshow');
-                // Play detail audio
-                handleDetailAudioPlayback();
+                console.log('🎵 More button clicked - playing audio and showing slideshow');
+                // Play audio
+                handlePlayPause();
                 // Show photo slideshow starting with first photo WITH AUTO-PLAY
                 if (photoURLs && photoURLs.length > 0) {
                   setSelectedPhotoIndex(0);
@@ -3370,19 +3270,8 @@ Tap OK to continue.`;
           // ✅ ENHANCED: Set closing state first to prevent any audio restart
           setModalClosing(true);
           
-          // ✅ ENHANCED: Robust audio cleanup when slideshow closes
-          if (audioRef.current) {
-            try {
-              audioRef.current.pause();
-              audioRef.current.currentTime = 0; // Reset to beginning
-              console.log('🎵 Audio stopped and reset when slideshow closed');
-            } catch (error) {
-              console.log('🎵 Audio cleanup error (non-critical):', error);
-            }
-          }
-          
-          // Always update playing state regardless of audio ref status
-          setIsPlaying(false);
+          // ✅ ENHANCED: Use comprehensive audio cleanup
+          stopAllAudio();
           
           // Close modal and reset closing state after a delay
           setTimeout(() => {
