@@ -22,30 +22,30 @@ import QuickcardPin from '../assets/quickcard_pin.png';
 // Custom icons for the map
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
-  iconSize: [60, 60],
-  iconAnchor: [30, 60],
-  popupAnchor: [0, -60],
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
 });
 
 const offerIcon = new L.Icon({
   iconUrl: OfferPin,
-  iconSize: [60, 60],
-  iconAnchor: [30, 60],
-  popupAnchor: [0, -60],
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
 });
 
 const quickcardIcon = new L.Icon({
   iconUrl: QuickcardPin,
-  iconSize: [60, 60],
-  iconAnchor: [30, 60],
-  popupAnchor: [0, -60],
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
 });
 
 const guideIcon = new L.Icon({
   iconUrl: '/Guide_pin.png',
-  iconSize: [60, 60],
-  iconAnchor: [30, 60],
-  popupAnchor: [0, -60],
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
 });
 
 // Component to auto-fit map bounds to show all pins
