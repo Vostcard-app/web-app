@@ -361,6 +361,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       visibility: vostcardToSave.visibility,
       hasPhotos: vostcardToSave.photos?.length > 0,
       hasVideo: !!vostcardToSave.video,
+      hasAudio: vostcardToSave.audioFiles?.length > 0,
       hasGeo: !!vostcardToSave.geo
     });
 
@@ -368,6 +369,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Upload media files first if they exist
       let photoURLs: string[] = [];
       let videoURL: string | null = null;
+      let audioURLs: string[] = [];
 
       // Upload photos
       if (vostcardToSave.photos && vostcardToSave.photos.length > 0) {
@@ -391,6 +393,26 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const videoRef = ref(storage, `vostcards/${user.uid}/videos/${vostcardToSave.id}`);
         await uploadBytes(videoRef, vostcardToSave.video);
         videoURL = await getDownloadURL(videoRef);
+      }
+
+      // Upload audio files
+      if (vostcardToSave.audioFiles && vostcardToSave.audioFiles.length > 0) {
+        console.log('🎵 Uploading audio files...');
+        audioURLs = await Promise.all(
+          vostcardToSave.audioFiles.map(async (audio: Blob, index: number) => {
+            const audioRef = ref(storage, `vostcards/${user.uid}/${vostcardToSave.id}/audio_${index}.mp3`);
+            await uploadBytes(audioRef, audio);
+            return getDownloadURL(audioRef);
+          })
+        );
+      } else if (vostcardToSave._firebaseAudioURLs && vostcardToSave._firebaseAudioURLs.length > 0) {
+        // Preserve existing audio URLs if no new audio to upload
+        console.log('🎵 Preserving existing audio...');
+        audioURLs = vostcardToSave._firebaseAudioURLs;
+      } else if (vostcardToSave.audioURL) {
+        // Handle legacy single audio URL
+        console.log('🎵 Preserving legacy audio URL...');
+        audioURLs = [vostcardToSave.audioURL];
       }
 
       // Clean geo object to remove undefined values
@@ -417,6 +439,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         userRole: vostcardToSave.userRole || authContext.userRole || 'user',
         photoURLs: photoURLs,
         videoURL: videoURL,
+        audioURLs: audioURLs,
+        audioURL: audioURLs.length > 0 ? audioURLs[0] : null, // Legacy compatibility
         latitude: vostcardToSave.geo?.latitude,
         longitude: vostcardToSave.geo?.longitude,
         geo: cleanGeo,
@@ -428,6 +452,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         type: 'vostcard' as const,
         hasVideo: !!vostcardToSave.video,
         hasPhotos: photoURLs.length > 0,
+        hasAudio: audioURLs.length > 0,
         mediaUploadStatus: 'complete',
         isOffer: vostcardToSave.isOffer || false,
         offerDetails: vostcardToSave.offerDetails || null,
