@@ -209,9 +209,10 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
         photoURLs,
         videoURL,
         audioURLs,
+        hasAudio: audioURLs.length > 0, // ✅ UNIFIED: Set hasAudio flag based on audioURLs
         photos: undefined, // Don't store large blobs in Firestore
         video: undefined,
-        audioFiles: undefined,
+        audioFiles: undefined, // Remove local blobs
         type: 'vostcard' as const, // Ensure type field is always set
         updatedAt: Timestamp.now()
       };

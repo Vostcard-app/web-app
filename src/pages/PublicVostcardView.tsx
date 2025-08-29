@@ -64,31 +64,23 @@ const PublicVostcardView: React.FC = () => {
   const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   
-  // ✅ Audio detection - check multiple possible audio fields
+  // ✅ UNIFIED AUDIO FORMAT - Simple and clean detection
   const hasAudio = useMemo(() => {
-    // ✅ FIXED: Prioritize Firebase URLs over Blob objects for studio-edited vostcards
-    const audioExists = !!(
-      vostcard?.audioURLs?.length > 0 ||           // Studio-edited: Firebase URLs from uploaded audioFiles
-      vostcard?._firebaseAudioURLs?.length > 0 ||  // Alternative Firebase URL field
-      vostcard?.audioURL ||                        // Legacy single URL
-      vostcard?._firebaseAudioURL ||               // Legacy Firebase URL
-      vostcard?.audio ||                           // Legacy Blob
-      vostcard?.audioFiles?.length > 0             // Blob fallback (should be uploaded to Firebase)
-    );
-    console.log('🔍 PublicVostcardView Audio detection:', {
+    // Primary: Use hasAudio flag if available, fallback to audioURLs check
+    const audioExists = vostcard?.hasAudio || !!(vostcard?.audioURLs?.length > 0);
+    
+    console.log('🔍 PublicVostcardView Audio detection (UNIFIED):', {
       audioExists,
+      hasAudioFlag: vostcard?.hasAudio,
       audioURLs: vostcard?.audioURLs,
       audioURLsLength: vostcard?.audioURLs?.length || 0,
-      _firebaseAudioURLs: vostcard?._firebaseAudioURLs,
-      _firebaseAudioURLsLength: vostcard?._firebaseAudioURLs?.length || 0,
-      audioURL: vostcard?.audioURL,
-      _firebaseAudioURL: vostcard?._firebaseAudioURL,
-      audio: !!vostcard?.audio,
-      audioFiles: vostcard?.audioFiles,
-      audioFilesLength: vostcard?.audioFiles?.length || 0
+      audioLabels: vostcard?.audioLabels,
+      // Legacy fields (for migration debugging)
+      legacyAudioURL: vostcard?.audioURL,
+      legacy_firebaseAudioURL: vostcard?._firebaseAudioURL
     });
     return audioExists;
-  }, [vostcard?.audioURL, vostcard?.audioURLs, vostcard?.audio, vostcard?._firebaseAudioURL, vostcard?._firebaseAudioURLs, vostcard?.audioFiles]);
+  }, [vostcard?.hasAudio, vostcard?.audioURLs]);
 
   // ✅ Audio playback function
   const handlePlayPause = useCallback(async () => {
@@ -114,13 +106,10 @@ const PublicVostcardView: React.FC = () => {
       const audio = new Audio();
       audioRef.current = audio;
 
-      // Get audio source - check multiple possible fields
-      // ✅ FIXED: Prioritize Firebase URLs over Blob objects for studio-edited vostcards
-      const audioSource = vostcard?.audioURLs?.[0] ||           // Studio-edited: Firebase URLs from uploaded audioFiles
-                         vostcard?._firebaseAudioURLs?.[0] ||   // Alternative Firebase URL field
-                         vostcard?.audioURL ||                  // Legacy single URL
-                         vostcard?._firebaseAudioURL ||         // Legacy Firebase URL
-                         vostcard?.audio;                       // Legacy Blob (last resort)
+      // ✅ UNIFIED AUDIO FORMAT - Simple source resolution
+      const audioSource = vostcard?.audioURLs?.[0] ||          // UNIFIED: Primary audio URL
+                         vostcard?.audioURL ||                  // Legacy: Single audio URL (migration support)
+                         vostcard?._firebaseAudioURL;           // Legacy: Firebase audio URL (migration support)
 
       if (!audioSource) {
         console.error('No audio source available');

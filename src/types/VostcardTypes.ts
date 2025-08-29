@@ -27,8 +27,17 @@ export interface Vostcard {
   scriptId?: string;
   hasVideo?: boolean;
   hasPhotos?: boolean;
+  hasAudio?: boolean;
   youtubeURL?: string | null;
   instagramURL?: string | null;
+  
+  // ✅ UNIFIED AUDIO FORMAT - Local storage (blobs for upload)
+  audioFiles?: Blob[];                    // Local audio files for upload
+  audioLabels?: string[];                 // Labels: ['intro', 'detail', 'ambient', etc.]
+  
+  // Legacy fields (for backward compatibility during migration)
+  audio?: Blob | null;                    // Legacy single audio blob
+  
   _videoBase64?: string | null;
   _photosBase64?: string[];
   _firebaseVideoURL?: string | null;
@@ -62,10 +71,21 @@ export interface FirebaseVostcard {
   updatedAt: Timestamp;
   hasVideo?: boolean;
   hasPhotos?: boolean;
+  hasAudio?: boolean;
   youtubeURL?: string | null;
   instagramURL?: string | null;
   videoURL?: string;
   photoURLs?: string[];
+  
+  // ✅ UNIFIED AUDIO FORMAT - Firebase storage (URLs)
+  audioURLs?: string[];                   // Firebase audio URLs (UNIFIED FORMAT)
+  audioLabels?: string[];                 // Labels: ['intro', 'detail', 'ambient', etc.]
+  
+  // Legacy fields (for backward compatibility during migration)
+  audioURL?: string;                      // Legacy single audio URL
+  _firebaseAudioURL?: string;             // Legacy Firebase audio URL
+  _firebaseAudioURLs?: string[];          // Legacy Firebase audio URLs array
+  
   isOffer?: boolean;
   offerDetails?: OfferDetails;
   avatarURL?: string;
