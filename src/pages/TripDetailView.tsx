@@ -2241,9 +2241,9 @@ ${shareUrl}`;
                     color: '#666'
                   }}>
                     <FaMapMarkerAlt size={48} style={{ color: '#ddd', marginBottom: '16px' }} />
-                    <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No items yet</h3>
+                    <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No items in this trip</h3>
                     <p style={{ margin: 0, fontSize: '14px' }}>
-                      Add vostcards and quickcards to this trip when creating content!
+                      Add vostcards to this trip when creating content!
                     </p>
                   </div>
                   

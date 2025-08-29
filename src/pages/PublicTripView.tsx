@@ -55,6 +55,7 @@ const PublicTripView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [tripPosts, setTripPosts] = useState<VostcardData[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   
   // Slideshow states
@@ -258,6 +259,7 @@ const PublicTripView: React.FC = () => {
         const postsData: VostcardData[] = [];
         
         // Fetch full vostcard data for each item first
+        setLoadingPosts(true);
         for (const item of trip.items) {
           try {
             const vostcardRef = doc(db, 'vostcards', item.vostcardID);
@@ -297,6 +299,8 @@ const PublicTripView: React.FC = () => {
         setTripPosts(postsData);
       } catch (error) {
 
+      } finally {
+        setLoadingPosts(false);
       }
     };
 
@@ -760,7 +764,27 @@ const PublicTripView: React.FC = () => {
         {/* Conditional View: Thumbnail or Map */}
         {viewMode === 'thumbnail' ? (
           /* Thumbnail View */
-          tripPosts.length > 0 ? (
+          loadingPosts ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: '#666'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '4px solid #f3f3f3',
+                borderTop: '4px solid #667eea',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 16px'
+              }} />
+              <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>Posts are loading...</h3>
+              <p style={{ margin: '0', fontSize: '14px' }}>
+                Please wait while we load the trip posts.
+              </p>
+            </div>
+          ) : tripPosts.length > 0 ? (
             <div style={{
               display: 'flex',
               flexDirection: 'column',
