@@ -93,6 +93,7 @@ const VostcardStudioView: React.FC = () => {
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingVostcards, setIsLoadingVostcards] = useState(false);
+  const [loadingCardId, setLoadingCardId] = useState<string | null>(null);
 
   // Drivecard creation state
   const [title, setTitle] = useState('');
@@ -1280,6 +1281,7 @@ const VostcardStudioView: React.FC = () => {
     
     try {
       setIsLoading(true);
+      setLoadingCardId(vostcard.id); // Set specific card as loading
       
       // Use the VostcardEdit context to start editing
       startEditing(vostcard);
@@ -1374,6 +1376,7 @@ const VostcardStudioView: React.FC = () => {
       alert('❌ Failed to load vostcard. Please try again.');
     } finally {
       setIsLoading(false);
+      setLoadingCardId(null); // Clear loading state
     }
   };
 
@@ -2831,7 +2834,7 @@ const VostcardStudioView: React.FC = () => {
                      return (
                        <div
                          key={vostcard.id}
-                         onClick={() => !isLoadingVostcards && loadVostcardForEditing(vostcard)}
+                         onClick={() => !isLoadingVostcards && !loadingCardId && loadVostcardForEditing(vostcard)}
                          style={{
                            display: 'flex',
                            alignItems: 'center',
@@ -2839,14 +2842,14 @@ const VostcardStudioView: React.FC = () => {
                            border: isPublic ? '2px solid #007aff' : '1px solid #ddd',
                            borderRadius: '8px',
                            marginBottom: '8px',
-                           cursor: isLoadingVostcards ? 'not-allowed' : 'pointer',
-                           backgroundColor: isLoadingVostcards ? '#f5f5f5' : (isPublic ? '#f0f8ff' : '#f9f9f9'),
+                           cursor: (isLoadingVostcards || loadingCardId) ? 'not-allowed' : 'pointer',
+                           backgroundColor: (isLoadingVostcards || loadingCardId === vostcard.id) ? '#f5f5f5' : (isPublic ? '#f0f8ff' : '#f9f9f9'),
                            transition: 'background-color 0.2s',
-                           opacity: isLoadingVostcards ? 0.6 : 1,
+                           opacity: (isLoadingVostcards || loadingCardId === vostcard.id) ? 0.6 : 1,
                            position: 'relative'
                          }}
-                         onMouseEnter={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = isPublic ? '#e6f3ff' : '#f0f0f0')}
-                         onMouseLeave={(e) => !isLoadingVostcards && (e.currentTarget.style.backgroundColor = isPublic ? '#f0f8ff' : '#f9f9f9')}
+                         onMouseEnter={(e) => !(isLoadingVostcards || loadingCardId) && (e.currentTarget.style.backgroundColor = isPublic ? '#e6f3ff' : '#f0f0f0')}
+                         onMouseLeave={(e) => !(isLoadingVostcards || loadingCardId) && (e.currentTarget.style.backgroundColor = isPublic ? '#f0f8ff' : '#f9f9f9')}
                        >
                          {/* Visibility Badge */}
                          <div style={{
@@ -2892,7 +2895,26 @@ const VostcardStudioView: React.FC = () => {
                            </div>
                          </div>
                          <div style={{ marginLeft: '12px', color: isPublic ? '#007aff' : '#28a745' }}>
-                           <FaEdit size={16} />
+                           {loadingCardId === vostcard.id ? (
+                             <div style={{
+                               display: 'flex',
+                               alignItems: 'center',
+                               gap: '8px',
+                               color: '#666'
+                             }}>
+                               <div style={{
+                                 width: '16px',
+                                 height: '16px',
+                                 border: '2px solid #f3f3f3',
+                                 borderTop: '2px solid #007aff',
+                                 borderRadius: '50%',
+                                 animation: 'spin 1s linear infinite'
+                               }} />
+                               <span style={{ fontSize: '12px', fontWeight: '500' }}>Loading...</span>
+                             </div>
+                           ) : (
+                             <FaEdit size={16} />
+                           )}
                          </div>
                        </div>
                      );
@@ -2906,5 +2928,18 @@ const VostcardStudioView: React.FC = () => {
     </div>
   );
 };
+
+// Add CSS for loading spinner animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+if (!document.head.querySelector('style[data-vostcard-studio-animations]')) {
+  style.setAttribute('data-vostcard-studio-animations', 'true');
+  document.head.appendChild(style);
+}
 
 export default VostcardStudioView; 
