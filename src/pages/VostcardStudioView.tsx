@@ -87,6 +87,7 @@ const VostcardStudioView: React.FC = () => {
   // Editing state for vostcards
   const [editingVostcardId, setEditingVostcardId] = useState<string | null>(null);
   const [originalVostcardState, setOriginalVostcardState] = useState<'private' | 'posted' | null>(null);
+  const [originalVostcardData, setOriginalVostcardData] = useState<Vostcard | null>(null);
 
   // Editing state
   const [editingDrivecard, setEditingDrivecard] = useState<Drivecard | null>(null);
@@ -1147,18 +1148,31 @@ const VostcardStudioView: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // Prepare audio files and labels
+      // Prepare audio files and labels - preserve existing audio if no new audio provided
       const audioFiles: Blob[] = [];
       const audioLabels: string[] = [];
       
+      // Use new audio if provided, otherwise preserve original audio
       if (vostcardIntroAudio) {
         audioFiles.push(vostcardIntroAudio);
+        audioLabels.push('intro');
+      } else if (originalVostcardData?.audioFiles?.[0]) {
+        // Preserve original intro audio
+        audioFiles.push(originalVostcardData.audioFiles[0]);
+        audioLabels.push(originalVostcardData.audioLabels?.[0] || 'intro');
+      } else if (originalVostcardData?.audio) {
+        // Preserve legacy audio format
+        audioFiles.push(originalVostcardData.audio);
         audioLabels.push('intro');
       }
       
       if (vostcardDetailAudio) {
         audioFiles.push(vostcardDetailAudio);
         audioLabels.push('detail');
+      } else if (originalVostcardData?.audioFiles?.[1]) {
+        // Preserve original detail audio
+        audioFiles.push(originalVostcardData.audioFiles[1]);
+        audioLabels.push(originalVostcardData.audioLabels?.[1] || 'detail');
       }
       
       // Process YouTube and Instagram URLs
@@ -1171,7 +1185,7 @@ const VostcardStudioView: React.FC = () => {
         title: vostcardTitle.trim(),
         description: vostcardDescription.trim() || 'Vostcard',
         photos: vostcardPhotos,
-        audio: vostcardIntroAudio,
+        audio: audioFiles[0] || null, // Use first audio file for legacy compatibility
         audioFiles: audioFiles,
         audioLabels: audioLabels,
         categories: vostcardCategories,
@@ -1186,7 +1200,7 @@ const VostcardStudioView: React.FC = () => {
 
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
+        hasAudio: audioFiles.length > 0, // Check if any audio files exist (new or preserved)
         createdAt: new Date().toISOString(), // This will be preserved from original
         updatedAt: new Date().toISOString()
       };
@@ -1257,6 +1271,7 @@ const VostcardStudioView: React.FC = () => {
     // Clear editing state
     setEditingVostcardId(null);
     setOriginalVostcardState(null);
+    setOriginalVostcardData(null);
   };
 
   // Function to load a quickcard for editing
@@ -1347,6 +1362,7 @@ const VostcardStudioView: React.FC = () => {
       
       // Set editing state
       setEditingVostcardId(vostcard.id);
+      setOriginalVostcardData(vostcard); // Store original data for audio preservation
       
       // Close the Load Vostcard modal
       setShowVostcardLoader(false);
@@ -1537,7 +1553,7 @@ const VostcardStudioView: React.FC = () => {
             maxWidth: '350px',
             width: '100%'
           }}>
-            ⏳ Loading drivecard for editing...
+            ⏳ Loading {editingDrivecardId ? 'drivecard' : editingVostcardId ? 'vostcard' : 'content'} for editing...
           </div>
         )}
 
