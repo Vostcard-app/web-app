@@ -301,6 +301,7 @@ const CreateOfferView: React.FC = () => {
         },
         state: 'posted',
         visibility: 'public', // 🔧 FIX: Add visibility field for offers
+        type: 'vostcard' as const, // Ensure type field is set for offers
         isOffer: true,   // 🎯 This ensures offer_pin is used on the map
         userID: user.uid,
         userId: user.uid,

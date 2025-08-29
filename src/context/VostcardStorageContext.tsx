@@ -212,6 +212,7 @@ export const VostcardStorageProvider: React.FC<{ children: React.ReactNode }> = 
         photos: undefined, // Don't store large blobs in Firestore
         video: undefined,
         audioFiles: undefined,
+        type: 'vostcard' as const, // Ensure type field is always set
         updatedAt: Timestamp.now()
       };
       

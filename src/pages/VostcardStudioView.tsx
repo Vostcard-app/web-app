@@ -1008,8 +1008,9 @@ const VostcardStudioView: React.FC = () => {
         userID: user?.uid || '',
         userRole: userRole || 'user',
         state: 'private',
+        visibility: 'private',
+        type: 'vostcard',
         video: null,
-
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
