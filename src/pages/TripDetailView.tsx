@@ -106,6 +106,7 @@ const TripDetailView: React.FC = () => {
   const [showSlideshow, setShowSlideshow] = useState(false);
   const [slideshowImages, setSlideshowImages] = useState<Array<{url: string, postTitle: string}>>([]);
   const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
+  const [slideshowAutoPlay, setSlideshowAutoPlay] = useState(false);
 
   console.log('🔄 TripDetailView rendered', {
     id,
@@ -520,6 +521,9 @@ ${shareUrl}`;
   // Start slideshow with music (called from user interaction)
   const startSlideshowWithMusic = async () => {
     console.log('🎬 Starting slideshow with music from user interaction');
+    
+    // Enable auto-play for slideshow
+    setSlideshowAutoPlay(true);
     
     // Start slideshow
     setShowSlideshow(true);
@@ -2234,11 +2238,12 @@ ${shareUrl}`;
         isOpen={showSlideshow}
         onClose={() => {
           setShowSlideshow(false);
+          setSlideshowAutoPlay(false); // Reset auto-play when closed
           // Switch back to appropriate view after slideshow
           setViewMode(isViewingSharedTrip ? 'map' : 'list');
         }}
         title={`${trip?.name} - Slideshow`}
-        autoPlay={false}
+        autoPlay={slideshowAutoPlay}
         autoPlayInterval={5000}
         tripTitle={trip?.name}
       />
