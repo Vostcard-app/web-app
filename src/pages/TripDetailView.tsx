@@ -521,6 +521,7 @@ ${shareUrl}`;
   // Start slideshow with music (called from user interaction)
   const startSlideshowWithMusic = async () => {
     console.log('🎬 Starting slideshow with music from user interaction');
+    console.log('🎬 TripDetailView: Setting slideshowAutoPlay to true');
     
     // Enable auto-play for slideshow
     setSlideshowAutoPlay(true);
@@ -1434,7 +1435,7 @@ ${shareUrl}`;
                     gap: '16px'
                   }}>
                     <div
-                      onClick={() => setShowSlideshow(true)}
+                      onClick={startSlideshowWithMusic}
                       style={{
                         position: 'relative',
                         cursor: 'pointer',
@@ -2232,11 +2233,13 @@ ${shareUrl}`;
       )}
 
       {/* Slideshow Modal */}
+      {showSlideshow && console.log('🎬 TripDetailView: Rendering MultiPhotoModal with autoPlay:', slideshowAutoPlay)}
       <MultiPhotoModal
         photos={slideshowImages}
         initialIndex={0}
         isOpen={showSlideshow}
         onClose={() => {
+          console.log('🎬 TripDetailView: Slideshow closing, resetting autoPlay');
           setShowSlideshow(false);
           setSlideshowAutoPlay(false); // Reset auto-play when closed
           // Switch back to appropriate view after slideshow
