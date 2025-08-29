@@ -2240,6 +2240,7 @@ ${shareUrl}`;
         title={`${trip?.name} - Slideshow`}
         autoPlay={false}
         autoPlayInterval={5000}
+        tripTitle={trip?.name}
       />
 
       {/* Hidden audio element to play background music during slideshow */}

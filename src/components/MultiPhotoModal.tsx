@@ -17,6 +17,7 @@ interface MultiPhotoModalProps {
   autoPlay?: boolean;
   autoPlayInterval?: number;
   audioDuration?: number;
+  tripTitle?: string; // New prop for trip title slide
 }
 
 const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
@@ -27,7 +28,8 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   title,
   autoPlay = false,
   autoPlayInterval = 5000,
-  audioDuration
+  audioDuration,
+  tripTitle
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -48,19 +50,42 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [deviceType, setDeviceType] = useState<'ios' | 'android' | 'desktop'>('desktop');
 
+  // Create combined array with title slide if tripTitle is provided
+  const allSlides = React.useMemo(() => {
+    if (tripTitle) {
+      return [{ type: 'title', title: tripTitle }, ...photos];
+    }
+    return photos;
+  }, [photos, tripTitle]);
+
   // Helper functions to handle both string arrays and PhotoWithMetadata arrays
   const getPhotoUrl = (index: number): string => {
-    const photo = photos[index];
+    const slide = allSlides[index];
+    if (typeof slide === 'object' && 'type' in slide && slide.type === 'title') {
+      return ''; // Title slides don't have URLs
+    }
+    const photo = slide as string | PhotoWithMetadata;
     return typeof photo === 'string' ? photo : photo.url;
   };
 
   const getPhotoMetadata = (index: number): PhotoWithMetadata | null => {
-    const photo = photos[index];
+    const slide = allSlides[index];
+    if (typeof slide === 'object' && 'type' in slide && slide.type === 'title') {
+      return null; // Title slides don't have metadata
+    }
+    const photo = slide as string | PhotoWithMetadata;
     return typeof photo === 'string' ? null : photo;
   };
 
   const getPhotoUrls = (): string[] => {
-    return photos.map(photo => typeof photo === 'string' ? photo : photo.url);
+    return allSlides
+      .filter(slide => !(typeof slide === 'object' && 'type' in slide && slide.type === 'title'))
+      .map(photo => typeof photo === 'string' ? photo : (photo as PhotoWithMetadata).url);
+  };
+
+  const isTitleSlide = (index: number): boolean => {
+    const slide = allSlides[index];
+    return typeof slide === 'object' && 'type' in slide && slide.type === 'title';
   };
 
   // Calculate optimal interval based on audio duration if provided
@@ -92,7 +117,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isOpen, autoPlay, currentIndex, photos.length, isPaused, audioDuration, autoPlayInterval]);
+  }, [isOpen, autoPlay, currentIndex, allSlides.length, isPaused, audioDuration, autoPlayInterval]);
 
   // Enhanced mobile and device detection
   useEffect(() => {
@@ -206,7 +231,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentIndex, photos.length]);
+  }, [isOpen, currentIndex, allSlides.length]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -226,14 +251,14 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   if (!isOpen || photos.length === 0) return null;
 
   const goToNext = () => {
-    const newIndex = (currentIndex + 1) % photos.length;
+    const newIndex = (currentIndex + 1) % allSlides.length;
     setCurrentIndex(newIndex);
     showControlsTemporarily();
     sendCastUpdate({ type: 'INDEX_CHANGED', index: newIndex });
   };
 
   const goToPrevious = () => {
-    const newIndex = (currentIndex - 1 + photos.length) % photos.length;
+    const newIndex = (currentIndex - 1 + allSlides.length) % allSlides.length;
     setCurrentIndex(newIndex);
     showControlsTemporarily();
     sendCastUpdate({ type: 'INDEX_CHANGED', index: newIndex });
@@ -590,43 +615,67 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
         onTouchEnd={handleTouchEnd}
         onClick={handleImageTap}
       >
-        <img
-          src={getPhotoUrl(currentIndex)}
-          alt={`Photo ${currentIndex + 1}`}
-          style={{
-            width: '100vw',
-            height: '100vh',
-            objectFit: 'contain',
-            userSelect: 'none',
-            imageRendering: '-webkit-optimize-contrast',
-            WebkitBackfaceVisibility: 'hidden',
-            backfaceVisibility: 'hidden',
-            transform: 'translateZ(0)',
-            borderRadius: '18px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
-            border: '4px solid white',
-            background: '#f8f9fa',
-            opacity: 1,
-            transition: 'opacity 0.7s cubic-bezier(.4,0,.2,1)',
-            animation: 'fadeInPhoto 0.7s cubic-bezier(.4,0,.2,1)'
-          } as React.CSSProperties}
-          draggable={false}
-          loading="eager"
-          fetchPriority="high"
-          onError={(e) => {
-            console.error('Failed to load image:', getPhotoUrl(currentIndex));
-            (e.target as HTMLImageElement).src = getPhotoUrl(currentIndex) + '?retry=' + Date.now();
-          }}
-          onLoad={(e) => {
-            console.log('✅ Image loaded successfully:', {
-              src: getPhotoUrl(currentIndex),
-              naturalWidth: (e.target as HTMLImageElement).naturalWidth,
-              naturalHeight: (e.target as HTMLImageElement).naturalHeight,
-              displayWidth: (e.target as HTMLImageElement).width,
-              displayHeight: (e.target as HTMLImageElement).height
-            });
-          }}
-        />
+        {isTitleSlide(currentIndex) ? (
+          /* Title Slide */
+          <div
+            style={{
+              width: '100vw',
+              height: '100vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'black',
+              color: 'white',
+              fontSize: '48px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              padding: '40px',
+              boxSizing: 'border-box',
+              lineHeight: 1.2
+            }}
+          >
+            {(allSlides[currentIndex] as any).title}
+          </div>
+        ) : (
+          /* Regular Photo */
+          <img
+            src={getPhotoUrl(currentIndex)}
+            alt={`Photo ${currentIndex + 1}`}
+            style={{
+              width: '100vw',
+              height: '100vh',
+              objectFit: 'contain',
+              userSelect: 'none',
+              imageRendering: '-webkit-optimize-contrast',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+              borderRadius: '18px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.28)',
+              border: '4px solid white',
+              background: '#f8f9fa',
+              opacity: 1,
+              transition: 'opacity 0.7s cubic-bezier(.4,0,.2,1)',
+              animation: 'fadeInPhoto 0.7s cubic-bezier(.4,0,.2,1)'
+            } as React.CSSProperties}
+            draggable={false}
+            loading="eager"
+            fetchPriority="high"
+            onError={(e) => {
+              console.error('Failed to load image:', getPhotoUrl(currentIndex));
+              (e.target as HTMLImageElement).src = getPhotoUrl(currentIndex) + '?retry=' + Date.now();
+            }}
+            onLoad={(e) => {
+              console.log('✅ Image loaded successfully:', {
+                src: getPhotoUrl(currentIndex),
+                naturalWidth: (e.target as HTMLImageElement).naturalWidth,
+                naturalHeight: (e.target as HTMLImageElement).naturalHeight,
+                displayWidth: (e.target as HTMLImageElement).width,
+                displayHeight: (e.target as HTMLImageElement).height
+              });
+            }}
+          />
+        )}
       </div>
 
       {/* Post Title Overlay */}
@@ -805,7 +854,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
               </button>
             )}
 
-            {photos.map((_, index) => (
+            {allSlides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => {
@@ -840,7 +889,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
               flexShrink: 0
             }}
           >
-            {currentIndex + 1} / {photos.length}
+            {currentIndex + 1} / {allSlides.length}
           </div>
 
           {/* Next Button */}

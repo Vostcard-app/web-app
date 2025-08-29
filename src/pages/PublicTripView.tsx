@@ -1224,6 +1224,7 @@ const PublicTripView: React.FC = () => {
           title={`${trip?.name} - Slideshow`}
           autoPlay={slideshowAutoPlay}
           autoPlayInterval={5000}
+          tripTitle={trip?.name}
         />
       )}
 
