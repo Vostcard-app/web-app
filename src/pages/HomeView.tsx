@@ -30,23 +30,23 @@ import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
 // FIXED: Import pin images from assets folder for better Leaflet compatibility
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
-  iconSize: [38, 38],
-  iconAnchor: [19, 38],
-  popupAnchor: [0, -38],
+  iconSize: [50, 50],
+  iconAnchor: [25, 50],
+  popupAnchor: [0, -50],
 });
 
 const offerIcon = new L.Icon({
   iconUrl: OfferPin,
-  iconSize: [38, 38],
-  iconAnchor: [19, 38],
-  popupAnchor: [0, -38],
+  iconSize: [50, 50],
+  iconAnchor: [25, 50],
+  popupAnchor: [0, -50],
 });
 
 const guideIcon = new L.Icon({
   iconUrl: '/Guide_pin.png', // ✅ Use the working PNG from public directory  
-  iconSize: [38, 38],
-  iconAnchor: [19, 38],
-  popupAnchor: [0, -38],
+  iconSize: [50, 50],
+  iconAnchor: [25, 50],
+  popupAnchor: [0, -50],
 });
 
 // Removed quickcard icon definition
