@@ -61,6 +61,7 @@ const VostcardDetailView: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(0);
   const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
+  const [modalClosing, setModalClosing] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -1048,15 +1049,19 @@ Tap OK to continue.`;
 
   // ✅ Auto-start audio when slideshow opens (with delay to prevent conflicts)
   useEffect(() => {
-    if (showMultiPhotoModal && hasAudio && !isPlaying) {
+    // Only auto-start if modal is opening (not closing) and audio isn't already playing
+    if (showMultiPhotoModal && hasAudio && !isPlaying && !modalClosing) {
       console.log('🎵 Slideshow opened - auto-starting audio');
       // Add small delay to ensure slideshow is fully rendered
       const timer = setTimeout(() => {
-        handlePlayPause();
+        // Double-check modal is still open and not closing before starting audio
+        if (showMultiPhotoModal && !modalClosing) {
+          handlePlayPause();
+        }
       }, 200);
       return () => clearTimeout(timer);
     }
-  }, [showMultiPhotoModal, hasAudio, isPlaying, handlePlayPause]);
+  }, [showMultiPhotoModal, hasAudio, isPlaying, modalClosing, handlePlayPause]);
 
   // ✅ NEW: Enhanced audio playback functions for Intro and Detail
   const handleIntroAudioPlayback = useCallback(async () => {
@@ -3361,7 +3366,9 @@ Tap OK to continue.`;
         isOpen={showMultiPhotoModal}
                   onClose={() => {
           console.log('🎵 MultiPhotoModal closing - stopping all audio');
-          setShowMultiPhotoModal(false);
+          
+          // ✅ ENHANCED: Set closing state first to prevent any audio restart
+          setModalClosing(true);
           
           // ✅ ENHANCED: Robust audio cleanup when slideshow closes
           if (audioRef.current) {
@@ -3377,9 +3384,11 @@ Tap OK to continue.`;
           // Always update playing state regardless of audio ref status
           setIsPlaying(false);
           
-          // Small delay to ensure state is updated before any auto-restart logic
+          // Close modal and reset closing state after a delay
           setTimeout(() => {
-            console.log('🎵 Audio cleanup complete');
+            setShowMultiPhotoModal(false);
+            setModalClosing(false);
+            console.log('🎵 Audio cleanup complete, modal closed');
           }, 100);
         }}
           title={vostcard?.title}
