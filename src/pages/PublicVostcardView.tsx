@@ -12,7 +12,7 @@ const PublicVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, username } = useAuth();
-  const { fixBrokenSharedVostcard } = useVostcard();
+  // Removed fixBrokenSharedVostcard as it doesn't exist in context
   
   const [vostcard, setVostcard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -100,80 +100,19 @@ const PublicVostcardView: React.FC = () => {
             setLoading(false);
             return;
           } else {
-            console.log('📱 Vostcard found but not configured for sharing, attempting to fix...');
+            console.log('📱 Vostcard found but not configured for sharing');
             
-            // Try to fix the sharing configuration
-            try {
-              const fixed = await fixBrokenSharedVostcard(id);
-              if (fixed) {
-                console.log('📱 Vostcard fixed, retrying load...');
-                
-                // Retry loading after fix
-                const retryDocSnap = await getDoc(docRef);
-                if (retryDocSnap.exists()) {
-                  const retryData = retryDocSnap.data();
-                  if (retryData.state === 'posted' || retryData.isPrivatelyShared) {
-                    clearTimeout(timeoutId);
-                    setVostcard(retryData);
-                    setLikeCount(retryData.likeCount || 0);
-                    setRatingStats({
-                      averageRating: retryData.averageRating || 0,
-                      ratingCount: retryData.ratingCount || 0
-                    });
-                    setIsPrivateShared(retryData.isPrivatelyShared || false);
-                    setLoading(false);
-                    return;
-                  }
-                }
-              }
-            } catch (fixError) {
-              console.error('📱 Failed to fix vostcard:', fixError);
-            }
-            
-            // If we get here, the vostcard exists but can't be shared
+            // The vostcard exists but is not configured for public sharing
+            // This could be a private vostcard that was never shared publicly
             clearTimeout(timeoutId);
-            setError('This Vostcard is not available for public viewing.');
+            setError('This Vostcard is private and not available for public viewing. The owner needs to share it publicly first.');
             setLoading(false);
             return;
           }
         } else {
-          console.log('📱 Vostcard not found in Firebase, attempting to fix...');
+          console.log('📱 Vostcard not found in Firebase');
           
-          // Second attempt - try to fix broken shared vostcard
-          try {
-            const fixed = await fixBrokenSharedVostcard(id);
-            if (fixed) {
-              console.log('📱 Vostcard potentially fixed, retrying load...');
-              
-              // Retry loading after fix attempt
-              const retryDocSnap = await getDoc(docRef);
-              if (retryDocSnap.exists()) {
-                const retryData = retryDocSnap.data();
-                console.log('📱 Retry successful, found vostcard:', {
-                  id: retryData.id,
-                  state: retryData.state,
-                  isPrivatelyShared: retryData.isPrivatelyShared,
-                  title: retryData.title
-                });
-                
-                if (retryData.state === 'posted' || retryData.isPrivatelyShared) {
-                  clearTimeout(timeoutId);
-                  setVostcard(retryData);
-                  setLikeCount(retryData.likeCount || 0);
-                  setRatingStats({
-                    averageRating: retryData.averageRating || 0,
-                    ratingCount: retryData.ratingCount || 0
-                  });
-                  setIsPrivateShared(retryData.isPrivatelyShared || false);
-                  setLoading(false);
-                  return;
-                }
-              }
-            }
-          } catch (fixError) {
-            console.error('📱 Failed to fix missing vostcard:', fixError);
-          }
-          
+          // The vostcard document doesn't exist
           // If we get here, the vostcard truly doesn't exist
           clearTimeout(timeoutId);
           setError('Vostcard not found. It may have been deleted or the link is invalid.');
@@ -189,7 +128,7 @@ const PublicVostcardView: React.FC = () => {
     };
 
     fetchVostcard();
-  }, [id, fixBrokenSharedVostcard]);
+  }, [id]);
 
   // Fetch user profile when vostcard is loaded
   useEffect(() => {
