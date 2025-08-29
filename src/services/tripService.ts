@@ -66,7 +66,7 @@ const convertFirebaseToTripItem = (doc: TripItemFirebaseDoc): TripItem => {
   };
 };
 
-// Verify that a vostcard/quickcard belongs to the current user
+// Verify that a vostcard belongs to the current user
 const verifyUserOwnsContent = async (vostcardID: string, userID: string): Promise<boolean> => {
   try {
     const vostcardDoc = await getDoc(doc(db, 'vostcards', vostcardID));

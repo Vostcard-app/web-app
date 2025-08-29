@@ -9,7 +9,7 @@ export interface BackgroundMusic {
   volume?: number; // 0.0 - 1.0
 }
 
-// Main Trip interface - personal collection of user's own vostcards/quickcards
+// Main Trip interface - personal collection of user's own vostcards
 export interface Trip {
   id: string;
   name: string;
@@ -27,8 +27,8 @@ export interface Trip {
 // Individual item in a trip - only user's own content
 export interface TripItem {
   id: string;
-  vostcardID: string; // Reference to user's own vostcard/quickcard
-  type: 'vostcard' | 'quickcard';
+  vostcardID: string; // Reference to user's own vostcard
+  type: 'vostcard';
   order: number; // Position in the trip (0-based)
   addedAt: string;
   
@@ -47,7 +47,7 @@ export interface CreateTripData {
   isPrivate?: boolean; // Default to true (private)
   firstItem?: {
     vostcardID: string;
-    type: 'vostcard' | 'quickcard';
+    type: 'vostcard';
   };
 }
 
@@ -62,8 +62,8 @@ export interface UpdateTripData {
 
 // For adding items to trips - only user's own content
 export interface AddItemToTripData {
-  vostcardID: string; // Must be user's own vostcard/quickcard
-  type: 'vostcard' | 'quickcard';
+  vostcardID: string; // Must be user's own vostcard
+  type: 'vostcard';
   title?: string;
   description?: string;
   photoURL?: string;
@@ -89,7 +89,7 @@ export interface TripFirebaseDoc {
 export interface TripItemFirebaseDoc {
   id: string;
   vostcardID: string;
-  type: 'vostcard' | 'quickcard';
+  type: 'vostcard';
   order: number;
   addedAt: Timestamp;
   title?: string;
@@ -113,7 +113,7 @@ export interface PublicTrip {
 export interface PublicTripItem {
   id: string;
   vostcardID: string;
-  type: 'vostcard' | 'quickcard';
+  type: 'vostcard';
   order: number;
   title?: string;
   description?: string;

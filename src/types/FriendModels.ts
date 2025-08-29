@@ -42,7 +42,7 @@ export interface VostboxMessage {
   readAt?: Date;
   replyMessage?: string;
   repliedAt?: Date;
-  isQuickcard?: boolean; // Add this field to distinguish quickcards
+  // Removed isQuickcard field - all content is now vostcards
 }
 
 export interface UserFriendData {

@@ -546,7 +546,7 @@ const AllPostedVostcardsView: React.FC = () => {
             userRole: p.userRole,
             state: p.state,
             userID: p.userID,
-            isQuickcard: p.isQuickcard,
+            // Removed isQuickcard field - all content is now vostcards
             hasValidData: !!(p.id && p.title),
             hasLocation: !!(p.latitude && p.longitude),
             createdAt: p.createdAt?.toDate ? p.createdAt.toDate().toISOString() : p.createdAt
@@ -571,10 +571,9 @@ const AllPostedVostcardsView: React.FC = () => {
           })));
         }
         
-        // Filter out any quickcard IDs that might be stale references AND invalid posts
+        // Filter out invalid posts
         const validVostcards = allContent.filter(v => {
           const isValid = v.id && 
-            !v.id.toLowerCase().includes('quickcard_') &&
             v.title &&
             v.userID &&
             (v.latitude || v.longitude); // At least some location data
@@ -717,10 +716,9 @@ const AllPostedVostcardsView: React.FC = () => {
         ...doc.data()
       })) as Vostcard[];
       
-      // Filter the new content: Vōstcards only (exclude offers, quickcard references, and invalid posts)
+      // Filter the new content: Vōstcards only (exclude offers and invalid posts)
       const newContent = newVostcards.filter(v => 
         !v.isOffer && 
-        !v.id.toLowerCase().includes('quickcard_') &&
         v.id &&
         v.title &&
         v.userID &&
@@ -1906,7 +1904,6 @@ const AllPostedVostcardsView: React.FC = () => {
                       style={{ marginRight: '8px' }}
                     />
                     {type === 'Vostcard' && '📹'} 
-                    {type === 'Quickcard' && '📸'} 
                     {type === 'Guide' && '📚'} 
                     {type}
                   </label>

@@ -898,7 +898,7 @@ const VostcardStudioView: React.FC = () => {
   const handleVostcardPinPlacer = async () => {
     console.log('🗺️ Pin placer button clicked!'); // Debug log
     
-    // ✅ SAVE CURRENT QUICKCARD STATE BEFORE NAVIGATING
+    // ✅ SAVE CURRENT VOSTCARD STATE BEFORE NAVIGATING
     const stateToSave: any = {
       title: vostcardTitle,
       description: vostcardDescription,
@@ -991,7 +991,7 @@ const VostcardStudioView: React.FC = () => {
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
-      // Create quickcard as private draft with multiple photos and audio files
+      // Create vostcard as private draft with multiple photos and audio files
       const vostcard: Vostcard = {
         id: `vostcard_${Date.now()}`,
         title: vostcardTitle.trim(),
@@ -1074,7 +1074,7 @@ const VostcardStudioView: React.FC = () => {
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
-      // Create quickcard ready for posting with multiple photos
+      // Create vostcard ready for posting with multiple photos
       const vostcard: Vostcard = {
         id: `vostcard_${Date.now()}`,
         title: vostcardTitle.trim(),
@@ -1120,7 +1120,7 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
-  // Update and repost existing quickcard
+  // Update and repost existing vostcard
   const handleUpdateAndRepostVostcard = async () => {
     if (!editingVostcardId) {
       alert('No vostcard is being edited.');
@@ -1212,7 +1212,7 @@ const VostcardStudioView: React.FC = () => {
         audioLabels: audioLabels
       });
 
-      // Update the existing quickcard with same ID and preserve original state
+      // Update the existing vostcard with same ID and preserve original state
       const updatedVostcard: Vostcard = {
         id: editingVostcardId, // Keep the same ID
         title: vostcardTitle.trim(),
@@ -1313,7 +1313,7 @@ const VostcardStudioView: React.FC = () => {
     setOriginalVostcardData(null);
   };
 
-  // Function to load a quickcard for editing
+  // Function to load a vostcard for editing
   const loadVostcardForEditing = async (vostcard: Vostcard) => {
     console.log('🔄 Loading vostcard for editing:', vostcard);
     
@@ -1427,7 +1427,7 @@ const VostcardStudioView: React.FC = () => {
       alert(`✅ Vostcard "${vostcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
       
     } catch (error) {
-      console.error('Error loading quickcard:', error);
+      console.error('Error loading vostcard:', error);
       alert('❌ Failed to load vostcard. Please try again.');
     } finally {
       setIsLoading(false);
@@ -1915,7 +1915,7 @@ const VostcardStudioView: React.FC = () => {
             }}>
               <button
                 onClick={async () => {
-                  console.log('📂 Opening quickcard loader - refreshing saved vostcards with full sync...');
+                  console.log('📂 Opening vostcard loader - refreshing saved vostcards with full sync...');
                   try {
                     // Use full sync to get both IndexedDB and Firebase data
                     await loadAllLocalVostcards();
@@ -2814,7 +2814,7 @@ const VostcardStudioView: React.FC = () => {
         
 
 
-        {/* Quickcard Loader Modal */}
+        {/* Vostcard Loader Modal */}
         {showVostcardLoader && (
           <div style={{
             position: 'fixed',
@@ -2863,7 +2863,7 @@ const VostcardStudioView: React.FC = () => {
 
 
 
-                             {/* Quickcard List */}
+                             {/* Vostcard List */}
                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                  {isLoadingVostcards ? (
                    <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>

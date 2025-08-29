@@ -243,7 +243,7 @@ export const TourService = {
             username: data.username,
             state: data.state,
             isOffer: data.isOffer || false,
-            isQuickcard: data.isQuickcard || false,
+            // Removed isQuickcard field - all content is now vostcards
             userRole: data.userRole
           });
         } else {

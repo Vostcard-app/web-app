@@ -19,8 +19,8 @@ export interface Itinerary {
 // Individual item in an itinerary
 export interface ItineraryItem {
   id: string; // Unique ID for this item in the itinerary
-  vostcardID: string; // Reference to the vostcard/quickcard
-  type: 'vostcard' | 'quickcard';
+  vostcardID: string; // Reference to the vostcard
+  type: 'vostcard';
   order: number; // Position in the itinerary (0-based)
   addedAt: string;
   
@@ -40,7 +40,7 @@ export interface CreateItineraryData {
   isPublic?: boolean;
   firstItem?: {
     vostcardID: string;
-    type: 'vostcard' | 'quickcard';
+    type: 'vostcard';
   };
 }
 
@@ -54,7 +54,7 @@ export interface UpdateItineraryData {
 // For adding items to itineraries
 export interface AddItemToItineraryData {
   vostcardID: string;
-  type: 'vostcard' | 'quickcard';
+  type: 'vostcard';
   title?: string;
   description?: string;
   photoURL?: string;
@@ -80,7 +80,7 @@ export interface ItineraryFirebaseDoc {
 export interface ItineraryItemFirebaseDoc {
   id: string;
   vostcardID: string;
-  type: 'vostcard' | 'quickcard';
+  type: 'vostcard';
   order: number;
   addedAt: Timestamp;
   
@@ -107,7 +107,7 @@ export interface PublicItinerary {
 export interface PublicItineraryItem {
   id: string;
   vostcardID: string;
-  type: 'vostcard' | 'quickcard';
+  type: 'vostcard';
   order: number;
   title?: string;
   description?: string;
