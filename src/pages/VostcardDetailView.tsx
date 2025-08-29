@@ -522,21 +522,28 @@ const VostcardDetailView: React.FC = () => {
     return urls;
   }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
   const hasAudio = useMemo(() => {
-    // ✅ UNIFIED AUDIO FORMAT - Simple and clean detection
-    const audioExists = vostcard?.hasAudio || !!(vostcard?.audioURLs?.length > 0);
+    // ✅ UNIFIED AUDIO FORMAT - Detect both URLs (Firebase) and Blobs (IndexedDB)
+    const audioExists = vostcard?.hasAudio || 
+                       !!(vostcard?.audioURLs?.length > 0) ||    // Firebase URLs
+                       !!(vostcard?.audioFiles?.length > 0) ||   // IndexedDB Blobs
+                       !!vostcard?.audioURL ||                   // Legacy URL
+                       !!vostcard?.audio;                        // Legacy Blob
     
     console.log('🔍 VostcardDetailView Audio detection (UNIFIED):', {
       audioExists,
       hasAudioFlag: vostcard?.hasAudio,
       audioURLs: vostcard?.audioURLs,
       audioURLsLength: vostcard?.audioURLs?.length || 0,
+      audioFiles: vostcard?.audioFiles,
+      audioFilesLength: vostcard?.audioFiles?.length || 0,
       audioLabels: vostcard?.audioLabels,
       // Legacy fields (for migration debugging)
       legacyAudioURL: vostcard?.audioURL,
+      legacyAudio: vostcard?.audio,
       legacy_firebaseAudioURL: vostcard?._firebaseAudioURL
     });
     return audioExists;
-  }, [vostcard?.hasAudio, vostcard?.audioURLs]);
+  }, [vostcard?.hasAudio, vostcard?.audioURLs, vostcard?.audioFiles, vostcard?.audioURL, vostcard?.audio]);
 
   // Removed redundant navigation state logging
 
@@ -1031,9 +1038,11 @@ Tap OK to continue.`;
         return;
       }
 
-      // ✅ UNIFIED AUDIO FORMAT - Simple source resolution
-      const audioSource = vostcard?.audioURLs?.[0] ||          // UNIFIED: Primary audio URL
+      // ✅ UNIFIED AUDIO FORMAT - Handle both URLs (Firebase) and Blobs (IndexedDB)
+      const audioSource = vostcard?.audioURLs?.[0] ||          // UNIFIED: Primary audio URL (Firebase)
+                         vostcard?.audioFiles?.[0] ||           // UNIFIED: Primary audio Blob (IndexedDB/local)
                          vostcard?.audioURL ||                  // Legacy: Single audio URL (migration support)
+                         vostcard?.audio ||                     // Legacy: Single audio Blob (migration support)
                          vostcard?._firebaseAudioURL;           // Legacy: Firebase audio URL (migration support)
 
       if (!audioSource) {
