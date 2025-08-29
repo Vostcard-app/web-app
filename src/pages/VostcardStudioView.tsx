@@ -1206,14 +1206,14 @@ const VostcardStudioView: React.FC = () => {
         updatedAt: new Date().toISOString()
       };
 
-      setCurrentVostcard(updatedVostcard);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Set the current vostcard for context consistency
       setCurrentVostcard(updatedVostcard);
       
       // Only post to public if the original was already posted, otherwise just save
       if (originalVostcardState === 'posted') {
         console.log('🔄 Updating already posted vostcard - keeping it public');
-        await postVostcard();
+        // Pass the vostcard directly to avoid state timing issues
+        await postVostcard(updatedVostcard);
       } else {
         console.log('🔄 Updating private vostcard - keeping it private');
         await saveVostcard();

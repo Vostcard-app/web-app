@@ -23,7 +23,7 @@ interface VostcardContextType {
   createNewVostcard: () => void;
   saveVostcard: () => Promise<void>;
   saveVostcardDirect: (vostcard: any) => Promise<void>;
-  postVostcard: () => Promise<void>;
+  postVostcard: (vostcardToPost?: Vostcard) => Promise<void>;
   deletePrivateVostcard: (vostcardId: string) => Promise<void>;
   loadAllLocalVostcards: () => Promise<void>;
   loadPrivateVostcards: () => Promise<void>;
@@ -1077,31 +1077,32 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
 
   // Post vostcard (change visibility to public and save)
-  const postVostcard = useCallback(async () => {
+  const postVostcard = useCallback(async (vostcardToPost?: Vostcard) => {
     console.log('🚀 Starting postVostcard...');
-    if (!currentVostcard) {
+    const vostcard = vostcardToPost || currentVostcard;
+    if (!vostcard) {
       console.error('No vostcard to post');
       throw new Error('No vostcard to post');
     }
 
-    if (!currentVostcard.geo?.latitude || !currentVostcard.geo?.longitude) {
+    if (!vostcard.geo?.latitude || !vostcard.geo?.longitude) {
       throw new Error('Vostcard must have geo location to be posted');
     }
 
     console.log('📍 Posting vostcard:', {
-      id: currentVostcard.id,
-      title: currentVostcard.title,
-      state: currentVostcard.state,
-      visibility: currentVostcard.visibility,
-      hasPhotos: currentVostcard.photos?.length > 0,
-      hasVideo: !!currentVostcard.video,
-      geo: currentVostcard.geo
+      id: vostcard.id,
+      title: vostcard.title,
+      state: vostcard.state,
+      visibility: vostcard.visibility,
+      hasPhotos: vostcard.photos?.length > 0,
+      hasVideo: !!vostcard.video,
+      geo: vostcard.geo
     });
 
     try {
       // Update vostcard to posted and public
       const updatedVostcard = {
-        ...currentVostcard,
+        ...vostcard,
         state: 'posted' as const,
         visibility: 'public' as const,
         updatedAt: new Date().toISOString()
@@ -1114,21 +1115,21 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // Move from savedVostcards to postedVostcards
       console.log('🔄 Moving vostcard between lists:', {
-        vostcardId: currentVostcard.id,
+        vostcardId: vostcard.id,
         savedCount: savedVostcards.length,
         postedCount: postedVostcards.length,
-        wasInSaved: savedVostcards.some(v => v.id === currentVostcard.id),
-        wasInPosted: postedVostcards.some(v => v.id === currentVostcard.id)
+        wasInSaved: savedVostcards.some(v => v.id === vostcard.id),
+        wasInPosted: postedVostcards.some(v => v.id === vostcard.id)
       });
       
       setSavedVostcards(prev => {
-        const filtered = prev.filter(v => v.id !== currentVostcard.id);
+        const filtered = prev.filter(v => v.id !== vostcard.id);
         console.log('📝 Removed from savedVostcards:', prev.length, '→', filtered.length);
         return filtered;
       });
       
       setPostedVostcards(prev => {
-        const filtered = prev.filter(v => v.id !== currentVostcard.id);
+        const filtered = prev.filter(v => v.id !== vostcard.id);
         const updated = [...filtered, updatedVostcard];
         console.log('📝 Added to postedVostcards:', prev.length, '→', updated.length);
         return updated;
