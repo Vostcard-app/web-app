@@ -523,6 +523,7 @@ const VostcardDetailView: React.FC = () => {
           console.log('📱 Vostcard found in Firestore:', {
             id: data.id,
             title: data.title,
+            isQuickcard: data.isQuickcard,
             hasPhotoURLs: !!data.photoURLs,
             photoURLsLength: data.photoURLs?.length || 0,
             has_firebasePhotoURLs: !!data._firebasePhotoURLs,
@@ -550,6 +551,8 @@ const VostcardDetailView: React.FC = () => {
             allKeys: Object.keys(data).sort()
           });
           
+          // Handle both regular vostcards and quickcards in the same component
+          // (Removed broken quickcard redirect since /quickcard/:id route doesn't exist)
           setVostcard(data);
           setLoading(false);
         } else {
