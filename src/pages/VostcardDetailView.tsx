@@ -455,6 +455,18 @@ const VostcardDetailView: React.FC = () => {
 
   // Removed redundant navigation state logging
 
+  // ✅ Cleanup audio when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup audio when leaving the page
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+        console.log('🎵 Audio cleaned up on component unmount');
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const fetchVostcard = async () => {
       if (!id) {
@@ -3345,10 +3357,12 @@ Tap OK to continue.`;
         isOpen={showMultiPhotoModal}
           onClose={() => {
             setShowMultiPhotoModal(false);
-            // Stop audio when slideshow is closed
+            // ✅ FIXED: Always stop audio when slideshow closes and reset position
             if (audioRef.current) {
               audioRef.current.pause();
+              audioRef.current.currentTime = 0; // Reset to beginning
               setIsPlaying(false);
+              console.log('🎵 Audio stopped and reset when slideshow closed');
             }
           }}
           title={vostcard?.title}

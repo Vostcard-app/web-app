@@ -167,6 +167,18 @@ const PublicVostcardView: React.FC = () => {
     }
   }, [hasAudio, handlePlayPause]);
 
+  // ✅ Cleanup audio when component unmounts
+  useEffect(() => {
+    return () => {
+      // Cleanup audio when leaving the page
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+        console.log('🎵 Audio cleaned up on component unmount');
+      }
+    };
+  }, []);
+
   // Load vostcard data
   useEffect(() => {
     const fetchVostcard = async () => {
@@ -1402,10 +1414,12 @@ ${privateUrl}`);
           isOpen={showMultiPhotoModal}
           onClose={() => {
             setShowMultiPhotoModal(false);
-            // Stop audio when modal closes
-            if (audioRef.current && isPlaying) {
+            // ✅ FIXED: Always stop audio when modal closes, regardless of isPlaying state
+            if (audioRef.current) {
               audioRef.current.pause();
+              audioRef.current.currentTime = 0; // Reset to beginning
               setIsPlaying(false);
+              console.log('🎵 Audio stopped when slideshow closed');
             }
           }}
           title={vostcard.title || 'Photos'}
