@@ -12,6 +12,7 @@ import { doc, getDoc, collection, query, where, orderBy, getDocs } from 'firebas
 import type { Trip, TripItem } from '../types/TripTypes';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import MusicPickerModal from '../components/MusicPickerModal';
+import ExpandableDescription from '../components/ExpandableDescription';
 import type { BackgroundMusic } from '../types/TripTypes';
 
 // Import pin assets
@@ -1555,36 +1556,63 @@ ${shareUrl}`;
                 </div>
               ) : (
                 /* Display Mode */
-                <div
-                  onClick={!isViewingSharedTrip ? startEditingDescription : undefined}
-                  style={{
-                    cursor: !isViewingSharedTrip ? 'pointer' : 'default',
-                    minHeight: !isViewingSharedTrip && !trip.description ? '20px' : 'auto'
-                  }}
-                >
-                  <p style={{ 
-                    margin: '0',
-                    fontSize: '14px', 
-                    color: trip.description ? '#555' : '#999',
-                    lineHeight: '1.4',
-                    overflow: 'hidden',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: 'vertical',
-                    fontStyle: !trip.description ? 'italic' : 'normal'
-                  }}>
-                    {trip.description || (!isViewingSharedTrip ? 'Click to add a description...' : '')}
-                  </p>
-                  {!isViewingSharedTrip && (
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#999',
-                      marginTop: '4px',
-                      opacity: 0.7
-                    }}>
-                      <FaEdit size={10} style={{ marginRight: '4px' }} />
-                      Click to edit
+                <div>
+                  {trip.description ? (
+                    <div>
+                      <ExpandableDescription
+                        description={trip.description}
+                        maxLines={3}
+                        maxLength={200}
+                        showPopup={true}
+                        title={`${trip.name || 'Trip'} - Description`}
+                        textStyle={{ 
+                          fontSize: '14px', 
+                          color: '#555',
+                          lineHeight: '1.4'
+                        }}
+                      />
+                      {!isViewingSharedTrip && (
+                        <div 
+                          onClick={startEditingDescription}
+                          style={{
+                            fontSize: '12px',
+                            color: '#999',
+                            marginTop: '8px',
+                            opacity: 0.7,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <FaEdit size={10} />
+                          Click to edit
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    !isViewingSharedTrip && (
+                      <div
+                        onClick={startEditingDescription}
+                        style={{
+                          cursor: 'pointer',
+                          minHeight: '20px',
+                          padding: '8px',
+                          border: '1px dashed #ccc',
+                          borderRadius: '4px',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <p style={{ 
+                          margin: '0',
+                          fontSize: '14px', 
+                          color: '#999',
+                          fontStyle: 'italic'
+                        }}>
+                          Click to add a description...
+                        </p>
+                      </div>
+                    )
                   )}
                 </div>
               )}

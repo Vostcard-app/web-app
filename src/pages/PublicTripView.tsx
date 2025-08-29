@@ -9,6 +9,7 @@ import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebas
 import { useAuth } from '../context/AuthContext';
 import type { Trip, TripItem } from '../types/TripTypes';
 import MultiPhotoModal from '../components/MultiPhotoModal';
+import ExpandableDescription from '../components/ExpandableDescription';
 import RoundInfoButton from '../assets/RoundInfo_Button.png';
 
 // Import pin assets
@@ -691,15 +692,14 @@ const PublicTripView: React.FC = () => {
             borderRadius: '8px',
             border: '1px solid #e9ecef'
           }}>
-            <p style={{ 
-              margin: '0',
-              fontSize: '14px', 
-              color: '#555',
-              lineHeight: '1.4',
-              textAlign: 'center'
-            }}>
-              {trip.description}
-            </p>
+            <ExpandableDescription
+              description={trip.description}
+              maxLines={3}
+              maxLength={200}
+              showPopup={true}
+              title={`${trip.name || 'Trip'} - Description`}
+              textStyle={{ textAlign: 'center' }}
+            />
           </div>
         )}
 
@@ -960,17 +960,19 @@ const PublicTripView: React.FC = () => {
                             />
                           )}
                           {post.description && (
-                            <p style={{
-                              margin: '0 0 8px 0',
-                              fontSize: '12px',
-                              color: '#666',
-                              lineHeight: '1.3'
-                            }}>
-                              {post.description.length > 100 
-                                ? post.description.substring(0, 100) + '...'
-                                : post.description
-                              }
-                            </p>
+                            <ExpandableDescription
+                              description={post.description}
+                              maxLines={2}
+                              maxLength={100}
+                              showPopup={true}
+                              title={`${post.title || 'Post'} - Description`}
+                              textStyle={{
+                                fontSize: '12px',
+                                color: '#666',
+                                lineHeight: '1.3'
+                              }}
+                              style={{ marginBottom: '8px' }}
+                            />
                           )}
                           <button
                             onClick={() => handlePostClick(post.id, post.isQuickcard)}
