@@ -99,7 +99,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
 
   // Auto-advance functionality
   useEffect(() => {
-    if (!isOpen || !autoPlay || photos.length <= 1 || isPaused) {
+    if (!isOpen || !autoPlay || allSlides.length <= 1 || isPaused) {
       if (autoPlayTimer) {
         clearTimeout(autoPlayTimer);
         setAutoPlayTimer(null);
@@ -107,9 +107,10 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
       return;
     }
 
-    const interval = getAutoPlayInterval();
+    // Use shorter interval for title slides (2 seconds), normal interval for photos
+    const interval = isTitleSlide(currentIndex) ? 2000 : getAutoPlayInterval();
     const timer = setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % photos.length);
+      setCurrentIndex((prev) => (prev + 1) % allSlides.length);
     }, interval);
 
     setAutoPlayTimer(timer);
