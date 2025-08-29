@@ -19,16 +19,16 @@ import QuickcardPin from '../assets/quickcard_pin.png';
 // Custom icons for the map
 const vostcardIcon = new L.Icon({
   iconUrl: VostcardPin,
-  iconSize: [60, 60],
-  iconAnchor: [30, 60],
-  popupAnchor: [0, -60],
+  iconSize: [20, 20],
+  iconAnchor: [10, 20],
+  popupAnchor: [0, -20],
 });
 
 const quickcardIcon = new L.Icon({
   iconUrl: QuickcardPin,
-  iconSize: [60, 60],
-  iconAnchor: [30, 60],
-  popupAnchor: [0, -60],
+  iconSize: [20, 20],
+  iconAnchor: [10, 20],
+  popupAnchor: [0, -20],
 });
 
 interface VostcardData {
