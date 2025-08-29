@@ -118,6 +118,11 @@ const TripDetailView: React.FC = () => {
   const [editedTitle, setEditedTitle] = useState('');
   const [savingTitle, setSavingTitle] = useState(false);
 
+  // Share modal states
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [preparingShare, setPreparingShare] = useState(false);
+
   console.log('🔄 TripDetailView rendered', {
     id,
     user: !!user,
@@ -398,7 +403,7 @@ const TripDetailView: React.FC = () => {
 
 
 
-  // Handle share trip
+  // Handle share trip - prepare share URL and show modal
   const handleShareTrip = async () => {
     if (!trip) return;
     
@@ -413,6 +418,7 @@ Tap OK to continue.`;
       return; // User cancelled
     }
     
+    setPreparingShare(true);
     try {
       // Mark trip as shared and public
       const updatedTrip = await TripService.updateTrip(trip.id, {
@@ -423,28 +429,58 @@ Tap OK to continue.`;
       setTrip(updatedTrip);
       
       // Generate public share URL
-      const shareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
+      const generatedShareUrl = `${window.location.origin}/share-trip/${updatedTrip.id}`;
+      setShareUrl(generatedShareUrl);
       
-      // Generate share text
-      const shareText = `Check out this trip I created with Vōstcard
-
-"${updatedTrip.name || 'My Trip'}"
-
-${updatedTrip.description || 'A collection of my favorite places'}
-
-${shareUrl}`;
-      
-      // Use native sharing or clipboard
-      if (navigator.share) {
-        await navigator.share({ text: shareText });
-      } else {
-        await navigator.clipboard.writeText(shareText);
-        alert('Share link copied to clipboard!');
-      }
+      // Show share modal
+      setShowShareModal(true);
       
     } catch (error) {
-      console.error('Error sharing trip:', error);
-      alert('Failed to share trip. Please try again.');
+      console.error('Error preparing share:', error);
+      alert('Failed to prepare share link. Please try again.');
+    } finally {
+      setPreparingShare(false);
+    }
+  };
+
+  // Copy link to clipboard
+  const copyLinkToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link copied to clipboard!');
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      alert('Failed to copy link. Please try again.');
+    }
+  };
+
+  // Share via native sharing
+  const shareViaSystem = async () => {
+    if (!trip) return;
+    
+    const shareText = `Check out this trip I created with Vōstcard
+
+"${trip.name || 'My Trip'}"
+
+${trip.description || 'A collection of my favorite places'}
+
+${shareUrl}`;
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({ 
+          title: trip.name || 'My Trip',
+          text: shareText,
+          url: shareUrl
+        });
+      } else {
+        // Fallback to copying text
+        await navigator.clipboard.writeText(shareText);
+        alert('Share text copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      alert('Failed to share. Please try again.');
     }
   };
 
@@ -1249,22 +1285,38 @@ ${shareUrl}`;
             {isViewingSharedTrip && (
               <button
                 style={{
-                  background: 'rgba(255,255,255,0.15)',
+                  background: preparingShare ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.15)',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '8px 16px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer',
+                  cursor: preparingShare ? 'not-allowed' : 'pointer',
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '600',
+                  gap: '6px'
                 }}
                 onClick={handleShareTrip}
+                disabled={preparingShare}
                 title="Share Trip"
               >
-                Share
+                {preparingShare ? (
+                  <>
+                    <div style={{
+                      width: '12px',
+                      height: '12px',
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      borderTop: '2px solid white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Preparing...
+                  </>
+                ) : (
+                  'Share'
+                )}
               </button>
             )}
             
@@ -2594,6 +2646,144 @@ ${shareUrl}`;
             }
           }}
         />
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '100%',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600 }}>
+                Share Trip
+              </h3>
+              <button
+                onClick={() => setShowShareModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '20px',
+                  cursor: 'pointer',
+                  color: '#666',
+                  padding: '4px'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            <div style={{
+              backgroundColor: '#f8f9fa',
+              border: '1px solid #e9ecef',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '20px',
+              fontSize: '14px',
+              wordBreak: 'break-all',
+              color: '#666'
+            }}>
+              {shareUrl}
+            </div>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <button
+                onClick={copyLinkToClipboard}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '12px 16px',
+                  backgroundColor: '#007aff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007aff'}
+              >
+                <FaShare size={14} />
+                Copy Link
+              </button>
+
+              {navigator.share && (
+                <button
+                  onClick={shareViaSystem}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '12px 16px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1e7e34'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+                >
+                  <FaShare size={14} />
+                  Share via System
+                </button>
+              )}
+
+              <button
+                onClick={() => setShowShareModal(false)}
+                style={{
+                  padding: '12px 16px',
+                  backgroundColor: '#f8f9fa',
+                  color: '#666',
+                  border: '1px solid #e9ecef',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e9ecef'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* CSS Animation for loading spinner */}
