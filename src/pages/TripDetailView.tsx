@@ -108,6 +108,11 @@ const TripDetailView: React.FC = () => {
   const [loadingSlideshowImages, setLoadingSlideshowImages] = useState(false);
   const [slideshowAutoPlay, setSlideshowAutoPlay] = useState(false);
 
+  // Description editing states
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [editedDescription, setEditedDescription] = useState('');
+  const [savingDescription, setSavingDescription] = useState(false);
+
   console.log('🔄 TripDetailView rendered', {
     id,
     user: !!user,
@@ -515,6 +520,37 @@ ${shareUrl}`;
       // Images already collected, ready for manual slideshow start
       console.log('🎬 Images already ready for slideshow (manual start required)');
       // setShowSlideshow(true); // Commented out - no auto-start
+    }
+  };
+
+  // Description editing functions
+  const startEditingDescription = () => {
+    setEditedDescription(trip?.description || '');
+    setIsEditingDescription(true);
+  };
+
+  const cancelEditingDescription = () => {
+    setIsEditingDescription(false);
+    setEditedDescription('');
+  };
+
+  const saveDescription = async () => {
+    if (!trip || !user || user.uid !== trip.userID) return;
+    
+    setSavingDescription(true);
+    try {
+      await TripService.updateTrip(trip.id, { description: editedDescription });
+      
+      // Update local trip state
+      setTrip(prev => prev ? { ...prev, description: editedDescription } : null);
+      
+      setIsEditingDescription(false);
+      console.log('✅ Trip description updated successfully');
+    } catch (error) {
+      console.error('❌ Error updating trip description:', error);
+      alert('Failed to update description. Please try again.');
+    } finally {
+      setSavingDescription(false);
     }
   };
 
@@ -1120,7 +1156,7 @@ ${shareUrl}`;
           </div>
 
           {/* Trip Description */}
-          {trip.description && (
+          {(trip.description || !isViewingSharedTrip) && (
             <div style={{
               marginBottom: '16px',
               padding: '12px',
@@ -1128,18 +1164,118 @@ ${shareUrl}`;
               borderRadius: '8px',
               border: '1px solid #e9ecef'
             }}>
-              <p style={{ 
-                margin: '0',
-                fontSize: '14px', 
-                color: '#555',
-                lineHeight: '1.4',
-                overflow: 'hidden',
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical'
-              }}>
-                {trip.description}
-              </p>
+              {!isViewingSharedTrip && isEditingDescription ? (
+                /* Editing Mode - Only for trip owners */
+                <div>
+                  <textarea
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    placeholder="Add a description for your trip..."
+                    style={{
+                      width: '100%',
+                      minHeight: '80px',
+                      padding: '8px',
+                      fontSize: '14px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      resize: 'vertical',
+                      fontFamily: 'inherit',
+                      lineHeight: '1.4'
+                    }}
+                  />
+                  <div style={{
+                    display: 'flex',
+                    gap: '8px',
+                    marginTop: '8px',
+                    justifyContent: 'flex-end'
+                  }}>
+                    <button
+                      onClick={cancelEditingDescription}
+                      disabled={savingDescription}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        backgroundColor: 'white',
+                        color: '#666',
+                        cursor: savingDescription ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveDescription}
+                      disabled={savingDescription}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        border: 'none',
+                        borderRadius: '4px',
+                        backgroundColor: savingDescription ? '#ccc' : '#007aff',
+                        color: 'white',
+                        cursor: savingDescription ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      {savingDescription ? (
+                        <>
+                          <div style={{
+                            width: '12px',
+                            height: '12px',
+                            border: '2px solid #fff',
+                            borderTop: '2px solid transparent',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }} />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <FaSave size={10} />
+                          Save
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Display Mode */
+                <div
+                  onClick={!isViewingSharedTrip ? startEditingDescription : undefined}
+                  style={{
+                    cursor: !isViewingSharedTrip ? 'pointer' : 'default',
+                    minHeight: !isViewingSharedTrip && !trip.description ? '20px' : 'auto'
+                  }}
+                >
+                  <p style={{ 
+                    margin: '0',
+                    fontSize: '14px', 
+                    color: trip.description ? '#555' : '#999',
+                    lineHeight: '1.4',
+                    overflow: 'hidden',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    fontStyle: !trip.description ? 'italic' : 'normal'
+                  }}>
+                    {trip.description || (!isViewingSharedTrip ? 'Click to add a description...' : '')}
+                  </p>
+                  {!isViewingSharedTrip && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#999',
+                      marginTop: '4px',
+                      opacity: 0.7
+                    }}>
+                      <FaEdit size={10} style={{ marginRight: '4px' }} />
+                      Click to edit
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
