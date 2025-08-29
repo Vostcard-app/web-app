@@ -977,34 +977,48 @@ Tap OK to continue.`;
   }, [photoURLs]);
 
   // ✅ NEW: Thumbnail click handler - launches audio and shows slideshow
-  const handleThumbnailClick = useCallback((photoUrl: string) => {
+  const handleThumbnailClick = useCallback(async (photoUrl: string) => {
     console.log('🖼️ Thumbnail clicked - launching audio and showing slideshow:', photoUrl);
-    
-    // Start audio if available
-    if (hasAudio) {
-      handlePlayPause();
-    }
     
     // Find the index of the clicked photo and start slideshow from there
     const photoIndex = photoURLs.indexOf(photoUrl);
     setSelectedPhotoIndex(photoIndex >= 0 ? photoIndex : 0);
     setShowMultiPhotoModal(true);
+    
+    // Start audio if available - do this after setting up slideshow
+    if (hasAudio) {
+      // Small delay to ensure slideshow is open
+      setTimeout(() => {
+        handlePlayPause();
+      }, 100);
+    }
   }, [hasAudio, handlePlayPause, photoURLs]);
 
   // ✅ Main photo click handler - triggers audio and shows slideshow
-  const handleMainPhotoClick = useCallback(() => {
+  const handleMainPhotoClick = useCallback(async () => {
     console.log('🚨 CLICK DETECTED ON MAIN PHOTO! 🚨');
     console.log('🖼️ Main photo clicked - launching audio and showing slideshow');
-    
-    // Start audio if available
-    if (hasAudio) {
-      handlePlayPause();
-    }
     
     // Start slideshow from the first photo
     setSelectedPhotoIndex(0);
     setShowMultiPhotoModal(true);
+    
+    // Start audio if available - do this after setting up slideshow
+    if (hasAudio) {
+      // Small delay to ensure slideshow is open
+      setTimeout(() => {
+        handlePlayPause();
+      }, 100);
+    }
   }, [hasAudio, handlePlayPause]);
+
+  // ✅ Auto-start audio when slideshow opens
+  useEffect(() => {
+    if (showMultiPhotoModal && hasAudio && !isPlaying) {
+      console.log('🎵 Slideshow opened - auto-starting audio');
+      handlePlayPause();
+    }
+  }, [showMultiPhotoModal, hasAudio, isPlaying, handlePlayPause]);
 
   // ✅ NEW: Enhanced audio playback functions for Intro and Detail
   const handleIntroAudioPlayback = useCallback(async () => {
