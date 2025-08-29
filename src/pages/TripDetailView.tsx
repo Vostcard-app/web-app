@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft, FaMapMarkerAlt, FaCalendar, FaImage, FaPlay, FaChevronRight, FaShare, FaEye, FaTrash, FaExclamationTriangle, FaEdit, FaTimes, FaList, FaMap, FaPhotoVideo, FaPlus, FaSave, FaMusic } from 'react-icons/fa';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useAuth } from '../context/AuthContext';
@@ -1674,6 +1674,23 @@ ${shareUrl}`;
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
                     <AutoFitBounds positions={positions} />
+                    
+                    {/* Path line connecting all trip items */}
+                    {itemsWithLocation.length > 1 && (
+                      <Polyline
+                        positions={itemsWithLocation
+                          .sort((a, b) => a.order - b.order)
+                          .map(item => [parseFloat(item.latitude!), parseFloat(item.longitude!)])
+                        }
+                        pathOptions={{
+                          color: '#007aff',
+                          weight: 2,
+                          opacity: 0.7,
+                          dashArray: '5, 10'
+                        }}
+                      />
+                    )}
+                    
                     {itemsWithLocation.map((item) => (
                       <Marker
                         key={item.id}

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaHome, FaHeart, FaUserCircle, FaMap, FaCalendar, FaEye, FaPlay, FaPhotoVideo } from 'react-icons/fa';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { db } from '../firebase/firebaseConfig';
@@ -915,6 +915,23 @@ const PublicTripView: React.FC = () => {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+                
+                {/* Path line connecting all posts */}
+                {tripPosts.filter(post => post.latitude && post.longitude).length > 1 && (
+                  <Polyline
+                    positions={tripPosts
+                      .filter(post => post.latitude && post.longitude)
+                      .map(post => [post.latitude!, post.longitude!])
+                    }
+                    pathOptions={{
+                      color: '#007aff',
+                      weight: 2,
+                      opacity: 0.7,
+                      dashArray: '5, 10'
+                    }}
+                  />
+                )}
+                
                 {tripPosts
                   .filter(post => post.latitude && post.longitude)
                   .map((post, index) => (
