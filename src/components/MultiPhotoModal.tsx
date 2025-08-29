@@ -18,6 +18,8 @@ interface MultiPhotoModalProps {
   autoPlayInterval?: number;
   audioDuration?: number;
   tripTitle?: string; // New prop for trip title slide
+  singleCycle?: boolean; // New prop to cycle once and stop
+  onSlideshowComplete?: () => void; // New callback when slideshow completes
 }
 
 const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
@@ -29,7 +31,9 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   autoPlay = false,
   autoPlayInterval = 5000,
   audioDuration,
-  tripTitle
+  tripTitle,
+  singleCycle = false,
+  onSlideshowComplete
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -38,6 +42,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
   const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
   const [autoPlayTimer, setAutoPlayTimer] = useState<NodeJS.Timeout | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [hasCompletedCycle, setHasCompletedCycle] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   
   // Casting states
@@ -99,7 +104,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
 
   // Auto-advance functionality
   useEffect(() => {
-    if (!isOpen || !autoPlay || allSlides.length <= 1 || isPaused) {
+    if (!isOpen || !autoPlay || allSlides.length <= 1 || isPaused || (singleCycle && hasCompletedCycle)) {
       if (autoPlayTimer) {
         clearTimeout(autoPlayTimer);
         setAutoPlayTimer(null);
@@ -110,7 +115,24 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     // Use shorter interval for title slides (2 seconds), normal interval for photos
     const interval = isTitleSlide(currentIndex) ? 2000 : getAutoPlayInterval();
     const timer = setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % allSlides.length);
+      setCurrentIndex((prev) => {
+        const nextIndex = (prev + 1) % allSlides.length;
+        
+        // If we're in single cycle mode and we're back to the beginning (title slide)
+        if (singleCycle && nextIndex === 0 && prev > 0) {
+          console.log('🎬 Single cycle completed, ending slideshow');
+          setHasCompletedCycle(true);
+          // Call completion callback after a short delay to show title slide
+          setTimeout(() => {
+            if (onSlideshowComplete) {
+              onSlideshowComplete();
+            }
+          }, 2000); // Show title slide for 2 seconds before completing
+          return nextIndex; // Still go to title slide
+        }
+        
+        return nextIndex;
+      });
     }, interval);
 
     setAutoPlayTimer(timer);
@@ -118,7 +140,7 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [isOpen, autoPlay, currentIndex, allSlides.length, isPaused, audioDuration, autoPlayInterval]);
+  }, [isOpen, autoPlay, currentIndex, allSlides.length, isPaused, audioDuration, autoPlayInterval, singleCycle, hasCompletedCycle, onSlideshowComplete]);
 
   // Enhanced mobile and device detection
   useEffect(() => {
@@ -234,10 +256,11 @@ const MultiPhotoModal: React.FC<MultiPhotoModalProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, currentIndex, allSlides.length]);
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open and reset cycle state
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      setHasCompletedCycle(false); // Reset cycle state when opening
     } else {
       document.body.style.overflow = 'unset';
     }

@@ -1225,6 +1225,35 @@ const PublicTripView: React.FC = () => {
           autoPlay={slideshowAutoPlay}
           autoPlayInterval={4000}
           tripTitle={trip?.name}
+          singleCycle={true}
+          onSlideshowComplete={() => {
+            console.log('🎬 PublicTripView: Slideshow completed, fading out music and switching to map');
+            
+            // Fade out background music
+            const audioEl = bgAudioRef.current;
+            if (audioEl && !audioEl.paused) {
+              const fadeOutDuration = 2000; // 2 seconds fade out
+              const startVolume = audioEl.volume;
+              const fadeStep = startVolume / (fadeOutDuration / 100);
+              
+              const fadeInterval = setInterval(() => {
+                if (audioEl.volume > fadeStep) {
+                  audioEl.volume -= fadeStep;
+                } else {
+                  audioEl.volume = 0;
+                  audioEl.pause();
+                  clearInterval(fadeInterval);
+                }
+              }, 100);
+            }
+            
+            // Close slideshow and switch to map view after fade
+            setTimeout(() => {
+              setShowSlideshow(false);
+              setSlideshowAutoPlay(false);
+              setViewMode('map');
+            }, 2500); // Wait for fade out to complete
+          }}
         />
       )}
 
