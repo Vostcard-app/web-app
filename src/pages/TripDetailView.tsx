@@ -1061,8 +1061,8 @@ ${shareUrl}`;
             
 
             
-            {/* Share Trip Button - Only show for trip owners */}
-            {!isViewingSharedTrip && (
+            {/* Share Trip Button - Hide for trip owners, only show for shared trip viewers */}
+            {isViewingSharedTrip && (
               <button
                 style={{
                   background: 'rgba(255,255,255,0.15)',
