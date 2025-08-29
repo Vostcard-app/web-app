@@ -973,7 +973,7 @@ ${shareUrl}`;
               <h1 style={{
                 color: 'white',
                 fontWeight: 700,
-                fontSize: '22px',
+                fontSize: '18px',
                 margin: 0,
                 lineHeight: '1.2'
               }}>{trip.name}</h1>

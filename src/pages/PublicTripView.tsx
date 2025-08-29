@@ -671,7 +671,7 @@ const PublicTripView: React.FC = () => {
       }}>
         {/* Trip Title */}
         <div style={{
-          fontSize: '22px',
+          fontSize: '18px',
           fontWeight: 'bold',
           color: '#333',
           marginBottom: '16px',
