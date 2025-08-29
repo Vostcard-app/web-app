@@ -1192,7 +1192,7 @@ const VostcardStudioView: React.FC = () => {
         geo: vostcardLocation,
         youtubeURL: processedYouTubeID,
         instagramURL: processedInstagramID,
-        username: user?.displayName || user?.email || 'Unknown User',
+        username: originalVostcardData?.username || user?.displayName || user?.email || 'Unknown User', // Preserve original username
         userID: user?.uid || '',
         userRole: userRole || 'user',
         state: originalVostcardState || 'private', // Preserve original state
