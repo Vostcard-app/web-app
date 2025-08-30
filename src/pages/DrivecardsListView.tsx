@@ -163,6 +163,7 @@ const DrivecardsListView: React.FC = () => {
       // Create and configure audio element
       const audio = new Audio(audioSrc);
       audioRef.current = audio;
+      audio.loop = false; // ✅ Ensure audio doesn't repeat/loop
       
       // Set up event listeners
       audio.onended = () => {

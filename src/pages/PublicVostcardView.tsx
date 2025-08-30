@@ -105,6 +105,7 @@ const PublicVostcardView: React.FC = () => {
       // Create new audio element
       const audio = new Audio();
       audioRef.current = audio;
+      audio.loop = false; // ✅ Ensure audio doesn't repeat/loop
 
       // ✅ UNIFIED AUDIO FORMAT - Simple source resolution
       const audioSource = vostcard?.audioURLs?.[0] ||          // UNIFIED: Primary audio URL

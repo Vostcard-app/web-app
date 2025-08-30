@@ -1089,6 +1089,7 @@ Tap OK to continue.`;
       const audio = new Audio();
       audioRef.current = audio;
       audio.src = audioSrc;
+      audio.loop = false; // ✅ Ensure audio doesn't repeat/loop
       
       console.log('🎵 Audio source set:', audioSrc);
 

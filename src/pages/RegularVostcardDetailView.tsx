@@ -109,6 +109,7 @@ const VostcardDetailView: React.FC = () => {
       // Create new audio element
       const audio = new Audio();
       audioRef.current = audio;
+      audio.loop = false; // ✅ Ensure audio doesn't repeat/loop
 
       // Get audio source - check multiple possible fields
       const audioSource = vostcard.audioURL || 
@@ -329,6 +330,7 @@ const VostcardDetailView: React.FC = () => {
         try {
           // Create temporary audio element to get duration
           const audio = new Audio();
+          audio.loop = false; // ✅ Ensure audio doesn't repeat/loop
           
           if (vostcardWithAudio.audio instanceof Blob) {
             audio.src = URL.createObjectURL(vostcardWithAudio.audio);
@@ -485,6 +487,7 @@ Tap OK to continue.`;
       // Create new audio element
       const audio = new Audio();
       audioRef.current = audio;
+      audio.loop = false; // ✅ Ensure audio doesn't repeat/loop
 
       // Set audio source
       if (vostcardWithAudio.audio instanceof Blob) {
