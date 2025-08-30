@@ -174,12 +174,45 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
       // Handle different URL formats
       let finalUrl = url;
       
-      // Add protocol if missing
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      // Handle special cases for different payment services
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('mailto:')) {
         if (option.id === 'venmo' && url.startsWith('@')) {
           finalUrl = `https://venmo.com/${url.substring(1)}`;
         } else if (option.id === 'cashapp' && url.startsWith('$')) {
           finalUrl = `https://cash.app/${url}`;
+        } else if (option.id === 'zelle') {
+          // Zelle uses email or phone - create a mailto link or show info
+          if (url.includes('@')) {
+            // Email address - create mailto link
+            finalUrl = `mailto:${url}?subject=Zelle Payment&body=Hi! I'd like to send you a tip via Zelle.`;
+          } else {
+            // Phone number or other - copy to clipboard and show instructions
+            navigator.clipboard.writeText(url).then(() => {
+              alert(`Zelle info copied to clipboard: ${url}\n\nTo send a payment:\n1. Open your banking app\n2. Go to Zelle\n3. Use this email/phone number`);
+            }).catch(() => {
+              alert(`Zelle info: ${url}\n\nTo send a payment:\n1. Open your banking app\n2. Go to Zelle\n3. Use this email/phone number`);
+            });
+            onClose();
+            return;
+          }
+        } else if (option.id === 'applepay') {
+          // Apple Pay - copy to clipboard with instructions
+          navigator.clipboard.writeText(url).then(() => {
+            alert(`Apple Pay info copied: ${url}\n\nTo send a payment:\n1. Open Messages or Apple Pay\n2. Use this email/phone number`);
+          }).catch(() => {
+            alert(`Apple Pay info: ${url}\n\nTo send a payment:\n1. Open Messages or Apple Pay\n2. Use this email/phone number`);
+          });
+          onClose();
+          return;
+        } else if (option.id === 'googlepay') {
+          // Google Pay - copy to clipboard with instructions
+          navigator.clipboard.writeText(url).then(() => {
+            alert(`Google Pay info copied: ${url}\n\nTo send a payment:\n1. Open Google Pay app\n2. Use this email/phone number`);
+          }).catch(() => {
+            alert(`Google Pay info: ${url}\n\nTo send a payment:\n1. Open Google Pay app\n2. Use this email/phone number`);
+          });
+          onClose();
+          return;
         } else if (option.id === 'bitcoin' || option.id === 'ethereum') {
           // For crypto, copy to clipboard instead of opening
           navigator.clipboard.writeText(url).then(() => {
@@ -188,6 +221,7 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
           onClose();
           return;
         } else {
+          // Default case - add https protocol
           finalUrl = `https://${url}`;
         }
       }
