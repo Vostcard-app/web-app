@@ -473,13 +473,22 @@ const VostcardStudioView: React.FC = () => {
     const hasLocationToRestore = sessionStorage.getItem('vostcardLocation') || 
                                   sessionStorage.getItem('drivecardLocation');
     const hasTransferData = sessionStorage.getItem('vostcardTransferData');
+    const isEditingExisting = editingVostcardId || editingDrivecardId;
     
-    if (!hasLocationToRestore && !hasTransferData) {
+    if (!hasLocationToRestore && !hasTransferData && !isEditingExisting) {
       // Clear any stale creator state to ensure clean start
       sessionStorage.removeItem('vostcardCreatorState');
+      
+      // Also clear form data if it's stale (not from current session)
+      const hasStaleFormData = vostcardTitle.trim() || vostcardDescription.trim() || vostcardPhotos.length > 0;
+      if (hasStaleFormData) {
+        console.log('🧹 Clearing stale form data for fresh start');
+        resetVostcardForm();
+      }
+      
       console.log('🧹 Cleared stale vostcard creator state for clean initialization');
     }
-  }, []);
+  }, []); // Only run once on mount
 
   // Separate useEffect for loading existing vostcard data - only runs once
   useEffect(() => {
@@ -2278,7 +2287,7 @@ const VostcardStudioView: React.FC = () => {
               </div>
             )}
 
-            {/* ✅ Two Action Buttons */}
+            {/* ✅ Action Buttons */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
               {/* Save to Personal Posts Button */}
               <button 
@@ -2353,6 +2362,36 @@ const VostcardStudioView: React.FC = () => {
                   Update
                 </button>
               )}
+            </div>
+
+            {/* Clear Form Button - Always visible */}
+            <div style={{ marginBottom: '15px' }}>
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to clear the entire form? All current data will be lost.')) {
+                    resetVostcardForm();
+                  }
+                }}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: isLoading ? '#ccc' : '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                🗑️ Clear Entire Form
+              </button>
             </div>
 
             {/* Clear Photo Button */}
