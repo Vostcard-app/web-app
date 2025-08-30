@@ -1044,7 +1044,13 @@ Tap OK to continue.`;
 
   // ✅ Enhanced audio playback function - MOVED FIRST
   const handlePlayPause = useCallback(async () => {
-    console.log('🎵 handlePlayPause called!', { hasAudio, isPlaying });
+    console.log('🎵 handlePlayPause called!', { 
+      hasAudio, 
+      isPlaying, 
+      modalClosing, 
+      showMultiPhotoModal,
+      audioRefExists: !!audioRef.current 
+    });
     
     if (!hasAudio) {
       console.log('❌ No audio detected, returning early');
@@ -1054,10 +1060,12 @@ Tap OK to continue.`;
     try {
       // Stop any existing audio (simple approach)
       if (audioRef.current) {
+        console.log('🎵 Pausing existing audio');
         audioRef.current.pause();
       }
 
       if (isPlaying) {
+        console.log('🎵 Audio is playing, stopping it');
         setIsPlaying(false);
         return;
       }
@@ -1184,6 +1192,13 @@ Tap OK to continue.`;
 
   // ✅ Auto-start audio when slideshow opens (with delay to prevent conflicts)
   useEffect(() => {
+    console.log('🎵 Auto-start useEffect triggered:', {
+      showMultiPhotoModal,
+      hasAudio,
+      isPlaying,
+      modalClosing
+    });
+    
     // Only auto-start if modal is opening (not closing) and audio isn't already playing
     if (showMultiPhotoModal && hasAudio && !isPlaying && !modalClosing) {
       console.log('🎵 Slideshow opened - auto-starting audio');
@@ -1191,10 +1206,16 @@ Tap OK to continue.`;
       const timer = setTimeout(() => {
         // Double-check modal is still open and not closing before starting audio
         if (showMultiPhotoModal && !modalClosing) {
+          console.log('🎵 Auto-starting audio after delay');
           handlePlayPause();
+        } else {
+          console.log('🎵 Auto-start cancelled - modal closed or closing');
         }
       }, 200);
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('🎵 Auto-start timer cleared');
+        clearTimeout(timer);
+      };
     }
   }, [showMultiPhotoModal, hasAudio, isPlaying, modalClosing, handlePlayPause]);
 
@@ -3369,10 +3390,19 @@ Tap OK to continue.`;
           // ✅ Set closing state first to prevent any audio restart
           setModalClosing(true);
           
-          // ✅ Simple audio stop (matches new iPhone-compatible approach)
+          // ✅ Enhanced audio stop with debugging
+          console.log('🎵 Stopping audio - audioRef.current exists:', !!audioRef.current);
           if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
+            try {
+              audioRef.current.pause();
+              audioRef.current.currentTime = 0;
+              audioRef.current.src = '';
+              audioRef.current = null;
+              console.log('🎵 Audio successfully stopped and cleared');
+            } catch (error) {
+              console.error('🎵 Error stopping audio:', error);
+              audioRef.current = null;
+            }
           }
           setIsPlaying(false);
           
