@@ -3363,19 +3363,23 @@ Tap OK to continue.`;
         initialIndex={selectedPhotoIndex}
         isOpen={showMultiPhotoModal}
           onClose={() => {
-          console.log('🎵 MultiPhotoModal closing - stopping all audio');
+          console.log('🎵 MultiPhotoModal closing - stopping audio');
           
-          // ✅ ENHANCED: Set closing state first to prevent any audio restart
+          // ✅ Set closing state first to prevent any audio restart
           setModalClosing(true);
           
-          // ✅ ENHANCED: Use comprehensive audio cleanup
-          stopAllAudio();
+          // ✅ Simple audio stop (matches new iPhone-compatible approach)
+          if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+          }
+          setIsPlaying(false);
           
           // Close modal and reset closing state after a delay
           setTimeout(() => {
             setShowMultiPhotoModal(false);
             setModalClosing(false);
-            console.log('🎵 Audio cleanup complete, modal closed');
+            console.log('🎵 Audio stopped, modal closed');
           }, 100);
           }}
           title={vostcard?.title}
