@@ -62,6 +62,7 @@ const VostcardDetailView: React.FC = () => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(0);
   const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
   const [modalClosing, setModalClosing] = useState(false);
+  const [audioPlayedInThisSession, setAudioPlayedInThisSession] = useState(false);
   const [showDescriptionModal, setShowDescriptionModal] = useState(false);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -1104,7 +1105,8 @@ Tap OK to continue.`;
       // Set up simple event listeners (iPhone-compatible)
       audio.addEventListener('ended', () => {
         setIsPlaying(false);
-        console.log('🎵 VostcardDetailView audio playback ended');
+        console.log('🎵 VostcardDetailView audio playback ended - will not restart');
+        // Audio has finished playing, slideshow can continue but audio won't restart
       });
 
       audio.addEventListener('error', (e) => {
@@ -1190,26 +1192,28 @@ Tap OK to continue.`;
     }
   }, [hasAudio, handlePlayPause]);
 
-  // ✅ Auto-start audio when slideshow opens (with delay to prevent conflicts)
+  // ✅ Auto-start audio when slideshow opens (ONLY ONCE per session)
   useEffect(() => {
     console.log('🎵 Auto-start useEffect triggered:', {
       showMultiPhotoModal,
       hasAudio,
       isPlaying,
-      modalClosing
+      modalClosing,
+      audioPlayedInThisSession
     });
     
-    // Only auto-start if modal is opening (not closing) and audio isn't already playing
-    if (showMultiPhotoModal && hasAudio && !isPlaying && !modalClosing) {
-      console.log('🎵 Slideshow opened - auto-starting audio');
+    // Only auto-start if modal is opening AND audio hasn't been played in this session yet
+    if (showMultiPhotoModal && hasAudio && !isPlaying && !modalClosing && !audioPlayedInThisSession) {
+      console.log('🎵 Slideshow opened - auto-starting audio (first time this session)');
       // Add small delay to ensure slideshow is fully rendered
       const timer = setTimeout(() => {
         // Double-check modal is still open and not closing before starting audio
-        if (showMultiPhotoModal && !modalClosing) {
+        if (showMultiPhotoModal && !modalClosing && !audioPlayedInThisSession) {
           console.log('🎵 Auto-starting audio after delay');
+          setAudioPlayedInThisSession(true); // Mark audio as played for this session
           handlePlayPause();
         } else {
-          console.log('🎵 Auto-start cancelled - modal closed or closing');
+          console.log('🎵 Auto-start cancelled - modal closed, closing, or audio already played');
         }
       }, 200);
       return () => {
@@ -1217,7 +1221,7 @@ Tap OK to continue.`;
         clearTimeout(timer);
       };
     }
-  }, [showMultiPhotoModal, hasAudio, isPlaying, modalClosing, handlePlayPause]);
+  }, [showMultiPhotoModal, hasAudio, isPlaying, modalClosing, audioPlayedInThisSession, handlePlayPause]);
 
   // ✅ Unified audio format - using single handlePlayPause function for all audio
 
@@ -3410,7 +3414,8 @@ Tap OK to continue.`;
           setTimeout(() => {
             setShowMultiPhotoModal(false);
             setModalClosing(false);
-            console.log('🎵 Audio stopped, modal closed');
+            setAudioPlayedInThisSession(false); // ✅ Reset for next slideshow session
+            console.log('🎵 Audio stopped, modal closed, session reset');
           }, 100);
           }}
           title={vostcard?.title}
