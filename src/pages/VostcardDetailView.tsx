@@ -653,9 +653,9 @@ const VostcardDetailView: React.FC = () => {
             console.log('🔄 Audio data missing in cached postedVostcard, forcing refresh from Firebase...');
             // Don't return here - fall through to Firebase fetch
           } else {
-            setVostcard(postedVostcard);
-            setLoading(false);
-            return;
+          setVostcard(postedVostcard);
+          setLoading(false);
+          return;
           }
         }
         
@@ -1052,8 +1052,13 @@ Tap OK to continue.`;
     }
 
     try {
+      // Stop any existing audio (simple approach)
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+
       if (isPlaying) {
-        stopAllAudio();
+        setIsPlaying(false);
         return;
       }
 
@@ -1080,35 +1085,29 @@ Tap OK to continue.`;
         return;
       }
 
-      const audio = createAudioInstance(audioSrc);
+      // Create simple audio element (iPhone-compatible approach)
+      const audio = new Audio();
+      audioRef.current = audio;
+      audio.src = audioSrc;
+      
       console.log('🎵 Audio source set:', audioSrc);
 
-      // Play audio with mobile-specific handling
+      // Set up simple event listeners (iPhone-compatible)
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        console.log('🎵 VostcardDetailView audio playback ended');
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('🎵 VostcardDetailView audio playback error:', e);
+        setIsPlaying(false);
+      });
+
+      // Simple play (iPhone-compatible)
       console.log('🎵 Attempting to play audio...');
-      
-      // ✅ iOS/Mobile audio context unlocking
-      try {
-        // For iOS Safari, we need to ensure audio context is unlocked
-        if (typeof window !== 'undefined' && 'webkitAudioContext' in window) {
-          console.log('🎵 iOS Safari detected - ensuring audio context is unlocked');
-          unlockMobileAudio();
-        }
-        
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-          await playPromise;
-          setIsPlaying(true);
-          console.log('🎵 Audio started playing successfully');
-        } else {
-          // Fallback for older browsers
-          setIsPlaying(true);
-          console.log('🎵 Audio play() returned undefined (older browser)');
-        }
-      } catch (playError) {
-        console.error('🚨 Audio play() failed:', playError);
-        throw playError; // Re-throw to be caught by outer catch
-      }
+      await audio.play();
+      setIsPlaying(true);
+      console.log('🎵 Audio started playing successfully');
       
     } catch (error) {
       console.error('🚨 Error playing audio:', {
@@ -1120,35 +1119,18 @@ Tap OK to continue.`;
         audioNetworkState: audio.networkState,
         audioError: audio.error
       });
-      stopAllAudio();
-      
-      // More user-friendly error message based on error type and device
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      let errorMsg = 'Failed to play audio. ';
-      
-      if (error.name === 'NotAllowedError') {
-        if (isMobile) {
-          errorMsg += 'On mobile devices, please tap the audio button directly to enable playback.';
-        } else {
-          errorMsg += 'Please tap to enable audio playback.';
-        }
-      } else if (error.name === 'NotSupportedError') {
-        if (isMobile) {
-          errorMsg += 'Audio format not supported on this mobile device. Try using a different browser.';
-        } else {
-          errorMsg += 'Audio format not supported by your browser.';
-        }
-      } else if (error.name === 'AbortError') {
-        errorMsg += 'Audio loading was interrupted. Please check your internet connection.';
-      } else {
-        if (isMobile) {
-          errorMsg += 'Mobile audio issue detected. Try tapping the play button again or refresh the page.';
-        } else {
-          errorMsg += 'Please try again.';
-        }
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current = null;
       }
       
-      alert(errorMsg);
+      // Simple iPhone-friendly error message
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        alert('Audio playback failed. Please try tapping the play button again.');
+      } else {
+        alert('Failed to play audio. Please try again.');
+      }
     }
   }, [hasAudio, isPlaying, vostcard]);
 
@@ -1176,7 +1158,7 @@ Tap OK to continue.`;
     if (hasAudio) {
       // Small delay to ensure slideshow is open
       setTimeout(() => {
-        handlePlayPause();
+      handlePlayPause();
       }, 100);
     }
   }, [hasAudio, handlePlayPause, photoURLs]);
@@ -1194,7 +1176,7 @@ Tap OK to continue.`;
     if (hasAudio) {
       // Small delay to ensure slideshow is open
       setTimeout(() => {
-        handlePlayPause();
+      handlePlayPause();
       }, 100);
     }
   }, [hasAudio, handlePlayPause]);
@@ -3380,7 +3362,7 @@ Tap OK to continue.`;
           photos={photoURLs}
         initialIndex={selectedPhotoIndex}
         isOpen={showMultiPhotoModal}
-                  onClose={() => {
+          onClose={() => {
           console.log('🎵 MultiPhotoModal closing - stopping all audio');
           
           // ✅ ENHANCED: Set closing state first to prevent any audio restart
@@ -3395,7 +3377,7 @@ Tap OK to continue.`;
             setModalClosing(false);
             console.log('🎵 Audio cleanup complete, modal closed');
           }, 100);
-        }}
+          }}
           title={vostcard?.title}
           autoPlay={true}
           autoPlayInterval={7000}
