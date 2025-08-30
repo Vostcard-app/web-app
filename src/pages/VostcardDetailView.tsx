@@ -5,8 +5,7 @@ import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 // Leaflet Routing Machine will be imported dynamically
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { updateDoc } from 'firebase/firestore';
 import { useVostcard } from '../context/VostcardContext';
 import CommentsModal from '../components/CommentsModal';
 // Legacy pin import removed - using VostcardPin for all vostcards
@@ -14,18 +13,19 @@ import VostcardPin from '../assets/Vostcard_pin.png';
 import GuidePin from '../assets/Guide_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import { useAuth } from '../context/AuthContext';
-import { VostboxService } from '../services/vostboxService';
+
 import { LikeService } from '../services/likeService';
 import { RatingService } from '../services/ratingService';
 import { ItineraryService } from '../services/itineraryService';
 import type { Itinerary } from '../types/ItineraryTypes';
-import FriendPickerModal from '../components/FriendPickerModal';
+
 import SharedOptionsModal from '../components/SharedOptionsModal';
-import { NavigationService, NavigationStep } from '../services/navigationService';
+import { NavigationService, type NavigationStep } from '../services/navigationService';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import { generateShareText } from '../utils/vostcardUtils';
 import TipDropdownMenu from '../components/TipDropdownMenu';
 import VostcardHeader from '../components/VostcardHeader';
+import { useVostcardData } from '../hooks/useVostcardData';
 
 // Icons will be created in component
 
@@ -33,8 +33,27 @@ const VostcardDetailView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards, refreshFirebaseStorageURLs } = useVostcard();
+  const { refreshFirebaseStorageURLs } = useVostcard();
   const { user } = useAuth();
+  
+  // Use the new useVostcardData hook
+  const {
+    vostcard,
+    userProfile,
+    loading,
+    error,
+    isLiked,
+    userRating,
+
+    hasAudio,
+    setUserProfile,
+    refetch
+  } = useVostcardData(id, {
+    loadUserProfile: true,
+    loadInteractionData: true,
+    checkLocalFirst: true,
+    timeout: 15000
+  });
   
   // Navigation state from previous view
   const navigationState = location.state as any;
@@ -55,10 +74,7 @@ const VostcardDetailView: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [id]); // Only log when ID changes, not on every render
   
-  const [vostcard, setVostcard] = useState<any>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Vostcard data now provided by useVostcardData hook
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number>(0);
   const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
@@ -74,7 +90,7 @@ const VostcardDetailView: React.FC = () => {
   const [showDirectionsOverlay, setShowDirectionsOverlay] = useState(false);
   const [liveNavigation, setLiveNavigation] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentStepIndex] = useState(0);
   const [distanceToNext, setDistanceToNext] = useState<number>(0);
 
   // Create custom icons
@@ -349,13 +365,12 @@ const VostcardDetailView: React.FC = () => {
 
     return null;
   };
-  const [isLiked, setIsLiked] = useState(false);
+  // Like and rating data now provided by useVostcardData hook
   const [showSharedOptions, setShowSharedOptions] = useState(false);
-  const [userRating, setUserRating] = useState(0);
 
   // ✅ Enhanced audio player state
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState<number | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const allAudioInstances = useRef<Set<HTMLAudioElement>>(new Set());
 
@@ -551,29 +566,7 @@ const VostcardDetailView: React.FC = () => {
     
     return urls;
   }, [vostcard?.photoURLs, vostcard?._firebasePhotoURLs, vostcard?.id]);
-  const hasAudio = useMemo(() => {
-    // ✅ UNIFIED AUDIO FORMAT - Detect both URLs (Firebase) and Blobs (IndexedDB)
-    const audioExists = vostcard?.hasAudio || 
-                       !!(vostcard?.audioURLs?.length > 0) ||    // Firebase URLs
-                       !!(vostcard?.audioFiles?.length > 0) ||   // IndexedDB Blobs
-                       !!vostcard?.audioURL ||                   // Legacy URL
-                       !!vostcard?.audio;                        // Legacy Blob
-    
-    console.log('🔍 VostcardDetailView Audio detection (UNIFIED):', {
-      audioExists,
-      hasAudioFlag: vostcard?.hasAudio,
-      audioURLs: vostcard?.audioURLs,
-      audioURLsLength: vostcard?.audioURLs?.length || 0,
-      audioFiles: vostcard?.audioFiles,
-      audioFilesLength: vostcard?.audioFiles?.length || 0,
-      audioLabels: vostcard?.audioLabels,
-      // Legacy fields (for migration debugging)
-      legacyAudioURL: vostcard?.audioURL,
-      legacyAudio: vostcard?.audio,
-      legacy_firebaseAudioURL: vostcard?._firebaseAudioURL
-    });
-    return audioExists;
-  }, [vostcard?.hasAudio, vostcard?.audioURLs, vostcard?.audioFiles, vostcard?.audioURL, vostcard?.audio]);
+  // Audio detection now handled by useVostcardData hook
 
   // Removed redundant navigation state logging
 
@@ -586,204 +579,7 @@ const VostcardDetailView: React.FC = () => {
     };
   }, [stopAllAudio]);
 
-  useEffect(() => {
-    const fetchVostcard = async () => {
-      if (!id) {
-        setError('No vostcard ID provided');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        console.log('📱 Loading vostcard:', id);
-        
-        // First try to find in savedVostcards (private vostcards from IndexedDB)
-        const savedVostcard = savedVostcards.find(v => v.id === id);
-        if (savedVostcard) {
-          console.log('📱 Found private vostcard in savedVostcards:', {
-            id: savedVostcard.id,
-            title: savedVostcard.title,
-            hasPhotoURLs: !!savedVostcard.photoURLs,
-            photoURLsLength: savedVostcard.photoURLs?.length || 0,
-            has_firebasePhotoURLs: !!savedVostcard._firebasePhotoURLs,
-            _firebasePhotoURLsLength: savedVostcard._firebasePhotoURLs?.length || 0,
-            hasPhotos: savedVostcard.hasPhotos,
-            youtubeURL: savedVostcard.youtubeURL,
-            instagramURL: savedVostcard.instagramURL,
-            hasYouTube: !!savedVostcard.youtubeURL,
-            hasInstagram: !!savedVostcard.instagramURL,
-            allKeys: Object.keys(savedVostcard).sort()
-          });
-          setVostcard(savedVostcard);
-          setLoading(false);
-          return;
-        }
-        
-        // Then try to find in postedVostcards (from Firestore)
-        const postedVostcard = postedVostcards.find(v => v.id === id);
-        if (postedVostcard) {
-          console.log('📱 Found posted vostcard in postedVostcards:', {
-            id: postedVostcard.id,
-            title: postedVostcard.title,
-            hasPhotoURLs: !!postedVostcard.photoURLs,
-            photoURLsLength: postedVostcard.photoURLs?.length || 0,
-            has_firebasePhotoURLs: !!postedVostcard._firebasePhotoURLs,
-            _firebasePhotoURLsLength: postedVostcard._firebasePhotoURLs?.length || 0,
-            hasPhotos: postedVostcard.hasPhotos,
-            youtubeURL: postedVostcard.youtubeURL,
-            instagramURL: postedVostcard.instagramURL,
-            hasYouTube: !!postedVostcard.youtubeURL,
-            hasInstagram: !!postedVostcard.instagramURL,
-            // ✅ Audio debugging
-            hasAudioURLs: !!postedVostcard.audioURLs,
-            audioURLsLength: postedVostcard.audioURLs?.length || 0,
-            hasAudioFiles: !!postedVostcard.audioFiles,
-            audioFilesLength: postedVostcard.audioFiles?.length || 0,
-            hasAudioFlag: postedVostcard.hasAudio,
-            audioURL: postedVostcard.audioURL,
-            allKeys: Object.keys(postedVostcard).sort()
-          });
-          
-          // ✅ Check if audio data is missing and force refresh from Firebase
-          const hasAnyAudio = postedVostcard.hasAudio || 
-                             !!(postedVostcard.audioURLs?.length > 0) ||
-                             !!(postedVostcard.audioFiles?.length > 0) ||
-                             !!postedVostcard.audioURL ||
-                             !!postedVostcard.audio;
-          
-          if (!hasAnyAudio) {
-            console.log('🔄 Audio data missing in cached postedVostcard, forcing refresh from Firebase...');
-            // Don't return here - fall through to Firebase fetch
-          } else {
-          setVostcard(postedVostcard);
-          setLoading(false);
-          return;
-          }
-        }
-        
-        // If not found in context, try to load from IndexedDB directly
-        console.log('📱 Not found in context, trying IndexedDB...');
-        try {
-          await loadLocalVostcard(id);
-          // loadLocalVostcard should update the context, so check again
-          const updatedSavedVostcard = savedVostcards.find(v => v.id === id);
-          if (updatedSavedVostcard) {
-            console.log('📱 Found vostcard after loading from IndexedDB:', updatedSavedVostcard);
-            setVostcard(updatedSavedVostcard);
-            setLoading(false);
-            return;
-          }
-        } catch (indexedDBError) {
-          console.log('📱 Not found in IndexedDB, trying Firestore...');
-        }
-        
-        // Finally try to load from Firestore (for posted vostcards)
-        const docRef = doc(db, 'vostcards', id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          console.log('📱 Vostcard found in Firestore:', {
-            id: data.id,
-            title: data.title,
-            isQuickcard: data.isQuickcard,
-            hasPhotoURLs: !!data.photoURLs,
-            photoURLsLength: data.photoURLs?.length || 0,
-            has_firebasePhotoURLs: !!data._firebasePhotoURLs,
-            _firebasePhotoURLsLength: data._firebasePhotoURLs?.length || 0,
-            hasPhotos: data.hasPhotos,
-            photoURLsValue: data.photoURLs,
-            // Video-related fields
-            hasVideo: data.hasVideo,
-            videoURL: data.videoURL,
-            hasVideoURL: !!data.videoURL,
-            // ✅ Audio-related fields (UNIFIED FORMAT)
-            hasAudio: data.hasAudio,
-            audioURLs: data.audioURLs,
-            audioURLsLength: data.audioURLs?.length || 0,
-            audioFiles: data.audioFiles,
-            audioFilesLength: data.audioFiles?.length || 0,
-            audioLabels: data.audioLabels,
-            // Legacy audio fields
-            audioURL: data.audioURL,
-            audio: data.audio,
-            _firebaseAudioURL: data._firebaseAudioURL,
-            _firebaseAudioURLs: data._firebaseAudioURLs,
-            video: data.video,
-            hasVideoBlob: !!data.video,
-            _firebaseVideoURL: data._firebaseVideoURL,
-            has_firebaseVideoURL: !!data._firebaseVideoURL,
-            // Audio-related fields
-            hasAudio: data.hasAudio,
-            audioURL: data.audioURL,
-            audioURLs: data.audioURLs,
-            audioURLsLength: data.audioURLs?.length || 0,
-            _firebaseAudioURL: data._firebaseAudioURL,
-            _firebaseAudioURLs: data._firebaseAudioURLs,
-            audio: data.audio,
-            audioFiles: data.audioFiles,
-            audioLabels: data.audioLabels,
-            allKeys: Object.keys(data).sort()
-          });
-          
-          // Handle both regular vostcards and quickcards in the same component
-          // (Removed broken quickcard redirect since /quickcard/:id route doesn't exist)
-          setVostcard(data);
-          setLoading(false);
-        } else {
-          console.log('📱 Vostcard not found anywhere, trying to fix...');
-          
-          try {
-            const fixed = await fixBrokenSharedVostcard(id);
-            if (fixed) {
-              console.log('📱 Vostcard fixed, retrying load...');
-              
-              const retryDocSnap = await getDoc(docRef);
-              if (retryDocSnap.exists()) {
-                const retryData = retryDocSnap.data();
-                setVostcard(retryData);
-                setLoading(false);
-                return;
-              }
-            }
-          } catch (fixError) {
-            console.error('📱 Failed to fix vostcard:', fixError);
-          }
-          
-          // Try to find by internal id field (for migrated vostcards)
-          console.log('📱 Trying to find by internal ID field...');
-          try {
-            const q = query(
-              collection(db, 'vostcards'),
-              where('id', '==', id)
-            );
-            const querySnapshot = await getDocs(q);
-            
-            if (!querySnapshot.empty) {
-              const data = querySnapshot.docs[0].data();
-              console.log('📱 Vostcard found by internal ID:', data);
-              setVostcard(data);
-              setLoading(false);
-              return;
-            } else {
-              console.log('📱 No vostcard found with internal ID:', id);
-            }
-          } catch (searchError) {
-            console.error('❌ Error searching by internal ID:', searchError);
-          }
-          
-          setError('Vostcard not found. It may have been deleted or the link is invalid.');
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('📱 Error loading vostcard:', err);
-        setError('Failed to load Vostcard. Please check your internet connection and try again.');
-        setLoading(false);
-      }
-    };
-
-    fetchVostcard();
-  }, [id, fixBrokenSharedVostcard, loadLocalVostcard, savedVostcards, postedVostcards]);
+  // Vostcard loading now handled by useVostcardData hook
 
   // Live GPS tracking for navigation
   useEffect(() => {
@@ -889,61 +685,9 @@ const VostcardDetailView: React.FC = () => {
     }
   };
 
-  // Fetch user profile when vostcard is loaded
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!vostcard?.userID) return;
-      
-      try {
-        const userRef = doc(db, 'users', vostcard.userID);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          console.log('🔍 VostcardDetailView Debug - Creator userRole:', userData.userRole);
-          console.log('🔍 VostcardDetailView Debug - Creator buyMeACoffeeURL:', userData.buyMeACoffeeURL);
-          setUserProfile(userData);
-        }
-      } catch (err) {
-        console.error('Failed to load user profile:', err);
-      }
-    };
-    
-    if (vostcard?.userID) {
-      fetchUserProfile();
-    }
-  }, [vostcard?.userID]);
+  // User profile loading now handled by useVostcardData hook
 
-  // Load existing like status
-  useEffect(() => {
-    const loadLikeStatus = async () => {
-      if (!user || !vostcard?.id) return;
-      
-      try {
-        const isLiked = await LikeService.isLiked(vostcard.id);
-        setIsLiked(isLiked);
-      } catch (error) {
-        console.error('Failed to load like status:', error);
-      }
-    };
-    
-    loadLikeStatus();
-  }, [user, vostcard?.id]);
-
-  // Load existing rating
-  useEffect(() => {
-    const loadUserRating = async () => {
-      if (!user || !vostcard?.id) return;
-      
-      try {
-        const rating = await RatingService.getUserRating(vostcard.id);
-        setUserRating(rating);
-      } catch (error) {
-        console.error('Failed to load user rating:', error);
-      }
-    };
-    
-    loadUserRating();
-  }, [user, vostcard?.id]);
+  // Like and rating loading now handled by useVostcardData hook
 
   // ✅ Audio event listeners are now handled by createAudioInstance() - no conflicting useEffect needed
 
@@ -998,13 +742,14 @@ Tap OK to continue.`;
     }
 
     try {
-      const newLikedState = await LikeService.toggleLike(vostcard.id);
-      setIsLiked(newLikedState);
+      await LikeService.toggleLike(vostcard.id);
+      // Refetch data to update like status and count
+      await refetch();
     } catch (error) {
       console.error('Error toggling like:', error);
       alert('Failed to update like status. Please try again.');
     }
-  }, [user, vostcard?.id]);
+  }, [user, vostcard?.id, refetch]);
 
   const handleMapClick = useCallback(() => {
     // Check both old format (latitude/longitude) and new format (geo.latitude/geo.longitude)
@@ -2281,7 +2026,8 @@ Tap OK to continue.`;
                     // Remove rating when user clicks same star
                     await RatingService.removeRating(vostcard.id);
                   }
-                  setUserRating(newRating);
+                  // Refetch data to update rating
+                  await refetch();
                 } catch (error) {
                   console.error('Error submitting rating:', error);
                   alert('Failed to submit rating. Please try again.');
@@ -2291,7 +2037,7 @@ Tap OK to continue.`;
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: star <= userRating ? '#ffd700' : '#ccc',
+                color: star <= (userRating || 0) ? '#ffd700' : '#ccc',
                 padding: '4px',
                 transition: 'color 0.2s ease'
               }}
