@@ -80,21 +80,7 @@ const VostcardHeader: React.FC<VostcardHeaderProps> = ({
         </div>
       </div>
 
-      {/* Guide Label - Upper right corner under banner */}
-      {(userProfile?.userRole === 'guide' || vostcard?.userRole === 'guide') && (
-        <div style={{
-          position: 'absolute',
-          top: '85px', // Just under the banner
-          right: '20px',
-          fontSize: '22px',
-          fontWeight: 'bold',
-          color: '#002B4D',
-          zIndex: 10,
-          textAlign: 'right'
-        }}>
-          Guide
-        </div>
-      )}
+      {/* Guide label removed from upper right corner - now shown under username */}
 
       {/* Swipe navigation indicators */}
       {(canGoToPrevious || canGoToNext) && (
@@ -175,16 +161,13 @@ const VostcardHeader: React.FC<VostcardHeaderProps> = ({
                 <FaUserCircle size={50} color="#ccc" />
               )}
             </div>
-            {userProfile?.userRole === 'guide' && (
-              <div style={{ marginTop: 4, fontSize: 11, color: '#666', fontWeight: 600 }}>Guide</div>
-            )}
+            {/* Guide label moved to under username */}
           </div>
           <div 
             style={{ 
-              fontSize: '20px', 
-              fontWeight: 'bold', 
-              color: '#333',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column'
             }}
             onClick={() => {
               if (vostcard?.userID) {
@@ -192,7 +175,22 @@ const VostcardHeader: React.FC<VostcardHeaderProps> = ({
               }
             }}
           >
-            {userProfile?.username || vostcard.username || 'Anonymous'}
+            <div style={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#333'
+            }}>
+              {userProfile?.username || vostcard.username || 'Anonymous'}
+            </div>
+            {(userProfile?.userRole === 'guide' || vostcard?.userRole === 'guide') && (
+              <div style={{ 
+                fontSize: '20px', 
+                fontWeight: 'bold', 
+                color: '#333'
+              }}>
+                Guide
+              </div>
+            )}
           </div>
         </div>
 
