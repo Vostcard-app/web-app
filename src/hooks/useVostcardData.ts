@@ -263,7 +263,7 @@ export const useVostcardData = (
   useEffect(() => {
     if (!loadInteractionData || !user || !vostcard?.id) return;
 
-    const loadInteractionData = async () => {
+    const fetchInteractionData = async () => {
       try {
         // Load like status
         const isLiked = await LikeService.isLiked(vostcard.id);
@@ -277,7 +277,7 @@ export const useVostcardData = (
       }
     };
 
-    loadInteractionData();
+    fetchInteractionData();
   }, [loadInteractionData, user, vostcard?.id]);
 
   // Initial fetch
