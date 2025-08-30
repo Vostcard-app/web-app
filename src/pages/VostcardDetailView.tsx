@@ -1165,14 +1165,8 @@ Tap OK to continue.`;
     setSelectedPhotoIndex(photoIndex >= 0 ? photoIndex : 0);
     setShowMultiPhotoModal(true);
     
-    // Start audio if available - do this after setting up slideshow
-    if (hasAudio) {
-      // Small delay to ensure slideshow is open
-      setTimeout(() => {
-      handlePlayPause();
-      }, 100);
-    }
-  }, [hasAudio, handlePlayPause, photoURLs]);
+    // Audio will auto-start via useEffect with session tracking
+  }, [photoURLs]);
 
   // ✅ Main photo click handler - triggers audio and shows slideshow
   const handleMainPhotoClick = useCallback(async () => {
@@ -1183,14 +1177,8 @@ Tap OK to continue.`;
     setSelectedPhotoIndex(0);
     setShowMultiPhotoModal(true);
     
-    // Start audio if available - do this after setting up slideshow
-    if (hasAudio) {
-      // Small delay to ensure slideshow is open
-      setTimeout(() => {
-      handlePlayPause();
-      }, 100);
-    }
-  }, [hasAudio, handlePlayPause]);
+    // Audio will auto-start via useEffect with session tracking
+  }, []);
 
   // ✅ Auto-start audio when slideshow opens (ONLY ONCE per session)
   useEffect(() => {
