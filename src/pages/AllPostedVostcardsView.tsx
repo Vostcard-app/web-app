@@ -99,8 +99,8 @@ const AllPostedVostcardsView: React.FC = () => {
   // Use same breakpoint as personal posts for consistency
   const [isDesktopView, setIsDesktopView] = useState(window.innerWidth > 768);
   
-  // Pagination - reduce initial load on mobile
-  const ITEMS_PER_PAGE = isDesktopView ? 5 : 3;
+  // Pagination - consistent 5 items per page for both desktop and mobile
+  const ITEMS_PER_PAGE = 5;
   
   useEffect(() => {
     const handleResize = () => {
