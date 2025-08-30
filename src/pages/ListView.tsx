@@ -32,7 +32,21 @@ const ListView: React.FC = () => {
         // Filter out offers - only show regular vostcards in this view
         const regularVostcards = allVostcards.filter(v => !v.isOffer);
         
-        setVostcards(regularVostcards);
+        // ✅ Sort by creation date for consistent ordering (most recent first)
+        const sortedVostcards = regularVostcards.sort((a, b) => {
+          const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 
+                       a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 
+                       b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bTime - aTime; // Most recent first
+        });
+        
+        console.log('📅 ListView sorted by creation date, first 3 vostcards:', sortedVostcards.slice(0, 3).map(v => ({
+          title: v.title,
+          createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toLocaleString() : 'Unknown'
+        })));
+        
+        setVostcards(sortedVostcards);
       } catch (error) {
         console.error('Error fetching vostcards:', error);
       } finally {

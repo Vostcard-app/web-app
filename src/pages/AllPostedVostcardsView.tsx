@@ -984,9 +984,15 @@ const AllPostedVostcardsView: React.FC = () => {
       });
     }
     
-    // Sort by distance (closest first)
+    // Sort by distance (closest first) if user location is available, otherwise by creation date
     if (userLocation) {
       console.log('📍 Sorting', filtered.length, 'vostcards by distance from user location:', userLocation);
+      console.log('📱 Device info for debugging:', {
+        userAgent: navigator.userAgent,
+        isMobile: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+        hasGeolocation: !!navigator.geolocation,
+        locationPermissions: 'check browser settings'
+      });
       filtered = filtered.sort((a, b) => {
         const distanceA = getDistanceForSorting(a);
         const distanceB = getDistanceForSorting(b);
@@ -998,7 +1004,19 @@ const AllPostedVostcardsView: React.FC = () => {
         distance: getDistanceForSorting(v).toFixed(2) + 'km'
       })));
     } else {
-      console.log('❌ No user location available for distance sorting');
+      console.log('❌ No user location available for distance sorting - using creation date instead');
+      // ✅ Fallback to consistent creation date sorting (most recent first)
+      filtered = filtered.sort((a, b) => {
+        const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 
+                     a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 
+                     b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bTime - aTime; // Most recent first
+      });
+      console.log('📅 After creation date sorting, first 3 vostcards:', filtered.slice(0, 3).map(v => ({
+        title: v.title,
+        createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toLocaleString() : 'Unknown'
+      })));
     }
     
     // Apply location filtering when browse location is selected
