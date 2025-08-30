@@ -92,7 +92,11 @@ const ListView: React.FC = () => {
   useEffect(() => {
     const fetchVostcards = async () => {
       try {
-        const q = query(collection(db, 'vostcards'), where('state', '==', 'posted'));
+        const q = query(
+          collection(db, 'vostcards'), 
+          where('state', '==', 'posted'),
+          where('visibility', '==', 'public')
+        );
         const snapshot = await getDocs(q);
         const allVostcards = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -104,8 +108,15 @@ const ListView: React.FC = () => {
         
         let sortedVostcards: Vostcard[];
         
-        console.log(`📊 Total vostcards fetched: ${regularVostcards.length}`);
+        console.log(`📊 Total vostcards fetched: ${allVostcards.length}`);
+        console.log(`📊 Regular vostcards (non-offers): ${regularVostcards.length}`);
         console.log(`📍 User location available: ${!!userLocation}`);
+        console.log('📋 All vostcards:', allVostcards.map(v => ({
+          id: v.id,
+          title: v.title,
+          isOffer: v.isOffer,
+          hasLocation: !!(v.latitude && v.longitude)
+        })));
         
         if (userLocation) {
           // Sort by distance from user location (nearest first)
@@ -153,8 +164,15 @@ const ListView: React.FC = () => {
         }
         
         setVostcards(sortedVostcards);
+        
+        // Alert if we're getting exactly 3 vostcards (suspicious)
+        if (sortedVostcards.length === 3) {
+          console.warn('⚠️ EXACTLY 3 vostcards returned - this might indicate a hidden limit!');
+          setDebugInfo(prev => prev + ` | ⚠️ Got exactly 3 (suspicious!)`);
+        }
       } catch (error) {
         console.error('Error fetching vostcards:', error);
+        setDebugInfo(prev => prev + ` | ❌ Error: ${error.message}`);
       } finally {
         setLoading(false);
       }
