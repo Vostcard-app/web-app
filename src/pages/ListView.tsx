@@ -17,7 +17,44 @@ interface Vostcard {
 const ListView: React.FC = () => {
   const [vostcards, setVostcards] = useState<Vostcard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const navigate = useNavigate();
+
+  // Function to calculate distance between two points using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in kilometers
+  };
+
+  // Get user's current location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          console.log('📍 ListView got user location:', {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.warn('📍 ListView location error:', error);
+          // Continue without location - will fallback to creation date sorting
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     const fetchVostcards = async () => {
@@ -32,19 +69,47 @@ const ListView: React.FC = () => {
         // Filter out offers - only show regular vostcards in this view
         const regularVostcards = allVostcards.filter(v => !v.isOffer);
         
-        // ✅ Sort by creation date for consistent ordering (most recent first)
-        const sortedVostcards = regularVostcards.sort((a, b) => {
-          const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 
-                       a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 
-                       b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return bTime - aTime; // Most recent first
-        });
+        let sortedVostcards: Vostcard[];
         
-        console.log('📅 ListView sorted by creation date, first 3 vostcards:', sortedVostcards.slice(0, 3).map(v => ({
-          title: v.title,
-          createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toLocaleString() : 'Unknown'
-        })));
+        if (userLocation) {
+          // Sort by distance from user location (nearest first)
+          const vostcardsWithDistance = regularVostcards
+            .filter(v => v.latitude && v.longitude) // Only include vostcards with location
+            .map(v => ({
+              ...v,
+              distance: calculateDistance(
+                userLocation.lat,
+                userLocation.lng,
+                parseFloat(v.latitude),
+                parseFloat(v.longitude)
+              )
+            }))
+            .sort((a, b) => a.distance - b.distance) // Nearest first
+            .slice(0, 5); // Limit to 5 nearest
+          
+          console.log('📍 ListView sorted by distance, showing 5 nearest vostcards:', vostcardsWithDistance.map(v => ({
+            title: v.title,
+            distance: `${v.distance.toFixed(2)} km`
+          })));
+          
+          sortedVostcards = vostcardsWithDistance;
+        } else {
+          // Fallback: Sort by creation date and limit to 5 (most recent first)
+          sortedVostcards = regularVostcards
+            .sort((a, b) => {
+              const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 
+                           a.createdAt ? new Date(a.createdAt).getTime() : 0;
+              const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 
+                           b.createdAt ? new Date(b.createdAt).getTime() : 0;
+              return bTime - aTime; // Most recent first
+            })
+            .slice(0, 5); // Limit to 5 most recent
+          
+          console.log('📅 ListView fallback: sorted by creation date, showing 5 most recent vostcards:', sortedVostcards.map(v => ({
+            title: v.title,
+            createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toLocaleString() : 'Unknown'
+          })));
+        }
         
         setVostcards(sortedVostcards);
       } catch (error) {
@@ -55,7 +120,7 @@ const ListView: React.FC = () => {
     };
 
     fetchVostcards();
-  }, []);
+  }, [userLocation, calculateDistance]); // Re-run when userLocation changes
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
@@ -66,7 +131,7 @@ const ListView: React.FC = () => {
         alignItems: 'center', 
         marginBottom: 30
       }}>
-        <h1>Vōstcards List</h1>
+        <h1>5 Nearest Vōstcards</h1>
         <button
           onClick={() => navigate('/home')}
           style={{
