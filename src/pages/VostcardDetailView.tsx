@@ -2225,7 +2225,7 @@ Tap OK to continue.`;
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#ff3b30'
+            color: '#666666'
           }}
         >
           <FaFlag size={22} />
