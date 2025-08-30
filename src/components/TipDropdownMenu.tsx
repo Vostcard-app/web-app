@@ -54,6 +54,39 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
   }, [isVisible, onClose]);
 
   const tipOptions: TipOption[] = [
+    // Reordered as requested: Apple Pay, Google Pay, Venmo, Zelle, Buy Me a Coffee, Ko-fi
+    {
+      id: 'applepay',
+      name: 'Apple Pay',
+      icon: <FaApple size={16} />,
+      urlKey: 'applePayURL',
+      color: '#000000',
+      description: 'Apple Pay Cash'
+    },
+    {
+      id: 'googlepay',
+      name: 'Google Pay',
+      icon: <FaGoogle size={16} />,
+      urlKey: 'googlePayURL',
+      color: '#4285F4',
+      description: 'Google Pay send'
+    },
+    {
+      id: 'venmo',
+      name: 'Venmo',
+      icon: <FaDollarSign size={16} />,
+      urlKey: 'venmoURL',
+      color: '#3D95CE',
+      description: '@username handle'
+    },
+    {
+      id: 'zelle',
+      name: 'Zelle',
+      icon: <FaDollarSign size={16} />,
+      urlKey: 'zelleURL',
+      color: '#6C1C99',
+      description: 'Quick bank transfer'
+    },
     {
       id: 'buymeacoffee',
       name: 'Buy Me a Coffee',
@@ -70,6 +103,7 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
       color: '#FF5E5B',
       description: 'One-time donations'
     },
+    // Other options below the requested ones
     {
       id: 'paypal',
       name: 'PayPal',
@@ -79,44 +113,12 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
       description: 'PayPal.me link'
     },
     {
-      id: 'venmo',
-      name: 'Venmo',
-      icon: <FaDollarSign size={16} />,
-      urlKey: 'venmoURL',
-      color: '#3D95CE',
-      description: '@username handle'
-    },
-    {
       id: 'cashapp',
       name: 'CashApp',
       icon: <FaDollarSign size={16} />,
       urlKey: 'cashappURL',
       color: '#00D632',
       description: '$username handle'
-    },
-    {
-      id: 'zelle',
-      name: 'Zelle',
-      icon: <FaDollarSign size={16} />,
-      urlKey: 'zelleURL',
-      color: '#6C1C99',
-      description: 'Quick bank transfer'
-    },
-    {
-      id: 'applepay',
-      name: 'Apple Pay',
-      icon: <FaApple size={16} />,
-      urlKey: 'applePayURL',
-      color: '#000000',
-      description: 'Apple Pay Cash'
-    },
-    {
-      id: 'googlepay',
-      name: 'Google Pay',
-      icon: <FaGoogle size={16} />,
-      urlKey: 'googlePayURL',
-      color: '#4285F4',
-      description: 'Google Pay send'
     },
     {
       id: 'patreon',
@@ -230,7 +232,7 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
       </div>
 
       {/* Options List */}
-      <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+      <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
         {availableOptions.map((option, index) => (
           <button
             key={option.id}
