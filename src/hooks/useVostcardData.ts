@@ -3,8 +3,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import { LikeService } from '../services/LikeService';
-import { RatingService } from '../services/RatingService';
+import { LikeService } from '../services/likeService';
+import { RatingService } from '../services/ratingService';
 
 export interface VostcardData {
   id: string;
