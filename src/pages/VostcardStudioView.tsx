@@ -62,13 +62,10 @@ const VostcardStudioView: React.FC = () => {
     longitude: number;
     address?: string;
   } | null>(null);
-  // Separate audio states for Intro and Detail
-  const [vostcardIntroAudio, setVostcardIntroAudio] = useState<Blob | null>(null);
-  const [vostcardIntroAudioSource, setVostcardIntroAudioSource] = useState<'recording' | 'file' | null>(null);
-  const [vostcardIntroAudioFileName, setVostcardIntroAudioFileName] = useState<string | null>(null);
-  const [vostcardDetailAudio, setVostcardDetailAudio] = useState<Blob | null>(null);
-  const [vostcardDetailAudioSource, setVostcardDetailAudioSource] = useState<'recording' | 'file' | null>(null);
-  const [vostcardDetailAudioFileName, setVostcardDetailAudioFileName] = useState<string | null>(null);
+  // Single audio state (simplified from intro/detail)
+  const [vostcardAudio, setVostcardAudio] = useState<Blob | null>(null);
+  const [vostcardAudioSource, setVostcardAudioSource] = useState<'recording' | 'file' | null>(null);
+  const [vostcardAudioFileName, setVostcardAudioFileName] = useState<string | null>(null);
   const [youtubeURL, setYoutubeURL] = useState<string>('');
   const [instagramURL, setInstagramURL] = useState<string>('');
   const [vostcardCategories, setVostcardCategories] = useState<string[]>([]);
@@ -186,7 +183,54 @@ const VostcardStudioView: React.FC = () => {
       streamRef.current = stream;
       audioChunksRef.current = [];
       
-      const mediaRecorder = new MediaRecorder(stream);
+      // Detect Safari/iOS for iPhone compatibility
+      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      let supportedTypes;
+      if (isIOS && isSafari) {
+        // Safari iOS has limited support - prioritize what works on iPhone
+        supportedTypes = [
+          'audio/mp4',
+          'audio/wav',
+          '', // Let browser choose as fallback
+        ];
+        console.log('🎤 Using Safari iOS optimized MIME types for iPhone compatibility');
+      } else {
+        // Desktop/Android - use more compatible formats
+        supportedTypes = [
+          'audio/webm',
+          'audio/mp4',
+          'audio/wav',
+          'audio/mpeg'
+        ];
+      }
+      
+      let mimeType = '';
+      for (const type of supportedTypes) {
+        if (type === '') {
+          // Empty string means let browser choose
+          console.log(`🎤 browser default: ✅ Using as fallback`);
+          if (!mimeType) mimeType = type;
+          continue;
+        }
+        
+        const supported = MediaRecorder.isTypeSupported(type);
+        console.log(`🎤 ${type}: ${supported ? '✅ Supported' : '❌ Not supported'}`);
+        if (supported && !mimeType) {
+          mimeType = type;
+        }
+      }
+      
+      console.log('🎤 Selected MIME type for iPhone compatibility:', mimeType || 'browser default');
+      
+      // Create MediaRecorder with iPhone-compatible options
+      let mediaRecorderOptions: MediaRecorderOptions = {};
+      if (mimeType) {
+        mediaRecorderOptions.mimeType = mimeType;
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
       mediaRecorderRef.current = mediaRecorder;
       
       mediaRecorder.ondataavailable = (event) => {
@@ -196,7 +240,9 @@ const VostcardStudioView: React.FC = () => {
       };
       
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // Use the detected MIME type for the blob
+        const finalMimeType = mimeType || 'audio/webm'; // fallback
+        const audioBlob = new Blob(audioChunksRef.current, { type: finalMimeType });
         setAudioBlob(audioBlob);
         setAudioSource('recording');
         setAudioFileName(null);
@@ -416,8 +462,8 @@ const VostcardStudioView: React.FC = () => {
             if (state.title) setVostcardTitle(state.title);
             if (state.description) setVostcardDescription(state.description);
             if (state.categories && state.categories.length > 0) setVostcardCategories(state.categories);
-            if (state.audioSource) setVostcardIntroAudioSource(state.audioSource);
-            if (state.audioFileName) setVostcardIntroAudioFileName(state.audioFileName);
+            if (state.audioSource) setVostcardAudioSource(state.audioSource);
+            if (state.audioFileName) setVostcardAudioFileName(state.audioFileName);
             
             // ✅ NEW: Restore photo from base64 (only if exists)
             if (state.photoBase64) {
@@ -443,7 +489,7 @@ const VostcardStudioView: React.FC = () => {
                 const blob = await response.blob();
                 const audioFile = new File([blob], state.audioFileName || 'vostcard-audio.mp3', { type: state.audioType || 'audio/mpeg' });
                 
-                setVostcardIntroAudio(audioFile);
+                setVostcardAudio(audioFile);
                 console.log('🎵 Audio restored from storage');
               } catch (error) {
                 console.error('❌ Failed to restore audio from base64:', error);
@@ -1296,7 +1342,7 @@ const VostcardStudioView: React.FC = () => {
     }
   };
 
-  // Helper function to reset form - UPDATED for multiple photos
+  // Helper function to reset form - UPDATED for multiple photos and single audio
   const resetVostcardForm = () => {
     setVostcardTitle('');
     setVostcardDescription('');
@@ -1306,12 +1352,9 @@ const VostcardStudioView: React.FC = () => {
     setVostcardPhotos([]);
     setVostcardPhotoPreviews([]);
     
-    setVostcardIntroAudio(null);
-    setVostcardIntroAudioSource(null);
-    setVostcardIntroAudioFileName(null);
-    setVostcardDetailAudio(null);
-    setVostcardDetailAudioSource(null);
-    setVostcardDetailAudioFileName(null);
+    setVostcardAudio(null);
+    setVostcardAudioSource(null);
+    setVostcardAudioFileName(null);
     setYoutubeURL('');
     setInstagramURL('');
     setVostcardLocation(null);
