@@ -309,7 +309,7 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
                   key={option.id}
                   onClick={() => handleOptionClick(option)}
                   style={{
-                    padding: '16px 12px',
+                    padding: '12px',
                     border: '2px solid #f0f0f0',
                     borderRadius: '12px',
                     backgroundColor: 'white',
@@ -317,11 +317,12 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '8px',
+                    justifyContent: 'center',
                     fontSize: '14px',
                     color: '#333',
                     transition: 'all 0.2s ease',
-                    minHeight: '80px'
+                    minHeight: '80px',
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = option.color;
@@ -334,22 +335,35 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
                     e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
+                  {/* Logo in upper left corner */}
                   <div
                     style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '8px',
+                      position: 'absolute',
+                      top: '8px',
+                      left: '8px',
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '4px',
                       backgroundColor: option.color,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: option.color === '#FFDD00' ? '#333' : 'white',
-                      flexShrink: 0
+                      fontSize: '12px'
                     }}
                   >
-                    {option.icon}
+                    {React.cloneElement(option.icon as React.ReactElement, { size: 12 })}
                   </div>
-                  <div style={{ textAlign: 'center' }}>
+                  
+                  {/* Centered service title */}
+                  <div style={{ 
+                    textAlign: 'center',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%'
+                  }}>
                     <div style={{ fontWeight: '600' }}>
                       {option.name}
                     </div>
