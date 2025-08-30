@@ -1223,22 +1223,7 @@ const VostcardStudioView: React.FC = () => {
           audioFiles.push(blob);
           audioLabels.push('audio');
         } catch (error) {
-          console.error('Failed to preserve intro audio from URL:', error);
-        }
-      }
- else if (originalVostcardData?.audioFiles?.[1]) {
-        // Preserve original detail audio from audioFiles
-        audioFiles.push(originalVostcardData.audioFiles[1]);
-        audioLabels.push(originalVostcardData.audioLabels?.[1] || 'detail');
-      } else if (originalVostcardData?.audioURLs?.[1]) {
-        // Preserve detail audio from Firebase URLs by fetching and converting to blob
-        try {
-          const response = await fetch(originalVostcardData.audioURLs[1]);
-          const blob = await response.blob();
-          audioFiles.push(blob);
-          audioLabels.push('detail');
-        } catch (error) {
-          console.error('Failed to preserve detail audio from URL:', error);
+          console.error('Failed to preserve audio from URL:', error);
         }
       }
       
@@ -1273,10 +1258,12 @@ const VostcardStudioView: React.FC = () => {
         userRole: userRole || 'user',
         state: originalVostcardState || 'private', // Preserve original state
         video: null,
-
+        // Preserve existing Firebase URLs for audio preservation
+        _firebaseAudioURLs: originalVostcardData?._firebaseAudioURLs || originalVostcardData?.audioURLs || (originalVostcardData?.audioURL ? [originalVostcardData.audioURL] : undefined),
+        _firebasePhotoURLs: originalVostcardData?._firebasePhotoURLs || originalVostcardData?.photoURLs,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: audioFiles.length > 0, // Check if any audio files exist (new or preserved)
+        hasAudio: audioFiles.length > 0 || !!(originalVostcardData?._firebaseAudioURLs?.length || originalVostcardData?.audioURLs?.length || originalVostcardData?.audioURL), // Check if any audio files exist (new or preserved)
         createdAt: new Date().toISOString(), // This will be preserved from original
         updatedAt: new Date().toISOString()
       };
@@ -1410,27 +1397,18 @@ const VostcardStudioView: React.FC = () => {
         setVostcardPhotoPreviews(photoPreviews);
       }
       
-      // Load audio files if available
+      // Load audio files if available (simplified to single audio)
       if (vostcard.audioFiles && vostcard.audioFiles.length > 0) {
-        // Load intro audio (first file)
+        // Load first audio file only (simplified from intro/detail)
         if (vostcard.audioFiles[0]) {
           setVostcardAudio(vostcard.audioFiles[0]);
           setVostcardAudioSource('file');
-          const introLabel = vostcard.audioLabels && vostcard.audioLabels[0] ? vostcard.audioLabels[0] : 'Intro Audio';
-          setVostcardAudioFileName(introLabel);
-        }
-        
-        // Load detail audio (second file) 
-        if (vostcard.audioFiles[1]) {
-          setVostcardAudio(vostcard.audioFiles[1]);
-          setVostcardAudioSource('file');
-          const detailLabel = vostcard.audioLabels && vostcard.audioLabels[1] ? vostcard.audioLabels[1] : 'Detail Audio';
-          setVostcardAudioFileName(detailLabel);
+          const audioLabel = vostcard.audioLabels && vostcard.audioLabels[0] ? vostcard.audioLabels[0] : 'Audio';
+          setVostcardAudioFileName(audioLabel);
         }
       } else {
         // Load audio from Firebase URLs - check all possible audio fields
-        const audioURL = vostcard.audioURL || vostcard.audioURLs?.[0] || vostcard._firebaseAudioURL;
-        const detailAudioURL = vostcard.audioURLs?.[1];
+        const audioURL = vostcard.audioURL || vostcard.audioURLs?.[0] || vostcard._firebaseAudioURL || vostcard._firebaseAudioURLs?.[0];
         
         if (audioURL) {
           try {
@@ -1440,19 +1418,7 @@ const VostcardStudioView: React.FC = () => {
             setVostcardAudioSource('file');
             setVostcardAudioFileName('loaded_audio.mp3');
           } catch (error) {
-            console.error('Failed to load intro audio:', error);
-          }
-        }
-        
-        if (detailAudioURL) {
-          try {
-            const response = await fetch(detailAudioURL);
-            const blob = await response.blob();
-            setVostcardAudio(blob);
-            setVostcardAudioSource('file');
-            setVostcardAudioFileName('loaded_detail_audio.mp3');
-          } catch (error) {
-            console.error('Failed to load detail audio:', error);
+            console.error('Failed to load audio:', error);
           }
         }
       }
