@@ -684,12 +684,12 @@ const VostcardStudioView: React.FC = () => {
     setVostcardPhotos([]);
     setVostcardPhotoPreviews([]);
     setVostcardLocation(null);
-    setVostcardIntroAudio(null);
-    setVostcardIntroAudioSource(null);
-    setVostcardIntroAudioFileName(null);
-    setVostcardDetailAudio(null);
-    setVostcardDetailAudioSource(null);
-    setVostcardDetailAudioFileName(null);
+    setVostcardAudio(null);
+    setVostcardAudioSource(null);
+    setVostcardAudioFileName(null);
+    setVostcardAudio(null);
+    setVostcardAudioSource(null);
+    setVostcardAudioFileName(null);
     setYoutubeURL('');
     setInstagramURL('');
     setVostcardCategories([]);
@@ -881,13 +881,13 @@ const VostcardStudioView: React.FC = () => {
     const file = e.target.files?.[0];
     if (file && file.type.startsWith('audio/')) {
       if (audioType === 'intro') {
-        setVostcardIntroAudio(file);
-        setVostcardIntroAudioSource('file');
-        setVostcardIntroAudioFileName(file.name);
+        setVostcardAudio(file);
+        setVostcardAudioSource('file');
+        setVostcardAudioFileName(file.name);
       } else if (audioType === 'detail') {
-        setVostcardDetailAudio(file);
-        setVostcardDetailAudioSource('file');
-        setVostcardDetailAudioFileName(file.name);
+        setVostcardAudio(file);
+        setVostcardAudioSource('file');
+        setVostcardAudioFileName(file.name);
       }
     }
   };
@@ -959,8 +959,8 @@ const VostcardStudioView: React.FC = () => {
       title: vostcardTitle,
       description: vostcardDescription,
       categories: vostcardCategories,
-      audioSource: vostcardIntroAudioSource,
-      audioFileName: vostcardIntroAudioFileName,
+      audioSource: vostcardAudioSource,
+      audioFileName: vostcardAudioFileName,
     };
 
     // Convert photos to base64 for storage
@@ -979,15 +979,15 @@ const VostcardStudioView: React.FC = () => {
     }
 
     // Convert audio to base64 for storage
-    if (vostcardIntroAudio) {
+    if (vostcardAudio) {
       try {
         const audioBase64 = await new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(vostcardIntroAudio);
+          reader.readAsDataURL(vostcardAudio);
         });
         stateToSave.audioBase64 = audioBase64;
-        stateToSave.audioType = vostcardIntroAudio.type;
+        stateToSave.audioType = vostcardAudio.type;
       } catch (error) {
         console.error('❌ Failed to convert audio to base64:', error);
       }
@@ -1033,15 +1033,11 @@ const VostcardStudioView: React.FC = () => {
       const audioFiles: Blob[] = [];
       const audioLabels: string[] = [];
       
-      if (vostcardIntroAudio) {
-        audioFiles.push(vostcardIntroAudio);
-        audioLabels.push('intro');
+      if (vostcardAudio) {
+        audioFiles.push(vostcardAudio);
+        audioLabels.push('audio');
       }
-      
-      if (vostcardDetailAudio) {
-        audioFiles.push(vostcardDetailAudio);
-        audioLabels.push('detail');
-      }
+
       
       // Process YouTube and Instagram URLs
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
@@ -1053,7 +1049,7 @@ const VostcardStudioView: React.FC = () => {
         title: vostcardTitle.trim(),
         description: vostcardDescription.trim() || '', 
         photos: vostcardPhotos, // Multiple photos
-        audio: vostcardIntroAudio, // LEGACY: Keep for backward compatibility
+        audio: vostcardAudio, // LEGACY: Keep for backward compatibility
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
@@ -1069,7 +1065,7 @@ const VostcardStudioView: React.FC = () => {
         video: null,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
+        hasAudio: !!(vostcardAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1116,15 +1112,11 @@ const VostcardStudioView: React.FC = () => {
       const audioFiles: Blob[] = [];
       const audioLabels: string[] = [];
       
-      if (vostcardIntroAudio) {
-        audioFiles.push(vostcardIntroAudio);
-        audioLabels.push('intro');
+      if (vostcardAudio) {
+        audioFiles.push(vostcardAudio);
+        audioLabels.push('audio');
       }
-      
-      if (vostcardDetailAudio) {
-        audioFiles.push(vostcardDetailAudio);
-        audioLabels.push('detail');
-      }
+
       
       // Process YouTube and Instagram URLs
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
@@ -1136,7 +1128,7 @@ const VostcardStudioView: React.FC = () => {
         title: vostcardTitle.trim(),
         description: vostcardDescription.trim() || 'Vostcard',
         photos: vostcardPhotos, // Multiple photos
-        audio: vostcardIntroAudio, // Use intro audio as primary
+        audio: vostcardAudio, // Use intro audio as primary
         audioFiles: audioFiles, // NEW: Multiple audio files
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
@@ -1151,7 +1143,7 @@ const VostcardStudioView: React.FC = () => {
 
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
-        hasAudio: !!(vostcardIntroAudio || vostcardDetailAudio),
+        hasAudio: !!(vostcardAudio),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1211,9 +1203,9 @@ const VostcardStudioView: React.FC = () => {
       const audioLabels: string[] = [];
       
       // Use new audio if provided, otherwise preserve original audio
-      if (vostcardIntroAudio) {
-        audioFiles.push(vostcardIntroAudio);
-        audioLabels.push('intro');
+      if (vostcardAudio) {
+        audioFiles.push(vostcardAudio);
+        audioLabels.push('audio');
       } else if (originalVostcardData?.audioFiles?.[0]) {
         // Preserve original intro audio from audioFiles
         audioFiles.push(originalVostcardData.audioFiles[0]);
@@ -1221,7 +1213,7 @@ const VostcardStudioView: React.FC = () => {
       } else if (originalVostcardData?.audio) {
         // Preserve legacy audio format
         audioFiles.push(originalVostcardData.audio);
-        audioLabels.push('intro');
+        audioLabels.push('audio');
       } else if (originalVostcardData?.audioURL || originalVostcardData?.audioURLs?.[0] || originalVostcardData?._firebaseAudioURL) {
         // Preserve audio from Firebase URLs by fetching and converting to blob
         const audioURL = originalVostcardData.audioURL || originalVostcardData.audioURLs?.[0] || originalVostcardData._firebaseAudioURL;
@@ -1229,16 +1221,12 @@ const VostcardStudioView: React.FC = () => {
           const response = await fetch(audioURL);
           const blob = await response.blob();
           audioFiles.push(blob);
-          audioLabels.push('intro');
+          audioLabels.push('audio');
         } catch (error) {
           console.error('Failed to preserve intro audio from URL:', error);
         }
       }
-      
-      if (vostcardDetailAudio) {
-        audioFiles.push(vostcardDetailAudio);
-        audioLabels.push('detail');
-      } else if (originalVostcardData?.audioFiles?.[1]) {
+ else if (originalVostcardData?.audioFiles?.[1]) {
         // Preserve original detail audio from audioFiles
         audioFiles.push(originalVostcardData.audioFiles[1]);
         audioLabels.push(originalVostcardData.audioLabels?.[1] || 'detail');
@@ -1262,8 +1250,7 @@ const VostcardStudioView: React.FC = () => {
       console.log('🎵 Audio data before creating updatedVostcard:', {
         audioFilesLength: audioFiles.length,
         audioLabelsLength: audioLabels.length,
-        hasIntroAudio: !!vostcardIntroAudio,
-        hasDetailAudio: !!vostcardDetailAudio,
+        hasAudio: !!vostcardAudio,
         audioFiles: audioFiles.map((file, i) => ({ index: i, size: file.size, type: file.type })),
         audioLabels: audioLabels
       });
@@ -1427,18 +1414,18 @@ const VostcardStudioView: React.FC = () => {
       if (vostcard.audioFiles && vostcard.audioFiles.length > 0) {
         // Load intro audio (first file)
         if (vostcard.audioFiles[0]) {
-          setVostcardIntroAudio(vostcard.audioFiles[0]);
-          setVostcardIntroAudioSource('file');
+          setVostcardAudio(vostcard.audioFiles[0]);
+          setVostcardAudioSource('file');
           const introLabel = vostcard.audioLabels && vostcard.audioLabels[0] ? vostcard.audioLabels[0] : 'Intro Audio';
-          setVostcardIntroAudioFileName(introLabel);
+          setVostcardAudioFileName(introLabel);
         }
         
         // Load detail audio (second file) 
         if (vostcard.audioFiles[1]) {
-          setVostcardDetailAudio(vostcard.audioFiles[1]);
-          setVostcardDetailAudioSource('file');
+          setVostcardAudio(vostcard.audioFiles[1]);
+          setVostcardAudioSource('file');
           const detailLabel = vostcard.audioLabels && vostcard.audioLabels[1] ? vostcard.audioLabels[1] : 'Detail Audio';
-          setVostcardDetailAudioFileName(detailLabel);
+          setVostcardAudioFileName(detailLabel);
         }
       } else {
         // Load audio from Firebase URLs - check all possible audio fields
@@ -1449,9 +1436,9 @@ const VostcardStudioView: React.FC = () => {
           try {
             const response = await fetch(audioURL);
             const blob = await response.blob();
-            setVostcardIntroAudio(blob);
-            setVostcardIntroAudioSource('file');
-            setVostcardIntroAudioFileName('loaded_audio.mp3');
+            setVostcardAudio(blob);
+            setVostcardAudioSource('file');
+            setVostcardAudioFileName('loaded_audio.mp3');
           } catch (error) {
             console.error('Failed to load intro audio:', error);
           }
@@ -1461,9 +1448,9 @@ const VostcardStudioView: React.FC = () => {
           try {
             const response = await fetch(detailAudioURL);
             const blob = await response.blob();
-            setVostcardDetailAudio(blob);
-            setVostcardDetailAudioSource('file');
-            setVostcardDetailAudioFileName('loaded_detail_audio.mp3');
+            setVostcardAudio(blob);
+            setVostcardAudioSource('file');
+            setVostcardAudioFileName('loaded_detail_audio.mp3');
           } catch (error) {
             console.error('Failed to load detail audio:', error);
           }
@@ -2189,9 +2176,9 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Audio Status Display */}
-            {(vostcardIntroAudio || vostcardDetailAudio) && (
+            {(vostcardAudio) && (
               <div style={{ marginBottom: '15px' }}>
-                {vostcardIntroAudio && (
+                {vostcardAudio && (
                   <div style={{
                     backgroundColor: '#f3e5f5',
                     padding: '8px 12px',
@@ -2201,43 +2188,12 @@ const VostcardStudioView: React.FC = () => {
                     color: '#6a1b9a',
                     marginBottom: '8px'
                   }}>
-                    🎵 Intro: {vostcardIntroAudioFileName || 'Audio file ready'}
+                    🎵 Audio: {vostcardAudioFileName || 'Audio file ready'}
                     <button
                       onClick={() => {
-                        setVostcardIntroAudio(null);
-                        setVostcardIntroAudioSource(null);
-                        setVostcardIntroAudioFileName(null);
-                      }}
-                      disabled={isLoading}
-                      style={{
-                        marginLeft: '8px',
-                        background: 'none',
-                        border: 'none',
-                        color: '#d32f2f',
-                        cursor: isLoading ? 'not-allowed' : 'pointer',
-                        fontSize: '12px',
-                        opacity: isLoading ? 0.6 : 1
-                      }}
-                    >
-                      ✕ Remove
-                    </button>
-                  </div>
-                )}
-                {vostcardDetailAudio && (
-                  <div style={{
-                    backgroundColor: '#fce4ec',
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    border: '1px solid #e91e63',
-                    fontSize: '14px',
-                    color: '#ad1457'
-                  }}>
-                    🎵 Detail: {vostcardDetailAudioFileName || 'Audio file ready'}
-                    <button
-                      onClick={() => {
-                        setVostcardDetailAudio(null);
-                        setVostcardDetailAudioSource(null);
-                        setVostcardDetailAudioFileName(null);
+                        setVostcardAudio(null);
+                        setVostcardAudioSource(null);
+                        setVostcardAudioFileName(null);
                       }}
                       disabled={isLoading}
                       style={{
@@ -2313,7 +2269,7 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Audio Status Indicator */}
-            {(vostcardIntroAudio || vostcardDetailAudio) && (
+            {(vostcardAudio) && (
               <div style={{
                 backgroundColor: '#e3f2fd',
                 border: '1px solid #2196f3',
@@ -2464,14 +2420,14 @@ const VostcardStudioView: React.FC = () => {
             )}
 
             {/* Clear Audio Buttons */}
-            {(vostcardIntroAudio || vostcardDetailAudio) && (
+            {(vostcardAudio) && (
               <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-                {vostcardIntroAudio && (
+                {vostcardAudio && (
                   <button
                     onClick={() => {
-                      setVostcardIntroAudio(null);
-                      setVostcardIntroAudioSource(null);
-                      setVostcardIntroAudioFileName(null);
+                      setVostcardAudio(null);
+                      setVostcardAudioSource(null);
+                      setVostcardAudioFileName(null);
                     }}
                     disabled={isLoading}
                     style={{
@@ -2486,30 +2442,7 @@ const VostcardStudioView: React.FC = () => {
                       opacity: isLoading ? 0.6 : 1
                     }}
                   >
-                    ✕ Remove Intro Audio
-                  </button>
-                )}
-                {vostcardDetailAudio && (
-                  <button
-                    onClick={() => {
-                      setVostcardDetailAudio(null);
-                      setVostcardDetailAudioSource(null);
-                      setVostcardDetailAudioFileName(null);
-                    }}
-                    disabled={isLoading}
-                    style={{
-                      backgroundColor: '#e91e63',
-                      color: 'white',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      flex: 1,
-                      opacity: isLoading ? 0.6 : 1
-                    }}
-                  >
-                    ✕ Remove Detail Audio
+                    ✕ Remove Audio
                   </button>
                 )}
               </div>
