@@ -148,15 +148,9 @@ const PublicHomeView: React.FC = () => {
 
   const center: [number, number] = [singleVostcard.latitude, singleVostcard.longitude];
   const isOffer = singleVostcard.isOffer;
-  const isQuickcard = singleVostcard.isQuickcard; // Add quickcard check
-
-  // Updated pin click handler to use correct URL for quickcards
+  // Pin click handler
   const handlePinClick = () => {
-    if (isQuickcard) {
-      navigate(`/share-quickcard/${singleVostcard.id}`);
-    } else {
-      navigate(`/share/${singleVostcard.id}`);
-    }
+    navigate(`/share/${singleVostcard.id}`);
   };
 
 

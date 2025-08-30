@@ -375,14 +375,7 @@ const ContentTab: React.FC = () => {
           <h5 style={{ margin: '0 0 15px 0', color: '#495057' }}>Advanced Options</h5>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="checkbox"
-                checked={currentVostcard?.isQuickcard || false}
-                onChange={(e) => updateContent({ isQuickcard: e.target.checked })}
-              />
-              <span>Quickcard (photo-only content)</span>
-            </label>
+
 
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <input

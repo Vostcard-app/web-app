@@ -1144,7 +1144,7 @@ Tap OK to continue.`;
         </div>
 
         {/* Media Section */}
-        {vostcard.isQuickcard ? (
+        {false ? (
           <div style={{ 
             padding: '20px', 
             display: 'flex', 
