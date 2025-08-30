@@ -321,7 +321,7 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
                     fontSize: '14px',
                     color: '#333',
                     transition: 'all 0.2s ease',
-                    minHeight: '100px'
+                    minHeight: '80px'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = option.color;
@@ -350,11 +350,8 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
                     {option.icon}
                   </div>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontWeight: '600', marginBottom: '2px' }}>
+                    <div style={{ fontWeight: '600' }}>
                       {option.name}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      {option.description}
                     </div>
                   </div>
                 </button>
