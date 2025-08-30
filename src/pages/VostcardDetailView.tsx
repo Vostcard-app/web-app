@@ -362,6 +362,21 @@ const VostcardDetailView: React.FC = () => {
   const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
   const tipButtonRef = useRef<HTMLButtonElement>(null);
 
+  // ✅ Mobile audio context unlocking
+  const unlockMobileAudio = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      // Create a silent audio element to unlock iOS audio context
+      const silentAudio = new Audio();
+      silentAudio.src = 'data:audio/mpeg;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAATNTYW1wbGUgcmF0ZSBjb252ZXJ0ZWQgdG8gNDRrSHoAVFNTRQAAAA8AAAFMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+      silentAudio.volume = 0.01;
+      silentAudio.play().then(() => {
+        console.log('🎵 Mobile audio context unlocked');
+      }).catch(() => {
+        console.log('🎵 Mobile audio context unlock failed (normal on some devices)');
+      });
+    }
+  }, []);
+
   // ✅ Audio management helper functions
   const stopAllAudio = useCallback(() => {
     console.log('🎵 Stopping all audio instances:', allAudioInstances.current.size);
@@ -399,6 +414,11 @@ const VostcardDetailView: React.FC = () => {
     audio.preload = 'auto';
     audio.crossOrigin = 'anonymous';
     audio.loop = false; // ✅ Ensure audio doesn't loop/repeat
+    
+    // ✅ Mobile-specific audio properties for iPhone/Safari compatibility
+    audio.playsInline = true; // Prevent fullscreen video player on iOS
+    audio.muted = false; // Ensure not muted
+    audio.volume = 1.0; // Full volume
     
     // Track this instance
     allAudioInstances.current.add(audio);
@@ -1063,11 +1083,32 @@ Tap OK to continue.`;
       const audio = createAudioInstance(audioSrc);
       console.log('🎵 Audio source set:', audioSrc);
 
-      // Play audio
+      // Play audio with mobile-specific handling
       console.log('🎵 Attempting to play audio...');
-      await audio.play();
-      setIsPlaying(true);
-      console.log('🎵 Audio started playing successfully');
+      
+      // ✅ iOS/Mobile audio context unlocking
+      try {
+        // For iOS Safari, we need to ensure audio context is unlocked
+        if (typeof window !== 'undefined' && 'webkitAudioContext' in window) {
+          console.log('🎵 iOS Safari detected - ensuring audio context is unlocked');
+          unlockMobileAudio();
+        }
+        
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+          console.log('🎵 Audio started playing successfully');
+        } else {
+          // Fallback for older browsers
+          setIsPlaying(true);
+          console.log('🎵 Audio play() returned undefined (older browser)');
+        }
+      } catch (playError) {
+        console.error('🚨 Audio play() failed:', playError);
+        throw playError; // Re-throw to be caught by outer catch
+      }
       
     } catch (error) {
       console.error('🚨 Error playing audio:', {
@@ -1081,16 +1122,30 @@ Tap OK to continue.`;
       });
       stopAllAudio();
       
-      // More user-friendly error message based on error type
+      // More user-friendly error message based on error type and device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       let errorMsg = 'Failed to play audio. ';
+      
       if (error.name === 'NotAllowedError') {
-        errorMsg += 'Please tap to enable audio playback.';
+        if (isMobile) {
+          errorMsg += 'On mobile devices, please tap the audio button directly to enable playback.';
+        } else {
+          errorMsg += 'Please tap to enable audio playback.';
+        }
       } else if (error.name === 'NotSupportedError') {
-        errorMsg += 'Audio format not supported by your browser.';
+        if (isMobile) {
+          errorMsg += 'Audio format not supported on this mobile device. Try using a different browser.';
+        } else {
+          errorMsg += 'Audio format not supported by your browser.';
+        }
       } else if (error.name === 'AbortError') {
-        errorMsg += 'Audio loading was interrupted.';
+        errorMsg += 'Audio loading was interrupted. Please check your internet connection.';
       } else {
-        errorMsg += 'Please try again.';
+        if (isMobile) {
+          errorMsg += 'Mobile audio issue detected. Try tapping the play button again or refresh the page.';
+        } else {
+          errorMsg += 'Please try again.';
+        }
       }
       
       alert(errorMsg);
