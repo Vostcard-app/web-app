@@ -1703,6 +1703,36 @@ const VostcardStudioView: React.FC = () => {
               )}
             </div>
 
+            {/* Clear Form Button - Always visible */}
+            <div style={{ marginBottom: '15px' }}>
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to clear the entire form? All current data will be lost.')) {
+                    resetVostcardForm();
+                  }
+                }}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: isLoading ? '#ccc' : '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                🗑️ Clear Entire Form
+              </button>
+            </div>
+
             {/* Title Input */}
             <div style={{ marginBottom: '15px' }}>
               <label style={{
@@ -2329,35 +2359,7 @@ const VostcardStudioView: React.FC = () => {
               )}
             </div>
 
-            {/* Clear Form Button - Always visible */}
-            <div style={{ marginBottom: '15px' }}>
-              <button
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to clear the entire form? All current data will be lost.')) {
-                    resetVostcardForm();
-                  }
-                }}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: isLoading ? '#ccc' : '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                🗑️ Clear Entire Form
-              </button>
-            </div>
+
 
             {/* Clear Photo Button */}
             {vostcardPhotos.length > 0 && (
