@@ -2989,12 +2989,11 @@ Tap OK to continue.`;
         }}
       />
 
-      {/* Tip Dropdown Menu */}
+      {/* Tip Modal */}
       <TipDropdownMenu
         userProfile={userProfile}
         isVisible={showTipDropdown}
         onClose={() => setShowTipDropdown(false)}
-        position={tipDropdownPosition}
       />
 
       {/* YouTube Modal */}

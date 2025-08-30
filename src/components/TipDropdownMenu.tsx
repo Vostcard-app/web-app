@@ -9,14 +9,15 @@ import {
   FaEthereum,
   FaPatreon,
   FaChevronDown,
-  FaExternalLinkAlt
+  FaExternalLinkAlt,
+  FaTimes
 } from 'react-icons/fa';
 
 interface TipDropdownMenuProps {
   userProfile: any;
   isVisible: boolean;
   onClose: () => void;
-  position: { top: number; left: number };
+  position?: { top: number; left: number }; // Optional since modal doesn't need positioning
 }
 
 interface TipOption {
@@ -31,15 +32,14 @@ interface TipOption {
 const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({ 
   userProfile, 
   isVisible, 
-  onClose, 
-  position 
+  onClose 
 }) => {
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
+  // Close modal when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
@@ -50,6 +50,23 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isVisible, onClose]);
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isVisible) {
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [isVisible, onClose]);
 
@@ -185,107 +202,168 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
   }
 
   return (
-    <div
-      ref={dropdownRef}
-      style={{
-        position: 'fixed',
-        top: position.top,
-        left: position.left,
-        transform: 'translateX(-50%)',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-        border: '1px solid #e0e0e0',
-        zIndex: 1000,
-        minWidth: '220px',
-        maxWidth: '280px',
-        overflow: 'hidden'
-      }}
-    >
-      {/* Header */}
-      <div style={{
-        padding: '16px',
-        borderBottom: '1px solid #f0f0f0',
-        backgroundColor: '#f8f9fa'
-      }}>
-        <div style={{
-          fontSize: '16px',
-          fontWeight: '600',
-          color: '#333',
-          textAlign: 'center',
+    <>
+      {/* Modal Overlay */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1000,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '8px'
-        }}>
-          <FaCoffee size={16} />
-          Tip This Guide
-        </div>
-        <div style={{
-          fontSize: '12px',
-          color: '#666',
-          textAlign: 'center',
-          marginTop: '4px'
-        }}>
-          Choose your preferred method
-        </div>
-      </div>
-
-      {/* Options List */}
-      <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
-        {availableOptions.map((option, index) => (
-          <button
-            key={option.id}
-            onClick={() => handleOptionClick(option)}
-            style={{
-              width: '100%',
-              padding: '14px 16px',
-              border: 'none',
-              borderBottom: index < availableOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
-              backgroundColor: 'transparent',
-              cursor: 'pointer',
+          padding: '20px'
+        }}
+        onClick={onClose}
+      >
+        {/* Modal Content */}
+        <div
+          ref={modalRef}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header with Close Button */}
+          <div style={{
+            padding: '20px',
+            borderBottom: '1px solid #f0f0f0',
+            backgroundColor: '#f8f9fa',
+            position: 'relative'
+          }}>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              color: '#333',
+              textAlign: 'center',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
+              justifyContent: 'center',
+              gap: '8px'
+            }}>
+              <FaCoffee size={18} />
+              Tip This Guide
+            </div>
+            <div style={{
               fontSize: '14px',
-              color: '#333',
-              transition: 'background-color 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f8f9fa';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <div
+              color: '#666',
+              textAlign: 'center',
+              marginTop: '4px'
+            }}>
+              Choose your preferred payment method
+            </div>
+            
+            {/* Close Button */}
+            <button
+              onClick={onClose}
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '6px',
-                backgroundColor: option.color,
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: option.color === '#FFDD00' ? '#333' : 'white',
-                flexShrink: 0
+                color: '#666',
+                transition: 'background-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#e9ecef';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              {option.icon}
+              <FaTimes size={16} />
+            </button>
+          </div>
+
+          {/* Options Grid */}
+          <div style={{ 
+            padding: '20px',
+            maxHeight: '60vh',
+            overflowY: 'auto'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+              gap: '12px'
+            }}>
+              {availableOptions.map((option) => (
+                <button
+                  key={option.id}
+                  onClick={() => handleOptionClick(option)}
+                  style={{
+                    padding: '16px 12px',
+                    border: '2px solid #f0f0f0',
+                    borderRadius: '12px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '14px',
+                    color: '#333',
+                    transition: 'all 0.2s ease',
+                    minHeight: '100px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = option.color;
+                    e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#f0f0f0';
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '8px',
+                      backgroundColor: option.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: option.color === '#FFDD00' ? '#333' : 'white',
+                      flexShrink: 0
+                    }}
+                  >
+                    {option.icon}
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontWeight: '600', marginBottom: '2px' }}>
+                      {option.name}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      {option.description}
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
-            <div style={{ flex: 1, textAlign: 'left' }}>
-              <div style={{ fontWeight: '500', marginBottom: '2px' }}>
-                {option.name}
-              </div>
-              <div style={{ fontSize: '12px', color: '#666' }}>
-                {option.description}
-              </div>
-            </div>
-            <FaExternalLinkAlt size={12} color="#999" />
-          </button>
-        ))}
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
