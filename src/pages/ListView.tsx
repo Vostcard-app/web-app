@@ -18,6 +18,8 @@ const ListView: React.FC = () => {
   const [vostcards, setVostcards] = useState<Vostcard[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<string>('Requesting location...');
+  const [debugInfo, setDebugInfo] = useState<string>('');
   const navigate = useNavigate();
 
   // Function to calculate distance between two points using Haversine formula
@@ -35,24 +37,55 @@ const ListView: React.FC = () => {
 
   // Get user's current location
   useEffect(() => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    setDebugInfo(`Device: ${isMobile ? 'Mobile' : 'Desktop'} ${isIOS ? '(iOS)' : ''}`);
+    
     if (navigator.geolocation) {
+      setLocationStatus('Requesting location permission...');
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
+          const location = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
-          console.log('📍 ListView got user location:', {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
+          };
+          setUserLocation(location);
+          setLocationStatus(`Location found: ${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`);
+          
+          console.log('📍 ListView got user location:', location);
         },
         (error) => {
+          let errorMsg = 'Location error: ';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMsg += 'Permission denied';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMsg += 'Position unavailable';
+              break;
+            case error.TIMEOUT:
+              errorMsg += 'Request timeout';
+              break;
+            default:
+              errorMsg += 'Unknown error';
+              break;
+          }
+          setLocationStatus(errorMsg);
           console.warn('📍 ListView location error:', error);
+          
           // Continue without location - will fallback to creation date sorting
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+        { 
+          enableHighAccuracy: true, 
+          timeout: 15000, // Increased timeout for mobile
+          maximumAge: 300000 
+        }
       );
+    } else {
+      setLocationStatus('Geolocation not supported');
+      console.warn('📍 Geolocation not supported');
     }
   }, []);
 
@@ -71,10 +104,15 @@ const ListView: React.FC = () => {
         
         let sortedVostcards: Vostcard[];
         
+        console.log(`📊 Total vostcards fetched: ${regularVostcards.length}`);
+        console.log(`📍 User location available: ${!!userLocation}`);
+        
         if (userLocation) {
           // Sort by distance from user location (nearest first)
-          const vostcardsWithDistance = regularVostcards
-            .filter(v => v.latitude && v.longitude) // Only include vostcards with location
+          const vostcardsWithLocation = regularVostcards.filter(v => v.latitude && v.longitude);
+          console.log(`📍 Vostcards with location data: ${vostcardsWithLocation.length}`);
+          
+          const vostcardsWithDistance = vostcardsWithLocation
             .map(v => ({
               ...v,
               distance: calculateDistance(
@@ -93,6 +131,7 @@ const ListView: React.FC = () => {
           })));
           
           sortedVostcards = vostcardsWithDistance;
+          setDebugInfo(prev => prev + ` | Found ${vostcardsWithDistance.length} nearby vostcards`);
         } else {
           // Fallback: Sort by creation date and limit to 5 (most recent first)
           sortedVostcards = regularVostcards
@@ -109,6 +148,8 @@ const ListView: React.FC = () => {
             title: v.title,
             createdAt: v.createdAt?.toDate ? v.createdAt.toDate().toLocaleString() : 'Unknown'
           })));
+          
+          setDebugInfo(prev => prev + ` | Showing ${sortedVostcards.length} recent vostcards (no location)`);
         }
         
         setVostcards(sortedVostcards);
@@ -131,7 +172,15 @@ const ListView: React.FC = () => {
         alignItems: 'center', 
         marginBottom: 30
       }}>
-        <h1>5 Nearest Vōstcards</h1>
+        <div>
+          <h1>5 Nearest Vōstcards</h1>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+            {debugInfo}
+          </div>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+            {locationStatus}
+          </div>
+        </div>
         <button
           onClick={() => navigate('/home')}
           style={{
