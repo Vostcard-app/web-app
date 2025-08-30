@@ -2,29 +2,36 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaHome, FaHeart, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
-import { db } from '../firebase/firebaseConfig';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { useVostcard } from '../context/VostcardContext';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import RoundInfoButton from '../assets/RoundInfo_Button.png';
+import { useVostcardData } from '../hooks/useVostcardData';
 
 const PublicVostcardView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, username } = useAuth();
-  // Removed fixBrokenSharedVostcard as it doesn't exist in context
   
-  const [vostcard, setVostcard] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [likeCount, setLikeCount] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [ratingStats, setRatingStats] = useState({
-    averageRating: 0,
-    ratingCount: 0
+  // Use the new useVostcardData hook
+  const {
+    vostcard,
+    userProfile,
+    loading,
+    error,
+    likeCount,
+    ratingStats,
+    hasAudio,
+    setUserProfile
+  } = useVostcardData(id, {
+    loadUserProfile: true,
+    loadInteractionData: false, // Public view doesn't need interaction data
+    checkLocalFirst: false,
+    timeout: 15000,
+    allowPrivateShared: true // Allow private shared vostcards
   });
+  
+  const [isLiked, setIsLiked] = useState(false);
   const [isPrivateShared, setIsPrivateShared] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
@@ -64,23 +71,7 @@ const PublicVostcardView: React.FC = () => {
   const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   
-  // ✅ UNIFIED AUDIO FORMAT - Simple and clean detection
-  const hasAudio = useMemo(() => {
-    // Primary: Use hasAudio flag if available, fallback to audioURLs check
-    const audioExists = vostcard?.hasAudio || !!(vostcard?.audioURLs?.length > 0);
-    
-    console.log('🔍 PublicVostcardView Audio detection (UNIFIED):', {
-      audioExists,
-      hasAudioFlag: vostcard?.hasAudio,
-      audioURLs: vostcard?.audioURLs,
-      audioURLsLength: vostcard?.audioURLs?.length || 0,
-      audioLabels: vostcard?.audioLabels,
-      // Legacy fields (for migration debugging)
-      legacyAudioURL: vostcard?.audioURL,
-      legacy_firebaseAudioURL: vostcard?._firebaseAudioURL
-    });
-    return audioExists;
-  }, [vostcard?.hasAudio, vostcard?.audioURLs]);
+  // Audio detection now handled by useVostcardData hook
 
   // ✅ Audio playback function
   const handlePlayPause = useCallback(async () => {
@@ -180,100 +171,16 @@ const PublicVostcardView: React.FC = () => {
     };
   }, []);
 
-  // Load vostcard data
+  // Vostcard loading now handled by useVostcardData hook
+
+  // User profile loading now handled by useVostcardData hook
+  
+  // Update isPrivateShared when vostcard data is loaded
   useEffect(() => {
-    const fetchVostcard = async () => {
-      if (!id) {
-        setError('No vostcard ID provided');
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-      
-      // Add timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        setError('Loading timed out. Please try again.');
-        setLoading(false);
-      }, 15000); // 15 second timeout
-
-      try {
-        console.log('📱 Loading vostcard for sharing:', id);
-        const docRef = doc(db, 'vostcards', id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          console.log('📱 Vostcard found:', {
-            id: data.id,
-            state: data.state,
-            isPrivatelyShared: data.isPrivatelyShared,
-            title: data.title
-          });
-          
-          if (data.state === 'posted' || data.isPrivatelyShared) {
-            clearTimeout(timeoutId);
-            setVostcard(data);
-            setLikeCount(data.likeCount || 0);
-            setRatingStats({
-              averageRating: data.averageRating || 0,
-              ratingCount: data.ratingCount || 0
-            });
-            setIsPrivateShared(data.isPrivatelyShared || false);
-            setLoading(false);
-            return;
-          } else {
-            console.log('📱 Vostcard found but not configured for sharing');
-            
-            // The vostcard exists but is not configured for public sharing
-            // This could be a private vostcard that was never shared publicly
-            clearTimeout(timeoutId);
-            setError('This Vostcard is private and not available for public viewing. The owner needs to share it publicly first.');
-            setLoading(false);
-            return;
-          }
-        } else {
-          console.log('📱 Vostcard not found in Firebase');
-          
-          // The vostcard document doesn't exist
-          // If we get here, the vostcard truly doesn't exist
-          clearTimeout(timeoutId);
-          setError('Vostcard not found. It may have been deleted or the link is invalid.');
-          setLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.error('📱 Error loading vostcard:', err);
-        clearTimeout(timeoutId);
-        setError('Failed to load Vostcard. Please check your internet connection and try again.');
-        setLoading(false);
-      }
-    };
-
-    fetchVostcard();
-  }, [id]);
-
-  // Fetch user profile when vostcard is loaded
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (!vostcard?.userID) return;
-      
-      try {
-        const userRef = doc(db, 'users', vostcard.userID);
-        const userSnap = await getDoc(userRef);
-        if (userSnap.exists()) {
-          setUserProfile(userSnap.data());
-        }
-      } catch (err) {
-        console.error('Failed to load user profile:', err);
-      }
-    };
-    
-    if (vostcard?.userID) {
-      fetchUserProfile();
+    if (vostcard) {
+      setIsPrivateShared(vostcard.isPrivatelyShared || false);
     }
-  }, [vostcard?.userID]);
+  }, [vostcard]);
 
   // Add keyboard support for video modal
   useEffect(() => {
