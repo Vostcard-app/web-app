@@ -1617,7 +1617,7 @@ const VostcardStudioView: React.FC = () => {
             maxWidth: '350px',
             width: '100%'
           }}>
-            ⏳ Loading {editingDrivecardId ? 'drivecard' : editingVostcardId ? 'vostcard' : 'content'} for editing...
+            💾 This vostcard is being saved and will be available shortly...
           </div>
         )}
 
