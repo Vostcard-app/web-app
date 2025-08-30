@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaArrowLeft, FaTimes, FaSync, FaHeart, FaRegComment, FaShare, FaUserCircle, FaFlag, FaMap, FaPlay, FaPause, FaCoffee, FaChevronDown, FaStar, FaDirections } from 'react-icons/fa';
+import { FaTimes, FaHeart, FaRegComment, FaShare, FaFlag, FaMap, FaPlay, FaStar, FaDirections } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 // Leaflet Routing Machine will be imported dynamically
 import L from 'leaflet';
@@ -25,6 +25,7 @@ import { NavigationService, NavigationStep } from '../services/navigationService
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import { generateShareText } from '../utils/vostcardUtils';
 import TipDropdownMenu from '../components/TipDropdownMenu';
+import VostcardHeader from '../components/VostcardHeader';
 
 // Icons will be created in component
 
@@ -1618,201 +1619,18 @@ Tap OK to continue.`;
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Header */}
-      <div style={{ 
-        background: '#07345c', 
-        padding: '15px 16px 9px 16px',
-        position: 'relative', 
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <span style={{ color: 'white', fontWeight: 700, fontSize: '2.5rem' }}>
-          Vōstcard
-        </span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button 
-            style={{ 
-              background: 'rgba(0,0,0,0.10)', 
-              border: 'none', 
-              borderRadius: '50%', 
-              width: 48, 
-              height: 48, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              cursor: 'pointer'
-            }} 
-            onClick={() => navigate(-1)}
-          >
-            <FaArrowLeft color="#fff" size={24} />
-          </button>
-          <button 
-            style={{ 
-              background: 'rgba(0,0,0,0.10)', 
-              border: 'none', 
-              borderRadius: '50%', 
-              width: 48, 
-              height: 48, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              cursor: 'pointer',
-              marginRight: '15px'
-            }} 
-            onClick={() => navigate('/home')}
-          >
-            <FaHome color="#fff" size={40} />
-          </button>
-        </div>
-      </div>
-
-      {/* Swipe navigation indicators */}
-      {(canGoToPrevious || canGoToNext) && (
-        <div style={{
-          position: 'fixed',
-          top: '50%',
-          right: '8px',
-          transform: 'translateY(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px',
-          zIndex: 10,
-          opacity: 0.4,
-          pointerEvents: 'none'
-        }}>
-          {canGoToPrevious && (
-            <div style={{
-              width: '2px',
-              height: '20px',
-              backgroundColor: '#333',
-              borderRadius: '1px'
-            }} />
-          )}
-          <div style={{
-            width: '4px',
-            height: '4px',
-            backgroundColor: '#333',
-            borderRadius: '50%'
-          }} />
-          {canGoToNext && (
-            <div style={{
-              width: '2px',
-              height: '20px',
-              backgroundColor: '#333',
-              borderRadius: '1px'
-            }} />
-          )}
-        </div>
-      )}
-
-      {/* User Info + Map View button on right */}
-      <div style={{ 
-        padding: '15px 20px 5px 20px',
-        display: 'flex', 
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: '0px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 16 }}>
-            <div 
-              style={{ 
-                width: 50, 
-                height: 50, 
-                borderRadius: '50%', 
-                overflow: 'hidden', 
-                background: '#f0f0f0',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={() => {
-                if (vostcard?.userID) {
-                  navigate(`/user-profile/${vostcard.userID}`);
-                }
-              }}
-            >
-              {userProfile?.avatarURL ? (
-                <img 
-                  src={userProfile.avatarURL} 
-                  alt="User Avatar" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                  onError={() => setUserProfile((prev: any) => ({ ...prev, avatarURL: null }))}
-                />
-              ) : (
-                <FaUserCircle size={50} color="#ccc" />
-              )}
-            </div>
-            {userProfile?.userRole === 'guide' && (
-              <div style={{ marginTop: 4, fontSize: 11, color: '#666', fontWeight: 600 }}>Guide</div>
-            )}
-          </div>
-          <div 
-            style={{ 
-              fontSize: '20px', 
-              fontWeight: 'bold', 
-              color: '#333',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              if (vostcard?.userID) {
-                navigate(`/user-profile/${vostcard.userID}`);
-              }
-            }}
-          >
-            {userProfile?.username || vostcard.username || 'Anonymous'}
-        </div>
-      </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* ☕ Tip Button for Guides */}
-          {userProfile?.userRole === 'guide' && user?.uid !== vostcard.userID && (
-            <button
-              ref={tipButtonRef}
-              onClick={handleTipButtonClick}
-              style={{
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '6px 12px',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
-                height: '40px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                lineHeight: '1',
-                gap: '4px'
-              }}
-            >
-              Leave a Tip
-              <FaChevronDown size={8} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Title */}
-      <div style={{ padding: '0 20px' }}>
-        <h1 style={{ 
-          margin: 0, 
-          fontSize: '22px', 
-          fontWeight: 'bold', 
-          color: '#333',
-          textAlign: 'center'
-        }}>
-          {vostcard.title || 'Untitled Vōstcard'}
-        </h1>
-      </div>
+      <VostcardHeader
+        vostcard={vostcard}
+        userProfile={userProfile}
+        user={user}
+        canGoToPrevious={canGoToPrevious}
+        canGoToNext={canGoToNext}
+        showTipDropdown={showTipDropdown}
+        tipDropdownPosition={tipDropdownPosition}
+        onTipButtonClick={handleTipButtonClick}
+        tipButtonRef={tipButtonRef}
+        setUserProfile={setUserProfile}
+      />
 
       {/* ✅ UPDATED: Side-by-side thumbnails (or single large photo when no video) */}
       {hasVideoMedia ? (
