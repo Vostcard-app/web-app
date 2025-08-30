@@ -80,6 +80,22 @@ const VostcardHeader: React.FC<VostcardHeaderProps> = ({
         </div>
       </div>
 
+      {/* Guide Label - Upper right corner under banner */}
+      {(userProfile?.userRole === 'guide' || vostcard?.userRole === 'guide') && (
+        <div style={{
+          position: 'absolute',
+          top: '85px', // Just under the banner
+          right: '20px',
+          fontSize: '22px',
+          fontWeight: 'bold',
+          color: '#002B4D',
+          zIndex: 10,
+          textAlign: 'right'
+        }}>
+          Guide
+        </div>
+      )}
+
       {/* Swipe navigation indicators */}
       {(canGoToPrevious || canGoToNext) && (
         <div style={{
