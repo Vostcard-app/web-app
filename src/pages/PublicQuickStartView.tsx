@@ -69,77 +69,6 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 3,
-    title: "Filters",
-    description: "Choose to see pins from just professionals or from everyone.",
-    icon: (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        padding: '12px 16px',
-        borderRadius: '12px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        backdropFilter: 'blur(10px)',
-        marginTop: '40px'
-      }}>
-        <div style={{
-          width: '72px',
-          height: '40px',
-          borderRadius: '20px',
-          background: '#002B4D',
-          position: 'relative',
-          cursor: 'pointer',
-          transition: 'background 0.2s',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            background: 'white',
-            position: 'absolute',
-            left: '4px',
-            transition: 'left 0.2s',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
-          }} />
-        </div>
-        <span style={{ fontSize: '20px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
-      </div>
-    )
-  },
-  {
-    id: 4,
-    title: "Need Help?\nWe've Got You!",
-    description: "Tap on the Help button to find this Quick Start and more helpful information.",
-    icon: (
-      <div style={{
-        backgroundColor: '#002B4D',
-        color: 'white',
-        border: 'none',
-        borderRadius: '12px',
-        padding: '12px 16px',
-        fontSize: '24px',
-        fontWeight: 500,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        lineHeight: '1',
-        gap: '8px',
-        minWidth: '120px',
-        marginTop: '25px'
-      }}>
-        <span style={{ fontSize: '28px', lineHeight: '1' }}>❓</span>
-        <span>Help</span>
-      </div>
-    )
-  },
-  {
-    id: 5,
     title: "Join Tours & Adventures",
     description: "Tap the Tour button of Guide avatar to see curated tours.",
     icon: (
@@ -165,13 +94,13 @@ const tourSlides: TourSlide[] = [
     )
   },
   {
-    id: 6,
+    id: 4,
     title: "Connect & Share",
     description: "Follow friends, like posts and build you community.",
     icon: <FaUsers size={48} color="#002B4D" />
   },
   {
-    id: 7,
+    id: 5,
     title: "You're All Set!",
     description: "Ready to start exploring? Create your first post or discover what's around you!",
     icon: <FaCheck size={48} color="#00C851" />
