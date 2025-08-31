@@ -11,6 +11,7 @@ import type { Drivecard, Vostcard } from '../types/VostcardTypes';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
 import PhotoUploadManager from '../components/PhotoUploadManager';
+import AudioRecordingStudio from '../components/AudioRecordingStudio';
 
 const VostcardStudioView: React.FC = () => {
   const navigate = useNavigate();
@@ -94,20 +95,10 @@ const VostcardStudioView: React.FC = () => {
   } | null>(null);
   const [drivecardCategory, setDrivecardCategory] = useState('None');
 
-  // Audio recording state
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
+  // Audio recording state - moved to AudioRecordingStudio component
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioSource, setAudioSource] = useState<'recording' | 'file' | null>(null);
   const [audioFileName, setAudioFileName] = useState<string | null>(null);
-  const [recordingError, setRecordingError] = useState<string | null>(null);
-  
-  // Recording refs
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [showPhotoOptionsModal, setShowPhotoOptionsModal] = useState(false);
 
@@ -167,139 +158,7 @@ const VostcardStudioView: React.FC = () => {
     loadDrivecardForEditing();
   }, [editingDrivecardId, navigate]);
 
-  // Recording functions
-  const startRecording = async () => {
-    try {
-      setRecordingError(null);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      audioChunksRef.current = [];
-      
-      // Detect Safari/iOS for iPhone compatibility
-      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      
-      let supportedTypes;
-      if (isIOS && isSafari) {
-        // Safari iOS has limited support - prioritize what works on iPhone
-        supportedTypes = [
-          'audio/mp4',
-          'audio/wav',
-          '', // Let browser choose as fallback
-        ];
-        console.log('🎤 Using Safari iOS optimized MIME types for iPhone compatibility');
-      } else {
-        // Desktop/Android - use more compatible formats
-        supportedTypes = [
-          'audio/webm',
-          'audio/mp4',
-          'audio/wav',
-          'audio/mpeg'
-        ];
-      }
-      
-      let mimeType = '';
-      for (const type of supportedTypes) {
-        if (type === '') {
-          // Empty string means let browser choose
-          console.log(`🎤 browser default: ✅ Using as fallback`);
-          if (!mimeType) mimeType = type;
-          continue;
-        }
-        
-        const supported = MediaRecorder.isTypeSupported(type);
-        console.log(`🎤 ${type}: ${supported ? '✅ Supported' : '❌ Not supported'}`);
-        if (supported && !mimeType) {
-          mimeType = type;
-        }
-      }
-      
-      console.log('🎤 Selected MIME type for iPhone compatibility:', mimeType || 'browser default');
-      
-      // Create MediaRecorder with iPhone-compatible options
-      let mediaRecorderOptions: MediaRecorderOptions = {};
-      if (mimeType) {
-        mediaRecorderOptions.mimeType = mimeType;
-      }
-      
-      const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions);
-      mediaRecorderRef.current = mediaRecorder;
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      
-      mediaRecorder.onstop = () => {
-        // Use the detected MIME type for the blob
-        const finalMimeType = mimeType || 'audio/webm'; // fallback
-        const audioBlob = new Blob(audioChunksRef.current, { type: finalMimeType });
-        setAudioBlob(audioBlob);
-        setAudioSource('recording');
-        setAudioFileName(null);
-        setIsRecording(false);
-        
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-      };
-      
-      mediaRecorder.start(1000);
-      setIsRecording(true);
-      setRecordingTime(0);
-      
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('❌ Failed to start recording:', error);
-      setRecordingError('Failed to start recording. Please try again.');
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-        recordingTimerRef.current = null;
-      }
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('audio/')) {
-      alert('Please select an audio file.');
-      return;
-    }
-
-    setAudioBlob(file);
-    setAudioSource('file');
-    setAudioFileName(file.name);
-    setRecordingTime(0);
-    event.target.value = '';
-  };
-
-  const clearRecording = () => {
-    setAudioBlob(null);
-    setAudioSource(null);
-    setAudioFileName(null);
-    setRecordingTime(0);
-    setRecordingError(null);
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Audio recording functions moved to AudioRecordingStudio component
 
   const handleSaveOrUpdate = async () => {
     if (!user || !title.trim()) {
@@ -376,7 +235,10 @@ const VostcardStudioView: React.FC = () => {
         setTitle('');
         setSelectedLocation(null);
         setDrivecardCategory('None');
-        clearRecording();
+        // Clear audio state
+        setAudioBlob(null);
+        setAudioSource(null);
+        setAudioFileName(null);
       }
       
     } catch (error) {
@@ -535,13 +397,7 @@ const VostcardStudioView: React.FC = () => {
   }, []); // Only run once on mount
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+  // Stream cleanup moved to AudioRecordingStudio component
 
   // Auto-refresh vostcards when loader modal opens
   useEffect(() => {
@@ -691,6 +547,20 @@ const VostcardStudioView: React.FC = () => {
   const handlePhotosChange = (newPhotos: (Blob | File)[], newPreviews: string[]) => {
     setVostcardPhotos(newPhotos);
     setVostcardPhotoPreviews(newPreviews);
+  };
+
+  // Audio change handler for AudioRecordingStudio (Drivecard)
+  const handleDrivecardAudioChange = (audioBlob: Blob | null, audioSource: 'recording' | 'file' | null, audioFileName: string | null) => {
+    setAudioBlob(audioBlob);
+    setAudioSource(audioSource);
+    setAudioFileName(audioFileName);
+  };
+
+  // Audio change handler for AudioRecordingStudio (Vostcard)
+  const handleVostcardAudioChange = (audioBlob: Blob | null, audioSource: 'recording' | 'file' | null, audioFileName: string | null) => {
+    setVostcardAudio(audioBlob);
+    setVostcardAudioSource(audioSource);
+    setVostcardAudioFileName(audioFileName);
   };
 
   // Enhanced photo upload handler for multiple photos (unlimited) - kept for legacy inputs
@@ -1405,13 +1275,7 @@ const VostcardStudioView: React.FC = () => {
       </div>
 
       {/* Hidden File Input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        accept="audio/*"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
+      {/* Audio file input moved to AudioRecordingStudio component */}
 
       {/* Content - Adjusted for fixed header */}
       <div style={{ 
@@ -2153,90 +2017,16 @@ const VostcardStudioView: React.FC = () => {
               />
             </div>
 
-            {/* Audio Recording Section */}
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#333',
-                marginBottom: '8px'
-              }}>
-                Audio {audioBlob && <span style={{color: 'green'}}>✅</span>}
-              </label>
-              
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                {/* Record Button */}
-                <button
-                  onClick={isRecording ? stopRecording : startRecording}
-                  disabled={isLoading}
-                  style={{
-                    backgroundColor: isRecording ? '#f44336' : '#4CAF50',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    flex: 1,
-                    opacity: isLoading ? 0.6 : 1
-                  }}
-                >
-                  {isRecording ? `🔴 Stop (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})` : '🎙️ Record'}
-                </button>
-
-                {/* Upload Button */}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading || isRecording}
-                  style={{
-                    backgroundColor: '#2196F3',
-                    color: 'white',
-                    border: 'none',
-                    padding: '8px 12px',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    cursor: (isLoading || isRecording) ? 'not-allowed' : 'pointer',
-                    flex: 1,
-                    opacity: (isLoading || isRecording) ? 0.6 : 1
-                  }}
-                >
-                  📁 Upload
-                </button>
-              </div>
-
-              {/* Audio Preview */}
-              {audioBlob && (
-                <div style={{
-                  padding: '8px',
-                  backgroundColor: 'white',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  color: '#666'
-                }}>
-                  {audioSource === 'recording' ? 
-                    `🎙️ Recorded audio (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})` : 
-                    `📁 ${audioFileName || 'Uploaded audio'}`
-                  }
-                </div>
-              )}
-
-              {/* Recording Error */}
-              {recordingError && (
-                <div style={{
-                  padding: '8px',
-                  backgroundColor: '#ffebee',
-                  border: '1px solid #ffcdd2',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  color: '#d32f2f',
-                  marginTop: '8px'
-                }}>
-                  {recordingError}
-                </div>
-              )}
-            </div>
+            {/* Audio Recording Studio */}
+            <AudioRecordingStudio
+              audioBlob={audioBlob}
+              audioSource={audioSource}
+              audioFileName={audioFileName}
+              onAudioChange={handleDrivecardAudioChange}
+              disabled={isLoading}
+              required={!editingDrivecard}
+              label="Audio"
+            />
 
             {/* Location Section */}
             <div style={{ marginBottom: '15px' }}>
@@ -2321,16 +2111,16 @@ const VostcardStudioView: React.FC = () => {
             {/* Save/Update Button */}
             <button 
               onClick={handleSaveOrUpdate}
-              disabled={!title.trim() || !selectedLocation || isRecording || isLoading || (!editingDrivecard && !audioBlob)}
+              disabled={!title.trim() || !selectedLocation || isLoading || (!editingDrivecard && !audioBlob)}
               style={{
-                backgroundColor: (!title.trim() || !selectedLocation || isRecording || isLoading || (!editingDrivecard && !audioBlob)) ? '#ccc' : '#002B4D',
+                backgroundColor: (!title.trim() || !selectedLocation || isLoading || (!editingDrivecard && !audioBlob)) ? '#ccc' : '#002B4D',
                 color: 'white',
                 border: 'none',
                 padding: '12px 8px',
                 borderRadius: '4px',
                 fontSize: '14px',
                 fontWeight: 'bold',
-                cursor: (!title.trim() || !selectedLocation || isRecording || isLoading || (!editingDrivecard && !audioBlob)) ? 'not-allowed' : 'pointer',
+                cursor: (!title.trim() || !selectedLocation || isLoading || (!editingDrivecard && !audioBlob)) ? 'not-allowed' : 'pointer',
                 width: '100%',
                 marginBottom: '10px',
                 display: 'flex',
@@ -2343,26 +2133,7 @@ const VostcardStudioView: React.FC = () => {
               {editingDrivecard ? 'Update Drivecard' : 'Save Drivecard'}
             </button>
 
-            {/* Clear Audio Button */}
-            {audioBlob && !isRecording && (
-              <button
-                onClick={clearRecording}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: '#ff9800',
-                  color: 'white',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  width: '100%',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                {editingDrivecard ? 'Clear New Audio' : 'Clear Audio'}
-              </button>
-            )}
+            {/* Clear Audio Button moved to AudioRecordingStudio component */}
           </div>
         )}
 
