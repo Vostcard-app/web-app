@@ -532,6 +532,8 @@ const VostcardDetailView: React.FC = () => {
       shouldShowSocialButtons: !!(vostcard.youtubeURL || vostcard.instagramURL),
       allVostcardProperties: Object.keys(vostcard)
     });
+    
+    console.log('🔍 FULL VOSTCARD OBJECT DEBUG:', vostcard);
   } else {
     console.log('❌ Vostcard is null - cannot detect video');
   }
