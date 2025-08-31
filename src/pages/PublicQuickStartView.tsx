@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaFilter } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 import GuidePin from '../assets/Guide_pin.png';
@@ -136,8 +137,18 @@ const tourSlides: TourSlide[] = [
 
 const PublicQuickStartView: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Helper function to handle navigation - if user is logged in, go to home, otherwise register
+  const handleJoinNavigation = () => {
+    if (user) {
+      navigate('/home');
+    } else {
+      navigate('/register');
+    }
+  };
 
   const handleNext = () => {
     if (isAnimating) return;
@@ -149,8 +160,8 @@ const PublicQuickStartView: React.FC = () => {
         setIsAnimating(false);
       }, 150);
     } else {
-      // On completion, navigate to register
-      navigate('/register');
+      // On completion, navigate based on auth status
+      handleJoinNavigation();
     }
   };
 
@@ -312,7 +323,7 @@ const PublicQuickStartView: React.FC = () => {
               onClick={(e) => {
                 // Handle join button click on slide 5
                 if (currentSlide === 4 && (e.target as HTMLElement).classList.contains('join-button')) {
-                  navigate('/register');
+                  handleJoinNavigation();
                 }
               }}
             >
@@ -458,7 +469,7 @@ const PublicQuickStartView: React.FC = () => {
           {/* Skip Button */}
           {!isLastSlide && (
             <button
-              onClick={() => navigate('/register')}
+              onClick={handleJoinNavigation}
               style={{
                 background: 'none',
                 border: 'none',
