@@ -102,6 +102,23 @@ export interface UserProfile {
   avatarURL?: string;
   userRole?: 'user' | 'guide' | 'advertiser' | 'admin';
   createdAt: string;
+  // Guide-specific fields
+  isGuideAccount?: boolean;
+  guideRates?: {
+    hourlyRate: number;
+    currency: string;
+    minimumDuration: number;
+    maximumDuration: number;
+    groupSizeLimit: number;
+  };
+  guideSettings?: {
+    autoAcceptBookings: boolean;
+    advanceBookingDays: number;
+    bufferTime: number;
+    languages: string[];
+    specialties: string[];
+    meetingInstructions?: string;
+  };
 }
 
 // Validation state interface
