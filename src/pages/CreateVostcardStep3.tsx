@@ -66,6 +66,15 @@ const CreateVostcardStep3: React.FC = () => {
     geo: !!currentVostcard?.geo
   });
 
+  console.log('📸 Step 3 Photo Debug:', {
+    currentVostcard: currentVostcard,
+    photos: photos,
+    photosArray: currentVostcard?.photos,
+    photosType: typeof currentVostcard?.photos,
+    photosIsArray: Array.isArray(currentVostcard?.photos),
+    photosLength: currentVostcard?.photos?.length || 0
+  });
+
   // Check Firebase Auth
   useEffect(() => {
     const checkAuth = () => {

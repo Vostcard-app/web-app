@@ -418,17 +418,37 @@ export default function VostcardCreateStep1Photos() {
       return;
     }
     
+    // iPhone-specific debugging
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    console.log('📱 iPhone Detection:', { isIOS, userAgent: navigator.userAgent });
+    
     // Save photos to context and route into unified step 2
     if (currentVostcard) {
-      setCurrentVostcard({ ...currentVostcard, photos: validPhotos });
+      const updatedVostcard = { ...currentVostcard, photos: validPhotos };
+      setCurrentVostcard(updatedVostcard);
+      
+      console.log('📱 Vostcard photos saved:', {
+        photoCount: validPhotos.length,
+        isIOS,
+        photosTypes: validPhotos.map(p => p.constructor.name),
+        photosSizes: validPhotos.map(p => p.size),
+        vostcardId: updatedVostcard.id,
+        contextUpdated: true
+      });
+      
+      // iPhone-specific: Add small delay to ensure context update completes
+      if (isIOS) {
+        setTimeout(() => {
+          console.log('📱 iPhone: Navigating to step 3 after delay');
+          navigate('/create-step3');
+        }, 100);
+      } else {
+        navigate('/create-step3');
+      }
+    } else {
+      console.error('❌ No currentVostcard found when saving photos');
+      alert('Error: Unable to save photos. Please try again.');
     }
-    
-    console.log('📱 Vostcard photos saved:', {
-      photoCount: validPhotos.length
-    });
-    
-    // Go to Step 3 (categories and trip)
-    navigate('/create-step3');
   };
 
   // Add video handler - save photos first, then go to Step 2
@@ -441,17 +461,36 @@ export default function VostcardCreateStep1Photos() {
       return;
     }
     
+    // iPhone-specific debugging
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
     // Save photos to context first
     if (currentVostcard) {
-      setCurrentVostcard({ ...currentVostcard, photos: validPhotos });
+      const updatedVostcard = { ...currentVostcard, photos: validPhotos };
+      setCurrentVostcard(updatedVostcard);
+      
+      console.log('📱 Photos saved before adding video:', {
+        photoCount: validPhotos.length,
+        isIOS,
+        photosTypes: validPhotos.map(p => p.constructor.name),
+        photosSizes: validPhotos.map(p => p.size),
+        vostcardId: updatedVostcard.id,
+        contextUpdated: true
+      });
+      
+      // iPhone-specific: Add small delay to ensure context update completes
+      if (isIOS) {
+        setTimeout(() => {
+          console.log('📱 iPhone: Navigating to step 2 after delay');
+          navigate('/create-step2');
+        }, 100);
+      } else {
+        navigate('/create-step2');
+      }
+    } else {
+      console.error('❌ No currentVostcard found when saving photos for video');
+      alert('Error: Unable to save photos. Please try again.');
     }
-    
-    console.log('📱 Photos saved before adding video:', {
-      photoCount: validPhotos.length
-    });
-    
-    // Navigate to Step 2 (video recording)
-    navigate('/create-step2');
   };
 
   const photoCount = selectedPhotos.filter(photo => photo !== null).length;
