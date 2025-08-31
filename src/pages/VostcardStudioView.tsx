@@ -1093,6 +1093,9 @@ const VostcardStudioView: React.FC = () => {
       // Use the VostcardEdit context to start editing
       startEditing(vostcard);
       
+      // IMPORTANT: Also set in main VostcardContext for saving
+      setCurrentVostcard(vostcard);
+      
       // Store the original state to preserve it during updates
       setOriginalVostcardState(vostcard.state || 'private');
       console.log('📝 Original vostcard state:', vostcard.state || 'private');
