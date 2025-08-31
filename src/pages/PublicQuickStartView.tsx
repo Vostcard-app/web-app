@@ -13,12 +13,12 @@ const PublicQuickStartView: React.FC = () => {
 
   return (
     <div style={{
-      height: '100vh',
+      minHeight: '100vh',
       width: '100vw',
       backgroundColor: '#f8f9fa',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden'
+      overflow: 'auto'
     }}>
       {/* Header */}
       <div style={{
@@ -83,20 +83,20 @@ const PublicQuickStartView: React.FC = () => {
       {/* Content */}
       <div style={{
         flex: 1,
-        padding: '40px 24px',
+        padding: '20px 24px 40px 24px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
         textAlign: 'center',
         maxWidth: '800px',
         margin: '0 auto',
-        overflow: 'auto'
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         
         {/* Title */}
         <h1 style={{
-          fontSize: '3rem',
+          fontSize: 'clamp(2rem, 5vw, 3rem)',
           fontWeight: '800',
           color: '#07345c',
           marginBottom: '16px',
@@ -106,9 +106,9 @@ const PublicQuickStartView: React.FC = () => {
         </h1>
         
         <p style={{
-          fontSize: '1.2rem',
+          fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
           color: '#6c757d',
-          marginBottom: '40px',
+          marginBottom: '24px',
           lineHeight: '1.6',
           maxWidth: '600px'
         }}>
@@ -119,9 +119,9 @@ const PublicQuickStartView: React.FC = () => {
         <div style={{
           backgroundColor: 'white',
           borderRadius: '16px',
-          padding: '32px',
+          padding: 'clamp(16px, 4vw, 32px)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          marginBottom: '40px',
+          marginBottom: '24px',
           width: '100%',
           maxWidth: '600px'
         }}>
@@ -137,9 +137,9 @@ const PublicQuickStartView: React.FC = () => {
           <div 
             onClick={() => setShowVideoModal(true)}
             style={{
-              position: 'relative',
-              width: '100%',
-              height: '300px',
+                          position: 'relative',
+            width: '100%',
+            height: 'clamp(200px, 40vw, 300px)',
               backgroundColor: '#f8f9fa',
               borderRadius: '12px',
               display: 'flex',
@@ -190,9 +190,9 @@ const PublicQuickStartView: React.FC = () => {
         <div style={{
           backgroundColor: 'white',
           borderRadius: '16px',
-          padding: '32px',
+          padding: 'clamp(16px, 4vw, 32px)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          marginBottom: '40px',
+          marginBottom: '24px',
           width: '100%',
           maxWidth: '600px',
           textAlign: 'left'
@@ -293,7 +293,9 @@ const PublicQuickStartView: React.FC = () => {
           display: 'flex',
           gap: '16px',
           flexWrap: 'wrap',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          marginTop: 'auto',
+          paddingTop: '20px'
         }}>
           <button
             onClick={() => navigate('/register')}
@@ -301,9 +303,9 @@ const PublicQuickStartView: React.FC = () => {
               backgroundColor: '#07345c',
               color: 'white',
               border: 'none',
-              padding: '16px 32px',
+              padding: 'clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px)',
               borderRadius: '12px',
-              fontSize: '1.1rem',
+              fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -327,9 +329,9 @@ const PublicQuickStartView: React.FC = () => {
               backgroundColor: 'transparent',
               color: '#07345c',
               border: '2px solid #07345c',
-              padding: '16px 32px',
+              padding: 'clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px)',
               borderRadius: '12px',
-              fontSize: '1.1rem',
+              fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
               fontWeight: '600',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
