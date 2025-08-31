@@ -1890,18 +1890,9 @@ const HomeView = () => {
 
             {/* 8. Admin Dashboard (disabled - duplicate admin entry) */}
             
-            {/* 9. Preferences */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                navigate('/preferences');
-              }}
-              style={menuItemStyle}
-            >
-              🔧 Preferences
             </button>
             
-            {/* 10. Settings */}
+            {/* 9. Settings */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -1912,7 +1903,7 @@ const HomeView = () => {
               ⚙️ Settings
             </button>
             
-            {/* 11. Contact - Parent Menu */}
+            {/* 10. Contact - Parent Menu */}
             <button
               onClick={() => {
                 setOpenSubmenu(openSubmenu === 'contact' ? null : 'contact');
