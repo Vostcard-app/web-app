@@ -762,6 +762,13 @@ const VostcardStudioView: React.FC = () => {
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
+      console.log('🔍 YouTube URL Processing Debug:', {
+        originalYouTubeURL: youtubeURL,
+        processedYouTubeID: processedYouTubeID,
+        originalInstagramURL: instagramURL,
+        processedInstagramID: processedInstagramID
+      });
+      
       // Create vostcard as private draft with multiple photos and audio files
       const vostcard: Vostcard = {
         id: uuidv4(), // Use Firebase-compatible UUID instead of timestamp
@@ -788,6 +795,14 @@ const VostcardStudioView: React.FC = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+
+      console.log('🔍 Final Vostcard Object Debug (Personal Posts):', {
+        id: vostcard.id,
+        youtubeURL: vostcard.youtubeURL,
+        instagramURL: vostcard.instagramURL,
+        hasYouTubeURL: !!vostcard.youtubeURL,
+        hasInstagramURL: !!vostcard.instagramURL
+      });
 
       setCurrentVostcard(vostcard);
       await saveVostcard();
@@ -866,6 +881,14 @@ const VostcardStudioView: React.FC = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
+
+      console.log('🔍 Final Vostcard Object Debug (Post Vostcard):', {
+        id: vostcard.id,
+        youtubeURL: vostcard.youtubeURL,
+        instagramURL: vostcard.instagramURL,
+        hasYouTubeURL: !!vostcard.youtubeURL,
+        hasInstagramURL: !!vostcard.instagramURL
+      });
 
       setCurrentVostcard(vostcard);
       await new Promise(resolve => setTimeout(resolve, 100));
