@@ -38,6 +38,16 @@ const tourSlides: TourSlide[] = [
       {
         icon: (
           <img 
+            src={GuidePin} 
+            alt="Guide Pin" 
+            style={{ width: '128px', height: '128px', flexShrink: 0 }} 
+          />
+        ),
+        text: "Points of interests made by a guide"
+      },
+      {
+        icon: (
+          <img 
             src={VostcardPin} 
             alt="Vostcard Pin" 
             style={{ width: '128px', height: '128px', flexShrink: 0 }} 
