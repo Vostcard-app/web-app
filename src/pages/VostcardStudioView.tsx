@@ -1042,6 +1042,10 @@ const VostcardStudioView: React.FC = () => {
       } else {
         console.log('🔄 Updating private vostcard - keeping it private');
         await saveVostcardDirect(updatedVostcard);
+        
+        // Force refresh the vostcard data to ensure YouTube URL is available immediately
+        console.log('🔄 Forcing vostcard refresh after YouTube URL update...');
+        await loadAllLocalVostcards();
       }
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
