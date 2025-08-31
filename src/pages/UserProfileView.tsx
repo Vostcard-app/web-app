@@ -1,15 +1,16 @@
 // ✅ Blueprint: PWA UserProfileView (React + Firebase Firestore)
 // 📁 src/pages/UserProfileView.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee, FaMapPin, FaWalking } from 'react-icons/fa';
+import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee, FaMapPin, FaWalking, FaChevronDown } from 'react-icons/fa';
 import { TourService } from '../services/tourService';
 import { GuidedTourService } from '../services/guidedTourService';
+import TipDropdownMenu from '../components/TipDropdownMenu';
 import type { Tour } from '../types/TourTypes';
 import type { GuidedTour } from '../types/GuidedTourTypes';
 
@@ -50,6 +51,11 @@ const UserProfileView: React.FC = () => {
   // Tour-related state
   const [tours, setTours] = useState<Tour[]>([]);
   const [guidedTours, setGuidedTours] = useState<GuidedTour[]>([]);
+  
+  // Tip dropdown state
+  const [showTipDropdown, setShowTipDropdown] = useState(false);
+  const [tipDropdownPosition, setTipDropdownPosition] = useState({ top: 0, left: 0 });
+  const tipButtonRef = useRef<HTMLButtonElement>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -199,6 +205,18 @@ const UserProfileView: React.FC = () => {
   // Helper function to get the correct terminology
   const getTourTerminology = () => {
     return profile?.userRole === 'guide' ? 'Tour' : 'Trip';
+  };
+
+  // Handle tip button click
+  const handleTipButtonClick = () => {
+    if (tipButtonRef.current) {
+      const rect = tipButtonRef.current.getBoundingClientRect();
+      setTipDropdownPosition({
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2
+      });
+      setShowTipDropdown(!showTipDropdown);
+    }
   };
 
   if (loading) return <p>Loading profile...</p>;
@@ -452,43 +470,43 @@ const UserProfileView: React.FC = () => {
           </p>
         )}
 
-        {/* ☕ Tip Button for Guides - Under Avatar */}
-        {!isCurrentUser && profile?.userRole === 'guide' && profile?.buyMeACoffeeURL && (
+        {/* ☕ Tip Button for Guides - Under Avatar (Detail View Style) */}
+        {!isCurrentUser && profile?.userRole === 'guide' && (
           <div style={{ 
             display: 'flex', 
             justifyContent: 'center', 
             marginTop: '15px'
           }}>
             <button
-              onClick={() => {
-                window.open(profile.buyMeACoffeeURL, '_blank', 'noopener,noreferrer');
-              }}
+              ref={tipButtonRef}
+              onClick={handleTipButtonClick}
               style={{
+                backgroundColor: '#002B4D',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                transition: 'transform 0.1s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                backgroundColor: '#FFDD00',
-                color: '#333',
-                border: 'none',
-                borderRadius: '20px',
-                padding: '10px 20px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                transition: 'all 0.2s ease'
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1',
+                gap: '6px'
               }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#FFE55C';
-                e.currentTarget.style.transform = 'scale(1.05)';
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
               }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#FFDD00';
-                e.currentTarget.style.transform = 'scale(1)';
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              <FaCoffee size={18} />
               Leave a Tip
+              <FaChevronDown size={8} />
             </button>
           </div>
         )}
@@ -608,6 +626,13 @@ const UserProfileView: React.FC = () => {
       )}
       
 
+      {/* Tip Dropdown Menu */}
+      <TipDropdownMenu
+        userProfile={profile}
+        isVisible={showTipDropdown}
+        onClose={() => setShowTipDropdown(false)}
+        position={tipDropdownPosition}
+      />
       
       </div>
     </div>
