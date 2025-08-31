@@ -1,0 +1,401 @@
+// ✅ Guided Tours View - Display guide's available guided tours
+// 📁 src/pages/GuidedToursView.tsx
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus } from 'react-icons/fa';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
+import { useAuth } from '../context/AuthContext';
+import { GuidedTourService } from '../services/guidedTourService';
+import type { GuidedTour } from '../types/GuidedTourTypes';
+
+interface UserProfile {
+  id: string;
+  username: string;
+  avatarURL?: string;
+  userRole?: string;
+  isGuideAccount?: boolean;
+}
+
+const GuidedToursView: React.FC = () => {
+  const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [guidedTours, setGuidedTours] = useState<GuidedTour[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const isCurrentUser = user?.uid === userId;
+
+  useEffect(() => {
+    const fetchProfileAndTours = async () => {
+      try {
+        if (!userId) return;
+
+        // Fetch user profile
+        const docRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setProfile({
+            id: docSnap.id,
+            username: data.username || 'Unknown User',
+            avatarURL: data.avatarURL,
+            userRole: data.userRole,
+            isGuideAccount: data.isGuideAccount,
+          });
+
+          // Load guided tours
+          try {
+            const userGuidedTours = await GuidedTourService.getGuidedToursByGuide(userId);
+            setGuidedTours(userGuidedTours);
+          } catch (error) {
+            console.error('Error loading guided tours:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileAndTours();
+  }, [userId]);
+
+  const formatPrice = (price: number, currency: string = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(price);
+  };
+
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hours > 0) {
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
+    return `${mins}m`;
+  };
+
+  if (loading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: '#f5f5f5'
+      }}>
+        <p>Loading guided tours...</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        backgroundColor: '#f5f5f5'
+      }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            backgroundColor: '#007aff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 24px',
+            fontSize: '16px',
+            cursor: 'pointer'
+          }}
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      {/* Header */}
+      <div style={{
+        backgroundColor: '#28a745',
+        color: 'white',
+        padding: '32px 24px 24px 24px',
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'white',
+            }}
+          >
+            <FaArrowLeft />
+          </button>
+          <div>
+            <h1 
+              onClick={() => navigate('/home')}
+              style={{ margin: 0, fontSize: '24px', fontWeight: '600', cursor: 'pointer' }}
+            >
+              {profile.username}'s Guided Tours
+            </h1>
+            <p style={{ margin: '4px 0 0 0', opacity: 0.9, fontSize: '14px' }}>
+              {guidedTours.length} guided tour{guidedTours.length !== 1 ? 's' : ''} available
+            </p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* Create New Tour Button - Only for current user */}
+          {isCurrentUser && (
+            <button
+              onClick={() => navigate('/create-guided-tour')}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '8px',
+                color: 'white',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FaPlus size={12} />
+              Create New Tour
+            </button>
+          )}
+          
+          {/* Home Button */}
+          <button
+            onClick={() => navigate('/home')}
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: 'none',
+              borderRadius: '50%',
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'white',
+            }}
+          >
+            <FaHome />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: '24px' }}>
+        {guidedTours.length === 0 ? (
+          <div style={{
+            textAlign: 'center',
+            padding: '48px 24px',
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <FaWalking size={48} color="#ccc" style={{ marginBottom: '16px' }} />
+            <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>
+              {isCurrentUser ? 'No Guided Tours Yet' : 'No Guided Tours Available'}
+            </h3>
+            <p style={{ margin: '0 0 24px 0', color: '#666' }}>
+              {isCurrentUser 
+                ? 'Create your first guided tour to start offering personalized experiences to visitors.'
+                : 'This guide hasn\'t created any guided tours yet. Check back later!'
+              }
+            </p>
+            {isCurrentUser && (
+              <button
+                onClick={() => navigate('/create-guided-tour')}
+                style={{
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  margin: '0 auto'
+                }}
+              >
+                <FaPlus size={14} />
+                Create Your First Guided Tour
+              </button>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: '16px' }}>
+            {guidedTours.map((tour) => (
+              <div
+                key={tour.id}
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: '16px',
+                  padding: '20px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                }}
+                onClick={() => navigate(`/guided-tour/${tour.id}`)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                }}
+              >
+                {/* Tour Header */}
+                <div style={{ marginBottom: '12px' }}>
+                  <h3 style={{ 
+                    margin: '0 0 4px 0', 
+                    fontSize: '18px', 
+                    fontWeight: '600',
+                    color: '#333'
+                  }}>
+                    {tour.name}
+                  </h3>
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '14px', 
+                    color: '#666',
+                    lineHeight: '1.4'
+                  }}>
+                    {tour.description}
+                  </p>
+                </div>
+
+                {/* Tour Details */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gap: '12px',
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FaClock size={14} color="#666" />
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      {formatDuration(tour.duration)}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FaUsers size={14} color="#666" />
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      Up to {tour.maxGroupSize} people
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FaDollarSign size={14} color="#28a745" />
+                    <span style={{ fontSize: '14px', color: '#28a745', fontWeight: '600' }}>
+                      {formatPrice(tour.totalPrice)}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FaStar size={14} color="#ffc107" />
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      {tour.averageRating > 0 ? tour.averageRating.toFixed(1) : 'New'}
+                      {tour.totalReviews > 0 && ` (${tour.totalReviews})`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Tour Highlights */}
+                {tour.highlights && tour.highlights.length > 0 && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ 
+                      margin: '0 0 6px 0', 
+                      fontSize: '12px', 
+                      fontWeight: '600',
+                      color: '#333',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                    }}>
+                      Highlights
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {tour.highlights.slice(0, 3).map((highlight, index) => (
+                        <span
+                          key={index}
+                          style={{
+                            fontSize: '12px',
+                            backgroundColor: '#f8f9fa',
+                            color: '#495057',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            border: '1px solid #e9ecef'
+                          }}
+                        >
+                          {highlight}
+                        </span>
+                      ))}
+                      {tour.highlights.length > 3 && (
+                        <span style={{ fontSize: '12px', color: '#666' }}>
+                          +{tour.highlights.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Category & Difficulty */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: '12px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    textTransform: 'capitalize'
+                  }}>
+                    {tour.category}
+                  </span>
+                  <span style={{
+                    fontSize: '12px',
+                    color: '#666',
+                    textTransform: 'capitalize'
+                  }}>
+                    {tour.difficulty} difficulty
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default GuidedToursView;

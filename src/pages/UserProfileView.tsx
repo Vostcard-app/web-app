@@ -7,9 +7,11 @@ import { doc, getDoc, updateDoc, arrayUnion, arrayRemove, collection, query, whe
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useVostcard } from '../context/VostcardContext';
-import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee, FaMapPin } from 'react-icons/fa';
+import { FaArrowLeft, FaUserEdit, FaHome, FaHeart, FaCoffee, FaMapPin, FaWalking } from 'react-icons/fa';
 import { TourService } from '../services/tourService';
+import { GuidedTourService } from '../services/guidedTourService';
 import type { Tour } from '../types/TourTypes';
+import type { GuidedTour } from '../types/GuidedTourTypes';
 
 interface UserProfile {
   id: string;
@@ -47,6 +49,7 @@ const UserProfileView: React.FC = () => {
   
   // Tour-related state
   const [tours, setTours] = useState<Tour[]>([]);
+  const [guidedTours, setGuidedTours] = useState<GuidedTour[]>([]);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -131,6 +134,16 @@ const UserProfileView: React.FC = () => {
             setTours(userTours);
           } catch (error) {
             console.error('Error loading tours:', error);
+          }
+
+          // Load guided tours (only for guides)
+          if (data.userRole === 'guide' || data.isGuideAccount) {
+            try {
+              const userGuidedTours = await GuidedTourService.getGuidedToursByGuide(userId);
+              setGuidedTours(userGuidedTours);
+            } catch (error) {
+              console.error('Error loading guided tours:', error);
+            }
           }
         } else {
           console.warn('❌ User not found');
@@ -273,7 +286,7 @@ const UserProfileView: React.FC = () => {
         )}
         <h2>{profile.username}</h2>
         
-        {/* 🗺️ Available Tours/Trips Button - Only for Guides */}
+        {/* 🗺️ Available Self Guided Tours/Trips Button - Only for Guides */}
         {profile?.userRole === 'guide' && (
           <div style={{ 
             margin: '16px 0',
@@ -320,6 +333,57 @@ const UserProfileView: React.FC = () => {
                 </p>
               </div>
               <FaMapPin style={{ color: '#007aff', fontSize: '18px' }} />
+            </div>
+          </div>
+        )}
+
+        {/* 🚶 Available Guided Tours Button - Only for Guides */}
+        {(profile?.userRole === 'guide' || profile?.isGuideAccount) && (
+          <div style={{ 
+            margin: '8px 0 16px 0',
+            padding: '12px 16px',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            border: '1px solid #e0e0e0',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            maxWidth: '300px',
+            marginLeft: 'auto',
+            marginRight: 'auto'
+          }}
+          onClick={() => navigate(`/user-profile/${userId}/guided-tours`)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#f8f9fa';
+            e.currentTarget.style.borderColor = '#28a745';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'white';
+            e.currentTarget.style.borderColor = '#e0e0e0';
+          }}
+          >
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center' 
+            }}>
+              <div>
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: '16px', 
+                  fontWeight: '600',
+                  color: '#333'
+                }}>
+                  Available Guided Tours
+                </h3>
+                <p style={{ 
+                  margin: '2px 0 0 0', 
+                  fontSize: '12px', 
+                  color: '#666' 
+                }}>
+                  {guidedTours.length} guided tour{guidedTours.length !== 1 ? 's' : ''} available
+                </p>
+              </div>
+              <FaWalking style={{ color: '#28a745', fontSize: '18px' }} />
             </div>
           </div>
         )}
