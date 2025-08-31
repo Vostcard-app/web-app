@@ -319,7 +319,7 @@ const HomeView = () => {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [showComposeModal, setShowComposeModal] = useState(false);
-  const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('J-ix67eZ7J4'); // Default "What is Vōstcard"
+  const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('JyV2HbeCPYA'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
   // Removed quickcard pressed state
   const [currentSpeed, setCurrentSpeed] = useState<number>(0);
