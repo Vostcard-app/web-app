@@ -33,6 +33,8 @@ export interface VostcardData {
   isOffer?: boolean;
   categories?: string[];
   offerDetails?: any;
+  youtubeURL?: string;
+  instagramURL?: string;
   [key: string]: any;
 }
 
