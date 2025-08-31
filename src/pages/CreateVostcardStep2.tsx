@@ -14,6 +14,7 @@ const CreateVostcardStep2: React.FC = () => {
 
   console.log('➡️ currentVostcard:', currentVostcard);
   console.log('🎥 video object:', video);
+  console.log('📸 photos from step 1:', currentVostcard?.photos);
 
   const videoURL = useMemo(() => {
     if (video instanceof Blob) {
@@ -229,11 +230,60 @@ const CreateVostcardStep2: React.FC = () => {
         </div>
       </div>
 
-      {/* 🎥 Thumbnail */}
+      {/* 📸 Photos from Step 1 */}
+      {currentVostcard?.photos && currentVostcard.photos.length > 0 && (
+        <div style={{
+          marginTop: '80px',
+          padding: '20px',
+          borderBottom: '1px solid #E5E5E5'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 16px 0', 
+            fontSize: '18px', 
+            fontWeight: '600',
+            color: '#002B4D',
+            textAlign: 'center'
+          }}>
+            📸 Photos from Step 1 ({currentVostcard.photos.length})
+          </h3>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
+            {currentVostcard.photos.slice(0, 4).map((photo, index) => {
+              if (!photo) return null;
+              const photoURL = photo instanceof Blob ? URL.createObjectURL(photo) : photo;
+              return (
+                <div key={index} style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  border: '2px solid #E5E5E5'
+                }}>
+                  <img 
+                    src={photoURL}
+                    alt={`Photo ${index + 1}`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 🎥 Video Section */}
       <div
         style={{
           flex: 1,
-          marginTop: '80px', // Account for fixed header
+          marginTop: currentVostcard?.photos && currentVostcard.photos.length > 0 ? '0px' : '80px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
