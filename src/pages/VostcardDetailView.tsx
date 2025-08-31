@@ -1788,6 +1788,18 @@ Tap OK to continue.`;
       </div>
 
       {/* YouTube and Instagram Buttons - Above Map View */}
+      {(() => {
+        console.log('🔍 VostcardDetailView Debug - YouTube/Instagram check:', {
+          vostcardId: vostcard?.id,
+          youtubeURL: vostcard?.youtubeURL,
+          instagramURL: vostcard?.instagramURL,
+          hasYoutube: !!vostcard?.youtubeURL,
+          hasInstagram: !!vostcard?.instagramURL,
+          shouldShowButtons: !!(vostcard?.youtubeURL || vostcard?.instagramURL),
+          vostcardKeys: vostcard ? Object.keys(vostcard) : 'no vostcard'
+        });
+        return null;
+      })()}
       {(vostcard?.youtubeURL || vostcard?.instagramURL) && (
         <div style={{
           display: 'flex',
