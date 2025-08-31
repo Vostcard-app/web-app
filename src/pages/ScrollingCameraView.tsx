@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { AiOutlineClose } from 'react-icons/ai';
 import { MdCameraswitch } from 'react-icons/md';
 import { useVostcard } from '../context/VostcardContext';
-import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+// Video is optional in the unified flow
 import CameraPermissionModal from '../components/CameraPermissionModal';
 import './ScrollingCameraView.css';
 

@@ -25,7 +25,7 @@ import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
 // Removed quickcard pin import
 import { AVAILABLE_CATEGORIES, AVAILABLE_TYPES } from '../types/VostcardTypes';
-import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+// Unified flow is now permanent - video is optional
 
 // FIXED: Import pin images from assets folder for better Leaflet compatibility
 const vostcardIcon = new L.Icon({
@@ -1196,8 +1196,7 @@ const HomeView = () => {
   const handleCreateClick = (e: React.MouseEvent) => {
     e.preventDefault();
     console.log('🎬 Create Vostcard button clicked!');
-    console.log('🎬 TEMP_UNIFIED_VOSTCARD_FLOW:', TEMP_UNIFIED_VOSTCARD_FLOW);
-    console.log('🎬 Navigating to:', TEMP_UNIFIED_VOSTCARD_FLOW ? '/create-step1' : '/create-step1');
+    console.log('🎬 Using unified flow - video is optional');
     clearVostcard();
     // Navigate to step1 with camera auto-open flag
     navigate('/create-step1', {

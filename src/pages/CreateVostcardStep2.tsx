@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaArrowLeft } from 'react-icons/fa';
 import { useVostcard } from '../context/VostcardContext';
-import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+// Unified flow is now permanent - video is optional
 
 const CreateVostcardStep2: React.FC = () => {
   const navigate = useNavigate();
@@ -60,26 +60,16 @@ const CreateVostcardStep2: React.FC = () => {
     console.log('✅ handleSaveAndContinue called');
     console.log('🎥 Video object at save:', video);
 
-    if (!TEMP_UNIFIED_VOSTCARD_FLOW) {
-      // Legacy flow: video is optional now (changed from required)
-      if (videoError) {
-        alert('❌ Video has errors. Please record a new video or continue without video.');
-        return;
-      }
-      
-      // Log video status for debugging
-      if (video) {
-        console.log('✅ Video found, proceeding with video');
-      } else {
-        console.log('ℹ️ No video found, proceeding without video (optional)');
-      }
-      
-      navigate('/create-step3');
-      return;
-    }
-
     // Unified flow: video optional, allow continue even without video
     // Video optional; do not overwrite geo here — geo comes from the first photo
+    
+    // Log video status for debugging
+    if (video) {
+      console.log('✅ Video found, proceeding with video');
+    } else {
+      console.log('ℹ️ No video found, proceeding without video (optional)');
+    }
+    
     navigate('/create-step3');
   };
 
@@ -113,14 +103,14 @@ const CreateVostcardStep2: React.FC = () => {
 
   // Force a re-render when video changes to avoid iOS black frame
   useEffect(() => {
-    if (TEMP_UNIFIED_VOSTCARD_FLOW && video) {
+    if (video) {
       setIsVideoLoading(true);
       requestAnimationFrame(() => {
         setIsVideoLoading(false);
         setVideoError(null);
       });
     }
-  }, [video, TEMP_UNIFIED_VOSTCARD_FLOW]);
+  }, [video]);
 
   const handleVideoCanPlay = () => {
     console.log('📹 Video can play');
@@ -484,27 +474,24 @@ const CreateVostcardStep2: React.FC = () => {
           Use Script Tool
         </button>
 
-          {/* ✅ Save & Continue (video optional when unified flow is on) */}
+          {/* ✅ Save & Continue (video is optional) */}
         <button
           onClick={handleSaveAndContinue}
-            disabled={!TEMP_UNIFIED_VOSTCARD_FLOW && (!video || !!videoError)}
           style={{
-              backgroundColor: (TEMP_UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? '#002B4D' : '#888',
+            backgroundColor: '#002B4D',
             color: 'white',
             border: 'none',
             width: '100%',
             padding: '14px',
             borderRadius: 8,
             fontSize: 18,
-              cursor: (TEMP_UNIFIED_VOSTCARD_FLOW || (video && !videoError)) ? 'pointer' : 'not-allowed',
+            cursor: 'pointer',
           }}
         >
-            {TEMP_UNIFIED_VOSTCARD_FLOW ? 'Save & Continue' : (videoError ? 'Fix Video to Continue' : 'Save & Continue')}
+          Save & Continue
         </button>
 
-          {TEMP_UNIFIED_VOSTCARD_FLOW && (
-            <div style={{ color: '#666', fontSize: 13 }}>Video is optional — you can skip this step.</div>
-          )}
+        <div style={{ color: '#666', fontSize: 13 }}>Video is optional — you can skip this step.</div>
         
         {/* Error message */}
         {videoError && (

@@ -80,7 +80,7 @@ import TourInProgressView from "./pages/TourInProgressView";
 import AuthRedirect from "./components/AuthRedirect";
 import FiltersHelpView from "./pages/FiltersHelpView";
 import CreateCardsHelpView from "./pages/CreateCardsHelpView";
-import { TEMP_UNIFIED_VOSTCARD_FLOW } from './utils/flags';
+// Unified flow is now permanent - video is optional
 
 function App() {
   return (

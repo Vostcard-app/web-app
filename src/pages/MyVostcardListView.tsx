@@ -8,7 +8,7 @@ import { db } from '../firebase/firebaseConfig';
 
 // ✅ NEW: Import our refactored utilities and types
 import { getVostcardStatus, generateShareText, createErrorMessage } from '../utils/vostcardUtils';
-import { TEMP_UNIFIED_VOSTCARD_FLOW } from '../utils/flags';
+// Video is optional in the unified flow
 import { LoadingSpinner, ErrorMessage } from '../components/shared';
 import type { Vostcard } from '../types/VostcardTypes';
 import SharedOptionsModal from '../components/SharedOptionsModal';
