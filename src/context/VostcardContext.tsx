@@ -795,10 +795,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           allFields: Object.keys(data)
         });
         
-        // Special debug for vostcard_1756389667986
-        if (doc.id === 'vostcard_1756389667986') {
-          console.log('🔍 SPECIAL DEBUG - vostcard_1756389667986 FULL DOCUMENT:', data);
-        }
+
         
         // Test if first photo URL is accessible and try to refresh if needed
         if (Array.isArray(data.photoURLs) && data.photoURLs.length > 0) {
