@@ -41,7 +41,7 @@ export default function VostcardCreateStep1Photos() {
   // Mobile detection
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  // Initialize empty vostcard or load saved photos/URLs when component mounts
+  // Initialize empty vostcard when component mounts (only once)
   useEffect(() => {
     const initializeVostcard = async () => {
       if (!currentVostcard) {
@@ -75,51 +75,49 @@ export default function VostcardCreateStep1Photos() {
       }
     };
 
-    const initVostcardAndPhotos = async () => {
-      await initializeVostcard();
+    initializeVostcard();
+  }, []); // Only run once on mount
 
-      // Prefer Files if present
-      if (currentVostcard?.photos && Array.isArray(currentVostcard.photos) && currentVostcard.photos.length > 0) {
-        const photos = currentVostcard.photos as (File | Blob | null)[];
-        const newPhotos: (File | null)[] = [null, null, null, null];
-        const newUrls: (string | null)[] = [null, null, null, null];
-        photos.slice(0, 4).forEach((photo, index) => {
-          if (photo instanceof File || photo instanceof Blob) {
-            try {
-              newPhotos[index] = photo as File;
-              newUrls[index] = URL.createObjectURL(photo);
-            } catch {}
-          }
-        });
-        setSelectedPhotos(newPhotos);
-        // Revoke previous blob: URLs only
-        setPhotoUrls(prev => {
-          prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
-          return newUrls;
-        });
-      }
-    };
+  // Load photos from currentVostcard when it changes (separate effect)
+  useEffect(() => {
+    if (!currentVostcard) return;
 
-    const initAll = async () => {
-      await initVostcardAndPhotos();
+    // Prefer Files if present
+    if (currentVostcard.photos && Array.isArray(currentVostcard.photos) && currentVostcard.photos.length > 0) {
+      const photos = currentVostcard.photos as (File | Blob | null)[];
+      const newPhotos: (File | null)[] = [null, null, null, null];
+      const newUrls: (string | null)[] = [null, null, null, null];
+      photos.slice(0, 4).forEach((photo, index) => {
+        if (photo instanceof File || photo instanceof Blob) {
+          try {
+            newPhotos[index] = photo as File;
+            newUrls[index] = URL.createObjectURL(photo);
+          } catch {}
+        }
+      });
+      setSelectedPhotos(newPhotos);
+      // Revoke previous blob: URLs only
+      setPhotoUrls(prev => {
+        prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
+        return newUrls;
+      });
+      return; // Exit early if we loaded from photos
+    }
 
-      // Fallback: use remote photoURLs if available (edit from saved metadata)
-      if (currentVostcard?.photoURLs && Array.isArray(currentVostcard.photoURLs) && currentVostcard.photoURLs.length > 0) {
-        const urls = (currentVostcard.photoURLs as string[]).slice(0, 4);
-        const paddedUrls: (string | null)[] = [null, null, null, null];
-        urls.forEach((u, i) => { paddedUrls[i] = u; });
-        // Keep selectedPhotos as null; backgroundImage uses photoUrls for display
-        setSelectedPhotos([null, null, null, null]);
-        setPhotoUrls(prev => {
-          // Revoke only blob: URLs from previous state
-          prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
-          return paddedUrls;
-        });
-      }
-    };
-
-    initAll();
-  }, [currentVostcard, setCurrentVostcard, setSelectedPhotos, setPhotoUrls]);
+    // Fallback: use remote photoURLs if available (edit from saved metadata)
+    if (currentVostcard.photoURLs && Array.isArray(currentVostcard.photoURLs) && currentVostcard.photoURLs.length > 0) {
+      const urls = (currentVostcard.photoURLs as string[]).slice(0, 4);
+      const paddedUrls: (string | null)[] = [null, null, null, null];
+      urls.forEach((u, i) => { paddedUrls[i] = u; });
+      // Keep selectedPhotos as null; backgroundImage uses photoUrls for display
+      setSelectedPhotos([null, null, null, null]);
+      setPhotoUrls(prev => {
+        // Revoke only blob: URLs from previous state
+        prev.forEach(u => { if (u && u.startsWith('blob:')) { try { URL.revokeObjectURL(u); } catch {} } });
+        return paddedUrls;
+      });
+    }
+  }, [currentVostcard?.id]); // Only depend on vostcard ID to avoid circular dependency
 
   // Auto-open camera if coming from Create button
   useEffect(() => {
