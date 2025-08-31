@@ -835,6 +835,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
+          youtubeURL: data.youtubeURL || null,
+          instagramURL: data.instagramURL || null,
           _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
           photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
@@ -957,6 +959,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           geo: data.geo || { latitude: data.latitude, longitude: data.longitude } || null,
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
+          youtubeURL: data.youtubeURL || null,
+          instagramURL: data.instagramURL || null,
           _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
           photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
