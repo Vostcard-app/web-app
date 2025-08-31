@@ -18,7 +18,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { startEditing } = useVostcardEdit();
-  const { saveVostcard, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards } = useVostcard();
+  const { saveVostcard, saveVostcardDirect, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -1026,7 +1026,7 @@ const VostcardStudioView: React.FC = () => {
         await postVostcard(updatedVostcard);
       } else {
         console.log('🔄 Updating private vostcard - keeping it private');
-        await saveVostcard();
+        await saveVostcardDirect(updatedVostcard);
       }
       
       // Clear any remaining sessionStorage state to ensure clean initialization next time
