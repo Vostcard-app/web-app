@@ -1748,22 +1748,18 @@ const AllPostedVostcardsView: React.FC = () => {
         )}
       </div>
 
-      {/* Filter/Clear Bar - Fixed for mobile visibility with proper container width */}
+      {/* Filter/Clear Bar - Matches header width exactly */}
       <div style={{
-        position: 'fixed',
-        left: isDesktopView ? '50%' : '0',
-        right: isDesktopView ? 'auto' : '0',
-        bottom: isDesktopView ? '20px' : '0',
-        width: isDesktopView ? '390px' : '100%',
-        maxWidth: '390px',
-        transform: isDesktopView ? 'translateX(-50%)' : 'none',
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
         background: 'white',
         borderTop: '1px solid #e0e0e0',
-        borderRadius: isDesktopView ? '0 0 16px 16px' : '0',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '16px 24px',
+        padding: '16px 20px',
         zIndex: 1000,
         boxShadow: '0 -2px 8px rgba(0,0,0,0.1)'
       }}>
