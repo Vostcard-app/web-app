@@ -252,6 +252,43 @@ const UserProfileView: React.FC = () => {
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
 
+        {/* More About Guide Button - Only for Guides */}
+        {(profile?.userRole === 'guide' || profile?.isGuideAccount) && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'flex-end', 
+            marginBottom: '16px' 
+          }}>
+            <button
+              onClick={() => navigate(`/guide-profile/${userId}`)}
+              style={{
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 4px rgba(40, 167, 69, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#218838';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(40, 167, 69, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#28a745';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(40, 167, 69, 0.2)';
+              }}
+            >
+              More about {profile.username}
+            </button>
+          </div>
+        )}
+
       {/* 🖼️ Avatar */}
       <div style={{ textAlign: 'center' }}>
         {profile.avatarURL ? (
