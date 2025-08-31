@@ -103,7 +103,34 @@ const tourSlides: TourSlide[] = [
     id: 5,
     title: "You're All Set!",
     description: "Ready to start exploring? Create your first post or discover what's around you!",
-    icon: <FaCheck size={48} color="#00C851" />
+    icon: (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '20px'
+      }}>
+        <FaCheck size={48} color="#00C851" />
+        <div
+          style={{
+            backgroundColor: '#00C851',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '12px 24px',
+            fontSize: '16px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 4px 12px rgba(0,200,81,0.3)',
+            textAlign: 'center'
+          }}
+          className="join-button"
+        >
+          Join (It's free)
+        </div>
+      </div>
+    )
   }
 ];
 
@@ -276,11 +303,19 @@ const PublicQuickStartView: React.FC = () => {
             whileDrag={{ cursor: 'grabbing' }}
           >
             {/* Icon */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: '0px'
-            }}>
+            <div 
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                marginBottom: '0px'
+              }}
+              onClick={(e) => {
+                // Handle join button click on slide 5
+                if (currentSlide === 4 && (e.target as HTMLElement).classList.contains('join-button')) {
+                  navigate('/signup');
+                }
+              }}
+            >
               {currentSlideData.icon}
             </div>
 
