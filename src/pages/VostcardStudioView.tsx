@@ -973,6 +973,13 @@ const VostcardStudioView: React.FC = () => {
       const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
+      console.log('🔍 YouTube URL Processing Debug (Update):', {
+        originalYouTubeURL: youtubeURL,
+        processedYouTubeID: processedYouTubeID,
+        originalInstagramURL: instagramURL,
+        processedInstagramID: processedInstagramID
+      });
+      
       // Debug audio data before creating updated vostcard
       console.log('🎵 Audio data before creating updatedVostcard:', {
         audioFilesLength: audioFiles.length,
@@ -1014,6 +1021,14 @@ const VostcardStudioView: React.FC = () => {
         hasAudio: updatedVostcard.hasAudio,
         audioFilesLength: updatedVostcard.audioFiles?.length || 0,
         hasLegacyAudio: !!updatedVostcard.audio
+      });
+
+      console.log('🔍 Final Vostcard Object Debug (Update):', {
+        id: updatedVostcard.id,
+        youtubeURL: updatedVostcard.youtubeURL,
+        instagramURL: updatedVostcard.instagramURL,
+        hasYouTubeURL: !!updatedVostcard.youtubeURL,
+        hasInstagramURL: !!updatedVostcard.instagramURL
       });
 
       // Set the current vostcard for context consistency
