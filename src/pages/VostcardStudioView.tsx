@@ -1491,6 +1491,42 @@ const VostcardStudioView: React.FC = () => {
               </button>
             </div>
 
+            {/* Load Card Button */}
+            <div style={{ marginBottom: '15px' }}>
+              <button
+                onClick={async () => {
+                  console.log('📂 Opening vostcard loader - refreshing saved vostcards with full sync...');
+                  try {
+                    // Use full sync to get both IndexedDB and Firebase data
+                    await loadAllLocalVostcards();
+                    console.log('✅ Vostcards refreshed with full sync, opening loader modal');
+                  } catch (error) {
+                    console.error('❌ Failed to refresh vostcards:', error);
+                  }
+                  setShowVostcardLoader(true);
+                }}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: isLoading ? '#ccc' : '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 8px',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <FaEdit size={14} />
+                📂 Load Card
+              </button>
+            </div>
+
             {/* Title Input */}
             <div style={{ marginBottom: '15px' }}>
               <label style={{
@@ -1562,47 +1598,9 @@ const VostcardStudioView: React.FC = () => {
               showPhotoOptionsModal={() => setShowPhotoOptionsModal(true)}
             />
 
-            {/* Enhanced Button Grid - Load Card and New Card */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: editingVostcardId ? '1fr 1fr' : '1fr',
-              gap: '10px',
-              marginBottom: '15px'
-            }}>
-              <button
-                onClick={async () => {
-                  console.log('📂 Opening vostcard loader - refreshing saved vostcards with full sync...');
-                  try {
-                    // Use full sync to get both IndexedDB and Firebase data
-                    await loadAllLocalVostcards();
-                    console.log('✅ Vostcards refreshed with full sync, opening loader modal');
-                  } catch (error) {
-                    console.error('❌ Failed to refresh vostcards:', error);
-                  }
-                  setShowVostcardLoader(true);
-                }}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: isLoading ? '#ccc' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaEdit size={14} />
-                📂 Load Card
-              </button>
-              
-              {/* New Vostcard Button (only when editing) */}
-              {editingVostcardId && (
+            {/* New Card Button (only when editing) */}
+            {editingVostcardId && (
+              <div style={{ marginBottom: '15px' }}>
                 <button
                   onClick={() => {
                     if (window.confirm('Are you sure you want to start a new vostcard? Current changes will be lost.')) {
@@ -1619,6 +1617,7 @@ const VostcardStudioView: React.FC = () => {
                     fontSize: '13px',
                     fontWeight: 'bold',
                     cursor: isLoading ? 'not-allowed' : 'pointer',
+                    width: '100%',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1628,8 +1627,8 @@ const VostcardStudioView: React.FC = () => {
                   <FaEdit size={14} />
                   🆕 New Card
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Set Location and Audio Buttons */}
             <div style={{
