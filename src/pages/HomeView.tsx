@@ -2534,6 +2534,32 @@ const HomeView = () => {
                 Create Cards
               </button>
               
+              <button
+                onClick={() => {
+                  console.log('📖 User Guide button clicked!');
+                  setShowHelpMenu(false);
+                  console.log('📖 Navigating to /user-guide');
+                  navigate('/user-guide');
+                  console.log('📖 Navigation completed');
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontSize: '14px',
+                  textAlign: 'left',
+                  color: '#333',
+                  transition: 'background-color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                📖 User Guide
+              </button>
 
             </div>
           )}

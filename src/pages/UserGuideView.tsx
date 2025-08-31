@@ -10,8 +10,8 @@ const UserGuideView: React.FC = () => {
   const navigate = useNavigate();
   const [showVideoModal, setShowVideoModal] = useState(false);
   
-  // YouTube video ID extracted from the provided URL
-  const youtubeVideoId = 'J-ix67eZ7J4';
+  // YouTube video ID for the new "What is Vostcard?" shorts video
+  const youtubeVideoId = 'JyV2HbeCPYA';
   const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   return (
