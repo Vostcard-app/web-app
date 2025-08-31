@@ -255,7 +255,7 @@ const CameraView: React.FC = () => {
           if (!isQuickcardMode) {
             // Give iOS Safari extra time to fully release camera
             setTimeout(() => {
-              navigate('/create/step2', { replace: true });
+              navigate('/create-step2', { replace: true });
             }, 300);
           }
         };
