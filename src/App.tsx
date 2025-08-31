@@ -76,6 +76,7 @@ import EmailVostcardView from "./pages/EmailVostcardView";
 import TourView from "./pages/TourView";
 import ToursView from "./pages/ToursView";
 import GuidedToursView from "./pages/GuidedToursView";
+import GuidedTourCreationView from "./pages/GuidedTourCreationView";
 import ToursNearMeView from "./pages/ToursNearMeView";
 import TourMapView from "./pages/TourMapView";
 import TourInProgressView from "./pages/TourInProgressView";
@@ -181,6 +182,7 @@ function App() {
                   <Route path="/user-profile/:userId" element={<UserProfileView />} />
                   <Route path="/user-profile/:userId/tours" element={<ToursView />} />
                   <Route path="/user-profile/:userId/guided-tours" element={<GuidedToursView />} />
+                  <Route path="/create-guided-tour" element={<GuidedTourCreationView />} />
                   <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />
 
                   {/* 🏢 Business */}
