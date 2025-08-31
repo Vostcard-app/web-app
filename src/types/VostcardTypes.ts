@@ -164,6 +164,7 @@ export const AVAILABLE_CATEGORIES = [
   'Pub',
   'Monument',
   'Boondocking',
+  'Church',
 ] as const;
 
 // Available types constant  

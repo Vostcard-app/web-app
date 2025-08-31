@@ -47,7 +47,7 @@ const AllPostedVostcardsView: React.FC = () => {
   });
   
   // Category filtering state (using central AVAILABLE_CATEGORIES)
-  const availableCategories = ['None', ...AVAILABLE_CATEGORIES];
+  const availableCategories = AVAILABLE_CATEGORIES;
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   
   // Friends filtering state
