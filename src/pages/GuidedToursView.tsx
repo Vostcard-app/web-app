@@ -3,11 +3,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus } from 'react-icons/fa';
+import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus, FaCalendarAlt } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { GuidedTourService } from '../services/guidedTourService';
+import TourBookingCalendar from '../components/TourBookingCalendar';
 import type { GuidedTour } from '../types/GuidedTourTypes';
 
 interface UserProfile {
@@ -25,6 +26,8 @@ const GuidedToursView: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [guidedTours, setGuidedTours] = useState<GuidedTour[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
+  const [selectedTour, setSelectedTour] = useState<GuidedTour | null>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -79,6 +82,26 @@ const GuidedToursView: React.FC = () => {
       return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
     }
     return `${mins}m`;
+  };
+
+  // Handle booking submission
+  const handleBookingSubmit = async (bookingData: any) => {
+    try {
+      console.log('📅 Booking submitted:', bookingData);
+      // TODO: Implement booking logic with payment processing
+      alert('Booking request submitted! The guide will review and confirm your booking.');
+      setShowBookingCalendar(false);
+      setSelectedTour(null);
+    } catch (error) {
+      console.error('❌ Error submitting booking:', error);
+      alert('Failed to submit booking. Please try again.');
+    }
+  };
+
+  // Handle book tour button click
+  const handleBookTour = (tour: GuidedTour) => {
+    setSelectedTour(tour);
+    setShowBookingCalendar(true);
   };
 
   if (loading) {
@@ -261,10 +284,8 @@ const GuidedToursView: React.FC = () => {
                   borderRadius: '16px',
                   padding: '20px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  cursor: 'pointer',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                 }}
-                onClick={() => navigate(`/guided-tour/${tour.id}`)}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
@@ -370,7 +391,7 @@ const GuidedToursView: React.FC = () => {
                 )}
 
                 {/* Category & Difficulty */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <span style={{
                     fontSize: '12px',
                     backgroundColor: '#28a745',
@@ -389,11 +410,90 @@ const GuidedToursView: React.FC = () => {
                     {tour.difficulty} difficulty
                   </span>
                 </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/guided-tour/${tour.id}`);
+                    }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: 'white',
+                      color: '#28a745',
+                      border: '2px solid #28a745',
+                      borderRadius: '8px',
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                    }}
+                  >
+                    View Details
+                  </button>
+                  
+                  {!isCurrentUser && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookTour(tour);
+                      }}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#218838';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#28a745';
+                      }}
+                    >
+                      <FaCalendarAlt size={12} />
+                      Book Tour
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Tour Booking Calendar */}
+      {selectedTour && (
+        <TourBookingCalendar
+          isVisible={showBookingCalendar}
+          onClose={() => {
+            setShowBookingCalendar(false);
+            setSelectedTour(null);
+          }}
+          tourId={selectedTour.id}
+          guideName={selectedTour.guideName}
+          guideAvatar={selectedTour.guideAvatar}
+          onBookingSubmit={handleBookingSubmit}
+        />
+      )}
     </div>
   );
 };

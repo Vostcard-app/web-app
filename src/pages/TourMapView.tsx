@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaLocationArrow, FaMap, FaList, FaStar, FaComment, FaEye } from 'react-icons/fa';
+import { FaArrowLeft, FaLocationArrow, FaMap, FaList, FaStar, FaComment, FaEye, FaCalendarAlt } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { TourService } from '../services/tourService';
 import { RatingService, type RatingStats } from '../services/ratingService';
 import ReviewsModal from '../components/ReviewsModal';
+import TourBookingCalendar from '../components/TourBookingCalendar';
 import { useResponsive } from '../hooks/useResponsive';
+import { useAuth } from '../context/AuthContext';
 import type { Tour, TourPost } from '../types/TourTypes';
+import type { GuidedTour } from '../types/GuidedTourTypes';
 
 // Import pin images
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -65,6 +68,7 @@ const TourMapView: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDesktop } = useResponsive();
+  const { user } = useAuth();
   const shouldUseContainer = isDesktop;
 
   const [tour, setTour] = useState<Tour | null>(null);
@@ -76,6 +80,7 @@ const TourMapView: React.FC = () => {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [ratingStats, setRatingStats] = useState<RatingStats | null>(null);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [showBookingCalendar, setShowBookingCalendar] = useState(false);
 
   // Get tour data from navigation state or fetch by ID
   useEffect(() => {
@@ -193,6 +198,23 @@ const TourMapView: React.FC = () => {
   const getTourTerminology = () => {
     // Default to Tour for now - could be enhanced with creator role info
     return 'Tour';
+  };
+
+  // Helper function to check if tour is guided
+  const isGuidedTour = (tour: Tour): tour is GuidedTour => {
+    return (tour as GuidedTour).type === 'guided';
+  };
+
+  // Handle booking submission
+  const handleBookingSubmit = async (bookingData: any) => {
+    try {
+      console.log('📅 Booking submitted:', bookingData);
+      // TODO: Implement booking logic with payment processing
+      alert('Booking request submitted! The guide will review and confirm your booking.');
+      setShowBookingCalendar(false);
+    } catch (error) {
+      console.error('❌ Error submitting booking. Please try again.');
+    }
   };
 
   if (loading) {
@@ -428,6 +450,38 @@ const TourMapView: React.FC = () => {
           >
             {loading ? '⏳ Loading...' : '🎬 Start Tour'}
           </button>
+
+          {/* Book Tour Button - Only for guided tours and non-creators */}
+          {tour && isGuidedTour(tour) && user && user.uid !== tour.creatorId && (
+            <button
+              onClick={() => setShowBookingCalendar(true)}
+              style={{
+                flex: 1,
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '10px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#218838';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#28a745';
+              }}
+            >
+              <FaCalendarAlt />
+              Book Guided Tour
+            </button>
+          )}
         </div>
 
         {/* Content Area */}
@@ -793,6 +847,18 @@ const TourMapView: React.FC = () => {
         tourId={tour.id}
         tourName={tour.name}
       />
+
+      {/* Tour Booking Calendar */}
+      {tour && isGuidedTour(tour) && (
+        <TourBookingCalendar
+          isVisible={showBookingCalendar}
+          onClose={() => setShowBookingCalendar(false)}
+          tourId={tour.id}
+          guideName={(tour as GuidedTour).guideName}
+          guideAvatar={(tour as GuidedTour).guideAvatar}
+          onBookingSubmit={handleBookingSubmit}
+        />
+      )}
     </div>
   );
 };
