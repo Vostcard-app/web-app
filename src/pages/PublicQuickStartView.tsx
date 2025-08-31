@@ -149,8 +149,8 @@ const PublicQuickStartView: React.FC = () => {
         setIsAnimating(false);
       }, 150);
     } else {
-      // On completion, navigate to signup
-      navigate('/signup');
+      // On completion, navigate to register
+      navigate('/register');
     }
   };
 
@@ -312,7 +312,7 @@ const PublicQuickStartView: React.FC = () => {
               onClick={(e) => {
                 // Handle join button click on slide 5
                 if (currentSlide === 4 && (e.target as HTMLElement).classList.contains('join-button')) {
-                  navigate('/signup');
+                  navigate('/register');
                 }
               }}
             >
@@ -458,7 +458,7 @@ const PublicQuickStartView: React.FC = () => {
           {/* Skip Button */}
           {!isLastSlide && (
             <button
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/register')}
               style={{
                 background: 'none',
                 border: 'none',
