@@ -309,7 +309,7 @@ const UserProfileView: React.FC = () => {
                   fontWeight: '600',
                   color: '#333'
                 }}>
-                  Available {getTourTerminology()}s
+                  Available Self Guided {getTourTerminology()}s
                 </h3>
                 <p style={{ 
                   margin: '2px 0 0 0', 
