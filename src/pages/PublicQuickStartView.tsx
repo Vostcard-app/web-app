@@ -1,447 +1,540 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaTimes, FaPlay } from 'react-icons/fa';
+import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaFilter } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import VostcardPin from '../assets/Vostcard_pin.png';
+import OfferPin from '../assets/Offer_pin.png';
+import GuidePin from '../assets/Guide_pin.png';
 
-const PublicQuickStartView: React.FC = () => {
-  const navigate = useNavigate();
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  
-  // YouTube video ID for the new "What is Vostcard?" shorts video
-  const youtubeVideoId = 'JyV2HbeCPYA';
-  const youtubeEmbedUrl = `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+interface TourSlide {
+  id: number;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  features?: (string | { icon: React.ReactNode; text: string })[];
+}
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      width: '100vw',
-      backgroundColor: '#f8f9fa',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'auto'
-    }}>
-      {/* Header */}
-      <div style={{
-        background: '#07345c',
-        color: 'white',
-        width: '100%',
-        padding: '20px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        zIndex: 1000,
-        position: 'relative',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <FaArrowLeft 
-            size={24} 
-            color="white" 
-            style={{ cursor: 'pointer', marginRight: '20px' }}
-            onClick={() => navigate(-1)}
-          />
-          <span 
-            onClick={() => navigate('/')}
-            style={{
-            fontSize: '2.2rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            letterSpacing: '-0.02em'
-            }}
-          >
-            Vōstcard
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: '16px' }}>
-          <button
-            onClick={() => navigate('/login')}
-            style={{
-              backgroundColor: 'transparent',
-              border: '2px solid white',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'white';
-              e.currentTarget.style.color = '#07345c';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = 'white';
-            }}
-          >
-            Log In
-          </button>
-        </div>
+const tourSlides: TourSlide[] = [
+  {
+    id: 1,
+    title: "Free Tours!\nWherever you go!",
+    description: "",
+    icon: (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <img
+          src={GuidePin}
+          alt="Guide Pin"
+          style={{ width: '128px', height: '128px' }}
+        />
       </div>
-
-      {/* Content */}
+    )
+  },
+  {
+    id: 2,
+    title: "",
+    description: "",
+    icon: <div></div>,
+    features: [
+      {
+        icon: (
+          <img 
+            src={VostcardPin} 
+            alt="Vostcard Pin" 
+            style={{ width: '128px', height: '128px', flexShrink: 0 }} 
+          />
+        ),
+        text: "Points of interest made by anyone"
+      },
+      {
+        icon: (
+          <img 
+            src={OfferPin} 
+            alt="Offer Pin" 
+            style={{ width: '128px', height: '128px', flexShrink: 0 }} 
+          />
+        ),
+        text: "Special offers and deals"
+      }
+    ]
+  },
+  {
+    id: 3,
+    title: "Filters",
+    description: "Choose to see pins from just professionals or from everyone.",
+    icon: (
       <div style={{
-        flex: 1,
-        padding: '20px 24px 40px 24px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        textAlign: 'center',
-        maxWidth: '800px',
-        margin: '0 auto',
-        width: '100%',
-        boxSizing: 'border-box'
+        gap: '8px',
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: '12px 16px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        backdropFilter: 'blur(10px)',
+        marginTop: '40px'
       }}>
-        
-        {/* Title */}
-        <h1 style={{
-          fontSize: 'clamp(2rem, 5vw, 3rem)',
-          fontWeight: '800',
-          color: '#07345c',
-          marginBottom: '16px',
-          lineHeight: '1.1'
-        }}>
-          ✨ Quick Start Guide
-        </h1>
-        
-        <p style={{
-          fontSize: 'clamp(1rem, 2.5vw, 1.2rem)',
-          color: '#6c757d',
-          marginBottom: '24px',
-          lineHeight: '1.6',
-          maxWidth: '600px'
-        }}>
-          Get started with Vōstcard in just a few minutes. Learn how to create, share, and discover location-based content.
-        </p>
-
-        {/* Video Section */}
         <div style={{
+          width: '72px',
+          height: '40px',
+          borderRadius: '20px',
+          background: '#002B4D',
+          position: 'relative',
+          cursor: 'pointer',
+          transition: 'background 0.2s',
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'white',
+            position: 'absolute',
+            left: '4px',
+            transition: 'left 0.2s',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+          }} />
+        </div>
+        <span style={{ fontSize: '20px', color: '#333', fontWeight: 500, textAlign: 'center' }}>📚 See all</span>
+      </div>
+    )
+  },
+  {
+    id: 4,
+    title: "Need Help?\nWe've Got You!",
+    description: "Tap on the Help button to find this Quick Start and more helpful information.",
+    icon: (
+      <div style={{
+        backgroundColor: '#002B4D',
+        color: 'white',
+        border: 'none',
+        borderRadius: '12px',
+        padding: '12px 16px',
+        fontSize: '24px',
+        fontWeight: 500,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        lineHeight: '1',
+        gap: '8px',
+        minWidth: '120px',
+        marginTop: '25px'
+      }}>
+        <span style={{ fontSize: '28px', lineHeight: '1' }}>❓</span>
+        <span>Help</span>
+      </div>
+    )
+  },
+  {
+    id: 5,
+    title: "Join Tours & Adventures",
+    description: "Tap the Tour button of Guide avatar to see curated tours.",
+    icon: (
+      <div style={{
+        backgroundColor: '#002B4D',
+        color: 'white',
+        border: 'none',
+        borderRadius: '6px',
+        padding: '12px 16px',
+        fontSize: '16px',
+        fontWeight: 500,
+        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
+        minWidth: '100px',
+        marginTop: '20px'
+      }}>
+        <FaWalking style={{ fontSize: '16px' }} />
+        <span>Tours</span>
+      </div>
+    )
+  },
+  {
+    id: 6,
+    title: "Connect & Share",
+    description: "Follow friends, like posts and build you community.",
+    icon: <FaUsers size={48} color="#002B4D" />
+  },
+  {
+    id: 7,
+    title: "You're All Set!",
+    description: "Ready to start exploring? Create your first post or discover what's around you!",
+    icon: <FaCheck size={48} color="#00C851" />
+  }
+];
+
+const PublicQuickStartView: React.FC = () => {
+  const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleNext = () => {
+    if (isAnimating) return;
+    
+    if (currentSlide < tourSlides.length - 1) {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentSlide(prev => prev + 1);
+        setIsAnimating(false);
+      }, 150);
+    } else {
+      // On completion, navigate to signup
+      navigate('/signup');
+    }
+  };
+
+  const handlePrevious = () => {
+    if (isAnimating || currentSlide === 0) return;
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentSlide(prev => prev - 1);
+      setIsAnimating(false);
+    }, 150);
+  };
+
+  const handleDotClick = (slideIndex: number) => {
+    if (isAnimating || slideIndex === currentSlide) return;
+    
+    setIsAnimating(true);
+    setTimeout(() => {
+      setCurrentSlide(slideIndex);
+      setIsAnimating(false);
+    }, 150);
+  };
+
+  // Swipe handling
+  const handleSwipe = (event: any, info: any) => {
+    if (isAnimating) return;
+
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    const velocityThreshold = 500; // Minimum velocity for a swipe
+    
+    // Check if it's a significant swipe (either distance or velocity)
+    if (Math.abs(info.offset.x) > swipeThreshold || Math.abs(info.velocity.x) > velocityThreshold) {
+      if (info.offset.x > 0) {
+        // Swipe right - go to previous slide
+        handlePrevious();
+      } else {
+        // Swipe left - go to next slide
+        handleNext();
+      }
+    }
+  };
+
+  const currentSlideData = tourSlides[currentSlide];
+  const isLastSlide = currentSlide === tourSlides.length - 1;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          zIndex: 100000,
+        }}
+      />
+
+      {/* Modal */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
           backgroundColor: 'white',
           borderRadius: '16px',
-          padding: 'clamp(16px, 4vw, 32px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          marginBottom: '24px',
-          width: '100%',
-          maxWidth: '600px'
-        }}>
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            color: '#07345c',
-            marginBottom: '16px'
-          }}>
-            🎥 What is Vōstcard?
-          </h2>
-          
-          <div 
-            onClick={() => setShowVideoModal(true)}
-            style={{
-                          position: 'relative',
-            width: '100%',
-            height: 'clamp(200px, 40vw, 300px)',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              border: '2px solid #e9ecef',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#07345c';
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#e9ecef';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <div style={{
-              backgroundColor: '#07345c',
-              borderRadius: '50%',
-              width: '80px',
-              height: '80px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 16px rgba(7,52,92,0.3)'
-            }}>
-              <FaPlay size={32} color="white" style={{ marginLeft: '4px' }} />
-            </div>
-            <div style={{
-              position: 'absolute',
-              bottom: '16px',
-              left: '16px',
-              backgroundColor: 'rgba(0,0,0,0.8)',
-              color: 'white',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              fontSize: '14px',
-              fontWeight: '600'
-            }}>
-              Watch Introduction Video
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Steps */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          padding: 'clamp(16px, 4vw, 32px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-          marginBottom: '24px',
-          width: '100%',
-          maxWidth: '600px',
-          textAlign: 'left'
-        }}>
-          <h2 style={{
-            fontSize: '1.5rem',
-            fontWeight: '700',
-            color: '#07345c',
-            marginBottom: '24px',
-            textAlign: 'center'
-          }}>
-            🚀 Get Started in 3 Steps
-          </h2>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-              <div style={{
-                backgroundColor: '#07345c',
-                color: 'white',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '16px',
-                fontWeight: '700',
-                flexShrink: 0
-              }}>
-                1
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#07345c', margin: '0 0 8px 0' }}>
-                  📱 Create Your Account
-                </h3>
-                <p style={{ fontSize: '1rem', color: '#6c757d', margin: 0, lineHeight: '1.5' }}>
-                  Sign up for free and set up your profile to start creating location-based content.
-                </p>
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-              <div style={{
-                backgroundColor: '#07345c',
-                color: 'white',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '16px',
-                fontWeight: '700',
-                flexShrink: 0
-              }}>
-                2
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#07345c', margin: '0 0 8px 0' }}>
-                  📸 Create Your First Vōstcard
-                </h3>
-                <p style={{ fontSize: '1rem', color: '#6c757d', margin: 0, lineHeight: '1.5' }}>
-                  Add photos, record a video, and share your experience at any location.
-                </p>
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-              <div style={{
-                backgroundColor: '#07345c',
-                color: 'white',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '16px',
-                fontWeight: '700',
-                flexShrink: 0
-              }}>
-                3
-              </div>
-              <div>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#07345c', margin: '0 0 8px 0' }}>
-                  🗺️ Explore & Discover
-                </h3>
-                <p style={{ fontSize: '1rem', color: '#6c757d', margin: 0, lineHeight: '1.5' }}>
-                  Browse the map to discover amazing places and experiences shared by others.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* CTA Buttons */}
+          padding: '0',
+          maxWidth: '400px',
+          width: '90%',
+          maxHeight: '80vh',
+          overflow: 'hidden',
+          zIndex: 100001,
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+        }}
+      >
+        {/* Header */}
         <div style={{
           display: 'flex',
-          gap: '16px',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          marginTop: 'auto',
-          paddingTop: '20px'
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 20px',
+          borderBottom: '1px solid #e0e0e0',
+          backgroundColor: '#f8f9fa'
         }}>
-          <button
-            onClick={() => navigate('/register')}
-            style={{
-              backgroundColor: '#07345c',
-              color: 'white',
-              border: 'none',
-              padding: 'clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px)',
-              borderRadius: '12px',
-              fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{
+              fontSize: '14px',
               fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 4px 16px rgba(7,52,92,0.3)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(7,52,92,0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 16px rgba(7,52,92,0.3)';
-            }}
-          >
-            🚀 Get Started Free
-          </button>
+              color: '#002B4D'
+            }}>
+              Quick Start
+            </span>
+            <span style={{
+              fontSize: '12px',
+              color: '#666',
+              backgroundColor: '#e9ecef',
+              padding: '2px 8px',
+              borderRadius: '12px'
+            }}>
+              {currentSlide + 1} of {tourSlides.length}
+            </span>
+          </div>
           
           <button
-            onClick={() => navigate('/user-guide')}
+            onClick={() => navigate('/')}
             style={{
-              backgroundColor: 'transparent',
-              color: '#07345c',
-              border: '2px solid #07345c',
-              padding: 'clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px)',
-              borderRadius: '12px',
-              fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
-              fontWeight: '600',
+              background: 'none',
+              border: 'none',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#07345c';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#07345c';
+              padding: '4px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#666'
             }}
           >
-            📖 Full User Guide
+            <FaTimes size={16} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.1}
+            onDragEnd={handleSwipe}
+            style={{
+              padding: '0px 24px 32px 24px',
+              textAlign: 'center',
+              minHeight: '300px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              cursor: 'grab'
+            }}
+            whileDrag={{ cursor: 'grabbing' }}
+          >
+            {/* Icon */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: '0px'
+            }}>
+              {currentSlideData.icon}
+            </div>
+
+            {/* Title */}
+            <h2 style={{
+              margin: '20px 0 16px 0',
+              fontSize: '28px',
+              fontWeight: '700',
+              color: '#002B4D',
+              lineHeight: '1.2',
+              whiteSpace: 'pre-line'
+            }}>
+              {currentSlideData.title}
+            </h2>
+
+            {/* Description */}
+            <p style={{
+              margin: '0 0 24px 0',
+              fontSize: '28px',
+              lineHeight: '1.5',
+              color: '#555',
+              textAlign: 'center'
+            }}>
+              {currentSlideData.description}
+            </p>
+
+            {/* Features */}
+            {currentSlideData.features && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                alignItems: 'flex-start',
+                textAlign: 'left'
+              }}>
+                {currentSlideData.features.map((feature, index) => (
+                  <div key={index} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '28px',
+                    color: '#666'
+                  }}>
+                    {typeof feature === 'string' ? (
+                      <>
+                        <div style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: '#002B4D',
+                          flexShrink: 0
+                        }} />
+                        {feature}
+                      </>
+                    ) : (
+                      <>
+                        {feature.icon}
+                        {feature.text}
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Swipe Indicator */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '8px 24px 0 24px',
+          fontSize: '12px',
+          color: '#999',
+          gap: '4px'
+        }}>
+          <span>←</span>
+          <span>Swipe to navigate</span>
+          <span>→</span>
+        </div>
+
+        {/* Progress Dots */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: '0 24px 16px 24px'
+        }}>
+          {tourSlides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => handleDotClick(index)}
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                border: 'none',
+                backgroundColor: index === currentSlide ? '#002B4D' : '#e0e0e0',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease'
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Navigation */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 24px 24px 24px',
+          gap: '16px'
+        }}>
+          {/* Previous Button */}
+          <button
+            onClick={handlePrevious}
+            disabled={currentSlide === 0 || isAnimating}
+            style={{
+              background: currentSlide === 0 ? '#f5f5f5' : 'white',
+              color: currentSlide === 0 ? '#ccc' : '#002B4D',
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: currentSlide === 0 ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+              minWidth: '80px',
+              justifyContent: 'center'
+            }}
+          >
+            <FaArrowLeft size={12} />
+            Back
+          </button>
+
+          {/* Skip Button */}
+          {!isLastSlide && (
+            <button
+              onClick={() => navigate('/signup')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#666',
+                fontSize: '14px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: '4px 8px'
+              }}
+            >
+              Skip Tour
+            </button>
+          )}
+
+          {/* Next/Complete Button */}
+          <button
+            onClick={handleNext}
+            disabled={isAnimating}
+            style={{
+              background: '#002B4D',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: isAnimating ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+              minWidth: '80px',
+              justifyContent: 'center'
+            }}
+          >
+            {isLastSlide ? (
+              <>
+                <FaCheck size={12} />
+                Done
+              </>
+            ) : (
+              <>
+                Next
+                <FaArrowRight size={12} />
+              </>
+            )}
           </button>
         </div>
       </div>
-
-      {/* Video Modal */}
-      <AnimatePresence>
-        {showVideoModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2000,
-              padding: '20px'
-            }}
-            onClick={() => setShowVideoModal(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '16px',
-                padding: '24px',
-                maxWidth: '800px',
-                width: '100%',
-                maxHeight: '90vh',
-                overflow: 'auto',
-                position: 'relative'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setShowVideoModal(false)}
-                style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '24px',
-                  cursor: 'pointer',
-                  color: '#6c757d',
-                  zIndex: 1
-                }}
-              >
-                <FaTimes />
-              </button>
-              
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                color: '#07345c',
-                marginBottom: '20px',
-                textAlign: 'center'
-              }}>
-                What is Vōstcard?
-              </h2>
-              
-              <div style={{
-                width: '100%',
-                height: '400px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <iframe
-                  src={youtubeEmbedUrl}
-                  width="100%"
-                  height="100%"
-                  style={{
-                    minHeight: '315px',
-                    maxWidth: '560px',
-                    border: 'none',
-                    borderRadius: '12px'
-                  }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="What is Vōstcard?"
-                />
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </>
   );
 };
 
