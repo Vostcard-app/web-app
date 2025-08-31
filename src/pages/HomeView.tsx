@@ -1197,10 +1197,10 @@ const HomeView = () => {
     e.preventDefault();
     console.log('🎬 Create Vostcard button clicked!');
     console.log('🎬 TEMP_UNIFIED_VOSTCARD_FLOW:', TEMP_UNIFIED_VOSTCARD_FLOW);
-    console.log('🎬 Navigating to:', TEMP_UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1');
+    console.log('🎬 Navigating to:', TEMP_UNIFIED_VOSTCARD_FLOW ? '/create-step1' : '/create-step1');
     clearVostcard();
     // Navigate to step1 with camera auto-open flag
-    navigate(TEMP_UNIFIED_VOSTCARD_FLOW ? '/create/step1' : '/create-step1', {
+    navigate('/create-step1', {
       state: { autoOpenCamera: true }
     });
     console.log('🎬 Navigation completed');
