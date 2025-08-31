@@ -1282,7 +1282,7 @@ ${privateUrl}`);
               justifyContent: 'center'
             }}>
               <iframe
-                src="https://www.youtube.com/embed/J-ix67eZ7J4?autoplay=1&rel=0&modestbranding=1&playsinline=1"
+                src="https://www.youtube.com/embed/JyV2HbeCPYA?autoplay=1&rel=0&modestbranding=1&playsinline=1"
                 width="100%"
                 height="100%"
                 style={{
