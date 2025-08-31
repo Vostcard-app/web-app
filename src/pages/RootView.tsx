@@ -219,7 +219,7 @@ const RootView: React.FC = () => {
         <span>Vōstcard</span>
         
         <div 
-          onClick={() => navigate('/user-guide')}
+          onClick={() => navigate('/quick-start')}
           style={{
             cursor: 'pointer',
             display: 'flex',
@@ -229,8 +229,9 @@ const RootView: React.FC = () => {
         >
           <img 
             src={RoundInfoButton} 
-            alt="Round Info Button" 
+            alt="Quick Start" 
             className="bobbing-pin"
+            title="Quick Start - Get Started with Vostcard"
             style={{
               width: '60px',
               height: '60px'

@@ -13,6 +13,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegistrationPage from "./pages/RegistrationPage";
 import UserGuideView from "./pages/UserGuideView";
+import PublicQuickStartView from "./pages/PublicQuickStartView";
 import HomeView from "./pages/HomeView";
 import PublicHomeView from "./pages/PublicHomeView";
 import BrowseAreaView from "./pages/BrowseAreaView";
@@ -101,6 +102,7 @@ function App() {
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegistrationPage />} />
                   <Route path="/user-guide" element={<UserGuideView />} />
+                  <Route path="/quick-start" element={<PublicQuickStartView />} />
 
                   {/*  Public Access */}
                   <Route path="/share/:id" element={<PublicVostcardView />} />

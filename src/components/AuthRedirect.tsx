@@ -9,7 +9,7 @@ const AuthRedirect = () => {
   const loginRedirectTimerRef = useRef<number | null>(null);
 
   // Add this debug logging (keep list in sync with publicRoutes below)
-  const debugPublicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/public-map', '/all-posted-vostcards'];
+  const debugPublicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/quick-start', '/public-map', '/all-posted-vostcards'];
   console.log('🔍 AuthRedirect Debug:', {
     loading,
     user: !!user,
@@ -90,7 +90,7 @@ const AuthRedirect = () => {
     }
 
     // Routes allowed without auth (public experience)
-    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/all-posted-vostcards'];
+    const publicRoutes = ['/', '/login', '/register', '/landing', '/user-guide', '/quick-start', '/all-posted-vostcards'];
     const isPublicRoute = publicRoutes.includes(location.pathname);
 
     // Dynamic routes that should be allowed (with any ID) 
@@ -132,7 +132,7 @@ const AuthRedirect = () => {
     }
 
     // If authenticated but on a public route (except root, user-guide, and all-posted-vostcards)
-    if (user && isPublicRoute && !['/', '/user-guide', '/all-posted-vostcards'].includes(location.pathname)) {
+    if (user && isPublicRoute && !['/', '/user-guide', '/quick-start', '/all-posted-vostcards'].includes(location.pathname)) {
       console.log('🏪 AuthRedirect: Public route redirect check - userRole:', userRole, 'path:', location.pathname);
       if (userRole === 'advertiser') {
         console.log('🏪 AuthRedirect: Redirecting advertiser from public route to advertiser portal');
