@@ -266,6 +266,13 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoURL = await getDownloadURL(videoRef);
       }
 
+      // Clean geo object to remove undefined values
+      const cleanGeo = currentVostcard.geo ? {
+        latitude: currentVostcard.geo.latitude,
+        longitude: currentVostcard.geo.longitude,
+        ...(currentVostcard.geo.address !== undefined && { address: currentVostcard.geo.address })
+      } : null;
+
       // Save to Firestore
       const docData = {
         id: currentVostcard.id,
@@ -279,7 +286,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoURL: videoURL,
         latitude: currentVostcard.geo?.latitude,
         longitude: currentVostcard.geo?.longitude,
-        geo: currentVostcard.geo || null,
+        geo: cleanGeo,
         avatarURL: user.photoURL || '',
         createdAt: currentVostcard.createdAt || serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -290,7 +297,9 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasPhotos: photoURLs.length > 0,
         mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
-        offerDetails: currentVostcard.offerDetails || null
+        offerDetails: currentVostcard.offerDetails || null,
+        youtubeURL: currentVostcard.youtubeURL || null,
+        instagramURL: currentVostcard.instagramURL || null
       };
 
       console.log('📝 Saving vostcard to Firebase:', docData);
