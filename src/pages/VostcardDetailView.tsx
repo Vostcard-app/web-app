@@ -1800,8 +1800,8 @@ Tap OK to continue.`;
         });
         return null;
       })()}
-      {/* TEMP DEBUG: Always show buttons to test UI */}
-      {true && (
+      {/* YouTube and Instagram buttons */}
+      {(vostcard?.youtubeURL || vostcard?.instagramURL) && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -1810,8 +1810,8 @@ Tap OK to continue.`;
           gap: '12px',
           borderBottom: '1px solid #eee'
         }}>
-          {/* YouTube Button - TEMP DEBUG: Always show */}
-          {true && (
+          {/* YouTube Button */}
+          {vostcard?.youtubeURL && (
             <button
               onClick={() => {
                 console.log('📺 YouTube button clicked:', vostcard.youtubeURL);
@@ -1846,12 +1846,12 @@ Tap OK to continue.`;
               }}>
                 <FaPlay size={8} style={{ color: '#FF0000', marginLeft: '1px' }} />
               </div>
-              YouTube {vostcard?.youtubeURL ? `(${vostcard.youtubeURL})` : '(no URL)'}
+              YouTube
             </button>
           )}
 
-          {/* Instagram Button - TEMP DEBUG: Always show */}
-          {true && (
+          {/* Instagram Button */}
+          {vostcard?.instagramURL && (
             <button
               onClick={() => {
                 console.log('📷 Instagram button clicked:', vostcard.instagramURL);
@@ -1886,7 +1886,7 @@ Tap OK to continue.`;
               }}>
                 📷
               </div>
-              Instagram {vostcard?.instagramURL ? `(${vostcard.instagramURL})` : '(no URL)'}
+              Instagram
             </button>
           )}
         </div>
