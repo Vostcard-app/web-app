@@ -1890,7 +1890,6 @@ const HomeView = () => {
 
             {/* 8. Admin Dashboard (disabled - duplicate admin entry) */}
             
-            </button>
             
             {/* 9. Settings */}
             <button
