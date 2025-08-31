@@ -10,6 +10,7 @@ import { useVostcardEdit } from '../context/VostcardEditContext';
 import type { Drivecard, Vostcard } from '../types/VostcardTypes';
 import MultiPhotoModal from '../components/MultiPhotoModal';
 import PhotoOptionsModal from '../components/PhotoOptionsModal';
+import PhotoUploadManager from '../components/PhotoUploadManager';
 
 const VostcardStudioView: React.FC = () => {
   const navigate = useNavigate();
@@ -71,16 +72,7 @@ const VostcardStudioView: React.FC = () => {
   const [vostcardCategories, setVostcardCategories] = useState<string[]>([]);
   const [showVostcardCategoryModal, setShowVostcardCategoryModal] = useState(false);
 
-  // Drag and drop state for photo reordering
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  
-  // Touch drag state for mobile
-  const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  
-  // Ref for managing touch event listeners
-  const photoGridRef = useRef<HTMLDivElement | null>(null);
+  // Photo grid ref removed - now handled by PhotoUploadManager
   
   // Editing state for vostcards
   const [editingVostcardId, setEditingVostcardId] = useState<string | null>(null);
@@ -695,7 +687,13 @@ const VostcardStudioView: React.FC = () => {
     setVostcardCategories([]);
   };
 
-  // Enhanced photo upload handler for multiple photos (unlimited)
+  // Photo change handler for PhotoUploadManager
+  const handlePhotosChange = (newPhotos: (Blob | File)[], newPreviews: string[]) => {
+    setVostcardPhotos(newPhotos);
+    setVostcardPhotoPreviews(newPreviews);
+  };
+
+  // Enhanced photo upload handler for multiple photos (unlimited) - kept for legacy inputs
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
@@ -722,160 +720,11 @@ const VostcardStudioView: React.FC = () => {
     console.log(`📸 Added ${imageFiles.length} photos. Total: ${newPhotos.length}`);
   };
 
-  // Remove a specific photo
-  const removePhoto = (index: number) => {
-    const newPhotos = vostcardPhotos.filter((_, i) => i !== index);
-    const newPreviews = vostcardPhotoPreviews.filter((_, i) => i !== index);
-    
-    // Clean up blob URL
-    if (vostcardPhotoPreviews[index]) {
-      URL.revokeObjectURL(vostcardPhotoPreviews[index]);
-    }
-    
-    setVostcardPhotos(newPhotos);
-    setVostcardPhotoPreviews(newPreviews);
-  };
+  // Photo removal function moved to PhotoUploadManager component
 
-  // Drag and drop handlers for photo reordering
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', index.toString());
-    
-    // Prevent default behavior to avoid conflicts with touch events
-    e.preventDefault();
-  };
+  // Drag and drop handlers moved to PhotoUploadManager component
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverIndex(index);
-  };
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      return;
-    }
-
-    // Reorder photos and previews
-    const newPhotos = [...vostcardPhotos];
-    const newPreviews = [...vostcardPhotoPreviews];
-    
-    const draggedPhoto = newPhotos[draggedIndex];
-    const draggedPreview = newPreviews[draggedIndex];
-    
-    // Remove from original position
-    newPhotos.splice(draggedIndex, 1);
-    newPreviews.splice(draggedIndex, 1);
-    
-    // Insert at new position
-    newPhotos.splice(dropIndex, 0, draggedPhoto);
-    newPreviews.splice(dropIndex, 0, draggedPreview);
-    
-    setVostcardPhotos(newPhotos);
-    setVostcardPhotoPreviews(newPreviews);
-    
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  // Touch event handlers for mobile drag and drop (manual event listeners)
-  const handleTouchStart = (e: TouchEvent) => {
-    const target = e.target as HTMLElement;
-    const photoIndex = target.getAttribute('data-photo-index');
-    if (!photoIndex) return;
-    
-    const index = parseInt(photoIndex);
-    const touch = e.touches[0];
-    setTouchStartPos({ x: touch.clientX, y: touch.clientY });
-    setDraggedIndex(index);
-    setIsDragging(false);
-    
-    // Prevent scrolling when starting to drag
-    e.preventDefault();
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (draggedIndex === null || !touchStartPos) return;
-    
-    const touch = e.touches[0];
-    const deltaX = Math.abs(touch.clientX - touchStartPos.x);
-    const deltaY = Math.abs(touch.clientY - touchStartPos.y);
-    
-    // Start dragging if moved more than 10px
-    if (deltaX > 10 || deltaY > 10) {
-      setIsDragging(true);
-      
-      // Find which photo we're over
-      const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-      const photoElement = elements.find(el => el.getAttribute('data-photo-index'));
-      if (photoElement) {
-        const targetIndex = parseInt(photoElement.getAttribute('data-photo-index') || '0');
-        if (targetIndex !== draggedIndex) {
-          setDragOverIndex(targetIndex);
-        } else {
-          setDragOverIndex(null);
-        }
-      }
-    }
-    
-    // Prevent scrolling while dragging
-    e.preventDefault();
-  };
-
-  const handleTouchEnd = (e: TouchEvent) => {
-    if (draggedIndex === null) return;
-    
-    if (isDragging && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
-      // Perform the reorder
-      const newPhotos = [...vostcardPhotos];
-      const newPreviews = [...vostcardPhotoPreviews];
-      
-      const draggedPhoto = newPhotos[draggedIndex];
-      const draggedPreview = newPreviews[draggedIndex];
-      
-      newPhotos.splice(draggedIndex, 1);
-      newPreviews.splice(draggedIndex, 1);
-      
-      newPhotos.splice(dragOverIndex, 0, draggedPhoto);
-      newPreviews.splice(dragOverIndex, 0, draggedPreview);
-      
-      setVostcardPhotos(newPhotos);
-      setVostcardPhotoPreviews(newPreviews);
-    }
-    
-    // Reset all drag state
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-    setTouchStartPos(null);
-    setIsDragging(false);
-  };
-
-  // Effect to manage touch event listeners with passive: false
-  useEffect(() => {
-    const photoGrid = photoGridRef.current;
-    if (!photoGrid) return;
-
-    // Add non-passive touch event listeners
-    photoGrid.addEventListener('touchstart', handleTouchStart, { passive: false });
-    photoGrid.addEventListener('touchmove', handleTouchMove, { passive: false });
-    photoGrid.addEventListener('touchend', handleTouchEnd, { passive: false });
-
-    return () => {
-      photoGrid.removeEventListener('touchstart', handleTouchStart);
-      photoGrid.removeEventListener('touchmove', handleTouchMove);
-      photoGrid.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [draggedIndex, touchStartPos, isDragging, dragOverIndex, vostcardPhotos, vostcardPhotoPreviews]);
+  // Touch event handlers and useEffect moved to PhotoUploadManager component
 
   const handleVostcardAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, audioType: 'intro' | 'detail') => {
     const file = e.target.files?.[0];
@@ -1794,158 +1643,20 @@ const VostcardStudioView: React.FC = () => {
               />
             </div>
 
-            {/* Photo Gallery Preview */}
-            {vostcardPhotoPreviews.length > 0 && (
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: '#333',
-                  marginBottom: '8px'
-                }}>
-                  Photos ({vostcardPhotoPreviews.length}/4)
-                </label>
-                <div 
-                  ref={photoGridRef}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: '8px',
-                    marginBottom: '8px'
-                  }}>
-                  {vostcardPhotoPreviews.map((preview, index) => (
-                    <div
-                      key={index}
-                      data-photo-index={index}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDrop={(e) => handleDrop(e, index)}
-                      onDragEnd={handleDragEnd}
-                      onMouseDown={(e) => {
-                        // Handle mouse drag for desktop
-                        if (e.button === 0) { // Left mouse button only
-                          setDraggedIndex(index);
-                        }
-                      }}
-                      onMouseEnter={(e) => {
-                        // Handle drag over for mouse
-                        if (draggedIndex !== null && draggedIndex !== index) {
-                          setDragOverIndex(index);
-                        }
-                      }}
-                      onMouseLeave={() => {
-                        setDragOverIndex(null);
-                      }}
-                      onMouseUp={() => {
-                        // Handle drop for mouse
-                        if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
-                          // Reorder photos
-                          const newPhotos = [...vostcardPhotos];
-                          const newPreviews = [...vostcardPhotoPreviews];
-                          
-                          const draggedPhoto = newPhotos[draggedIndex];
-                          const draggedPreview = newPreviews[draggedIndex];
-                          
-                          newPhotos.splice(draggedIndex, 1);
-                          newPreviews.splice(draggedIndex, 1);
-                          
-                          newPhotos.splice(dragOverIndex, 0, draggedPhoto);
-                          newPreviews.splice(dragOverIndex, 0, draggedPreview);
-                          
-                          setVostcardPhotos(newPhotos);
-                          setVostcardPhotoPreviews(newPreviews);
-                        }
-                        setDraggedIndex(null);
-                        setDragOverIndex(null);
-                      }}
-                      style={{
-                          position: 'relative',
-                          aspectRatio: '1',
-                          borderRadius: '8px',
-                          overflow: 'hidden',
-                          backgroundColor: '#f0f0f0',
-                          cursor: 'grab',
-                          opacity: draggedIndex === index ? 0.5 : 1,
-                          transform: draggedIndex === index ? 'scale(0.95)' : 'scale(1)',
-                          transition: isDragging ? 'none' : 'all 0.2s ease', // Disable transition during touch drag
-                          border: dragOverIndex === index && draggedIndex !== index ? '2px dashed #007aff' : 'none',
-                          boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 0 10px rgba(0, 122, 255, 0.3)' : 'none',
-                          touchAction: 'none' // Prevent browser touch behaviors
-                        }}
-                    >
-                      <img
-                        src={preview}
-                        alt={`Photo ${index + 1}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          pointerEvents: 'none', // Prevent image from interfering with drag
-                          userSelect: 'none', // Prevent text selection
-                          WebkitUserSelect: 'none'
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '4px',
-                          left: '4px',
-                          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                          color: 'white',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '10px',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        {index + 1}
-                      </div>
-                      <button
-                        onClick={() => removePhoto(index)}
-                        disabled={isLoading}
-                        style={{
-                          position: 'absolute',
-                          top: '4px',
-                          right: '4px',
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          backgroundColor: 'rgba(255, 0, 0, 0.8)',
-                          color: 'white',
-                          border: 'none',
-                          fontSize: '12px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          zIndex: 10
-                        }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                {vostcardPhotoPreviews.length > 1 && (
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#666',
-                    textAlign: 'center',
-                    fontStyle: 'italic',
-                    marginTop: '4px'
-                  }}>
-                    💡 Tap and drag photos to reorder them
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Photo Upload Manager */}
+            <PhotoUploadManager
+              photos={vostcardPhotos}
+              photoPreviews={vostcardPhotoPreviews}
+              onPhotosChange={handlePhotosChange}
+              maxPhotos={4}
+              disabled={isLoading}
+              showPhotoOptionsModal={() => setShowPhotoOptionsModal(true)}
+            />
 
-            {/* Enhanced Button Grid - Load Card, Load Photos, and New Card */}
+            {/* Enhanced Button Grid - Load Card and New Card */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: editingVostcardId ? '1fr 1fr 1fr' : '1fr 1fr',
+              gridTemplateColumns: editingVostcardId ? '1fr 1fr' : '1fr',
               gap: '10px',
               marginBottom: '15px'
             }}>
@@ -1979,28 +1690,6 @@ const VostcardStudioView: React.FC = () => {
               >
                 <FaEdit size={14} />
                 📂 Load Card
-              </button>
-
-              <button 
-                onClick={() => setShowPhotoOptionsModal(true)}
-                disabled={isLoading || vostcardPhotos.length >= 4}
-                style={{
-                  backgroundColor: (isLoading || vostcardPhotos.length >= 4) ? '#ccc' : '#007aff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 8px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontWeight: 'bold',
-                  cursor: (isLoading || vostcardPhotos.length >= 4) ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <FaImages size={14} />
-                📷 Add Photo
               </button>
               
               {/* New Vostcard Button (only when editing) */}
