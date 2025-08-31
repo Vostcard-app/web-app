@@ -70,7 +70,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 3,
     title: "Join Tours & Adventures",
-    description: "Tap the Tour button of Guide avatar to see curated tours.",
+    description: "Tap the Tour button or Guide avatar to see curated tours.",
     icon: (
       <div style={{
         backgroundColor: '#002B4D',
