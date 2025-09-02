@@ -444,8 +444,8 @@ const ToursNearMeView: React.FC = () => {
               padding: '16px',
               border: 'none',
               backgroundColor: activeTab === 'guide-led' ? '#f8f9fa' : 'transparent',
-              borderBottom: activeTab === 'guide-led' ? '3px solid #007aff' : '3px solid transparent',
-              color: activeTab === 'guide-led' ? '#007aff' : '#666',
+              borderBottom: activeTab === 'guide-led' ? '3px solid #134369' : '3px solid transparent',
+              color: activeTab === 'guide-led' ? '#134369' : '#666',
               fontWeight: activeTab === 'guide-led' ? '600' : '400',
               fontSize: '16px',
               cursor: 'pointer',
@@ -733,7 +733,7 @@ const ToursNearMeView: React.FC = () => {
                         
                         {'basePrice' in tour && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '14px', color: '#28a745', fontWeight: '600' }}>
+                            <span style={{ fontSize: '14px', color: '#134369', fontWeight: '600' }}>
                               ${tour.basePrice}/person
                             </span>
                           </div>
@@ -758,8 +758,8 @@ const ToursNearMeView: React.FC = () => {
                           style={{
                             flex: 1,
                             backgroundColor: 'white',
-                            color: '#28a745',
-                            border: '2px solid #28a745',
+                            color: '#134369',
+                            border: '2px solid #134369',
                             borderRadius: '8px',
                             padding: '8px 12px',
                             fontSize: '14px',
@@ -784,7 +784,7 @@ const ToursNearMeView: React.FC = () => {
                           }}
                           style={{
                             flex: 1,
-                            backgroundColor: '#28a745',
+                            backgroundColor: '#134369',
                             color: 'white',
                             border: 'none',
                             borderRadius: '8px',
@@ -799,10 +799,10 @@ const ToursNearMeView: React.FC = () => {
                             gap: '6px'
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#218838';
+                            e.currentTarget.style.backgroundColor = '#0f2a4a';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#28a745';
+                            e.currentTarget.style.backgroundColor = '#134369';
                           }}
                         >
                           <FaCalendarAlt size={12} />
