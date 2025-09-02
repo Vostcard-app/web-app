@@ -258,6 +258,83 @@ service cloud.firestore {
       }
     }
 
+    // Allow authenticated users to manage their own guided tours
+    match /guidedTours/{tourId} {
+      allow read: if true; // Allow all users to read guided tours (for public browsing)
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.creatorId;
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.creatorId ||
+        request.auth.uid == resource.data.guideId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.creatorId ||
+        request.auth.uid == resource.data.guideId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      
+      // Allow authenticated users to manage tour reviews
+      match /reviews/{reviewId} {
+        allow read: if true; // Anyone can read guided tour reviews
+        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId; // Users can create reviews
+        allow update: if request.auth != null && request.auth.uid == resource.data.userId; // Users can update their own reviews
+        allow delete: if request.auth != null && request.auth.uid == resource.data.userId; // Users can delete their own reviews
+      }
+      
+      // Allow authenticated users to manage tour ratings
+      match /ratings/{userId} {
+        allow read: if true; // Anyone can read guided tour ratings (for averages)
+        allow write: if request.auth != null && request.auth.uid == userId; // Users can only write their own ratings
+      }
+      
+      // Allow anyone to read guided tour rating stats, authenticated users to write
+      match /ratingStats/{document} {
+        allow read: if true; // Anyone can read guided tour rating statistics
+        allow write: if request.auth != null; // Only authenticated users can update stats
+      }
+    }
+
+    // Allow authenticated users to manage tour bookings
+    match /tourBookings/{bookingId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId || // Customer who booked
+        request.auth.uid == resource.data.guideId || // Guide who offers the tour
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId; // Only customers can create bookings
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userId || // Customer can update their booking
+        request.auth.uid == resource.data.guideId || // Guide can update booking status
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId || // Customer can cancel their booking
+        request.auth.uid == resource.data.guideId || // Guide can cancel bookings
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+    }
+
+    // Allow authenticated users to manage guide profiles
+    match /guideProfiles/{userId} {
+      allow read: if true; // Allow all users to read guide profiles (for public browsing)
+      allow create: if request.auth != null && request.auth.uid == userId; // Users can create their own guide profile
+      allow update: if request.auth != null && (
+        request.auth.uid == userId || // Guide can update their own profile
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+      allow delete: if request.auth != null && (
+        request.auth.uid == userId || // Guide can delete their own profile
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userRole == 'admin'
+      );
+    }
+
     // Public royalty-free music library (metadata only)
     // Reads are open so users can browse tracks; writes restricted to admins
     match /musicLibrary/{trackId} {

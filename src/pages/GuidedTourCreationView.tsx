@@ -548,7 +548,11 @@ const GuidedTourCreationView: React.FC = () => {
                   Choose Different Template
                 </button>
                 <button
-                  onClick={handleCreateTour}
+                  onClick={() => {
+                    if (selectedTemplate) {
+                      setShowTemplateEditor(true);
+                    }
+                  }}
                   disabled={isCreating}
                   style={{
                     padding: '8px 16px',
@@ -562,7 +566,7 @@ const GuidedTourCreationView: React.FC = () => {
                     opacity: isCreating ? 0.7 : 1
                   }}
                 >
-                  {isCreating ? 'Creating...' : 'Create Tour from Template'}
+                  Customize Template
                 </button>
               </div>
             </div>
