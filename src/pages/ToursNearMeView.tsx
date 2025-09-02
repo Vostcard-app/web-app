@@ -9,6 +9,7 @@ import { RatingService, type RatingStats } from '../services/ratingService';
 import { ReviewService } from '../services/reviewService';
 import ReviewsModal from '../components/ReviewsModal';
 import type { Tour } from '../types/TourTypes';
+import type { GuidedTour } from '../types/GuidedTourTypes';
 
 interface TourWithCreator extends Tour {
   creatorUsername: string;
@@ -23,18 +24,37 @@ interface TourWithCreator extends Tour {
   reviewCount?: number;
 }
 
+interface GuidedTourWithCreator extends GuidedTour {
+  creatorUsername: string;
+  creatorAvatar?: string;
+  creatorRole?: string;
+  distance?: number;
+  firstPostLocation?: {
+    latitude: number;
+    longitude: number;
+  };
+  ratingStats?: RatingStats;
+  reviewCount?: number;
+}
+
+type AllTourTypes = TourWithCreator | GuidedTourWithCreator;
+
+type TabType = 'self-guided' | 'guide-led';
+
 const ToursNearMeView: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { isDesktop } = useResponsive();
   const shouldUseContainer = isDesktop;
 
-  const [tours, setTours] = useState<TourWithCreator[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('self-guided');
+  const [selfGuidedTours, setSelfGuidedTours] = useState<TourWithCreator[]>([]);
+  const [guidedTours, setGuidedTours] = useState<GuidedTourWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
-  const [selectedTour, setSelectedTour] = useState<TourWithCreator | null>(null);
+  const [selectedTour, setSelectedTour] = useState<AllTourTypes | null>(null);
 
   // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -62,7 +82,7 @@ const ToursNearMeView: React.FC = () => {
   };
 
   // Handle review icon click
-  const handleReviewIconClick = (tour: TourWithCreator, e: React.MouseEvent) => {
+  const handleReviewIconClick = (tour: AllTourTypes, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent tour click
     setSelectedTour(tour);
     setShowReviewsModal(true);
@@ -109,17 +129,27 @@ const ToursNearMeView: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch all public tours
-        const toursQuery = query(
+        // Fetch self-guided tours (regular tours)
+        const selfGuidedQuery = query(
           collection(db, 'tours'),
           where('isPublic', '==', true)
         );
         
-        const toursSnapshot = await getDocs(toursQuery);
-        const toursWithCreators: TourWithCreator[] = [];
+        // Fetch guided tours
+        const guidedQuery = query(
+          collection(db, 'guidedTours')
+        );
+        
+        const [selfGuidedSnapshot, guidedSnapshot] = await Promise.all([
+          getDocs(selfGuidedQuery),
+          getDocs(guidedQuery)
+        ]);
 
-        // Process each tour
-        for (const tourDoc of toursSnapshot.docs) {
+        const selfGuidedWithCreators: TourWithCreator[] = [];
+        const guidedWithCreators: GuidedTourWithCreator[] = [];
+
+        // Process self-guided tours
+        for (const tourDoc of selfGuidedSnapshot.docs) {
           const tourData = tourDoc.data();
           
           // Get creator information
@@ -187,11 +217,60 @@ const ToursNearMeView: React.FC = () => {
             reviewCount
           };
 
-          toursWithCreators.push(tourWithCreator);
+          selfGuidedWithCreators.push(tourWithCreator);
         }
 
-        // Sort by distance (closest first), then by creation date for tours without location
-        const sortedTours = toursWithCreators.sort((a, b) => {
+        // Process guided tours
+        for (const tourDoc of guidedSnapshot.docs) {
+          const tourData = tourDoc.data();
+          
+          // Get creator information
+          const creatorDoc = await getDoc(doc(db, 'users', tourData.creatorId || tourData.guideId));
+          const creatorData = creatorDoc.exists() ? creatorDoc.data() : null;
+
+          // Get rating stats
+          const ratingStats = await RatingService.getTourRatingStats(tourDoc.id);
+
+          // Get review count for the tour
+          const reviewCount = await getTourReviewCount(tourDoc.id);
+
+          // For guided tours, use meeting point for distance calculation
+          let firstPostLocation: { latitude: number; longitude: number } | undefined = undefined;
+          let distance: number | undefined = undefined;
+          
+          if (tourData.meetingPoint?.latitude && tourData.meetingPoint?.longitude) {
+            firstPostLocation = {
+              latitude: tourData.meetingPoint.latitude,
+              longitude: tourData.meetingPoint.longitude
+            };
+            
+            distance = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              firstPostLocation.latitude,
+              firstPostLocation.longitude
+            );
+          }
+
+          const guidedTourWithCreator: GuidedTourWithCreator = {
+            ...tourData,
+            id: tourDoc.id,
+            createdAt: tourData.createdAt?.toDate() || new Date(),
+            updatedAt: tourData.updatedAt?.toDate() || new Date(),
+            creatorUsername: creatorData?.username || tourData.guideName || 'Unknown Guide',
+            creatorAvatar: creatorData?.avatarURL || tourData.guideAvatar,
+            creatorRole: creatorData?.userRole || 'guide',
+            distance,
+            firstPostLocation,
+            ratingStats,
+            reviewCount
+          } as GuidedTourWithCreator;
+
+          guidedWithCreators.push(guidedTourWithCreator);
+        }
+
+        // Sort both arrays by distance (closest first), then by creation date
+        const sortTours = (tours: any[]) => tours.sort((a, b) => {
           if (a.distance !== undefined && b.distance !== undefined) {
             return a.distance - b.distance;
           }
@@ -205,7 +284,8 @@ const ToursNearMeView: React.FC = () => {
           return b.createdAt.getTime() - a.createdAt.getTime();
         });
 
-        setTours(sortedTours);
+        setSelfGuidedTours(sortTours(selfGuidedWithCreators));
+        setGuidedTours(sortTours(guidedWithCreators));
       } catch (error) {
         console.error('Error fetching tours:', error);
         setError('Failed to load tours. Please try again.');
@@ -217,15 +297,23 @@ const ToursNearMeView: React.FC = () => {
     fetchToursNearMe();
   }, [userLocation]);
 
-  const handleTourClick = async (tour: TourWithCreator) => {
+  const handleTourClick = async (tour: AllTourTypes) => {
     try {
+      // Check if it's a guided tour
+      if ('type' in tour && tour.type === 'guided') {
+        // Navigate to guided tour detail view
+        navigate(`/guided-tour/${tour.id}`);
+        return;
+      }
+      
+      // Handle self-guided tour
       console.log('🎬 Loading tour for dedicated map view:', tour.name);
       
       // Import TourService to get tour posts
       const { TourService } = await import('../services/tourService');
       
       // Get the tour posts
-      const tourPosts = await TourService.getTourPosts(tour);
+      const tourPosts = await TourService.getTourPosts(tour as TourWithCreator);
       console.log('🎬 Fetched tour posts:', tourPosts.length);
       
       // Navigate to dedicated TourMapView with tour data
@@ -325,6 +413,49 @@ const ToursNearMeView: React.FC = () => {
           <div style={{ width: '44px' }} /> {/* Spacer for centering */}
         </div>
 
+        {/* Tabs */}
+        <div style={{
+          display: 'flex',
+          borderBottom: '1px solid #e0e0e0',
+          backgroundColor: 'white',
+          flexShrink: 0
+        }}>
+          <button
+            onClick={() => setActiveTab('self-guided')}
+            style={{
+              flex: 1,
+              padding: '16px',
+              border: 'none',
+              backgroundColor: activeTab === 'self-guided' ? '#f8f9fa' : 'transparent',
+              borderBottom: activeTab === 'self-guided' ? '3px solid #007aff' : '3px solid transparent',
+              color: activeTab === 'self-guided' ? '#007aff' : '#666',
+              fontWeight: activeTab === 'self-guided' ? '600' : '400',
+              fontSize: '16px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Self Guided
+          </button>
+          <button
+            onClick={() => setActiveTab('guide-led')}
+            style={{
+              flex: 1,
+              padding: '16px',
+              border: 'none',
+              backgroundColor: activeTab === 'guide-led' ? '#f8f9fa' : 'transparent',
+              borderBottom: activeTab === 'guide-led' ? '3px solid #007aff' : '3px solid transparent',
+              color: activeTab === 'guide-led' ? '#007aff' : '#666',
+              fontWeight: activeTab === 'guide-led' ? '600' : '400',
+              fontSize: '16px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Guide Led
+          </button>
+        </div>
+
         {/* Content */}
         <div style={{ 
           flex: 1, 
@@ -357,30 +488,36 @@ const ToursNearMeView: React.FC = () => {
             </div>
           )}
 
-          {!loading && !error && tours.length === 0 && (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px 20px',
-              color: '#666',
-              fontStyle: 'italic'
-            }}>
-              No tours found in your area
-            </div>
-          )}
+          {(() => {
+            const currentTours = activeTab === 'self-guided' ? selfGuidedTours : guidedTours;
+            
+            if (!loading && !error && currentTours.length === 0) {
+              return (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: '#666',
+                  fontStyle: 'italic'
+                }}>
+                  No {activeTab === 'self-guided' ? 'self-guided' : 'guide-led'} tours found in your area
+                </div>
+              );
+            }
 
-          {!loading && !error && tours.length > 0 && (
-            <>
-              <div style={{
-                marginBottom: '16px',
-                fontSize: '16px',
-                fontWeight: '600',
-                color: '#333'
-              }}>
-                {tours.length} tour{tours.length !== 1 ? 's' : ''} found
-              </div>
+            if (!loading && !error && currentTours.length > 0) {
+              return (
+                <>
+                  <div style={{
+                    marginBottom: '16px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#333'
+                  }}>
+                    {currentTours.length} {activeTab === 'self-guided' ? 'self-guided' : 'guide-led'} tour{currentTours.length !== 1 ? 's' : ''} found
+                  </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {tours.map((tour) => (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {currentTours.map((tour) => (
                   <div
                     key={tour.id}
                     style={{
@@ -573,10 +710,14 @@ const ToursNearMeView: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
+                    ))}
+                  </div>
+                </>
+              );
+            }
+            
+            return null;
+          })()}
         </div>
       </div>
 
