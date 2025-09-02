@@ -28,6 +28,7 @@ import {
   CreateGuidedTourRequest,
   BookTourRequest,
   UpdateAvailabilityRequest,
+  GuideAvailability,
   FIRESTORE_COLLECTIONS,
   DEFAULT_GUIDE_RATES,
   DEFAULT_GUIDE_SETTINGS,
@@ -546,5 +547,156 @@ export class GuidedTourService {
    */
   static calculateTotalPrice(basePrice: number): number {
     return basePrice + this.calculatePlatformFee(basePrice);
+  }
+
+  // ===== AVAILABILITY MANAGEMENT =====
+
+  /**
+   * Save guide availability
+   */
+  static async saveGuideAvailability(availability: GuideAvailability): Promise<string> {
+    try {
+      const availabilityData = {
+        ...availability,
+        updatedAt: new Date()
+      };
+
+      if (availability.id) {
+        // Update existing availability
+        const docRef = doc(db, 'guideAvailability', availability.id);
+        await updateDoc(docRef, availabilityData);
+        console.log('✅ Guide availability updated');
+        return availability.id;
+      } else {
+        // Create new availability
+        const docRef = await addDoc(collection(db, 'guideAvailability'), {
+          ...availabilityData,
+          createdAt: new Date()
+        });
+        console.log('✅ Guide availability created with ID:', docRef.id);
+        return docRef.id;
+      }
+    } catch (error) {
+      console.error('❌ Error saving guide availability:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get guide availability
+   */
+  static async getGuideAvailability(guideId: string): Promise<GuideAvailability | null> {
+    try {
+      const q = query(
+        collection(db, 'guideAvailability'),
+        where('guideId', '==', guideId),
+        orderBy('updatedAt', 'desc'),
+        firestoreLimit(1)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const doc = querySnapshot.docs[0];
+        return { id: doc.id, ...doc.data() } as GuideAvailability;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Error fetching guide availability:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if guide is available on a specific date and time
+   */
+  static async isGuideAvailable(
+    guideId: string, 
+    date: Date, 
+    startTime: string, 
+    endTime: string
+  ): Promise<boolean> {
+    try {
+      const availability = await this.getGuideAvailability(guideId);
+      
+      if (!availability) {
+        return false; // No availability set = not available
+      }
+
+      const dayOfWeek = date.getDay();
+      const dateString = date.toISOString().split('T')[0];
+
+      // Check blackout dates
+      if (availability.blackoutDates.includes(dateString)) {
+        return false;
+      }
+
+      // Check weekly schedule
+      const daySchedule = availability.weeklySchedule.find(day => day.dayOfWeek === dayOfWeek);
+      
+      if (!daySchedule || !daySchedule.isAvailable) {
+        return false;
+      }
+
+      // Check time slots
+      return daySchedule.timeSlots.some(slot => {
+        if (!slot.isAvailable) return false;
+        
+        const slotStart = this.timeToMinutes(slot.startTime);
+        const slotEnd = this.timeToMinutes(slot.endTime);
+        const requestStart = this.timeToMinutes(startTime);
+        const requestEnd = this.timeToMinutes(endTime);
+        
+        return requestStart >= slotStart && requestEnd <= slotEnd;
+      });
+    } catch (error) {
+      console.error('❌ Error checking guide availability:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get available time slots for a guide on a specific date
+   */
+  static async getAvailableTimeSlots(guideId: string, date: Date): Promise<string[]> {
+    try {
+      const availability = await this.getGuideAvailability(guideId);
+      
+      if (!availability) {
+        return [];
+      }
+
+      const dayOfWeek = date.getDay();
+      const dateString = date.toISOString().split('T')[0];
+
+      // Check blackout dates
+      if (availability.blackoutDates.includes(dateString)) {
+        return [];
+      }
+
+      // Check weekly schedule
+      const daySchedule = availability.weeklySchedule.find(day => day.dayOfWeek === dayOfWeek);
+      
+      if (!daySchedule || !daySchedule.isAvailable) {
+        return [];
+      }
+
+      // Return available time slots
+      return daySchedule.timeSlots
+        .filter(slot => slot.isAvailable)
+        .map(slot => `${slot.startTime} - ${slot.endTime}`);
+    } catch (error) {
+      console.error('❌ Error getting available time slots:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Helper method to convert time string to minutes
+   */
+  private static timeToMinutes(timeString: string): number {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
   }
 }

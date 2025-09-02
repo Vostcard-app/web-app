@@ -370,6 +370,39 @@ export interface BookTourRequest {
   specialRequests?: string;
 }
 
+// Guide Availability Types
+export interface TimeSlot {
+  startTime: string; // Format: "09:00"
+  endTime: string;   // Format: "17:00"
+  isAvailable: boolean;
+}
+
+export interface DayAvailability {
+  dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+  isAvailable: boolean;
+  timeSlots: TimeSlot[];
+}
+
+export interface GuideAvailability {
+  id?: string;
+  guideId: string;
+  tourId?: string; // Optional: specific to a tour, or general availability
+  weeklySchedule: DayAvailability[];
+  timezone: string;
+  blackoutDates: string[]; // ISO date strings for unavailable dates
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AvailabilityException {
+  id?: string;
+  guideId: string;
+  date: string; // ISO date string
+  isAvailable: boolean;
+  timeSlots?: TimeSlot[];
+  reason?: string; // e.g., "Holiday", "Personal", "Booked"
+}
+
 export interface UpdateAvailabilityRequest {
   guideId: string;
   schedules: Omit<GuideSchedule, 'id' | 'createdAt' | 'updatedAt'>[];

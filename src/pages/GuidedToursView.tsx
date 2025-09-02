@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus, FaCalendarAlt, FaTrash, FaEllipsisV } from 'react-icons/fa';
+import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus, FaCalendarAlt, FaTrash, FaEllipsisV, FaCalendar } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
@@ -12,7 +12,8 @@ import TourBookingCalendar from '../components/TourBookingCalendar';
 import PaymentModal from '../components/PaymentModal';
 import TourDetailsForm from '../components/TourDetailsForm';
 import DeleteTourModal from '../components/DeleteTourModal';
-import type { GuidedTour } from '../types/GuidedTourTypes';
+import GuideAvailabilityManager from '../components/GuideAvailabilityManager';
+import type { GuidedTour, GuideAvailability } from '../types/GuidedTourTypes';
 
 interface UserProfile {
   id: string;
@@ -37,6 +38,8 @@ const GuidedToursView: React.FC = () => {
   const [editingTour, setEditingTour] = useState<GuidedTour | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingTour, setDeletingTour] = useState<GuidedTour | null>(null);
+  const [showAvailabilityManager, setShowAvailabilityManager] = useState(false);
+  const [currentAvailability, setCurrentAvailability] = useState<GuideAvailability | null>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -159,6 +162,32 @@ const GuidedToursView: React.FC = () => {
     }
   };
 
+  // Handle manage availability
+  const handleManageAvailability = async () => {
+    try {
+      if (user) {
+        const availability = await GuidedTourService.getGuideAvailability(user.uid);
+        setCurrentAvailability(availability);
+        setShowAvailabilityManager(true);
+      }
+    } catch (error) {
+      console.error('❌ Error loading availability:', error);
+      setShowAvailabilityManager(true); // Still show the manager to create new availability
+    }
+  };
+
+  // Handle save availability
+  const handleSaveAvailability = async (availability: GuideAvailability) => {
+    try {
+      await GuidedTourService.saveGuideAvailability(availability);
+      setCurrentAvailability(availability);
+      alert('Availability saved successfully!');
+    } catch (error) {
+      console.error('❌ Error saving availability:', error);
+      throw error; // Re-throw to let modal handle the error display
+    }
+  };
+
   // Handle book tour button click
   const handleBookTour = (tour: GuidedTour) => {
     setSelectedTour(tour);
@@ -249,48 +278,67 @@ const GuidedToursView: React.FC = () => {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Guide Action Buttons - Only for current user */}
-          {isCurrentUser && (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                onClick={() => navigate('/create-guided-tour')}
-                style={{
-                  background: 'rgba(255,255,255,0.15)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <FaPlus size={12} />
-                Create New Tour
-              </button>
-              
-              <button
-                onClick={() => navigate('/booking-management')}
-                style={{
-                  background: 'rgba(40, 167, 69, 0.8)',
-                  border: '1px solid rgba(40, 167, 69, 0.9)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <FaCalendarAlt size={12} />
-                Manage Bookings
-              </button>
-            </div>
-          )}
+                  {/* Guide Action Buttons - Only for current user */}
+        {isCurrentUser && (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => navigate('/create-guided-tour')}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                borderRadius: '8px',
+                color: 'white',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FaPlus size={12} />
+              Create New Tour
+            </button>
+            
+            <button
+              onClick={() => navigate('/booking-management')}
+              style={{
+                background: 'rgba(40, 167, 69, 0.8)',
+                border: '1px solid rgba(40, 167, 69, 0.9)',
+                borderRadius: '8px',
+                color: 'white',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FaCalendarAlt size={12} />
+              Manage Bookings
+            </button>
+
+            <button
+              onClick={handleManageAvailability}
+              style={{
+                background: 'rgba(255, 193, 7, 0.8)',
+                border: '1px solid rgba(255, 193, 7, 0.9)',
+                borderRadius: '8px',
+                color: 'white',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <FaCalendar size={12} />
+              Manage Availability
+            </button>
+          </div>
+        )}
           
           {/* Home Button */}
           <button
@@ -686,6 +734,17 @@ const GuidedToursView: React.FC = () => {
           onConfirmDelete={handleConfirmDelete}
         />
       )}
+
+      {/* Guide Availability Manager */}
+      <GuideAvailabilityManager
+        isVisible={showAvailabilityManager}
+        onClose={() => {
+          setShowAvailabilityManager(false);
+          setCurrentAvailability(null);
+        }}
+        onSave={handleSaveAvailability}
+        initialAvailability={currentAvailability || undefined}
+      />
     </div>
   );
 };
