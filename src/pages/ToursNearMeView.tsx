@@ -540,15 +540,34 @@ const ToursNearMeView: React.FC = () => {
                     }}
                   >
                     {/* Tour Image - for guided tours */}
-                    {'images' in tour && tour.images && tour.images.length > 0 && tour.images[0] && !tour.images[0].startsWith('data:image/') && (
+                    {'images' in tour && (
                       <div style={{
                         width: '100%',
                         height: '160px',
-                        backgroundImage: `url(${tour.images[0]})`,
+                        backgroundImage: tour.images && tour.images.length > 0 && tour.images[0]
+                          ? `url(${tour.images[0]})`
+                          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
-                        position: 'relative'
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                       }}>
+                        {/* Placeholder text when no image */}
+                        {(!tour.images || tour.images.length === 0 || !tour.images[0]) && (
+                          <div style={{
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            textAlign: 'center',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                            padding: '0 16px'
+                          }}>
+                            {tour.name}
+                          </div>
+                        )}
+
                         {/* Rating badge */}
                         {'averageRating' in tour && tour.averageRating > 0 && (
                           <div style={{

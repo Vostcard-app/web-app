@@ -426,47 +426,63 @@ const GuidedToursView: React.FC = () => {
                 }}
               >
                 {/* Tour Image */}
-                {tour.images && tour.images.length > 0 && tour.images[0] && !tour.images[0].startsWith('data:image/') && (
+                <div style={{
+                  width: '100%',
+                  height: '200px',
+                  backgroundImage: tour.images && tour.images.length > 0 && tour.images[0] 
+                    ? `url(${tour.images[0]})` 
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {/* Placeholder text when no image */}
+                  {(!tour.images || tour.images.length === 0 || !tour.images[0]) && (
+                    <div style={{
+                      color: 'white',
+                      fontSize: '18px',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                    }}>
+                      {tour.name}
+                    </div>
+                  )}
+
+                  {/* Overlay for better text readability */}
                   <div style={{
-                    width: '100%',
-                    height: '200px',
-                    backgroundImage: `url(${tour.images[0]})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    position: 'relative'
-                  }}>
-                    {/* Overlay for better text readability */}
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                    height: '60px'
+                  }} />
+                  
+                  {/* Rating badge */}
+                  {tour.averageRating > 0 && (
                     <div style={{
                       position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                      height: '60px'
-                    }} />
-                    
-                    {/* Rating badge */}
-                    {tour.averageRating > 0 && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '12px',
-                        right: '12px',
-                        backgroundColor: 'white',
-                        borderRadius: '20px',
-                        padding: '4px 8px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                      }}>
-                        <span style={{ color: '#ffc107' }}>★</span>
-                        <span>{tour.averageRating.toFixed(1)}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      top: '12px',
+                      right: '12px',
+                      backgroundColor: 'white',
+                      borderRadius: '20px',
+                      padding: '4px 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                      <span style={{ color: '#ffc107' }}>★</span>
+                      <span>{tour.averageRating.toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Tour Content */}
                 <div style={{ padding: '20px' }}>
@@ -527,43 +543,7 @@ const GuidedToursView: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Tour Highlights */}
-                {tour.highlights && tour.highlights.length > 0 && (
-                  <div style={{ marginBottom: '12px' }}>
-                    <p style={{ 
-                      margin: '0 0 6px 0', 
-                      fontSize: '12px', 
-                      fontWeight: '600',
-                      color: '#333',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
-                      Highlights
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {tour.highlights.slice(0, 3).map((highlight, index) => (
-                        <span
-                          key={index}
-                          style={{
-                            fontSize: '12px',
-                            backgroundColor: '#f8f9fa',
-                            color: '#495057',
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            border: '1px solid #e9ecef'
-                          }}
-                        >
-                          {highlight}
-                        </span>
-                      ))}
-                      {tour.highlights.length > 3 && (
-                        <span style={{ fontSize: '12px', color: '#666' }}>
-                          +{tour.highlights.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Category & Difficulty */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
