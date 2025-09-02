@@ -20,13 +20,15 @@ import {
   FaGlobe,
   FaWalking,
   FaCamera,
-  FaInfoCircle
+  FaInfoCircle,
+  FaEdit
 } from 'react-icons/fa';
 import { GuidedTour } from '../types/GuidedTourTypes';
 import { GuidedTourService } from '../services/guidedTourService';
 import { useAuth } from '../context/AuthContext';
 import TourBookingCalendar from '../components/TourBookingCalendar';
 import PaymentModal from '../components/PaymentModal';
+import TourDetailsForm from '../components/TourDetailsForm';
 import { useDeviceDetection } from '../hooks/useDeviceDetection';
 
 const TourDetailView: React.FC = () => {
@@ -42,6 +44,7 @@ const TourDetailView: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [bookingFormData, setBookingFormData] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -156,6 +159,11 @@ const TourDetailView: React.FC = () => {
     setBookingFormData(null);
   };
 
+  const handleTourUpdated = (updatedTour: GuidedTour) => {
+    setTour(updatedTour);
+    setShowEditForm(false);
+  };
+
   const nextImage = () => {
     if (tour.images && tour.images.length > 0) {
       setCurrentImageIndex((prev) => (prev + 1) % tour.images.length);
@@ -207,6 +215,28 @@ const TourDetailView: React.FC = () => {
           </button>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Edit button for tour owner */}
+            {user && tour && user.uid === tour.guideId && (
+              <button
+                onClick={() => setShowEditForm(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: '#134369',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontWeight: '500'
+                }}
+              >
+                <FaEdit size={16} />
+                Edit Tour
+              </button>
+            )}
+            
             <button
               onClick={() => setIsLiked(!isLiked)}
               style={{
@@ -861,6 +891,16 @@ const TourDetailView: React.FC = () => {
             guideName: tour.guideName
           }}
           onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* Tour Edit Form */}
+      {tour && (
+        <TourDetailsForm
+          isVisible={showEditForm}
+          onClose={() => setShowEditForm(false)}
+          tour={tour}
+          onTourUpdated={handleTourUpdated}
         />
       )}
 
