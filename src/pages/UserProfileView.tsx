@@ -280,7 +280,7 @@ const UserProfileView: React.FC = () => {
             <button
               onClick={() => navigate(`/guide-profile/${userId}`)}
               style={{
-                backgroundColor: '#28a745',
+                backgroundColor: '#134369',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -289,17 +289,17 @@ const UserProfileView: React.FC = () => {
                 fontWeight: '600',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(40, 167, 69, 0.2)'
+                boxShadow: '0 2px 4px rgba(19, 67, 105, 0.2)'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#218838';
+                e.currentTarget.style.backgroundColor = '#0f2d4d';
                 e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 8px rgba(40, 167, 69, 0.3)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(19, 67, 105, 0.3)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#28a745';
+                e.currentTarget.style.backgroundColor = '#134369';
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 4px rgba(40, 167, 69, 0.2)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(19, 67, 105, 0.2)';
               }}
             >
               More about {profile.username}
