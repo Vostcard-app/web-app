@@ -86,6 +86,8 @@ import CreateCardsHelpView from "./pages/CreateCardsHelpView";
 import BookingManagementView from "./pages/BookingManagementView";
 import TourDetailView from "./pages/TourDetailView";
 import DeviceDetectionDemo from "./components/DeviceDetectionDemo";
+import ViewportWrapper from "./components/ViewportWrapper";
+import ViewportModeDemo from "./components/ViewportModeDemo";
 // Unified flow is now permanent - video is optional
 
 function App() {
@@ -99,7 +101,7 @@ function App() {
                 <DriveModeProvider>
                   <Router>
               <AuthRedirect />
-              <ResponsiveContainer>
+              <ViewportWrapper>
                 <Routes>
                   {/* 🔑 Authentication */}
                   <Route path="/" element={<RootView />} />
@@ -189,6 +191,7 @@ function App() {
                             <Route path="/booking-management" element={<BookingManagementView />} />
                             <Route path="/guided-tour/:tourId" element={<TourDetailView />} />
                             <Route path="/device-detection-demo" element={<DeviceDetectionDemo />} />
+                            <Route path="/viewport-mode-demo" element={<ViewportModeDemo />} />
                             <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />
 
                   {/* 🏢 Business */}
@@ -218,7 +221,7 @@ function App() {
                   {/* 🔍 Examples */}
                   <Route path="/example" element={<ExampleView />} />
                 </Routes>
-              </ResponsiveContainer>
+              </ViewportWrapper>
             </Router>
                 </DriveModeProvider>
               </FollowingProvider>
