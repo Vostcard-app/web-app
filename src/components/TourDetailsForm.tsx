@@ -214,36 +214,41 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
         duration: formData.duration,
         maxGroupSize: formData.maxGroupSize,
         ...pricingUpdates, // Include pricing updates if basePrice changed
-        highlights: formData.highlights,
-        included: formData.included,
-        requirements: formData.requirements,
+        highlights: formData.highlights || [],
+        included: formData.included || [],
+        requirements: formData.requirements || [],
         meetingPoint: formData.meetingPoint,
-        images: formData.images,
-        languages: formData.languages,
+        images: formData.images || [],
+        languages: formData.languages || [],
         difficulty: formData.difficulty,
-        tags: formData.tags,
-        // Add detailed information as custom fields
+        tags: formData.tags || [],
+        // Add detailed information as custom fields - only include non-empty values
         detailedInfo: {
-          detailedDescription: formData.detailedDescription,
-          whatToExpect: formData.whatToExpect,
-          notIncluded: formData.notIncluded,
-          recommendations: formData.recommendations,
-          itinerary: formData.itinerary,
-          policies: {
-            cancellation: formData.cancellationPolicy,
-            weather: formData.weatherPolicy,
-            age: formData.ageRestrictions,
-            groupSize: formData.groupSizePolicy
+          ...(formData.detailedDescription && { detailedDescription: formData.detailedDescription }),
+          ...(formData.whatToExpect && { whatToExpect: formData.whatToExpect }),
+          ...(formData.notIncluded && formData.notIncluded.length > 0 && { notIncluded: formData.notIncluded }),
+          ...(formData.recommendations && { recommendations: formData.recommendations }),
+          ...(formData.itinerary && { itinerary: formData.itinerary }),
+          ...(formData.cancellationPolicy || formData.weatherPolicy || formData.ageRestrictions || formData.groupSizePolicy) && {
+            policies: {
+              ...(formData.cancellationPolicy && { cancellation: formData.cancellationPolicy }),
+              ...(formData.weatherPolicy && { weather: formData.weatherPolicy }),
+              ...(formData.ageRestrictions && { age: formData.ageRestrictions }),
+              ...(formData.groupSizePolicy && { groupSize: formData.groupSizePolicy })
+            }
           },
-          accessibility: formData.accessibility,
-          pricing: {
-            groupDiscounts: formData.groupDiscounts,
-            seasonalPricing: formData.seasonalPricing
+          ...(formData.accessibility && { accessibility: formData.accessibility }),
+          ...(formData.groupDiscounts || formData.seasonalPricing) && {
+            pricing: {
+              ...(formData.groupDiscounts && { groupDiscounts: formData.groupDiscounts }),
+              ...(formData.seasonalPricing && { seasonalPricing: formData.seasonalPricing })
+            }
           },
-          videoUrl: formData.videoUrl
-        },
-        updatedAt: new Date()
+          ...(formData.videoUrl && { videoUrl: formData.videoUrl })
+        }
       };
+
+      console.log('🔍 TourDetailsForm: Preparing to update tour with data:', updatedTour);
 
       // Update the tour in Firestore
       await GuidedTourService.updateGuidedTour(tour.id, updatedTour);

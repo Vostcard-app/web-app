@@ -157,16 +157,51 @@ export class GuidedTourService {
    */
   static async updateGuidedTour(tourId: string, updates: Partial<GuidedTour>): Promise<void> {
     try {
-      const docRef = doc(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS, tourId);
-      await updateDoc(docRef, {
+      // Clean the updates object to remove any undefined values and ensure proper serialization
+      const cleanUpdates = this.cleanUpdateData({
         ...updates,
         updatedAt: new Date()
       });
+      
+      console.log('🔍 Updating tour with data:', JSON.stringify(cleanUpdates, null, 2));
+      
+      const docRef = doc(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS, tourId);
+      await updateDoc(docRef, cleanUpdates);
       console.log('✅ Guided tour updated successfully');
     } catch (error) {
       console.error('❌ Error updating guided tour:', error);
+      console.error('❌ Update data that failed:', JSON.stringify(updates, null, 2));
       throw error;
     }
+  }
+
+  /**
+   * Clean update data to remove undefined values and ensure Firestore compatibility
+   */
+  private static cleanUpdateData(data: any): any {
+    if (data === null || data === undefined) {
+      return null;
+    }
+    
+    if (data instanceof Date) {
+      return data;
+    }
+    
+    if (Array.isArray(data)) {
+      return data.filter(item => item !== undefined).map(item => this.cleanUpdateData(item));
+    }
+    
+    if (typeof data === 'object') {
+      const cleaned: any = {};
+      for (const [key, value] of Object.entries(data)) {
+        if (value !== undefined) {
+          cleaned[key] = this.cleanUpdateData(value);
+        }
+      }
+      return cleaned;
+    }
+    
+    return data;
   }
 
   /**
