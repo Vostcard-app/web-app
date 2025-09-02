@@ -1788,6 +1788,18 @@ const HomeView = () => {
                     >
                       Public Tours
                     </button>
+                    
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        navigate('/booking-management');
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      style={submenuItemStyle}
+                    >
+                      📅 Manage Bookings
+                    </button>
                   </>
                 ) : (
                   <button

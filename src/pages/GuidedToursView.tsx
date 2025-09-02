@@ -203,26 +203,47 @@ const GuidedToursView: React.FC = () => {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Create New Tour Button - Only for current user */}
+          {/* Guide Action Buttons - Only for current user */}
           {isCurrentUser && (
-            <button
-              onClick={() => navigate('/create-guided-tour')}
-              style={{
-                background: 'rgba(255,255,255,0.15)',
-                border: '1px solid rgba(255,255,255,0.3)',
-                borderRadius: '8px',
-                color: 'white',
-                padding: '8px 16px',
-                fontSize: '14px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-              }}
-            >
-              <FaPlus size={12} />
-              Create New Tour
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => navigate('/create-guided-tour')}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FaPlus size={12} />
+                Create New Tour
+              </button>
+              
+              <button
+                onClick={() => navigate('/booking-management')}
+                style={{
+                  background: 'rgba(40, 167, 69, 0.8)',
+                  border: '1px solid rgba(40, 167, 69, 0.9)',
+                  borderRadius: '8px',
+                  color: 'white',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FaCalendarAlt size={12} />
+                Manage Bookings
+              </button>
+            </div>
           )}
           
           {/* Home Button */}
