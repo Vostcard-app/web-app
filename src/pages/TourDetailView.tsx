@@ -344,7 +344,7 @@ const TourDetailView: React.FC = () => {
                 {/* Image Indicators */}
                 <div style={{
                   position: 'absolute',
-                  bottom: '20px',
+                  bottom: '80px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   display: 'flex',
@@ -379,6 +379,126 @@ const TourDetailView: React.FC = () => {
             <FaCamera size={48} />
           </div>
         )}
+
+        {/* Hero Overlay with Guide Avatar and Tour Title */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
+          padding: '40px 24px 24px',
+          color: 'white'
+        }}>
+          <div style={{ 
+            maxWidth: '1200px', 
+            margin: '0 auto',
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: '16px'
+          }}>
+            {/* Guide Avatar */}
+            <div 
+              style={{ 
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease'
+              }}
+              onClick={() => navigate(`/guide-profile/${tour.guideId}`)}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              {tour.guideAvatar ? (
+                <img
+                  src={tour.guideAvatar}
+                  alt={tour.guideName}
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '3px solid white',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  backgroundColor: '#134369',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '3px solid white',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                }}>
+                  <FaUserCircle size={40} color="white" />
+                </div>
+              )}
+            </div>
+
+            {/* Tour Title and Guide Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Tour Category and Rating */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                <span style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  backdropFilter: 'blur(10px)',
+                  color: 'white',
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}>
+                  {tour.category}
+                </span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <FaStar size={16} color="#ffc107" />
+                  <span style={{ fontSize: '16px', fontWeight: '600', textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)' }}>
+                    {tour.averageRating > 0 ? tour.averageRating.toFixed(1) : 'New'}
+                  </span>
+                  {tour.totalReviews > 0 && (
+                    <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.8)', textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)' }}>
+                      ({tour.totalReviews} reviews)
+                    </span>
+                  )}
+                </div>
+              </div>
+              
+              {/* Tour Title */}
+              <h1 style={{ 
+                fontSize: deviceInfo.isMobile ? '28px' : '36px', 
+                fontWeight: 'bold', 
+                margin: '0 0 8px 0',
+                lineHeight: '1.2',
+                color: 'white',
+                textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)'
+              }}>
+                {tour.name}
+              </h1>
+
+              {/* Guide Name */}
+              <div 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                }}
+                onClick={() => navigate(`/guide-profile/${tour.guideId}`)}
+              >
+                <span>with {tour.guideName}</span>
+                <span style={{ fontSize: '12px' }}>• View Profile</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -392,43 +512,8 @@ const TourDetailView: React.FC = () => {
       }}>
         {/* Left Column - Tour Details */}
         <div>
-          {/* Tour Header */}
+          {/* Tour Description */}
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <span style={{
-                backgroundColor: '#28a745',
-                color: 'white',
-                padding: '4px 12px',
-                borderRadius: '16px',
-                fontSize: '12px',
-                fontWeight: '600',
-                textTransform: 'uppercase'
-              }}>
-                {tour.category}
-              </span>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <FaStar size={16} color="#ffc107" />
-                <span style={{ fontSize: '16px', fontWeight: '600' }}>
-                  {tour.averageRating > 0 ? tour.averageRating.toFixed(1) : 'New'}
-                </span>
-                {tour.totalReviews > 0 && (
-                  <span style={{ fontSize: '14px', color: '#666' }}>
-                    ({tour.totalReviews} reviews)
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            <h1 style={{ 
-              fontSize: deviceInfo.isMobile ? '24px' : '32px', 
-              fontWeight: 'bold', 
-              margin: '0 0 16px 0',
-              lineHeight: '1.2'
-            }}>
-              {tour.name}
-            </h1>
-            
             <p style={{ 
               fontSize: '18px', 
               color: '#666', 
@@ -766,115 +851,7 @@ const TourDetailView: React.FC = () => {
             </p>
           </div>
 
-          {/* Guide Profile */}
-          <div style={{
-            backgroundColor: 'white',
-            border: '1px solid #e0e0e0',
-            borderRadius: '16px',
-            padding: '24px'
-          }}>
-            <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '16px' }}>
-              Your Guide
-            </h3>
-            
-            <div 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '16px', 
-                marginBottom: '16px',
-                cursor: 'pointer',
-                padding: '8px',
-                borderRadius: '12px',
-                transition: 'background-color 0.2s ease'
-              }}
-              onClick={() => navigate(`/guide-profile/${tour.guideId}`)}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              {tour.guideAvatar ? (
-                <img
-                  src={tour.guideAvatar}
-                  alt={tour.guideName}
-                  style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    objectFit: 'cover'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FaUserCircle size={32} color="#ccc" />
-                </div>
-              )}
-              
-              <div>
-                <h4 style={{ 
-                  fontSize: '18px', 
-                  fontWeight: '600', 
-                  margin: '0 0 4px 0',
-                  color: '#134369'
-                }}>
-                  {tour.guideName}
-                </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <FaStar size={14} color="#ffc107" />
-                  <span style={{ fontSize: '14px', color: '#666' }}>
-                    Local Guide • View Profile
-                  </span>
-                </div>
-              </div>
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px',
-                  backgroundColor: '#f8f9fa',
-                  border: '1px solid #e9ecef',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  width: '100%'
-                }}
-              >
-                <FaEnvelope size={14} />
-                Contact Guide
-              </button>
-              
-              <button
-                onClick={() => navigate(`/user-profile/${tour.guideId}`)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '12px',
-                  backgroundColor: 'white',
-                  border: '1px solid #007aff',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  color: '#007aff',
-                  width: '100%'
-                }}
-              >
-                <FaUserCircle size={14} />
-                View Profile
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
