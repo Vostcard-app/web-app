@@ -99,6 +99,26 @@ export interface GuidedTour extends Tour {
   basePrice: number; // display price per person (includes platform fee)
   platformFee: number; // 10% fee (for accounting)
   totalPrice: number; // same as basePrice (per person inclusive price)
+  // Detailed tour information
+  detailedInfo?: {
+    detailedDescription?: string;
+    whatToExpect?: string;
+    notIncluded?: string[];
+    recommendations?: string;
+    itinerary?: string;
+    policies?: {
+      cancellation?: string;
+      weather?: string;
+      age?: string;
+      groupSize?: string;
+    };
+    accessibility?: string;
+    pricing?: {
+      groupDiscounts?: string;
+      seasonalPricing?: string;
+    };
+    videoUrl?: string;
+  };
 }
 
 export interface MeetingPoint {

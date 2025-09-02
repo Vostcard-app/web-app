@@ -191,13 +191,29 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Handle pricing logic - if basePrice changed, recalculate guide rate and platform fee
+      let pricingUpdates = {};
+      if (formData.basePrice !== tour.basePrice) {
+        // If the guide is updating the display price, we need to reverse-calculate the guide rate
+        // Current basePrice includes platform fee, so guide rate = basePrice / 1.1
+        const newGuideRate = formData.basePrice / 1.1;
+        const newPlatformFee = formData.basePrice - newGuideRate;
+        
+        pricingUpdates = {
+          basePrice: formData.basePrice, // Display price (inclusive)
+          guideRate: newGuideRate, // What guide receives
+          platformFee: newPlatformFee, // Platform fee amount
+          totalPrice: formData.basePrice // Same as basePrice for per-person pricing
+        };
+      }
+
       // Update the tour with detailed information
       const updatedTour: Partial<GuidedTour> = {
         name: formData.name,
         description: formData.description,
         duration: formData.duration,
         maxGroupSize: formData.maxGroupSize,
-        basePrice: formData.basePrice,
+        ...pricingUpdates, // Include pricing updates if basePrice changed
         highlights: formData.highlights,
         included: formData.included,
         requirements: formData.requirements,
