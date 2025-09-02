@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus, FaCalendarAlt, FaTrash, FaEllipsisV, FaCalendar } from 'react-icons/fa';
+import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus, FaCalendarAlt, FaTrash, FaEllipsisV, FaCalendar, FaUserCircle } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
@@ -451,16 +451,6 @@ const GuidedToursView: React.FC = () => {
                       {tour.name}
                     </div>
                   )}
-
-                  {/* Overlay for better text readability */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-                    height: '60px'
-                  }} />
                   
                   {/* Rating badge */}
                   {tour.averageRating > 0 && (
@@ -482,20 +472,110 @@ const GuidedToursView: React.FC = () => {
                       <span>{tour.averageRating.toFixed(1)}</span>
                     </div>
                   )}
+
+                  {/* Hero Overlay with Guide Avatar and Tour Title */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
+                    padding: '16px 16px 12px',
+                    color: 'white'
+                  }}>
+                    <div style={{ 
+                      display: 'flex',
+                      alignItems: 'flex-end',
+                      gap: '12px'
+                    }}>
+                      {/* Guide Avatar */}
+                      <div 
+                        style={{ 
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s ease'
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/guide-profile/${tour.guideId}`);
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        {tour.guideAvatar ? (
+                          <img
+                            src={tour.guideAvatar}
+                            alt={tour.guideName}
+                            style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid white',
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            backgroundColor: '#134369',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid white',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)'
+                          }}>
+                            <FaUserCircle size={24} color="white" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Tour Title and Guide Info */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {/* Tour Title */}
+                        <h3 style={{ 
+                          fontSize: '16px', 
+                          fontWeight: 'bold', 
+                          margin: '0 0 4px 0',
+                          lineHeight: '1.2',
+                          color: 'white',
+                          textShadow: '0 2px 4px rgba(0, 0, 0, 0.7)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {tour.name}
+                        </h3>
+
+                        {/* Guide Name */}
+                        <div 
+                          style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '6px',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)'
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/guide-profile/${tour.guideId}`);
+                          }}
+                        >
+                          <span>with {tour.guideName}</span>
+                          <span style={{ fontSize: '10px' }}>• View Profile</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Tour Content */}
                 <div style={{ padding: '20px' }}>
-                  {/* Tour Header */}
+                  {/* Tour Description */}
                   <div style={{ marginBottom: '12px' }}>
-                    <h3 style={{ 
-                      margin: '0 0 4px 0', 
-                      fontSize: '18px', 
-                      fontWeight: '600',
-                      color: '#333'
-                    }}>
-                      {tour.name}
-                    </h3>
                     <p style={{ 
                       margin: 0, 
                       fontSize: '14px', 
