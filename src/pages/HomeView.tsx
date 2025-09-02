@@ -2341,14 +2341,16 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '6px',
+                gap: '4px',
                 flex: '1',
-                minWidth: '0'
+                minWidth: '0',
+                padding: '4px 8px',
+                boxSizing: 'border-box'
               }} 
               onClick={handleListViewClick}
             >
-              <img src={VostcardPin} alt="Vōstcards" style={{ width: '18px', height: '18px' }} />
-              <span style={{ textAlign: 'center', width: '100%' }}>Vōstcards</span>
+              <img src={VostcardPin} alt="Vōstcards" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+              <span style={{ textAlign: 'center', width: '100%', fontSize: '14px', lineHeight: '1.1' }}>Vōstcards</span>
             </button>
             
             {/* Offers Button */}
@@ -2372,14 +2374,16 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '6px',
+                gap: '4px',
                 flex: '1',
-                minWidth: '0'
+                minWidth: '0',
+                padding: '4px 8px',
+                boxSizing: 'border-box'
               }} 
               onClick={handleOffersClick}
             >
-              <img src={OfferPin} alt="Offers" style={{ width: '18px', height: '18px' }} />
-              <span style={{ textAlign: 'center', width: '100%' }}>Offers</span>
+              <img src={OfferPin} alt="Offers" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
+              <span style={{ textAlign: 'center', width: '100%', fontSize: '14px', lineHeight: '1.1' }}>Offers</span>
             </button>
             
             {/* Tours Button */}
@@ -2403,14 +2407,16 @@ const HomeView = () => {
                 justifyContent: 'center',
                 textAlign: 'center',
                 lineHeight: '1',
-                gap: '2px',
+                gap: '4px',
                 flex: '1',
-                minWidth: '0'
+                minWidth: '0',
+                padding: '4px 8px',
+                boxSizing: 'border-box'
               }} 
               onClick={handleToursClick}
             >
-              <FaWalking style={{ fontSize: '18px' }} />
-              <span style={{ textAlign: 'center', width: '100%' }}>Tours</span>
+              <FaWalking style={{ fontSize: '16px', flexShrink: 0 }} />
+              <span style={{ textAlign: 'center', width: '100%', fontSize: '14px', lineHeight: '1.1' }}>Tours</span>
             </button>
           </div>
 
