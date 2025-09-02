@@ -46,10 +46,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   if (!isVisible) return null;
 
-  // Calculate pricing
-  const subtotal = tourDetails.basePrice;
-  const platformFee = subtotal * 0.1; // 10% platform fee
-  const total = subtotal + platformFee;
+  // Calculate pricing - basePrice already includes platform fee
+  const pricePerPerson = tourDetails.basePrice; // Inclusive price
+  const totalParticipants = bookingData.adults + bookingData.children;
+  const total = pricePerPerson * totalParticipants;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -200,19 +200,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               padding: '16px',
               marginBottom: '20px'
             }}>
-              <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>Price Breakdown</h3>
+              <h3 style={{ margin: '0 0 12px 0', fontSize: '16px' }}>Price Summary</h3>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span>Tour price</span>
-                <span>{formatPrice(subtotal)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span>Platform fee (10%)</span>
-                <span>{formatPrice(platformFee)}</span>
+                <span>{formatPrice(pricePerPerson)} × {totalParticipants} participant{totalParticipants !== 1 ? 's' : ''}</span>
+                <span>{formatPrice(total)}</span>
               </div>
               <hr style={{ margin: '12px 0', border: 'none', borderTop: '1px solid #eee' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '16px' }}>
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
+              </div>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                All fees included
               </div>
             </div>
 

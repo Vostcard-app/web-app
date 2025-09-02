@@ -728,11 +728,9 @@ const TourDetailView: React.FC = () => {
                 </span>
                 <span style={{ fontSize: '16px', color: '#666' }}>per person</span>
               </div>
-              {tour.platformFee > 0 && (
-                <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
-                  + {formatPrice(tour.platformFee)} platform fee
-                </p>
-              )}
+              <p style={{ fontSize: '12px', color: '#666', margin: 0 }}>
+                All fees included
+              </p>
             </div>
 
             <button

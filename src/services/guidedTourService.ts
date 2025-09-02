@@ -350,10 +350,17 @@ export class GuidedTourService {
 
       const tour = tourDoc.data() as GuidedTour;
       
-      // Calculate pricing
-      const subtotal = tour.basePrice;
-      const platformFee = subtotal * PLATFORM_FEE_PERCENTAGE;
-      const total = subtotal + platformFee;
+      // Calculate pricing based on number of participants
+      const participantCount = request.participants.length;
+      const pricePerPerson = tour.basePrice; // Already includes platform fee
+      const subtotal = pricePerPerson * participantCount;
+      
+      // For accounting: calculate how much goes to guide vs platform
+      const guideRatePerPerson = tour.guideRate || (tour.basePrice / 1.1); // Fallback for existing tours
+      const guideTotal = guideRatePerPerson * participantCount;
+      const platformFeeTotal = subtotal - guideTotal;
+      
+      const total = subtotal; // No additional fees, price is inclusive
 
       const booking: Omit<TourBooking, 'id'> = {
         tourId: request.tourId,
@@ -366,12 +373,16 @@ export class GuidedTourService {
         },
         paymentInfo: {
           subtotal,
-          platformFee,
+          platformFee: platformFeeTotal, // Total platform fee for all participants
           total,
           currency: 'USD', // TODO: Get from guide settings
           paymentMethod: {
             type: 'card' // TODO: Get from payment method
-          }
+          },
+          // Additional accounting info
+          participantCount,
+          pricePerPerson,
+          guideTotal // How much the guide receives
         },
         participants: request.participants,
         communication: [],

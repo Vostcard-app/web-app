@@ -95,9 +95,10 @@ export interface GuidedTour extends Tour {
   images: string[];
   averageRating: number;
   totalReviews: number;
-  basePrice: number; // guide's rate
-  platformFee: number; // 10% fee
-  totalPrice: number; // basePrice + platformFee
+  guideRate?: number; // what guide actually receives per person (for accounting)
+  basePrice: number; // display price per person (includes platform fee)
+  platformFee: number; // 10% fee (for accounting)
+  totalPrice: number; // same as basePrice (per person inclusive price)
 }
 
 export interface MeetingPoint {
@@ -183,8 +184,8 @@ export interface EmergencyContact {
 // ==================== PAYMENT SYSTEM ====================
 
 export interface PaymentInfo {
-  subtotal: number; // guide's rate
-  platformFee: number; // 10% of subtotal
+  subtotal: number; // total for all participants (inclusive pricing)
+  platformFee: number; // total platform fee for all participants
   taxes?: number;
   total: number;
   currency: string;
@@ -192,6 +193,10 @@ export interface PaymentInfo {
   transactionId?: string;
   stripePaymentIntentId?: string;
   refundInfo?: RefundInfo;
+  // Additional accounting fields
+  participantCount?: number;
+  pricePerPerson?: number; // inclusive price per person
+  guideTotal?: number; // total amount guide receives
 }
 
 export interface PaymentMethod {

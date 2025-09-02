@@ -165,9 +165,10 @@ const GuidedTourCreationView: React.FC = () => {
 
     setIsCreating(true);
     try {
-      // Calculate platform fee (10%)
-      const platformFee = formData.pricePerPerson * 0.1;
-      const totalPrice = formData.pricePerPerson + platformFee;
+      // Guide enters their desired rate, we add 10% platform fee to create display price
+      const guideRate = formData.pricePerPerson; // What the guide actually receives
+      const platformFee = guideRate * 0.1; // 10% platform fee
+      const displayPrice = guideRate + platformFee; // What customers see per person
 
       const guidedTour: Omit<GuidedTour, 'id'> = {
         // Base Tour interface fields
@@ -186,9 +187,10 @@ const GuidedTourCreationView: React.FC = () => {
         guideAvatar: formData.guideAvatar,
         duration: formData.duration,
         maxGroupSize: formData.maxGroupSize,
-        basePrice: formData.pricePerPerson,
-        platformFee,
-        totalPrice,
+        guideRate, // What guide actually receives per person
+        basePrice: displayPrice, // Display price (includes platform fee)
+        platformFee, // Still track for accounting
+        totalPrice: displayPrice, // Same as basePrice now
         category: formData.category === 'Custom' ? formData.customCategory : formData.category as any,
         difficulty: formData.difficulty,
         highlights: formData.highlights,
