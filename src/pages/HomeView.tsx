@@ -2348,7 +2348,7 @@ const HomeView = () => {
               onClick={handleListViewClick}
             >
               <img src={VostcardPin} alt="Vōstcards" style={{ width: '18px', height: '18px' }} />
-              <span>Vōstcards</span>
+              <span style={{ textAlign: 'center', width: '100%' }}>Vōstcards</span>
             </button>
             
             {/* Offers Button */}
@@ -2379,7 +2379,7 @@ const HomeView = () => {
               onClick={handleOffersClick}
             >
               <img src={OfferPin} alt="Offers" style={{ width: '18px', height: '18px' }} />
-              <span>Offers</span>
+              <span style={{ textAlign: 'center', width: '100%' }}>Offers</span>
             </button>
             
             {/* Tours Button */}
@@ -2410,7 +2410,7 @@ const HomeView = () => {
               onClick={handleToursClick}
             >
               <FaWalking style={{ fontSize: '18px' }} />
-              <span>Tours</span>
+              <span style={{ textAlign: 'center', width: '100%' }}>Tours</span>
             </button>
           </div>
 
