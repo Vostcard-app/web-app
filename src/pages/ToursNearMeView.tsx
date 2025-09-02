@@ -523,7 +523,7 @@ const ToursNearMeView: React.FC = () => {
                     style={{
                       border: '1px solid #e0e0e0',
                       borderRadius: '12px',
-                      padding: '16px',
+                      overflow: 'hidden',
                       backgroundColor: 'white',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
@@ -539,6 +539,41 @@ const ToursNearMeView: React.FC = () => {
                       e.currentTarget.style.borderColor = '#e0e0e0';
                     }}
                   >
+                    {/* Tour Image - for guided tours */}
+                    {'images' in tour && tour.images && tour.images.length > 0 && tour.images[0] && !tour.images[0].startsWith('data:image/') && (
+                      <div style={{
+                        width: '100%',
+                        height: '160px',
+                        backgroundImage: `url(${tour.images[0]})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        position: 'relative'
+                      }}>
+                        {/* Rating badge */}
+                        {'averageRating' in tour && tour.averageRating > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            backgroundColor: 'white',
+                            borderRadius: '16px',
+                            padding: '3px 6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}>
+                            <span style={{ color: '#ffc107' }}>★</span>
+                            <span>{tour.averageRating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Tour Content */}
+                    <div style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
                       {/* Guide Avatar */}
                       <div style={{

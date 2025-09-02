@@ -412,7 +412,7 @@ const GuidedToursView: React.FC = () => {
                 style={{
                   backgroundColor: 'white',
                   borderRadius: '16px',
-                  padding: '20px',
+                  overflow: 'hidden',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease'
                 }}
@@ -425,25 +425,70 @@ const GuidedToursView: React.FC = () => {
                   e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
                 }}
               >
-                {/* Tour Header */}
-                <div style={{ marginBottom: '12px' }}>
-                  <h3 style={{ 
-                    margin: '0 0 4px 0', 
-                    fontSize: '18px', 
-                    fontWeight: '600',
-                    color: '#333'
+                {/* Tour Image */}
+                {tour.images && tour.images.length > 0 && tour.images[0] && !tour.images[0].startsWith('data:image/') && (
+                  <div style={{
+                    width: '100%',
+                    height: '200px',
+                    backgroundImage: `url(${tour.images[0]})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    position: 'relative'
                   }}>
-                    {tour.name}
-                  </h3>
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '14px', 
-                    color: '#666',
-                    lineHeight: '1.4'
-                  }}>
-                    {tour.description}
-                  </p>
-                </div>
+                    {/* Overlay for better text readability */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                      height: '60px'
+                    }} />
+                    
+                    {/* Rating badge */}
+                    {tour.averageRating > 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '12px',
+                        right: '12px',
+                        backgroundColor: 'white',
+                        borderRadius: '20px',
+                        padding: '4px 8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }}>
+                        <span style={{ color: '#ffc107' }}>★</span>
+                        <span>{tour.averageRating.toFixed(1)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tour Content */}
+                <div style={{ padding: '20px' }}>
+                  {/* Tour Header */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <h3 style={{ 
+                      margin: '0 0 4px 0', 
+                      fontSize: '18px', 
+                      fontWeight: '600',
+                      color: '#333'
+                    }}>
+                      {tour.name}
+                    </h3>
+                    <p style={{ 
+                      margin: 0, 
+                      fontSize: '14px', 
+                      color: '#666',
+                      lineHeight: '1.4'
+                    }}>
+                      {tour.description}
+                    </p>
+                  </div>
 
                 {/* Tour Details */}
                 <div style={{ 
