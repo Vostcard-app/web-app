@@ -363,6 +363,7 @@ export interface CreateGuidedTourRequest {
 
 export interface BookTourRequest {
   tourId: string;
+  userId: string;
   bookingDetails: Omit<BookingDetails, 'meetingPoint'>;
   participants: Participant[];
   paymentMethodId: string;

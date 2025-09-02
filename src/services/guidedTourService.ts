@@ -313,7 +313,7 @@ export class GuidedTourService {
       const booking: Omit<TourBooking, 'id'> = {
         tourId: request.tourId,
         guideId: tour.guideId,
-        userId: '', // TODO: Get from auth context
+        userId: request.userId,
         status: tour.guideSettings?.autoAcceptBookings ? 'confirmed' : 'pending',
         bookingDetails: {
           ...request.bookingDetails,

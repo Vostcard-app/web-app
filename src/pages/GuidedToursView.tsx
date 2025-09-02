@@ -9,6 +9,7 @@ import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { GuidedTourService } from '../services/guidedTourService';
 import TourBookingCalendar from '../components/TourBookingCalendar';
+import PaymentModal from '../components/PaymentModal';
 import type { GuidedTour } from '../types/GuidedTourTypes';
 
 interface UserProfile {
@@ -28,6 +29,8 @@ const GuidedToursView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [selectedTour, setSelectedTour] = useState<GuidedTour | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [bookingFormData, setBookingFormData] = useState<any>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -88,14 +91,26 @@ const GuidedToursView: React.FC = () => {
   const handleBookingSubmit = async (bookingData: any) => {
     try {
       console.log('📅 Booking submitted:', bookingData);
-      // TODO: Implement booking logic with payment processing
-      alert('Booking request submitted! The guide will review and confirm your booking.');
+      
+      if (!selectedTour) return;
+      
+      // Show payment modal instead of direct booking
+      setShowPaymentModal(true);
+      setBookingFormData(bookingData);
       setShowBookingCalendar(false);
-      setSelectedTour(null);
+      
     } catch (error) {
       console.error('❌ Error submitting booking:', error);
       alert('Failed to submit booking. Please try again.');
     }
+  };
+
+  // Handle successful payment
+  const handlePaymentSuccess = (bookingId: string) => {
+    alert(`Booking confirmed! Booking ID: ${bookingId}. You will receive a confirmation email shortly.`);
+    setShowPaymentModal(false);
+    setSelectedTour(null);
+    setBookingFormData(null);
   };
 
   // Handle book tour button click
@@ -492,6 +507,25 @@ const GuidedToursView: React.FC = () => {
           guideName={selectedTour.guideName}
           guideAvatar={selectedTour.guideAvatar}
           onBookingSubmit={handleBookingSubmit}
+        />
+      )}
+
+      {/* Payment Modal */}
+      {selectedTour && bookingFormData && (
+        <PaymentModal
+          isVisible={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setBookingFormData(null);
+          }}
+          bookingData={bookingFormData}
+          tourDetails={{
+            id: selectedTour.id,
+            name: selectedTour.name,
+            basePrice: selectedTour.basePrice,
+            guideName: selectedTour.guideName
+          }}
+          onPaymentSuccess={handlePaymentSuccess}
         />
       )}
     </div>

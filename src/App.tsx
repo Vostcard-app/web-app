@@ -83,6 +83,7 @@ import TourInProgressView from "./pages/TourInProgressView";
 import AuthRedirect from "./components/AuthRedirect";
 import FiltersHelpView from "./pages/FiltersHelpView";
 import CreateCardsHelpView from "./pages/CreateCardsHelpView";
+import BookingManagementView from "./pages/BookingManagementView";
 // Unified flow is now permanent - video is optional
 
 function App() {
@@ -183,6 +184,7 @@ function App() {
                   <Route path="/user-profile/:userId/tours" element={<ToursView />} />
                   <Route path="/user-profile/:userId/guided-tours" element={<GuidedToursView />} />
                   <Route path="/create-guided-tour" element={<GuidedTourCreationView />} />
+                  <Route path="/booking-management" element={<BookingManagementView />} />
                   <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />
 
                   {/* 🏢 Business */}
