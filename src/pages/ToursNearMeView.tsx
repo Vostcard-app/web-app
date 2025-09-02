@@ -539,6 +539,10 @@ const ToursNearMeView: React.FC = () => {
                       e.currentTarget.style.borderColor = '#e0e0e0';
                     }}
                   >
+                    {/* Render different layouts based on tour type */}
+                    {activeTab === 'guide-led' ? (
+                      /* GUIDED TOUR LAYOUT */
+                      <>
                     {/* Tour Image - for guided tours */}
                     {'images' in tour && (
                       <div style={{
@@ -806,6 +810,184 @@ const ToursNearMeView: React.FC = () => {
                         </button>
                       </div>
                     </div>
+                      </>
+                    ) : (
+                      /* SELF-GUIDED TOUR LAYOUT (Original) */
+                      <>
+                        <div style={{ padding: '16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                            {/* Guide Avatar */}
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              flexShrink: 0,
+                              gap: '4px'
+                            }}>
+                              <div style={{
+                                width: '50px',
+                                height: '50px',
+                                borderRadius: '50%',
+                                overflow: 'hidden',
+                                backgroundColor: '#f0f0f0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                {tour.creatorAvatar ? (
+                                  <img
+                                    src={tour.creatorAvatar}
+                                    alt={tour.creatorUsername}
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover'
+                                    }}
+                                  />
+                                ) : (
+                                  <FaUser size={24} color="#666" />
+                                )}
+                              </div>
+                              {tour.creatorRole === 'guide' && (
+                                <div style={{
+                                  fontSize: '10px',
+                                  color: '#007aff',
+                                  fontWeight: '600',
+                                  textAlign: 'center'
+                                }}>
+                                  Guide
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Tour Details */}
+                            <div style={{ flex: 1 }}>
+                              {/* Tour Title */}
+                              <h3 style={{
+                                margin: '0 0 4px 0',
+                                fontSize: '18px',
+                                fontWeight: '600',
+                                color: '#333'
+                              }}>
+                                {tour.name}
+                              </h3>
+
+                              {/* Creator Info */}
+                              <div style={{
+                                fontSize: '14px',
+                                color: '#007aff',
+                                marginBottom: '8px'
+                              }}>
+                                by {tour.creatorUsername} • {getTourTerminology(tour.creatorRole)}
+                              </div>
+
+                              {/* Rating and Reviews Row */}
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '16px',
+                                marginBottom: '8px'
+                              }}>
+                                {/* Star Rating */}
+                                {tour.ratingStats && tour.ratingStats.ratingCount > 0 && (
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
+                                  }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <FaStar
+                                          key={star}
+                                          size={14}
+                                          color={star <= Math.round(tour.ratingStats!.averageRating) ? '#ffc107' : '#e0e0e0'}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span style={{
+                                      fontSize: '12px',
+                                      color: '#666',
+                                      fontWeight: '500'
+                                    }}>
+                                      {tour.ratingStats.averageRating.toFixed(1)} ({tour.ratingStats.ratingCount})
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Review Count */}
+                                {tour.reviewCount !== undefined && tour.reviewCount > 0 && (
+                                  <button
+                                    onClick={(e) => handleReviewIconClick(tour, e)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '4px',
+                                      borderRadius: '4px',
+                                      transition: 'background-color 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = '#f0f0f0';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
+                                  >
+                                    <FaComment size={12} color="#666" />
+                                    <span style={{
+                                      fontSize: '12px',
+                                      color: '#666',
+                                      fontWeight: '500'
+                                    }}>
+                                      {tour.reviewCount} review{tour.reviewCount !== 1 ? 's' : ''}
+                                    </span>
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Description */}
+                              {tour.description && (
+                                <p style={{
+                                  margin: '0 0 8px 0',
+                                  color: '#666',
+                                  fontSize: '14px',
+                                  lineHeight: '1.4'
+                                }}>
+                                  {tour.description}
+                                </p>
+                              )}
+
+                              {/* Meta Info */}
+                              <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '16px',
+                                fontSize: '12px',
+                                color: '#999'
+                              }}>
+                                <span>{tour.postIds.length} {tour.postIds.length === 1 ? 'stop' : 'stops'}</span>
+                                <span>Created {tour.createdAt.toLocaleDateString()}</span>
+                                {tour.distance !== undefined && (
+                                  <span style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    color: '#007aff',
+                                    fontWeight: '500'
+                                  }}>
+                                    <FaMapPin size={10} />
+                                    {formatDistance(tour.distance)} away
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                     ))}
                   </div>
