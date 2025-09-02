@@ -385,7 +385,7 @@ const GuidedToursView: React.FC = () => {
               <button
                 onClick={() => navigate('/create-guided-tour')}
                 style={{
-                  backgroundColor: '#28a745',
+                  backgroundColor: '#134369',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -608,8 +608,8 @@ const GuidedToursView: React.FC = () => {
                   </div>
                   
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <FaDollarSign size={14} color="#28a745" />
-                    <span style={{ fontSize: '14px', color: '#28a745', fontWeight: '600' }}>
+                    <FaDollarSign size={14} color="#134369" />
+                    <span style={{ fontSize: '14px', color: '#134369', fontWeight: '600' }}>
                       {formatPrice(tour.totalPrice)}
                     </span>
                   </div>
@@ -629,7 +629,7 @@ const GuidedToursView: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <span style={{
                     fontSize: '12px',
-                    backgroundColor: '#28a745',
+                    backgroundColor: '#134369',
                     color: 'white',
                     padding: '4px 8px',
                     borderRadius: '12px',
@@ -656,8 +656,8 @@ const GuidedToursView: React.FC = () => {
                     style={{
                       flex: 1,
                       backgroundColor: 'white',
-                      color: '#28a745',
-                      border: '2px solid #28a745',
+                      color: '#134369',
+                      border: '2px solid #134369',
                       borderRadius: '8px',
                       padding: '8px 12px',
                       fontSize: '14px',
@@ -748,7 +748,7 @@ const GuidedToursView: React.FC = () => {
                       }}
                       style={{
                         flex: 1,
-                        backgroundColor: '#28a745',
+                        backgroundColor: '#134369',
                         color: 'white',
                         border: 'none',
                         borderRadius: '8px',
@@ -763,10 +763,10 @@ const GuidedToursView: React.FC = () => {
                         gap: '6px'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#218838';
+                        e.currentTarget.style.backgroundColor = '#0f2d4d';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#28a745';
+                        e.currentTarget.style.backgroundColor = '#134369';
                       }}
                     >
                       <FaCalendarAlt size={12} />

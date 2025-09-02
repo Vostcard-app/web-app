@@ -409,7 +409,7 @@ const UserProfileView: React.FC = () => {
           onClick={() => navigate(`/user-profile/${userId}/guided-tours`)}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = '#f8f9fa';
-            e.currentTarget.style.borderColor = '#28a745';
+            e.currentTarget.style.borderColor = '#134369';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'white';
@@ -438,7 +438,7 @@ const UserProfileView: React.FC = () => {
                   {guidedTours.length} guided tour{guidedTours.length !== 1 ? 's' : ''} available
                 </p>
               </div>
-              <FaWalking style={{ color: '#28a745', fontSize: '18px' }} />
+              <FaWalking style={{ color: '#134369', fontSize: '18px' }} />
             </div>
           </div>
         )}

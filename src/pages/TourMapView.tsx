@@ -457,7 +457,7 @@ const TourMapView: React.FC = () => {
               onClick={() => setShowBookingCalendar(true)}
               style={{
                 flex: 1,
-                backgroundColor: '#28a745',
+                backgroundColor: '#134369',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
@@ -472,10 +472,10 @@ const TourMapView: React.FC = () => {
                 gap: '6px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#218838';
+                e.currentTarget.style.backgroundColor = '#0f2d4d';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#28a745';
+                e.currentTarget.style.backgroundColor = '#134369';
               }}
             >
               <FaCalendarAlt />
