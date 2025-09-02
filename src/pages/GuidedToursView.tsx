@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus, FaCalendarAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaHome, FaWalking, FaClock, FaUsers, FaDollarSign, FaStar, FaPlus, FaCalendarAlt, FaTrash, FaEllipsisV } from 'react-icons/fa';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +11,7 @@ import { GuidedTourService } from '../services/guidedTourService';
 import TourBookingCalendar from '../components/TourBookingCalendar';
 import PaymentModal from '../components/PaymentModal';
 import TourDetailsForm from '../components/TourDetailsForm';
+import DeleteTourModal from '../components/DeleteTourModal';
 import type { GuidedTour } from '../types/GuidedTourTypes';
 
 interface UserProfile {
@@ -34,6 +35,8 @@ const GuidedToursView: React.FC = () => {
   const [bookingFormData, setBookingFormData] = useState<any>(null);
   const [showDetailsForm, setShowDetailsForm] = useState(false);
   const [editingTour, setEditingTour] = useState<GuidedTour | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingTour, setDeletingTour] = useState<GuidedTour | null>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -129,6 +132,31 @@ const GuidedToursView: React.FC = () => {
     ));
     setShowDetailsForm(false);
     setEditingTour(null);
+  };
+
+  // Handle delete tour
+  const handleDeleteTour = (tour: GuidedTour) => {
+    setDeletingTour(tour);
+    setShowDeleteModal(true);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = async (tourId: string) => {
+    try {
+      await GuidedTourService.deleteGuidedTour(tourId);
+      
+      // Remove tour from local state
+      setGuidedTours(prev => prev.filter(tour => tour.id !== tourId));
+      
+      // Close modal
+      setShowDeleteModal(false);
+      setDeletingTour(null);
+      
+      alert('Tour deleted successfully!');
+    } catch (error) {
+      console.error('❌ Error deleting tour:', error);
+      throw error; // Re-throw to let modal handle the error display
+    }
   };
 
   // Handle book tour button click
@@ -495,36 +523,70 @@ const GuidedToursView: React.FC = () => {
                   </button>
                   
                   {isCurrentUser ? (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditTourDetails(tour);
-                      }}
-                      style={{
-                        flex: 1,
-                        backgroundColor: '#007aff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '8px 12px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#0056b3';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#007aff';
-                      }}
-                    >
-                      ✏️ Edit Details
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTourDetails(tour);
+                        }}
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#007aff',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#0056b3';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#007aff';
+                        }}
+                      >
+                        ✏️ Edit Details
+                      </button>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTour(tour);
+                        }}
+                        style={{
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '8px 12px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          minWidth: '44px'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#c82333';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#dc3545';
+                        }}
+                        title="Delete Tour"
+                      >
+                        <FaTrash size={12} />
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={(e) => {
@@ -609,6 +671,19 @@ const GuidedToursView: React.FC = () => {
           }}
           tour={editingTour}
           onTourUpdated={handleTourUpdated}
+        />
+      )}
+
+      {/* Delete Tour Modal */}
+      {deletingTour && (
+        <DeleteTourModal
+          isVisible={showDeleteModal}
+          onClose={() => {
+            setShowDeleteModal(false);
+            setDeletingTour(null);
+          }}
+          tour={deletingTour}
+          onConfirmDelete={handleConfirmDelete}
         />
       )}
     </div>

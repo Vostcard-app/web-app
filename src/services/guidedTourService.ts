@@ -187,6 +187,20 @@ export class GuidedTourService {
   }
 
   /**
+   * Delete a guided tour
+   */
+  static async deleteGuidedTour(tourId: string): Promise<void> {
+    try {
+      const docRef = doc(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS, tourId);
+      await deleteDoc(docRef);
+      console.log('✅ Guided tour deleted successfully');
+    } catch (error) {
+      console.error('❌ Error deleting guided tour:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Search for guided tours with filters
    */
   static async searchGuidedTours(
