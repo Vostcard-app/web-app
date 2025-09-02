@@ -2324,99 +2324,81 @@ const HomeView = () => {
             <button 
               type="button"
               style={{ 
-                backgroundColor: '#002B4D',
+                background: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
-                height: '50px',
-                fontSize: '18px',
+                borderRadius: 12,
+                padding: '0px 8px',
+                fontSize: 18,
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
+                boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                width: '32%',
+                height: '50px',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                lineHeight: '1',
-                gap: '4px',
-                flex: '1',
-                minWidth: '0',
-                padding: '4px 8px',
-                boxSizing: 'border-box'
+                lineHeight: '1.2'
               }} 
               onClick={handleListViewClick}
             >
-              <img src={VostcardPin} alt="Vōstcards" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
-              <span style={{ textAlign: 'center', width: '100%', fontSize: '14px', lineHeight: '1.1' }}>Vōstcards</span>
+              Vōstcards
             </button>
             
             {/* Offers Button */}
             <button 
               type="button"
               style={{ 
-                backgroundColor: '#002B4D',
+                background: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
-                height: '50px',
-                fontSize: '18px',
+                borderRadius: 12,
+                padding: '0px 8px',
+                fontSize: 18,
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
+                boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                width: '32%',
+                height: '50px',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                lineHeight: '1',
-                gap: '4px',
-                flex: '1',
-                minWidth: '0',
-                padding: '4px 8px',
-                boxSizing: 'border-box'
+                lineHeight: '1.2'
               }} 
               onClick={handleOffersClick}
             >
-              <img src={OfferPin} alt="Offers" style={{ width: '16px', height: '16px', flexShrink: 0 }} />
-              <span style={{ textAlign: 'center', width: '100%', fontSize: '14px', lineHeight: '1.1' }}>Offers</span>
+              Offers
             </button>
             
             {/* Tours Button */}
             <button 
               type="button"
               style={{ 
-                backgroundColor: '#002B4D',
+                background: '#002B4D',
                 color: 'white',
                 border: 'none',
-                borderRadius: '6px',
-                height: '50px',
-                fontSize: '18px',
+                borderRadius: 12,
+                padding: '0px 8px',
+                fontSize: 18,
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
+                boxShadow: '0 4px 16px rgba(0,43,77,0.2)',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                width: '32%',
+                height: '50px',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
-                lineHeight: '1',
-                gap: '4px',
-                flex: '1',
-                minWidth: '0',
-                padding: '4px 8px',
-                boxSizing: 'border-box'
+                lineHeight: '1.2'
               }} 
               onClick={handleToursClick}
             >
-              <FaWalking style={{ fontSize: '16px', flexShrink: 0 }} />
-              <span style={{ textAlign: 'center', width: '100%', fontSize: '14px', lineHeight: '1.1' }}>Tours</span>
+              Tours
             </button>
           </div>
 
