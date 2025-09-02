@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { GuidedTourService } from '../services/guidedTourService';
 import TourBookingCalendar from '../components/TourBookingCalendar';
 import PaymentModal from '../components/PaymentModal';
+import TourDetailsForm from '../components/TourDetailsForm';
 import type { GuidedTour } from '../types/GuidedTourTypes';
 
 interface UserProfile {
@@ -31,6 +32,8 @@ const GuidedToursView: React.FC = () => {
   const [selectedTour, setSelectedTour] = useState<GuidedTour | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [bookingFormData, setBookingFormData] = useState<any>(null);
+  const [showDetailsForm, setShowDetailsForm] = useState(false);
+  const [editingTour, setEditingTour] = useState<GuidedTour | null>(null);
 
   const isCurrentUser = user?.uid === userId;
 
@@ -111,6 +114,21 @@ const GuidedToursView: React.FC = () => {
     setShowPaymentModal(false);
     setSelectedTour(null);
     setBookingFormData(null);
+  };
+
+  // Handle edit tour details
+  const handleEditTourDetails = (tour: GuidedTour) => {
+    setEditingTour(tour);
+    setShowDetailsForm(true);
+  };
+
+  // Handle tour updated
+  const handleTourUpdated = (updatedTour: GuidedTour) => {
+    setGuidedTours(prev => prev.map(tour => 
+      tour.id === updatedTour.id ? updatedTour : tour
+    ));
+    setShowDetailsForm(false);
+    setEditingTour(null);
   };
 
   // Handle book tour button click
@@ -476,7 +494,38 @@ const GuidedToursView: React.FC = () => {
                     View Details
                   </button>
                   
-                  {!isCurrentUser && (
+                  {isCurrentUser ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditTourDetails(tour);
+                      }}
+                      style={{
+                        flex: 1,
+                        backgroundColor: '#007aff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#0056b3';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#007aff';
+                      }}
+                    >
+                      ✏️ Edit Details
+                    </button>
+                  ) : (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -547,6 +596,19 @@ const GuidedToursView: React.FC = () => {
             guideName: selectedTour.guideName
           }}
           onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* Tour Details Form */}
+      {editingTour && (
+        <TourDetailsForm
+          isVisible={showDetailsForm}
+          onClose={() => {
+            setShowDetailsForm(false);
+            setEditingTour(null);
+          }}
+          tour={editingTour}
+          onTourUpdated={handleTourUpdated}
         />
       )}
     </div>

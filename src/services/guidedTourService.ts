@@ -152,6 +152,41 @@ export class GuidedTourService {
   }
 
   /**
+   * Update an existing guided tour
+   */
+  static async updateGuidedTour(tourId: string, updates: Partial<GuidedTour>): Promise<void> {
+    try {
+      const docRef = doc(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS, tourId);
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: new Date()
+      });
+      console.log('✅ Guided tour updated successfully');
+    } catch (error) {
+      console.error('❌ Error updating guided tour:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get a single guided tour by ID
+   */
+  static async getGuidedTour(tourId: string): Promise<GuidedTour | null> {
+    try {
+      const docRef = doc(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS, tourId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as GuidedTour;
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ Error fetching guided tour:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Search for guided tours with filters
    */
   static async searchGuidedTours(
