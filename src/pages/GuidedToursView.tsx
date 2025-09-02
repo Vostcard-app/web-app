@@ -210,7 +210,7 @@ const GuidedToursView: React.FC = () => {
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       {/* Header */}
       <div style={{
-        backgroundColor: '#28a745',
+        backgroundColor: '#007aff',
         color: 'white',
         padding: '32px 24px 24px 24px',
         borderBottomLeftRadius: 24,
