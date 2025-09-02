@@ -158,8 +158,12 @@ const GuideProfileEditView: React.FC = () => {
         languages: profile.languages
       });
 
-      // Navigate back to profile
-      navigate(`/guide-profile/${guideId}`);
+      // Navigate back - if editing own profile, go to home, otherwise go to profile
+      if (user?.uid === guideId) {
+        navigate('/home');
+      } else {
+        navigate(`/guide-profile/${guideId}`);
+      }
     } catch (error) {
       console.error('Error saving profile:', error);
       setError('Failed to save profile. Please try again.');
@@ -261,7 +265,14 @@ const GuideProfileEditView: React.FC = () => {
           justifyContent: 'space-between'
         }}>
           <button
-            onClick={() => navigate(`/guide-profile/${guideId}`)}
+            onClick={() => {
+              // If editing own profile, go back to home, otherwise go to profile view
+              if (user?.uid === guideId) {
+                navigate('/home');
+              } else {
+                navigate(`/guide-profile/${guideId}`);
+              }
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -275,7 +286,7 @@ const GuideProfileEditView: React.FC = () => {
             }}
           >
             <FaArrowLeft size={16} />
-            Cancel
+            {user?.uid === guideId ? 'Back to App' : 'Cancel'}
           </button>
 
           <h1 style={{
