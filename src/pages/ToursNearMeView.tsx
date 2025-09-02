@@ -744,6 +744,7 @@ const ToursNearMeView: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                    </div>
                   </div>
                     ))}
                   </div>

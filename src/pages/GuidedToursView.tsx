@@ -490,7 +490,7 @@ const GuidedToursView: React.FC = () => {
                     </p>
                   </div>
 
-                {/* Tour Details */}
+                  {/* Tour Details */}
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(2, 1fr)', 
@@ -713,6 +713,7 @@ const GuidedToursView: React.FC = () => {
                       Book Tour
                     </button>
                   )}
+                </div>
                 </div>
               </div>
             ))}
