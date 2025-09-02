@@ -501,9 +501,9 @@ const GuidedToursView: React.FC = () => {
                         onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
                         onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                       >
-                        {tour.guideAvatar ? (
+                        {(tour.guideAvatar || profile?.avatarURL) ? (
                           <img
-                            src={tour.guideAvatar}
+                            src={tour.guideAvatar || profile?.avatarURL}
                             alt={tour.guideName}
                             style={{
                               width: '48px',
