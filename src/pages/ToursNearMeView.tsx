@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaMapPin, FaWalking, FaUser, FaStar, FaComment, FaUserCircle, FaCalendarAlt } from 'react-icons/fa';
+import { FaArrowLeft, FaMapPin, FaWalking, FaUser, FaStar, FaComment, FaUserCircle, FaCalendarAlt, FaClock, FaUsers } from 'react-icons/fa';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { useAuth } from '../context/AuthContext';
