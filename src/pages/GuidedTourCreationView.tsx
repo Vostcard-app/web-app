@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaCamera, FaMapPin, FaClock, FaUsers, FaDollarSign, FaStar, FaCheck, FaPlus } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { GuidedTourService } from '../services/guidedTourService';
+import GuidedTourTemplateEditor, { TourFormData } from '../components/GuidedTourTemplateEditor';
 import type { GuidedTour } from '../types/GuidedTourTypes';
 
 interface TourTemplate {
@@ -105,6 +106,7 @@ const GuidedTourCreationView: React.FC = () => {
   const { user } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<TourTemplate | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [showTemplateEditor, setShowTemplateEditor] = useState(false);
 
   // Form state
   const [tourData, setTourData] = useState({
@@ -138,24 +140,8 @@ const GuidedTourCreationView: React.FC = () => {
   }, [user, navigate]);
 
   const handleTemplateSelect = (template: TourTemplate) => {
-    if (template.id === 'custom-tour') {
-      setShowCustomForm(true);
-      setSelectedTemplate(template);
-    } else {
-      setSelectedTemplate(template);
-      setTourData({
-        ...tourData,
-        name: template.name,
-        description: template.description,
-        duration: template.suggestedDuration,
-        basePrice: template.suggestedPrice,
-        category: template.category,
-        difficulty: template.difficulty,
-        highlights: [...template.highlights],
-        included: [...template.included],
-        coverImage: template.coverImage
-      });
-    }
+    setSelectedTemplate(template);
+    setShowTemplateEditor(true);
   };
 
   const formatDuration = (minutes: number) => {
@@ -174,35 +160,36 @@ const GuidedTourCreationView: React.FC = () => {
     }).format(price);
   };
 
-  const handleCreateTour = async () => {
-    if (!user || !selectedTemplate) return;
+  const handleSaveTour = async (formData: TourFormData) => {
+    if (!user) return;
 
     setIsCreating(true);
     try {
       // Calculate platform fee (10%)
-      const platformFee = tourData.basePrice * 0.1;
-      const totalPrice = tourData.basePrice + platformFee;
+      const platformFee = formData.pricePerPerson * 0.1;
+      const totalPrice = formData.pricePerPerson + platformFee;
 
       const guidedTour: Partial<GuidedTour> = {
         type: 'guided',
         creatorId: user.uid,
         guideId: user.uid,
-        guideName: user.displayName || 'Guide',
-        name: tourData.name,
-        description: tourData.description,
-        duration: tourData.duration,
-        maxGroupSize: tourData.maxGroupSize,
-        basePrice: tourData.basePrice,
+        guideName: formData.guideName,
+        guideAvatar: formData.guideAvatar,
+        name: formData.title,
+        description: formData.description,
+        duration: formData.duration,
+        maxGroupSize: formData.maxGroupSize,
+        basePrice: formData.pricePerPerson,
         platformFee,
         totalPrice,
-        category: tourData.category as any,
-        difficulty: tourData.difficulty,
-        highlights: tourData.highlights.filter(h => h.trim()),
-        included: tourData.included.filter(i => i.trim()),
-        meetingPoint: tourData.meetingPoint,
-        languages: tourData.languages,
-        images: tourData.coverImage ? [tourData.coverImage] : [],
-        tags: selectedTemplate.tags,
+        category: formData.category === 'Custom' ? formData.customCategory : formData.category as any,
+        difficulty: formData.difficulty,
+        highlights: formData.highlights,
+        included: formData.included,
+        meetingPoint: formData.meetingPoint,
+        languages: formData.languages,
+        images: formData.coverImage ? [formData.coverImage] : [],
+        tags: formData.tags,
         averageRating: 0,
         totalReviews: 0,
         isPublic: true,
@@ -211,19 +198,37 @@ const GuidedTourCreationView: React.FC = () => {
         updatedAt: new Date()
       };
 
-      // TODO: Implement actual creation via GuidedTourService
-      console.log('Creating guided tour:', guidedTour);
+      // Create the tour using the service
+      const tourId = await GuidedTourService.createGuidedTour({
+        tourData: guidedTour as any
+      });
       
-      // For now, show success and navigate back
-      alert('Guided tour template created successfully! You can now add stops and customize further.');
+      console.log('✅ Guided tour created with ID:', tourId);
+      alert('Guided tour created successfully! You can now manage bookings and add more details.');
       navigate('/user-profile/' + user.uid + '/guided-tours');
       
     } catch (error) {
-      console.error('Error creating guided tour:', error);
+      console.error('❌ Error creating guided tour:', error);
       alert('Failed to create guided tour. Please try again.');
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const getInitialFormData = (template: TourTemplate): Partial<TourFormData> => {
+    return {
+      title: template.name,
+      description: template.description,
+      category: template.category,
+      duration: template.suggestedDuration,
+      pricePerPerson: template.suggestedPrice,
+      highlights: [...template.highlights],
+      included: [...template.included],
+      tags: [...template.tags],
+      coverImage: template.coverImage,
+      difficulty: template.difficulty,
+      guideName: user?.displayName || 'Guide'
+    };
   };
 
   if (!user) {
@@ -564,6 +569,19 @@ const GuidedTourCreationView: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* Template Editor Modal */}
+      {selectedTemplate && (
+        <GuidedTourTemplateEditor
+          isVisible={showTemplateEditor}
+          onClose={() => {
+            setShowTemplateEditor(false);
+            setSelectedTemplate(null);
+          }}
+          onSave={handleSaveTour}
+          initialData={getInitialFormData(selectedTemplate)}
+        />
+      )}
     </div>
   );
 };
