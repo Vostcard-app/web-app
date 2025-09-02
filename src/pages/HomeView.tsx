@@ -2406,7 +2406,7 @@ const HomeView = () => {
       <div
         style={{
           position: 'fixed',
-          top: shouldUseContainer ? '175px' : '155px', // Under nav buttons: Desktop(115px + 40px + 20px), Mobile(95px + 40px + 20px)
+          top: shouldUseContainer ? '185px' : '165px', // Under nav buttons: Desktop(115px + 50px + 20px), Mobile(95px + 50px + 20px)
           left: shouldUseContainer ? 'calc(50% - 187px)' : '8px', // Desktop: container left edge + 8px, Mobile: 8px from edge
           zIndex: 1002,
           display: 'flex',
