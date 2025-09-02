@@ -317,7 +317,6 @@ const HomeView = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [showHelpMenu, setShowHelpMenu] = useState(false);
   const [showComposeModal, setShowComposeModal] = useState(false);
   const [currentTutorialVideo, setCurrentTutorialVideo] = useState<string>('JyV2HbeCPYA'); // Default "What is Vōstcard"
   const [isCreatePressed, setIsCreatePressed] = useState(false);
@@ -1113,22 +1112,7 @@ const HomeView = () => {
     };
   }, []); // Empty dependency - location watch should only start once and never restart
 
-  // Close help menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showHelpMenu) {
-        setShowHelpMenu(false);
-      }
-    };
 
-    if (showHelpMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showHelpMenu]);
 
   // Close main menu when clicking outside
   useEffect(() => {
@@ -1957,7 +1941,106 @@ const HomeView = () => {
               </>
             )}
             
-            {/* 11. Logout */}
+            {/* 11. Help - Parent Menu */}
+            <button
+              onClick={() => {
+                setOpenSubmenu(openSubmenu === 'help' ? null : 'help');
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              style={parentMenuItemStyle}
+            >
+              <span>❓ Help</span>
+              <span style={{ fontSize: '12px', color: '#666' }}>
+                {openSubmenu === 'help' ? '▼' : '▶'}
+              </span>
+            </button>
+            
+            {/* Help Submenu */}
+            {openSubmenu === 'help' && (
+              <>
+                <button
+                  onTouchStart={(e) => {
+                    console.log('🎯 TOUCH START - Quick Start Tour triggered!');
+                    e.preventDefault();
+                    setIsMenuOpen(false);
+                    setShowOnboarding(true);
+                    console.log('🎯 Quick Start Tour activated via touch');
+                  }}
+                  onMouseDown={(e) => {
+                    console.log('🎯 MOUSE DOWN - Quick Start Tour triggered!');
+                    e.preventDefault();
+                    setIsMenuOpen(false);
+                    setShowOnboarding(true);
+                    console.log('🎯 Quick Start Tour activated via mouse');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  ✨ Quick Start
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    handleTutorialVideo('VTfeDwSUy-o', 'Home Page');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  🎥 Video Tutorials
+                </button>
+                
+                <button
+                  onClick={() => {
+                    console.log('🔍 Filters button clicked!');
+                    setIsMenuOpen(false);
+                    console.log('🔍 Navigating to /help/filters');
+                    navigate('/help/filters');
+                    console.log('🔍 Navigation completed');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  🔍 Filters Help
+                </button>
+                
+                <button
+                  onClick={() => {
+                    console.log('📷 Create Cards button clicked!');
+                    setIsMenuOpen(false);
+                    console.log('📷 Navigating to /help/create-cards');
+                    navigate('/help/create-cards');
+                    console.log('📷 Navigation completed');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  📷 Create Cards Help
+                </button>
+                
+                <button
+                  onClick={() => {
+                    console.log('📖 User Guide button clicked!');
+                    setIsMenuOpen(false);
+                    console.log('📖 Navigating to /user-guide');
+                    navigate('/user-guide');
+                    console.log('📖 Navigation completed');
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={submenuItemStyle}
+                >
+                  📖 User Guide
+                </button>
+              </>
+            )}
+
+            {/* 12. Logout */}
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -2236,38 +2319,7 @@ const HomeView = () => {
               paddingRight: shouldUseContainer ? '8px' : '0'
             }}
           >
-            {/* Help Button */}
-            <button 
-              type="button"
-              style={{ 
-                backgroundColor: '#002B4D',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '6px 8px',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                pointerEvents: 'auto',
-                transition: 'transform 0.1s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                lineHeight: '1',
-                gap: '2px',
-                flex: '1',
-                minWidth: '0'
-              }} 
-              onClick={() => {
-                setShowHelpMenu(!showHelpMenu);
-              }}
-            >
-              <span style={{ fontSize: '20px', lineHeight: '1' }}>❓</span>
-              <span>Help</span>
-            </button>
-            
+
             {/* List View Button */}
             <button 
               type="button"
@@ -2414,167 +2466,7 @@ const HomeView = () => {
         </span>
       </div>
 
-          {/* Help Menu Dropdown */}
-          {showHelpMenu && (
-            <div style={{
-              position: 'absolute',
-              top: '50px',
-              left: '8px',
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 2001,
-              minWidth: '180px',
-              maxWidth: '200px'
-            }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', fontSize: '14px', fontWeight: 'bold', color: '#002B4D' }}>
-                Help Resources
-              </div>
-              
-              <button
-                onTouchStart={(e) => {
-                  console.log('🎯 TOUCH START - Quick Start Tour triggered!');
-                  e.preventDefault(); // Prevent default touch behavior
-                  setShowHelpMenu(false);
-                  setShowOnboarding(true);
-                  console.log('🎯 Quick Start Tour activated via touch');
-                }}
-                onMouseDown={(e) => {
-                  console.log('🎯 MOUSE DOWN - Quick Start Tour triggered!');
-                  e.preventDefault(); // Prevent default mouse behavior
-                  setShowHelpMenu(false);
-                  setShowOnboarding(true);
-                  console.log('🎯 Quick Start Tour activated via mouse');
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #f0f0f0',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                ✨ Quick Start
-              </button>
-              
-              <button
-                onClick={() => {
-                  setShowHelpMenu(false);
-                  handleTutorialVideo('VTfeDwSUy-o', 'Home Page');
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #f0f0f0',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                🏠 Home Page
-              </button>
-              
-              <button
-                onClick={() => {
-                  console.log('🔍 Filters button clicked!');
-                  setShowHelpMenu(false);
-                  console.log('🔍 Navigating to /help/filters');
-                  navigate('/help/filters');
-                  console.log('🔍 Navigation completed');
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #f0f0f0',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                <FaFilter style={{ marginRight: '8px' }} />
-                Filters
-              </button>
-              
-              <button
-                onClick={() => {
-                  console.log('📷 Create Cards button clicked!');
-                  setShowHelpMenu(false);
-                  console.log('📷 Navigating to /help/create-cards');
-                  navigate('/help/create-cards');
-                  console.log('📷 Navigation completed');
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #f0f0f0',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                <FaCamera style={{ marginRight: '8px' }} />
-                Create Cards
-              </button>
-              
-              <button
-                onClick={() => {
-                  console.log('📖 User Guide button clicked!');
-                  setShowHelpMenu(false);
-                  console.log('📖 Navigating to /user-guide');
-                  navigate('/user-guide');
-                  console.log('📖 Navigation completed');
-                }}
-                style={{
-                  width: '100%',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  color: '#333',
-                  transition: 'background-color 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-              >
-                📖 User Guide
-              </button>
 
-            </div>
-          )}
 
           {/* Recenter control - Hidden when viewing a tour */}
           {!tourData && (
