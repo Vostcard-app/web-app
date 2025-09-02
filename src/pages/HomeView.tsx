@@ -2328,7 +2328,7 @@ const HomeView = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                padding: '7px 8px',
+                padding: '9px 8px',
                 fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -2358,7 +2358,7 @@ const HomeView = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                padding: '7px 8px',
+                padding: '9px 8px',
                 fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -2388,7 +2388,7 @@ const HomeView = () => {
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                padding: '7px 8px',
+                padding: '9px 8px',
                 fontSize: '12px',
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -2415,7 +2415,7 @@ const HomeView = () => {
       <div
         style={{
           position: 'fixed',
-          top: shouldUseContainer ? '165px' : '145px', // Under nav buttons: Desktop(115px + 40px + 10px), Mobile(95px + 40px + 10px)
+          top: shouldUseContainer ? '175px' : '155px', // Under nav buttons: Desktop(115px + 40px + 20px), Mobile(95px + 40px + 20px)
           left: shouldUseContainer ? 'calc(50% - 187px)' : '8px', // Desktop: container left edge + 8px, Mobile: 8px from edge
           zIndex: 1002,
           display: 'flex',
