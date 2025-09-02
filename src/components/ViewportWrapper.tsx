@@ -1,5 +1,6 @@
 import React from 'react';
-import { useViewportMode, getMobileFrameStyles, MobileFrameDecorations } from '../hooks/useViewportMode';
+import { useViewportMode, getMobileFrameStyles } from '../hooks/useViewportMode';
+import { MobileFrameDecorations } from './MobileFrameDecorations';
 import { useDeviceDetection } from '../hooks/useDeviceDetection';
 
 interface ViewportWrapperProps {
