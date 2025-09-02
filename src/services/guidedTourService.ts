@@ -188,17 +188,49 @@ export class GuidedTourService {
     }
     
     if (Array.isArray(data)) {
-      return data.filter(item => item !== undefined).map(item => this.cleanUpdateData(item));
+      return data
+        .filter(item => item !== undefined)
+        .map(item => this.cleanUpdateData(item))
+        .filter(item => {
+          // Filter out base64 data URLs that are too large for Firestore
+          if (typeof item === 'string' && item.startsWith('data:image/')) {
+            if (item.length > 1000000) { // 1MB limit
+              console.warn('🚫 Filtering out large base64 image data (too large for Firestore)');
+              return false;
+            }
+          }
+          return true;
+        });
     }
     
     if (typeof data === 'object') {
       const cleaned: any = {};
       for (const [key, value] of Object.entries(data)) {
         if (value !== undefined) {
-          cleaned[key] = this.cleanUpdateData(value);
+          // Special handling for images array
+          if (key === 'images' && Array.isArray(value)) {
+            const cleanedImages = value.filter(img => {
+              if (typeof img === 'string' && img.startsWith('data:image/')) {
+                if (img.length > 1000000) { // 1MB limit
+                  console.warn('🚫 Filtering out large base64 image data from images array');
+                  return false;
+                }
+              }
+              return true;
+            });
+            cleaned[key] = cleanedImages;
+          } else {
+            cleaned[key] = this.cleanUpdateData(value);
+          }
         }
       }
       return cleaned;
+    }
+    
+    // Filter out individual base64 strings that are too large
+    if (typeof data === 'string' && data.startsWith('data:image/') && data.length > 1000000) {
+      console.warn('🚫 Filtering out large base64 image data');
+      return null;
     }
     
     return data;

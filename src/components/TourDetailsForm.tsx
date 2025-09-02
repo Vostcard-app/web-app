@@ -250,6 +250,15 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
 
       console.log('🔍 TourDetailsForm: Preparing to update tour with data:', updatedTour);
 
+      // Check for large base64 images and warn user
+      const hasLargeImages = updatedTour.images?.some(img => 
+        typeof img === 'string' && img.startsWith('data:image/') && img.length > 1000000
+      );
+      
+      if (hasLargeImages) {
+        console.warn('⚠️ Large base64 images detected - these will be filtered out during save');
+      }
+
       // Update the tour in Firestore
       await GuidedTourService.updateGuidedTour(tour.id, updatedTour);
       
