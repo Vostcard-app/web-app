@@ -85,6 +85,8 @@ import FiltersHelpView from "./pages/FiltersHelpView";
 import CreateCardsHelpView from "./pages/CreateCardsHelpView";
 import BookingManagementView from "./pages/BookingManagementView";
 import TourDetailView from "./pages/TourDetailView";
+import GuideProfileView from "./pages/GuideProfileView";
+import GuideProfileEditView from "./pages/GuideProfileEditView";
 import DeviceDetectionDemo from "./components/DeviceDetectionDemo";
 import ViewportWrapper from "./components/ViewportWrapper";
 import ViewportModeDemo from "./components/ViewportModeDemo";
@@ -190,6 +192,8 @@ function App() {
                                               <Route path="/create-guided-tour" element={<GuidedTourCreationView />} />
                             <Route path="/booking-management" element={<BookingManagementView />} />
                             <Route path="/guided-tour/:tourId" element={<TourDetailView />} />
+                            <Route path="/guide-profile/:guideId" element={<GuideProfileView />} />
+                            <Route path="/guide-profile/:guideId/edit" element={<GuideProfileEditView />} />
                             <Route path="/device-detection-demo" element={<DeviceDetectionDemo />} />
                             <Route path="/viewport-mode-demo" element={<ViewportModeDemo />} />
                             <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />

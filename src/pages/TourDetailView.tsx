@@ -779,7 +779,21 @@ const TourDetailView: React.FC = () => {
               Your Guide
             </h3>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+            <div 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '16px', 
+                marginBottom: '16px',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '12px',
+                transition: 'background-color 0.2s ease'
+              }}
+              onClick={() => navigate(`/guide-profile/${tour.guideId}`)}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
               {tour.guideAvatar ? (
                 <img
                   src={tour.guideAvatar}
@@ -806,13 +820,18 @@ const TourDetailView: React.FC = () => {
               )}
               
               <div>
-                <h4 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 4px 0' }}>
+                <h4 style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '600', 
+                  margin: '0 0 4px 0',
+                  color: '#134369'
+                }}>
                   {tour.guideName}
                 </h4>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <FaStar size={14} color="#ffc107" />
                   <span style={{ fontSize: '14px', color: '#666' }}>
-                    Local Guide
+                    Local Guide • View Profile
                   </span>
                 </div>
               </div>

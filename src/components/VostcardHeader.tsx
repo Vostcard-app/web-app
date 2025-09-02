@@ -171,7 +171,12 @@ const VostcardHeader: React.FC<VostcardHeaderProps> = ({
             }}
             onClick={() => {
               if (vostcard?.userID) {
-                navigate(`/user-profile/${vostcard.userID}`);
+                // Navigate to guide profile if user is a guide, otherwise regular profile
+                if (userProfile?.userRole === 'guide' || vostcard?.userRole === 'guide') {
+                  navigate(`/guide-profile/${vostcard.userID}`);
+                } else {
+                  navigate(`/user-profile/${vostcard.userID}`);
+                }
               }
             }}
           >
