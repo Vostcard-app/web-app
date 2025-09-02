@@ -25,6 +25,9 @@ const FULL_SCREEN_PAGES = [
   '/tour-detail/*',
   '/device-detection-demo',
   
+  // Guide profile pages
+  '/guide-profile/*',
+  
   // Creation and editing pages
   '/create-guided-tour',
   '/edit-store-profile',
