@@ -111,17 +111,12 @@ export class GuidedTourService {
    */
   static async createGuidedTour(tourData: CreateGuidedTourRequest): Promise<string> {
     try {
+      // Use the tour data as provided, since it already contains all required fields
       const tour: Omit<GuidedTour, 'id'> = {
-        ...tourData.tourData,
-        type: 'guided',
-        averageRating: 0,
-        totalReviews: 0,
-        platformFee: tourData.tourData.basePrice * PLATFORM_FEE_PERCENTAGE,
-        totalPrice: tourData.tourData.basePrice * (1 + PLATFORM_FEE_PERCENTAGE),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        ...tourData.tourData
       };
 
+      console.log('🔍 Creating guided tour with data:', tour);
       const docRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS), tour);
       console.log('✅ Guided tour created with ID:', docRef.id);
       return docRef.id;

@@ -169,14 +169,21 @@ const GuidedTourCreationView: React.FC = () => {
       const platformFee = formData.pricePerPerson * 0.1;
       const totalPrice = formData.pricePerPerson + platformFee;
 
-      const guidedTour: Partial<GuidedTour> = {
-        type: 'guided',
+      const guidedTour: Omit<GuidedTour, 'id'> = {
+        // Base Tour interface fields
         creatorId: user.uid,
+        name: formData.title,
+        description: formData.description,
+        postIds: [], // Will be populated later when posts are added
+        isPublic: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        
+        // GuidedTour specific fields
+        type: 'guided',
         guideId: user.uid,
         guideName: formData.guideName,
         guideAvatar: formData.guideAvatar,
-        name: formData.title,
-        description: formData.description,
         duration: formData.duration,
         maxGroupSize: formData.maxGroupSize,
         basePrice: formData.pricePerPerson,
@@ -186,21 +193,23 @@ const GuidedTourCreationView: React.FC = () => {
         difficulty: formData.difficulty,
         highlights: formData.highlights,
         included: formData.included,
-        meetingPoint: formData.meetingPoint,
+        meetingPoint: {
+          name: formData.meetingPoint?.name || 'To be determined',
+          address: formData.meetingPoint?.address || 'Meeting point will be provided after booking',
+          latitude: 0,
+          longitude: 0,
+          instructions: formData.meetingPoint?.instructions || 'Meeting point details will be shared with confirmed bookings'
+        },
         languages: formData.languages,
         images: formData.coverImage ? [formData.coverImage] : [],
         tags: formData.tags,
         averageRating: 0,
-        totalReviews: 0,
-        isPublic: true,
-        postIds: [], // Will be populated later when posts are added
-        createdAt: new Date(),
-        updatedAt: new Date()
+        totalReviews: 0
       };
 
       // Create the tour using the service
       const tourId = await GuidedTourService.createGuidedTour({
-        tourData: guidedTour as any
+        tourData: guidedTour
       });
       
       console.log('✅ Guided tour created with ID:', tourId);
