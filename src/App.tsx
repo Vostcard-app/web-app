@@ -85,6 +85,7 @@ import FiltersHelpView from "./pages/FiltersHelpView";
 import CreateCardsHelpView from "./pages/CreateCardsHelpView";
 import BookingManagementView from "./pages/BookingManagementView";
 import TourDetailView from "./pages/TourDetailView";
+import DeviceDetectionDemo from "./components/DeviceDetectionDemo";
 // Unified flow is now permanent - video is optional
 
 function App() {
@@ -187,6 +188,7 @@ function App() {
                                               <Route path="/create-guided-tour" element={<GuidedTourCreationView />} />
                             <Route path="/booking-management" element={<BookingManagementView />} />
                             <Route path="/guided-tour/:tourId" element={<TourDetailView />} />
+                            <Route path="/device-detection-demo" element={<DeviceDetectionDemo />} />
                             <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />
 
                   {/* 🏢 Business */}

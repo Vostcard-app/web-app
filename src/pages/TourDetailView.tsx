@@ -27,11 +27,13 @@ import { GuidedTourService } from '../services/guidedTourService';
 import { useAuth } from '../context/AuthContext';
 import TourBookingCalendar from '../components/TourBookingCalendar';
 import PaymentModal from '../components/PaymentModal';
+import { useDeviceDetection } from '../hooks/useDeviceDetection';
 
 const TourDetailView: React.FC = () => {
   const { tourId } = useParams<{ tourId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const deviceInfo = useDeviceDetection();
   
   const [tour, setTour] = useState<GuidedTour | null>(null);
   const [loading, setLoading] = useState(true);
@@ -353,10 +355,10 @@ const TourDetailView: React.FC = () => {
       <div style={{ 
         maxWidth: '1200px', 
         margin: '0 auto', 
-        padding: '32px 24px',
+        padding: deviceInfo.isMobile ? '16px' : '32px 24px',
         display: 'grid',
-        gridTemplateColumns: '2fr 1fr',
-        gap: '48px'
+        gridTemplateColumns: deviceInfo.isMobile ? '1fr' : '2fr 1fr',
+        gap: deviceInfo.isMobile ? '24px' : '48px'
       }}>
         {/* Left Column - Tour Details */}
         <div>
@@ -389,7 +391,7 @@ const TourDetailView: React.FC = () => {
             </div>
             
             <h1 style={{ 
-              fontSize: '32px', 
+              fontSize: deviceInfo.isMobile ? '24px' : '32px', 
               fontWeight: 'bold', 
               margin: '0 0 16px 0',
               lineHeight: '1.2'
@@ -410,10 +412,10 @@ const TourDetailView: React.FC = () => {
           {/* Quick Info */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '24px',
+            gridTemplateColumns: deviceInfo.isMobile ? '1fr 1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: deviceInfo.isMobile ? '16px' : '24px',
             marginBottom: '32px',
-            padding: '24px',
+            padding: deviceInfo.isMobile ? '16px' : '24px',
             backgroundColor: '#f8f9fa',
             borderRadius: '12px'
           }}>
