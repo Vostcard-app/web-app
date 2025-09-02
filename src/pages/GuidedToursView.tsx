@@ -552,7 +552,7 @@ const GuidedToursView: React.FC = () => {
                           e.currentTarget.style.backgroundColor = '#007aff';
                         }}
                       >
-                        ✏️ Edit Details
+                        ✏️ Edit
                       </button>
                       
                       <button
