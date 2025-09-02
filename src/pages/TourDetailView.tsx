@@ -26,6 +26,8 @@ import {
 import { GuidedTour } from '../types/GuidedTourTypes';
 import { GuidedTourService } from '../services/guidedTourService';
 import { useAuth } from '../context/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 import TourBookingCalendar from '../components/TourBookingCalendar';
 import PaymentModal from '../components/PaymentModal';
 import TourDetailsForm from '../components/TourDetailsForm';
@@ -45,6 +47,7 @@ const TourDetailView: React.FC = () => {
   const [bookingFormData, setBookingFormData] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [guideProfile, setGuideProfile] = useState<any>(null);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -54,6 +57,18 @@ const TourDetailView: React.FC = () => {
         setLoading(true);
         const tourData = await GuidedTourService.getGuidedTour(tourId);
         setTour(tourData);
+
+        // Fetch guide profile data for avatar fallback
+        if (tourData?.guideId) {
+          try {
+            const guideDoc = await getDoc(doc(db, 'users', tourData.guideId));
+            if (guideDoc.exists()) {
+              setGuideProfile(guideDoc.data());
+            }
+          } catch (error) {
+            console.error('❌ Error fetching guide profile:', error);
+          }
+        }
       } catch (error) {
         console.error('❌ Error fetching tour:', error);
       } finally {
@@ -407,9 +422,9 @@ const TourDetailView: React.FC = () => {
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
-              {tour.guideAvatar ? (
+              {(tour.guideAvatar || guideProfile?.avatarURL) ? (
                 <img
-                  src={tour.guideAvatar}
+                  src={tour.guideAvatar || guideProfile?.avatarURL}
                   alt={tour.guideName}
                   style={{
                     width: '80px',
