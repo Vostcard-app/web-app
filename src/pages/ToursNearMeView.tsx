@@ -734,7 +734,14 @@ const ToursNearMeView: React.FC = () => {
                         {'basePrice' in tour && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '14px', color: '#134369', fontWeight: '600' }}>
-                              ${tour.basePrice}/person
+                              ${(() => {
+                                // Ensure 10% markup is always applied for display
+                                // If tour has guideRate, use basePrice as-is (already includes markup)
+                                // If no guideRate, assume basePrice is guide rate and add 10%
+                                const hasGuideRate = 'guideRate' in tour && tour.guideRate;
+                                const displayPrice = hasGuideRate ? tour.basePrice : Math.round(tour.basePrice * 1.1);
+                                return displayPrice;
+                              })()}/person
                             </span>
                           </div>
                         )}
