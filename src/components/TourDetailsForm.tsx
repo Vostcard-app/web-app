@@ -252,11 +252,20 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
 
       // Check for large base64 images and warn user
       const hasLargeImages = updatedTour.images?.some(img => 
-        typeof img === 'string' && img.startsWith('data:image/') && img.length > 1000000
+        typeof img === 'string' && img.startsWith('data:image/') && img.length > 500000
       );
       
       if (hasLargeImages) {
         console.warn('⚠️ Large base64 images detected - these will be filtered out during save');
+        alert('⚠️ Some images are too large and will be removed to prevent document size errors. Please use smaller images (under 500KB each) or upload to an image hosting service.');
+      }
+
+      // Calculate approximate document size
+      const documentSize = new Blob([JSON.stringify(updatedTour)]).size;
+      console.log(`📏 Estimated document size: ${documentSize} bytes (${(documentSize / 1024).toFixed(1)} KB)`);
+      
+      if (documentSize > 900000) {
+        alert('⚠️ Warning: Tour data is approaching Firestore size limits. Consider using smaller images or fewer details.');
       }
 
       // Update the tour in Firestore

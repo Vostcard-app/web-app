@@ -163,6 +163,19 @@ export class GuidedTourService {
         updatedAt: new Date()
       });
       
+      // Calculate document size and warn if approaching limit
+      const documentSize = this.calculateDocumentSize(cleanUpdates);
+      console.log(`📏 Document size: ${documentSize} bytes (${(documentSize / 1024).toFixed(1)} KB)`);
+      
+      if (documentSize > 900000) { // 900KB warning threshold
+        console.warn('⚠️ Document size approaching Firestore limit (1MB)');
+        console.warn('⚠️ Consider moving large data to Firebase Storage');
+      }
+      
+      if (documentSize > 1048576) { // 1MB hard limit
+        throw new Error(`Document size (${documentSize} bytes) exceeds Firestore limit of 1MB. Please reduce image sizes or move images to Firebase Storage.`);
+      }
+      
       console.log('🔍 Updating tour with data:', JSON.stringify(cleanUpdates, null, 2));
       
       const docRef = doc(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS, tourId);
@@ -173,6 +186,13 @@ export class GuidedTourService {
       console.error('❌ Update data that failed:', JSON.stringify(updates, null, 2));
       throw error;
     }
+  }
+
+  /**
+   * Calculate approximate document size in bytes
+   */
+  private static calculateDocumentSize(data: any): number {
+    return new Blob([JSON.stringify(data)]).size;
   }
 
   /**
@@ -194,7 +214,7 @@ export class GuidedTourService {
         .filter(item => {
           // Filter out base64 data URLs that are too large for Firestore
           if (typeof item === 'string' && item.startsWith('data:image/')) {
-            if (item.length > 1000000) { // 1MB limit
+            if (item.length > 500000) { // 500KB limit per image (more conservative)
               console.warn('🚫 Filtering out large base64 image data (too large for Firestore)');
               return false;
             }
@@ -211,7 +231,7 @@ export class GuidedTourService {
           if (key === 'images' && Array.isArray(value)) {
             const cleanedImages = value.filter(img => {
               if (typeof img === 'string' && img.startsWith('data:image/')) {
-                if (img.length > 1000000) { // 1MB limit
+                if (img.length > 500000) { // 500KB limit per image
                   console.warn('🚫 Filtering out large base64 image data from images array');
                   return false;
                 }
@@ -228,7 +248,7 @@ export class GuidedTourService {
     }
     
     // Filter out individual base64 strings that are too large
-    if (typeof data === 'string' && data.startsWith('data:image/') && data.length > 1000000) {
+    if (typeof data === 'string' && data.startsWith('data:image/') && data.length > 500000) {
       console.warn('🚫 Filtering out large base64 image data');
       return null;
     }
