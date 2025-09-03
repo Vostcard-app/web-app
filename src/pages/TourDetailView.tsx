@@ -68,6 +68,7 @@ const TourDetailView: React.FC = () => {
               console.log('🔍 Guide profile data:', profileData);
               console.log('🔍 Tour guideAvatar:', tourData.guideAvatar);
               console.log('🔍 Profile avatarURL:', profileData?.avatarURL);
+              console.log('🔍 Profile photoURL:', profileData?.photoURL);
               setGuideProfile(profileData);
             }
           } catch (error) {
@@ -361,7 +362,21 @@ const TourDetailView: React.FC = () => {
               fontSize: '16px',
               opacity: 0.9
             }}>
-              <FaUserCircle size={20} />
+              {(tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL) ? (
+                <img
+                  src={tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL}
+                  alt={tour.guideName}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '2px solid rgba(255, 255, 255, 0.3)'
+                  }}
+                />
+              ) : (
+                <FaUserCircle size={20} />
+              )}
               <span>with {tour.guideName}</span>
             </div>
             
@@ -807,9 +822,9 @@ const TourDetailView: React.FC = () => {
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                {(tour.guideAvatar || guideProfile?.avatarURL) ? (
+                {(tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL) ? (
                   <img
-                    src={tour.guideAvatar || guideProfile?.avatarURL}
+                    src={tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL}
                     alt={tour.guideName}
                     style={{
                       width: '48px',
