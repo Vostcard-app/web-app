@@ -301,44 +301,52 @@ const BrowseAreaView: React.FC = () => {
         )}
 
         {/* Browse Sections */}
-        {selectedLocation && (
-          <div className="browse-sections">
+        <div className="browse-sections">
+          {selectedLocation && (
             <div className="selected-location-header">
               <FaMapPin className="selected-icon" />
               <span>Browse {selectedLocation.name}</span>
             </div>
-            
-            {/* Browse Vōstcards Section */}
-            <div className="browse-section">
-              <div className="section-header">
-                <FaMap className="section-icon" />
-                <div className="section-info">
-                  <h3>Browse Area for Vōstcards</h3>
-                  <p>Discover local experiences, stories, and hidden gems</p>
-                </div>
+          )}
+          
+          {/* Browse Vōstcards Section */}
+          <div className="browse-section">
+            <div className="section-header">
+              <FaMap className="section-icon" />
+              <div className="section-info">
+                <h3>Browse Area for Vōstcards</h3>
+                <p>Discover local experiences, stories, and hidden gems</p>
               </div>
-              <button onClick={handleBrowseVostcards} className="browse-button vostcards-button">
-                <FaMap style={{ marginRight: '8px' }} />
-                View Vōstcards
-              </button>
             </div>
-
-            {/* Browse Tour Guides Section */}
-            <div className="browse-section">
-              <div className="section-header">
-                <FaWalking className="section-icon" />
-                <div className="section-info">
-                  <h3>Browse Area for Tour Guides</h3>
-                  <p>Find professional guided tours and local experts</p>
-                </div>
-              </div>
-              <button onClick={handleBrowseTourGuides} className="browse-button tour-guides-button">
-                <FaWalking style={{ marginRight: '8px' }} />
-                Find Tour Guides
-              </button>
-            </div>
+            <button 
+              onClick={selectedLocation ? handleBrowseVostcards : () => alert('Please search and select a location first')} 
+              className={`browse-button vostcards-button ${!selectedLocation ? 'disabled' : ''}`}
+              disabled={!selectedLocation}
+            >
+              <FaMap style={{ marginRight: '8px' }} />
+              View Vōstcards
+            </button>
           </div>
-        )}
+
+          {/* Browse Tour Guides Section */}
+          <div className="browse-section">
+            <div className="section-header">
+              <FaWalking className="section-icon" />
+              <div className="section-info">
+                <h3>Browse Area for Tour Guides</h3>
+                <p>Find professional guided tours and local experts</p>
+              </div>
+            </div>
+            <button 
+              onClick={selectedLocation ? handleBrowseTourGuides : () => alert('Please search and select a location first')} 
+              className={`browse-button tour-guides-button ${!selectedLocation ? 'disabled' : ''}`}
+              disabled={!selectedLocation}
+            >
+              <FaWalking style={{ marginRight: '8px' }} />
+              Find Tour Guides
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
