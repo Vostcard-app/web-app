@@ -1055,12 +1055,18 @@ const HomeView = () => {
       setActualUserLocation([latitude, longitude]);
       
       // Only set initial position ONCE, never update map automatically again
-      if (!hasInitialPosition) {
+      // BUT: Don't override browse location if one is set
+      if (!hasInitialPosition && !browseLocationRef.current) {
         setUserLocation([latitude, longitude]);
         // Center the map on the user's location ONCE at initial GPS success
         setMapTargetLocation([latitude, longitude]);
         setShouldUpdateMapView(true); // ✅ INITIAL positioning only - show user location on first load
         setHasInitialPosition(true); // Mark that we've set initial position
+        console.log('📍 Initial GPS position set - no browse location active');
+      } else if (!hasInitialPosition && browseLocationRef.current) {
+        setUserLocation([latitude, longitude]);
+        setHasInitialPosition(true); // Mark that we've set initial position
+        console.log('📍 Initial GPS received but browse location active - not overriding map position');
       } else {
         console.log('🔒 MOBILE DEBUG: GPS update received - actualUserLocation updated, map position unchanged');
         console.log('🔒 MOBILE DEBUG: hasInitialPosition:', hasInitialPosition, 'shouldUpdateMapView:', shouldUpdateMapView);
