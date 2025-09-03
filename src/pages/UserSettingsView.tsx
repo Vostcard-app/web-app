@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, storage } from '../firebase/firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FaArrowLeft, FaCamera, FaImage, FaTimes } from 'react-icons/fa';
@@ -129,16 +129,55 @@ const UserSettingsView: React.FC = () => {
   const handleSave = async (field: string) => {
     if (!user) return;
     
+    // Username validation
+    if (field === 'username') {
+      const trimmedUsername = tempValue.trim();
+      
+      // Basic username validation
+      if (trimmedUsername.length < 3) {
+        alert('Username must be at least 3 characters long.');
+        return;
+      }
+      
+      if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+        alert('Username can only contain letters, numbers, and underscores (no spaces).');
+        return;
+      }
+      
+      // Check if username is already taken (if different from current)
+      if (trimmedUsername !== profile.username) {
+        try {
+          const usersRef = collection(db, 'users');
+          const q = query(usersRef, where('username', '==', trimmedUsername));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            alert('Username is already taken. Please choose a different one.');
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking username uniqueness:', error);
+          alert('Failed to verify username availability. Please try again.');
+          return;
+        }
+      }
+      
+      // Update tempValue to trimmed version
+      setTempValue(trimmedUsername);
+    }
+    
     setSaving(true);
     try {
       const docRef = doc(db, 'users', user.uid);
+      const updateValue = field === 'username' ? tempValue.trim() : tempValue;
+      
       await updateDoc(docRef, {
-        [field]: tempValue
+        [field]: updateValue
       });
       
       setProfile(prev => ({
         ...prev,
-        [field]: tempValue
+        [field]: updateValue
       }));
       
       setEditingField(null);

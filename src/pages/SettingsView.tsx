@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaHome, FaUser, FaLock, FaAddressBook, FaToggleOn, FaToggleOff, FaGoogle, FaPhone, FaExclamationTriangle, FaFilter, FaSave, FaUndo } from 'react-icons/fa';
 import { updatePassword, updateProfile } from 'firebase/auth';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import './SettingsView.css';
 import { useAuth } from '../context/AuthContext';
@@ -34,6 +34,36 @@ const SettingsView = () => {
   const handleUsernameChange = async () => {
     if (!user || !newUsername.trim()) return;
     
+    const trimmedUsername = newUsername.trim();
+    
+    // Username validation
+    if (trimmedUsername.length < 3) {
+      setError('Username must be at least 3 characters long.');
+      return;
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(trimmedUsername)) {
+      setError('Username can only contain letters, numbers, and underscores (no spaces).');
+      return;
+    }
+    
+    // Check if username is already taken (if different from current)
+    if (trimmedUsername !== username) {
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', trimmedUsername));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          setError('Username is already taken. Please choose a different one.');
+          return;
+        }
+      } catch (error: any) {
+        setError(`Failed to verify username availability: ${error.message}`);
+        return;
+      }
+    }
+    
     setIsUpdatingUsername(true);
     setError('');
     setMessage('');
@@ -42,9 +72,12 @@ const SettingsView = () => {
       // Update username in Firestore
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
-        username: newUsername.trim(),
+        username: trimmedUsername,
         updatedAt: new Date()
       });
+      
+      // Update local state
+      setNewUsername(trimmedUsername);
       
       // Refresh user role to get updated username
       await refreshUserRole();
