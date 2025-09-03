@@ -227,17 +227,9 @@ export class GuidedTourService {
       const cleaned: any = {};
       for (const [key, value] of Object.entries(data)) {
         if (value !== undefined) {
-          // Special handling for images array
+          // Special handling for images array with smart filtering
           if (key === 'images' && Array.isArray(value)) {
-            const cleanedImages = value.filter(img => {
-              if (typeof img === 'string' && img.startsWith('data:image/')) {
-                if (img.length > 500000) { // 500KB limit per image
-                  console.warn('🚫 Filtering out large base64 image data from images array');
-                  return false;
-                }
-              }
-              return true;
-            });
+            const cleanedImages = this.smartImageFiltering(value);
             cleaned[key] = cleanedImages;
           } else {
             cleaned[key] = this.cleanUpdateData(value);
@@ -254,6 +246,50 @@ export class GuidedTourService {
     }
     
     return data;
+  }
+
+  /**
+   * Smart image filtering that prioritizes hero images (first image) up to 1MB
+   * and applies stricter limits to additional images to stay within document size limits
+   */
+  private static smartImageFiltering(images: string[]): string[] {
+    const cleanedImages: string[] = [];
+    let totalImageSize = 0;
+    
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      
+      if (typeof img === 'string' && img.startsWith('data:image/')) {
+        const imageSize = img.length;
+        
+        // First image (hero) can be up to 1MB
+        if (i === 0 && imageSize <= 1000000) {
+          cleanedImages.push(img);
+          totalImageSize += imageSize;
+          console.log(`✅ Hero image accepted: ${(imageSize / 1024).toFixed(1)} KB`);
+        }
+        // Additional images limited to 300KB each to manage total document size
+        else if (i > 0 && imageSize <= 300000 && totalImageSize + imageSize < 800000) {
+          cleanedImages.push(img);
+          totalImageSize += imageSize;
+          console.log(`✅ Additional image accepted: ${(imageSize / 1024).toFixed(1)} KB`);
+        }
+        // Skip images that would exceed limits
+        else {
+          if (i === 0) {
+            console.warn(`🚫 Hero image too large: ${(imageSize / 1024).toFixed(1)} KB (max 1MB for hero)`);
+          } else {
+            console.warn(`🚫 Additional image filtered: ${(imageSize / 1024).toFixed(1)} KB (max 300KB for additional images)`);
+          }
+        }
+      } else {
+        // Non-base64 images (URLs) are always included
+        cleanedImages.push(img);
+      }
+    }
+    
+    console.log(`📊 Total image data size: ${(totalImageSize / 1024).toFixed(1)} KB`);
+    return cleanedImages;
   }
 
   /**

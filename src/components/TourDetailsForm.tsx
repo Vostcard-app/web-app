@@ -250,14 +250,24 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
 
       console.log('🔍 TourDetailsForm: Preparing to update tour with data:', updatedTour);
 
-      // Check for large base64 images and warn user
-      const hasLargeImages = updatedTour.images?.some(img => 
-        typeof img === 'string' && img.startsWith('data:image/') && img.length > 500000
+      // Check for large base64 images and warn user with new smart filtering rules
+      const hasOversizedHeroImage = updatedTour.images?.[0] && 
+        typeof updatedTour.images[0] === 'string' && 
+        updatedTour.images[0].startsWith('data:image/') && 
+        updatedTour.images[0].length > 1000000;
+      
+      const hasOversizedAdditionalImages = updatedTour.images?.slice(1).some(img => 
+        typeof img === 'string' && img.startsWith('data:image/') && img.length > 300000
       );
       
-      if (hasLargeImages) {
-        console.warn('⚠️ Large base64 images detected - these will be filtered out during save');
-        alert('⚠️ Some images are too large and will be removed to prevent document size errors. Please use smaller images (under 500KB each) or upload to an image hosting service.');
+      if (hasOversizedHeroImage) {
+        console.warn('⚠️ Hero image too large - will be filtered out during save');
+        alert('⚠️ The first image (hero image) is too large and will be removed. Hero images can be up to 1MB. Please use a smaller image.');
+      }
+      
+      if (hasOversizedAdditionalImages) {
+        console.warn('⚠️ Additional images too large - some will be filtered out during save');
+        alert('⚠️ Some additional images are too large and will be removed. Additional images should be under 300KB each to manage document size.');
       }
 
       // Calculate approximate document size
