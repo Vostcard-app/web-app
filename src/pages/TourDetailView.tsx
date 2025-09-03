@@ -321,138 +321,228 @@ const TourDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* Hero Image Gallery */}
+      {/* Hero Section with Vostcard Blue Background */}
       <div style={{ 
-        position: 'relative', 
-        height: '500px', 
-        backgroundColor: '#f0f0f0',
-        overflow: 'hidden'
+        backgroundColor: '#134369',
+        padding: deviceInfo.isMobile ? '32px 16px' : '48px 32px',
+        minHeight: '400px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
-        {currentImage ? (
-          <>
-            <img
-              src={currentImage}
-              alt={tour.name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-            />
+        <div style={{
+          maxWidth: '1200px',
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: deviceInfo.isMobile ? '1fr' : '1fr 1fr',
+          gap: deviceInfo.isMobile ? '24px' : '48px',
+          alignItems: 'center'
+        }}>
+          {/* Tour Info Section */}
+          <div style={{ color: 'white' }}>
+            <h1 style={{
+              fontSize: deviceInfo.isMobile ? '28px' : '36px',
+              fontWeight: 'bold',
+              margin: '0 0 16px 0',
+              lineHeight: '1.2'
+            }}>
+              {tour.name}
+            </h1>
             
-            {/* Image Navigation */}
-            {tour.images.length > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px',
+              fontSize: '16px',
+              opacity: 0.9
+            }}>
+              <FaUserCircle size={20} />
+              <span>with {tour.guideName}</span>
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '16px',
+              fontSize: '14px',
+              opacity: 0.9
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FaClock size={14} />
+                <span>{formatDuration(tour.duration)}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FaUsers size={14} />
+                <span>Up to {tour.maxGroupSize} people</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FaStar size={14} color="#ffc107" />
+                <span>{tour.averageRating > 0 ? tour.averageRating.toFixed(1) : 'New'}</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Slideshow Section */}
+          <div style={{ 
+            position: 'relative',
+            width: '100%',
+            maxWidth: '500px',
+            margin: '0 auto'
+          }}>
+            {currentImage ? (
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                paddingBottom: '66.67%', // 3:2 aspect ratio
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+              }}>
+                <img
+                  src={currentImage}
+                  alt={tour.name}
                   style={{
                     position: 'absolute',
-                    left: '20px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '48px',
-                    height: '48px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
                   }}
-                >
-                  <FaChevronLeft size={20} />
-                </button>
+                />
                 
-                <button
-                  onClick={nextImage}
-                  style={{
-                    position: 'absolute',
-                    right: '20px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '48px',
-                    height: '48px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <FaChevronRight size={20} />
-                </button>
-                
-                {/* Image Indicators */}
+                {/* Image Navigation */}
+                {tour.images.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      style={{
+                        position: 'absolute',
+                        left: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        backgroundColor: 'rgba(19, 67, 105, 0.8)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 1)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 0.8)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                      }}
+                    >
+                      <FaChevronLeft size={16} />
+                    </button>
+                    
+                    <button
+                      onClick={nextImage}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        backgroundColor: 'rgba(19, 67, 105, 0.8)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 1)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 0.8)';
+                        e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                      }}
+                    >
+                      <FaChevronRight size={16} />
+                    </button>
+                    
+                    {/* Image Indicators */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      display: 'flex',
+                      gap: '6px'
+                    }}>
+                      {tour.images.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentImageIndex(index)}
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            border: 'none',
+                            backgroundColor: index === currentImageIndex ? 'white' : 'rgba(255, 255, 255, 0.5)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div style={{
+                position: 'relative',
+                width: '100%',
+                paddingBottom: '66.67%', // 3:2 aspect ratio
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'rgba(255, 255, 255, 0.7)'
+              }}>
                 <div style={{
                   position: 'absolute',
-                  bottom: '80px',
+                  top: '50%',
                   left: '50%',
-                  transform: 'translateX(-50%)',
-                  display: 'flex',
-                  gap: '8px'
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center'
                 }}>
-                  {tour.images.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImageIndex(index)}
-                      style={{
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '50%',
-                        border: 'none',
-                        backgroundColor: index === currentImageIndex ? 'white' : 'rgba(255, 255, 255, 0.5)',
-                        cursor: 'pointer'
-                      }}
-                    />
-                  ))}
+                  <FaCamera size={48} style={{ marginBottom: '12px' }} />
+                  <div>No images available</div>
                 </div>
-              </>
+              </div>
             )}
-          </>
-        ) : (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            color: '#666'
-          }}>
-            <FaCamera size={48} />
           </div>
-        )}
+        </div>
+      </div>
 
-        {/* Hero Overlay with Guide Avatar and Tour Title */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.8))',
-          padding: '40px 24px 24px',
-          color: 'white'
-        }}>
-          <div style={{ 
-            maxWidth: '1200px', 
-            margin: '0 auto',
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: '16px'
-          }}>
-            {/* Guide Avatar */}
-            <div 
-              style={{ 
-                cursor: 'pointer',
-                transition: 'transform 0.2s ease'
-              }}
-              onClick={() => navigate(`/guide-profile/${tour.guideId}`)}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            >
+      {/* Main Content */}
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto', 
+        padding: deviceInfo.isMobile ? '16px' : '32px 24px',
+        display: 'grid',
+        gridTemplateColumns: deviceInfo.isMobile ? '1fr' : '2fr 1fr',
+        gap: deviceInfo.isMobile ? '24px' : '48px'
+      }}>
               {(tour.guideAvatar || guideProfile?.avatarURL) ? (
                 <img
                   src={tour.guideAvatar || guideProfile?.avatarURL}
