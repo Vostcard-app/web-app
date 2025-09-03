@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaHome, FaSearch, FaMapPin, FaArrowLeft } from 'react-icons/fa';
+import { FaHome, FaSearch, FaMapPin, FaArrowLeft, FaMap, FaUserTie, FaWalking } from 'react-icons/fa';
 import { GeocodingService } from '../services/geocodingService';
+import { GuidedTourService } from '../services/guidedTourService';
 import { db } from '../firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import './BrowseAreaView.css';
@@ -126,8 +127,8 @@ const BrowseAreaView: React.FC = () => {
     setShowDropdown(false);
   };
 
-  const handleBrowseArea = () => {
-    console.log('🗺️ Browse Area button clicked');
+  const handleBrowseVostcards = () => {
+    console.log('🗺️ Browse Vōstcards button clicked');
     console.log('📍 Selected location:', selectedLocation);
     
     if (selectedLocation) {
@@ -143,6 +144,27 @@ const BrowseAreaView: React.FC = () => {
             id: selectedLocation.id,
             type: selectedLocation.type,
             place: selectedLocation.place,
+          },
+        },
+      });
+    }
+  };
+
+  const handleBrowseTourGuides = () => {
+    console.log('🎯 Browse Tour Guides button clicked');
+    console.log('📍 Selected location:', selectedLocation);
+    
+    if (selectedLocation) {
+      console.log('📍 Coordinates being sent:', selectedLocation.coordinates);
+      console.log('🎯 Navigating to GuidedToursView with location filter');
+      
+      navigate('/guided-tours', {
+        state: {
+          searchLocation: {
+            coordinates: selectedLocation.coordinates,
+            name: selectedLocation.name,
+            latitude: selectedLocation.latitude,
+            longitude: selectedLocation.longitude,
           },
         },
       });
@@ -191,7 +213,7 @@ const BrowseAreaView: React.FC = () => {
           onClick={() => navigate('/home')}
           style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
         >
-          Browse Area
+          Browse
         </h1>
         <FaHome
           size={40}
@@ -278,16 +300,43 @@ const BrowseAreaView: React.FC = () => {
           <div style={{ color: 'red', margin: '12px 0', textAlign: 'center' }}>{searchError}</div>
         )}
 
-        {/* Browse Button */}
+        {/* Browse Sections */}
         {selectedLocation && (
-          <div className="browse-section">
-            <div className="selected-location">
+          <div className="browse-sections">
+            <div className="selected-location-header">
               <FaMapPin className="selected-icon" />
-              <span>View map of {selectedLocation.name}</span>
+              <span>Browse {selectedLocation.name}</span>
             </div>
-            <button onClick={handleBrowseArea} className="browse-button">
-              Browse Area
-            </button>
+            
+            {/* Browse Vōstcards Section */}
+            <div className="browse-section">
+              <div className="section-header">
+                <FaMap className="section-icon" />
+                <div className="section-info">
+                  <h3>Browse Area for Vōstcards</h3>
+                  <p>Discover local experiences, stories, and hidden gems</p>
+                </div>
+              </div>
+              <button onClick={handleBrowseVostcards} className="browse-button vostcards-button">
+                <FaMap style={{ marginRight: '8px' }} />
+                View Vōstcards
+              </button>
+            </div>
+
+            {/* Browse Tour Guides Section */}
+            <div className="browse-section">
+              <div className="section-header">
+                <FaWalking className="section-icon" />
+                <div className="section-info">
+                  <h3>Browse Area for Tour Guides</h3>
+                  <p>Find professional guided tours and local experts</p>
+                </div>
+              </div>
+              <button onClick={handleBrowseTourGuides} className="browse-button tour-guides-button">
+                <FaWalking style={{ marginRight: '8px' }} />
+                Find Tour Guides
+              </button>
+            </div>
           </div>
         )}
       </div>

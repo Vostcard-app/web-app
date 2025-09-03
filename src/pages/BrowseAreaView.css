@@ -213,41 +213,107 @@
   text-transform: capitalize;
 }
 
-.browse-section {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
+.browse-sections {
+  margin-top: 24px;
 }
 
-.selected-location {
+.selected-location-header {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   font-weight: 600;
+  font-size: 18px;
+  color: #002B4D;
+  padding: 16px;
+  background: #f0f8ff;
+  border-radius: 12px;
+  border: 2px solid #e6f3ff;
 }
 
 .selected-icon {
-  margin-right: 8px;
+  margin-right: 12px;
   color: #002B4D;
+  font-size: 20px;
+}
+
+.browse-section {
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.browse-section:hover {
+  border-color: #002B4D;
+  box-shadow: 0 4px 16px rgba(0, 43, 77, 0.1);
+  transform: translateY(-2px);
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.section-icon {
+  color: #002B4D;
+  font-size: 24px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.section-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #002B4D;
+}
+
+.section-info p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .browse-button {
   width: 100%;
-  background: #002B4D;
-  color: white;
   border: none;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 16px 20px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.browse-button:hover {
+.vostcards-button {
+  background: #002B4D;
+  color: white;
+}
+
+.vostcards-button:hover {
   background: #001a33;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 43, 77, 0.3);
+}
+
+.tour-guides-button {
+  background: #134369;
+  color: white;
+}
+
+.tour-guides-button:hover {
+  background: #0f2d4d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(19, 67, 105, 0.3);
 }
 
 .popular-cities {
