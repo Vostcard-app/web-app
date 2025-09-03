@@ -79,6 +79,17 @@ const TourDetailView: React.FC = () => {
     fetchTour();
   }, [tourId]);
 
+  // Auto-cycle through images in hero section
+  useEffect(() => {
+    if (!tour?.images || tour.images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % tour.images.length);
+    }, 5000); // Change image every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [tour?.images]);
+
   if (loading) {
     return (
       <div style={{ 
@@ -824,7 +835,14 @@ const TourDetailView: React.FC = () => {
             <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
                 <span style={{ fontSize: '32px', fontWeight: 'bold', color: '#333' }}>
-                  {formatPrice(tour.basePrice)}
+                  {formatPrice((() => {
+                    // Ensure 10% markup is always applied for display
+                    // If tour has guideRate, use basePrice as-is (already includes markup)
+                    // If no guideRate, assume basePrice is guide rate and add 10%
+                    const hasGuideRate = tour.guideRate;
+                    const displayPrice = hasGuideRate ? tour.basePrice : Math.round(tour.basePrice * 1.1);
+                    return displayPrice;
+                  })())}
                 </span>
                 <span style={{ fontSize: '16px', color: '#666' }}>per person</span>
               </div>
