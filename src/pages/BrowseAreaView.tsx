@@ -200,6 +200,7 @@ const BrowseAreaView: React.FC = () => {
             id: selectedLocation.id,
             type: selectedLocation.type,
             place: selectedLocation.place,
+            zoomOut: true, // Flag to indicate we want a zoomed-out view
           },
         },
       });

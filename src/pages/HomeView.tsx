@@ -81,12 +81,13 @@ const createDirectionalUserIcon = (heading: number) => {
 };
 
 // MapUpdater component - COMPLETELY DISABLED - No automatic recentering
-const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce }: {
+const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stableShouldUpdateMapView, hasRecenteredOnce, browseLocation }: {
   targetLocation: [number, number] | null;
   singleVostcard?: any;
   shouldUpdateMapView: boolean;
   stableShouldUpdateMapView: (value: boolean) => void;
   hasRecenteredOnce: React.MutableRefObject<boolean>;
+  browseLocation?: any;
 }) => {
   const map = useMap();
 
@@ -96,7 +97,18 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
     if (targetLocation && map && shouldUpdateMapView && hasRecenteredOnce.current === false) {
       const currentZoom = map.getZoom();
       console.log('🎯 MapUpdater: Manual recenter requested to:', targetLocation);
-      map.setView(targetLocation, Math.max(currentZoom, 13));
+      
+      // Use zoomed-out view for browse locations to show the whole area
+      let zoomLevel;
+      if (browseLocation?.zoomOut) {
+        zoomLevel = 10; // Zoomed-out view to show broader area
+        console.log('🔍 Using zoomed-out view for browse location (zoom level 10)');
+      } else {
+        zoomLevel = Math.max(currentZoom, 13); // Default closer zoom
+        console.log('🔍 Using default zoom level:', zoomLevel);
+      }
+      
+      map.setView(targetLocation, zoomLevel);
       hasRecenteredOnce.current = true;
       stableShouldUpdateMapView(false);
     } else if (shouldUpdateMapView) {
@@ -2293,6 +2305,7 @@ const HomeView = () => {
                 shouldUpdateMapView={shouldUpdateMapView}
                 stableShouldUpdateMapView={stableShouldUpdateMapView}
                 hasRecenteredOnce={hasRecenteredOnce}
+                browseLocation={browseLocation}
               />
               <MapBoundsListener
                 onBoundsChange={handleMapBoundsChange}
