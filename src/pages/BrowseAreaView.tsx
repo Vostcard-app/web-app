@@ -206,9 +206,9 @@ const BrowseAreaView: React.FC = () => {
       
       console.log('🎯 Browse Tour Guides button clicked');
       console.log('🏙️ Selected city:', selectedCity);
-      console.log('🎯 Navigating to GuidedToursView with city filter');
+      console.log('🎯 Navigating to GuidesListView with city filter');
       
-      navigate('/guided-tours', {
+      navigate('/guides-list', {
         state: {
           filterByCity: selectedCity,
         },
