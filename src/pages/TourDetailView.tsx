@@ -64,7 +64,11 @@ const TourDetailView: React.FC = () => {
           try {
             const guideDoc = await getDoc(doc(db, 'users', tourData.guideId));
             if (guideDoc.exists()) {
-              setGuideProfile(guideDoc.data());
+              const profileData = guideDoc.data();
+              console.log('🔍 Guide profile data:', profileData);
+              console.log('🔍 Tour guideAvatar:', tourData.guideAvatar);
+              console.log('🔍 Profile avatarURL:', profileData?.avatarURL);
+              setGuideProfile(profileData);
             }
           } catch (error) {
             console.error('❌ Error fetching guide profile:', error);
