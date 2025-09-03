@@ -899,7 +899,8 @@ const HomeView = () => {
 
   // Get visible posts (within map bounds) - limit to 5 non-offer pins plus all offers
   const visiblePosts = useMemo(() => {
-    const allPosts = !mapBounds ? vostcards : filterPostsByBounds(vostcards, mapBounds);
+    // Use filteredVostcards instead of raw vostcards to respect all filters including "Guides only"
+    const allPosts = !mapBounds ? filteredVostcards : filterPostsByBounds(filteredVostcards, mapBounds);
     
     // Separate offers from non-offer posts
     const offers = allPosts.filter(p => p.isOffer);
@@ -907,7 +908,7 @@ const HomeView = () => {
     
     // Return combined array: 5 non-offer posts + all offers
     return [...nonOfferPosts, ...offers];
-  }, [vostcards, mapBounds, filterPostsByBounds]);
+  }, [filteredVostcards, mapBounds, filterPostsByBounds]);
 
   // Optimize map view to fit pins when posts are loaded
   const handleMapOptimization = useCallback((posts: any[], userLoc: [number, number] | null) => {
