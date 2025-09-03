@@ -121,6 +121,10 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
     description: ''
   });
 
+  // Drag and drop state for image reordering
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   if (!isVisible) return null;
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,6 +149,59 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }));
+  };
+
+  // Drag and drop handlers for image reordering
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', ''); // Required for Firefox
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear dragOverIndex if we're leaving the container, not just moving between children
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverIndex(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Reorder the images array
+    const newImages = [...formData.images];
+    const draggedImage = newImages[draggedIndex];
+    
+    // Remove the dragged image from its original position
+    newImages.splice(draggedIndex, 1);
+    
+    // Insert it at the new position
+    newImages.splice(dropIndex, 0, draggedImage);
+
+    setFormData(prev => ({
+      ...prev,
+      images: newImages
+    }));
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const addListItem = (listName: keyof DetailedTourData, item: string) => {
@@ -921,52 +978,110 @@ const TourDetailsForm: React.FC<TourDetailsFormProps> = ({
               
               {/* Image Gallery */}
               {formData.images.length > 0 && (
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
-                  gap: '12px' 
-                }}>
-                  {formData.images.map((image, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        position: 'relative',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        aspectRatio: '1'
-                      }}
-                    >
-                      <img
-                        src={image}
-                        alt={`Tour photo ${index + 1}`}
+                <div>
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
+                    Drag and drop photos to reorder them. The first photo will be used as the hero image.
+                  </p>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
+                    gap: '12px' 
+                  }}>
+                    {formData.images.map((image, index) => (
+                      <div
+                        key={index}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onDragEnd={handleDragEnd}
                         style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                      <button
-                        onClick={() => removeImage(index)}
-                        style={{
-                          position: 'absolute',
-                          top: '8px',
-                          right: '8px',
-                          backgroundColor: 'rgba(220, 53, 69, 0.8)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '50%',
-                          width: '24px',
-                          height: '24px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
+                          position: 'relative',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          aspectRatio: '1',
+                          cursor: 'grab',
+                          opacity: draggedIndex === index ? 0.5 : 1,
+                          transform: dragOverIndex === index && draggedIndex !== index ? 'scale(1.05)' : 'scale(1)',
+                          transition: 'transform 0.2s ease, opacity 0.2s ease',
+                          border: dragOverIndex === index && draggedIndex !== index ? '2px solid #134369' : '2px solid transparent',
+                          boxShadow: dragOverIndex === index && draggedIndex !== index ? '0 4px 12px rgba(19, 67, 105, 0.3)' : 'none'
                         }}
                       >
-                        <FaTimes size={10} />
-                      </button>
-                    </div>
-                  ))}
+                        {/* Hero Badge */}
+                        {index === 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '8px',
+                            left: '8px',
+                            backgroundColor: '#134369',
+                            color: 'white',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            textTransform: 'uppercase',
+                            zIndex: 2
+                          }}>
+                            Hero
+                          </div>
+                        )}
+                        
+                        <img
+                          src={image}
+                          alt={`Tour photo ${index + 1}`}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            pointerEvents: 'none' // Prevent image from interfering with drag
+                          }}
+                        />
+                        
+                        {/* Order indicator */}
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '8px',
+                          left: '8px',
+                          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                          color: 'white',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}>
+                          {index + 1}
+                        </div>
+                        
+                        <button
+                          onClick={() => removeImage(index)}
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '24px',
+                            height: '24px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 2
+                          }}
+                        >
+                          <FaTimes size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
