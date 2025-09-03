@@ -19,8 +19,14 @@ const BrowseAreaView: React.FC = () => {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [selectedCity, setSelectedCity] = useState('');
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
+  const [citySearchQuery, setCitySearchQuery] = useState('');
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const cityInputRef = useRef<HTMLInputElement>(null);
+  const cityResultsRef = useRef<HTMLDivElement>(null);
 
   // Real-time location search with debouncing using the existing geocoding service
   useEffect(() => {
@@ -92,6 +98,34 @@ const BrowseAreaView: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
+  // Fetch available cities from users' guide areas
+  useEffect(() => {
+    const fetchAvailableCities = async () => {
+      try {
+        const usersRef = collection(db, 'users');
+        const querySnapshot = await getDocs(usersRef);
+        
+        const cities = new Set<string>();
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          if (userData.guideAreas && Array.isArray(userData.guideAreas)) {
+            userData.guideAreas.forEach((city: string) => {
+              if (city && city.trim()) {
+                cities.add(city.trim());
+              }
+            });
+          }
+        });
+        
+        setAvailableCities(Array.from(cities).sort());
+      } catch (error) {
+        console.error('Error fetching available cities:', error);
+      }
+    };
+
+    fetchAvailableCities();
+  }, []);
+
   // Keyboard navigation for dropdown
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!showDropdown || searchResults.length === 0) return;
@@ -128,13 +162,26 @@ const BrowseAreaView: React.FC = () => {
     setShowDropdown(false);
   };
 
-  const handleBrowse = () => {
-    if (!selectedLocation) {
-      alert('Please search and select a location first');
-      return;
-    }
+  const handleCitySelect = (city: string) => {
+    setSelectedCity(city);
+    setCitySearchQuery(city);
+    setShowCityDropdown(false);
+  };
 
+  const getFilteredCities = () => {
+    if (!citySearchQuery.trim()) return availableCities;
+    return availableCities.filter(city => 
+      city.toLowerCase().includes(citySearchQuery.toLowerCase())
+    );
+  };
+
+  const handleBrowse = () => {
     if (activeTab === 'vostcards') {
+      if (!selectedLocation) {
+        alert('Please search and select a location first');
+        return;
+      }
+      
       console.log('🗺️ Browse Vōstcards button clicked');
       console.log('📍 Selected location:', selectedLocation);
       console.log('📍 Coordinates being sent:', selectedLocation.coordinates);
@@ -152,18 +199,18 @@ const BrowseAreaView: React.FC = () => {
         },
       });
     } else {
+      if (!selectedCity) {
+        alert('Please select a city first');
+        return;
+      }
+      
       console.log('🎯 Browse Tour Guides button clicked');
-      console.log('📍 Selected location:', selectedLocation);
-      console.log('🎯 Navigating to GuidedToursView with location filter');
+      console.log('🏙️ Selected city:', selectedCity);
+      console.log('🎯 Navigating to GuidedToursView with city filter');
       
       navigate('/guided-tours', {
         state: {
-          searchLocation: {
-            coordinates: selectedLocation.coordinates,
-            name: selectedLocation.name,
-            latitude: selectedLocation.latitude,
-            longitude: selectedLocation.longitude,
-          },
+          filterByCity: selectedCity,
         },
       });
     }
@@ -179,6 +226,15 @@ const BrowseAreaView: React.FC = () => {
         !inputRef.current.contains(event.target as Node)
       ) {
         setShowDropdown(false);
+      }
+      
+      if (
+        cityResultsRef.current &&
+        !cityResultsRef.current.contains(event.target as Node) &&
+        cityInputRef.current &&
+        !cityInputRef.current.contains(event.target as Node)
+      ) {
+        setShowCityDropdown(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -256,77 +312,145 @@ const BrowseAreaView: React.FC = () => {
 
         {/* Tab Content */}
         <div className="tab-content">
-          {/* Search Section */}
-          <div className="search-section">
-            <div className="search-input-container">
-              <FaMapPin className="search-icon" />
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder={`Search for any location worldwide...`}
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowDropdown(true);
-                }}
-                onKeyDown={handleKeyDown}
-                className="search-input"
-                autoComplete="off"
-              />
-              <button
-                onClick={handleSearch}
-                disabled={isSearching || !searchQuery.trim()}
-                className="search-button"
-              >
-                {isSearching ? (
-                  <div className="loading-spinner"></div>
-                ) : (
-                  <FaSearch size={16} />
-                )}
-              </button>
-            </div>
-
-            {/* Autocomplete Dropdown */}
-            {showDropdown && searchResults.length > 0 && (
-              <div className="autocomplete-dropdown" ref={resultsRef}>
-                  {searchResults.map((result, index) => (
-                  <div
-                    key={index}
-                    className={`autocomplete-item${highlightedIndex === index ? ' highlighted' : ''}`}
-                    onMouseDown={() => handleLocationSelect(result)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
+          {activeTab === 'vostcards' ? (
+            <>
+              {/* Location Search for Vostcards */}
+              <div className="search-section">
+                <div className="search-input-container">
+                  <FaMapPin className="search-icon" />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="Search for any location worldwide..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowDropdown(true);
+                    }}
+                    onKeyDown={handleKeyDown}
+                    className="search-input"
+                    autoComplete="off"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    disabled={isSearching || !searchQuery.trim()}
+                    className="search-button"
                   >
-                    <FaMapPin className="result-icon" />
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontWeight: 600 }}>
-                        {result.name}
-                      </span>
-                      {result.displayAddress && result.displayAddress !== result.name ? (
-                        <span style={{ color: '#666', fontWeight: 400, fontSize: 13, display: 'block' }}>
-                          {result.displayAddress}
+                    {isSearching ? (
+                      <div className="loading-spinner"></div>
+                    ) : (
+                      <FaSearch size={16} />
+                    )}
+                  </button>
+                </div>
+
+                {/* Autocomplete Dropdown */}
+                {showDropdown && searchResults.length > 0 && (
+                  <div className="autocomplete-dropdown" ref={resultsRef}>
+                      {searchResults.map((result, index) => (
+                      <div
+                        key={index}
+                        className={`autocomplete-item${highlightedIndex === index ? ' highlighted' : ''}`}
+                        onMouseDown={() => handleLocationSelect(result)}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                      >
+                        <FaMapPin className="result-icon" />
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontWeight: 600 }}>
+                            {result.name}
+                          </span>
+                          {result.displayAddress && result.displayAddress !== result.name ? (
+                            <span style={{ color: '#666', fontWeight: 400, fontSize: 13, display: 'block' }}>
+                              {result.displayAddress}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
+                          Location
                         </span>
-                      ) : null}
-                    </div>
-                    <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
-                      Location
-                    </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {/* Error Message */}
+                {searchError && (
+                  <div style={{ color: 'red', margin: '12px 0', textAlign: 'center' }}>{searchError}</div>
+                )}
               </div>
-            )}
 
-            {/* Error Message */}
-            {searchError && (
-              <div style={{ color: 'red', margin: '12px 0', textAlign: 'center' }}>{searchError}</div>
-            )}
-          </div>
+              {/* Selected Location Display */}
+              {selectedLocation && (
+                <div className="selected-location-display">
+                  <FaMapPin className="selected-icon" />
+                  <span>Selected: {selectedLocation.name}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {/* City Search for Guides */}
+              <div className="search-section">
+                <div className="search-input-container">
+                  <FaMapPin className="search-icon" />
+                  <input
+                    ref={cityInputRef}
+                    type="text"
+                    placeholder="Search cities where guides are available..."
+                    value={citySearchQuery}
+                    onChange={(e) => {
+                      setCitySearchQuery(e.target.value);
+                      setShowCityDropdown(true);
+                    }}
+                    className="search-input"
+                    autoComplete="off"
+                  />
+                  <button
+                    onClick={() => {
+                      const filtered = getFilteredCities();
+                      if (filtered.length > 0) {
+                        handleCitySelect(filtered[0]);
+                      }
+                    }}
+                    disabled={!citySearchQuery.trim()}
+                    className="search-button"
+                  >
+                    <FaSearch size={16} />
+                  </button>
+                </div>
 
-          {/* Selected Location Display */}
-          {selectedLocation && (
-            <div className="selected-location-display">
-              <FaMapPin className="selected-icon" />
-              <span>Selected: {selectedLocation.name}</span>
-            </div>
+                {/* City Dropdown */}
+                {showCityDropdown && getFilteredCities().length > 0 && (
+                  <div className="autocomplete-dropdown" ref={cityResultsRef}>
+                      {getFilteredCities().map((city, index) => (
+                      <div
+                        key={index}
+                        className="autocomplete-item"
+                        onMouseDown={() => handleCitySelect(city)}
+                      >
+                        <FaMapPin className="result-icon" />
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontWeight: 600 }}>
+                            {city}
+                          </span>
+                        </div>
+                        <span style={{ color: '#aaa', fontSize: 12, marginLeft: 8 }}>
+                          City
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Selected City Display */}
+              {selectedCity && (
+                <div className="selected-location-display">
+                  <FaMapPin className="selected-icon" />
+                  <span>Selected: {selectedCity}</span>
+                </div>
+              )}
+            </>
           )}
 
           {/* Tab-specific Content */}
@@ -355,16 +479,16 @@ const BrowseAreaView: React.FC = () => {
                   <FaWalking className="content-icon" />
                   <div className="content-info">
                     <h2>Browse Guides</h2>
-                    <p>Find professional guided tours and local experts in your selected area</p>
+                    <p>Find professional guided tours and local experts by city</p>
                   </div>
                 </div>
                 <button 
                   onClick={handleBrowse}
-                  className={`browse-action-button guides-action ${!selectedLocation ? 'disabled' : ''}`}
-                  disabled={!selectedLocation}
+                  className={`browse-action-button guides-action ${!selectedCity ? 'disabled' : ''}`}
+                  disabled={!selectedCity}
                 >
                   <FaSearch style={{ marginRight: '8px' }} />
-                  {selectedLocation ? `Find Tour Guides in ${selectedLocation.name}` : 'Select a location to browse Tour Guides'}
+                  {selectedCity ? `Find Tour Guides in ${selectedCity}` : 'Select a city to browse Tour Guides'}
                 </button>
               </div>
             )}

@@ -12,6 +12,7 @@ interface UserProfile {
   email: string;
   name: string;
   message: string;
+  guideAreas?: string[];
   avatarURL?: string;
   buyMeACoffeeURL?: string;
   kofiURL?: string;
@@ -42,6 +43,7 @@ const UserSettingsView: React.FC = () => {
     email: '',
     name: '',
     message: '',
+    guideAreas: [],
     avatarURL: '',
     buyMeACoffeeURL: '',
     kofiURL: '',
@@ -67,6 +69,7 @@ const UserSettingsView: React.FC = () => {
   const [showNameSeparationModal, setShowNameSeparationModal] = useState(false);
   const [tempFirstName, setTempFirstName] = useState('');
   const [tempLastName, setTempLastName] = useState('');
+  const [newGuideArea, setNewGuideArea] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -83,6 +86,7 @@ const UserSettingsView: React.FC = () => {
             email: data.email || user.email || '',
             name: data.name || '',
             message: data.message || '',
+            guideAreas: data.guideAreas || [],
             avatarURL: data.avatarURL || '',
             buyMeACoffeeURL: data.buyMeACoffeeURL || '',
             kofiURL: data.kofiURL || '',
@@ -288,6 +292,65 @@ const UserSettingsView: React.FC = () => {
     } catch (error) {
       console.error('Error updating name:', error);
       alert('Failed to update name. Please try again.');
+    }
+  };
+
+  const handleAddGuideArea = async () => {
+    if (!user || !newGuideArea.trim()) return;
+    
+    const trimmedArea = newGuideArea.trim();
+    if (profile.guideAreas?.includes(trimmedArea)) {
+      alert('This city is already in your guide areas.');
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      const updatedAreas = [...(profile.guideAreas || []), trimmedArea];
+      
+      const docRef = doc(db, 'users', user.uid);
+      await updateDoc(docRef, {
+        guideAreas: updatedAreas
+      });
+      
+      setProfile(prev => ({
+        ...prev,
+        guideAreas: updatedAreas
+      }));
+      
+      setNewGuideArea('');
+      alert('Guide area added successfully!');
+    } catch (error) {
+      console.error('Error adding guide area:', error);
+      alert('Failed to add guide area. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveGuideArea = async (areaToRemove: string) => {
+    if (!user) return;
+    
+    try {
+      setSaving(true);
+      const updatedAreas = profile.guideAreas?.filter(area => area !== areaToRemove) || [];
+      
+      const docRef = doc(db, 'users', user.uid);
+      await updateDoc(docRef, {
+        guideAreas: updatedAreas
+      });
+      
+      setProfile(prev => ({
+        ...prev,
+        guideAreas: updatedAreas
+      }));
+      
+      alert('Guide area removed successfully!');
+    } catch (error) {
+      console.error('Error removing guide area:', error);
+      alert('Failed to remove guide area. Please try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -632,6 +695,112 @@ const UserSettingsView: React.FC = () => {
                 Edit
               </button>
             )}
+          </div>
+
+          {/* Guide Areas */}
+          <div style={{
+            marginBottom: 25,
+          }}>
+            <div style={{ fontSize: 18, fontWeight: 600, color: '#333', marginBottom: 10 }}>
+              Guide Areas:
+            </div>
+            <div style={{ marginBottom: 15 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
+                <input
+                  type="text"
+                  value={newGuideArea}
+                  onChange={(e) => setNewGuideArea(e.target.value)}
+                  placeholder="Enter city name (e.g., Dublin, New York)"
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    border: '1px solid #ccc',
+                    borderRadius: 4,
+                    fontSize: 16,
+                  }}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddGuideArea();
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleAddGuideArea}
+                  disabled={saving || !newGuideArea.trim()}
+                  style={{
+                    background: saving || !newGuideArea.trim() ? '#ccc' : '#007aff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4,
+                    padding: '8px 16px',
+                    cursor: saving || !newGuideArea.trim() ? 'not-allowed' : 'pointer',
+                    fontSize: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  {saving ? 'Adding...' : 'Add City'}
+                </button>
+              </div>
+              
+              {/* Display current guide areas */}
+              {profile.guideAreas && profile.guideAreas.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
+                    Cities you provide tours in:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {profile.guideAreas.map((area, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          background: '#f0f8ff',
+                          border: '1px solid #007aff',
+                          borderRadius: 20,
+                          padding: '4px 12px',
+                          fontSize: 14,
+                          gap: 6,
+                        }}
+                      >
+                        <span>{area}</span>
+                        <button
+                          onClick={() => handleRemoveGuideArea(area)}
+                          disabled={saving}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#007aff',
+                            cursor: saving ? 'not-allowed' : 'pointer',
+                            fontSize: 16,
+                            padding: 0,
+                            width: 16,
+                            height: 16,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          title="Remove this city"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {(!profile.guideAreas || profile.guideAreas.length === 0) && (
+                <div style={{ 
+                  fontSize: 14, 
+                  color: '#888', 
+                  fontStyle: 'italic',
+                  marginTop: 8 
+                }}>
+                  No guide areas added yet. Add cities where you provide tours.
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
