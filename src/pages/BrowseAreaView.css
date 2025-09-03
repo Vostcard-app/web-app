@@ -255,8 +255,8 @@
   flex: 1;
   padding: 16px 24px;
   border: none;
-  background: transparent;
-  color: #666;
+  background: white;
+  color: #134369;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -270,14 +270,14 @@
 }
 
 .tab-button:hover {
-  color: #002B4D;
-  background: rgba(0, 43, 77, 0.05);
+  color: white;
+  background: rgba(19, 67, 105, 0.8);
 }
 
 .tab-button.active {
-  color: #002B4D;
-  border-bottom-color: #002B4D;
-  background: rgba(0, 43, 77, 0.05);
+  color: white;
+  background: #134369;
+  border-bottom-color: #134369;
 }
 
 .tab-icon {
