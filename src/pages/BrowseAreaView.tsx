@@ -43,6 +43,7 @@ const BrowseAreaView: React.FC = () => {
         setSearchError(null);
         console.log('🔍 Searching for location:', searchQuery);
 
+        console.log('🔍 Making geocode request for:', searchQuery.trim());
         const response = await fetch('/.netlify/functions/geocode', {
           method: 'POST',
           headers: {
@@ -84,6 +85,8 @@ const BrowseAreaView: React.FC = () => {
         setSearchResults(formattedResults);
         setShowDropdown(formattedResults.length > 0);
         setHighlightedIndex(-1);
+        console.log('🔽 Dropdown should now be visible with', formattedResults.length, 'results');
+        console.log('📍 First result:', formattedResults[0]);
 
       } catch (error) {
         console.error('🔍 Search failed:', error);
@@ -157,9 +160,11 @@ const BrowseAreaView: React.FC = () => {
   };
 
   const handleLocationSelect = (location: any) => {
+    console.log('📍 Location selected:', location);
     setSelectedLocation(location);
     setSearchQuery(location.name);
     setShowDropdown(false);
+    console.log('✅ Location selection complete, dropdown closed');
   };
 
   const handleCitySelect = (city: string) => {
@@ -351,8 +356,20 @@ const BrowseAreaView: React.FC = () => {
                       <div
                         key={index}
                         className={`autocomplete-item${highlightedIndex === index ? ' highlighted' : ''}`}
-                        onMouseDown={() => handleLocationSelect(result)}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          handleLocationSelect(result);
+                        }}
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          handleLocationSelect(result);
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleLocationSelect(result);
+                        }}
                         onMouseEnter={() => setHighlightedIndex(index)}
+                        style={{ cursor: 'pointer' }}
                       >
                         <FaMapPin className="result-icon" />
                         <div style={{ flex: 1 }}>

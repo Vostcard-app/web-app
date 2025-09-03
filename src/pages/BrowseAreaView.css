@@ -122,6 +122,9 @@
   overflow-y: auto;
   z-index: 9999;
   margin-top: 4px;
+  /* Mobile improvements */
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
 }
 
 .autocomplete-item {
@@ -131,6 +134,10 @@
   cursor: pointer;
   border-bottom: 1px solid #e9ecef;
   transition: all 0.2s ease;
+  /* Mobile touch improvements */
+  min-height: 48px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(0, 43, 77, 0.1);
 }
 
 .autocomplete-item:last-child {
