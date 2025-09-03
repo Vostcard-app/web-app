@@ -543,123 +543,8 @@ const TourDetailView: React.FC = () => {
         gridTemplateColumns: deviceInfo.isMobile ? '1fr' : '2fr 1fr',
         gap: deviceInfo.isMobile ? '24px' : '48px'
       }}>
-              {(tour.guideAvatar || guideProfile?.avatarURL) ? (
-                <img
-                  src={tour.guideAvatar || guideProfile?.avatarURL}
-                  alt={tour.guideName}
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '3px solid white',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  backgroundColor: '#134369',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '3px solid white',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
-                }}>
-                  <FaUserCircle size={40} color="white" />
-                </div>
-              )}
-            </div>
-
-            {/* Tour Title and Guide Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Tour Category and Rating */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                <span style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  backdropFilter: 'blur(10px)',
-                  color: 'white',
-                  padding: '4px 12px',
-                  borderRadius: '16px',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  textTransform: 'uppercase',
-                  border: '1px solid rgba(255, 255, 255, 0.3)'
-                }}>
-                  {tour.category}
-                </span>
-                
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <FaStar size={16} color="#ffc107" />
-                  <span style={{ fontSize: '16px', fontWeight: '600', textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)' }}>
-                    {tour.averageRating > 0 ? tour.averageRating.toFixed(1) : 'New'}
-                  </span>
-                  {tour.totalReviews > 0 && (
-                    <span style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.8)', textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)' }}>
-                      ({tour.totalReviews} reviews)
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Tour Title */}
-              <h1 style={{ 
-                fontSize: deviceInfo.isMobile ? '28px' : '36px', 
-                fontWeight: 'bold', 
-                margin: '0 0 8px 0',
-                lineHeight: '1.2',
-                color: 'white',
-                textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)'
-              }}>
-                {tour.name}
-              </h1>
-
-              {/* Guide Name */}
-              <div 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '8px',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
-                }}
-                onClick={() => navigate(`/guide-profile/${tour.guideId}`)}
-              >
-                <span>with {tour.guideName}</span>
-                <span style={{ fontSize: '12px' }}>• View Profile</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto', 
-        padding: deviceInfo.isMobile ? '16px' : '32px 24px',
-        display: 'grid',
-        gridTemplateColumns: deviceInfo.isMobile ? '1fr' : '2fr 1fr',
-        gap: deviceInfo.isMobile ? '24px' : '48px'
-      }}>
         {/* Left Column - Tour Details */}
         <div>
-          {/* Tour Description */}
-          <div style={{ marginBottom: '32px' }}>
-            <p style={{ 
-              fontSize: '18px', 
-              color: '#666', 
-              lineHeight: '1.5',
-              margin: 0
-            }}>
-              {tour.description}
-            </p>
-          </div>
-
           {/* Quick Info */}
           <div style={{
             display: 'grid',
@@ -667,279 +552,146 @@ const TourDetailView: React.FC = () => {
             gap: deviceInfo.isMobile ? '16px' : '24px',
             marginBottom: '32px',
             padding: deviceInfo.isMobile ? '16px' : '24px',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '12px'
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FaClock size={20} color="#007aff" />
+              <FaClock size={20} color="#134369" />
               <div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>Duration</div>
-                <div style={{ fontSize: '14px', color: '#666' }}>{formatDuration(tour.duration)}</div>
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FaUsers size={20} color="#007aff" />
-              <div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>Group Size</div>
-                <div style={{ fontSize: '14px', color: '#666' }}>Up to {tour.maxGroupSize} people</div>
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FaLanguage size={20} color="#007aff" />
-              <div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>Languages</div>
-                <div style={{ fontSize: '14px', color: '#666' }}>
-                  {tour.languages?.join(', ') || 'English'}
+                <div style={{ fontSize: '14px', color: '#666', marginBottom: '2px' }}>Duration</div>
+                <div style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  {formatDuration(tour.duration)}
                 </div>
               </div>
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <FaWalking size={20} color="#007aff" />
+              <FaUsers size={20} color="#134369" />
               <div>
-                <div style={{ fontSize: '16px', fontWeight: '600' }}>Difficulty</div>
-                <div style={{ fontSize: '14px', color: '#666', textTransform: 'capitalize' }}>
-                  {tour.difficulty}
+                <div style={{ fontSize: '14px', color: '#666', marginBottom: '2px' }}>Group Size</div>
+                <div style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  Up to {tour.maxGroupSize} people
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <FaMapMarkerAlt size={20} color="#134369" />
+              <div>
+                <div style={{ fontSize: '14px', color: '#666', marginBottom: '2px' }}>Meeting Point</div>
+                <div style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  {tour.meetingPoint.name}
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <FaLanguage size={20} color="#134369" />
+              <div>
+                <div style={{ fontSize: '14px', color: '#666', marginBottom: '2px' }}>Languages</div>
+                <div style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                  {tour.languages.join(', ')}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Detailed Description */}
-          {tour.detailedInfo?.detailedDescription && (
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                About This Experience
-              </h2>
-              <p style={{ 
-                fontSize: '16px', 
-                lineHeight: '1.6', 
-                color: '#333',
-                whiteSpace: 'pre-line'
-              }}>
-                {tour.detailedInfo.detailedDescription}
-              </p>
-            </div>
-          )}
-
-          {/* What to Expect */}
-          {tour.detailedInfo?.whatToExpect && tour.detailedInfo.whatToExpect.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                What to Expect
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {tour.detailedInfo.whatToExpect.map((item, index) => (
-                  <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                    <FaCheck size={16} color="#28a745" style={{ marginTop: '2px', flexShrink: 0 }} />
-                    <span style={{ fontSize: '16px', lineHeight: '1.5' }}>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Tour Description */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: deviceInfo.isMobile ? '20px' : '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            marginBottom: '24px'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              margin: '0 0 16px 0',
+              color: '#333'
+            }}>
+              About This Tour
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              lineHeight: '1.6',
+              color: '#666',
+              margin: 0
+            }}>
+              {tour.description}
+            </p>
+          </div>
 
           {/* What's Included */}
-          {tour.included && tour.included.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                What's Included
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {tour.included.map((item, index) => (
-                  <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                    <FaCheck size={16} color="#28a745" style={{ marginTop: '2px', flexShrink: 0 }} />
-                    <span style={{ fontSize: '16px', lineHeight: '1.5' }}>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* What's NOT Included */}
-          {tour.detailedInfo?.notIncluded && tour.detailedInfo.notIncluded.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                What's NOT Included
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {tour.detailedInfo.notIncluded.map((item, index) => (
-                  <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                    <FaTimes size={16} color="#dc3545" style={{ marginTop: '2px', flexShrink: 0 }} />
-                    <span style={{ fontSize: '16px', lineHeight: '1.5' }}>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Itinerary */}
-          {tour.detailedInfo?.itinerary && tour.detailedInfo.itinerary.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                Itinerary
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {tour.detailedInfo.itinerary.map((item, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    gap: '16px',
-                    padding: '20px',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '12px',
-                    border: '1px solid #e9ecef'
-                  }}>
-                    <div style={{
-                      backgroundColor: '#007aff',
-                      color: 'white',
-                      borderRadius: '50%',
-                      width: '32px',
-                      height: '32px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      flexShrink: 0
-                    }}>
-                      {index + 1}
-                    </div>
-                    
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                        <span style={{
-                          backgroundColor: '#28a745',
-                          color: 'white',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: '600'
-                        }}>
-                          {item.time}
-                        </span>
-                        {item.duration && item.duration > 0 && (
-                          <span style={{
-                            color: '#666',
-                            fontSize: '12px'
-                          }}>
-                            {item.duration} minutes
-                          </span>
-                        )}
-                      </div>
-                      
-                      <h4 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 8px 0' }}>
-                        {item.activity}
-                      </h4>
-                      
-                      {item.location && (
-                        <p style={{ fontSize: '14px', color: '#666', margin: '0 0 8px 0' }}>
-                          <FaMapMarkerAlt size={12} style={{ marginRight: '4px' }} />
-                          {item.location}
-                        </p>
-                      )}
-                      
-                      {item.description && (
-                        <p style={{ fontSize: '14px', color: '#333', margin: 0, lineHeight: '1.5' }}>
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Meeting Point */}
-          <div style={{ marginBottom: '32px' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-              Meeting Point
-            </h2>
-            <div style={{
-              padding: '20px',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '12px',
-              border: '1px solid #e9ecef'
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: deviceInfo.isMobile ? '20px' : '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              margin: '0 0 16px 0',
+              color: '#333'
             }}>
-              <h4 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '8px' }}>
-                {tour.meetingPoint.name}
-              </h4>
-              <p style={{ fontSize: '16px', color: '#666', marginBottom: '12px' }}>
-                <FaMapMarkerAlt size={14} style={{ marginRight: '8px' }} />
-                {tour.meetingPoint.address}
-              </p>
-              {tour.meetingPoint.instructions && (
-                <p style={{ fontSize: '14px', color: '#333', lineHeight: '1.5' }}>
-                  <FaInfoCircle size={14} style={{ marginRight: '8px' }} />
-                  {tour.meetingPoint.instructions}
-                </p>
-              )}
+              What's Included
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {tour.included.map((item, index) => (
+                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FaCheck size={14} color="#28a745" />
+                  <span style={{ fontSize: '14px', color: '#666' }}>{item}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Requirements */}
-          {tour.requirements && tour.requirements.length > 0 && (
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                Requirements
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {tour.requirements.map((item, index) => (
-                  <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                    <FaInfoCircle size={16} color="#007aff" style={{ marginTop: '2px', flexShrink: 0 }} />
-                    <span style={{ fontSize: '16px', lineHeight: '1.5' }}>{item}</span>
-                  </div>
-                ))}
-              </div>
+          {/* Highlights */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: deviceInfo.isMobile ? '20px' : '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            marginBottom: '24px'
+          }}>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              margin: '0 0 16px 0',
+              color: '#333'
+            }}>
+              Tour Highlights
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {tour.highlights.map((highlight, index) => (
+                <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: '#134369',
+                    marginTop: '8px',
+                    flexShrink: 0
+                  }} />
+                  <span style={{ fontSize: '14px', color: '#666', lineHeight: '1.5' }}>{highlight}</span>
+                </div>
+              ))}
             </div>
-          )}
-
-          {/* Policies */}
-          {tour.detailedInfo?.policies && (
-            <div style={{ marginBottom: '32px' }}>
-              <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
-                Policies
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {tour.detailedInfo.policies.cancellation && (
-                  <div>
-                    <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
-                      Cancellation Policy
-                    </h4>
-                    <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.5' }}>
-                      {tour.detailedInfo.policies.cancellation}
-                    </p>
-                  </div>
-                )}
-                
-                {tour.detailedInfo.policies.weather && (
-                  <div>
-                    <h4 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '8px' }}>
-                      Weather Policy
-                    </h4>
-                    <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.5' }}>
-                      {tour.detailedInfo.policies.weather}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
-        {/* Right Column - Booking Widget & Guide Info */}
+        {/* Right Column - Booking */}
         <div>
-          {/* Booking Widget */}
           <div style={{
+            backgroundColor: 'white',
+            borderRadius: '16px',
+            padding: deviceInfo.isMobile ? '20px' : '32px',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
             position: 'sticky',
             top: '100px',
-            backgroundColor: 'white',
-            border: '1px solid #e0e0e0',
-            borderRadius: '16px',
-            padding: '24px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
             marginBottom: '24px'
           }}>
             <div style={{ marginBottom: '20px' }}>
@@ -961,65 +713,150 @@ const TourDetailView: React.FC = () => {
               </p>
             </div>
 
-            <button
-              onClick={handleBookTour}
-              style={{
-                width: '100%',
+            {user && user.uid !== tour.guideId ? (
+              <button
+                onClick={handleBookTour}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#134369',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  marginBottom: '16px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#0f2d4d';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#134369';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <FaCalendarAlt style={{ marginRight: '8px' }} />
+                Book This Tour
+              </button>
+            ) : user && user.uid === tour.guideId ? (
+              <button
+                onClick={() => setShowEditForm(true)}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#134369',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  marginBottom: '16px'
+                }}
+              >
+                <FaEdit style={{ marginRight: '8px' }} />
+                Edit Tour Details
+              </button>
+            ) : (
+              <div style={{
+                textAlign: 'center',
                 padding: '16px',
-                backgroundColor: '#007aff',
-                color: 'white',
-                border: 'none',
+                backgroundColor: '#f8f9fa',
                 borderRadius: '12px',
-                fontSize: '18px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                marginBottom: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <FaCalendarAlt size={16} />
-              Book This Experience
-            </button>
+                marginBottom: '16px'
+              }}>
+                <p style={{ margin: 0, color: '#666' }}>
+                  Please sign in to book this tour
+                </p>
+              </div>
+            )}
 
-            <p style={{ 
-              fontSize: '12px', 
-              color: '#666', 
-              textAlign: 'center',
-              margin: 0
+            {/* Contact Guide */}
+            <div style={{
+              borderTop: '1px solid #e0e0e0',
+              paddingTop: '16px'
             }}>
-              Free cancellation up to 24 hours before
-            </p>
+              <h4 style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                margin: '0 0 12px 0',
+                color: '#333'
+              }}>
+                Your Guide
+              </h4>
+              
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onClick={() => navigate(`/guide-profile/${tour.guideId}`)}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                {(tour.guideAvatar || guideProfile?.avatarURL) ? (
+                  <img
+                    src={tour.guideAvatar || guideProfile?.avatarURL}
+                    alt={tour.guideName}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    backgroundColor: '#134369',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <FaUserCircle size={24} color="white" />
+                  </div>
+                )}
+                
+                <div>
+                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
+                    {tour.guideName}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#666' }}>
+                    Tour Guide
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-
-
         </div>
       </div>
 
-      {/* Tour Booking Calendar */}
-      {tour && (
+      {/* Booking Calendar Modal */}
+      {showBookingCalendar && (
         <TourBookingCalendar
           isVisible={showBookingCalendar}
-          onClose={() => {
-            setShowBookingCalendar(false);
-          }}
-          tourId={tour.id}
-          guideName={tour.guideName}
-          guideAvatar={tour.guideAvatar}
+          onClose={() => setShowBookingCalendar(false)}
+          tour={tour}
           onBookingSubmit={handleBookingSubmit}
         />
       )}
 
       {/* Payment Modal */}
-      {tour && bookingFormData && (
+      {showPaymentModal && bookingFormData && (
         <PaymentModal
           isVisible={showPaymentModal}
-          onClose={() => {
-            setShowPaymentModal(false);
-            setBookingFormData(null);
-          }}
+          onClose={() => setShowPaymentModal(false)}
           bookingData={bookingFormData}
           tourDetails={{
             id: tour.id,
@@ -1031,8 +868,8 @@ const TourDetailView: React.FC = () => {
         />
       )}
 
-      {/* Tour Edit Form */}
-      {tour && (
+      {/* Tour Details Form Modal */}
+      {showEditForm && (
         <TourDetailsForm
           isVisible={showEditForm}
           onClose={() => setShowEditForm(false)}
@@ -1040,16 +877,6 @@ const TourDetailView: React.FC = () => {
           onTourUpdated={handleTourUpdated}
         />
       )}
-
-      {/* CSS for loading animation */}
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
     </div>
   );
 };
