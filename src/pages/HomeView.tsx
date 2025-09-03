@@ -897,18 +897,7 @@ const HomeView = () => {
     });
   }, []);
 
-  // Get visible posts (within map bounds) - limit to 5 non-offer pins plus all offers
-  const visiblePosts = useMemo(() => {
-    // Use filteredVostcards instead of raw vostcards to respect all filters including "Guides only"
-    const allPosts = !mapBounds ? filteredVostcards : filterPostsByBounds(filteredVostcards, mapBounds);
-    
-    // Separate offers from non-offer posts
-    const offers = allPosts.filter(p => p.isOffer);
-    const nonOfferPosts = allPosts.filter(p => !p.isOffer).slice(0, 5); // Limit to 5 non-offer posts
-    
-    // Return combined array: 5 non-offer posts + all offers
-    return [...nonOfferPosts, ...offers];
-  }, [filteredVostcards, mapBounds, filterPostsByBounds]);
+  // visiblePosts moved after filteredVostcards definition to avoid temporal dead zone error
 
   // Optimize map view to fit pins when posts are loaded
   const handleMapOptimization = useCallback((posts: any[], userLoc: [number, number] | null) => {
@@ -1459,6 +1448,19 @@ const HomeView = () => {
     
     return boundsFiltered;
   }, [vostcards, selectedCategories, selectedTypes, showFriendsOnly, showCreatorsIFollow, showGuidesOnly, mapBounds, filterPostsByBounds, MAX_POSTS]);
+
+  // Get visible posts (within map bounds) - limit to 5 non-offer pins plus all offers
+  const visiblePosts = useMemo(() => {
+    // Use filteredVostcards instead of raw vostcards to respect all filters including "Guides only"
+    const allPosts = !mapBounds ? filteredVostcards : filterPostsByBounds(filteredVostcards, mapBounds);
+    
+    // Separate offers from non-offer posts
+    const offers = allPosts.filter(p => p.isOffer);
+    const nonOfferPosts = allPosts.filter(p => !p.isOffer).slice(0, 5); // Limit to 5 non-offer posts
+    
+    // Return combined array: 5 non-offer posts + all offers
+    return [...nonOfferPosts, ...offers];
+  }, [filteredVostcards, mapBounds, filterPostsByBounds]);
 
   // Menu style
   const menuStyle = {
