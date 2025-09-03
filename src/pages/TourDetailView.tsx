@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   FaArrowLeft, 
+  FaHome,
   FaHeart, 
   FaShare, 
   FaStar, 
@@ -223,22 +224,41 @@ const TourDetailView: React.FC = () => {
           maxWidth: '1200px',
           margin: '0 auto'
         }}>
-          <button
-            onClick={() => navigate(-1)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '16px',
-              color: '#333'
-            }}
-          >
-            <FaArrowLeft size={16} />
-            Back
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                color: '#333'
+              }}
+            >
+              <FaArrowLeft size={16} />
+              Back
+            </button>
+            
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                color: '#134369'
+              }}
+            >
+              <FaHome size={16} />
+              Home
+            </button>
+          </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {/* Edit button for tour owner */}
