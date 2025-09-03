@@ -1,11 +1,22 @@
+/* Ensure all elements use border-box sizing */
+.browse-area-container *,
+.browse-area-container *::before,
+.browse-area-container *::after {
+  box-sizing: border-box;
+}
+
 .browse-area-container {
   min-height: 100vh;
   height: 100vh;
+  width: 100vw;
+  max-width: 100%;
   background: white;
   color: #333;
   font-family: system-ui, sans-serif;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 ::-ms-clear
 .browse-area-header {
@@ -53,6 +64,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .search-input-container {
@@ -234,10 +246,12 @@
   .browse-sections {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
+    gap: 24px;
     align-items: start;
-    max-width: 1000px;
-    margin: 24px auto 0;
+    max-width: 100%;
+    width: 100%;
+    margin: 24px 0 0 0;
+    box-sizing: border-box;
   }
   
   .selected-location-header {
@@ -272,6 +286,8 @@
   margin-bottom: 20px;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .browse-section:hover {
@@ -410,15 +426,18 @@
 @media (max-width: 767px) {
   .search-section {
     padding: 16px;
+    margin: 69px 0 0 0;
   }
   
   .browse-sections {
     margin-top: 16px;
     gap: 16px;
+    width: 100%;
   }
   
   .browse-section {
     padding: 20px;
+    width: 100%;
   }
   
   .section-info h3 {
@@ -437,10 +456,12 @@
 @media (max-width: 480px) {
   .search-section {
     padding: 12px;
+    margin: 69px 0 0 0;
   }
   
   .browse-section {
     padding: 16px;
+    width: 100%;
   }
   
   .section-header {
