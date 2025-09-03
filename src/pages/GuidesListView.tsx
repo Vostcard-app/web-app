@@ -112,13 +112,22 @@ const GuidesListView: React.FC = () => {
     }
     
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <div style={{ display: 'flex', gap: '2px' }}>
-          {stars}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '2px' }}>
+            {stars}
+          </div>
+          {rating > 0 && (
+            <span style={{ fontSize: '14px', color: '#666' }}>
+              {rating.toFixed(1)} ({totalReviews})
+            </span>
+          )}
         </div>
-        <span style={{ fontSize: '14px', color: '#666' }}>
-          {rating > 0 ? `${rating.toFixed(1)} (${totalReviews})` : 'No reviews yet'}
-        </span>
+        {rating === 0 && (
+          <span style={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
+            No reviews yet
+          </span>
+        )}
       </div>
     );
   };
