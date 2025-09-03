@@ -190,6 +190,13 @@ const BrowseAreaView: React.FC = () => {
       console.log('🗺️ Browse Vōstcards button clicked');
       console.log('📍 Selected location:', selectedLocation);
       console.log('📍 Coordinates being sent:', selectedLocation.coordinates);
+      console.log('📍 Coordinate format check:', {
+        coordinates: selectedLocation.coordinates,
+        lat: selectedLocation.latitude,
+        lng: selectedLocation.longitude,
+        coordinatesType: typeof selectedLocation.coordinates,
+        coordinatesArray: Array.isArray(selectedLocation.coordinates)
+      });
       console.log('🗺️ Navigating to HomeView with browse location:', selectedLocation.name);
       
       navigate('/home', {

@@ -97,6 +97,13 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
     if (targetLocation && map && shouldUpdateMapView && hasRecenteredOnce.current === false) {
       const currentZoom = map.getZoom();
       console.log('🎯 MapUpdater: Manual recenter requested to:', targetLocation);
+      console.log('🎯 Target location details:', {
+        targetLocation,
+        isArray: Array.isArray(targetLocation),
+        lat: targetLocation[0],
+        lng: targetLocation[1],
+        browseLocationZoomOut: browseLocation?.zoomOut
+      });
       
       // Use zoomed-out view for browse locations to show the whole area
       let zoomLevel;
@@ -108,6 +115,7 @@ const MapUpdater = ({ targetLocation, singleVostcard, shouldUpdateMapView, stabl
         console.log('🔍 Using default zoom level:', zoomLevel);
       }
       
+      console.log('🗺️ Setting map view to coordinates:', targetLocation, 'with zoom:', zoomLevel);
       map.setView(targetLocation, zoomLevel);
       hasRecenteredOnce.current = true;
       stableShouldUpdateMapView(false);
@@ -419,12 +427,20 @@ const HomeView = () => {
     if (browseLocationState) {
       console.log('🗺️ Browse location received:', browseLocationState);
       console.log('📍 Coordinates:', browseLocationState.coordinates);
+      console.log('📍 Coordinate details:', {
+        coordinates: browseLocationState.coordinates,
+        coordinatesType: typeof browseLocationState.coordinates,
+        coordinatesArray: Array.isArray(browseLocationState.coordinates),
+        lat: browseLocationState.coordinates?.[0],
+        lng: browseLocationState.coordinates?.[1]
+      });
       console.log('📍 Setting browse location and user location...');
       setBrowseLocation(browseLocationState);
       browseLocationRef.current = browseLocationState;
       setMapTargetLocation(browseLocationState.coordinates);
       setShouldUpdateMapView(true); // ✅ ENABLED for browse areas - we want to center on the browsed location
       console.log('🗺️ Navigation: Setting map target for browse area and enabling map update');
+      console.log('🎯 Map target location set to:', browseLocationState.coordinates);
       // Remove the immediate state clearing - let it persist for this render cycle
     }
   }, [browseLocationState]);
