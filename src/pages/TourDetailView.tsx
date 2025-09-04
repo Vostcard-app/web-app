@@ -640,7 +640,7 @@ const TourDetailView: React.FC = () => {
             {(tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL) ? (
               <img
                 src={tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL}
-                alt={tour.guideName}
+                alt={guideProfile?.name || guideProfile?.displayName || tour.guideName}
                 style={{
                   width: '40px',
                   height: '40px',
@@ -653,7 +653,7 @@ const TourDetailView: React.FC = () => {
             ) : (
               <FaUserCircle size={24} />
             )}
-            <span>with {tour.guideName}</span>
+            <span>with {guideProfile?.name || guideProfile?.displayName || tour.guideName}</span>
           </div>
           
           <div style={{
@@ -964,7 +964,7 @@ const TourDetailView: React.FC = () => {
                 {(tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL) ? (
                   <img
                     src={tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL}
-                    alt={tour.guideName}
+                    alt={guideProfile?.name || guideProfile?.displayName || tour.guideName}
                     style={{
                       width: '48px',
                       height: '48px',
@@ -988,7 +988,7 @@ const TourDetailView: React.FC = () => {
                 
                 <div>
                   <div style={{ fontSize: '16px', fontWeight: '600', color: '#333' }}>
-                    {tour.guideName}
+                    {guideProfile?.name || guideProfile?.displayName || tour.guideName}
                   </div>
                   <div style={{ fontSize: '14px', color: '#666' }}>
                     Tour Guide
