@@ -69,6 +69,15 @@ const GuideProfileView: React.FC = () => {
         }
 
         const userData = userDoc.data();
+        console.log('📊 User data loaded:', {
+          username: userData.username,
+          name: userData.name,
+          displayName: userData.displayName,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          userRole: userData.userRole,
+          isGuideAccount: userData.isGuideAccount
+        });
         
         // Fetch guide profile from guideProfiles collection if exists
         let guideProfileData = null;
@@ -82,6 +91,7 @@ const GuideProfileView: React.FC = () => {
         }
 
         // Combine user data with guide profile data
+        console.log('🔗 Creating combined profile...');
         const combinedProfile: GuideProfileData = {
           id: guideId,
           username: userData.username || 'Unknown Guide',
@@ -106,6 +116,13 @@ const GuideProfileView: React.FC = () => {
         };
 
         setGuideProfile(combinedProfile);
+        console.log('✅ Guide profile set successfully:', {
+          id: combinedProfile.id,
+          username: combinedProfile.username,
+          name: combinedProfile.name,
+          firstName: combinedProfile.firstName,
+          lastName: combinedProfile.lastName
+        });
 
         // Fetch guide's tours
         const tours = await GuidedTourService.getGuidedToursByGuide(guideId);
@@ -128,8 +145,13 @@ const GuideProfileView: React.FC = () => {
 
         setGuidedTours(toursWithStats);
       } catch (error) {
-        console.error('Error fetching guide data:', error);
-        setError('Failed to load guide profile');
+        console.error('❌ Error fetching guide data:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          stack: error.stack,
+          guideId: guideId
+        });
+        setError(`Failed to load guide profile: ${error.message}`);
       } finally {
         setLoading(false);
       }
