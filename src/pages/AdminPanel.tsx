@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FaKey, FaUser, FaSearch, FaHome, FaUsers, FaEye, FaSync } from 'react-icons/fa';
+import { FaKey, FaUser, FaSearch, FaHome, FaUsers, FaEye, FaSync, FaList } from 'react-icons/fa';
 import { collection, query, where, getDocs, doc, updateDoc, deleteDoc, addDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { storage } from '../firebase/firebaseConfig';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import AdminPostViewer from '../components/AdminPostViewer';
 
 const AdminPanel: React.FC = () => {
   const { user, userRole, isAdmin, convertUserToGuide, convertUserToAdmin } = useAuth();
@@ -45,6 +46,9 @@ const AdminPanel: React.FC = () => {
     advertisersTotal: 0
   });
   const [statsLoading, setStatsLoading] = useState(false);
+  
+  // Tab management
+  const [activeTab, setActiveTab] = useState<'overview' | 'posts' | 'users' | 'music'>('overview');
 
 
   // Redirect if not admin
@@ -491,8 +495,103 @@ const AdminPanel: React.FC = () => {
         <div style={{ width: 36 }} />
       </div>
 
-      {/* Statistics Dashboard */}
-      <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #dee2e6' }}>
+      {/* Tab Navigation */}
+      <div style={{
+        display: 'flex',
+        gap: '0',
+        borderBottom: '1px solid #dee2e6',
+        marginBottom: '24px',
+        backgroundColor: 'white',
+        borderRadius: '8px 8px 0 0',
+        overflow: 'hidden'
+      }}>
+        <button
+          onClick={() => setActiveTab('overview')}
+          style={{
+            padding: '16px 24px',
+            border: 'none',
+            borderBottom: activeTab === 'overview' ? '3px solid #134369' : '3px solid transparent',
+            backgroundColor: activeTab === 'overview' ? '#f8f9fa' : 'white',
+            color: activeTab === 'overview' ? '#134369' : '#666',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <FaEye size={16} />
+          Overview
+        </button>
+        <button
+          onClick={() => setActiveTab('posts')}
+          style={{
+            padding: '16px 24px',
+            border: 'none',
+            borderBottom: activeTab === 'posts' ? '3px solid #134369' : '3px solid transparent',
+            backgroundColor: activeTab === 'posts' ? '#f8f9fa' : 'white',
+            color: activeTab === 'posts' ? '#134369' : '#666',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <FaList size={16} />
+          All Posts
+        </button>
+        <button
+          onClick={() => setActiveTab('users')}
+          style={{
+            padding: '16px 24px',
+            border: 'none',
+            borderBottom: activeTab === 'users' ? '3px solid #134369' : '3px solid transparent',
+            backgroundColor: activeTab === 'users' ? '#f8f9fa' : 'white',
+            color: activeTab === 'users' ? '#134369' : '#666',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <FaUsers size={16} />
+          User Management
+        </button>
+        <button
+          onClick={() => setActiveTab('music')}
+          style={{
+            padding: '16px 24px',
+            border: 'none',
+            borderBottom: activeTab === 'music' ? '3px solid #134369' : '3px solid transparent',
+            backgroundColor: activeTab === 'music' ? '#f8f9fa' : 'white',
+            color: activeTab === 'music' ? '#134369' : '#666',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          🎵
+          Music Library
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'posts' && (
+        <AdminPostViewer />
+      )}
+
+      {activeTab === 'overview' && (
+        <>
+          {/* Statistics Dashboard */}
+          <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #dee2e6' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', color: '#495057' }}>
             📊 Platform Statistics
@@ -592,8 +691,13 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
-      {/* 1. Pending Advertiser Applications Section */}
-      <div style={{ backgroundColor: '#e8f5e8', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #c3e6c3' }}>
+        </>
+      )}
+
+      {activeTab === 'users' && (
+        <>
+          {/* 1. Pending Advertiser Applications Section */}
+          <div style={{ backgroundColor: '#e8f5e8', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #c3e6c3' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', color: '#155724' }}>
             🏪 Pending Advertiser Applications
@@ -897,8 +1001,13 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
-      {/* 4. Music Library (Admin) */}
-      <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
+        </>
+      )}
+
+      {activeTab === 'music' && (
+        <>
+          {/* 4. Music Library (Admin) */}
+          <div style={{ backgroundColor: '#eef5ff', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #cfe2ff' }}>
         <h2 style={{ marginBottom: '15px', display: 'flex', alignItems: 'center', color: '#084298' }}>
           🎵 Music Library (Admin)
         </h2>
@@ -1037,6 +1146,8 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
       </div>
+        </>
+      )}
 
     </div>
   );
