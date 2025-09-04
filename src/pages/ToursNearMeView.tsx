@@ -416,23 +416,29 @@ const ToursNearMeView: React.FC = () => {
         {/* Tabs */}
         <div style={{
           display: 'flex',
-          borderBottom: '1px solid #e0e0e0',
+          borderBottom: '2px solid #e9ecef',
           backgroundColor: 'white',
-          flexShrink: 0
+          flexShrink: 0,
+          gap: 0
         }}>
           <button
             onClick={() => setActiveTab('self-guided')}
             style={{
               flex: 1,
-              padding: '16px',
+              padding: '16px 24px',
               border: 'none',
-              backgroundColor: activeTab === 'self-guided' ? '#f8f9fa' : 'transparent',
-              borderBottom: activeTab === 'self-guided' ? '3px solid #007aff' : '3px solid transparent',
-              color: activeTab === 'self-guided' ? '#007aff' : '#666',
-              fontWeight: activeTab === 'self-guided' ? '600' : '400',
+              background: activeTab === 'self-guided' ? '#134369' : 'white',
+              color: activeTab === 'self-guided' ? 'white' : '#134369',
+              fontWeight: 600,
               fontSize: '16px',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              borderBottom: '3px solid transparent',
+              position: 'relative'
             }}
           >
             Self Guided
@@ -441,15 +447,20 @@ const ToursNearMeView: React.FC = () => {
             onClick={() => setActiveTab('guide-led')}
             style={{
               flex: 1,
-              padding: '16px',
+              padding: '16px 24px',
               border: 'none',
-              backgroundColor: activeTab === 'guide-led' ? '#f8f9fa' : 'transparent',
-              borderBottom: activeTab === 'guide-led' ? '3px solid #134369' : '3px solid transparent',
-              color: activeTab === 'guide-led' ? '#134369' : '#666',
-              fontWeight: activeTab === 'guide-led' ? '600' : '400',
+              background: activeTab === 'guide-led' ? '#134369' : 'white',
+              color: activeTab === 'guide-led' ? 'white' : '#134369',
+              fontWeight: 600,
               fontSize: '16px',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              borderBottom: '3px solid transparent',
+              position: 'relative'
             }}
           >
             Guide Led
