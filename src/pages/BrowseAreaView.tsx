@@ -2,14 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaMapPin, FaArrowLeft, FaMap, FaUserTie, FaWalking } from 'react-icons/fa';
 import { GeocodingService } from '../services/geocodingService';
-// import { GuidedTourService } from '../services/guidedTourService';
-// import { db } from '../firebase/firebaseConfig';
-// import { collection, getDocs } from 'firebase/firestore';
+import { GuidedTourService } from '../services/guidedTourService';
+import { db } from '../firebase/firebaseConfig';
+import { collection, getDocs } from 'firebase/firestore';
 import './BrowseAreaView.css';
 
 const DEBOUNCE_MS = 300;
-
-// Force deployment refresh
 
 const BrowseAreaView: React.FC = () => {
   const navigate = useNavigate();
@@ -107,30 +105,26 @@ const BrowseAreaView: React.FC = () => {
   useEffect(() => {
     const fetchAvailableCities = async () => {
       try {
-        // Temporarily disabled Firebase calls for testing
-        // const usersRef = collection(db, 'users');
-        // const querySnapshot = await getDocs(usersRef);
+        const usersRef = collection(db, 'users');
+        const querySnapshot = await getDocs(usersRef);
         
         const cities = new Set<string>();
-        // Test data
-        ['New York', 'Los Angeles', 'Chicago', 'Miami', 'Seattle'].forEach(city => {
-          cities.add(city);
+        querySnapshot.forEach((doc) => {
+          const userData = doc.data();
+          if (userData.guideAreas && Array.isArray(userData.guideAreas)) {
+            userData.guideAreas.forEach((city: string) => {
+              if (city && city.trim()) {
+                cities.add(city.trim());
+              }
+            });
+          }
         });
-        
-        // querySnapshot.forEach((doc) => {
-        //   const userData = doc.data();
-        //   if (userData.guideAreas && Array.isArray(userData.guideAreas)) {
-        //     userData.guideAreas.forEach((city: string) => {
-        //       if (city && city.trim()) {
-        //         cities.add(city.trim());
-        //       }
-        //     });
-        //   }
-        // });
         
         setAvailableCities(Array.from(cities).sort());
       } catch (error) {
         console.error('Error fetching available cities:', error);
+        // Fallback to test data if Firebase fails
+        setAvailableCities(['New York', 'Los Angeles', 'Chicago', 'Miami', 'Seattle']);
       }
     };
 
