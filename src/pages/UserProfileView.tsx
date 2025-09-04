@@ -342,7 +342,7 @@ const UserProfileView: React.FC = () => {
         <h2>
           {profile.firstName && profile.lastName 
             ? `${profile.firstName} ${profile.lastName}`
-            : profile.name || profile.username
+            : profile.name || profile.displayName || profile.username
           }
         </h2>
         

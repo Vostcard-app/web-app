@@ -932,7 +932,7 @@ const TourInProgressView: React.FC = () => {
                   }}>
                     {guideProfile?.firstName && guideProfile?.lastName 
                       ? `${guideProfile.firstName} ${guideProfile.lastName}`
-                      : guideProfile?.name || guideProfile?.username || tourPosts[0]?.username || 'Tour Guide'
+                      : guideProfile?.name || guideProfile?.displayName || guideProfile?.username || tourPosts[0]?.username || 'Tour Guide'
                     }
                   </h3>
                   <div style={{

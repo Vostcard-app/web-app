@@ -350,7 +350,7 @@ const GuideProfileView: React.FC = () => {
                 }}>
                   {guideProfile.firstName && guideProfile.lastName 
                     ? `${guideProfile.firstName} ${guideProfile.lastName}`
-                    : guideProfile.name || guideProfile.username
+                    : guideProfile.name || guideProfile.displayName || guideProfile.username
                   }
                 </h1>
                 {guideProfile.verified && (
