@@ -1249,13 +1249,14 @@ const VostcardStudioView: React.FC = () => {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: '100%',
       backgroundColor: '#f5f5f5',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
       
-      {/* Standard Banner - Fixed to reach both sides */}
+      {/* Standard Banner */}
       <div style={{
         backgroundColor: '#002B4D',
         height: 80,
@@ -1263,11 +1264,6 @@ const VostcardStudioView: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 16px',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         flexShrink: 0
       }}>
@@ -1326,12 +1322,12 @@ const VostcardStudioView: React.FC = () => {
       <div style={{ 
         flex: 1,
         padding: '20px',
-        paddingTop: '100px', // Account for fixed header height + spacing
+        paddingTop: '20px', // Reduced padding since header is not fixed
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         overflowY: 'auto',
-        maxHeight: '100vh'
+        height: 'calc(100% - 80px)' // Account for header height
       }}>
         <h1 style={{
           fontSize: '24px',
