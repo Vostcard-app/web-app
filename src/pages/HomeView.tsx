@@ -2540,18 +2540,8 @@ const HomeView = () => {
               <button
                 onClick={() => setShowFilterModal(!showFilterModal)}
                 style={{
-                  background: (
-                    selectedCategories.length > 0 || 
-                    selectedTypes.length > 0 ||
-                    showFriendsOnly ||
-                    showCreatorsIFollow
-                  ) ? '#002B4D' : '#fff',
-                  color: (
-                    selectedCategories.length > 0 || 
-                    selectedTypes.length > 0 ||
-                    showFriendsOnly ||
-                    showCreatorsIFollow
-                  ) ? 'white' : '#002B4D',
+                  background: '#134369',
+                  color: 'white',
                   border: '1px solid #ddd',
                   borderRadius: 8,
                   padding: '8px 12px',
