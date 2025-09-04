@@ -17,6 +17,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
+import { ImageStorageService } from './imageStorageService';
 import {
   GuidedTour,
   GuideProfile,
@@ -108,19 +109,47 @@ export class GuidedTourService {
   // ==================== GUIDED TOUR MANAGEMENT ====================
 
   /**
-   * Create a new guided tour
+   * Create a new guided tour with automatic large image handling
    */
   static async createGuidedTour(tourData: CreateGuidedTourRequest): Promise<string> {
     try {
-      // Use the tour data as provided, since it already contains all required fields
-      const tour: Omit<GuidedTour, 'id'> = {
-        ...tourData.tourData
+      console.log('🔄 Creating guided tour with large image support...');
+      
+      // First create the document to get an ID
+      const tempTour: Omit<GuidedTour, 'id'> = {
+        ...tourData.tourData,
+        images: [] // Temporarily empty while we process images
       };
 
-      console.log('🔍 Creating guided tour with data:', tour);
-      const docRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS), tour);
-      console.log('✅ Guided tour created with ID:', docRef.id);
-      return docRef.id;
+      const docRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS), tempTour);
+      const tourId = docRef.id;
+      console.log('✅ Guided tour created with ID:', tourId);
+      
+      // Now process images if they exist
+      if (tourData.tourData.images && tourData.tourData.images.length > 0) {
+        console.log('📸 Processing images for new tour...');
+        
+        const { urls, storagePaths } = await ImageStorageService.processMultipleImages(
+          tourData.tourData.images,
+          tourData.tourData.guideId,
+          tourId
+        );
+        
+        // Update the tour with processed images
+        const updateData: any = {
+          images: urls,
+          updatedAt: new Date()
+        };
+        
+        if (storagePaths.length > 0) {
+          updateData.storagePaths = storagePaths;
+        }
+        
+        await updateDoc(docRef, updateData);
+        console.log(`✅ Updated tour with ${urls.length} processed images (${storagePaths.length} in Storage)`);
+      }
+      
+      return tourId;
     } catch (error) {
       console.error('❌ Error creating guided tour:', error);
       throw error;
@@ -153,34 +182,60 @@ export class GuidedTourService {
   }
 
   /**
-   * Update an existing guided tour
+   * Update an existing guided tour with automatic large image handling
    */
   static async updateGuidedTour(tourId: string, updates: Partial<GuidedTour>): Promise<void> {
     try {
+      console.log('🔄 Updating guided tour:', tourId);
+      
+      // Get current tour data to access userId and existing storage paths
+      const currentTour = await this.getGuidedTour(tourId);
+      const userId = currentTour.guideId;
+      
+      let processedUpdates = { ...updates };
+      
+      // Process images if they're being updated
+      if (updates.images && Array.isArray(updates.images)) {
+        console.log('📸 Processing images for large file handling...');
+        
+        // Process all images through the storage service
+        const { urls, storagePaths } = await ImageStorageService.processMultipleImages(
+          updates.images,
+          userId,
+          tourId
+        );
+        
+        // Update the images array with processed URLs
+        processedUpdates.images = urls;
+        
+        // Store storage paths for cleanup later (if needed)
+        if (storagePaths.length > 0) {
+          processedUpdates.storagePaths = storagePaths;
+        }
+        
+        console.log(`✅ Processed ${urls.length} images (${storagePaths.length} uploaded to Storage)`);
+      }
+      
       // Clean the updates object to remove any undefined values and ensure proper serialization
       const cleanUpdates = this.cleanUpdateData({
-        ...updates,
+        ...processedUpdates,
         updatedAt: new Date()
       });
       
-      // Calculate document size and warn if approaching limit
+      // Calculate document size (should be much smaller now with Storage URLs)
       const documentSize = this.calculateDocumentSize(cleanUpdates);
       console.log(`📏 Document size: ${documentSize} bytes (${(documentSize / 1024).toFixed(1)} KB)`);
       
-      if (documentSize > 900000) { // 900KB warning threshold
-        console.warn('⚠️ Document size approaching Firestore limit (1MB)');
-        console.warn('⚠️ Consider moving large data to Firebase Storage');
-      }
-      
+      // Much higher threshold now since we're using Storage for large images
       if (documentSize > 1048576) { // 1MB hard limit
-        throw new Error(`Document size (${documentSize} bytes) exceeds Firestore limit of 1MB. Please reduce image sizes or move images to Firebase Storage.`);
+        throw new Error(`Document size (${documentSize} bytes) still exceeds Firestore limit. This shouldn't happen with Storage URLs.`);
       }
       
-      console.log('🔍 Updating tour with data:', JSON.stringify(cleanUpdates, null, 2));
+      console.log('🔍 Updating tour with processed data');
       
       const docRef = doc(db, FIRESTORE_COLLECTIONS.GUIDED_TOURS, tourId);
       await updateDoc(docRef, cleanUpdates);
-      console.log('✅ Guided tour updated successfully');
+      console.log('✅ Guided tour updated successfully with large image support');
     } catch (error) {
       console.error('❌ Error updating guided tour:', error);
       console.error('❌ Update data that failed:', JSON.stringify(updates, null, 2));
