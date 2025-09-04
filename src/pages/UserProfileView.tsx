@@ -17,6 +17,10 @@ import type { GuidedTour } from '../types/GuidedTourTypes';
 interface UserProfile {
   id: string;
   username: string;
+  displayName?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
   avatarURL?: string;
   followerCount: number;
   followingCount: number;
@@ -117,6 +121,10 @@ const UserProfileView: React.FC = () => {
           setProfile({
             id: userId,
             username: data.username || 'Unknown User',
+            displayName: data.displayName || '',
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            name: data.name || '',
             avatarURL: data.avatarURL || '',
             followerCount: data.followerCount || 0,
             followingCount: data.followingCount || 0,
