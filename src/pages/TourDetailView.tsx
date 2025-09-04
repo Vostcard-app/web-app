@@ -87,7 +87,7 @@ const TourDetailView: React.FC = () => {
     fetchTour();
   }, [tourId]);
 
-  // Preload all images for smooth slideshow transitions
+  // Preload all images with high-quality settings for smooth slideshow transitions
   useEffect(() => {
     if (!tour?.images || tour.images.length === 0) return;
 
@@ -95,15 +95,48 @@ const TourDetailView: React.FC = () => {
       const loadPromises = tour.images.map((src) => {
         return new Promise<string>((resolve, reject) => {
           const img = new Image();
-          img.onload = () => resolve(src);
-          img.onerror = reject;
-          img.src = src;
+          
+          // High-quality image loading settings
+          img.crossOrigin = 'anonymous'; // Enable CORS for better processing
+          img.decoding = 'sync'; // Synchronous decoding for immediate display
+          img.loading = 'eager'; // Load immediately
+          
+          img.onload = () => {
+            console.log(`✅ High-quality image loaded: ${src.substring(0, 50)}...`);
+            resolve(src);
+          };
+          
+          img.onerror = (error) => {
+            console.warn(`❌ Image failed to load: ${src.substring(0, 50)}...`, error);
+            reject(error);
+          };
+          
+          // Try to get higher quality version if it's a Firebase Storage URL
+          let highQualityUrl = src;
+          if (src.includes('firebasestorage.googleapis.com')) {
+            // Remove any existing size parameters and add high-quality parameters
+            const baseUrl = src.split('?')[0];
+            const urlParams = new URLSearchParams(src.split('?')[1] || '');
+            
+            // Remove compression parameters that might reduce quality
+            urlParams.delete('w'); // width
+            urlParams.delete('h'); // height  
+            urlParams.delete('q'); // quality
+            
+            // Add high-quality parameters
+            urlParams.set('alt', 'media'); // Get original file
+            
+            highQualityUrl = `${baseUrl}?${urlParams.toString()}`;
+          }
+          
+          img.src = highQualityUrl;
         });
       });
 
       try {
         const loaded = await Promise.all(loadPromises);
         setPreloadedImages(loaded);
+        console.log(`🎨 Successfully preloaded ${loaded.length} high-quality images`);
       } catch (error) {
         console.warn('Some images failed to preload:', error);
         setPreloadedImages(tour.images); // Use original URLs as fallback
@@ -386,7 +419,7 @@ const TourDetailView: React.FC = () => {
         alignItems: 'flex-end',
         justifyContent: 'flex-start'
       }}>
-        {/* Background Image with Smooth Transitions */}
+        {/* High-Quality Background Image with Anti-Aliasing */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -399,10 +432,52 @@ const TourDetailView: React.FC = () => {
           backgroundRepeat: 'no-repeat',
           transition: isTransitioning ? 'opacity 0.3s ease-in-out' : 'none',
           opacity: isTransitioning ? 0.7 : 1,
-          filter: 'contrast(1.05) saturate(1.1) brightness(1.02)',
-          transform: 'scale(1.02)', // Slight zoom for premium feel
+          // Enhanced image quality settings
+          imageRendering: 'high-quality',
+          WebkitImageRendering: 'high-quality',
+          MozImageRendering: 'high-quality',
+          msImageRendering: 'high-quality',
+          // Subtle enhancements without over-processing
+          filter: 'contrast(1.02) saturate(1.05) brightness(1.01) blur(0px)',
+          transform: 'scale(1.01) translateZ(0)', // Hardware acceleration + minimal zoom
+          backfaceVisibility: 'hidden', // Improve rendering performance
+          WebkitBackfaceVisibility: 'hidden',
+          WebkitTransform: 'translateZ(0)', // Force hardware acceleration
           zIndex: 0
         }} />
+
+        {/* Alternative: High-Quality IMG Element Overlay (for better quality) */}
+        {currentImage && (
+          <img
+            src={currentImage}
+            alt="Tour Hero"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              transition: isTransitioning ? 'opacity 0.3s ease-in-out' : 'none',
+              opacity: isTransitioning ? 0.7 : 1,
+              // High-quality image rendering
+              imageRendering: 'high-quality',
+              WebkitImageRendering: 'high-quality',
+              MozImageRendering: 'high-quality',
+              msImageRendering: 'high-quality',
+              // Minimal processing to preserve quality
+              filter: 'contrast(1.01) saturate(1.02) brightness(1.005)',
+              transform: 'scale(1.005) translateZ(0)',
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              WebkitTransform: 'translateZ(0)',
+              zIndex: 0
+            }}
+            loading="eager"
+            decoding="sync"
+          />
+        )}
 
         {/* Navigation Controls */}
         {hasImages && tour.images.length > 1 && (
