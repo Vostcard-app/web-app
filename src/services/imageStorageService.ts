@@ -82,15 +82,17 @@ export class ImageStorageService {
       const storagePath = `guided-tours/${userId}/${tourId}/${fileName}`;
       const storageRef = ref(storage, storagePath);
 
-      // Upload to Firebase Storage
-      console.log(`📤 Uploading to: ${storagePath}`);
+      // Upload to Firebase Storage with maximum quality settings
+      console.log(`📤 Uploading high-quality image to: ${storagePath}`);
       const snapshot = await uploadBytes(storageRef, blob, {
         contentType: mimeType,
         customMetadata: {
           userId,
           tourId,
           imageIndex: imageIndex.toString(),
-          uploadedAt: new Date().toISOString()
+          uploadedAt: new Date().toISOString(),
+          quality: 'original', // Mark as original quality
+          compression: 'none' // No compression applied
         }
       });
 
@@ -111,8 +113,8 @@ export class ImageStorageService {
       console.error('❌ Error uploading image to Storage:', error);
       
       // Fallback: compress and return base64 if upload fails
-      console.log('🔄 Falling back to compressed base64...');
-      const compressedImage = await this.compressImage(base64Data, 0.7); // 70% quality
+      console.log('🔄 Falling back to high-quality compressed base64...');
+      const compressedImage = await this.compressImage(base64Data, 0.95); // 95% quality
       
       return {
         url: compressedImage,
@@ -124,34 +126,45 @@ export class ImageStorageService {
   }
 
   /**
-   * Compress base64 image to reduce size
+   * Compress base64 image with high quality preservation
    */
-  private static async compressImage(base64Data: string, quality: number = 0.8): Promise<string> {
+  private static async compressImage(base64Data: string, quality: number = 0.95): Promise<string> {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
       const img = new Image();
 
       img.onload = () => {
-        // Calculate new dimensions (max 1920x1080 for large images)
-        const maxWidth = 1920;
-        const maxHeight = 1080;
+        // Only resize if image is extremely large (> 4K)
+        const maxWidth = 3840; // 4K width
+        const maxHeight = 2160; // 4K height
         let { width, height } = img;
 
+        // Only resize if truly massive to preserve quality
         if (width > maxWidth || height > maxHeight) {
           const ratio = Math.min(maxWidth / width, maxHeight / height);
           width *= ratio;
           height *= ratio;
+          console.log(`📐 Resizing extremely large image: ${img.width}x${img.height} → ${width}x${height}`);
+        } else {
+          console.log(`✅ Preserving original dimensions: ${width}x${height}`);
         }
 
         canvas.width = width;
         canvas.height = height;
 
-        // Draw and compress
-        ctx?.drawImage(img, 0, 0, width, height);
-        const compressedData = canvas.toDataURL('image/jpeg', quality);
+        // High-quality canvas rendering
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, width, height);
+        }
+
+        // Use PNG for better quality if original was PNG, otherwise high-quality JPEG
+        const originalFormat = base64Data.includes('data:image/png') ? 'image/png' : 'image/jpeg';
+        const compressedData = canvas.toDataURL(originalFormat, quality);
         
-        console.log(`🗜️ Compressed image: ${(base64Data.length / 1024).toFixed(1)} KB → ${(compressedData.length / 1024).toFixed(1)} KB`);
+        console.log(`🗜️ High-quality compression: ${(base64Data.length / 1024).toFixed(1)} KB → ${(compressedData.length / 1024).toFixed(1)} KB`);
         resolve(compressedData);
       };
 

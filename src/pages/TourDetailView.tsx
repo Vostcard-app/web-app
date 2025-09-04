@@ -111,22 +111,27 @@ const TourDetailView: React.FC = () => {
             reject(error);
           };
           
-          // Try to get higher quality version if it's a Firebase Storage URL
+          // Ensure maximum quality from Firebase Storage URLs
           let highQualityUrl = src;
           if (src.includes('firebasestorage.googleapis.com')) {
-            // Remove any existing size parameters and add high-quality parameters
+            // Remove any existing compression parameters and get original file
             const baseUrl = src.split('?')[0];
             const urlParams = new URLSearchParams(src.split('?')[1] || '');
             
-            // Remove compression parameters that might reduce quality
+            // Remove ALL compression parameters that might reduce quality
             urlParams.delete('w'); // width
             urlParams.delete('h'); // height  
             urlParams.delete('q'); // quality
+            urlParams.delete('resize'); // resize
+            urlParams.delete('format'); // format conversion
+            urlParams.delete('compress'); // compression
+            urlParams.delete('quality'); // quality parameter
             
-            // Add high-quality parameters
-            urlParams.set('alt', 'media'); // Get original file
+            // Ensure we get the original, uncompressed file
+            urlParams.set('alt', 'media');
             
             highQualityUrl = `${baseUrl}?${urlParams.toString()}`;
+            console.log(`🎨 Optimized Firebase Storage URL for maximum quality: ${highQualityUrl.substring(0, 100)}...`);
           }
           
           img.src = highQualityUrl;
@@ -437,9 +442,9 @@ const TourDetailView: React.FC = () => {
           WebkitImageRendering: 'high-quality',
           MozImageRendering: 'high-quality',
           msImageRendering: 'high-quality',
-          // Subtle enhancements without over-processing
-          filter: 'contrast(1.02) saturate(1.05) brightness(1.01) blur(0px)',
-          transform: 'scale(1.01) translateZ(0)', // Hardware acceleration + minimal zoom
+          // Maximum quality with virtually no processing
+          filter: 'contrast(1.005) saturate(1.01) brightness(1.002) blur(0px)',
+          transform: 'scale(1.002) translateZ(0)', // Hardware acceleration + minimal zoom
           backfaceVisibility: 'hidden', // Improve rendering performance
           WebkitBackfaceVisibility: 'hidden',
           WebkitTransform: 'translateZ(0)', // Force hardware acceleration
@@ -466,9 +471,9 @@ const TourDetailView: React.FC = () => {
               WebkitImageRendering: 'high-quality',
               MozImageRendering: 'high-quality',
               msImageRendering: 'high-quality',
-              // Minimal processing to preserve quality
-              filter: 'contrast(1.01) saturate(1.02) brightness(1.005)',
-              transform: 'scale(1.005) translateZ(0)',
+              // Maximum quality with minimal processing
+              filter: 'contrast(1.005) saturate(1.01) brightness(1.002)',
+              transform: 'scale(1.002) translateZ(0)',
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
               WebkitTransform: 'translateZ(0)',
