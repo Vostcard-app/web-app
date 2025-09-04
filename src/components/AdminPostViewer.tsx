@@ -32,7 +32,7 @@ interface FilterOptions {
   user: string;
   visibility: 'all' | 'public' | 'personal';
   flagged: 'all' | 'flagged' | 'unflagged';
-  postType: 'all' | 'vostcard' | 'offer' | 'tour';
+  postType: 'all' | 'vostcard' | 'offer';
   sortBy: 'newest' | 'oldest' | 'flagged' | 'location';
 }
 
@@ -154,55 +154,14 @@ const AdminPostViewer: React.FC = () => {
         console.error('❌ Error loading offers:', offersError);
       }
 
-      // Load Guided Tours
-      console.log('🚶 Loading guided tours...');
-      try {
-        // Try with orderBy first, fallback to simple query if it fails
-        let toursSnapshot;
-        try {
-          const toursQuery = query(collection(db, 'guidedTours'), orderBy('createdAt', 'desc'));
-          toursSnapshot = await getDocs(toursQuery);
-        } catch (orderError) {
-          console.warn('⚠️ OrderBy failed for guided tours, using simple query:', orderError);
-          toursSnapshot = await getDocs(collection(db, 'guidedTours'));
-        }
-        console.log(`🚶 Found ${toursSnapshot.docs.length} guided tours`);
-      
-      for (const docSnap of toursSnapshot.docs) {
-        const data = docSnap.data();
-        const creatorDoc = await getDoc(doc(db, 'users', data.guideId));
-        const creatorData = creatorDoc.data();
-        
-        allPosts.push({
-          id: docSnap.id,
-          title: data.title || 'Untitled Tour',
-          description: data.description || '',
-          creatorId: data.guideId,
-          creatorUsername: creatorData?.username || 'Unknown Guide',
-          creatorName: creatorData?.displayName || creatorData?.name || creatorData?.firstName && creatorData?.lastName 
-            ? `${creatorData.firstName} ${creatorData.lastName}` : undefined,
-          location: data.startLocation || data.location,
-          visibility: data.visibility || 'public',
-          flagged: data.flagged || false,
-          flagCount: data.flagCount || 0,
-          flagReasons: data.flagReasons || [],
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-          type: 'tour',
-          imageURLs: data.heroImages || data.imageURLs || [],
-          tags: data.tags || []
-        });
-      }
-      } catch (toursError) {
-        console.error('❌ Error loading guided tours:', toursError);
-      }
+      // Skip guided tours - focus on vostcards as main content
+      console.log('ℹ️ Skipping guided tours - focusing on vostcards as main content');
 
       setPosts(allPosts);
       console.log(`✅ Loaded ${allPosts.length} total posts`);
       console.log('📊 Posts breakdown:', {
         vostcards: allPosts.filter(p => p.type === 'vostcard').length,
-        offers: allPosts.filter(p => p.type === 'offer').length,
-        tours: allPosts.filter(p => p.type === 'tour').length
+        offers: allPosts.filter(p => p.type === 'offer').length
       });
     } catch (error) {
       console.error('❌ Error loading posts:', error);
@@ -327,7 +286,6 @@ const AdminPostViewer: React.FC = () => {
     switch (type) {
       case 'vostcard': return '#134369';
       case 'offer': return '#28a745';
-      case 'tour': return '#fd7e14';
       default: return '#6c757d';
     }
   };
@@ -557,7 +515,6 @@ const AdminPostViewer: React.FC = () => {
                 <option value="all">All Types</option>
                 <option value="vostcard">Vostcards</option>
                 <option value="offer">Offers</option>
-                <option value="tour">Tours</option>
               </select>
             </div>
 
