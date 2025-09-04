@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, getDoc, limit, startAfter, QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/firebaseConfig';
 import { FaSearch, FaFilter, FaFlag, FaEye, FaTrash, FaUser, FaMapMarkerAlt, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 
@@ -53,17 +53,23 @@ const AdminPostViewer: React.FC = () => {
     sortBy: 'newest'
   });
 
-  // Pagination state
+  // Optimized pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
+  const [loadedBatches, setLoadedBatches] = useState<Set<number>>(new Set([1])); // Track which batches are loaded
+  const [lastDocuments, setLastDocuments] = useState<Map<string, QueryDocumentSnapshot<any>>>(new Map()); // Cursors for pagination
+  const [hasMoreData, setHasMoreData] = useState(true);
+  const [batchLoading, setBatchLoading] = useState(false);
+  
+  const itemsPerPage = 25; // Show 25 items per page
+  const batchSize = 50; // Load 50 items per batch (2 pages worth)
   const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentPagePosts = filteredPosts.slice(startIndex, endIndex);
 
-  // Load all posts from different collections
+  // Load initial batch of posts
   useEffect(() => {
-    loadAllPosts();
+    loadPostsBatch(1);
   }, []);
 
   // Apply filters whenever filters or posts change
@@ -72,24 +78,64 @@ const AdminPostViewer: React.FC = () => {
     setCurrentPage(1); // Reset to first page when filters change
   }, [filters, posts]);
 
-  const loadAllPosts = async () => {
-    setLoading(true);
-    console.log('🔍 AdminPostViewer: Starting to load all posts...');
-    console.log('🔗 Firebase db instance:', db);
-    try {
-      const allPosts: PostData[] = [];
+  // Smart prefetching: load next batch when user approaches the end of current batch
+  useEffect(() => {
+    const currentBatch = Math.ceil(currentPage / 2); // Each batch contains 2 pages (50 items / 25 per page)
+    const nextBatch = currentBatch + 1;
+    
+    // If user is on the second page of a batch and next batch isn't loaded, prefetch it
+    if (currentPage % 2 === 0 && !loadedBatches.has(nextBatch) && hasMoreData && !batchLoading) {
+      console.log(`🔄 Prefetching batch ${nextBatch} (user on page ${currentPage})`);
+      loadPostsBatch(nextBatch);
+    }
+  }, [currentPage, loadedBatches, hasMoreData, batchLoading]);
 
-      // Load Vostcards
-      console.log('📋 Loading vostcards...');
+  const loadPostsBatch = async (batchNumber: number) => {
+    if (batchNumber === 1) {
+      setLoading(true);
+    } else {
+      setBatchLoading(true);
+    }
+    
+    console.log(`🔍 AdminPostViewer: Loading batch ${batchNumber}...`);
+    console.log('🔗 Firebase db instance:', db);
+    
+    try {
+      const batchPosts: PostData[] = [];
+
+      // Load Vostcards with pagination
+      console.log(`📋 Loading vostcards batch ${batchNumber}...`);
       try {
-        // Try with orderBy first, fallback to simple query if it fails
         let vostcardsSnapshot;
+        const vostcardsCollection = collection(db, 'vostcards');
+        
         try {
-          const vostcardsQuery = query(collection(db, 'vostcards'), orderBy('createdAt', 'desc'));
+          let vostcardsQuery;
+          const lastVostcardDoc = lastDocuments.get(`vostcards_${batchNumber - 1}`);
+          
+          if (batchNumber === 1 || !lastVostcardDoc) {
+            // First batch or no cursor available
+            vostcardsQuery = query(
+              vostcardsCollection, 
+              orderBy('createdAt', 'desc'), 
+              limit(batchSize)
+            );
+          } else {
+            // Subsequent batch with cursor
+            vostcardsQuery = query(
+              vostcardsCollection, 
+              orderBy('createdAt', 'desc'), 
+              startAfter(lastVostcardDoc),
+              limit(batchSize)
+            );
+          }
+          
           vostcardsSnapshot = await getDocs(vostcardsQuery);
         } catch (orderError) {
           console.warn('⚠️ OrderBy failed for vostcards, using simple query:', orderError);
-          vostcardsSnapshot = await getDocs(collection(db, 'vostcards'));
+          // Fallback to simple query with limit
+          const simpleQuery = query(vostcardsCollection, limit(batchSize));
+          vostcardsSnapshot = await getDocs(simpleQuery);
         }
         console.log(`📋 Found ${vostcardsSnapshot.docs.length} vostcards`);
         
@@ -107,7 +153,7 @@ const AdminPostViewer: React.FC = () => {
           console.warn(`⚠️ Creator data not found for user ${creatorId}`);
         }
         
-        allPosts.push({
+        batchPosts.push({
           id: docSnap.id,
           title: data.title || 'Untitled Vostcard',
           description: data.description || '',
@@ -133,6 +179,17 @@ const AdminPostViewer: React.FC = () => {
           imageURLs: data.photoURLs || data.imageURLs || [],
           tags: data.categories || data.tags || []
         });
+      }
+      
+      // Save cursor for next batch
+      if (vostcardsSnapshot.docs.length > 0) {
+        const lastDoc = vostcardsSnapshot.docs[vostcardsSnapshot.docs.length - 1];
+        setLastDocuments(prev => new Map(prev.set(`vostcards_${batchNumber}`, lastDoc)));
+      }
+      
+      // Check if we have more data
+      if (vostcardsSnapshot.docs.length < batchSize) {
+        setHasMoreData(false);
       }
       } catch (vostcardsError) {
         console.error('❌ Error loading vostcards:', vostcardsError);
@@ -166,7 +223,7 @@ const AdminPostViewer: React.FC = () => {
           console.warn(`⚠️ Creator data not found for user ${creatorId}`);
         }
         
-        allPosts.push({
+        batchPosts.push({
           id: docSnap.id,
           title: data.title || 'Untitled Offer',
           description: data.description || '',
@@ -200,16 +257,29 @@ const AdminPostViewer: React.FC = () => {
       // Skip guided tours - focus on vostcards as main content
       console.log('ℹ️ Skipping guided tours - focusing on vostcards as main content');
 
-      setPosts(allPosts);
-      console.log(`✅ Loaded ${allPosts.length} total posts`);
-      console.log('📊 Posts breakdown:', {
-        vostcards: allPosts.filter(p => p.type === 'vostcard').length,
-        offers: allPosts.filter(p => p.type === 'offer').length
+      // Update posts state - append new batch or replace if first batch
+      if (batchNumber === 1) {
+        setPosts(batchPosts);
+      } else {
+        setPosts(prevPosts => [...prevPosts, ...batchPosts]);
+      }
+      
+      // Mark this batch as loaded
+      setLoadedBatches(prev => new Set([...prev, batchNumber]));
+      
+      console.log(`✅ Loaded batch ${batchNumber}: ${batchPosts.length} posts`);
+      console.log('📊 Batch breakdown:', {
+        vostcards: batchPosts.filter(p => p.type === 'vostcard').length,
+        offers: batchPosts.filter(p => p.type === 'offer').length
       });
     } catch (error) {
-      console.error('❌ Error loading posts:', error);
+      console.error(`❌ Error loading batch ${batchNumber}:`, error);
     } finally {
-      setLoading(false);
+      if (batchNumber === 1) {
+        setLoading(false);
+      } else {
+        setBatchLoading(false);
+      }
     }
   };
 
@@ -808,6 +878,8 @@ const AdminPostViewer: React.FC = () => {
         }}>
           <div style={{ color: '#666', fontSize: '14px' }}>
             Showing {startIndex + 1}-{Math.min(endIndex, filteredPosts.length)} of {filteredPosts.length} posts
+            {batchLoading && <span style={{ color: '#134369', marginLeft: '8px' }}>• Loading more...</span>}
+            {!hasMoreData && filteredPosts.length > 0 && <span style={{ color: '#28a745', marginLeft: '8px' }}>• All loaded</span>}
           </div>
           
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
