@@ -99,22 +99,30 @@ const AdminPostViewer: React.FC = () => {
       
       for (const docSnap of vostcardsSnapshot.docs) {
         const data = docSnap.data();
-        console.log(`📋 Processing vostcard ${docSnap.id} by creator ${data.creatorId}`);
-        const creatorDoc = await getDoc(doc(db, 'users', data.creatorId));
+        const creatorId = data.userID || data.creatorId; // Vostcards use userID, not creatorId
+        console.log(`📋 Processing vostcard ${docSnap.id} by creator ${creatorId}`);
+        const creatorDoc = await getDoc(doc(db, 'users', creatorId));
         const creatorData = creatorDoc.data();
         if (!creatorData) {
-          console.warn(`⚠️ Creator data not found for user ${data.creatorId}`);
+          console.warn(`⚠️ Creator data not found for user ${creatorId}`);
         }
         
         allPosts.push({
           id: docSnap.id,
           title: data.title || 'Untitled Vostcard',
           description: data.description || '',
-          creatorId: data.creatorId,
-          creatorUsername: creatorData?.username || 'Unknown User',
+          creatorId: creatorId,
+          creatorUsername: creatorData?.username || data.username || 'Unknown User',
           creatorName: creatorData?.displayName || creatorData?.name || creatorData?.firstName && creatorData?.lastName 
             ? `${creatorData.firstName} ${creatorData.lastName}` : undefined,
-          location: data.location,
+          location: data.geo ? {
+            latitude: data.geo.latitude || data.latitude,
+            longitude: data.geo.longitude || data.longitude,
+            address: data.geo.address
+          } : (data.latitude && data.longitude ? {
+            latitude: data.latitude,
+            longitude: data.longitude
+          } : undefined),
           visibility: data.visibility || 'public',
           flagged: data.flagged || false,
           flagCount: data.flagCount || 0,
@@ -122,8 +130,8 @@ const AdminPostViewer: React.FC = () => {
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
           type: 'vostcard',
-          imageURLs: data.imageURLs || [],
-          tags: data.tags || []
+          imageURLs: data.photoURLs || data.imageURLs || [],
+          tags: data.categories || data.tags || []
         });
       }
       } catch (vostcardsError) {
@@ -150,22 +158,30 @@ const AdminPostViewer: React.FC = () => {
       
       for (const docSnap of offersSnapshot.docs) {
         const data = docSnap.data();
-        console.log(`🎁 Processing offer ${docSnap.id} by creator ${data.creatorId}`);
-        const creatorDoc = await getDoc(doc(db, 'users', data.creatorId));
+        const creatorId = data.userID || data.creatorId; // Offers might also use userID
+        console.log(`🎁 Processing offer ${docSnap.id} by creator ${creatorId}`);
+        const creatorDoc = await getDoc(doc(db, 'users', creatorId));
         const creatorData = creatorDoc.data();
         if (!creatorData) {
-          console.warn(`⚠️ Creator data not found for user ${data.creatorId}`);
+          console.warn(`⚠️ Creator data not found for user ${creatorId}`);
         }
         
         allPosts.push({
           id: docSnap.id,
           title: data.title || 'Untitled Offer',
           description: data.description || '',
-          creatorId: data.creatorId,
-          creatorUsername: creatorData?.username || 'Unknown User',
+          creatorId: creatorId,
+          creatorUsername: creatorData?.username || data.username || 'Unknown User',
           creatorName: creatorData?.displayName || creatorData?.name || creatorData?.firstName && creatorData?.lastName 
             ? `${creatorData.firstName} ${creatorData.lastName}` : undefined,
-          location: data.location,
+          location: data.geo ? {
+            latitude: data.geo.latitude || data.latitude,
+            longitude: data.geo.longitude || data.longitude,
+            address: data.geo.address
+          } : (data.latitude && data.longitude ? {
+            latitude: data.latitude,
+            longitude: data.longitude
+          } : undefined),
           visibility: data.visibility || 'public',
           flagged: data.flagged || false,
           flagCount: data.flagCount || 0,
@@ -173,8 +189,8 @@ const AdminPostViewer: React.FC = () => {
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
           type: 'offer',
-          imageURLs: data.imageURLs || [],
-          tags: data.tags || []
+          imageURLs: data.photoURLs || data.imageURLs || [],
+          tags: data.categories || data.tags || []
         });
       }
       } catch (offersError) {
