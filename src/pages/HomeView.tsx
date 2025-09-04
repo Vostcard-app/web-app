@@ -2554,18 +2554,19 @@ const HomeView = () => {
                   ) ? 'white' : '#002B4D',
                   border: '1px solid #ddd',
                   borderRadius: 8,
-                  width: 40,
-                  height: 40,
+                  padding: '8px 12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 20,
+                  fontSize: 14,
+                  fontWeight: 600,
                   cursor: 'pointer',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  whiteSpace: 'nowrap'
                 }}
               >
-                <FaFilter />
+                Filter
               </button>
             </div>
           )}
