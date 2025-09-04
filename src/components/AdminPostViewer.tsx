@@ -37,6 +37,7 @@ interface FilterOptions {
 }
 
 const AdminPostViewer: React.FC = () => {
+  console.log('🚀 AdminPostViewer component rendered');
   const [posts, setPosts] = useState<PostData[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +66,7 @@ const AdminPostViewer: React.FC = () => {
   const loadAllPosts = async () => {
     setLoading(true);
     console.log('🔍 AdminPostViewer: Starting to load all posts...');
+    console.log('🔗 Firebase db instance:', db);
     try {
       const allPosts: PostData[] = [];
 
@@ -81,11 +83,19 @@ const AdminPostViewer: React.FC = () => {
           vostcardsSnapshot = await getDocs(collection(db, 'vostcards'));
         }
         console.log(`📋 Found ${vostcardsSnapshot.docs.length} vostcards`);
+        
+        if (vostcardsSnapshot.docs.length > 0) {
+          console.log('📋 Sample vostcard data:', vostcardsSnapshot.docs[0].data());
+        }
       
       for (const docSnap of vostcardsSnapshot.docs) {
         const data = docSnap.data();
+        console.log(`📋 Processing vostcard ${docSnap.id} by creator ${data.creatorId}`);
         const creatorDoc = await getDoc(doc(db, 'users', data.creatorId));
         const creatorData = creatorDoc.data();
+        if (!creatorData) {
+          console.warn(`⚠️ Creator data not found for user ${data.creatorId}`);
+        }
         
         allPosts.push({
           id: docSnap.id,
@@ -124,11 +134,19 @@ const AdminPostViewer: React.FC = () => {
           offersSnapshot = await getDocs(collection(db, 'offers'));
         }
         console.log(`🎁 Found ${offersSnapshot.docs.length} offers`);
+        
+        if (offersSnapshot.docs.length > 0) {
+          console.log('🎁 Sample offer data:', offersSnapshot.docs[0].data());
+        }
       
       for (const docSnap of offersSnapshot.docs) {
         const data = docSnap.data();
+        console.log(`🎁 Processing offer ${docSnap.id} by creator ${data.creatorId}`);
         const creatorDoc = await getDoc(doc(db, 'users', data.creatorId));
         const creatorData = creatorDoc.data();
+        if (!creatorData) {
+          console.warn(`⚠️ Creator data not found for user ${data.creatorId}`);
+        }
         
         allPosts.push({
           id: docSnap.id,
