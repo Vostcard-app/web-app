@@ -12,6 +12,7 @@ import {
   FaExternalLinkAlt,
   FaTimes
 } from 'react-icons/fa';
+import RevolutIcon from './RevolutIcon';
 
 interface TipDropdownMenuProps {
   userProfile: any;
@@ -107,7 +108,7 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
     {
       id: 'revolut',
       name: 'Revolut',
-      icon: <FaDollarSign size={16} />,
+      icon: <RevolutIcon size={16} />,
       urlKey: 'revolutURL',
       color: '#0075EB',
       description: 'Instant transfers'

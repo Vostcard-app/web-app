@@ -13,6 +13,7 @@ import {
   FaCheck,
   FaSpinner
 } from 'react-icons/fa';
+import RevolutIcon from './RevolutIcon';
 
 interface TipSettingsSectionProps {
   profile: any;
@@ -141,7 +142,7 @@ const TipSettingsSection: React.FC<TipSettingsSectionProps> = ({ profile, setPro
     {
       id: 'revolut',
       name: 'Revolut',
-      icon: <FaDollarSign size={16} />,
+      icon: <RevolutIcon size={16} />,
       urlKey: 'revolutURL',
       color: '#0075EB',
       placeholder: '@yourrevolutname or revolut.me/yourname',
