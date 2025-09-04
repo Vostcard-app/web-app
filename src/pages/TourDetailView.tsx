@@ -43,6 +43,8 @@ const TourDetailView: React.FC = () => {
   const [tour, setTour] = useState<GuidedTour | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [preloadedImages, setPreloadedImages] = useState<string[]>([]);
   const [showBookingCalendar, setShowBookingCalendar] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [bookingFormData, setBookingFormData] = useState<any>(null);
@@ -85,8 +87,46 @@ const TourDetailView: React.FC = () => {
     fetchTour();
   }, [tourId]);
 
-  // Use first image as hero background (no auto-cycling)
-  // Single high-resolution image display for better quality
+  // Preload all images for smooth slideshow transitions
+  useEffect(() => {
+    if (!tour?.images || tour.images.length === 0) return;
+
+    const preloadImages = async () => {
+      const loadPromises = tour.images.map((src) => {
+        return new Promise<string>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(src);
+          img.onerror = reject;
+          img.src = src;
+        });
+      });
+
+      try {
+        const loaded = await Promise.all(loadPromises);
+        setPreloadedImages(loaded);
+      } catch (error) {
+        console.warn('Some images failed to preload:', error);
+        setPreloadedImages(tour.images); // Use original URLs as fallback
+      }
+    };
+
+    preloadImages();
+  }, [tour?.images]);
+
+  // Auto-advance slideshow with smooth transitions
+  useEffect(() => {
+    if (!tour?.images || tour.images.length <= 1 || preloadedImages.length === 0) return;
+
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % tour.images.length);
+        setIsTransitioning(false);
+      }, 150); // Half of transition duration
+    }, 4000); // Change image every 4 seconds
+
+    return () => clearInterval(interval);
+  }, [tour?.images, preloadedImages]);
 
   if (loading) {
     return (
@@ -188,20 +228,37 @@ const TourDetailView: React.FC = () => {
     setShowEditForm(false);
   };
 
+
+  const hasImages = tour.images && tour.images.length > 0;
+  const currentImage = hasImages ? (preloadedImages[currentImageIndex] || tour.images[currentImageIndex]) : null;
+
+  // Smooth navigation functions
   const nextImage = () => {
-    if (tour.images && tour.images.length > 0) {
+    if (!tour?.images || tour.images.length <= 1 || isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
       setCurrentImageIndex((prev) => (prev + 1) % tour.images.length);
-    }
+      setIsTransitioning(false);
+    }, 150);
   };
 
   const prevImage = () => {
-    if (tour.images && tour.images.length > 0) {
+    if (!tour?.images || tour.images.length <= 1 || isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
       setCurrentImageIndex((prev) => (prev - 1 + tour.images.length) % tour.images.length);
-    }
+      setIsTransitioning(false);
+    }, 150);
   };
 
-  const hasImages = tour.images && tour.images.length > 0;
-  const currentImage = hasImages ? tour.images[currentImageIndex] : null;
+  const goToImage = (index: number) => {
+    if (!tour?.images || index === currentImageIndex || isTransitioning) return;
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setCurrentImageIndex(index);
+      setIsTransitioning(false);
+    }, 150);
+  };
 
   return (
     <div style={{ backgroundColor: '#fff', minHeight: '100vh' }}>
@@ -318,20 +375,149 @@ const TourDetailView: React.FC = () => {
         </div>
       </div>
 
-      {/* Full-Width Hero Section with High-Res Image */}
+      {/* High-Quality Slideshow Hero Section */}
       <div style={{ 
         position: 'relative',
         width: '100%',
         height: deviceInfo.isMobile ? '60vh' : '70vh',
         minHeight: '400px',
-        backgroundImage: currentImage ? `url(${currentImage})` : 'none',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        overflow: 'hidden',
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'flex-start'
       }}>
+        {/* Background Image with Smooth Transitions */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundImage: currentImage ? `url(${currentImage})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          transition: isTransitioning ? 'opacity 0.3s ease-in-out' : 'none',
+          opacity: isTransitioning ? 0.7 : 1,
+          filter: 'contrast(1.05) saturate(1.1) brightness(1.02)',
+          transform: 'scale(1.02)', // Slight zoom for premium feel
+          zIndex: 0
+        }} />
+
+        {/* Navigation Controls */}
+        {hasImages && tour.images.length > 1 && (
+          <>
+            {/* Previous Button */}
+            <button
+              onClick={prevImage}
+              disabled={isTransitioning}
+              style={{
+                position: 'absolute',
+                left: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                backgroundColor: 'rgba(19, 67, 105, 0.8)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '50px',
+                height: '50px',
+                cursor: isTransitioning ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                opacity: isTransitioning ? 0.5 : 1,
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                zIndex: 3
+              }}
+              onMouseEnter={(e) => {
+                if (!isTransitioning) {
+                  e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 1)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 0.8)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              }}
+            >
+              <FaChevronLeft size={18} />
+            </button>
+
+            {/* Next Button */}
+            <button
+              onClick={nextImage}
+              disabled={isTransitioning}
+              style={{
+                position: 'absolute',
+                right: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                backgroundColor: 'rgba(19, 67, 105, 0.8)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '50px',
+                height: '50px',
+                cursor: isTransitioning ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                opacity: isTransitioning ? 0.5 : 1,
+                backdropFilter: 'blur(10px)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                zIndex: 3
+              }}
+              onMouseEnter={(e) => {
+                if (!isTransitioning) {
+                  e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 1)';
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(19, 67, 105, 0.8)';
+                e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              }}
+            >
+              <FaChevronRight size={18} />
+            </button>
+
+            {/* Image Indicators */}
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: '12px',
+              zIndex: 3
+            }}>
+              {tour.images.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToImage(index)}
+                  disabled={isTransitioning}
+                  style={{
+                    width: index === currentImageIndex ? '32px' : '12px',
+                    height: '12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    backgroundColor: index === currentImageIndex 
+                      ? 'white' 
+                      : 'rgba(255, 255, 255, 0.5)',
+                    cursor: isTransitioning ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    opacity: isTransitioning ? 0.5 : 1,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
         {/* Dark overlay for better text readability */}
         <div style={{
           position: 'absolute',
