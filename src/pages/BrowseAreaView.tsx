@@ -263,8 +263,8 @@ const BrowseAreaView: React.FC = () => {
       <div
         style={{
           backgroundColor: '#002B4D',
-          height: '69px',
-          padding: '15px 20px',
+          height: '80px',
+          padding: '20px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -279,7 +279,7 @@ const BrowseAreaView: React.FC = () => {
       >
         <h1 
           onClick={() => navigate('/home')}
-          style={{ fontSize: '30px', margin: 0, cursor: 'pointer' }}
+          style={{ fontSize: '24px', margin: 0, cursor: 'pointer', fontWeight: '700' }}
         >
           Browse
         </h1>

@@ -56,7 +56,6 @@ export default defineConfig({
       'jszip',
       'file-saver',
       'uuid',
-      'firebase',
       'firebase/app',
       'firebase/auth',
       'firebase/firestore',
