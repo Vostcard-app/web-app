@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useDeviceDetection } from '../hooks/useDeviceDetection';
 import { FaArrowLeft, FaEdit, FaStar, FaMapPin, FaClock, FaUsers, FaLanguage, FaCheckCircle, FaCalendarAlt, FaHeart } from 'react-icons/fa';
 import { GuidedTourService } from '../services/guidedTourService';
+import GuideReviewsSection from '../components/GuideReviewsSection';
 import { RatingService } from '../services/ratingService';
 import { ReviewService } from '../services/reviewService';
 import type { GuidedTour, GuideProfile } from '../types/GuidedTourTypes';
@@ -753,24 +754,10 @@ const GuideProfileView: React.FC = () => {
             )}
 
             {activeTab === 'reviews' && (
-              <div>
-                <h3 style={{
-                  margin: '0 0 24px 0',
-                  fontSize: '20px',
-                  fontWeight: '600',
-                  color: '#333'
-                }}>
-                  Reviews
-                </h3>
-                
-                <div style={{
-                  textAlign: 'center',
-                  padding: '40px 20px',
-                  color: '#666'
-                }}>
-                  Reviews functionality coming soon
-                </div>
-              </div>
+              <GuideReviewsSection 
+                guideId={guideId!} 
+                showTitle={false}
+              />
             )}
           </div>
         </div>

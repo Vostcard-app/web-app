@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { GuidedTourService } from '../services/guidedTourService';
 import { TourBooking, BookingStatus } from '../types/GuidedTourTypes';
-import { FaCalendar, FaUser, FaClock, FaMapMarkerAlt, FaCheck, FaTimes, FaEye, FaArrowLeft } from 'react-icons/fa';
+import { FaCalendar, FaUser, FaClock, FaMapMarkerAlt, FaCheck, FaTimes, FaEye, FaArrowLeft, FaStar } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import GuideReviewDashboard from '../components/GuideReviewDashboard';
 
 const BookingManagementView: React.FC = () => {
   const { user } = useAuth();
@@ -11,6 +12,7 @@ const BookingManagementView: React.FC = () => {
   const [bookings, setBookings] = useState<TourBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | BookingStatus>('all');
+  const [activeTab, setActiveTab] = useState<'bookings' | 'reviews'>('bookings');
 
   useEffect(() => {
     if (user) {
@@ -110,11 +112,55 @@ const BookingManagementView: React.FC = () => {
             <FaArrowLeft />
           </button>
           <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>
-            Booking Management
+            Guide Dashboard
           </h1>
         </div>
         
-        {/* Filter Tabs */}
+        {/* Main Tabs */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '0', 
+          borderBottom: '1px solid #eee',
+          marginBottom: '16px'
+        }}>
+          <button
+            onClick={() => setActiveTab('bookings')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              borderBottom: activeTab === 'bookings' ? '3px solid #134369' : '3px solid transparent',
+              backgroundColor: 'transparent',
+              color: activeTab === 'bookings' ? '#134369' : '#666',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: '600'
+            }}
+          >
+            Bookings
+          </button>
+          <button
+            onClick={() => setActiveTab('reviews')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              borderBottom: activeTab === 'reviews' ? '3px solid #134369' : '3px solid transparent',
+              backgroundColor: 'transparent',
+              color: activeTab === 'reviews' ? '#134369' : '#666',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <FaStar size={14} />
+            Reviews
+          </button>
+        </div>
+        
+        {/* Filter Tabs - Only show for bookings tab */}
+        {activeTab === 'bookings' && (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {(['all', 'pending', 'confirmed', 'paid', 'in-progress', 'completed'] as const).map(status => (
             <button
@@ -140,10 +186,12 @@ const BookingManagementView: React.FC = () => {
             </button>
           ))}
         </div>
+        )}
       </div>
 
-      {/* Bookings List */}
-      <div style={{ padding: '20px' }}>
+      {/* Tab Content */}
+      {activeTab === 'bookings' && (
+        <div style={{ padding: '20px' }}>
         {filteredBookings.length === 0 ? (
           <div style={{
             textAlign: 'center',
@@ -339,7 +387,13 @@ const BookingManagementView: React.FC = () => {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      )}
+
+      {/* Reviews Tab */}
+      {activeTab === 'reviews' && (
+        <GuideReviewDashboard />
+      )}
     </div>
   );
 };
