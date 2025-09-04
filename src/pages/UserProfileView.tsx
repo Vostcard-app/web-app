@@ -339,7 +339,24 @@ const UserProfileView: React.FC = () => {
             ?
           </div>
         )}
-        <h2>{profile.username}</h2>
+        <h2>
+          {profile.firstName && profile.lastName 
+            ? `${profile.firstName} ${profile.lastName}`
+            : profile.name || profile.username
+          }
+        </h2>
+        
+        {/* Show "Guide" label for guides */}
+        {profile?.userRole === 'guide' && (
+          <div style={{
+            fontSize: '16px',
+            color: '#666',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            Guide
+          </div>
+        )}
         
         {/* 🗺️ Available Self Guided Tours/Trips Button - Only for Guides */}
         {profile?.userRole === 'guide' && (

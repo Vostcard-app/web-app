@@ -930,8 +930,18 @@ const TourInProgressView: React.FC = () => {
                     fontWeight: '600',
                     color: '#002B4D'
                   }}>
-                    {guideProfile?.username || tourPosts[0]?.username || 'Tour Guide'}
+                    {guideProfile?.firstName && guideProfile?.lastName 
+                      ? `${guideProfile.firstName} ${guideProfile.lastName}`
+                      : guideProfile?.name || guideProfile?.username || tourPosts[0]?.username || 'Tour Guide'
+                    }
                   </h3>
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#666',
+                    marginTop: '2px'
+                  }}>
+                    Guide
+                  </div>
                 </div>
               </div>
 

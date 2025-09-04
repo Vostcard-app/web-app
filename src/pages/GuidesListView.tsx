@@ -347,18 +347,16 @@ const GuidesListView: React.FC = () => {
                       {guide.name}
                     </h3>
                     
-                    {guide.username && (
-                      <p style={{
-                        margin: '0 0 8px 0',
-                        fontSize: '14px',
-                        color: '#666',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        @{guide.username}
-                      </p>
-                    )}
+                    <p style={{
+                      margin: '0 0 8px 0',
+                      fontSize: '14px',
+                      color: '#666',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      Guide
+                    </p>
 
                     {/* Star Rating */}
                     {renderStarRating(guide.averageRating || 0, guide.totalReviews || 0)}
