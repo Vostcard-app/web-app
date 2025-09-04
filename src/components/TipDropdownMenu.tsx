@@ -105,6 +105,14 @@ const TipDropdownMenu: React.FC<TipDropdownMenuProps> = ({
       description: 'Quick bank transfer'
     },
     {
+      id: 'revolut',
+      name: 'Revolut',
+      icon: <FaDollarSign size={16} />,
+      urlKey: 'revolutURL',
+      color: '#0075EB',
+      description: 'Instant transfers'
+    },
+    {
       id: 'buymeacoffee',
       name: 'Buy Me a Coffee',
       icon: <FaCoffee size={16} />,

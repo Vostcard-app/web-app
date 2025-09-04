@@ -139,6 +139,15 @@ const TipSettingsSection: React.FC<TipSettingsSectionProps> = ({ profile, setPro
       description: 'Email or phone linked to Google Pay'
     },
     {
+      id: 'revolut',
+      name: 'Revolut',
+      icon: <FaDollarSign size={16} />,
+      urlKey: 'revolutURL',
+      color: '#0075EB',
+      placeholder: '@yourrevolutname or revolut.me/yourname',
+      description: 'Revolut username or link for instant transfers'
+    },
+    {
       id: 'patreon',
       name: 'Patreon',
       icon: <FaPatreon size={16} />,

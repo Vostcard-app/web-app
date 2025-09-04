@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaTimes, FaCreditCard, FaLock, FaPaypal } from 'react-icons/fa';
+import { FaTimes, FaCreditCard, FaLock, FaPaypal, FaDollarSign } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { GuidedTourService } from '../services/guidedTourService';
 
@@ -34,7 +34,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onPaymentSuccess
 }) => {
   const { user } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal' | 'revolut'>('card');
   const [cardDetails, setCardDetails] = useState({
     cardNumber: '',
     expiryDate: '',
@@ -255,6 +255,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   <FaPaypal />
                   PayPal
                 </button>
+                <button
+                  onClick={() => setPaymentMethod('revolut')}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    border: paymentMethod === 'revolut' ? '2px solid #007aff' : '1px solid #ddd',
+                    borderRadius: '8px',
+                    backgroundColor: paymentMethod === 'revolut' ? '#f0f8ff' : 'white',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <FaDollarSign />
+                  Revolut
+                </button>
               </div>
 
               {/* Card Details Form */}
@@ -309,6 +327,70 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                         fontSize: '14px'
                       }}
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* Revolut Payment Info */}
+              {paymentMethod === 'revolut' && (
+                <div style={{
+                  padding: '20px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: '#0075EB'
+                  }}>
+                    Revolut Payment
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#666',
+                    marginBottom: '16px'
+                  }}>
+                    You will be redirected to Revolut to complete your payment securely.
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#888'
+                  }}>
+                    Fast, secure, and instant transfers with Revolut
+                  </div>
+                </div>
+              )}
+
+              {/* PayPal Payment Info */}
+              {paymentMethod === 'paypal' && (
+                <div style={{
+                  padding: '20px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: '#0070BA'
+                  }}>
+                    PayPal Payment
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#666',
+                    marginBottom: '16px'
+                  }}>
+                    You will be redirected to PayPal to complete your payment securely.
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#888'
+                  }}>
+                    Pay with your PayPal account or credit card
                   </div>
                 </div>
               )}
