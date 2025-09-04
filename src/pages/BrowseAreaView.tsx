@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaHome, FaSearch, FaMapPin, FaArrowLeft, FaMap, FaUserTie, FaWalking } from 'react-icons/fa';
 import { GeocodingService } from '../services/geocodingService';
-import { GuidedTourService } from '../services/guidedTourService';
-import { db } from '../firebase/firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+// import { GuidedTourService } from '../services/guidedTourService';
+// import { db } from '../firebase/firebaseConfig';
+// import { collection, getDocs } from 'firebase/firestore';
 import './BrowseAreaView.css';
 
 const DEBOUNCE_MS = 300;
@@ -107,20 +107,26 @@ const BrowseAreaView: React.FC = () => {
   useEffect(() => {
     const fetchAvailableCities = async () => {
       try {
-        const usersRef = collection(db, 'users');
-        const querySnapshot = await getDocs(usersRef);
+        // Temporarily disabled Firebase calls for testing
+        // const usersRef = collection(db, 'users');
+        // const querySnapshot = await getDocs(usersRef);
         
         const cities = new Set<string>();
-        querySnapshot.forEach((doc) => {
-          const userData = doc.data();
-          if (userData.guideAreas && Array.isArray(userData.guideAreas)) {
-            userData.guideAreas.forEach((city: string) => {
-              if (city && city.trim()) {
-                cities.add(city.trim());
-              }
-            });
-          }
+        // Test data
+        ['New York', 'Los Angeles', 'Chicago', 'Miami', 'Seattle'].forEach(city => {
+          cities.add(city);
         });
+        
+        // querySnapshot.forEach((doc) => {
+        //   const userData = doc.data();
+        //   if (userData.guideAreas && Array.isArray(userData.guideAreas)) {
+        //     userData.guideAreas.forEach((city: string) => {
+        //       if (city && city.trim()) {
+        //         cities.add(city.trim());
+        //       }
+        //     });
+        //   }
+        // });
         
         setAvailableCities(Array.from(cities).sort());
       } catch (error) {
