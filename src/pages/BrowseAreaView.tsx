@@ -262,9 +262,9 @@ const BrowseAreaView: React.FC = () => {
       {/* Header */}
       <div
         style={{
-          backgroundColor: '#002B4D',
-          height: '80px',
-          padding: '20px',
+          background: '#07345c',
+          padding: '15px 16px 24px 16px',
+          height: 30,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -273,16 +273,14 @@ const BrowseAreaView: React.FC = () => {
           left: 0,
           right: 0,
           zIndex: 1000,
-          color: 'white',
-          boxSizing: 'border-box'
         }}
       >
-        <h1 
+        <span 
           onClick={() => navigate('/home')}
-          style={{ fontSize: '24px', margin: 0, cursor: 'pointer', fontWeight: '700' }}
+          style={{ color: 'white', fontWeight: 700, fontSize: '30px', cursor: 'pointer' }}
         >
           Browse
-        </h1>
+        </span>
         <FaHome
           size={24}
           color="white"
