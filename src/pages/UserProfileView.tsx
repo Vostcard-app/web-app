@@ -349,10 +349,11 @@ const UserProfileView: React.FC = () => {
         {/* Show "Guide" label for guides */}
         {profile?.userRole === 'guide' && (
           <div style={{
-            fontSize: '16px',
+            fontSize: '1.5em',
             color: '#666',
             marginBottom: '16px',
-            textAlign: 'center'
+            textAlign: 'center',
+            fontWeight: 'normal'
           }}>
             Guide
           </div>
