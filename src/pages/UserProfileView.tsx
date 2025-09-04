@@ -340,10 +340,26 @@ const UserProfileView: React.FC = () => {
           </div>
         )}
         <h2>
-          {profile.firstName && profile.lastName 
-            ? `${profile.firstName} ${profile.lastName}`
-            : profile.name || profile.displayName || profile.username
-          }
+          {(() => {
+            console.log('Profile data for name display:', {
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              name: profile.name,
+              displayName: profile.displayName,
+              username: profile.username
+            });
+            
+            if (profile.firstName && profile.lastName) {
+              return `${profile.firstName} ${profile.lastName}`;
+            }
+            if (profile.name) {
+              return profile.name;
+            }
+            if (profile.displayName) {
+              return profile.displayName;
+            }
+            return profile.username || 'Unknown User';
+          })()}
         </h2>
         
         {/* Show "Guide" label for guides */}
