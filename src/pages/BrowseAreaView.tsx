@@ -257,30 +257,26 @@ const BrowseAreaView: React.FC = () => {
   }, []);
 
   return (
-    <div
-      className="browse-area-container"
-      style={{ backgroundColor: 'white', minHeight: '100vh' }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          background: '#07345c',
-          padding: '8px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1000,
-          minHeight: '44px',
-          boxSizing: 'border-box'
-        }}
-      >
+    <div style={{
+      height: '100vh',
+      backgroundColor: '#ffffff',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
+      {/* Banner */}
+      <div style={{
+        background: '#07345c',
+        padding: '15px 16px 15px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+        zIndex: 1000,
+      }}>
         <span 
           onClick={() => navigate('/home')}
-          style={{ color: 'white', fontWeight: 700, fontSize: '20px', cursor: 'pointer' }}
+          style={{ color: 'white', fontWeight: 700, fontSize: '30px', cursor: 'pointer' }}
         >
           Browse
         </span>
@@ -304,7 +300,19 @@ const BrowseAreaView: React.FC = () => {
       </div>
 
       {/* Tabbed Interface */}
-      <div className="browse-container">
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        padding: '0 24px',
+        maxWidth: '1200px',
+        width: '100%',
+        margin: '0 auto',
+        background: 'white',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box'
+      }}>
         {/* Tab Navigation */}
         <div className="tab-navigation">
           <button
