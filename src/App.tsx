@@ -88,6 +88,7 @@ import BookingManagementView from "./pages/BookingManagementView";
 import TourDetailView from "./pages/TourDetailView";
 import GuideProfileView from "./pages/GuideProfileView";
 import GuideProfileEditView from "./pages/GuideProfileEditView";
+import ReviewGuideView from "./pages/ReviewGuideView";
 import DeviceDetectionDemo from "./components/DeviceDetectionDemo";
 import ViewportWrapper from "./components/ViewportWrapper";
 import ViewportModeDemo from "./components/ViewportModeDemo";
@@ -196,6 +197,7 @@ function App() {
                             <Route path="/guided-tour/:tourId" element={<TourDetailView />} />
                             <Route path="/guide-profile/:guideId" element={<GuideProfileView />} />
                             <Route path="/guide-profile/:guideId/edit" element={<GuideProfileEditView />} />
+                            <Route path="/review-guide/:bookingId" element={<ReviewGuideView />} />
                             <Route path="/device-detection-demo" element={<DeviceDetectionDemo />} />
                             <Route path="/viewport-mode-demo" element={<ViewportModeDemo />} />
                             <Route path="/business-profile/:businessId" element={<BusinessProfileView />} />
