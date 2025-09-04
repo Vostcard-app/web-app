@@ -64,12 +64,23 @@ const AdminPostViewer: React.FC = () => {
 
   const loadAllPosts = async () => {
     setLoading(true);
+    console.log('🔍 AdminPostViewer: Starting to load all posts...');
     try {
       const allPosts: PostData[] = [];
 
       // Load Vostcards
-      const vostcardsQuery = query(collection(db, 'vostcards'), orderBy('createdAt', 'desc'));
-      const vostcardsSnapshot = await getDocs(vostcardsQuery);
+      console.log('📋 Loading vostcards...');
+      try {
+        // Try with orderBy first, fallback to simple query if it fails
+        let vostcardsSnapshot;
+        try {
+          const vostcardsQuery = query(collection(db, 'vostcards'), orderBy('createdAt', 'desc'));
+          vostcardsSnapshot = await getDocs(vostcardsQuery);
+        } catch (orderError) {
+          console.warn('⚠️ OrderBy failed for vostcards, using simple query:', orderError);
+          vostcardsSnapshot = await getDocs(collection(db, 'vostcards'));
+        }
+        console.log(`📋 Found ${vostcardsSnapshot.docs.length} vostcards`);
       
       for (const docSnap of vostcardsSnapshot.docs) {
         const data = docSnap.data();
@@ -96,10 +107,23 @@ const AdminPostViewer: React.FC = () => {
           tags: data.tags || []
         });
       }
+      } catch (vostcardsError) {
+        console.error('❌ Error loading vostcards:', vostcardsError);
+      }
 
       // Load Offers
-      const offersQuery = query(collection(db, 'offers'), orderBy('createdAt', 'desc'));
-      const offersSnapshot = await getDocs(offersQuery);
+      console.log('🎁 Loading offers...');
+      try {
+        // Try with orderBy first, fallback to simple query if it fails
+        let offersSnapshot;
+        try {
+          const offersQuery = query(collection(db, 'offers'), orderBy('createdAt', 'desc'));
+          offersSnapshot = await getDocs(offersQuery);
+        } catch (orderError) {
+          console.warn('⚠️ OrderBy failed for offers, using simple query:', orderError);
+          offersSnapshot = await getDocs(collection(db, 'offers'));
+        }
+        console.log(`🎁 Found ${offersSnapshot.docs.length} offers`);
       
       for (const docSnap of offersSnapshot.docs) {
         const data = docSnap.data();
@@ -126,10 +150,23 @@ const AdminPostViewer: React.FC = () => {
           tags: data.tags || []
         });
       }
+      } catch (offersError) {
+        console.error('❌ Error loading offers:', offersError);
+      }
 
       // Load Guided Tours
-      const toursQuery = query(collection(db, 'guidedTours'), orderBy('createdAt', 'desc'));
-      const toursSnapshot = await getDocs(toursQuery);
+      console.log('🚶 Loading guided tours...');
+      try {
+        // Try with orderBy first, fallback to simple query if it fails
+        let toursSnapshot;
+        try {
+          const toursQuery = query(collection(db, 'guidedTours'), orderBy('createdAt', 'desc'));
+          toursSnapshot = await getDocs(toursQuery);
+        } catch (orderError) {
+          console.warn('⚠️ OrderBy failed for guided tours, using simple query:', orderError);
+          toursSnapshot = await getDocs(collection(db, 'guidedTours'));
+        }
+        console.log(`🚶 Found ${toursSnapshot.docs.length} guided tours`);
       
       for (const docSnap of toursSnapshot.docs) {
         const data = docSnap.data();
@@ -156,9 +193,17 @@ const AdminPostViewer: React.FC = () => {
           tags: data.tags || []
         });
       }
+      } catch (toursError) {
+        console.error('❌ Error loading guided tours:', toursError);
+      }
 
       setPosts(allPosts);
       console.log(`✅ Loaded ${allPosts.length} total posts`);
+      console.log('📊 Posts breakdown:', {
+        vostcards: allPosts.filter(p => p.type === 'vostcard').length,
+        offers: allPosts.filter(p => p.type === 'offer').length,
+        tours: allPosts.filter(p => p.type === 'tour').length
+      });
     } catch (error) {
       console.error('❌ Error loading posts:', error);
     } finally {
