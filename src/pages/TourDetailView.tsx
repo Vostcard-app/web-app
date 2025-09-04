@@ -1019,7 +1019,14 @@ const TourDetailView: React.FC = () => {
           tourDetails={{
             id: tour.id,
             name: tour.name,
-            basePrice: tour.basePrice,
+            basePrice: (() => {
+              // Ensure 10% markup is always applied for checkout
+              // If tour has guideRate, use basePrice as-is (already includes markup)
+              // If no guideRate, assume basePrice is guide rate and add 10%
+              const hasGuideRate = tour.guideRate;
+              const displayPrice = hasGuideRate ? tour.basePrice : Math.round(tour.basePrice * 1.1);
+              return displayPrice;
+            })(),
             guideName: tour.guideName
           }}
           onPaymentSuccess={handlePaymentSuccess}
