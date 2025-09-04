@@ -724,7 +724,12 @@ const AdminPostViewer: React.FC = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setSelectedPost(post);
+                  // Navigate to the actual vostcard detail view that users see
+                  if (post.type === 'vostcard') {
+                    window.open(`/vostcard/${post.id}`, '_blank');
+                  } else if (post.type === 'offer') {
+                    window.open(`/offer/${post.id}`, '_blank');
+                  }
                 }}
                 style={{
                   flex: 1,
