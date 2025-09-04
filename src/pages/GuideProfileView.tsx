@@ -51,7 +51,11 @@ const GuideProfileView: React.FC = () => {
 
   useEffect(() => {
     const fetchGuideData = async () => {
-      if (!guideId) return;
+      console.log('🔍 GuideProfileView: Received guideId:', guideId);
+      if (!guideId) {
+        console.error('❌ GuideProfileView: No guideId provided');
+        return;
+      }
 
       try {
         setLoading(true);

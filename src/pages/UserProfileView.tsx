@@ -286,7 +286,10 @@ const UserProfileView: React.FC = () => {
             marginBottom: '16px' 
           }}>
             <button
-              onClick={() => navigate(`/guide-profile/${userId}`)}
+              onClick={() => {
+                console.log('🔗 More about button clicked, navigating to:', `/guide-profile/${userId}`);
+                navigate(`/guide-profile/${userId}`);
+              }}
               style={{
                 backgroundColor: '#134369',
                 color: 'white',
