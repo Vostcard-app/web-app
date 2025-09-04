@@ -53,6 +53,14 @@ const AdminPostViewer: React.FC = () => {
     sortBy: 'newest'
   });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+  const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPagePosts = filteredPosts.slice(startIndex, endIndex);
+
   // Load all posts from different collections
   useEffect(() => {
     loadAllPosts();
@@ -61,6 +69,7 @@ const AdminPostViewer: React.FC = () => {
   // Apply filters whenever filters or posts change
   useEffect(() => {
     applyFilters();
+    setCurrentPage(1); // Reset to first page when filters change
   }, [filters, posts]);
 
   const loadAllPosts = async () => {
@@ -568,7 +577,7 @@ const AdminPostViewer: React.FC = () => {
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
         gap: '16px'
       }}>
-        {filteredPosts.map(post => (
+        {currentPagePosts.map(post => (
           <div
             key={post.id}
             style={{
@@ -765,6 +774,64 @@ const AdminPostViewer: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {filteredPosts.length > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px 0',
+          borderTop: '1px solid #e0e0e0',
+          marginTop: '20px'
+        }}>
+          <div style={{ color: '#666', fontSize: '14px' }}>
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredPosts.length)} of {filteredPosts.length} posts
+          </div>
+          
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                background: currentPage === 1 ? '#f5f5f5' : 'white',
+                color: currentPage === 1 ? '#999' : '#333',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Previous
+            </button>
+            
+            <span style={{ 
+              padding: '8px 12px',
+              fontSize: '14px',
+              color: '#666'
+            }}>
+              Page {currentPage} of {totalPages}
+            </span>
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: '8px 16px',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                background: currentPage === totalPages ? '#f5f5f5' : '#134369',
+                color: currentPage === totalPages ? '#999' : 'white',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* No Results */}
       {filteredPosts.length === 0 && (
