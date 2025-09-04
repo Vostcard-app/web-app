@@ -642,16 +642,16 @@ const TourDetailView: React.FC = () => {
                 src={tour.guideAvatar || guideProfile?.avatarURL || guideProfile?.photoURL}
                 alt={guideProfile?.name || guideProfile?.displayName || tour.guideName}
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '120px',
+                  height: '120px',
                   borderRadius: '50%',
                   objectFit: 'cover',
-                  border: '3px solid rgba(255, 255, 255, 0.8)',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                  border: '4px solid rgba(255, 255, 255, 0.8)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.4)'
                 }}
               />
             ) : (
-              <FaUserCircle size={24} />
+              <FaUserCircle size={72} />
             )}
             <span>with {guideProfile?.name || guideProfile?.displayName || tour.guideName}</span>
           </div>
