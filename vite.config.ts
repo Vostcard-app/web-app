@@ -60,8 +60,10 @@ export default defineConfig({
       'firebase/auth',
       'firebase/firestore',
       'firebase/storage',
+      'firebase/functions',
       'emailjs-com'
     ],
+    force: true,
     exclude: [
       'nodemailer', // Server-side only
       'gapi-script', // Server-side only
