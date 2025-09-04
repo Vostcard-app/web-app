@@ -1392,7 +1392,7 @@ const VostcardStudioView: React.FC = () => {
               padding: '12px 16px',
               border: 'none',
               borderRadius: '6px',
-              backgroundColor: activeSection === 'vostcard' ? '#007aff' : 'transparent',
+              backgroundColor: activeSection === 'vostcard' ? '#134369' : 'transparent',
               color: activeSection === 'vostcard' ? 'white' : '#666',
               fontSize: '14px',
               fontWeight: 'bold',
@@ -1410,7 +1410,7 @@ const VostcardStudioView: React.FC = () => {
                 padding: '12px 16px',
                 border: 'none',
                 borderRadius: '6px',
-                backgroundColor: activeSection === 'drivecard' ? '#007aff' : 'transparent',
+                backgroundColor: activeSection === 'drivecard' ? '#134369' : 'transparent',
                 color: activeSection === 'drivecard' ? 'white' : '#666',
                 fontSize: '14px',
                 fontWeight: 'bold',
@@ -1457,36 +1457,6 @@ const VostcardStudioView: React.FC = () => {
               )}
             </div>
 
-            {/* Clear Form Button - Always visible */}
-            <div style={{ marginBottom: '15px' }}>
-              <button
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to clear the entire form? All current data will be lost.')) {
-                    resetVostcardForm();
-                  }
-                }}
-                disabled={isLoading}
-                style={{
-                  backgroundColor: isLoading ? '#ccc' : '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 16px',
-                  borderRadius: '4px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                🗑️ Clear Entire Form
-              </button>
-            </div>
-
             {/* Load Card Button */}
             <div style={{ marginBottom: '15px' }}>
               <button
@@ -1520,6 +1490,36 @@ const VostcardStudioView: React.FC = () => {
               >
                 <FaEdit size={14} />
                 📂 Load Card
+              </button>
+            </div>
+
+            {/* Clear Form Button - Always visible */}
+            <div style={{ marginBottom: '15px' }}>
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to clear the entire form? All current data will be lost.')) {
+                    resetVostcardForm();
+                  }
+                }}
+                disabled={isLoading}
+                style={{
+                  backgroundColor: isLoading ? '#ccc' : '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                🗑️ Clear Entire Form
               </button>
             </div>
 
@@ -1631,7 +1631,8 @@ const VostcardStudioView: React.FC = () => {
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
               gap: '10px',
-              marginBottom: '15px'
+              marginBottom: '15px',
+              marginTop: '5px'
             }}>
               <button 
                 onClick={handleVostcardPinPlacer}
