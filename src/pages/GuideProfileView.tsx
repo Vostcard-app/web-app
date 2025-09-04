@@ -363,7 +363,7 @@ const GuideProfileView: React.FC = () => {
                 color: '#666',
                 marginBottom: '16px'
               }}>
-                @{guideProfile.username}
+                Guide
               </div>
 
               {/* Rating and Stats */}
