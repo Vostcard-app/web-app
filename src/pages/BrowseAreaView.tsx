@@ -9,6 +9,8 @@ import './BrowseAreaView.css';
 
 const DEBOUNCE_MS = 300;
 
+// Force deployment refresh
+
 const BrowseAreaView: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'vostcards' | 'guides'>('vostcards');
