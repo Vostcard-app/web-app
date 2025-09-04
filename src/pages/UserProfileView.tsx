@@ -310,7 +310,18 @@ const UserProfileView: React.FC = () => {
                 e.currentTarget.style.boxShadow = '0 2px 4px rgba(19, 67, 105, 0.2)';
               }}
             >
-              More about {profile.username}
+              More about {(() => {
+                if (profile.firstName && profile.lastName) {
+                  return `${profile.firstName} ${profile.lastName}`;
+                }
+                if (profile.name) {
+                  return profile.name;
+                }
+                if (profile.displayName) {
+                  return profile.displayName;
+                }
+                return profile.username || 'Guide';
+              })()}
             </button>
           </div>
         )}
