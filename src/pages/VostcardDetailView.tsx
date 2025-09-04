@@ -26,6 +26,7 @@ import { generateShareText } from '../utils/vostcardUtils';
 import TipDropdownMenu from '../components/TipDropdownMenu';
 import VostcardHeader from '../components/VostcardHeader';
 import { useVostcardData } from '../hooks/useVostcardData';
+import NavigationModal from '../components/NavigationModal';
 
 // Icons will be created in component
 
@@ -92,6 +93,7 @@ const VostcardDetailView: React.FC = () => {
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
   const [currentStepIndex] = useState(0);
   const [distanceToNext, setDistanceToNext] = useState<number>(0);
+  const [showNavigationModal, setShowNavigationModal] = useState(false);
 
   // Create custom icons
   const createIcons = () => {
@@ -1715,30 +1717,9 @@ Tap OK to continue.`;
         {/* Directions button */}
         {vostcard?.latitude && vostcard?.longitude && (
           <button
-            onClick={async () => {
-              console.log('🧭 Real directions button clicked');
-              setShowMapModal(true);
-              
-              // Get user's current location
-              if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                  async (position) => {
-                    const userLocation: [number, number] = [
-                      position.coords.latitude,
-                      position.coords.longitude
-                    ];
-                    console.log('📍 User location obtained:', userLocation);
-                    await fetchRealDirections(userLocation);
-                  },
-                  (error) => {
-                    console.error('❌ Geolocation error:', error);
-                    alert('Location access denied. Please enable location to get directions.');
-                  },
-                  { enableHighAccuracy: true, timeout: 10000 }
-                );
-              } else {
-                alert('Geolocation is not supported by this browser.');
-              }
+            onClick={() => {
+              console.log('🧭 Navigation button clicked - opening NavigationModal');
+              setShowNavigationModal(true);
             }}
             style={{
               background: 'none',
@@ -3147,6 +3128,43 @@ Tap OK to continue.`;
             />
           </div>
         </div>
+      )}
+
+      {/* Navigation Modal */}
+      {vostcard?.latitude && vostcard?.longitude && (
+        <NavigationModal
+          isOpen={showNavigationModal}
+          onClose={() => setShowNavigationModal(false)}
+          latitude={vostcard.latitude}
+          longitude={vostcard.longitude}
+          title={vostcard.title || 'Vostcard Location'}
+          address={vostcard.address}
+          onGetDirections={async () => {
+            // Use the existing in-app directions functionality
+            setShowMapModal(true);
+            
+            // Get user's current location for in-app directions
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                  const userLocation: [number, number] = [
+                    position.coords.latitude,
+                    position.coords.longitude
+                  ];
+                  console.log('📍 User location obtained for in-app directions:', userLocation);
+                  await fetchRealDirections(userLocation);
+                },
+                (error) => {
+                  console.error('❌ Geolocation error:', error);
+                  alert('Location access denied. Please enable location to get directions.');
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+              );
+            } else {
+              alert('Geolocation is not supported by this browser.');
+            }
+          }}
+        />
       )}
     </div>
   );
