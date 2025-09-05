@@ -467,6 +467,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isOffer: vostcardToSave.isOffer || false,
         offerDetails: vostcardToSave.offerDetails || null,
         youtubeURL: vostcardToSave.youtubeURL || null,
+        youtubeStart: typeof (vostcardToSave as any).youtubeStart === 'number' ? (vostcardToSave as any).youtubeStart : null,
         instagramURL: vostcardToSave.instagramURL || null
       };
 
@@ -834,6 +835,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
           youtubeURL: data.youtubeURL || null,
+          youtubeStart: typeof data.youtubeStart === 'number' ? data.youtubeStart : undefined,
           instagramURL: data.instagramURL || null,
           // Preserve audio references from Firestore so Studio can keep audio on update
           audioURL: data.audioURL || null,
@@ -962,6 +964,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hasVideo: data.hasVideo || false,
           hasPhotos: data.hasPhotos || false,
           youtubeURL: data.youtubeURL || null,
+          youtubeStart: typeof data.youtubeStart === 'number' ? data.youtubeStart : undefined,
           instagramURL: data.instagramURL || null,
           // Preserve audio references from Firestore so Studio can keep audio on update
           audioURL: data.audioURL || null,
@@ -1092,6 +1095,8 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           isOffer: !!data.isOffer,
           offerDetails: data.offerDetails || undefined,
           userRole: data.userRole,
+          youtubeURL: data.youtubeURL || null,
+          youtubeStart: typeof data.youtubeStart === 'number' ? data.youtubeStart : undefined,
           // Preserve audio references from Firestore so Studio can keep audio on update
           audioURL: data.audioURL || null,
           audioURLs: Array.isArray(data.audioURLs) ? data.audioURLs : undefined,
