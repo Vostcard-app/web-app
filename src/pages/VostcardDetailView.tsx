@@ -880,57 +880,77 @@ Tap OK to continue.`;
       
       console.log('🎵 Audio source set:', audioSrc);
 
+      // Helper to try playing Tag.mp3 (reuse same element first)
+      const playTagChained = async (): Promise<boolean> => {
+        const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+        if (!audioRef.current) return false;
+        try {
+          audioRef.current.muted = false;
+          audioRef.current.volume = 1.0;
+          audioRef.current.playbackRate = 1.0;
+          audioRef.current.src = tagSrc;
+          audioRef.current.currentTime = 0;
+          audioRef.current.load();
+          await audioRef.current.play();
+          console.log('🔔 Played Tag.mp3 (chained same element)');
+          return true;
+        } catch (err) {
+          console.warn('🔔 Tag.mp3 play failed (chained same element):', err);
+          return false;
+        }
+      };
+
+      const playTagFallbackNew = async (): Promise<boolean> => {
+        try {
+          const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+          const tag = new Audio(tagSrc);
+          tagAudioRef.current = tag;
+          tag.volume = 1.0;
+          await tag.play();
+          console.log('🔔 Played Tag.mp3 (new element)');
+          return true;
+        } catch (err) {
+          console.warn('🔔 Tag.mp3 play failed (new element):', err);
+          return false;
+        }
+      };
+
       // Set up simple event listeners (iPhone-compatible)
       audio.addEventListener('ended', () => {
         console.log('🎵 Narration ended');
         setIsPlaying(false);
-        // Helper to robustly try playing tag
-        const tryPlayTag = async () => {
-          const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
-          if (!audioRef.current) return false;
-          try {
-            audioRef.current.muted = false;
-            audioRef.current.volume = 1.0;
-            audioRef.current.playbackRate = 1.0;
-            audioRef.current.src = tagSrc;
-            audioRef.current.currentTime = 0;
-            audioRef.current.load();
-            await audioRef.current.play();
-            console.log('🔔 Played Tag.mp3 (same element)');
-            return true;
-          } catch (err) {
-            console.warn('🔔 Tag.mp3 play failed (same element):', err);
-            return false;
-          }
-        };
-
-        const tryPlayTagNewElement = async () => {
-          try {
-            const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
-            const tag = new Audio(tagSrc);
-            tagAudioRef.current = tag;
-            tag.volume = 1.0;
-            await tag.play();
-            console.log('🔔 Played Tag.mp3 (new element fallback)');
-            return true;
-          } catch (err) {
-            console.warn('🔔 Tag.mp3 play failed (new element):', err);
-            return false;
-          }
-        };
-
         (async () => {
           if (tagPlayedRef.current) return;
           tagPlayedRef.current = true;
           // Attempt 1: immediate same-element play
-          if (await tryPlayTag()) return;
+          if (await playTagChained()) return;
           // Attempt 2: microtask delay
           await new Promise(r => setTimeout(r, 50));
-          if (await tryPlayTag()) return;
+          if (await playTagChained()) return;
           // Attempt 3: fallback new element
-          await tryPlayTagNewElement();
+          await playTagFallbackNew();
         })();
       });
+
+      // Near-end detector: fire tag when within last 150ms (some browsers miss 'ended')
+      const onTimeUpdate = () => {
+        const el = audioRef.current;
+        if (!el || tagPlayedRef.current) return;
+        const d = el.duration;
+        if (!Number.isFinite(d) || d <= 0) return;
+        const remaining = d - el.currentTime;
+        if (remaining <= 0.15 && remaining >= 0) {
+          console.log('⏱️ Near end detected, triggering Tag.mp3');
+          tagPlayedRef.current = true;
+          // Defer slightly to let ended fire if it will
+          setTimeout(async () => {
+            if (!(await playTagChained())) {
+              await playTagFallbackNew();
+            }
+          }, 10);
+        }
+      };
+      audio.addEventListener('timeupdate', onTimeUpdate);
 
       audio.addEventListener('error', (e) => {
         console.error('🎵 VostcardDetailView audio playback error:', e);
