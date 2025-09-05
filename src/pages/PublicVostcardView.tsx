@@ -1348,7 +1348,7 @@ ${privateUrl}`);
               justifyContent: 'center'
             }}>
               <iframe
-                src={`https://www.youtube.com/embed/${getNormalizedYouTubeId(vostcard.youtubeURL || '')}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                src={`https://www.youtube.com/embed/${getNormalizedYouTubeId(vostcard.youtubeURL || '')}?autoplay=1&rel=0&modestbranding=1&playsinline=1${vostcard.youtubeStart ? `&start=${vostcard.youtubeStart}` : ''}`}
                 width="100%"
                 height="100%"
                 style={{

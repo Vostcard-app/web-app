@@ -620,13 +620,14 @@ const VostcardStudioView: React.FC = () => {
   };
 
   // YouTube URL validation and processing
-  const validateAndProcessYouTubeURL = (url: string): string | null => {
+  // Returns { id, start } where id is 11-char video id and start is seconds if present
+  const validateAndProcessYouTubeURL = (url: string): { id: string; start?: number } | null => {
     const trimmed = url.trim();
     if (!trimmed) return null;
 
     // If an 11-char YouTube ID is provided directly, accept it
     const idOnly = /^[a-zA-Z0-9_-]{11}$/;
-    if (idOnly.test(trimmed)) return trimmed;
+    if (idOnly.test(trimmed)) return { id: trimmed };
 
     // YouTube URL patterns (including Shorts)
     const patterns = [
@@ -638,7 +639,18 @@ const VostcardStudioView: React.FC = () => {
 
     for (const pattern of patterns) {
       const match = trimmed.match(pattern);
-      if (match) return match[1]; // Return the video ID
+      if (match) {
+        // Extract start time from t or start params (e.g., &t=26s or &start=26)
+        const urlObj = new URL(trimmed, 'https://dummy.base');
+        const tParam = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
+        let start: number | undefined;
+        if (tParam) {
+          const seconds = /^(\d+)s?$/.exec(tParam)?.[1] || tParam;
+          const n = parseInt(seconds, 10);
+          if (!Number.isNaN(n) && n >= 0) start = n;
+        }
+        return { id: match[1], start };
+      }
     }
 
     return null;
@@ -762,12 +774,12 @@ const VostcardStudioView: React.FC = () => {
 
       
       // Process YouTube and Instagram URLs
-      const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      const processedYouTube = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       console.log('🔍 YouTube URL Processing Debug:', {
         originalYouTubeURL: youtubeURL,
-        processedYouTubeID: processedYouTubeID,
+        processedYouTube,
         originalInstagramURL: instagramURL,
         processedInstagramID: processedInstagramID
       });
@@ -783,7 +795,8 @@ const VostcardStudioView: React.FC = () => {
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
         geo: vostcardLocation,
-        youtubeURL: processedYouTubeID,
+        youtubeURL: processedYouTube?.id || null,
+        youtubeStart: processedYouTube?.start || null,
         instagramURL: processedInstagramID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
@@ -856,7 +869,7 @@ const VostcardStudioView: React.FC = () => {
 
       
       // Process YouTube and Instagram URLs
-      const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      const processedYouTube = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       // Create vostcard ready for posting with multiple photos
@@ -870,7 +883,8 @@ const VostcardStudioView: React.FC = () => {
         audioLabels: audioLabels, // NEW: Labels for multiple audio files
         categories: vostcardCategories,
         geo: vostcardLocation,
-        youtubeURL: processedYouTubeID,
+        youtubeURL: processedYouTube?.id || null,
+        youtubeStart: processedYouTube?.start || null,
         instagramURL: processedInstagramID,
         username: user?.displayName || user?.email || 'Unknown User',
         userID: user?.uid || '',
@@ -973,12 +987,12 @@ const VostcardStudioView: React.FC = () => {
       }
       
       // Process YouTube and Instagram URLs
-      const processedYouTubeID = validateAndProcessYouTubeURL(youtubeURL);
+      const processedYouTube = validateAndProcessYouTubeURL(youtubeURL);
       const processedInstagramID = validateAndProcessInstagramURL(instagramURL);
       
       console.log('🔍 YouTube URL Processing Debug (Update):', {
         originalYouTubeURL: youtubeURL,
-        processedYouTubeID: processedYouTubeID,
+        processedYouTube,
         originalInstagramURL: instagramURL,
         processedInstagramID: processedInstagramID
       });
@@ -1003,7 +1017,8 @@ const VostcardStudioView: React.FC = () => {
         audioLabels: audioLabels,
         categories: vostcardCategories,
         geo: vostcardLocation,
-        youtubeURL: processedYouTubeID,
+        youtubeURL: processedYouTube?.id || null,
+        youtubeStart: processedYouTube?.start || null,
         instagramURL: processedInstagramID,
         username: originalVostcardData?.username || user?.displayName || user?.email || 'Unknown User', // Preserve original username
         userID: user?.uid || '',
