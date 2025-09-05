@@ -376,6 +376,7 @@ const VostcardDetailView: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const allAudioInstances = useRef<Set<HTMLAudioElement>>(new Set());
   const tagAudioRef = useRef<HTMLAudioElement | null>(null);
+  const tagPlayedRef = useRef<boolean>(false);
 
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
@@ -843,6 +844,9 @@ Tap OK to continue.`;
         return;
       }
 
+      // Reset tag state for this session
+      tagPlayedRef.current = false;
+
       // Create simple audio element (iPhone-compatible approach)
       const audio = new Audio();
       audioRef.current = audio;
@@ -853,20 +857,23 @@ Tap OK to continue.`;
 
       // Set up simple event listeners (iPhone-compatible)
       audio.addEventListener('ended', () => {
+        console.log('🎵 Narration ended');
         setIsPlaying(false);
-        console.log('🎵 VostcardDetailView audio playback ended - will not restart');
-        // After narration finishes, play tag audio once
-        try {
-          if (!tagAudioRef.current) {
-            const tag = new Audio('/Tag.mp3');
-            tagAudioRef.current = tag;
-            tag.volume = 1.0;
-            tag.play().then(() => console.log('🔔 Played Tag.mp3 after narration')).catch(err => console.warn('🔔 Tag.mp3 play failed:', err));
+        // Chain Tag.mp3 on the SAME audio element to avoid autoplay restrictions
+        if (!tagPlayedRef.current && audioRef.current) {
+          tagPlayedRef.current = true;
+          try {
+            audioRef.current.src = '/Tag.mp3';
+            audioRef.current.currentTime = 0;
+            // Ensure browser recognizes source change
+            audioRef.current.load();
+            audioRef.current.play()
+              .then(() => console.log('🔔 Played Tag.mp3 after narration using same element'))
+              .catch(err => console.warn('🔔 Tag.mp3 play failed:', err));
+          } catch (e) {
+            console.warn('🔔 Could not play Tag.mp3 after narration:', e);
           }
-        } catch (e) {
-          console.warn('🔔 Could not play Tag.mp3 after narration:', e);
         }
-        // Audio has finished playing, slideshow can continue but audio won't restart
       });
 
       audio.addEventListener('error', (e) => {
