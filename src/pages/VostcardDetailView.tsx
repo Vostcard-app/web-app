@@ -928,6 +928,21 @@ Tap OK to continue.`;
         (async () => {
           if (tagPlayedRef.current) return;
           tagPlayedRef.current = true;
+          // Preferred Attempt: use preloaded muted tag element (unmute + restart)
+          if (tagAudioRef.current) {
+            try {
+              const tagEl = tagAudioRef.current;
+              tagEl.pause();
+              tagEl.muted = false;
+              tagEl.currentTime = 0;
+              await tagEl.play();
+              console.log('🔔 Played Tag.mp3 (preloaded element unmuted)');
+              audioPhaseRef.current = 'tag';
+              return;
+            } catch (err) {
+              console.warn('🔔 Preloaded tag element play failed:', err);
+            }
+          }
           // Attempt 1: immediate same-element play
           if (await playTagChained()) {
             audioPhaseRef.current = 'tag';
@@ -977,6 +992,19 @@ Tap OK to continue.`;
       await audio.play();
       setIsPlaying(true);
       console.log('🎵 Audio started playing successfully');
+
+      // Preload Tag.mp3 as muted, playing silently for autoplay allowance
+      try {
+        const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+        const tag = new Audio(tagSrc);
+        tag.muted = true;
+        tag.loop = false;
+        await tag.play();
+        tagAudioRef.current = tag;
+        console.log('🔔 Preplaying Tag.mp3 muted for later unmute');
+      } catch (e) {
+        console.warn('🔔 Could not preplay Tag.mp3 muted:', e);
+      }
       
     } catch (error) {
       console.error('🚨 Error playing audio:', {
