@@ -1194,7 +1194,8 @@ const VostcardStudioView: React.FC = () => {
       // Close the Load Vostcard modal
       setShowVostcardLoader(false);
       
-      alert(`✅ Vostcard "${vostcard.title}" loaded for editing! Use "Update & Repost" to avoid duplicates.`);
+      // Previously showed an alert on load; switched to silent log to avoid interrupting the flow
+      console.log(`✅ Vostcard "${vostcard.title}" loaded for editing`);
       
     } catch (error) {
       console.error('Error loading vostcard:', error);
