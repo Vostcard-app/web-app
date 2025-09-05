@@ -377,6 +377,31 @@ const VostcardDetailView: React.FC = () => {
   const allAudioInstances = useRef<Set<HTMLAudioElement>>(new Set());
   const tagAudioRef = useRef<HTMLAudioElement | null>(null);
   const tagPlayedRef = useRef<boolean>(false);
+  const preloadedTagUrlRef = useRef<string | null>(null);
+
+  // Preload Tag.mp3 once for reliability (fetch as blob -> object URL)
+  useEffect(() => {
+    let revoked: string | null = null;
+    (async () => {
+      try {
+        const res = await fetch('/Tag.mp3', { cache: 'force-cache' });
+        if (res.ok) {
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          preloadedTagUrlRef.current = url;
+          revoked = url;
+          console.log('🔔 Preloaded Tag.mp3');
+        } else {
+          console.warn('🔔 Failed to preload Tag.mp3:', res.status);
+        }
+      } catch (e) {
+        console.warn('🔔 Error preloading Tag.mp3:', e);
+      }
+    })();
+    return () => {
+      if (revoked) URL.revokeObjectURL(revoked);
+    };
+  }, []);
 
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
@@ -863,7 +888,8 @@ Tap OK to continue.`;
         if (!tagPlayedRef.current && audioRef.current) {
           tagPlayedRef.current = true;
           try {
-            audioRef.current.src = '/Tag.mp3';
+            const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+            audioRef.current.src = tagSrc;
             audioRef.current.currentTime = 0;
             // Ensure browser recognizes source change
             audioRef.current.load();
