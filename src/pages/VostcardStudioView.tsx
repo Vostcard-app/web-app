@@ -621,23 +621,26 @@ const VostcardStudioView: React.FC = () => {
 
   // YouTube URL validation and processing
   const validateAndProcessYouTubeURL = (url: string): string | null => {
-    if (!url.trim()) return null;
-    
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // If an 11-char YouTube ID is provided directly, accept it
+    const idOnly = /^[a-zA-Z0-9_-]{11}$/;
+    if (idOnly.test(trimmed)) return trimmed;
+
     // YouTube URL patterns (including Shorts)
     const patterns = [
-      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
-      /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]+)/,
-      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
-      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/, // watch?v=
+      /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})/,              // youtu.be/
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,  // embed/
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/  // shorts/
     ];
-    
+
     for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) {
-        return match[1]; // Return the video ID
-      }
+      const match = trimmed.match(pattern);
+      if (match) return match[1]; // Return the video ID
     }
-    
+
     return null;
   };
 
@@ -1134,6 +1137,7 @@ const VostcardStudioView: React.FC = () => {
       }
       
       // Load YouTube and Instagram URLs
+      // Load saved YouTube value (accepts either full URL or 11-char ID)
       setYoutubeURL(vostcard.youtubeURL || '');
       setInstagramURL(vostcard.instagramURL || '');
       

@@ -40,6 +40,25 @@ const PublicVostcardView: React.FC = () => {
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showLikeMessage, setShowLikeMessage] = useState(false);
   
+  // Normalize stored youtubeURL (may be full URL or ID)
+  const getNormalizedYouTubeId = (raw?: string | null): string | null => {
+    if (!raw) return null;
+    const trimmed = raw.trim();
+    const idOnly = /^[a-zA-Z0-9_-]{11}$/;
+    if (idOnly.test(trimmed)) return trimmed;
+    const patterns = [
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+      /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})/,
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+      /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    for (const p of patterns) {
+      const m = trimmed.match(p);
+      if (m) return m[1];
+    }
+    return null;
+  };
+  
   // Add video ref for control management
   const videoRef = useRef<HTMLVideoElement>(null);
   
@@ -1228,7 +1247,7 @@ ${privateUrl}`);
       )}
 
       {/* YouTube button (public view) */}
-      {vostcard?.youtubeURL && (
+      {getNormalizedYouTubeId(vostcard?.youtubeURL || '') && (
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -1275,7 +1294,7 @@ ${privateUrl}`);
 
       {/* YouTube Modal */}
       <AnimatePresence>
-        {showYouTubeModal && vostcard?.youtubeURL && (
+        {showYouTubeModal && getNormalizedYouTubeId(vostcard?.youtubeURL || '') && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1329,7 +1348,7 @@ ${privateUrl}`);
               justifyContent: 'center'
             }}>
               <iframe
-                src={`https://www.youtube.com/embed/${vostcard.youtubeURL}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                src={`https://www.youtube.com/embed/${getNormalizedYouTubeId(vostcard.youtubeURL || '')}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
                 width="100%"
                 height="100%"
                 style={{
