@@ -30,7 +30,7 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: 'Missing site URL for Tag.mp3 fetch' };
     }
 
-    const fetch = (await import('node-fetch')).default;
+    // Use global fetch (Node 18+) to retrieve Tag.mp3 from the deployed site
     const resp = await fetch(`${siteUrl}/Tag.mp3`);
     if (!resp.ok) {
       return { statusCode: 500, body: `Failed to fetch Tag.mp3: ${resp.status}` };
@@ -38,23 +38,36 @@ exports.handler = async (event) => {
     const tagBuffer = Buffer.from(await resp.arrayBuffer());
     const userBuffer = Buffer.from(userAudioBase64, 'base64');
 
-    // Concatenate using ffmpeg concat protocol by creating in-memory inputs
+    // Concatenate using filter_complex with explicit stream labels for reliability
     const concatBuffers = async (buf1, buf2) => new Promise((resolve, reject) => {
       const chunks = [];
       const command = ffmpeg()
         .input(Buffer.from(buf1))
-        .inputFormat('mp3')
+        .inputOptions(['-f mp3'])
         .input(Buffer.from(buf2))
-        .inputFormat('mp3')
-        .on('error', reject)
+        .inputOptions(['-f mp3'])
+        .complexFilter([
+          {
+            filter: 'concat',
+            options: { n: 2, v: 0, a: 1 },
+            inputs: ['0:a', '1:a'],
+            outputs: 'aout'
+          }
+        ])
+        .outputOptions([
+          '-map [aout]',
+          '-c:a libmp3lame',
+          '-ar 44100',
+          '-ac 2',
+          '-b:a 192k'
+        ])
+        .on('error', (err) => reject(err))
         .on('end', () => resolve(Buffer.concat(chunks)))
-        .format('mp3')
-        .audioCodec('libmp3lame')
-        .outputOptions(['-filter_complex concat=n=2:v=0:a=1']);
+        .format('mp3');
 
       const stream = command.pipe();
       stream.on('data', (d) => chunks.push(d));
-      stream.on('error', reject);
+      stream.on('error', (err) => reject(err));
     });
 
     const output = await concatBuffers(userBuffer, tagBuffer);
