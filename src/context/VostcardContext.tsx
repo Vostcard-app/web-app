@@ -299,6 +299,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isOffer: currentVostcard.isOffer || false,
         offerDetails: currentVostcard.offerDetails || null,
         youtubeURL: currentVostcard.youtubeURL || null,
+        youtubeStart: typeof (currentVostcard as any).youtubeStart === 'number' ? (currentVostcard as any).youtubeStart : null,
         instagramURL: currentVostcard.instagramURL || null
       };
 

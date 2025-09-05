@@ -3041,11 +3041,21 @@ Tap OK to continue.`;
               <FaTimes />
             </button>
 
-            {/* YouTube Embed */}
+            {/* YouTube Embed with start time */}
             <iframe
               width="100%"
               height="100%"
-              src={`https://www.youtube.com/embed/${vostcard.youtubeURL}?autoplay=1`}
+              src={`https://www.youtube.com/embed/${(vostcard.youtubeURL || '').trim()}?autoplay=1&rel=0&modestbranding=1&playsinline=1&start=${(() => {
+                const startField = (vostcard as any).youtubeStart;
+                if (typeof startField === 'number' && startField > 0) return startField;
+                const raw = (vostcard.youtubeURL || '');
+                const m = raw.match(/[?&](?:t|start)=(\d+)(?:s)?/);
+                if (m && m[1]) {
+                  const n = parseInt(m[1], 10);
+                  if (!Number.isNaN(n) && n > 0) return n;
+                }
+                return 0;
+              })()}`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
