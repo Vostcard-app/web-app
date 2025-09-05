@@ -377,6 +377,7 @@ const VostcardDetailView: React.FC = () => {
   const allAudioInstances = useRef<Set<HTMLAudioElement>>(new Set());
   const tagAudioRef = useRef<HTMLAudioElement | null>(null);
   const tagPlayedRef = useRef<boolean>(false);
+  const audioPhaseRef = useRef<'idle' | 'narration' | 'tag'>('idle');
   const preloadedTagUrlRef = useRef<string | null>(null);
 
   // Preload Tag.mp3 once for reliability (fetch as blob -> object URL)
@@ -871,6 +872,7 @@ Tap OK to continue.`;
 
       // Reset tag state for this session
       tagPlayedRef.current = false;
+      audioPhaseRef.current = 'narration';
 
       // Create simple audio element (iPhone-compatible approach)
       const audio = new Audio();
@@ -919,16 +921,27 @@ Tap OK to continue.`;
       audio.addEventListener('ended', () => {
         console.log('🎵 Narration ended');
         setIsPlaying(false);
+        if (audioPhaseRef.current !== 'narration') {
+          // Ignore ended events when we're on the tag clip
+          return;
+        }
         (async () => {
           if (tagPlayedRef.current) return;
           tagPlayedRef.current = true;
           // Attempt 1: immediate same-element play
-          if (await playTagChained()) return;
+          if (await playTagChained()) {
+            audioPhaseRef.current = 'tag';
+            return;
+          }
           // Attempt 2: microtask delay
           await new Promise(r => setTimeout(r, 50));
-          if (await playTagChained()) return;
+          if (await playTagChained()) {
+            audioPhaseRef.current = 'tag';
+            return;
+          }
           // Attempt 3: fallback new element
           await playTagFallbackNew();
+          audioPhaseRef.current = 'tag';
         })();
       });
 
@@ -936,6 +949,7 @@ Tap OK to continue.`;
       const onTimeUpdate = () => {
         const el = audioRef.current;
         if (!el || tagPlayedRef.current) return;
+        if (audioPhaseRef.current !== 'narration') return;
         const d = el.duration;
         if (!Number.isFinite(d) || d <= 0) return;
         const remaining = d - el.currentTime;
@@ -947,6 +961,7 @@ Tap OK to continue.`;
             if (!(await playTagChained())) {
               await playTagFallbackNew();
             }
+            audioPhaseRef.current = 'tag';
           }, 10);
         }
       };
