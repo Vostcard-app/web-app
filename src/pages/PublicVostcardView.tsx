@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaHome, FaHeart, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaHome, FaHeart, FaUserCircle, FaMap, FaTimes, FaLock, FaEnvelope, FaPlay } from 'react-icons/fa';
 import { updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import MultiPhotoModal from '../components/MultiPhotoModal';
@@ -35,6 +35,7 @@ const PublicVostcardView: React.FC = () => {
   const [isPrivateShared, setIsPrivateShared] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
+  const [showYouTubeModal, setShowYouTubeModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showLikeMessage, setShowLikeMessage] = useState(false);
@@ -1225,6 +1226,140 @@ ${privateUrl}`);
           />
         </div>
       )}
+
+      {/* YouTube button (public view) */}
+      {vostcard?.youtubeURL && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '10px',
+          gap: '12px',
+          borderBottom: '1px solid #eee'
+        }}>
+          <button
+            onClick={() => setShowYouTubeModal(true)}
+            style={{
+              backgroundColor: '#FF0000',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 2px 8px rgba(255,0,0,0.2)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#CC0000')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#FF0000')}
+          >
+            <div style={{
+              width: '16px',
+              height: '16px',
+              backgroundColor: 'white',
+              borderRadius: '2px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <FaPlay size={8} style={{ color: '#FF0000', marginLeft: '1px' }} />
+            </div>
+            YouTube
+          </button>
+        </div>
+      )}
+
+      {/* YouTube Modal */}
+      <AnimatePresence>
+        {showYouTubeModal && vostcard?.youtubeURL && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.9)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+            onClick={() => setShowYouTubeModal(false)}
+          >
+            <button
+              onClick={() => setShowYouTubeModal(false)}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                zIndex: 10001,
+                fontSize: '18px',
+                color: 'white',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <FaTimes />
+            </button>
+
+            <div style={{ 
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${vostcard.youtubeURL}?autoplay=1&rel=0&modestbranding=1&playsinline=1`}
+                width="100%"
+                height="100%"
+                style={{
+                  minHeight: '315px',
+                  maxWidth: '560px',
+                  aspectRatio: '16/9',
+                  borderRadius: 8,
+                  border: 'none'
+                }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              color: 'rgba(255,255,255,0.8)',
+              fontSize: '14px',
+              textAlign: 'center',
+              pointerEvents: 'none'
+            }}>
+              Tap outside video or ✕ to close
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tutorial Video Modal */}
       <AnimatePresence>
