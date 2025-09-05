@@ -879,9 +879,10 @@ ${privateUrl}`);
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                  width: '90px',
-                  height: '120px',
-                    cursor: 'pointer'
+                    width: '90px',
+                    height: '120px',
+                    cursor: 'pointer',
+                    position: 'relative'
                   }}
                   onClick={() => handlePhotoClick(photoURLs[0], 0)}
                 >
@@ -889,11 +890,34 @@ ${privateUrl}`);
                     src={photoURLs[0]} 
                     alt="Quickcard Photo" 
                     style={{ 
-                    width: '90px', 
-                    height: '120px', 
+                      width: '90px', 
+                      height: '120px', 
                       objectFit: 'cover' 
                     }}
                   />
+                  {/* Play triangle overlay */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'rgba(0,0,0,0.6)',
+                    borderRadius: '50%',
+                    width: 28,
+                    height: 28,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <div style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: '9px solid white',
+                      borderTop: '6px solid transparent',
+                      borderBottom: '6px solid transparent',
+                      marginLeft: 2
+                    }} />
+                  </div>
                 </div>
               ) : (
                 <div 
@@ -976,7 +1000,8 @@ ${privateUrl}`);
                     justifyContent: 'center',
                     width: '180px',
                     height: '120px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    position: 'relative'
                   }}
                   onClick={() => handlePhotoClick(photoURLs[0], 0)}
                 >
@@ -985,6 +1010,29 @@ ${privateUrl}`);
                     alt={`Photo 1`} 
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
+                  {/* Play triangle overlay */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'rgba(0,0,0,0.6)',
+                    borderRadius: '50%',
+                    width: 30,
+                    height: 30,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <div style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: '10px solid white',
+                      borderTop: '6px solid transparent',
+                      borderBottom: '6px solid transparent',
+                      marginLeft: 2
+                    }} />
+                  </div>
                 </div>
               )}
             </>
