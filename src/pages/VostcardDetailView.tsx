@@ -375,34 +375,9 @@ const VostcardDetailView: React.FC = () => {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const allAudioInstances = useRef<Set<HTMLAudioElement>>(new Set());
-  const tagAudioRef = useRef<HTMLAudioElement | null>(null);
-  const tagPlayedRef = useRef<boolean>(false);
-  const audioPhaseRef = useRef<'idle' | 'narration' | 'tag'>('idle');
-  const preloadedTagUrlRef = useRef<string | null>(null);
+  
 
-  // Preload Tag.mp3 once for reliability (fetch as blob -> object URL)
-  useEffect(() => {
-    let revoked: string | null = null;
-    (async () => {
-      try {
-        const res = await fetch('/Tag.mp3', { cache: 'force-cache' });
-        if (res.ok) {
-          const blob = await res.blob();
-          const url = URL.createObjectURL(blob);
-          preloadedTagUrlRef.current = url;
-          revoked = url;
-          console.log('🔔 Preloaded Tag.mp3');
-        } else {
-          console.warn('🔔 Failed to preload Tag.mp3:', res.status);
-        }
-      } catch (e) {
-        console.warn('🔔 Error preloading Tag.mp3:', e);
-      }
-    })();
-    return () => {
-      if (revoked) URL.revokeObjectURL(revoked);
-    };
-  }, []);
+  
 
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
@@ -870,9 +845,7 @@ Tap OK to continue.`;
         return;
       }
 
-      // Reset tag state for this session
-      tagPlayedRef.current = false;
-      audioPhaseRef.current = 'narration';
+      
 
       // Create simple audio element (iPhone-compatible approach)
       const audio = new Audio();
@@ -882,105 +855,16 @@ Tap OK to continue.`;
       
       console.log('🎵 Audio source set:', audioSrc);
 
-      // Helper to try playing Tag.mp3 (reuse same element first)
-      const playTagChained = async (): Promise<boolean> => {
-        const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
-        if (!audioRef.current) return false;
-        try {
-          audioRef.current.muted = false;
-          audioRef.current.volume = 1.0;
-          audioRef.current.playbackRate = 1.0;
-          audioRef.current.src = tagSrc;
-          audioRef.current.currentTime = 0;
-          audioRef.current.load();
-          await audioRef.current.play();
-          console.log('🔔 Played Tag.mp3 (chained same element)');
-          return true;
-        } catch (err) {
-          console.warn('🔔 Tag.mp3 play failed (chained same element):', err);
-          return false;
-        }
-      };
-
-      const playTagFallbackNew = async (): Promise<boolean> => {
-        try {
-          const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
-          const tag = new Audio(tagSrc);
-          tagAudioRef.current = tag;
-          tag.volume = 1.0;
-          await tag.play();
-          console.log('🔔 Played Tag.mp3 (new element)');
-          return true;
-        } catch (err) {
-          console.warn('🔔 Tag.mp3 play failed (new element):', err);
-          return false;
-        }
-      };
+      
 
       // Set up simple event listeners (iPhone-compatible)
       audio.addEventListener('ended', () => {
         console.log('🎵 Narration ended');
         setIsPlaying(false);
-        if (audioPhaseRef.current !== 'narration') {
-          // Ignore ended events when we're on the tag clip
-          return;
-        }
-        (async () => {
-          if (tagPlayedRef.current) return;
-          tagPlayedRef.current = true;
-          // Preferred Attempt: use preloaded muted tag element (unmute + restart)
-          if (tagAudioRef.current) {
-            try {
-              const tagEl = tagAudioRef.current;
-              tagEl.pause();
-              tagEl.muted = false;
-              tagEl.currentTime = 0;
-              await tagEl.play();
-              console.log('🔔 Played Tag.mp3 (preloaded element unmuted)');
-              audioPhaseRef.current = 'tag';
-              return;
-            } catch (err) {
-              console.warn('🔔 Preloaded tag element play failed:', err);
-            }
-          }
-          // Attempt 1: immediate same-element play
-          if (await playTagChained()) {
-            audioPhaseRef.current = 'tag';
-            return;
-          }
-          // Attempt 2: microtask delay
-          await new Promise(r => setTimeout(r, 50));
-          if (await playTagChained()) {
-            audioPhaseRef.current = 'tag';
-            return;
-          }
-          // Attempt 3: fallback new element
-          await playTagFallbackNew();
-          audioPhaseRef.current = 'tag';
-        })();
       });
 
       // Near-end detector: fire tag when within last 150ms (some browsers miss 'ended')
-      const onTimeUpdate = () => {
-        const el = audioRef.current;
-        if (!el || tagPlayedRef.current) return;
-        if (audioPhaseRef.current !== 'narration') return;
-        const d = el.duration;
-        if (!Number.isFinite(d) || d <= 0) return;
-        const remaining = d - el.currentTime;
-        if (remaining <= 0.15 && remaining >= 0) {
-          console.log('⏱️ Near end detected, triggering Tag.mp3');
-          tagPlayedRef.current = true;
-          // Defer slightly to let ended fire if it will
-          setTimeout(async () => {
-            if (!(await playTagChained())) {
-              await playTagFallbackNew();
-            }
-            audioPhaseRef.current = 'tag';
-          }, 10);
-        }
-      };
-      audio.addEventListener('timeupdate', onTimeUpdate);
+      
 
       audio.addEventListener('error', (e) => {
         console.error('🎵 VostcardDetailView audio playback error:', e);
@@ -993,18 +877,7 @@ Tap OK to continue.`;
       setIsPlaying(true);
       console.log('🎵 Audio started playing successfully');
 
-      // Preload Tag.mp3 as muted, playing silently for autoplay allowance
-      try {
-        const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
-        const tag = new Audio(tagSrc);
-        tag.muted = true;
-        tag.loop = false;
-        await tag.play();
-        tagAudioRef.current = tag;
-        console.log('🔔 Preplaying Tag.mp3 muted for later unmute');
-      } catch (e) {
-        console.warn('🔔 Could not preplay Tag.mp3 muted:', e);
-      }
+      
       
     } catch (error) {
       console.error('🚨 Error playing audio:', {
@@ -3092,19 +2965,7 @@ Tap OK to continue.`;
               audioRef.current = null;
             }
           }
-          // ✅ Stop and clear any tag audio on close
-          if (tagAudioRef.current) {
-            try {
-              tagAudioRef.current.pause();
-              tagAudioRef.current.currentTime = 0;
-              tagAudioRef.current.src = '';
-              tagAudioRef.current = null;
-              console.log('🔔 Tag audio stopped on close');
-            } catch (e) {
-              console.warn('🔔 Error stopping tag audio on close:', e);
-              tagAudioRef.current = null;
-            }
-          }
+          
           setIsPlaying(false);
           
           // Close modal and reset closing state after a delay
@@ -3120,17 +2981,6 @@ Tap OK to continue.`;
           autoPlayInterval={7000}
           audioDuration={vostcard?.audioDuration}
           singleCycle={true}
-          onSlideshowComplete={() => {
-            try {
-              // Play Tag.mp3 from public folder at the end of the slideshow
-              const tag = new Audio('/Tag.mp3');
-              tagAudioRef.current = tag;
-              tag.volume = 1.0;
-              tag.play().then(() => console.log('🔔 Played Tag.mp3 at end of slideshow')).catch(err => console.warn('🔔 Tag.mp3 play failed:', err));
-            } catch (e) {
-              console.warn('🔔 Could not play Tag.mp3:', e);
-            }
-          }}
       />
       )}
 
