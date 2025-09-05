@@ -158,15 +158,6 @@ const PublicHomeView: React.FC = () => {
   // Function to get the correct icon
   const getIcon = () => {
     if (isOffer) return offerIcon;
-    // For quickcards, check user role to determine correct pin
-    if (isQuickcard) {
-      // If the quickcard is posted by a guide or admin, use Guide_pin
-      if (singleVostcard.userRole === 'guide' || singleVostcard.userRole === 'admin') {
-        return guideIcon;
-      }
-      // Otherwise, use regular Vostcard_pin for user quickcards
-      return vostcardIcon;
-    }
     // For regular vostcards, check if posted by guide
     if (singleVostcard.userRole === 'guide') return guideIcon;
     return vostcardIcon;
@@ -317,20 +308,7 @@ const PublicHomeView: React.FC = () => {
                   {singleVostcard.description || 'No description'}
                 </p>
                 
-                {/* Show quickcard indicator */}
-                {isQuickcard && (
-                  <div style={{
-                    backgroundColor: '#e8f4ff',
-                    border: '1px solid #b3d9ff',
-                    borderRadius: '6px',
-                    padding: '8px',
-                    marginBottom: '12px'
-                  }}>
-                    <strong style={{ color: '#0066cc' }}>📱 Quickcard</strong>
-                    <br />
-                    <span style={{ fontSize: '12px' }}>Quick photo with location</span>
-                  </div>
-                )}
+                {/* Quickcard indicator removed */}
                 
                 {/* Existing offer details */}
                 {isOffer && singleVostcard.offerDetails?.discount && (
@@ -372,7 +350,7 @@ const PublicHomeView: React.FC = () => {
                     marginTop: '8px'
                   }}
                 >
-                  View {isQuickcard ? 'Quickcard' : 'Vostcard'}
+                  View Vostcard
                 </button>
               </div>
             </Popup>
