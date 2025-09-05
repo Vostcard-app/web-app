@@ -855,6 +855,17 @@ Tap OK to continue.`;
       audio.addEventListener('ended', () => {
         setIsPlaying(false);
         console.log('🎵 VostcardDetailView audio playback ended - will not restart');
+        // After narration finishes, play tag audio once
+        try {
+          if (!tagAudioRef.current) {
+            const tag = new Audio('/Tag.mp3');
+            tagAudioRef.current = tag;
+            tag.volume = 1.0;
+            tag.play().then(() => console.log('🔔 Played Tag.mp3 after narration')).catch(err => console.warn('🔔 Tag.mp3 play failed:', err));
+          }
+        } catch (e) {
+          console.warn('🔔 Could not play Tag.mp3 after narration:', e);
+        }
         // Audio has finished playing, slideshow can continue but audio won't restart
       });
 
