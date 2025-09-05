@@ -29,6 +29,7 @@ export interface Vostcard {
   hasPhotos?: boolean;
   hasAudio?: boolean;
   youtubeURL?: string | null;
+  youtubeStart?: number | null; // seconds to start playback
   instagramURL?: string | null;
   
   // ✅ UNIFIED AUDIO FORMAT - Local storage (blobs for upload)
@@ -73,6 +74,7 @@ export interface FirebaseVostcard {
   hasPhotos?: boolean;
   hasAudio?: boolean;
   youtubeURL?: string | null;
+  youtubeStart?: number | null; // seconds to start playback
   instagramURL?: string | null;
   videoURL?: string;
   photoURLs?: string[];
