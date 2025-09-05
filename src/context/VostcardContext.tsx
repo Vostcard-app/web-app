@@ -834,6 +834,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hasPhotos: data.hasPhotos || false,
           youtubeURL: data.youtubeURL || null,
           instagramURL: data.instagramURL || null,
+          // Preserve audio references from Firestore so Studio can keep audio on update
+          audioURL: data.audioURL || null,
+          audioURLs: Array.isArray(data.audioURLs) ? data.audioURLs : undefined,
+          _firebaseAudioURLs: Array.isArray(data.audioURLs) ? data.audioURLs : (data.audioURL ? [data.audioURL] : undefined),
           _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
           photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
@@ -958,6 +962,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           hasPhotos: data.hasPhotos || false,
           youtubeURL: data.youtubeURL || null,
           instagramURL: data.instagramURL || null,
+          // Preserve audio references from Firestore so Studio can keep audio on update
+          audioURL: data.audioURL || null,
+          audioURLs: Array.isArray(data.audioURLs) ? data.audioURLs : undefined,
+          _firebaseAudioURLs: Array.isArray(data.audioURLs) ? data.audioURLs : (data.audioURL ? [data.audioURL] : undefined),
           _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
           photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
@@ -1083,6 +1091,10 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           isOffer: !!data.isOffer,
           offerDetails: data.offerDetails || undefined,
           userRole: data.userRole,
+          // Preserve audio references from Firestore so Studio can keep audio on update
+          audioURL: data.audioURL || null,
+          audioURLs: Array.isArray(data.audioURLs) ? data.audioURLs : undefined,
+          _firebaseAudioURLs: Array.isArray(data.audioURLs) ? data.audioURLs : (data.audioURL ? [data.audioURL] : undefined),
           _firebaseVideoURL: data.videoURL || null,
           _firebasePhotoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [],
           photoURLs: Array.isArray(data.photoURLs) ? data.photoURLs : [], // Use original Firebase URLs with tokens
