@@ -58,6 +58,17 @@ const PublicVostcardView: React.FC = () => {
     }
     return null;
   };
+
+  // Derive start seconds from stored field or from legacy full URL with t/start
+  const getYouTubeStartSeconds = (rawUrl?: string | null, startField?: number | null): number => {
+    if (typeof startField === 'number' && startField > 0) return startField;
+    const s = (rawUrl || '').match(/[?&](?:t|start)=(\d+)(?:s)?/);
+    if (s && s[1]) {
+      const n = parseInt(s[1], 10);
+      if (!Number.isNaN(n) && n > 0) return n;
+    }
+    return 0;
+  };
   
   // Add video ref for control management
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -1348,7 +1359,7 @@ ${privateUrl}`);
               justifyContent: 'center'
             }}>
               <iframe
-                src={`https://www.youtube.com/embed/${getNormalizedYouTubeId(vostcard.youtubeURL || '')}?autoplay=1&rel=0&modestbranding=1&playsinline=1${vostcard.youtubeStart ? `&start=${vostcard.youtubeStart}` : ''}`}
+                src={`https://www.youtube.com/embed/${getNormalizedYouTubeId(vostcard.youtubeURL || '')}?autoplay=1&rel=0&modestbranding=1&playsinline=1&start=${getYouTubeStartSeconds(vostcard.youtubeURL, (vostcard as any).youtubeStart)}`}
                 width="100%"
                 height="100%"
                 style={{
