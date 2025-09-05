@@ -671,7 +671,7 @@ ${privateUrl}`);
               navigate(`/login?returnTo=${encodeURIComponent(privateUrl)}`);
             }}
             style={{
-              backgroundColor: '#007aff',
+              backgroundColor: '#07345c',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
@@ -743,7 +743,7 @@ ${privateUrl}`);
         minHeight: 'calc(100vh - 200px)',
         boxSizing: 'border-box'
       }}>
-        {/* Map Icon, Heart Icon, and Free Account Button - All on same line */}
+        {/* Map View button and Like - same row */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
@@ -753,16 +753,17 @@ ${privateUrl}`);
           marginTop: '25px',
           flexWrap: 'wrap'
         }}>
-          {/* Map Icon */}
-          <div 
+          {/* Map View button */}
+          <button 
             style={{
               cursor: 'pointer',
-              padding: '12px',
+              padding: '10px 16px',
               borderRadius: '12px',
               background: '#f5f5f5',
+              color: '#333',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              gap: 8,
               transition: 'all 0.2s ease',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
               border: '1px solid #e0e0e0'
@@ -798,12 +799,13 @@ ${privateUrl}`);
                 alert('No location data available for this vostcard');
               }
             }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseDown={(e) => (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.98)'}
+            onMouseUp={(e) => (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'}
+            onMouseLeave={(e) => (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)'}
           >
-            <FaMap size={28} color="#333" />
-          </div>
+            <FaMap size={20} color="#333" />
+            <span style={{ fontWeight: 600 }}>Map View</span>
+          </button>
 
           {/* Heart Icon */}
           <div 
@@ -843,43 +845,7 @@ ${privateUrl}`);
             </span>
           </div>
 
-          {/* Free Account Button */}
-          <button
-            type="button"
-            style={{
-              cursor: 'pointer',
-              transition: 'transform 0.1s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#002B4D',
-              color: 'white',
-              padding: '12px 20px',
-              borderRadius: '12px',
-              fontSize: 14,
-              fontWeight: 600,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: 'none',
-              whiteSpace: 'nowrap'
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Free Account button clicked!');
-              navigate('/user-guide');
-            }}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('Free Account button touched!');
-              navigate('/user-guide');
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                      >
-              Join (it's free)
-            </button>
+          {/* (Removed extra Join button here per new design) */}
         </div>
 
         {/* Title */}
@@ -893,8 +859,8 @@ ${privateUrl}`);
           {title || 'Untitled'}
         </div>
 
-        {/* Video/Photo Display - Check if this is actually a quickcard */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: '16px' }}>
+        {/* Video/Photo thumbnails area */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: '16px', alignItems: 'center' }}>
           {vostcard.isQuickcard ? (
             /* Single Photo Display for Quickcards */
             <div style={{ 
@@ -947,141 +913,124 @@ ${privateUrl}`);
               )}
             </div>
           ) : (
-            /* Regular Vostcard Layout with Video + Photos */
             <>
-              <div 
-                style={{ 
-                  width: 150, 
-                  height: 150, 
-                  background: '#111', 
-                  borderRadius: 16, 
-                  overflow: 'hidden', 
-                  cursor: videoURL ? 'pointer' : 'default',
-                  position: 'relative'
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (videoURL) setShowVideoModal(true);
-                }}
-              >
-                {videoURL ? (
-                  <>
-                    <video 
-                      src={videoURL} 
-                      style={{ 
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        pointerEvents: 'none',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0
-                      }}
-                      onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
-                      muted
-                      loop
-                      playsInline
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      background: 'rgba(0,0,0,0.7)',
-                      borderRadius: '50%',
-                      width: 30,
-                      height: 30,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <div style={{
-                        width: 0,
-                        height: 0,
-                        borderLeft: '10px solid white',
-                        borderTop: '6px solid transparent',
-                        borderBottom: '6px solid transparent',
-                        marginLeft: 2
-                      }} />
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    height: '150px',
-                    color: '#666'
+              {/* Video thumbnail (only if video) */}
+              {videoURL && (
+                <div
+                  onClick={(e) => { e.stopPropagation(); setShowVideoModal(true); }}
+                  style={{ 
+                    background: '#000', 
+                    borderRadius: 16, 
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '180px',
+                    height: '120px',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                >
+                  <video 
+                    src={videoURL} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    muted
+                    loop
+                    playsInline
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    background: 'rgba(0,0,0,0.7)',
+                    borderRadius: '50%',
+                    width: 30,
+                    height: 30,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}>
-                    No Video
+                    <div style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: '10px solid white',
+                      borderTop: '6px solid transparent',
+                      borderBottom: '6px solid transparent',
+                      marginLeft: 2
+                    }} />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Photos Grid */}
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                gap: 8,
-                width: 150,
-                height: 150
-              }}>
-                {photoURLs.slice(0, 2).map((url: string, index: number) => (
-                  <div 
-                    key={index}
-                    style={{ 
-                      background: '#f0f0f0', 
-                      borderRadius: 8, 
-                      overflow: 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '71px',
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => handlePhotoClick(url, idx)}
-                  >
-                    <img 
-                      src={url} 
-                      alt={`Photo ${index + 1}`} 
-                      style={{ 
-                        width: '150px', 
-                        height: '71px', 
-                        objectFit: 'cover' 
-                      }}
-                    />
-                  </div>
-                ))}
-                {photoURLs.length < 2 && Array.from({ length: 2 - photoURLs.length }).map((_, index) => (
-                  <div 
-                    key={`empty-${index}`}
-                    style={{ 
-                      background: '#f0f0f0', 
-                      borderRadius: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ccc',
-                      height: '71px'
-                    }}
-                  >
-                    <FaMap size={20} />
-                  </div>
-                ))}
-              </div>
+              {/* Single photo thumbnail to open slideshow */}
+              {photoURLs.length > 0 && (
+                <div 
+                  key={0}
+                  style={{ 
+                    background: '#f0f0f0', 
+                    borderRadius: 16, 
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '180px',
+                    height: '120px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => handlePhotoClick(photoURLs[0], 0)}
+                >
+                  <img 
+                    src={photoURLs[0]} 
+                    alt={`Photo 1`} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
 
-        {/* Description */}
+        {/* Description - scrollable after ~4 lines */}
         <div style={{ 
           color: '#333',
           lineHeight: 1.5,
           fontSize: 16,
-          marginBottom: '16px'
+          marginBottom: '12px',
+          maxHeight: '6.2em',
+          overflowY: 'auto',
+          whiteSpace: 'pre-wrap'
         }}>
           {description || 'No description available.'}
         </div>
+
+        {/* YouTube / Instagram buttons under description */}
+        {(getNormalizedYouTubeId(vostcard.youtubeURL || '') || vostcard.instagramURL) && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
+            {getNormalizedYouTubeId(vostcard.youtubeURL || '') && (
+              <button
+                onClick={() => setShowYouTubeModal(true)}
+                style={{
+                  backgroundColor: '#FF0000', color: 'white', border: 'none', borderRadius: 8,
+                  padding: '10px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                YouTube
+              </button>
+            )}
+            {vostcard.instagramURL && (
+              <button
+                onClick={() => window.open(vostcard.instagramURL!, '_blank')}
+                style={{
+                  background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)',
+                  color: 'white', border: 'none', borderRadius: 8, padding: '10px 16px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                Instagram
+              </button>
+            )}
+          </div>
+        )}
 
         <div style={{ textAlign: 'center', color: '#888', fontSize: 14, marginBottom: '24px' }}>
           Posted: {createdAt}
