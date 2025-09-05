@@ -884,22 +884,52 @@ Tap OK to continue.`;
       audio.addEventListener('ended', () => {
         console.log('🎵 Narration ended');
         setIsPlaying(false);
-        // Chain Tag.mp3 on the SAME audio element to avoid autoplay restrictions
-        if (!tagPlayedRef.current && audioRef.current) {
-          tagPlayedRef.current = true;
+        // Helper to robustly try playing tag
+        const tryPlayTag = async () => {
+          const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+          if (!audioRef.current) return false;
           try {
-            const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+            audioRef.current.muted = false;
+            audioRef.current.volume = 1.0;
+            audioRef.current.playbackRate = 1.0;
             audioRef.current.src = tagSrc;
             audioRef.current.currentTime = 0;
-            // Ensure browser recognizes source change
             audioRef.current.load();
-            audioRef.current.play()
-              .then(() => console.log('🔔 Played Tag.mp3 after narration using same element'))
-              .catch(err => console.warn('🔔 Tag.mp3 play failed:', err));
-          } catch (e) {
-            console.warn('🔔 Could not play Tag.mp3 after narration:', e);
+            await audioRef.current.play();
+            console.log('🔔 Played Tag.mp3 (same element)');
+            return true;
+          } catch (err) {
+            console.warn('🔔 Tag.mp3 play failed (same element):', err);
+            return false;
           }
-        }
+        };
+
+        const tryPlayTagNewElement = async () => {
+          try {
+            const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+            const tag = new Audio(tagSrc);
+            tagAudioRef.current = tag;
+            tag.volume = 1.0;
+            await tag.play();
+            console.log('🔔 Played Tag.mp3 (new element fallback)');
+            return true;
+          } catch (err) {
+            console.warn('🔔 Tag.mp3 play failed (new element):', err);
+            return false;
+          }
+        };
+
+        (async () => {
+          if (tagPlayedRef.current) return;
+          tagPlayedRef.current = true;
+          // Attempt 1: immediate same-element play
+          if (await tryPlayTag()) return;
+          // Attempt 2: microtask delay
+          await new Promise(r => setTimeout(r, 50));
+          if (await tryPlayTag()) return;
+          // Attempt 3: fallback new element
+          await tryPlayTagNewElement();
+        })();
       });
 
       audio.addEventListener('error', (e) => {
