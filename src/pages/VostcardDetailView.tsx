@@ -3029,17 +3029,17 @@ Tap OK to continue.`;
               audioRef.current = null;
             }
           }
-          // ✅ Stop tag audio if playing
-          if (tagAudioRef.current) {
+          // ✅ Play Tag.mp3 on close (user gesture-friendly)
+          if (!tagPlayedRef.current) {
+            tagPlayedRef.current = true;
             try {
-              tagAudioRef.current.pause();
-              tagAudioRef.current.currentTime = 0;
-              tagAudioRef.current.src = '';
-              tagAudioRef.current = null;
-              console.log('🔔 Tag audio stopped and cleared');
-            } catch (error) {
-              console.error('🔔 Error stopping tag audio:', error);
-              tagAudioRef.current = null;
+              const tagSrc = preloadedTagUrlRef.current || '/Tag.mp3';
+              const tag = new Audio(tagSrc);
+              tagAudioRef.current = tag;
+              tag.volume = 1.0;
+              tag.play().then(() => console.log('🔔 Played Tag.mp3 on slideshow close')).catch(err => console.warn('🔔 Tag.mp3 play failed on close:', err));
+            } catch (e) {
+              console.warn('🔔 Could not play Tag.mp3 on close:', e);
             }
           }
           setIsPlaying(false);
