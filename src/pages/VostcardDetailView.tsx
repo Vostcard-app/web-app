@@ -375,6 +375,7 @@ const VostcardDetailView: React.FC = () => {
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const allAudioInstances = useRef<Set<HTMLAudioElement>>(new Set());
+  const tagAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Tip dropdown state
   const [showTipDropdown, setShowTipDropdown] = useState(false);
@@ -2954,6 +2955,19 @@ Tap OK to continue.`;
               audioRef.current = null;
             }
           }
+          // ✅ Stop tag audio if playing
+          if (tagAudioRef.current) {
+            try {
+              tagAudioRef.current.pause();
+              tagAudioRef.current.currentTime = 0;
+              tagAudioRef.current.src = '';
+              tagAudioRef.current = null;
+              console.log('🔔 Tag audio stopped and cleared');
+            } catch (error) {
+              console.error('🔔 Error stopping tag audio:', error);
+              tagAudioRef.current = null;
+            }
+          }
           setIsPlaying(false);
           
           // Close modal and reset closing state after a delay
@@ -2968,6 +2982,18 @@ Tap OK to continue.`;
           autoPlay={true}
           autoPlayInterval={7000}
           audioDuration={vostcard?.audioDuration}
+          singleCycle={true}
+          onSlideshowComplete={() => {
+            try {
+              // Play Tag.mp3 from public folder at the end of the slideshow
+              const tag = new Audio('/Tag.mp3');
+              tagAudioRef.current = tag;
+              tag.volume = 1.0;
+              tag.play().then(() => console.log('🔔 Played Tag.mp3 at end of slideshow')).catch(err => console.warn('🔔 Tag.mp3 play failed:', err));
+            } catch (e) {
+              console.warn('🔔 Could not play Tag.mp3:', e);
+            }
+          }}
       />
       )}
 
