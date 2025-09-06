@@ -364,8 +364,8 @@ const MyPostedVostcardsListView = () => {
       // Load the vostcard for editing
       await loadPostedVostcardForEdit(vostcardId);
       
-      // Navigate to the unified editor
-      navigate(`/edit/${vostcardId}`);
+      // Navigate directly to Studio and pass the id so Studio hydrates video/photos
+      navigate('/studio', { state: { editingVostcard: vostcardId, activeTab: 'vostcard' } });
       
     } catch (error) {
       console.error('❌ Failed to load vostcard for editing:', error);
