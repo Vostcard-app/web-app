@@ -258,12 +258,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         photoURLs = currentVostcard._firebasePhotoURLs;
       }
 
-      // Upload video
+      // Upload or preserve video
       if (currentVostcard.video) {
         console.log('🎥 Uploading video...');
         const videoRef = ref(storage, `vostcards/${user.uid}/videos/${currentVostcard.id}`);
         await uploadBytes(videoRef, currentVostcard.video);
         videoURL = await getDownloadURL(videoRef);
+      } else {
+        // Preserve existing video URL if present and no new video provided
+        const existingVideoURL: string | null = (currentVostcard as any)._firebaseVideoURL || (currentVostcard as any).videoURL || null;
+        if (existingVideoURL) {
+          console.log('🎥 Preserving existing video URL...');
+          videoURL = existingVideoURL;
+        }
       }
 
       // Clean geo object to remove undefined values
@@ -293,7 +300,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: currentVostcard.state,
         visibility: currentVostcard.visibility || 'private',
         type: 'vostcard' as const,
-        hasVideo: !!currentVostcard.video,
+        hasVideo: !!(currentVostcard.video || videoURL),
         hasPhotos: photoURLs.length > 0,
         mediaUploadStatus: 'complete',
         isOffer: currentVostcard.isOffer || false,
@@ -397,12 +404,18 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         photoURLs = vostcardToSave._firebasePhotoURLs;
       }
 
-      // Upload video
+      // Upload or preserve video
       if (vostcardToSave.video) {
         console.log('🎥 Uploading video...');
         const videoRef = ref(storage, `vostcards/${user.uid}/videos/${vostcardToSave.id}`);
         await uploadBytes(videoRef, vostcardToSave.video);
         videoURL = await getDownloadURL(videoRef);
+      } else {
+        const existingVideoURL: string | null = (vostcardToSave as any)._firebaseVideoURL || (vostcardToSave as any).videoURL || null;
+        if (existingVideoURL) {
+          console.log('🎥 Preserving existing video URL...');
+          videoURL = existingVideoURL;
+        }
       }
 
       // Upload audio files
@@ -460,7 +473,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         state: vostcardToSave.state,
         visibility: vostcardToSave.visibility || 'private',
         type: 'vostcard' as const,
-        hasVideo: !!vostcardToSave.video,
+        hasVideo: !!(vostcardToSave.video || videoURL),
         hasPhotos: photoURLs.length > 0,
         hasAudio: audioURLs.length > 0,
         mediaUploadStatus: 'complete',
