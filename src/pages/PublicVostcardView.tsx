@@ -72,6 +72,29 @@ const PublicVostcardView: React.FC = () => {
   
   // Add video ref for control management
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Stop playback and close the video modal safely
+  const stopAndCloseVideo = () => {
+    try {
+      const v = videoRef.current;
+      if (v) {
+        v.pause();
+        v.removeAttribute('src');
+        v.load();
+      }
+    } catch {}
+    setShowVideoModal(false);
+  };
+
+  // Allow ESC to close the video modal
+  useEffect(() => {
+    if (!showVideoModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') stopAndCloseVideo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showVideoModal]);
   
   // Add video control functions
   const handleVideoPlay = () => {
@@ -1139,10 +1162,10 @@ ${privateUrl}`);
               justifyContent: 'center',
               padding: '20px'
             }}
-            onClick={() => setShowVideoModal(false)}
+            onClick={stopAndCloseVideo}
           >
             <button
-              onClick={() => setShowVideoModal(false)}
+              onClick={stopAndCloseVideo}
               style={{
                 position: 'absolute',
                 top: '20px',
@@ -1190,7 +1213,7 @@ ${privateUrl}`);
                 }}
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
                 onPlay={handleVideoPlay}
-                onEnded={() => setShowVideoModal(false)}
+                onEnded={stopAndCloseVideo}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleVideoInteraction();
