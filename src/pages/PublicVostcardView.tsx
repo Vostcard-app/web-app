@@ -21,7 +21,6 @@ const PublicVostcardView: React.FC = () => {
     error,
     likeCount,
     ratingStats,
-    hasAudio,
     setUserProfile
   } = useVostcardData(id, {
     loadUserProfile: true,
@@ -118,100 +117,19 @@ const PublicVostcardView: React.FC = () => {
     }
   };
 
-  // ✅ Add audio support - missing from PublicVostcardView
+  // Audio ref for slideshow playback only
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState<number | null>(null);
   const [showMultiPhotoModal, setShowMultiPhotoModal] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
-  
-  // Audio detection now handled by useVostcardData hook
 
-  // ✅ Audio playback function
-  const handlePlayPause = useCallback(async () => {
-    console.log('🎵 PublicVostcardView handlePlayPause called!', { hasAudio, isPlaying });
-    
-    if (!hasAudio) {
-      console.log('❌ No audio detected, returning early');
-      return;
-    }
-
-    try {
-      // Stop any existing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
-
-      if (isPlaying) {
-        setIsPlaying(false);
-        return;
-      }
-
-      // Create new audio element
-      const audio = new Audio();
-      audioRef.current = audio;
-      audio.loop = false; // ✅ Ensure audio doesn't repeat/loop
-
-      // ✅ UNIFIED AUDIO FORMAT - Simple source resolution
-      const audioSource = vostcard?.audioURLs?.[0] ||          // UNIFIED: Primary audio URL
-                         vostcard?.audioURL ||                  // Legacy: Single audio URL (migration support)
-                         vostcard?._firebaseAudioURL;           // Legacy: Firebase audio URL (migration support)
-
-      if (!audioSource) {
-        console.error('No audio source available');
-        return;
-      }
-
-      // Set audio source
-      if (audioSource instanceof Blob) {
-        audio.src = URL.createObjectURL(audioSource);
-      } else if (typeof audioSource === 'string') {
-        audio.src = audioSource;
-      } else {
-        console.error('Invalid audio source type:', typeof audioSource);
-        return;
-      }
-
-      // Set up event listeners
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false);
-        console.log('🎵 PublicVostcardView audio playback ended');
-      });
-
-      audio.addEventListener('error', (e) => {
-        console.error('🎵 PublicVostcardView audio playback error:', e);
-        setIsPlaying(false);
-      });
-
-      // Play audio
-      await audio.play();
-      setIsPlaying(true);
-      
-    } catch (error) {
-      console.error('Error playing audio:', error);
-      setIsPlaying(false);
-      if (audioRef.current) {
-        audioRef.current = null;
-      }
-      alert('Failed to play audio. Please try again.');
-    }
-  }, [hasAudio, isPlaying, vostcard]);
-
-  // ✅ Photo click handler with audio support
+  // Photo click handler - opens slideshow (audio plays automatically in slideshow)
   const handlePhotoClick = useCallback((photoUrl: string, photoIndex: number = 0) => {
-    console.log('🖼️ PublicVostcardView photo clicked - launching audio and showing slideshow:', photoUrl);
+    console.log('🖼️ PublicVostcardView photo clicked - showing slideshow:', photoUrl);
     
     // Set up slideshow
     setSelectedPhotoIndex(photoIndex);
     setShowMultiPhotoModal(true);
-    
-    // Start audio if available
-    if (hasAudio) {
-      setTimeout(() => {
-        handlePlayPause();
-      }, 100);
-    }
-  }, [hasAudio, handlePlayPause]);
+  }, []);
 
   // ✅ Cleanup audio when component unmounts
   useEffect(() => {
@@ -648,31 +566,13 @@ ${privateUrl}`);
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
-                marginRight: hasAudio ? '8px' : '0'
+                marginRight: '0'
               }}
             >
               Play Video
             </button>
           )}
 
-          {/* ✅ Play Audio if available */}
-          {hasAudio && (
-            <button
-              onClick={handlePlayPause}
-              style={{
-                backgroundColor: isPlaying ? '#dc3545' : '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              {isPlaying ? '⏸️ Stop Audio' : '🎵 Play Audio'}
-            </button>
-          )}
         </div>
       </div>
 
