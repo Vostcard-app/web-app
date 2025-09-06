@@ -107,10 +107,7 @@ export class VostboxService {
         sharedAt: serverTimestamp()
       });
       
-      // Update receiver's unread count
-      await updateDoc(doc(db, 'users', receiverUID), {
-        vostboxUnreadCount: increment(1)
-      });
+      // Receiver's unread count is derived in UI; no direct write to receiver profile here
       
       // Mark vostcard as shared with friend
       await updateDoc(doc(db, 'vostcards', vostcardID), {
@@ -171,7 +168,7 @@ export class VostboxService {
         sharedAt: serverTimestamp()
       });
 
-      await updateDoc(doc(db, 'users', receiverUID), { vostboxUnreadCount: increment(1) });
+      // Receiver's unread count is derived in UI; no direct write to receiver profile here
 
       return { success: true, messageId: messageDoc.id };
     } catch (error) {
