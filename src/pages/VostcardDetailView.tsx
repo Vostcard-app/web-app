@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import VideoOverlayModal from '../components/VideoOverlayModal';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaTimes, FaHeart, FaRegComment, FaShare, FaFlag, FaMap, FaPlay, FaStar, FaDirections } from 'react-icons/fa';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
@@ -87,6 +88,7 @@ const VostcardDetailView: React.FC = () => {
   const [showYouTubeModal, setShowYouTubeModal] = useState(false);
   const [showInstagramModal, setShowInstagramModal] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
+  const [showVideoOverlay, setShowVideoOverlay] = useState(false);
   const [directions, setDirections] = useState<NavigationStep[]>([]);
   const [showDirectionsOverlay, setShowDirectionsOverlay] = useState(false);
   const [liveNavigation, setLiveNavigation] = useState(false);
@@ -1361,7 +1363,13 @@ Tap OK to continue.`;
   }
 
   return (
-    <div
+    <>
+      <VideoOverlayModal
+        isOpen={showVideoOverlay}
+        src={(vostcard as any)?.videoURL || (vostcard as any)?._firebaseVideoURL || undefined}
+        onClose={() => setShowVideoOverlay(false)}
+      />
+      <div
       style={{
         background: '#fff',
         minHeight: '100vh',
@@ -1479,16 +1487,7 @@ Tap OK to continue.`;
                 position: 'relative',
                 cursor: 'pointer'
               }}
-              onClick={() => {
-                const videoUrl = (vostcard as any)?.videoURL || (vostcard as any)?._firebaseVideoURL || ((vostcard as any)?.video instanceof Blob ? URL.createObjectURL((vostcard as any).video) : null);
-                console.log('🎥 Opening video:', videoUrl);
-                if (videoUrl) {
-                  window.open(videoUrl, '_blank');
-                } else {
-                  console.log('❌ No video URL available to open');
-                  alert('Video not available');
-                }
-              }}
+              onClick={() => setShowVideoOverlay(true)}
             >
               <div style={{ width: '100%', height: '100%', position: 'relative' }}>
                 {/* Video thumbnail */}
@@ -1496,33 +1495,7 @@ Tap OK to continue.`;
                   const videoUrl = (vostcard as any)?.videoURL || (vostcard as any)?._firebaseVideoURL;
                   console.log('🎥 Video thumbnail URL:', videoUrl);
                   
-                  if (videoUrl) {
-                    return (
-                      <video
-                        style={{ 
-                          width: '100%', 
-                          height: '100%', 
-                          objectFit: 'cover',
-                          display: 'block'
-                        }}
-                        preload="metadata"
-                        muted
-                        playsInline
-                        onError={(e) => {
-                          console.error('❌ Video thumbnail failed to load:', {
-                            videoUrl,
-                            error: e,
-                            vostcardId: (vostcard as any)?.id
-                          });
-                        }}
-                        onLoadedMetadata={() => {
-                          console.log('✅ Video thumbnail loaded successfully');
-                        }}
-                      >
-                        <source src={`${videoUrl}#t=0.5`} type="video/mp4" />
-                      </video>
-                    );
-                  } else {
+                  if (!videoUrl) {
                     console.log('❌ No video URL found for thumbnail');
                     return (
                       <div style={{ 
@@ -1539,6 +1512,7 @@ Tap OK to continue.`;
                       </div>
                     );
                   }
+                  return null;
                 })()}
                 {/* Play overlay */}
                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3189,7 +3163,8 @@ Tap OK to continue.`;
           }}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
