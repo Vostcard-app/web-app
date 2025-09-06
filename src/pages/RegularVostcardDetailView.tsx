@@ -2017,6 +2017,24 @@ Tap OK to continue.`;
               }}
               onClick={e => e.stopPropagation()}
             >
+              <video
+                ref={videoRef}
+                src={vostcard.videoURL}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: 8,
+                  backgroundColor: '#000'
+                }}
+                controls
+                autoPlay
+                playsInline
+                onEnded={stopAndCloseVideo}
+                onClick={(e) => e.stopPropagation()}
+              />
+              
+              {/* Close button overlay on video */}
               <button
                 onClick={stopAndCloseVideo}
                 style={{
@@ -2059,7 +2077,7 @@ Tap OK to continue.`;
                   bottom: 20,
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  background: 'rgba(255,0,0,0.8)',
+                  background: 'rgba(255,0,0,0.9)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -2079,29 +2097,13 @@ Tap OK to continue.`;
                   e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,0,0,0.8)';
+                  e.currentTarget.style.background = 'rgba(255,0,0,0.9)';
                   e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
                 }}
               >
                 <FaTimes size={14} />
                 STOP & CLOSE
               </button>
-              <video
-                ref={videoRef}
-                src={vostcard.videoURL}
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'contain',
-                  borderRadius: 8,
-                  backgroundColor: '#000'
-                }}
-                controls
-                autoPlay
-                playsInline
-                onEnded={stopAndCloseVideo}
-                onClick={(e) => e.stopPropagation()}
-              />
             </div>
           </div>
         )}
