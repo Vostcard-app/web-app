@@ -1130,18 +1130,6 @@ ${privateUrl}`);
               />
             </div>
 
-            <div style={{
-              position: 'absolute',
-              bottom: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: 'rgba(255,255,255,0.8)',
-              fontSize: '14px',
-              textAlign: 'center',
-              pointerEvents: 'none'
-            }}>
-              Tap outside video or ✕ to close
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1299,18 +1287,6 @@ ${privateUrl}`);
               />
             </div>
 
-            <div style={{
-              position: 'absolute',
-              bottom: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: 'rgba(255,255,255,0.8)',
-              fontSize: '14px',
-              textAlign: 'center',
-              pointerEvents: 'none'
-            }}>
-              Tap outside video or ✕ to close
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1387,18 +1363,6 @@ ${privateUrl}`);
               />
             </div>
 
-            <div style={{
-              position: 'absolute',
-              bottom: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              color: 'rgba(255,255,255,0.8)',
-              fontSize: '14px',
-              textAlign: 'center',
-              pointerEvents: 'none'
-            }}>
-              Tap outside video or ✕ to close
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

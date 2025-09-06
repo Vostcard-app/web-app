@@ -2015,7 +2015,6 @@ Tap OK to continue.`;
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
-              onClick={e => e.stopPropagation()}
             >
               <video
                 ref={videoRef}
