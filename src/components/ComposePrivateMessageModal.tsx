@@ -30,6 +30,10 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
   const [friendSearchQuery, setFriendSearchQuery] = useState('');
   const [filteredFriends, setFilteredFriends] = useState<Friend[]>([]);
+  // Users (non-friend) search and selection
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userResults, setUserResults] = useState<Friend[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   
   // Post selection state
   const [showPostPicker, setShowPostPicker] = useState(false);
@@ -67,6 +71,22 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
       setFilteredFriends(friends);
     }
   }, [friendSearchQuery, friends]);
+
+  // Debounced user search (registered users)
+  useEffect(() => {
+    const run = async () => {
+      if (!userSearchQuery.trim()) { setUserResults([]); return; }
+      try {
+        const results = await FriendService.searchUsers(userSearchQuery.trim(), user?.uid || '');
+        setUserResults(results);
+      } catch (e) {
+        console.error('User search failed:', e);
+        setUserResults([]);
+      }
+    };
+    const t = setTimeout(run, 250);
+    return () => clearTimeout(t);
+  }, [userSearchQuery, user?.uid]);
 
   // Filter posts based on search
   useEffect(() => {
@@ -116,11 +136,12 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
   };
 
   const handleSendMessage = async () => {
-    if (!user?.uid || selectedFriends.size === 0 || (!message.trim() && !selectedPost)) {
+    const totalSelected = selectedFriends.size + selectedUsers.size;
+    if (!user?.uid || totalSelected === 0 || (!message.trim() && !selectedPost)) {
       if (!message.trim() && !selectedPost) {
         alert('Please write a message or attach a post.');
       } else {
-        alert('Please select friends.');
+        alert('Please select at least one recipient.');
       }
       return;
     }
@@ -129,7 +150,8 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
       setSending(true);
       const results = [];
 
-      for (const friendUID of selectedFriends) {
+      const recipients = [...selectedFriends, ...selectedUsers];
+      for (const friendUID of recipients) {
         if (selectedPost) {
           // Send with post attachment
           const result = await VostboxService.sendVostcardToFriend({
@@ -162,6 +184,7 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
         setSelectedPost(null);
         setSelectedFriends(new Set());
         setFriendSearchQuery('');
+        setUserSearchQuery('');
         setPostSearchQuery('');
         onClose();
       } else {
@@ -592,6 +615,94 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
                 color: '#666'
               }}>
                 {selectedFriends.size} friend{selectedFriends.size !== 1 ? 's' : ''} selected
+              </div>
+            )}
+          </div>
+
+          {/* Users Selection (Registered Users) */}
+          <div style={{ marginTop: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#333',
+              marginBottom: '8px'
+            }}>
+              Send To Users
+            </label>
+
+            <input
+              type="text"
+              value={userSearchQuery}
+              onChange={(e) => setUserSearchQuery(e.target.value)}
+              placeholder="Search users..."
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '6px',
+                marginBottom: '12px',
+                fontSize: '14px'
+              }}
+            />
+
+            <div style={{
+              maxHeight: '200px',
+              overflowY: 'auto',
+              border: '1px solid #e0e0e0',
+              borderRadius: '8px',
+              padding: '8px'
+            }}>
+              {userResults.length > 0 ? (
+                userResults.map(userRow => (
+                  <div
+                    key={userRow.uid}
+                    onClick={() => {
+                      const next = new Set(selectedUsers);
+                      if (next.has(userRow.uid)) next.delete(userRow.uid); else next.add(userRow.uid);
+                      setSelectedUsers(next);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '8px',
+                      margin: '4px 0',
+                      backgroundColor: selectedUsers.has(userRow.uid) ? '#e3f2fd' : 'transparent',
+                      border: selectedUsers.has(userRow.uid) ? '1px solid #002B4D' : '1px solid transparent',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      backgroundColor: '#e0e0e0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '12px',
+                      fontSize: '14px'
+                    }}>
+                      {userRow.avatarURL ? <img src={userRow.avatarURL} alt={userRow.username} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : <FaUser />}
+                    </div>
+                    <span style={{ flex: 1, fontSize: '14px', fontWeight: '500' }}>{userRow.username}</span>
+                    {selectedUsers.has(userRow.uid) && (
+                      <FaCheck style={{ color: '#002B4D', fontSize: '14px' }} />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                  {userSearchQuery.trim() ? 'No users found' : 'Search registered users by username'}
+                </div>
+              )}
+            </div>
+
+            {(selectedUsers.size > 0) && (
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                {selectedUsers.size} user{selectedUsers.size !== 1 ? 's' : ''} selected
               </div>
             )}
           </div>

@@ -6,6 +6,21 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // Vostbox private messages between users
+    match /vostbox/{messageId} {
+      // Read allowed for sender or receiver
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.senderUID ||
+        request.auth.uid == resource.data.receiverUID
+      );
+      // Create allowed by authenticated sender
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.senderUID;
+      // Update (e.g., mark as read or add reply) allowed for receiver
+      allow update: if request.auth != null && request.auth.uid == resource.data.receiverUID;
+      // Delete allowed for receiver
+      allow delete: if request.auth != null && request.auth.uid == resource.data.receiverUID;
+    }
+
     // Allow authenticated users to read and write their own vostcards
     match /vostcards/{vostcardId} {
       allow read: if true; // Allow all users to read vostcards (for the map)
