@@ -22,6 +22,7 @@ import CreateVostcardStep1 from "./pages/CreateVostcardStep1";
 import CreateVostcardStep2 from "./pages/CreateVostcardStep2";
 import CreateVostcardStep3 from "./pages/CreateVostcardStep3";
 import EditVostcardView from "./pages/EditVostcardView";
+import { Navigate, useLocation, useParams } from 'react-router-dom';
 import VostcardCreateStep1Photos from "./pages/VostcardCreateStep1Photos";
 // Removed quickcard imports
 import ListView from "./pages/ListView";
@@ -172,7 +173,8 @@ function App() {
                   {/* Removed legacy quickcard routes */}
                   {/* Removed quick audio route */}
                   <Route path="/step2-camera" element={<Step2CameraView />} />
-                  <Route path="/edit/:id" element={<EditVostcardView />} />
+                  {/* Redirect legacy edit route to Studio */}
+                  <Route path="/edit/:id" element={<Navigate to="/studio" replace />} />
 
                   {/* 📍 Location */}
                   <Route path="/pin-placer" element={<PinPlacerTool />} />

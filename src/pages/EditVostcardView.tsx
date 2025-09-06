@@ -13,6 +13,15 @@ const EditVostcardView: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
+  // Temporary: forward into Studio immediately
+  React.useEffect(() => {
+    if (id) {
+      navigate('/studio', { replace: true, state: { editingVostcard: id, activeTab: 'vostcard' } });
+    } else {
+      navigate('/studio', { replace: true });
+    }
+  }, [id, navigate]);
+
       const {
     currentVostcard,
     setCurrentVostcard,
