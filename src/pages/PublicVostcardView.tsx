@@ -1170,7 +1170,7 @@ ${privateUrl}`);
                 position: 'absolute',
                 top: '20px',
                 right: '20px',
-                background: 'rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.9)',
                 border: 'none',
                 borderRadius: '50%',
                 width: '44px',
@@ -1181,11 +1181,57 @@ ${privateUrl}`);
                 cursor: 'pointer',
                 zIndex: 2001,
                 fontSize: '18px',
-                color: 'white',
-                backdropFilter: 'blur(10px)'
+                color: '#333',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,1)';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
             >
               <FaTimes />
+            </button>
+            
+            {/* Large STOP button overlay on video */}
+            <button
+              onClick={stopAndCloseVideo}
+              style={{
+                position: 'absolute',
+                bottom: 20,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: 'rgba(255,0,0,0.8)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '12px 24px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                zIndex: 2001,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,0,0,1)';
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255,0,0,0.8)';
+                e.currentTarget.style.transform = 'translateX(-50%) scale(1)';
+              }}
+            >
+              <FaTimes size={14} />
+              STOP & CLOSE
             </button>
 
             <div style={{ 
