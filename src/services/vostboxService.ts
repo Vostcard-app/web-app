@@ -143,10 +143,7 @@ export class VostboxService {
       const senderData = senderDoc.data();
       const receiverData = receiverDoc.data();
 
-      // Relationship checks
-      if (!senderData.friends?.includes(receiverUID)) {
-        return { success: false, error: 'Users are not friends' };
-      }
+      // Relationship checks (allow messaging registered users, block if receiver blocked the sender)
       if (receiverData.blockedUsers?.includes(senderUID)) {
         return { success: false, error: 'Cannot send to this user' };
       }
@@ -257,20 +254,11 @@ export class VostboxService {
         return { success: true };
       }
       
-      const batch = writeBatch(db);
-      
       // Mark message as read
-      batch.update(doc(db, 'vostbox', messageId), {
+      await updateDoc(doc(db, 'vostbox', messageId), {
         isRead: true,
         readAt: serverTimestamp()
       });
-      
-      // Decrement unread count
-      batch.update(doc(db, 'users', userUID), {
-        vostboxUnreadCount: increment(-1)
-      });
-      
-      await batch.commit();
       
       return { success: true };
     } catch (error) {
@@ -296,21 +284,11 @@ export class VostboxService {
         return { success: true };
       }
       
-      const batch = writeBatch(db);
-      
       // Mark all messages as read
+      const batch = writeBatch(db);
       unreadDocs.forEach(doc => {
-        batch.update(doc.ref, {
-          isRead: true,
-          readAt: serverTimestamp()
-        });
+        batch.update(doc.ref, { isRead: true, readAt: serverTimestamp() });
       });
-      
-      // Reset unread count
-      batch.update(doc(db, 'users', userUID), {
-        vostboxUnreadCount: 0
-      });
-      
       await batch.commit();
       
       return { success: true };
@@ -371,19 +349,8 @@ export class VostboxService {
         return { success: false, error: 'Unauthorized' };
       }
       
-      const batch = writeBatch(db);
-      
       // Delete message
-      batch.delete(doc(db, 'vostbox', messageId));
-      
-      // Decrement unread count if message was unread
-      if (!messageData.isRead) {
-        batch.update(doc(db, 'users', userUID), {
-          vostboxUnreadCount: increment(-1)
-        });
-      }
-      
-      await batch.commit();
+      await deleteDoc(doc(db, 'vostbox', messageId));
       
       return { success: true };
     } catch (error) {
