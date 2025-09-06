@@ -18,7 +18,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { startEditing } = useVostcardEdit();
-  const { saveVostcard, saveVostcardDirect, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards, refreshFirebaseStorageURLs } = useVostcard();
+  const { saveVostcard, saveVostcardDirect, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards, refreshFirebaseStorageURLs, restoreMissingVideoURL } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -1514,7 +1514,7 @@ const VostcardStudioView: React.FC = () => {
             </div>
 
             {/* Restore Video Button (visible when editing and video missing) */}
-            {editingVostcardId && originalVostcardData && !originalVostcardData.hasVideo && (
+            {editingVostcardId && originalVostcardData && (
               <div style={{ marginBottom: '15px' }}>
                 <button
                   onClick={async () => {
@@ -1523,11 +1523,18 @@ const VostcardStudioView: React.FC = () => {
                       const ownerUID = originalVostcardData.userID;
                       const cardId = originalVostcardData.id;
                       console.log('🔄 Attempting to restore video for', cardId, 'owner', ownerUID);
+                      // First try refreshing from any known URL
                       const result = await refreshFirebaseStorageURLs(cardId);
                       if (result?.videoURL) {
                         alert('✅ Video restored successfully. It will appear after refresh.');
                       } else {
-                        alert('Could not restore video automatically. If you previously uploaded a video, re-open this card and try again.');
+                        // Fall back to reconstructing from known Storage path
+                        const restored = await restoreMissingVideoURL(cardId, ownerUID);
+                        if (restored) {
+                          alert('✅ Video restored from Storage. It will appear after refresh.');
+                        } else {
+                          alert('Could not find a stored video to restore. If you have the original file, re-upload it.');
+                        }
                       }
                     } catch (e) {
                       console.error('Restore video failed', e);
