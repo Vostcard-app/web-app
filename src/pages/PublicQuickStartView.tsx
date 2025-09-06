@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaFilter } from 'react-icons/fa';
+import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaFilter, FaBars } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import VostcardPin from '../assets/Vostcard_pin.png';
@@ -96,9 +96,9 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 4,
-    title: "Connect & Share",
-    description: "Follow friends, like posts and build you community.",
-    icon: <FaUsers size={48} color="#002B4D" />
+    title: "Try the pulldown menu",
+    description: "Find Help, your posts and much more",
+    icon: <FaBars size={48} color="#002B4D" />
   },
   {
     id: 5,
