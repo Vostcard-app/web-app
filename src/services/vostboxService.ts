@@ -26,6 +26,12 @@ export interface VostboxSendOptions {
   message?: string;
 }
 
+export interface VostboxTextSendOptions {
+  senderUID: string;
+  receiverUID: string;
+  message: string;
+}
+
 export interface VostboxReplyOptions {
   messageID: string;
   userUID: string;
@@ -116,6 +122,61 @@ export class VostboxService {
     } catch (error) {
       console.error('Error sending vostcard to friend:', error);
       return { success: false, error: 'Failed to send vostcard' };
+    }
+  }
+
+  /**
+   * Send a text-only private message (no attachment)
+   */
+  static async sendTextMessageToFriend(options: VostboxTextSendOptions): Promise<{ success: boolean; error?: string; messageId?: string }> {
+    try {
+      const { senderUID, receiverUID, message } = options;
+      if (!message || !message.trim()) {
+        return { success: false, error: 'Message is empty' };
+      }
+
+      // Get sender and receiver
+      const [senderDoc, receiverDoc] = await Promise.all([
+        getDoc(doc(db, 'users', senderUID)),
+        getDoc(doc(db, 'users', receiverUID))
+      ]);
+
+      if (!senderDoc.exists()) return { success: false, error: 'Sender not found' };
+      if (!receiverDoc.exists()) return { success: false, error: 'Receiver not found' };
+      const senderData = senderDoc.data();
+      const receiverData = receiverDoc.data();
+
+      // Relationship checks
+      if (!senderData.friends?.includes(receiverUID)) {
+        return { success: false, error: 'Users are not friends' };
+      }
+      if (receiverData.blockedUsers?.includes(senderUID)) {
+        return { success: false, error: 'Cannot send to this user' };
+      }
+
+      // Create text-only Vostbox message
+      const vostboxMessage: Omit<VostboxMessage, 'id'> = {
+        senderUID,
+        senderUsername: senderData.username || 'Unknown',
+        senderAvatarURL: senderData.avatarURL,
+        receiverUID,
+        // No vostcard fields
+        message: message.trim(),
+        sharedAt: new Date(),
+        isRead: false
+      } as any;
+
+      const messageDoc = await addDoc(collection(db, 'vostbox'), {
+        ...vostboxMessage,
+        sharedAt: serverTimestamp()
+      });
+
+      await updateDoc(doc(db, 'users', receiverUID), { vostboxUnreadCount: increment(1) });
+
+      return { success: true, messageId: messageDoc.id };
+    } catch (error) {
+      console.error('Error sending text message to friend:', error);
+      return { success: false, error: 'Failed to send message' };
     }
   }
 

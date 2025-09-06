@@ -117,7 +117,11 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
 
   const handleSendMessage = async () => {
     if (!user?.uid || selectedFriends.size === 0 || (!message.trim() && !selectedPost)) {
-      alert('Please select friends and add a message or attach a post.');
+      if (!message.trim() && !selectedPost) {
+        alert('Please write a message or attach a post.');
+      } else {
+        alert('Please select friends.');
+      }
       return;
     }
 
@@ -128,25 +132,21 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
       for (const friendUID of selectedFriends) {
         if (selectedPost) {
           // Send with post attachment
-          const result = selectedPost.isQuickcard
-            ? await VostboxService.sendQuickcardToFriend({
-                senderUID: user.uid,
-                receiverUID: friendUID,
-                quickcardID: selectedPost.id,
-                message: message.trim() || undefined
-              })
-            : await VostboxService.sendVostcardToFriend({
-                senderUID: user.uid,
-                receiverUID: friendUID,
-                vostcardID: selectedPost.id,
-                message: message.trim() || undefined
-              });
+          const result = await VostboxService.sendVostcardToFriend({
+            senderUID: user.uid,
+            receiverUID: friendUID,
+            vostcardID: selectedPost.id,
+            message: message.trim() || undefined
+          });
           results.push(result);
         } else {
-          // Send text-only message (we'll need to extend VostboxService for this)
-          // For now, we require a post attachment
-          alert('Please attach a post to your message.');
-          return;
+          // Send text-only message
+          const result = await VostboxService.sendTextMessageToFriend({
+            senderUID: user.uid,
+            receiverUID: friendUID,
+            message: message.trim()
+          });
+          results.push(result);
         }
       }
 
