@@ -1625,9 +1625,9 @@ Tap OK to continue.`;
             {((vostcard as any)?.videoURL || (vostcard as any)?.video instanceof Blob) && (
               <button
                 onClick={() => {
-                  const videoUrl = (vostcard as any)?.videoURL || (vostcard as any)?.videoURLFromBlob || ((vostcard as any)?.video instanceof Blob ? URL.createObjectURL((vostcard as any).video) : null);
-                  if (videoUrl) {
-                    window.open(videoUrl, '_blank');
+                  // Open the in-page modal video player (same behavior as shared view)
+                  if ((vostcard as any)?.videoURL || (vostcard as any)?.video instanceof Blob) {
+                    setShowVideoModal(true);
                   } else {
                     alert('No video available');
                   }
