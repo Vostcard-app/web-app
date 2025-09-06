@@ -553,25 +553,6 @@ ${privateUrl}`);
               {vostcardUsername || 'Unknown User'}
             </div>
           </div>
-          {/* Play Video if available */}
-          {vostcard?.videoURL && (
-            <button
-              onClick={() => window.open(vostcard.videoURL!, '_blank')}
-              style={{
-                backgroundColor: '#007aff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                marginRight: '0'
-              }}
-            >
-              Play Video
-            </button>
-          )}
 
         </div>
       </div>
@@ -783,7 +764,7 @@ ${privateUrl}`);
         </div>
 
         {/* Video/Photo thumbnails area */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: '16px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: '16px', alignItems: 'flex-start' }}>
           {vostcard.isQuickcard ? (
             /* Single Photo Display for Quickcards */
             <div style={{ 
@@ -863,98 +844,120 @@ ${privateUrl}`);
             <>
               {/* Video thumbnail (only if video) */}
               {videoURL && (
-                <div
-                  onClick={(e) => { e.stopPropagation(); setShowVideoModal(true); }}
-                  style={{ 
-                    background: '#000', 
-                    borderRadius: 16, 
-                    overflow: 'hidden',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '180px',
-                    height: '120px',
-                    cursor: 'pointer',
-                    position: 'relative'
-                  }}
-                >
-                  <video 
-                    src={videoURL} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    muted
-                    loop
-                    playsInline
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    background: 'rgba(0,0,0,0.7)',
-                    borderRadius: '50%',
-                    width: 30,
-                    height: 30,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div
+                    onClick={(e) => { e.stopPropagation(); setShowVideoModal(true); }}
+                    style={{ 
+                      background: '#000', 
+                      borderRadius: 16, 
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '180px',
+                      height: '120px',
+                      cursor: 'pointer',
+                      position: 'relative'
+                    }}
+                  >
+                    <video 
+                      src={videoURL} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      muted
+                      loop
+                      playsInline
+                    />
                     <div style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '10px solid white',
-                      borderTop: '6px solid transparent',
-                      borderBottom: '6px solid transparent',
-                      marginLeft: 2
-                    }} />
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: 'rgba(0,0,0,0.7)',
+                      borderRadius: '50%',
+                      width: 30,
+                      height: 30,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <div style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '10px solid white',
+                        borderTop: '6px solid transparent',
+                        borderBottom: '6px solid transparent',
+                        marginLeft: 2
+                      }} />
+                    </div>
+                  </div>
+                  <div style={{ 
+                    marginTop: '8px', 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: '#666',
+                    textAlign: 'center'
+                  }}>
+                    Video
                   </div>
                 </div>
               )}
 
               {/* Single photo thumbnail to open slideshow */}
               {photoURLs.length > 0 && (
-                <div 
-                  key={0}
-                  style={{ 
-                    background: '#f0f0f0', 
-                    borderRadius: 16, 
-                    overflow: 'hidden',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '180px',
-                    height: '120px',
-                    cursor: 'pointer',
-                    position: 'relative'
-                  }}
-                  onClick={() => handlePhotoClick(photoURLs[0], 0)}
-                >
-                  <img 
-                    src={photoURLs[0]} 
-                    alt={`Photo 1`} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  {/* Play triangle overlay */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    background: 'rgba(0,0,0,0.6)',
-                    borderRadius: '50%',
-                    width: 30,
-                    height: 30,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div 
+                    key={0}
+                    style={{ 
+                      background: '#f0f0f0', 
+                      borderRadius: 16, 
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '180px',
+                      height: '120px',
+                      cursor: 'pointer',
+                      position: 'relative'
+                    }}
+                    onClick={() => handlePhotoClick(photoURLs[0], 0)}
+                  >
+                    <img 
+                      src={photoURLs[0]} 
+                      alt={`Photo 1`} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {/* Play triangle overlay */}
                     <div style={{
-                      width: 0,
-                      height: 0,
-                      borderLeft: '10px solid white',
-                      borderTop: '6px solid transparent',
-                      borderBottom: '6px solid transparent',
-                      marginLeft: 2
-                    }} />
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: 'rgba(0,0,0,0.6)',
+                      borderRadius: '50%',
+                      width: 30,
+                      height: 30,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <div style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '10px solid white',
+                        borderTop: '6px solid transparent',
+                        borderBottom: '6px solid transparent',
+                        marginLeft: 2
+                      }} />
+                    </div>
+                  </div>
+                  <div style={{ 
+                    marginTop: '8px', 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: '#666',
+                    textAlign: 'center'
+                  }}>
+                    Photo
                   </div>
                 </div>
               )}
