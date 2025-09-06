@@ -92,11 +92,13 @@ const VostcardDetailView: React.FC = () => {
   // Helper: stop playback and close modal
   const stopAndCloseVideo = () => {
     try {
-      videoRef.current?.pause();
-      videoRef.current?.removeAttribute('src');
-      // Force unload to stop audio on some mobile browsers
       if (videoRef.current) {
-        videoRef.current.load();
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0; // Reset to beginning
+        videoRef.current.removeAttribute('src');
+        videoRef.current.load(); // Force unload
+        // Clear the ref to prevent any restart
+        videoRef.current = null;
       }
     } catch {}
     setShowVideoModal(false);
@@ -2027,7 +2029,6 @@ Tap OK to continue.`;
                   backgroundColor: '#000'
                 }}
                 controls
-                autoPlay
                 playsInline
                 onEnded={stopAndCloseVideo}
                 onClick={(e) => e.stopPropagation()}
