@@ -108,7 +108,7 @@ const tourSlides: TourSlide[] = [
   {
     id: 4,
     title: "Try the pulldown menu",
-    description: "Find Help, your posts and much more",
+    description: "Find: Help, Your Posts, Vostbox (Messages), and more",
     icon: <FaBars size={48} color="#002B4D" />
   },
   {
