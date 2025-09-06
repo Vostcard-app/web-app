@@ -91,14 +91,24 @@ const VostcardDetailView: React.FC = () => {
 
   // Stop playback and close the video modal safely
   const stopAndCloseVideo = () => {
+    console.log('🔴 STOPPING VIDEO AND CLOSING MODAL');
     try {
       const v = videoRef.current;
       if (v) {
+        console.log('🔴 Video element found, stopping playback');
         v.pause();
+        v.currentTime = 0;
         v.removeAttribute('src');
         v.load();
+        // Clear the ref
+        videoRef.current = null;
+      } else {
+        console.log('🔴 No video element found');
       }
-    } catch {}
+    } catch (error) {
+      console.error('🔴 Error stopping video:', error);
+    }
+    console.log('🔴 Setting showVideoModal to false');
     setShowVideoModal(false);
   };
 
@@ -2009,24 +2019,37 @@ Tap OK to continue.`;
             onClick={stopAndCloseVideo}
           >
             <button
-              onClick={stopAndCloseVideo}
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('🔴 CLOSE BUTTON CLICKED - STOPPING VIDEO');
+                stopAndCloseVideo();
+              }}
               style={{
                 position: 'absolute',
                 top: '20px',
                 right: '20px',
-                background: 'rgba(255,255,255,0.2)',
-                border: 'none',
+                background: 'rgba(255,255,255,0.9)',
+                border: '2px solid white',
                 borderRadius: '50%',
-                width: '44px',
-                height: '44px',
+                width: '50px',
+                height: '50px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
-                zIndex: 2001,
-                fontSize: '18px',
-                color: 'white',
-                backdropFilter: 'blur(10px)'
+                zIndex: 9999,
+                fontSize: '20px',
+                color: '#333',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'white';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
             >
               <FaTimes />
