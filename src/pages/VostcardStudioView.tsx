@@ -53,6 +53,8 @@ const VostcardStudioView: React.FC = () => {
   const [showVostcardImporter, setShowVostcardImporter] = useState(false);
   const [showVostcardCreator, setShowVostcardCreator] = useState(false);
   const [showVostcardLoader, setShowVostcardLoader] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewChecks, setReviewChecks] = useState<{label: string; ok: boolean; detail?: string}[]>([]);
   
   // Vostcard creation state - ENHANCED FOR MULTIPLE PHOTOS
   const [vostcardTitle, setVostcardTitle] = useState('');
@@ -2001,7 +2003,7 @@ const VostcardStudioView: React.FC = () => {
               {/* Update Button - Only visible when editing */}
               {editingVostcardId && (
                 <button 
-                  onClick={handleUpdateAndRepostVostcard}
+                  onClick={() => setShowReviewModal(true)}
                   disabled={!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0}
                   style={{
                     backgroundColor: (!vostcardTitle.trim() || !vostcardLocation || isLoading || vostcardPhotos.length === 0 || vostcardCategories.length === 0) ? '#ccc' : '#ff9800',
@@ -2020,7 +2022,7 @@ const VostcardStudioView: React.FC = () => {
                   }}
                 >
                   <FaEdit size={12} />
-                  Update
+                  Review & Update
                 </button>
               )}
             </div>
@@ -2332,6 +2334,77 @@ const VostcardStudioView: React.FC = () => {
           title="Add Photos to Vostcard"
           isMobile={/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)}
         />
+
+        {/* Review & Confirm Modal */}
+        {showReviewModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1001
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '12px',
+              width: '90%',
+              maxWidth: '420px',
+              maxHeight: '70vh',
+              overflow: 'auto'
+            }}>
+              <h3 style={{ marginTop: 0, marginBottom: '12px' }}>Review & Confirm</h3>
+              <p style={{ fontSize: '12px', color: '#555', marginTop: 0 }}>Confirm everything looks right before updating.</p>
+
+              <div style={{ display: 'grid', rowGap: '8px', margin: '12px 0' }}>
+                <div>✅ Title: {vostcardTitle.trim() ? 'Present' : 'Missing'}</div>
+                <div>✅ Photos: {vostcardPhotos.length} file(s)</div>
+                <div>✅ Location: {vostcardLocation ? 'Set' : 'Missing'}</div>
+                <div>✅ Categories: {vostcardCategories.length} selected</div>
+                <div>✅ Audio: {vostcardAudio ? 'Present' : 'None'}</div>
+                <div>✅ Video: {(originalVostcardData as any)?._firebaseVideoURL ? 'Linked' : 'Not linked'}</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={async () => {
+                    try {
+                      if (originalVostcardData) {
+                        const rst = await refreshFirebaseStorageURLs(originalVostcardData.id);
+                        if (!rst?.videoURL && originalVostcardData.userID) {
+                          await restoreMissingVideoURL(originalVostcardData.id, originalVostcardData.userID);
+                        }
+                        alert('Tried to restore video. Close and reopen this dialog to refresh status.');
+                      }
+                    } catch (e) {
+                      console.error(e);
+                      alert('Restore attempt failed.');
+                    }
+                  }}
+                  style={{
+                    backgroundColor: '#134369', color: 'white', border: 'none', padding: '10px 12px', borderRadius: 6, fontSize: 13, fontWeight: 'bold', flex: 1
+                  }}
+                >Attempt Restore</button>
+                <button
+                  onClick={() => setShowReviewModal(false)}
+                  style={{ backgroundColor: '#6c757d', color: 'white', border: 'none', padding: '10px 12px', borderRadius: 6, fontSize: 13, fontWeight: 'bold', flex: 1 }}
+                >Cancel</button>
+                <button
+                  onClick={async () => {
+                    setShowReviewModal(false);
+                    await handleUpdateAndRepostVostcard();
+                  }}
+                  style={{ backgroundColor: '#ff9800', color: 'white', border: 'none', padding: '10px 12px', borderRadius: 6, fontSize: 13, fontWeight: 'bold', flex: 1 }}
+                >Confirm & Update</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Hidden Inputs - NATIVE APP ACCESS */}
         <input
