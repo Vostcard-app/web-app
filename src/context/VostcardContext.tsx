@@ -695,6 +695,30 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, []);
 
+  // Attempt to restore a missing video URL from the known storage path
+  const restoreMissingVideoURL = useCallback(async (vostcardId: string, ownerUID: string): Promise<string | null> => {
+    try {
+      const storagePath = `vostcards/${ownerUID}/videos/${vostcardId}`;
+      const videoRef = ref(storage, storagePath);
+      const downloadURL = await getDownloadURL(videoRef);
+      const vostcardRef = doc(db, 'vostcards', vostcardId);
+      await setDoc(vostcardRef, { videoURL: downloadURL, hasVideo: true, updatedAt: serverTimestamp() }, { merge: true });
+
+      // Update local context copies if present
+      setSavedVostcards(prev => prev.map(v => v.id === vostcardId ? { ...v, _firebaseVideoURL: downloadURL } as any : v));
+      setPostedVostcards(prev => prev.map(v => v.id === vostcardId ? { ...v, _firebaseVideoURL: downloadURL } as any : v));
+      if (currentVostcard && currentVostcard.id === vostcardId) {
+        (currentVostcard as any)._firebaseVideoURL = downloadURL;
+      }
+
+      console.log('✅ Restored video URL from storage for', vostcardId, downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.warn('❌ Failed to restore video URL from storage for', vostcardId, error);
+      return null;
+    }
+  }, [currentVostcard]);
+
   // Function to clean up broken file references from the database
   const cleanupBrokenFileReferences = useCallback(async () => {
     const user = auth.currentUser;
