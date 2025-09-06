@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { db } from '../firebase/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 import { FaHome, FaArrowLeft, FaList, FaMicrophone, FaStop, FaUpload, FaMapMarkerAlt, FaSave, FaCamera, FaGlobe, FaImages, FaEdit } from 'react-icons/fa';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../context/AuthContext';
@@ -420,6 +422,55 @@ const VostcardStudioView: React.FC = () => {
       refreshVostcards();
     }
   }, [showVostcardLoader, loadAllLocalVostcards]);
+
+  // If navigated here with state.editingVostcard, load that card (supports redirects from /edit/:id)
+  useEffect(() => {
+    const state: any = (location as any)?.state;
+    const targetId: string | undefined = state?.editingVostcard;
+    if (!targetId) return;
+
+    const hydrateFromFirestore = async () => {
+      try {
+        setIsLoading(true);
+        const ref = doc(db, 'vostcards', targetId);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data: any = snap.data();
+          const minimal: any = {
+            id: snap.id,
+            title: data?.title || '',
+            description: data?.description || '',
+            categories: Array.isArray(data?.categories) ? data.categories : [],
+            username: data?.username || '',
+            userID: data?.userID || '',
+            createdAt: data?.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            updatedAt: data?.updatedAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            state: data?.state || 'private',
+            type: 'vostcard',
+            video: null,
+            photos: [],
+            geo: data?.geo || (data?.latitude && data?.longitude ? { latitude: data.latitude, longitude: data.longitude } : null),
+            hasVideo: !!data?.videoURL,
+            hasPhotos: Array.isArray(data?.photoURLs) && data.photoURLs.length > 0,
+            _firebaseVideoURL: data?.videoURL || null,
+            _firebasePhotoURLs: Array.isArray(data?.photoURLs) ? data.photoURLs : [],
+            _isMetadataOnly: true
+          };
+          await loadVostcardForEditing(minimal);
+        } else {
+          console.warn('Vostcard not found for id', targetId);
+        }
+      } catch (err) {
+        console.error('Failed to hydrate Studio from id', targetId, err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    hydrateFromFirestore();
+    // Only run on first mount with provided state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle vostcard import
   const handleVostcardImport = (vostcard: Vostcard) => {
