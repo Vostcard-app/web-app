@@ -19,7 +19,7 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
   preSelectedPost
 }) => {
   const { user } = useAuth();
-  const { savedVostcards, loadAllLocalVostcardsImmediate } = useVostcard();
+  const { savedVostcards, loadAllLocalVostcards } = useVostcard();
   
   // Message state
   const [message, setMessage] = useState('');
@@ -119,7 +119,7 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
 
   const loadPosts = async () => {
     try {
-      await loadAllLocalVostcardsImmediate();
+      await loadAllLocalVostcards();
     } catch (error) {
       console.error('Error loading posts:', error);
     }
@@ -734,7 +734,7 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
           
           <button
             onClick={handleSendMessage}
-            disabled={sending || selectedFriends.size === 0 || (!message.trim() && !selectedPost)}
+            disabled={sending || (selectedFriends.size + selectedUsers.size === 0) || (!message.trim() && !selectedPost)}
             style={{
               backgroundColor: sending ? '#ccc' : '#002B4D',
               color: 'white',
@@ -746,7 +746,7 @@ const ComposePrivateMessageModal: React.FC<ComposePrivateMessageModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              opacity: (selectedFriends.size === 0 || (!message.trim() && !selectedPost)) ? 0.5 : 1
+              opacity: ((selectedFriends.size + selectedUsers.size === 0) || (!message.trim() && !selectedPost)) ? 0.5 : 1
             }}
           >
             <FaPaperPlane size={14} />
