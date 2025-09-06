@@ -2006,6 +2006,7 @@ Tap OK to continue.`;
                 controls
                 autoPlay
                 playsInline
+                onEnded={() => setShowVideoModal(false)}
                 onClick={(e) => e.stopPropagation()}
               />
             </div>

@@ -1190,6 +1190,7 @@ ${privateUrl}`);
                 }}
                 onLoadedMetadata={(e) => handleVideoLoadedMetadata(e.currentTarget)}
                 onPlay={handleVideoPlay}
+                onEnded={() => setShowVideoModal(false)}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleVideoInteraction();
