@@ -782,6 +782,38 @@ const AdminPanel: React.FC = () => {
                       <strong>Applied:</strong> {advertiser.createdAt ? new Date(advertiser.createdAt).toLocaleDateString() : 'N/A'}
                     </div>
                   </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleApproveAdvertiser(advertiser.id, advertiser.email)}
+                      style={{
+                        padding: '8px 12px',
+                        backgroundColor: '#198754',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 600
+                      }}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleRejectAdvertiser(advertiser.id, advertiser.email)}
+                      style={{
+                        padding: '8px 12px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 600
+                      }}
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
