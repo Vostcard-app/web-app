@@ -89,16 +89,14 @@ const VostcardDetailView: React.FC = () => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Helper: stop playback and close modal
+  // Stop playback and close the video modal safely
   const stopAndCloseVideo = () => {
     try {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0; // Reset to beginning
-        videoRef.current.removeAttribute('src');
-        videoRef.current.load(); // Force unload
-        // Clear the ref to prevent any restart
-        videoRef.current = null;
+      const v = videoRef.current;
+      if (v) {
+        v.pause();
+        v.removeAttribute('src');
+        v.load();
       }
     } catch {}
     setShowVideoModal(false);
@@ -2029,6 +2027,7 @@ Tap OK to continue.`;
                   backgroundColor: '#000'
                 }}
                 controls
+                autoPlay
                 playsInline
                 onEnded={stopAndCloseVideo}
                 onClick={(e) => e.stopPropagation()}
