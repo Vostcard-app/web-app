@@ -1658,6 +1658,58 @@ const VostcardStudioView: React.FC = () => {
               />
             </div>
 
+            {/* Video thumbnail preview (if linked/loaded) */}
+            {editingVostcardId && originalVostcardData && (originalVostcardData as any)?._firebaseVideoURL && (
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#333', marginBottom: 6 }}>Video</div>
+                <div
+                  style={{
+                    width: 180,
+                    height: 120,
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    background: '#000',
+                    position: 'relative'
+                  }}
+                >
+                  <video
+                    src={(originalVostcardData as any)._firebaseVideoURL}
+                    muted
+                    loop
+                    playsInline
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      background: 'rgba(0,0,0,0.6)',
+                      borderRadius: '50%',
+                      width: 30,
+                      height: 30,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: '10px solid white',
+                        borderTop: '6px solid transparent',
+                        borderBottom: '6px solid transparent',
+                        marginLeft: 2
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Photo Upload Manager */}
             <PhotoUploadManager
               photos={vostcardPhotos}
