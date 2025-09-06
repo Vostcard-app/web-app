@@ -1028,6 +1028,8 @@ const VostcardStudioView: React.FC = () => {
         // Preserve existing Firebase URLs for audio preservation
         _firebaseAudioURLs: originalVostcardData?._firebaseAudioURLs || originalVostcardData?.audioURLs || (originalVostcardData?.audioURL ? [originalVostcardData.audioURL] : undefined),
         _firebasePhotoURLs: originalVostcardData?._firebasePhotoURLs || originalVostcardData?.photoURLs,
+        // ✅ Preserve existing video reference so save logic keeps it
+        _firebaseVideoURL: (originalVostcardData as any)?._firebaseVideoURL || (originalVostcardData as any)?.videoURL || null,
         hasVideo: false,
         hasPhotos: vostcardPhotos.length > 0,
         hasAudio: audioFiles.length > 0 || !!(originalVostcardData?._firebaseAudioURLs?.length || originalVostcardData?.audioURLs?.length || originalVostcardData?.audioURL), // Check if any audio files exist (new or preserved)

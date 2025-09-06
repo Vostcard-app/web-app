@@ -281,7 +281,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         ...(currentVostcard.geo.address !== undefined && { address: currentVostcard.geo.address })
       } : null;
 
-      // Save to Firestore
+      // Save to Firestore (server-side guard: if no video provided nor preserved, fetch current doc to keep existing videoURL)
       const docData = {
         id: currentVostcard.id,
         title: currentVostcard.title,
@@ -314,6 +314,19 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log('📝 Saving vostcard to Firebase:', docData);
       
       try {
+        // Guard: ensure we never null out an existing videoURL
+        if (!videoURL) {
+          try {
+            const existing = (await import('firebase/firestore')).getDoc ? await (await import('firebase/firestore')).getDoc((await import('firebase/firestore')).doc(db, 'vostcards', currentVostcard.id)) : null;
+            const existingData = existing && existing.exists() ? existing.data() as any : null;
+            if (existingData?.videoURL) {
+              (docData as any).videoURL = existingData.videoURL;
+              (docData as any).hasVideo = true;
+            }
+          } catch (e) {
+            console.warn('Guard fetch failed (non-blocking):', e);
+          }
+        }
         await setDoc(doc(db, 'vostcards', currentVostcard.id), docData);
         console.log('✅ Successfully saved vostcard to Firebase:', currentVostcard.id);
       } catch (firebaseError) {
@@ -452,7 +465,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
 
-      // Save to Firestore
+      // Save to Firestore (server-side guard for direct save)
       const docData = {
         id: vostcardToSave.id,
         title: vostcardToSave.title,
@@ -486,6 +499,20 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
 
       console.log('📝 Saving vostcard directly to Firebase:', docData);
+      // Guard: ensure we never null out an existing videoURL on direct save
+      try {
+        if (!videoURL) {
+          const { getDoc } = await import('firebase/firestore');
+          const existing = await getDoc(doc(db, 'vostcards', vostcardToSave.id));
+          const existingData = existing.exists() ? existing.data() as any : null;
+          if (existingData?.videoURL) {
+            (docData as any).videoURL = existingData.videoURL;
+            (docData as any).hasVideo = true;
+          }
+        }
+      } catch (e) {
+        console.warn('Guard fetch (direct) failed (non-blocking):', e);
+      }
       await setDoc(doc(db, 'vostcards', vostcardToSave.id), docData);
 
       console.log('✅ Vostcard saved directly to Firebase successfully');
