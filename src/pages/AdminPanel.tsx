@@ -48,7 +48,7 @@ const AdminPanel: React.FC = () => {
   const [statsLoading, setStatsLoading] = useState(false);
   
   // Tab management
-  const [activeTab, setActiveTab] = useState<'overview' | 'posts' | 'users' | 'music'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'posts' | 'users' | 'directories' | 'music'>('overview');
 
 
   // Redirect if not admin
@@ -491,6 +491,25 @@ const AdminPanel: React.FC = () => {
         >
           <FaHome size={16} />
         </button>
+        <button
+          onClick={() => setActiveTab('directories')}
+          style={{
+            padding: '16px 24px',
+            border: 'none',
+            borderBottom: activeTab === 'directories' ? '3px solid #134369' : '3px solid transparent',
+            backgroundColor: activeTab === 'directories' ? '#f8f9fa' : 'white',
+            color: activeTab === 'directories' ? '#134369' : '#666',
+            cursor: 'pointer',
+            fontSize: '16px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <FaList size={16} />
+          Directories
+        </button>
         <h1 style={{ color: 'white', margin: 0, fontSize: '20px', fontWeight: 700 }}>Admin Panel</h1>
         <div style={{ width: 36 }} />
       </div>
@@ -691,6 +710,30 @@ const AdminPanel: React.FC = () => {
         )}
       </div>
 
+        </>
+      )}
+
+      {activeTab === 'directories' && (
+        <>
+          <div style={{ backgroundColor: '#f8f9fa', padding: 20, borderRadius: 8, border: '1px solid #dee2e6', marginBottom: 20 }}>
+            <h2 style={{ marginTop: 0 }}>Directories</h2>
+            <p style={{ color: '#666' }}>Browse users, advertisers, and guides. Filter and search coming next.</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: 8, padding: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Users</h3>
+              <button onClick={() => setActiveTab('users')} style={{ padding: '8px 12px', background: '#134369', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Open User Management</button>
+            </div>
+            <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: 8, padding: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Advertisers</h3>
+              <button onClick={loadPendingAdvertisers} style={{ padding: '8px 12px', background: '#198754', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>Refresh Pending</button>
+              <div style={{ marginTop: 12, color: '#666' }}>Pending: {pendingAdvertisers.length}</div>
+            </div>
+            <div style={{ background: 'white', border: '1px solid #dee2e6', borderRadius: 8, padding: 16 }}>
+              <h3 style={{ marginTop: 0 }}>Guides</h3>
+              <div style={{ color: '#666' }}>Guide directory coming soon.</div>
+            </div>
+          </div>
         </>
       )}
 
