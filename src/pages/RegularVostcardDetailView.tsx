@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaHeart, FaStar, FaRegComment, FaShare, FaUserCircle, FaTimes, FaFlag, FaSync, FaArrowLeft, FaUserPlus, FaMap, FaCoffee, FaChevronDown, FaPlay, FaPause, FaImages } from 'react-icons/fa';
+import VideoOverlayModal from '../components/VideoOverlayModal';
 import { db } from '../firebase/firebaseConfig';
 import { doc, getDoc, updateDoc, collection, query, orderBy, getDocs, increment, addDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
@@ -2000,90 +2001,8 @@ Tap OK to continue.`;
           </div>
         )}
 
-        {/* Video Modal */}
-        {showVideoModal && vostcard.videoURL && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.9)',
-              zIndex: 2000,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '20px'
-            }}
-            onClick={stopAndCloseVideo}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('🔴 CLOSE BUTTON CLICKED - STOPPING VIDEO');
-                stopAndCloseVideo();
-              }}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                background: 'rgba(255,255,255,0.9)',
-                border: '2px solid white',
-                borderRadius: '50%',
-                width: '50px',
-                height: '50px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 9999,
-                fontSize: '20px',
-                color: '#333',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.5)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'white';
-                e.currentTarget.style.transform = 'scale(1.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              <FaTimes />
-            </button>
-
-            <div style={{ 
-              position: 'relative',
-              maxWidth: '90vw',
-              maxHeight: '90vh',
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <video 
-                ref={videoRef}
-                src={vostcard.videoURL} 
-                controls
-                autoPlay
-                playsInline
-                webkit-playsinline="true"
-                controlsList="nodownload nofullscreen noremoteplayback"
-                style={{ 
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  borderRadius: 8,
-                  backgroundColor: '#000'
-                }}
-                onEnded={stopAndCloseVideo}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          </div>
-        )}
+        {/* Video Modal - reuse shared view behavior */}
+        <VideoOverlayModal isOpen={showVideoModal && !!vostcard.videoURL} src={vostcard.videoURL} onClose={stopAndCloseVideo} />
 
         {/* Multi Photo Modal */}
         {/* Share Options Modal */}
