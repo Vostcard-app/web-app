@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaFilter } from 'react-icons/fa';
+import { FaTimes, FaArrowLeft, FaArrowRight, FaCheck, FaMapPin, FaCamera, FaStar, FaWalking, FaUsers, FaHeart, FaFilter, FaBars } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import VostcardPin from '../assets/Vostcard_pin.png';
 import OfferPin from '../assets/Offer_pin.png';
@@ -107,31 +107,9 @@ const tourSlides: TourSlide[] = [
   },
   {
     id: 4,
-    title: "Need Help?\nWe've Got You!",
-    description: "Tap on the Help button to find this Quick Start and more helpful information.",
-    icon: (
-      <div style={{
-        backgroundColor: '#002B4D',
-        color: 'white',
-        border: 'none',
-        borderRadius: '12px',
-        padding: '12px 16px',
-        fontSize: '24px',
-        fontWeight: 500,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        lineHeight: '1',
-        gap: '8px',
-        minWidth: '120px',
-        marginTop: '25px'
-      }}>
-        <span style={{ fontSize: '28px', lineHeight: '1' }}>❓</span>
-        <span>Help</span>
-      </div>
-    )
+    title: "Try the pulldown menu",
+    description: "Find Help, your posts and much more",
+    icon: <FaBars size={48} color="#002B4D" />
   },
   {
     id: 5,
