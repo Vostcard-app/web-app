@@ -37,6 +37,7 @@ interface VostcardContextType {
   refreshFirebaseStorageURLs: (vostcardId: string, vostcardData?: any) => Promise<{ photoURLs: string[]; videoURL: string | null; audioURL: string | null } | null>;
   fixExpiredURLs: (vostcardData: any) => { photoURLs: string[]; videoURL: string | null; audioURL: string | null };
   cleanupBrokenFileReferences: () => Promise<void>;
+  restoreMissingVideoURL: (vostcardId: string, ownerUID: string) => Promise<string | null>;
 
   setVideo: (video: Blob, location?: { latitude: number; longitude: number }) => void;
   updateVostcard: (updates: Partial<Vostcard>) => void;
@@ -1808,6 +1809,7 @@ export const VostcardProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     refreshFirebaseStorageURLs,
     fixExpiredURLs,
     cleanupBrokenFileReferences,
+    restoreMissingVideoURL,
 
     setVideo,
     updateVostcard,

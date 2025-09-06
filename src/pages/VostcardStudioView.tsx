@@ -18,7 +18,7 @@ const VostcardStudioView: React.FC = () => {
   const location = useLocation();
   const { user, userRole } = useAuth();
   const { startEditing } = useVostcardEdit();
-  const { saveVostcard, saveVostcardDirect, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards } = useVostcard();
+  const { saveVostcard, saveVostcardDirect, setCurrentVostcard, postVostcard, clearVostcard, savedVostcards, currentVostcard, loadAllLocalVostcards, refreshFirebaseStorageURLs } = useVostcard();
   
   // Categories from step 3
   const availableCategories = [
@@ -1512,6 +1512,49 @@ const VostcardStudioView: React.FC = () => {
                 📂 Load Card
               </button>
             </div>
+
+            {/* Restore Video Button (visible when editing and video missing) */}
+            {editingVostcardId && originalVostcardData && !originalVostcardData.hasVideo && (
+              <div style={{ marginBottom: '15px' }}>
+                <button
+                  onClick={async () => {
+                    try {
+                      if (!originalVostcardData) return;
+                      const ownerUID = originalVostcardData.userID;
+                      const cardId = originalVostcardData.id;
+                      console.log('🔄 Attempting to restore video for', cardId, 'owner', ownerUID);
+                      const result = await refreshFirebaseStorageURLs(cardId);
+                      if (result?.videoURL) {
+                        alert('✅ Video restored successfully. It will appear after refresh.');
+                      } else {
+                        alert('Could not restore video automatically. If you previously uploaded a video, re-open this card and try again.');
+                      }
+                    } catch (e) {
+                      console.error('Restore video failed', e);
+                      alert('Restore failed. Please try again later.');
+                    }
+                  }}
+                  disabled={isLoading}
+                  style={{
+                    backgroundColor: isLoading ? '#ccc' : '#134369',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 8px',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  🔄 Restore Video
+                </button>
+              </div>
+            )}
 
             {/* Clear Form Button - Always visible */}
             <div style={{ marginBottom: '15px' }}>
