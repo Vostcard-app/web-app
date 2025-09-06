@@ -88,6 +88,29 @@ const VostcardDetailView: React.FC = () => {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
 
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Helper: stop playback and close modal
+  const stopAndCloseVideo = () => {
+    try {
+      videoRef.current?.pause();
+      videoRef.current?.removeAttribute('src');
+      // Force unload to stop audio on some mobile browsers
+      if (videoRef.current) {
+        videoRef.current.load();
+      }
+    } catch {}
+    setShowVideoModal(false);
+  };
+
+  // ESC to close video modal
+  useEffect(() => {
+    if (!showVideoModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') stopAndCloseVideo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showVideoModal]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const tipButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -1980,7 +2003,7 @@ Tap OK to continue.`;
               zIndex: 1000,
               padding: '20px'
             }}
-            onClick={() => setShowVideoModal(false)}
+            onClick={stopAndCloseVideo}
           >
             <div
               style={{
@@ -1994,7 +2017,29 @@ Tap OK to continue.`;
               }}
               onClick={e => e.stopPropagation()}
             >
+              <button
+                onClick={stopAndCloseVideo}
+                style={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 12,
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 40,
+                  height: 40,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  zIndex: 1,
+                  color: 'white'
+                }}
+              >
+                <FaTimes />
+              </button>
               <video
+                ref={videoRef}
                 src={vostcard.videoURL}
                 style={{
                   maxWidth: '100%',
@@ -2006,7 +2051,7 @@ Tap OK to continue.`;
                 controls
                 autoPlay
                 playsInline
-                onEnded={() => setShowVideoModal(false)}
+                onEnded={stopAndCloseVideo}
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
